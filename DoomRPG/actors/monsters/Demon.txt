@@ -1,0 +1,266 @@
+actor Demon
+{
+	Game Doom
+	SpawnID 8
+	Health 150
+	PainChance 180
+	Speed 10
+	Radius 30
+	Height 56
+	Mass 400
+	
+	Monster
+	+FLOORCLIP
+	
+	SeeSound "demon/sight"
+	AttackSound "demon/melee"
+	PainSound "demon/pain"
+	DeathSound "demon/death"
+	ActiveSound "demon/active"
+	Obituary "$OB_DEMONHIT"
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+
+	States
+	{
+	Spawn:
+		SARG AB 10 A_Look
+		Loop
+	See:
+		SARG AABBCCDD 2 Fast A_Chase
+		Loop
+	Melee:
+		SARG EF 8 Fast A_FaceTarget
+		SARG G 8 Fast A_SargAttack
+		Goto See
+	Pain:
+		SARG H 2 Fast
+		SARG H 2 Fast A_Pain
+		Goto See
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(150, 300))
+		SARG I 8
+		SARG J 8 A_Scream
+		SARG K 4
+		SARG L 4 A_NoBlocking
+		SARG M 4
+		SARG N -1
+		Stop
+	Raise:
+		SARG N 5
+		SARG MLKJI 5
+		Goto See
+	}
+}
+
+ACTOR Spectre : Demon 58
+{
+	Game Doom
+	SpawnID 9
+	
+	+SHADOW
+	
+	RenderStyle Fuzzy
+	Alpha 0.5
+	
+	SeeSound "spectre/sight"
+	AttackSound "spectre/melee"
+	PainSound "spectre/pain"
+	DeathSound "spectre/death"
+	ActiveSound "spectre/active"
+	HitObituary "$OB_SPECTREHIT"
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "BlurSphere" 32
+	DropItem "InvisibilityCharge" 8
+}
+
+actor DemonBoss : Demon
+{
+	Health 300
+	
+	States
+	{
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(150, 300) * 2)
+		SARG I 8
+		SARG J 8 A_Scream
+		SARG K 4
+		SARG L 4 A_NoBlocking
+		SARG M 4
+		SARG N 1
+		Goto FadeOut
+	FadeOut:
+		SARG N 1 A_FadeOut(0.001, true)
+		Loop
+	}
+}
+
+actor DemonRed : DemonBoss 10140
+{
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 0]"
+	BloodColor Red
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "RuneDropper"
+	
+	States
+	{
+	Melee:
+		SARG EF 4 Fast A_FaceTarget
+		SARG G 4 Fast A_SargAttack
+		Goto See
+	}
+}
+
+actor DemonGreen : DemonBoss 10141
+{
+	PainChance 0
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 0]"
+	BloodColor Green
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "ArmorRandomizer"
+}
+
+actor DemonWhite : DemonBoss 10142
+{
+	Translation "0 : 255 = %[0, 0, 0] : [1, 1, 1]"
+	BloodColor White
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "SmallTokenDropper"
+	
+	States
+	{
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(150, 300) * 4)
+		SARG I 8
+		SARG J 8 A_Scream
+		SARG K 4
+		SARG L 4 A_NoBlocking
+		SARG M 4
+		SARG N 1
+		Goto FadeOut
+	}
+}
+
+actor DemonOrange : DemonBoss 10143
+{
+	+ALWAYSFAST
+	+QUICKTORETALIATE
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0.5, 0]"
+	BloodColor Orange
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "TimeSphere"
+}
+
+actor DemonPink : DemonBoss 10144
+{
+	health 600
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 0.5]"
+	BloodColor Pink
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "MedikitRandomizer"
+}
+
+actor DemonBlue : DemonBoss 10145
+{
+	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 1]"
+	BloodColor Cyan
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "EPCapsuke"
+	DropItem "BigEPCapsule"
+}
+
+actor DemonPurple : DemonBoss 10146
+{
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 1]"
+	BloodColor Purple
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "ShieldBooster"
+}
+
+actor DemonDarkBlue : DemonBoss 10147
+{
+	Translation "0 : 255 = %[0, 0, 0] : [0, 0, 1]"
+	BloodColor Blue
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+}
+
+actor DemonYellow : DemonBoss 10148
+{
+	Translation "0 : 255 = %[0, 0, 0] : [1, 1, 0]"
+	BloodColor Yellow
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "MoneyDropper"
+}
+
+actor DemonBlack : DemonBoss 10149
+{
+	health 600
+	PainChance 0
+	
+	+ALWAYSFAST
+	+QUICKTORETALIATE
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 0, 0]"
+	BloodColor Black
+	RenderStyle Fuzzy
+	Alpha 0.5
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "MoneyDropper"
+	DropItem "RuneDropper"
+	DropItem "ArmorRandomizer"
+	DropItem "SmallTokenDropper"
+	DropItem "TimeSphere"
+	DropItem "MedikitRandomizer"
+	DropItem "EPCapsule"
+	DropItem "BigEPCapsule"
+	DropItem "ShieldBooster"
+	
+	States
+	{
+	Melee:
+		SARG EF 4 Fast A_FaceTarget
+		SARG G 4 Fast A_SargAttack
+		Goto See
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(150, 300) * 8)
+		SARG I 8
+		SARG J 8 A_Scream
+		SARG K 4
+		SARG L 4 A_NoBlocking
+		SARG M 4
+		SARG N 1
+		Goto FadeOut
+	}
+}

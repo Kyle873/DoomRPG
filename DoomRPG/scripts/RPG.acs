@@ -1,0 +1,331 @@
+#library "RPG"
+
+#include "zcommon.acs"
+
+#import "Stats.acs"
+#import "Skills.acs"
+#import "Accessories.acs"
+#import "Shop.acs"
+#import "Menu.acs"
+#import "Shield.acs"
+#import "Utils.acs"
+
+// LineTarget Enum
+#define LT_NONE			0
+#define LT_CLASSNAME	1
+#define LT_SPAWNHEALTH	2
+#define LT_HEALTH		4
+#define LT_RADIUS		8
+#define LT_HEIGHT		16
+
+// Flags
+global int 1 : FirstRun;
+
+// Enemy HP HUD Display
+global int 60 : TargetHealth;
+global int 61 : TargetHealthMax;
+
+str Version = "v0.9 Beta";
+str TimeStamp = "6/5/2013 1:15 PM";
+
+// Init Script
+script "Init" enter
+{
+	// Check for Menu Options
+	if (!GetCVAR("drpg_init"))
+	{
+		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+		Print(s:"\cjBefore playing, please go into the Doom RPG Options menu and restore your settings to defaults, then restart the game");
+		Delay(1);
+		restart;
+	}
+	
+	if (FirstRun == 0)
+	{
+		EP = 100;
+		RankString = Ranks[0];
+		Vitality = 10;
+		Energy = 10;
+		Capacity = 10;
+		ComboTimer = -100;
+		ShieldTimer = 175;
+		ShieldBody = 1;
+		ShieldBattery = 1;
+		ShieldCapacitor = 1;
+		ShieldAccessory = 1;
+		
+		int Tokens = 10 - FixedMul(GameSkill(), 0.75);
+		GiveInventory("StatToken", Tokens);
+		GiveInventory("SkillToken", Tokens);
+		DefaultLoadout();
+		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+		FirstRun = 1;
+
+		// Version Info
+		Log(s:"\cnDoom RPG ", s:Version, s:" (", s:TimeStamp, s:") ", s:"loaded!");
+	}
+	
+	// Setup the max Accessory count and XP/Rank tables
+	SetAccessorySlots();
+	SetupTables();
+	
+	// Execute Game Loops
+	ACS_NamedExecuteAlways("Loop", 0);
+	ACS_NamedExecuteAlways("Speed", 0);
+	ACS_NamedExecuteAlways("ShieldRegen", 0);
+	
+	/* Auras are not transferred between levels
+	Aura = 0;
+	AuraTimer = 0;
+	AuraTimerHUD = 0; */
+	
+	// Transport from/to Outpost Screen Fading
+	if (Transported)
+	{
+		FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
+		Transported = false;
+	}
+	
+	// Reset the menus if they were open in the last level
+	InMenu = false;
+	InShop = false;
+}
+
+// Loop Script
+script "Loop" (void)
+{
+	// Always Quick Heal if CVAR is set
+	if (GetCVAR("drpg_auto_heal"))
+		ACS_NamedExecuteAlways("QuickHeal", 0);
+
+	// Update Functions
+	CheckStats();
+	CheckLuck();
+	CheckStatCap();
+	CheckHealth();
+	CheckArmor();
+	CheckCombo();
+	CheckLevel();
+	CheckRank();
+	CheckLevelInfo();
+	CheckAccessories();
+	CheckSkills();
+	CheckSkillDescriptions();
+	CheckBurnout();
+	
+	// Main Menu
+	if (InMenu)
+		MenuLoop();
+
+	// Shop Menu
+	if (InShop)
+		ShopLoop();
+
+	// Shield Handling
+	if (CheckInventory("Shield"))
+	{
+		ACS_NamedExecuteAlways("Shield", 0);
+		AfterHealth = GetActorProperty(0, APROP_HEALTH);
+		AfterArmor = CheckInventory("BasicArmor");
+	}
+	CheckShields();
+
+	// Regeneration
+	if (GetActorProperty(0, APROP_HEALTH) > 0)
+		DoRegen();
+
+	// For EP Bar on HUD
+	TakeInventory("EP", 100);
+	GiveInventory("EP", FixedMul(FixedDiv(EP, EPMax), 100));
+	
+	// Enemy HP Display
+	TargetHealth = LineTarget(LT_HEALTH);
+	TargetHealthMax = LineTarget(LT_SPAWNHEALTH);
+	if (TargetHealth >= 2147418142) TargetHealth = 0;			// Dafuq?
+	if (TargetHealthMax >= 2147418142) TargetHealthMax = 0;
+		
+	// Luck Inventory Item
+//	TakeInventory("Luck", 200);
+//	GiveInventory("Luck", Luck);
+	
+	// Loop
+	Delay(1);
+	restart;
+}
+
+// Handles Speed Stat
+script "Speed" (void)
+{
+	int Time;
+	
+	if (Agility <= 100)
+		Time = Abs(Round(WeaponSpeed * 0.35 - 35.0));
+	else
+		Time = 0;
+	
+	if (GetCVAR("drpg_stat_weaponspeed"))
+		GiveInventory("Speed", 1);
+	
+	Delay(Time + 1);
+	restart;
+}
+
+// Quick Heal
+script "QuickHeal" (int Quick)
+{
+	int Health = GetActorProperty(0, APROP_HEALTH);
+	int Percent = GetCVAR("drpg_auto_heal_percent");
+	
+	if ((Health < HealthMax / Percent) || Quick)
+		 if (CheckInventory("StimPack")) 		UseInventory("StimPack");
+	else if (CheckInventory("SmallMedikit")) 	UseInventory("SmallMedikit");
+	else if (CheckInventory("Medikit")) 		UseInventory("Medikit");
+	else if (CheckInventory("LargeMedikit")) 	UseInventory("LargeMedikit");
+	else if (CheckInventory("XLMedikit")) 		UseInventory("XLMedikit");
+	else if (CheckInventory("MedPack")) 		UseInventory("MedPack");
+	else if (CheckInventory("SuperMedPack")) 	UseInventory("SuperMedPack");
+	else if (CheckInventory("SurgeryKit")) 		UseInventory("SurgeryKit");
+}
+
+// Quick Armor
+script "QuickArmor" (void)
+{
+		 if (CheckInventory("WhiteArmor")) 		UseInventory("WhiteArmor");
+	else if (CheckInventory("WhiteArmorUsed")) 	UseInventory("WhiteArmorUsed");
+	else if (CheckInventory("RedArmor")) 		UseInventory("RedArmor");
+	else if (CheckInventory("RedArmorUsed")) 	UseInventory("RedArmorUsed");
+	else if (CheckInventory("YellowArmor")) 	UseInventory("YellowArmor");
+	else if (CheckInventory("YellowArmorUsed")) UseInventory("YellowArmorUsed");
+	else if (CheckInventory("BlueArmor")) 		UseInventory("BlueArmor");
+	else if (CheckInventory("BlueArmorUsed")) 	UseInventory("BlueArmorUsed");
+	else if (CheckInventory("GreenArmor")) 		UseInventory("GreenArmor");
+	else if (CheckInventory("GreenArmorUsed")) 	UseInventory("GreenArmorUsed");
+}
+
+// Buy Ammo for selected Weapon
+script "QuickAmmo" (void)
+{
+	// Weapon, Ammo Type and Amount
+	int Weapon;
+	int AmmoType;
+	int Amount;
+	
+	// Get the current Weapon to determine the ammo type
+	if (CheckWeapon("Pistol") || CheckWeapon("ChainGun")) 		{ AmmoType = 0; Amount = 10; }
+	if (CheckWeapon("Shotgun") || CheckWeapon("SuperShotgun")) 	{ AmmoType = 2; Amount = 4;  }
+	if (CheckWeapon("RocketLauncher"))							{ AmmoType = 4; Amount = 1;  }
+	if (CheckWeapon("PlasmaRifle") || CheckWeapon("BFG9000"))	{ AmmoType = 6; Amount = 20; }
+	
+	// ... And the alternate Extras versions too -_-
+	if (CheckWeapon("Pistol1") || CheckWeapon("ChainGun1")) 	{ AmmoType = 0; Amount = 10; }
+	if (CheckWeapon("Shotgun1") || CheckWeapon("SSG")) 			{ AmmoType = 2; Amount = 4;  }
+	if (CheckWeapon("RocketLauncher1"))							{ AmmoType = 4; Amount = 1;  }
+	if (CheckWeapon("PlasmaGun") || CheckWeapon("BFG9001"))		{ AmmoType = 6; Amount = 20; }
+	
+	// AND Brutal Doom -__-
+	if (CheckWeapon("BrutalPistol") || CheckWeapon("Rifle") || CheckWeapon("Mini_Gun")) 									{ AmmoType = 0; Amount = 10; }
+	if (CheckWeapon("Shot_Gun") || CheckWeapon("SSG")) 																		{ AmmoType = 2; Amount = 4;  }
+	if (CheckWeapon("Rocket_Launcher") || CheckWeapon("Grenade_Launcher"))													{ AmmoType = 4; Amount = 1;  }
+	if (CheckWeapon("Plasma_Gun") || CheckWeapon("Rail_Gun") || CheckWeapon("BIG_FUCKING_GUN") || CheckWeapon("BFG10000"))	{ AmmoType = 6; Amount = 20; }
+	
+	// Discount and Cost
+	int Discount = FixedMul(RankLevel, 2.1);
+	int Cost = ShopCosts[1][AmmoType] - ShopCosts[1][AmmoType] * Discount / 100;
+
+	// Give ammo and take Credits
+	if (CheckInventory("Credits") >= Cost && CheckInventory(Shop[1][AmmoType][0]) < GetAmmoCapacity(Shop[1][AmmoType][0]))
+	{
+		ActivatorSound("credits/pickup", 127);
+		TakeInventory("Credits", Cost);
+		GiveInventory(Shop[1][AmmoType][0], Amount);
+	}
+	else
+		ActivatorSound("menu/error", 127);
+}
+
+// Death Script
+// This will give you a huge penalty if you resurrect yourself
+script "Death" death
+{
+	// Taunt the Player
+	if (GetCVAR("drpg_ext_brutal"))
+		ActivatorSound("Taunt", 127);
+	
+	while (1)
+	{
+		// Wipe out your entire inventory
+		ClearInventory();
+		
+		// Kill all the player's summons
+		for (int i = 2100; i <= SummonID; i++)
+			Thing_Damage(i, 1000000);
+		
+		// Reset a metric fuckton of variables to make death look cleaner
+		TargetHealth = 0;
+		TargetHealthMax = 0;
+		InMenu = false;
+		InShop = false;
+		Menu = 0;
+		MenuIndex = 0;
+		ShopIndex = 0;
+		Strength = 0;
+		Defense = 0;
+		Vitality = 0;
+		Energy = 0;
+		Regeneration = 0;
+		Agility = 0;
+		Capacity = 0;
+		Luck = 0;
+		Level = 0;
+		XP = 0;
+		RankLevel = 0;
+		Rank = 0;
+		EP = 0;
+		Combo = 0;
+		ComboTimer = -100;
+		TotalGained = 0;
+		XPGained = 0;
+		RankGained = 0;
+		Aura = 0;
+		AuraTimer = 0;
+		AuraTimerHUD = 0;
+		PayTimer = 0;
+		Shield = 0;
+		ShieldBody = 0;
+		ShieldBattery = 0;
+		ShieldCapacitor = 0;
+		ShieldAccessory = 0;
+		
+		Delay(1);
+	}
+}
+
+function void DefaultLoadout(void)
+{
+	// Fists/Melee
+	if (!GetCVAR("drpg_ext_brutal"))
+		GiveInventory("Melee_Attacks", 1);
+	else
+	{
+		GiveInventory("Fist", 1);
+		GiveInventory("Knuckle", 1);
+		GiveInventory("Clip", 25);
+		GiveInventory("Pistol", 1);
+		GiveInventory("Pistol1", 1);
+		SetWeapon("Pistol");
+		SetWeapon("Pistol1");
+	}
+	
+	// Give Standard Shield Components
+	GiveInventory("ShieldBodyStandard", 1);
+	GiveInventory("ShieldBatteryStandard", 1);
+	GiveInventory("ShieldCapacitorStandard", 1);
+	
+	// Brutal Doom Equipment
+	if (!GetCVAR("drpg_ext_brutal"))
+	{
+		GiveInventory("BrutalPistol", 1);
+		TakeInventory("Clip", 1000000);
+		GiveInventory("Clip", 100);
+	}	
+}

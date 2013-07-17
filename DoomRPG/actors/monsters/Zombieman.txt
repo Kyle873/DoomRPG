@@ -1,0 +1,321 @@
+actor ZombieMan
+{
+	Game Doom
+	SpawnID 4
+	Health 20
+	Radius 20
+	Height 56
+	Speed 8
+	PainChance 200
+	
+	Monster
+	+FLOORCLIP
+	
+	SeeSound "grunt/sight"
+	AttackSound "grunt/attack"
+	PainSound "grunt/pain"
+	DeathSound "grunt/death"
+	ActiveSound "grunt/active"
+	Obituary "$OB_ZOMBIE"
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+
+	States
+	{
+	Spawn:
+		POSS AB 10 A_Look
+		Loop
+	See:
+		POSS AABBCCDD 4 A_Chase
+		Loop
+	Missile:
+		POSS E 10 A_FaceTarget
+		POSS F 8 A_PosAttack
+		POSS E 8
+		Goto See
+	Pain:
+		POSS G 3
+		POSS G 3 A_Pain
+		Goto See
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(20, 40))
+		POSS H 5
+		POSS I 5 A_Scream
+		POSS J 5 A_NoBlocking
+		POSS K 5
+		POSS L -1
+		Stop
+	XDeath:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(20, 40) * 2)
+		POSS M 5
+		POSS N 5 A_XScream
+		POSS O 5 A_NoBlocking
+		POSS PQRST 5
+		POSS U -1
+		Stop
+	Raise:
+		POSS K 5
+		POSS JIH 5
+		Goto See
+	}
+}
+
+actor ZombieManBoss : ZombieMan
+{
+	States
+	{
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(40, 80) * 2)
+		POSS H 5
+		POSS I 5 A_Scream
+		POSS J 5 A_NoBlocking
+		POSS K 5
+		POSS L 1
+		Goto FadeOut
+	XDeath:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(40, 80) * 4)
+		POSS M 5
+		POSS N 5 A_XScream
+		POSS O 5 A_NoBlocking
+		POSS PQRST 5
+		POSS U 1
+		Goto XFadeOut
+	FadeOut:
+		POSS L 1 A_FadeOut(0.001, true)
+		Loop
+	XFadeOut:
+		POSS U 1 A_FadeOut(0.001, true)
+		Loop
+	}
+}
+
+actor ZombieManRed : ZombieManBoss 10100
+{
+	health 40
+
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 0]"
+	BloodColor Red
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+	DropItem "RuneDropper"
+
+	States
+	{
+	Missile:
+		POSS E 10 A_FaceTarget
+		POSS F 4 A_PosAttack
+		POSS E 1 A_FaceTarget
+		POSS F 4 A_PosAttack
+		POSS E 1 A_FaceTarget
+		POSS F 4 A_PosAttack
+		POSS E 8
+		Goto See
+	}
+}
+
+actor ZombieManGreen : ZombieManBoss 10101
+{
+	health 40
+	PainChance 0
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 0]"
+	BloodColor Green
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+	DropItem "ArmorRandomizer"
+}
+
+actor ZombieManWhite : ZombieManBoss 10102
+{
+	health 40
+
+	Translation "0 : 255 = %[0, 0, 0] : [1, 1, 1]"
+	BloodColor White
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+	DropItem "SmallTokenDropper"
+
+	States
+	{
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(40, 80) * 4)
+		POSS H 5
+		POSS I 5 A_Scream
+		POSS J 5 A_NoBlocking
+		POSS K 5
+		POSS L 1
+		Goto FadeOut
+	XDeath:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(40, 80) * 8)
+		POSS M 5
+		POSS N 5 A_XScream
+		POSS O 5 A_NoBlocking
+		POSS PQRST 5
+		POSS U 1
+		Goto XFadeOut
+	}
+}
+
+actor ZombieManOrange : ZombieManBoss 10103
+{
+	health 40
+
+	+ALWAYSFAST
+	+QUICKTORETALIATE 
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0.5, 0]"
+	BloodColor Orange
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+	DropItem "TimeSphere"
+}
+
+actor ZombieManPink : ZombieManBoss 10104
+{
+	health 80
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 0.5]"
+	BloodColor Pink
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+	DropItem "MedikitRandomizer"
+}
+
+actor ZombieManBlue : ZombieManBoss 10105
+{
+	health 40
+
+	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 1]"
+	BloodColor Cyan
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+	DropItem "EPCapsule"
+	DropItem "BigEPCapsule"
+}
+
+actor ZombieManPurple : ZombieManBoss 10106
+{
+	health 40
+
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 1]"
+	BloodColor Purple
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+	DropItem "ShieldBooster"
+}
+
+actor ZombieManDarkBlue : ZombieManBoss 10107
+{
+	health 40
+
+	Translation "0 : 255 = %[0, 0, 0] : [0, 0, 1]"
+	BloodColor Blue
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+	DropItem "ClipBox"
+}
+
+actor ZombieManYellow : ZombieManBoss 10108
+{
+	health 40
+
+	Translation "0 : 255 = %[0, 0, 0] : [1, 1, 0]"
+	BloodColor Yellow
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "MoneyDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+}
+
+actor ZombieManBlack : ZombieManBoss 10109
+{
+	health 160
+	PainChance 0
+	
+	+ALWAYSFAST
+	+QUICKTORETALIATE 
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 0, 0]"
+	BloodColor Black
+	RenderStyle Fuzzy
+	Alpha 0.5
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "MoneyDropper"
+	DropItem "Pistol" 32
+	DropItem "Clip"
+	DropItem "RuneDropper"
+	DropItem "ArmorRandomizer"
+	DropItem "SmallTokenDropper"
+	DropItem "TimeSphere"
+	DropItem "MedikitRandomizer"
+	DropItem "EPCapsule"
+	DropItem "BigEPCapsule"
+	DropItem "ShieldBooster"
+	DropItem "ClipBox"
+
+	States
+	{
+	Missile:
+		POSS E 10 A_FaceTarget
+		POSS F 4 A_PosAttack
+		POSS E 1 A_FaceTarget
+		POSS F 4 A_PosAttack
+		POSS E 1 A_FaceTarget
+		POSS F 4 A_PosAttack
+		POSS E 8
+		Goto See
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(40, 80) * 8)
+		POSS H 5 A_Explode(40, 128)
+		POSS I 5 A_Scream
+		POSS J 5 A_NoBlocking
+		POSS K 5
+		POSS L 1
+		Goto FadeOut
+	XDeath:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(40, 80) * 16)
+		POSS M 5 A_Explode(40, 128)
+		POSS N 5 A_XScream
+		POSS O 5 A_NoBlocking
+		POSS PQRST 5
+		POSS U 1
+		Goto XFadeOut
+	}
+}

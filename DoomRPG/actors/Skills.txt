@@ -1,0 +1,232 @@
+// Powerups
+actor SkillInvulnerability1 : PowerupGiver
+{
+	-INVBAR
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ADDITIVETIME
+	
+	Powerup.Type Invulnerable
+	Powerup.Color GoldMap
+	Powerup.Duration -6
+}
+actor SkillInvulnerability2 : SkillInvulnerability1 { Powerup.Duration -12 }
+actor SkillInvulnerability3 : SkillInvulnerability1 { Powerup.Duration -18 }
+actor SkillInvulnerability4 : SkillInvulnerability1 { Powerup.Duration -24 }
+actor SkillInvulnerability5 : SkillInvulnerability1 { Powerup.Duration -30 }
+actor SkillInvulnerability6 : SkillInvulnerability1 { Powerup.Duration -36 Powerup.Mode Reflective }
+actor SkillInvulnerability7 : SkillInvulnerability1 { Powerup.Duration -42 Powerup.Mode Reflective }
+actor SkillInvulnerability8 : SkillInvulnerability1 { Powerup.Duration -48 Powerup.Mode Reflective }
+actor SkillInvulnerability9 : SkillInvulnerability1 { Powerup.Duration -54 Powerup.Mode Reflective }
+actor SkillInvulnerability10 : SkillInvulnerability1 { Powerup.Duration -60 Powerup.Mode Reflective }
+
+actor SkillInvisibility1 : PowerupGiver
+{
+	-INVBAR
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ADDITIVETIME
+	
+	Powerup.Type Shadow
+	Powerup.Duration -6
+}
+actor SkillInvisibility2 : SkillInvisibility1 { Powerup.Duration -12 }
+actor SkillInvisibility3 : SkillInvisibility1 { Powerup.Duration -18 }
+actor SkillInvisibility4 : SkillInvisibility1 { Powerup.Duration -24 }
+actor SkillInvisibility5 : SkillInvisibility1 { Powerup.Duration -30 }
+actor SkillInvisibility6 : SkillInvisibility1 { Powerup.Duration -36 }
+actor SkillInvisibility7 : SkillInvisibility1 { Powerup.Duration -42 }
+actor SkillInvisibility8 : SkillInvisibility1 { Powerup.Duration -48 }
+actor SkillInvisibility9 : SkillInvisibility1 { Powerup.Duration -54 }
+actor SkillInvisibility10 : SkillInvisibility1 { Powerup.Duration -60 }
+
+actor TimeFreezerQuick : PowerupGiver
+{
+	-INVBAR
+	+INVENTORY.AUTOACTIVATE
+
+	Powerup.Type "TimeFreezer"
+	Powerup.Color GrayMap
+	Powerup.Duration 3
+}
+
+// Used for SBARINFO Aura HUD checking, horrible hacks
+actor Aura : Inventory
+{
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+}
+
+// Aura Lights
+actor AuraLight
+{
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		TNT1 A 2
+		Stop
+	}
+}
+actor RedAura : AuraLight {}
+actor GreenAura : AuraLight {}
+actor WhiteAura : AuraLight {}
+actor OrangeAura : AuraLight {}
+actor PinkAura : AuraLight {}
+actor CyanAura : AuraLight {}
+actor PurpleAura : AuraLight {}
+actor BlueAura : AuraLight {}
+actor YellowAura : AuraLight {}
+
+// Aura Skills
+actor AuraPower : PowerupGiver
+{
+	-INVBAR
+	
+	+INVENTORY.AUTOACTIVATE
+
+	Powerup.Duration 2
+}
+actor RedAura1 : AuraPower { Powerup.Type Damage DamageFactor 2.0 }
+actor RedAura2 : AuraPower { Powerup.Type Damage DamageFactor 4.0 }
+actor RedAura3 : AuraPower { Powerup.Type InfiniteAmmo }
+actor GreenAura1 : AuraPower { Powerup.Type IronFeet }
+actor GreenAura2 : AuraPower { Powerup.Type Invulnerable Powerup.Duration 5 }
+actor GreenAura3 : AuraPower { Powerup.Type Invulnerable Powerup.Mode Reflective Powerup.Duration 5 }
+actor PinkAura1 : AuraPower { Powerup.Type Drain Powerup.Duration 5 }
+actor OrangeAura1 : AuraPower { Powerup.Type Speed Powerup.Duration 5 }
+actor OrangeAura2 : AuraPower { Powerup.Type HighJump Powerup.Duration 5 }
+actor OrangeAura3 : AuraPower { Powerup.Type DoubleFiringSpeed }
+
+// Bullet-Time Skill
+actor SkillBulletTime : PowerupGiver
+{
+	-INVBAR
+	
+	+INVENTORY.AUTOACTIVATE
+	-INVENTORY.ADDITIVETIME
+	
+ 	Powerup.Type TimeFreezer
+	Powerup.Duration 60
+}
+
+// Force Field
+actor ForceField
+{
+	Radius 32
+	Height 64
+	
+	+SOLID
+	+BRIGHT
+	
+	RenderStyle Add
+	Alpha 0.5
+	
+	States
+	{
+	Spawn:
+		FFLD A 0
+	FadeOut:
+		FFLD A 1 A_FadeOut(0.001, true)
+		Loop
+	}
+}
+
+actor ForceField2 : ForceField
+{
+	Radius 64
+	Height 128
+	Scale 2.0
+}
+
+// Portal Skill
+actor Portal1
+{
+	Radius 16
+	Height 32
+	
+	+NOBLOCKMAP
+	+DONTSPLASH
+	-NOSECTOR
+	+NOGRAVITY
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 A_PlaySound("skills/portalhum", 0, 1.0, true, 2)
+		TNT1 A 0 ACS_NamedExecuteAlways("Portal", 0, 0)
+	Idle:
+		TNT1 A 2 A_SpawnItemEx("Portal1Particles", (sin(-pitch) * random(-32, 32)), frandom(-32, 32), frandom(-32, 32), 0, 0, frandom(0, 0.2), 0, 32)
+		Loop
+	}
+}
+
+ACTOR Portal2 : Portal1
+{
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 A_PlaySound("skills/portalhum", 0, 1.0, true, 2)
+		TNT1 A 0 ACS_NamedExecuteAlways("Portal", 0, 1)
+	Idle:
+		TNT1 A 2 A_SpawnItemEx("Portal2Particles", (sin(-pitch) * random(-32, 32)), frandom(-32, 32), frandom(-32, 32), 0, 0, frandom(0, 0.2), 0, 32)
+		Loop
+	}
+}
+
+Actor Portal1Particles
+{
+	+NOINTERACTION
+	
+	RenderStyle Add
+	Alpha 0.75
+	Scale 0.75
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0.25, 0.25, 1]"
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 A_Jump(256,"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10")
+	S1:
+		X006 C 0		
+		Goto Playoff
+	S2:
+		X006 F 0		
+		Goto Playoff
+	S3:
+		X006 I 0		
+		Goto Playoff
+	S4:
+		X006 L 0		
+		Goto Playoff
+	S5:
+		X007 D 0		
+		Goto Playoff
+	S6:
+		X007 G 0		
+		Goto Playoff
+	S7:
+		X033 B 0		
+		Goto Playoff
+	S8:
+		X033 C 0		
+		Goto Playoff
+	S9:
+		X033 E 0		
+		Goto Playoff
+	S10:
+		X033 H 0		
+		Goto Playoff
+	Playoff:
+		"####" "#" 0 //A_Stop//A_ScaleVelocity(1.01)
+		"####" "#" 2 A_FadeOut(0.02)
+		Loop
+	}
+}
+
+Actor Portal2Particles : Portal1Particles
+{
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0.65, 0.25]"
+}

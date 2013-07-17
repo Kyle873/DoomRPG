@@ -1,0 +1,611 @@
+#library "Stats"
+
+#include "zcommon.acs"
+
+#import "RPG.acs"
+#import "Skills.acs"
+#import "Accessories.acs"
+#import "Shop.acs"
+#import "Menu.acs"
+#import "Shield.acs"
+#import "Utils.acs"
+
+// CVARS/Options
+global int 4 : RandomizedStartTokens;	// Whether the tokens given at the beginning of the game have been used
+
+// Level & XP
+global int 8 : Level;
+global int 9 : XP;
+global int 10 : XPNext;
+
+// Rank
+global int 11 : RankString;
+global int 12 : RankLevel;
+global int 13 : Rank;
+global int 14 : RankNext;
+global int 15 : PayTimer;
+
+// HUD Stuff
+global int 18 : Credits;
+global int 19 : Continues;
+
+// Combo System
+global int 20 : Combo;
+global int 21 : ComboTimer;
+global int 22 : TotalGained;
+global int 23 : XPGained;
+global int 24 : RankGained;
+int XPMult;
+int StyleMult;
+
+// Primary Stats
+global int 31 : Strength;		// Increases Damage
+global int 32 : Defense;		// Reduces Damage taken
+global int 33 : Vitality;		// Increases max Health and HP regen rate
+global int 34 : Energy;			// Increases max EP and EP regen rate
+global int 35 : Regeneration;	// Increases both HP/EP regen rate
+global int 36 : Agility;		// Increases movement speed and jump height (and optionally weapon speed)
+global int 37 : Capacity;		// Increases max ammo capacities
+global int 38 : Luck;			// Increases Survivability bonus and drop chances
+global int 39 : HealthMax;		// Max player Health
+global int 40 : ArmorMax;		// Max Armor that the player's current armor can go up to
+
+// Secondary Stats
+int Damage;						// The player's DamageFactor against monsters
+int DamageFactor;				// General damage the player will defend against
+int Speed;						// Movement Speed
+int JumpHeight;					// Jump Height
+int WeaponSpeed;				// Weapon Speed Increase bsed on Agility
+int SurvivalBonus;				// Chance that you will survive a fatal hit
+
+// Misc stat/token stuff
+int StatTokens;					// Current Stat Tokens
+int SkillTokens;				// Current Skill Tokens
+int StatCap;					// Current Stat Cap
+int SoftStatCap = 100;			// Soft Stat Cap, this cannot be passed with tokens
+int HardStatCap = 1000;			// Hard Stat Cap, this cap cannot be passed period
+
+// 100% Bonuses
+int Kills;
+int KillBonus;
+int Items;
+int ItemsBonus;
+int SecretsFound;
+int SecretsBonus;
+int AllBonus;
+
+// HP/EP Regen Timers
+int HPRate;
+int EPRate;
+int LowHealthTimer;
+
+// XP & Rank Tables
+int XPTable[1001];
+int RankTable[25];
+
+// Luck Chance Percentages
+int MoneyChance[7];
+int HealthChance[4];
+int ArmorChance[5];
+int PowerupChance;
+int RuneChance;
+int TokenChance;
+int AccessoryChance;
+int ShieldChance;
+int EPChance;
+
+// Rank strings
+str Ranks[25] = {
+	"None",
+	"Pvt", "Pvt +",
+	"PFC", "PFC +",
+	"LCpl", "LCpl +",
+	"Cpl", "Cpl +",
+	"Sgt", "Sgt +",
+	"SSgt", "SSgt +",
+	"GySgt", "GySgt +",
+	"MSgt", "MSgt +",
+	"1stSgt", "1stSgt +",
+	"MGySgt", "MGySgt +",
+	"SgtMaj", "SgtMaj +",
+	"SgtMajMarCor", "MSgtMarCor"
+};
+
+str LongRanks[25] = {
+	"None",
+	"Private", "Private +",
+	"Private First Class", "Private First Class +",
+	"Lance Corporal", "Lance Corporal +",
+	"Corporal", "Corporal +",
+	"Seargent", "Seargent +",
+	"Staff Seargent", "Staff Seargent +",
+	"Gunnery Seargent", "Gunnery Seargent +",
+	"Master Seargent", "Master Seargent +",
+	"First Seargent", "First Seargent +",
+	"Master Gunnery Seargent", "Master Gunnery Seargent +",
+	"Seargent Major", "Seargent Major +",
+	"Seargent Major of the Marine Corps", "Master Seargent Major of the Marine Corps"
+};
+
+function void CheckCombo(void)
+{
+	if (GetCVAR("drpg_combo") == 1)
+	{
+		// Stupid hack so that the ComboTimer doesn't decrease when PowerTimeFreezer is active
+		if ((ComboTimer > 0 || ComboTimer < 100) && CheckInventory("MenuFreezer") > 0)
+			if (ComboTimer != 0) ComboTimer++;
+		
+		// Subtract the combo timer each tic
+		if ((Combo > 0 || ComboTimer < 100) && !CheckInventory("PowerTimeFreezer"))
+			ComboTimer--;
+		
+		// Set your Inventory Combo Item to the current ComboTimer aunt
+		if (ComboTimer < 100)
+		{
+			TakeInventory("Combo", 100);
+			TakeInventory("Combo2", 100);
+			GiveInventory("Combo", ComboTimer);
+		}
+		if (ComboTimer < 0)
+		{
+			TakeInventory("Combo", 100);
+			TakeInventory("Combo2", 100);
+			GiveInventory("Combo2", ComboTimer + 100);
+		}
+		
+		// Add up and randomize the XP and Rank gain
+		if (ComboTimer == 0)
+		{
+			XPGained += TotalGained + Random(0, Combo + Combo * Level) * XPMult;
+			RankGained += TotalGained + Random(0, Combo + Combo * RankLevel) * StyleMult;
+			
+			XP += XPGained;
+			Rank += RankGained;
+			
+			TotalGained = 0;
+			Combo = 0;
+		}
+		
+		if (ComboTimer < -100)
+		{
+			TotalGained = 0;
+			XPGained = 0;
+			RankGained = 0;
+			ComboTimer = 100;
+		}
+	}
+	else ComboTimer = -100;
+}
+
+// Keeps current level and XP updated
+function void CheckLevel(void)
+{
+	if (Level < 1000)
+		XPNext = XPTable[Level];
+
+	if (Level > 999)
+	{
+		XP = XPTable[Level - 1];
+		XPNext = XPTable[Level - 1];
+	}
+	
+	// Now check for a level up
+	if (XP >= XPTable[Level] && Level < 1000)
+	{
+		// Level Up
+		ActivatorSound("misc/levelup", 127);
+		Level++;
+		GiveInventory("StatToken", 10 - GameSkill());
+		GiveInventory("SkillToken", 1);
+		if (EP <= 0) EP = 0; else EP = GetEPMax();
+		HealThing(1000000);
+		FadeRange(255, 255, 255, 0.75, 255, 255, 255, 0, 1.0);
+		Log(s:"You have reached level ", d:Level);
+	}
+}
+
+// Keeps current Rank updated
+function void CheckRank(void)
+{
+	RankString = Ranks[RankLevel];
+	
+	if (RankLevel < 25)
+		RankNext = RankTable[RankLevel];
+	
+	if (RankLevel >= 24)
+	{
+		Rank = RankTable[RankLevel];
+		RankNext = RankTable[RankLevel];
+	}
+		
+	if (Rank >= RankTable[RankLevel] && RankLevel < 24)
+	{
+		ActivatorSound("misc/rankup", 127);
+		RankLevel++;
+		FadeRange(255, 255, 0, 0.75, 255, 255, 0, 0, 1.0);
+		Log(s:"\ckYou have reached rank level ", d:RankLevel, s:": ", s:LongRanks[RankLevel]);
+	}
+	
+	// Payment
+	PayTimer++;
+	if (PayTimer >= 35 * 60 * 5)
+	{
+		PayTimer = 0;
+		
+		if (RankLevel > 0)
+		{
+			GiveInventory("Credits", 100 * RankLevel + 100);
+			
+			FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0, 2.0);
+			ActivatorSound("credits/payout", 127);
+			Log(s:"\cfYou have been paid ", d:100 * RankLevel + 100, s:" Credits by the UAC");
+		}
+	}
+}
+
+// Gives rewards for finding a secret and 100% Kills/Items/Secrets
+function void CheckLevelInfo(void)
+{
+	int CurrentKills = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+	int CurrentItems = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+	int CurrentSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+	
+	int XPBonus = Random(XPGained * 100, RankLevel * 100 + Random(0, 100));
+	int RankBonus = RankLevel * 10000;
+	
+	// Set HUD Size and Font
+	SetHUDSize(0, 0, false);
+	SetFont("SMALLFONT");
+	
+	// Check to see if any total stats are 0, if they are, silently flag them as recieved already
+	if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
+		KillBonus = true;
+	if (GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0)
+		ItemsBonus = true;
+	if (GetLevelInfo(LEVELINFO_TOTAL_SECRETS) == 0)
+		SecretsBonus = true;
+	
+	// 100% Kills
+	if (CurrentKills >= GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) && !KillBonus)
+	{
+		FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
+		XPBonus = Random(Level * 10, Level * 100);
+		XPGained += XPBonus;
+		ComboTimer = 100;
+		if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+		HudMessage(s:"100% Monsters Killed!\n", d:XPBonus, s:" XP Bonus";
+				   HUDMSG_TYPEON, 0, CR_BRICK, 1.5, 0.4, 3.0, 0.1, 3.0);
+		KillBonus = true;
+	}
+	
+	// 100% Items
+	if (CurrentItems >= GetLevelInfo(LEVELINFO_TOTAL_ITEMS) && !ItemsBonus)
+	{
+		FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
+		EP = GetEPMax();
+		ComboTimer = 100;
+		if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+		HealThing(1000000);
+		HudMessage(s:"100% Items Found!\nFull HP/EP Restore";
+				   HUDMSG_TYPEON, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 0.1, 3.0);
+		ItemsBonus = true;
+	}
+
+	// Secrets
+	if (CurrentSecretsFound == SecretsFound + 1 && RankLevel < 25)
+	{
+		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
+		RankGained += Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
+		ComboTimer = 100;
+		if (GetCVAR("drpg_combo")) Combo++;
+		
+		// 100% Secrets
+		if (CurrentSecretsFound >= GetLevelInfo(LEVELINFO_TOTAL_SECRETS) && !SecretsBonus)
+		{
+			FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
+			RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
+			Rank += RankBonus;
+			ComboTimer += 100;
+			if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+			HudMessage(s:"100% Secrets Found!\n", d:RankBonus, s:" Rank Bonus";
+					   HUDMSG_TYPEON, 0, CR_YELLOW, 1.5, 0.8, 3.0, 0.1, 3.0);
+			SecretsBonus = true;
+		}
+	}
+	
+	// All Kills/Items/Secrets 100%
+	if ((KillBonus && ItemsBonus && SecretsBonus) && !AllBonus)
+	{
+		FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
+		XPBonus = Random(Level * 100, Level * 1000);
+		RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
+		XPGained += XPBonus;
+		RankGained += RankBonus;
+		EP = GetEPMax();
+		ComboTimer = 100;
+		if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+		if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+		if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+		HealThing(1000000);
+		HudMessage(s:"100% Monsters killed!\n100% Items Found!\n100% Secrets Found!\n\n",
+				   d:XPBonus, s:" XP Bonus\n", d:RankBonus, s:" Rank Bonus\nFull HP/EP Restore";
+				   HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
+		AllBonus = true;
+	}
+	
+	
+	CurrentKills = Kills;
+	CurrentItems = Items;
+	SecretsFound = CurrentSecretsFound;
+}
+
+function void CheckHealth(void)
+{
+	if (LowHealthTimer >= 100 && CheckInventory("Health") > 0)
+	{
+		ActivatorSound("health/low", 64);
+		LowHealthTimer = 0;
+	}
+	
+	if (CheckInventory("Health") <= GetActorProperty(0, APROP_SPAWNHEALTH) / 10 && CheckInventory("Health") > 0)
+	{
+		FadeRange(LowHealthTimer + 155, 0, 0, 0.25, LowHealthTimer + 155, 0, 0, 0.0, 1.0);
+		LowHealthTimer++;
+		
+		// Halve Movement Speed and Jump Height
+		Speed /= 2;
+		JumpHeight /= 2;
+		SetActorProperty(0, APROP_SPEED, Speed);
+		SetActorProperty(0, APROP_JUMPZ, JumpHeight);
+	}
+}
+
+function void CheckArmor(void)
+{
+	if (!GetArmorType("none", 0)) 				ArmorMax = 0;
+	if (GetArmorType("ArmorBonus", 0) > 0) 		ArmorMax = 100;
+	if (GetArmorType("UsedGreenArmor", 0) > 0) 	ArmorMax = 50;
+	if (GetArmorType("GreenArmor", 0) > 0) 		ArmorMax = 100;
+	if (GetArmorType("UsedBlueArmor", 0) > 0) 	ArmorMax = 125;
+	if (GetArmorType("BlueArmor", 0) > 0) 		ArmorMax = 250;
+	if (GetArmorType("UsedYellowArmor", 0) > 0) ArmorMax = 250;
+	if (GetArmorType("YellowArmor", 0) > 0) 	ArmorMax = 500;
+	if (GetArmorType("UsedRedArmor", 0) > 0) 	ArmorMax = 375;
+	if (GetArmorType("RedArmor", 0) > 0) 		ArmorMax = 750;
+	if (GetArmorType("UsedWhiteArmor", 0) > 0) 	ArmorMax = 500;
+	if (GetArmorType("WhiteArmor", 0) > 0) 		ArmorMax = 1000;
+}
+
+function void CheckStats(void)
+{
+	// VERY IMPORTANT CODE RIGHT HERE
+	// If you're reading this and you'd like to modify stat curves, this is where you'd do it
+	Damage = Strength * 0.01;
+	DamageFactor = 1.0 - FixedMul(0.25, FixedDiv(Defense, 100));
+	HealthMax = Vitality * 10;
+	EPMax = Energy * 10;
+	Speed = 1.0 + FixedMul(0.25, FixedDiv(Agility, 100));
+	JumpHeight = 8.0 + FixedMul(Agility, 0.04);
+	WeaponSpeed = Agility;
+	SetAmmoCapacity("Clip", Capacity * 20);
+	SetAmmoCapacity("Shell", Capacity * 10);
+	SetAmmoCapacity("RocketAmmo", Capacity * 5);
+	SetAmmoCapacity("Cell", Capacity * 30);
+	SurvivalBonus = Luck;
+
+	// Prevent Underflow of DamageFactor
+	if (DamageFactor < 0.0)
+		DamageFactor = 0.0;
+	
+	// Prevent stats from going overboard
+	CapStats(HardStatCap);
+	
+	// Prevent Shield Capacity from under/overflowing
+	if (Shield <= 0)
+		Shield = 0;
+	if (Shield > ShieldCapacity)
+		Shield = ShieldCapacity;
+	
+	// Cap Weapon Speed
+	if (WeaponSpeed > 100)
+		WeaponSpeed = 100;
+	
+	// Keep misc counts handy for the SBARINFO HUD and such
+	Credits = CheckInventory("Credits");
+	Continues = CheckInventory("Continue");
+	StatTokens = CheckInventory("StatToken");
+	SkillTokens = CheckInventory("SkillToken");
+	
+	// Give the Strength boosting item
+	if (Accessories[0] == 0 && Accessories[8] == 0)
+		if (Round(Damage * 100) > 0 && Round(Damage * 100) <= 8000)
+			GiveInventory(StrParam(s:"Strength", d:Round(Damage * 100)), 1);
+		
+	// Speed capping CVAR
+	if (Speed >= FixedDiv(GetCVAR("drpg_maxspeed"), 100))
+		Speed = FixedDiv(GetCVAR("drpg_maxspeed"), 100);
+	
+	// Now apply the Stats
+	SetActorProperty(0, APROP_SPAWNHEALTH, HealthMax);
+	SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor);
+	SetActorProperty(0, APROP_SPEED, Speed);
+	SetActorProperty(0, APROP_JUMPZ, JumpHeight);
+	
+	// Survival Bonus
+	if (Random(1, 1000) <= SurvivalBonus)
+		SetPlayerProperty(0, 1, PROP_BUDDHA);
+	else
+		SetPlayerProperty(0, 0, PROP_BUDDHA);
+	
+	// Only randomize your starting tokens
+	if (GetCVAR("drpg_randomstatgrowth") == 1 && !RandomizedStartTokens)
+	{
+		if (StatTokens > 0)
+			IncreaseStat(Random(0, 7));
+		if (StatTokens == 0)
+			RandomizedStartTokens = true;
+	}
+	// If we're playing with ramdom leveling, tokens should automatically be used
+	if (GetCVAR("drpg_randomstatgrowth") == 2)
+		if (StatTokens > 0)
+			IncreaseStat(Random(0, 7));
+	// Autospend your tokens on level-up
+	if (GetCVAR("drpg_autospend"))
+		if (StatTokens > 0)
+			IncreaseStat(Random(0, 7));
+}
+
+// Keep the Stat Cap (SoftStatCap + Stat Cap Tokens) updated
+function void CheckStatCap(void)
+{
+	StatCap = SoftStatCap + CheckInventory("StatCapToken");
+}
+
+// Regeneration
+function void DoRegen(void)
+{
+	// HP Regen
+	if (HPRate >= 3500 && CheckInventory("Health") >= 0)
+	{
+		HealThing(1);
+		HPRate = 0;
+	}
+
+	// EP Regen
+	if (EPRate >= 3500 && EP <= EPMax)
+	{
+		EP++;
+		if (EP > EPMax)
+			EP = EPMax;
+		
+		EPRate = 0;
+	}
+	
+	// If damaged, reset the Healing timer
+	if (HealthLoss != 0)
+		HPRate = 0;
+	
+	// Now increment the timers
+	if (!CheckInventory("MenuFreezer"))
+	{
+		HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
+		EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
+	}
+}
+
+// Setup XP & Rank Tables
+function void SetupTables(void)
+{
+	// XP Table
+	for (int i = 0; i < 1000; i++)
+		XPTable[i] = 1000 + (1000 * i * i);
+	
+	// Rank Table
+	for (int j = 0; j < 25; j++)
+		RankTable[j] = 100000 + (100000 * j * j);
+}
+
+// Keep stats capped at certain values
+function void CapStats(int Cap)
+{
+	if (Strength < 0)			Strength = 0;
+	if (Strength > Cap)			Strength = Cap;
+	if (Defense < 0)			Defense = 0;
+	if (Defense > Cap)			Defense = Cap;
+	if (Vitality < 0)			Vitality = 0;
+	if (Vitality > Cap)			Vitality = Cap;
+	if (Energy < 0)				Energy = 0;
+	if (Energy > Cap)			Energy = Cap;
+	if (Regeneration < 0)		Regeneration = 0;
+	if (Regeneration > Cap)		Regeneration = Cap;
+	if (Agility < 0)			Agility = 0;
+	if (Agility > Cap)			Agility = Cap;
+	if (Capacity < 0)			Capacity = 0;
+	if (Capacity > Cap)			Capacity = Cap;
+	if (Luck < 0)				Luck = 0;
+	if (Luck > Cap)				Luck = Cap;
+}
+
+// Recalculate stats after something (accessory, aura) has modified them
+function void RecalculateStats(void)
+{
+	int HPRatio = (GetActorProperty(0, APROP_HEALTH) * 100) / GetActorProperty(0, APROP_SPAWNHEALTH);
+	int CurrentHP = (HPRatio * GetActorProperty(0, APROP_SPAWNHEALTH)) / 100;
+	int EPRatio = (EP * 100) / EPMax;
+	int CurrentEP = (EPRatio * EPMax) / 100;
+	
+	// SetActorProperty(0, APROP_HEALTH, CurrentHP);
+	// EP = CurrentEP;
+}
+
+// Luck Chances
+function void CheckLuck(void)
+{
+	// Credits
+	MoneyChance[0] = FixedMul(Luck, 0.5);
+	MoneyChance[1] = FixedMul(Luck, 0.25);
+	MoneyChance[2] = FixedMul(Luck, 0.2);
+	MoneyChance[3] = FixedMul(Luck, 0.15);
+	MoneyChance[4] = FixedMul(Luck, 0.1);
+	MoneyChance[5] = FixedMul(Luck, 0.05);
+	MoneyChance[6] = FixedMul(Luck, 0.01);
+	
+	// Health
+	HealthChance[0] = FixedMul(Luck, 0.1);
+	HealthChance[1] = FixedMul(Luck, 0.025);
+	HealthChance[2] = FixedMul(Luck, 0.01);
+	
+	// Armor
+	ArmorChance[0] = FixedMul(Luck, 0.1);
+	ArmorChance[1] = FixedMul(Luck, 0.075);
+	ArmorChance[2] = FixedMul(Luck, 0.05);
+	ArmorChance[3] = FixedMul(Luck, 0.025);
+	ArmorChance[4] = FixedMul(Luck, 0.01);
+	
+	// Powerups
+	PowerupChance = FixedMul(Luck, 0.05);
+	
+	// Runes
+	RuneChance = FixedMul(Luck, 0.025);
+
+	// Tokens
+	TokenChance = FixedMul(Luck, 0.01);
+	
+	// Accessories
+	AccessoryChance = FixedMul(Luck, 0.01);
+	
+	// Shield Parts
+	ShieldChance = FixedMul(Luck, 0.01);
+
+	// EP Capsules
+	EPChance = FixedMul(Luck, 0.1);
+}
+
+function void CheckBurnout(void)
+{
+	// Energy Burnout Effect
+	if (EP < 0)
+	{
+		// Dynamic Intensity
+		int Intensity = Abs(FixedDiv(EP, EPMax));
+		if (Intensity > 0.75) Intensity = 0.75;
+		
+		// Screen Effect
+		FadeRange(0, 128, 255, Intensity, 0, 128, 255, 0, 0.25);
+		
+		// Penalties
+		Damage /= 2;
+		DamageFactor /= 2;
+		HealthMax /= 2;
+		EPMax /= 2;
+		Speed /= 2;
+		JumpHeight /= 2;
+		SurvivalBonus /= 2;
+
+		// Now apply the Stats
+		SetActorProperty(0, APROP_SPAWNHEALTH, HealthMax);
+		SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor);
+		SetActorProperty(0, APROP_SPEED, Speed);
+		SetActorProperty(0, APROP_JUMPZ, JumpHeight);
+	}
+}

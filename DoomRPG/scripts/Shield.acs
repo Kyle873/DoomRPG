@@ -1,0 +1,319 @@
+#library "Shield"
+
+#include "zcommon.acs"
+
+#import "Stats.acs"
+#import "Skills.acs"
+#import "Accessories.acs"
+#import "Shop.acs"
+#import "Menu.acs"
+#import "Utils.acs"
+
+global int 50 : Shield;
+global int 51 : ShieldCapacity;
+global int 52 : ShieldBody;
+global int 53 : ShieldBattery;
+global int 54 : ShieldCapacitor;
+global int 55 : ShieldAccessory;
+global str 56 : ArmorType;
+global int 57 : ArmorAmount;
+
+str ShieldData[4][30][3] =
+{
+	// Item, Description, Icon
+	
+	// Bodies
+	{
+		// Standard Body
+		{
+			"ShieldBodyStandard",
+			"Standard Body\n+50 Capacity",
+			"SHBody1",
+		},
+		
+		// Bronze Body
+		{
+			"ShieldBodyBronze",
+			"Bronze Body\n+100 Capacity\n+1 Charge Rate/sec",
+			"SHBody2",
+		},
+
+		// Silver Body
+		{
+			"ShieldBodySilver",
+			"Silver Body\n+200 Capacity\n+2 Charge Rate/sec",
+			"SHBody3",
+		},
+
+		// Gold Body
+		{
+			"ShieldBodyGold",
+			"Gold Body\n+250 Capacity\n+3 Charge Rate/sec",
+			"SHBody4",
+		},
+
+		// Diamond Body
+		{
+			"ShieldBodyDiamond",
+			"Diamond  Body\n+500 Capacity\n+4 Charge Rate/sec",
+			"SHBody5",
+		},
+
+		// Demon Body
+		{
+			"ShieldBodyDemon",
+			"Demon Body\n+750 Capacity\n+5 Charge Rate/sec",
+			"SHBody6",
+		},
+
+		// Turtle Body
+		{
+			"ShieldBodyTurtle",
+			"Turtle Body\n+1000 Capacity\n+5 Delay sec",
+			"SHBody7",
+		},
+	},
+	
+	// Batteries
+	{
+		// Standard Battery
+		{
+			"ShieldBatteryStandard",
+			"Standard Battery\n+50 Capacity",
+			"SHBatt1",
+		},
+	},
+
+	// Capacitors
+	{
+		// Standard Capacitor
+		{
+			"ShieldCapacitorStandard",
+			"Standard Capacitor\n+1 Charge Rate/sec",
+			"Shield",
+		},
+	},
+
+	// Accessories
+	{
+		// Standard Capacitor
+		{
+			"",
+			"None",
+			"",
+		},
+	}
+};
+
+// Shield Stats
+int ShieldStats[4][30][3] =
+{
+	// Capacity, Charge Rate, Delay Rate
+	// Bodies
+	{
+		{ 50, 0, 0 }, 		// Standard Body
+		{ 100, 1, 0 }, 		// Bronze Body
+		{ 200, 2, 0 }, 		// Silver Body
+		{ 250, 3, 0 }, 		// Gold Body
+		{ 500, 4, 0 }, 		// Platinum Body
+		{ 750, 5, 0 }, 		// Diamond Body
+		{ 1000, 0, 175 },	// Turtle Body
+	},
+
+	// Batteries
+	{
+		{ 50, 0, 0 }, 		// Standard Battery
+	},
+
+	// Capacitor
+	{
+		{ 0, 1, 0 }, 		// Standard Capacitor
+	},
+
+	// Accessories
+	{
+		{ 0, 0, 0 },		// None
+	}
+};
+
+int ShieldChargeRate;
+int ShieldDelayRate;
+int BeforeHealth;
+int AfterHealth;
+int HealthLoss;
+int BeforeArmor;
+int AfterArmor;
+int ArmorLoss;
+int ShieldTimer;
+bool ShieldFull = false;
+
+script "Shield" (void)
+{
+	BeforeHealth = GetActorProperty(0, APROP_HEALTH);
+	BeforeArmor = CheckInventory("Armor");
+	HealthLoss = BeforeHealth - AfterHealth;
+	ArmorLoss = BeforeArmor - AfterArmor;
+	
+	/* Debugging
+	SetFont("BIGFONT");
+	Print(s:"\cj", d:BeforeHealth,
+		  s:"\n\cj", d:BeforeArmor,
+		  s:"\n\cj", d:HealthLoss,
+		  s:"\n\cj", d:ArmorLoss,
+		  s:"\n\cj", s:ArmorType,
+		  s:"\n\cj", d:ArmorAmount); */
+	
+	// For the HUD
+	TakeInventory("ShieldCapacity", 100);
+	GiveInventory("ShieldCapacity", FixedMul(FixedDiv(Shield, ShieldCapacity), 100));
+	
+	// Shield is Full
+	if (Shield >= ShieldCapacity && !ShieldFull)
+	{
+		ActivatorSound("shield/full", 127);
+		ShieldFull = true;
+	}
+	
+	// Fake Shield Armor Handling
+	TakeInventory("BasicArmor", 1000000);
+	if (Shield > 0)
+	{
+		GiveInventory("Shield", 1);
+		GiveInventory("ShieldArmor", 1);
+	}
+	else
+	{
+		GiveInventory("ShieldArmorEmpty", 1);
+		
+		if (ArmorLoss != 0 || HealthLoss != 0)
+			GiveArmor();
+	}
+	
+	// Damage Handling
+	if (ArmorLoss < -Shield)
+	{
+		ShieldTimer = ShieldDelayRate;
+		Shield = 0;
+		ShieldFull = false;
+		FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
+		ActivatorSound("shield/hit", 127);
+		GiveArmor();
+	}
+	else if (AfterArmor != BeforeArmor)
+	{
+		FadeRange(255, 255, 255, 0.1, 255, 255, 255, 0.0, 0.1);
+		Shield += ArmorLoss;
+		ShieldTimer = ShieldDelayRate;
+		ShieldFull = false;
+	}
+	
+	// Reset the Shield Timer if your Health is damaged
+	if (HealthLoss != 0)
+		ShieldTimer = ShieldDelayRate;
+	
+	// Shield Timer
+	if (ShieldTimer > 0)
+		ShieldTimer--;
+		
+	Delay(1);
+}
+
+script "ShieldRegen" (void)
+{
+	int Interval = 35;
+	
+	// Accessory Handling
+	if (Accessories[4] == 1) // Regeneration Badge
+	{
+		Interval /= 2;
+		ShieldChargeRate *= 2;
+		ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
+	}
+	if (Accessories[8] == 1) // Rainbow Badge
+	{
+		Interval /= 2;
+		ShieldChargeRate *= 2;
+		ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
+	}
+
+	// Increase Charge
+	if (CheckInventory("Shield"))
+		if (ShieldTimer == 0)
+			Shield += ShieldChargeRate;
+	
+	Delay(Interval);
+	restart;
+}
+
+script "ToggleShield" (void)
+{
+	// If you're dead, terminate
+	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+
+	FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
+	
+	if (!CheckInventory("Shield"))
+	{
+		ActivatorSound("shield/on", 127);
+		ArmorType = CheckArmorType();
+		ArmorAmount = CheckInventory("BasicArmor");
+		GiveInventory("Shield", 1);
+	}
+	else
+	{
+		GiveArmor();
+		ActivatorSound("shield/off", 127);
+	}
+}
+
+script "AddShield" (int Amount)
+{
+	FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 0.25);
+	Shield += Amount;
+}
+
+function void GiveArmor(void)
+{
+	TakeInventory("BasicArmor", 1000000);
+	TakeInventory("Shield", 1);
+	
+	if (ArmorType != "")
+	{
+		GiveInventory(ArmorType, 1);
+		UseInventory(ArmorType);
+		TakeInventory("BasicArmor", GetArmorType(ArmorType, 0) - 1);
+		GiveInventory("ArmorBonus", ArmorAmount - 1);
+	}
+}
+
+function str CheckArmorType(void)
+{
+		 if (GetArmorType("BasicArmorBonus", 0) > 0) 	return "BasicArmorBonus";
+	else if (GetArmorType("GreenArmor", 0) > 0) 		return "GreenArmor";
+	else if (GetArmorType("UsedGreenArmor", 0) > 0) 	return "UsedGreenArmor";
+	else if (GetArmorType("BlueArmor", 0) > 0) 			return "BlueArmor";
+	else if (GetArmorType("UsedBlueArmor", 0) > 0) 		return "UsedBlueArmor";
+	else if (GetArmorType("YellowArmor", 0) > 0) 		return "YellowArmor";
+	else if (GetArmorType("UsedYellowArmor", 0) > 0) 	return "UsedYellowArmor";
+	else if (GetArmorType("RedArmor", 0) > 0) 			return "RedArmor";
+	else if (GetArmorType("UsedRedArmor", 0) > 0) 		return "UsedRedArmor";
+	else if (GetArmorType("WhiteArmor", 0) > 0) 		return "WhiteArmor";
+	else if (GetArmorType("UsedWhiteArmor", 0) > 0) 	return "UsedWhiteArmor";
+	else												return "";
+	
+	return "";
+}
+
+function void CheckShields(void)
+{
+	// If a part is sold/dropped/nuked from orbit/etc, revert that part to the Standard part
+	if (!CheckInventory(ShieldData[0][ShieldBody - 1][0])) 		ShieldBody = 1;
+	if (!CheckInventory(ShieldData[1][ShieldBattery - 1][0])) 	ShieldBattery = 1;
+	if (!CheckInventory(ShieldData[2][ShieldCapacitor - 1][0]))	ShieldCapacitor = 1;
+//	if (!CheckInventory(ShieldData[3][ShieldAccessory - 1][0]))	ShieldAccessory = 1;
+	
+	// Apply Components stats to Shield
+	ShieldCapacity = ShieldStats[0][ShieldBody - 1][0] + ShieldStats[1][ShieldBattery - 1][0] + ShieldStats[2][ShieldCapacitor - 1][0];
+	ShieldChargeRate = ShieldStats[0][ShieldBody - 1][1] + ShieldStats[1][ShieldBattery- 1][1] + ShieldStats[2][ShieldCapacitor- 1][1];
+	ShieldDelayRate = 175 + ShieldStats[0][ShieldBody - 1][2] + ShieldStats[1][ShieldBattery - 1][2] + ShieldStats[2][ShieldCapacitor - 1][2];
+}

@@ -1,0 +1,304 @@
+actor ChainGunGuy
+{
+	Game Doom
+	SpawnID 2
+	Health 70
+	Radius 20
+	Height 56
+	Mass 100
+	Speed 8
+	PainChance 170
+	
+	Monster
+	+FLOORCLIP
+	
+	SeeSound "chainguy/sight"
+	PainSound "chainguy/pain"
+	DeathSound "chainguy/death"
+	ActiveSound "chainguy/active"
+	AttackSound "chainguy/attack"
+	Obituary "$OB_CHAINGUY"
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "ClipBox" 32
+	DropItem "Chaingun"
+	
+	States
+	{
+	Spawn:
+		CPOS AB 10 A_Look
+		Loop
+	See:
+		CPOS AABBCCDD 3 A_Chase
+		Loop
+	Missile:
+		CPOS E 10 A_FaceTarget
+		CPOS FE 4 BRIGHT A_CPosAttack
+		CPOS F 1 A_CPosRefire
+		Goto Missile+1
+	Pain:
+		CPOS G 3
+		CPOS G 3 A_Pain
+		Goto See
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(70, 140))
+		CPOS H 5
+		CPOS I 5 A_Scream
+		CPOS J 5 A_NoBlocking
+		CPOS KLM 5
+		CPOS N -1
+		Stop
+	XDeath:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(70, 140) * 2)
+		CPOS O 5 
+		CPOS P 5 A_XScream
+		CPOS Q 5 A_NoBlocking
+		CPOS RS 5
+		CPOS T -1
+		Stop
+	Raise:
+		CPOS N 5
+		CPOS MLKJIH 5
+		Goto See
+	}
+}
+
+actor ChainGunGuyBoss : ChainGunGuy
+{
+	States
+	{
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(70, 140) * 2)
+		CPOS H 5
+		CPOS I 5 A_Scream
+		CPOS J 5 A_NoBlocking
+		CPOS KLM 5
+		CPOS N 1
+		Goto FadeOut
+	XDeath:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(70, 140) * 4)
+		CPOS O 5 
+		CPOS P 5 A_XScream
+		CPOS Q 5 A_NoBlocking
+		CPOS RS 5
+		CPOS T 1
+		Goto XFadeOut
+	FadeOut:
+		CPOS N 1 A_FadeOut(0.001, true)
+		Loop
+	XFadeOut:
+		CPOS T 1 A_FadeOut(0.001, true)
+		Loop
+	}
+}
+
+actor ChainGunGuyRed : ChainGunGuyBoss 10120
+{
+	Health 140
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 0]"
+	BloodColor Red
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Chaingun"
+	DropItem "RuneDropper"
+	
+	States
+	{
+	Missile:
+		CPOS E 5 A_FaceTarget
+		CPOS FE 2 BRIGHT A_CPosAttack
+		CPOS F 1 BRIGHT A_CPosReFire
+		Goto Missile+1
+	}
+}
+
+actor ChainGunGuyGreen : ChainGunGuyBoss 10121
+{
+	Health 140
+	PainChance 0
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 0]"
+	BloodColor Green
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Chaingun"
+	DropItem "ArmorRandomizer"
+}
+
+actor ChainGunGuyWhite : ChainGunGuyBoss 10122
+{
+	Health 140
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 1, 1]"
+	BloodColor White
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Chaingun"
+	DropItem "SmallTokenDropper"
+
+	States
+	{
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(70, 140) * 4)
+		CPOS H 5
+		CPOS I 5 A_Scream
+		CPOS J 5 A_NoBlocking
+		CPOS KLM 5
+		CPOS N 1
+		Goto FadeOut
+	XDeath:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(70, 140) * 8)
+		CPOS O 5 
+		CPOS P 5 A_XScream
+		CPOS Q 5 A_NoBlocking
+		CPOS RS 5
+		CPOS T 1
+		Goto XFadeOut
+	}
+}
+
+actor ChainGunGuyOrange : ChainGunGuyBoss 10123
+{
+	Health 280
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0.5, 0]"
+	BloodColor Orange
+
+	+ALWAYSFAST
+	+QUICKTORETALIATE
+	
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Chaingun"
+	DropItem "TimeSphere"
+}
+
+actor ChainGunGuyPink : ChainGunGuyBoss 10124
+{
+	Health 140
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 0.5]"
+	BloodColor Pink
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Chaingun"
+	DropItem "MedikitRandomizer"
+}
+
+actor ChainGunGuyBlue : ChainGunGuyBoss 10125
+{
+	Health 140
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 1]"
+	BloodColor Cyan
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Chaingun"
+	DropItem "EPCapsule"
+	DropItem "BigEPCapsule"
+}
+
+actor ChainGunGuyPurple : ChainGunGuyBoss 10126
+{
+	Health 140
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 1]"
+	BloodColor Purple
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Chaingun"
+	DropItem "ShieldBooster"
+}
+
+actor ChainGunGuyDarkBlue : ChainGunGuyBoss 10127
+{
+	Health 140
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 0, 1]"
+	BloodColor Blue
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "Chaingun"
+	DropItem "ClipBox"
+}
+
+actor ChainGunGuyYellow : ChainGunGuyBoss 10128
+{
+	Health 140
+	
+	Translation "0 : 255 = %[0, 0, 0] : [1, 1, 0]"
+	BloodColor Yellow
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "MoneyDropper"
+	DropItem "Chaingun"
+}
+
+actor ChainGunGuyBlack : ChainGunGuyBoss 10129
+{
+	Health 280
+	PainChance 0
+	
+	+ALWAYSFAST
+	+QUICKTORETALIATE
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 0, 0]"
+	BloodColor Black
+	RenderStyle Fuzzy
+	Alpha 0.5
+
+	DropItem "Dropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "LuckDropper"
+	DropItem "MoneyDropper"
+	DropItem "Chaingun"
+	DropItem "RuneDropper"
+	DropItem "ArmorRandomizer"
+	DropItem "SmallTokenDropper"
+	DropItem "TimeSphere"
+	DropItem "MedikitRandomizer"
+	DropItem "EPCapsule"
+	DropItem "BigEPCapsule"
+	DropItem "ShieldBooster"
+	DropItem "ClipBox"
+
+	States
+	{
+	Missile:
+		CPOS E 5 A_FaceTarget
+		CPOS FE 2 BRIGHT A_CPosAttack
+		CPOS F 1 BRIGHT A_CPosReFire
+		Goto Missile+1
+	Death:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(70, 140) * 8)
+		CPOS H 5
+		CPOS I 5 A_Scream
+		CPOS J 5 A_NoBlocking
+		CPOS KLM 5
+		CPOS N 1
+		Goto FadeOut
+	XDeath:
+		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(70, 140) * 16)
+		CPOS O 5 
+		CPOS P 5 A_XScream
+		CPOS Q 5 A_NoBlocking
+		CPOS RS 5
+		CPOS T 1
+		Goto XFadeOut
+	}
+}

@@ -1,0 +1,231 @@
+#library "Accessories"
+
+#include "zcommon.acs"
+
+#import "Stats.acs"
+#import "Skills.acs"
+#import "Shield.acs"
+#import "Utils.acs"
+
+str Accessory[30][4] =
+{
+	// Class name, Nice name, Description, Icon
+	
+	// Badgesd
+	{ "StrengthBadge", "Strength Badge", "2x Damage", "Badge1" },
+	{ "DefenseBadge", "Defense Badge", "-2x Damage Taken", "Badge2" },
+	{ "VitalityBadge", "Vitality Badge", "2x Max Health\n2x Health Regen", "Badge3" },
+	{ "EnergyBadge", "Energy Badge", "2x Max EP\n2x EP Regen", "Badge4" },
+	{ "RegenerationBadge", "Regeneration Badge", "2x HP/EP Regen\n2x Shield Charge Rate\n-2x Shield Delay Rate", "Badge5" },
+	{ "AgilityBadge", "Agility Badge", "2x Movement Speed\n2x Jump Height", "Badge6" },
+	{ "CapacityBadge", "Capacity Badge", "2x Ammo Limits", "Badge7" },
+	{ "LuckBadge", "Luck Badge", "2x Luck Drop Chances", "Badge8" },
+	{ "RainbowBadge", "Rainbow Badge", "2x Damage\n-2x Damage Taken\n2x Max Health\n4x Health Regen\n2x Max EP\n4x EP Regen\n2x Shield Charge Rate\n-2x Shield Delay Rate\n2x Movement Speed\n2x Jump Height\n2x Ammo Limits\n2x Luck Drop Chances", "Badge9" },
+	
+	// Rings
+	{ "", "", "", "Ring1" },
+	{ "", "", "", "Ring2" },
+	{ "", "", "", "Ring3" },
+	{ "", "", "", "Ring4" },
+	
+	// ...
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" },
+	{ "", "", "", "" }
+};
+
+global int 48 : Accessories[];
+global int 49 : AccessorySlotsUsed;
+
+int MaxAccessorySlots;
+
+function void SetAccessorySlots(void)
+{
+	// How many slots will you get on your difficulty?
+	int Skill = GameSkill();
+	if (Skill == 1 || Skill == 2 || Skill == 3)
+		MaxAccessorySlots = 5;
+	if (Skill == 4)
+		MaxAccessorySlots = 4;
+	if (Skill == 5)
+		MaxAccessorySlots = 3;
+	if (Skill == 6)
+		MaxAccessorySlots = 2;
+	if (Skill == 7)
+		MaxAccessorySlots = 1;
+}
+
+function void CheckAccessories(void)
+{
+	// Strength Badge
+	if (Accessories[0] == 1)
+		Damage = FixedMul(Damage, 2.0);
+	
+	// Defense Badge
+	if (Accessories[1] == 1)
+		DamageFactor = FixedDiv(DamageFactor, 2.0);
+	
+	// Vitality Badge
+	if (Accessories[2] == 1)
+	{
+		HealthMax *= 2;
+		SetActorProperty(0, APROP_SPAWNHEALTH, HealthMax);
+	}
+	
+	// Energy Badge
+	if (Accessories[3] == 1)
+		EPMax *= 2;
+	
+	// Regeneration Badge
+	if (Accessories[4] == 1)
+	{
+		HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
+		EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
+		ShieldChargeRate *= 2;
+		ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
+	}
+
+	// Agility Badge
+	if (Accessories[5] == 1)
+	{
+		Speed *= 2;
+		JumpHeight *= 2;
+	}
+	
+	// Capacity Badge
+	if (Accessories[6] == 1)
+	{
+		SetAmmoCapacity("Clip", Capacity * 20 * 2);
+		SetAmmoCapacity("Shell", Capacity * 10 * 2);
+		SetAmmoCapacity("RocketAmmo", Capacity * 5 * 2);
+		SetAmmoCapacity("Cell", Capacity * 30 * 2);
+	}
+	if (Accessories[8] == 1)
+	{
+		SetAmmoCapacity("Clip", Capacity * 20 * 2);
+		SetAmmoCapacity("Shell", Capacity * 10 * 2);
+		SetAmmoCapacity("RocketAmmo", Capacity * 5 * 2);
+		SetAmmoCapacity("Cell", Capacity * 30 * 2);
+	}
+
+	// Luck Badge
+	if (Accessories[7] == 1)
+	{
+		MoneyChance[0] *= 2;
+		MoneyChance[1] *= 2;
+		MoneyChance[2] *= 2;
+		MoneyChance[3] *= 2;
+		MoneyChance[4] *= 2;
+		MoneyChance[5] *= 2;
+		MoneyChance[6] *= 2;
+		HealthChance[0] *= 2;
+		HealthChance[1] *= 2;
+		HealthChance[2] *= 2;
+		ArmorChance[0] *= 2;
+		ArmorChance[1] *= 2;
+		ArmorChance[2] *= 2;
+		ArmorChance[3] *= 2;
+		ArmorChance[4] *= 2;
+		PowerupChance *= 2;
+		RuneChance *= 2;
+		TokenChance *= 2;
+		AccessoryChance *= 2;
+		ShieldChance *= 2;
+		EPChance *= 2;
+	}
+	
+	// Rainbow Badge
+	if (Accessories[8] == 1)
+	{
+		Damage = FixedMul(Damage, 2.0);
+		DamageFactor = FixedDiv(DamageFactor, 2.0);
+		HealthMax *= 2;
+		EPMax *= 2;
+		HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
+		EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
+		ShieldChargeRate *= 2;
+		ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
+		Speed *= 2;
+		JumpHeight *= 2;
+		MoneyChance[0] *= 2;
+		MoneyChance[1] *= 2;
+		MoneyChance[2] *= 2;
+		MoneyChance[3] *= 2;
+		MoneyChance[4] *= 2;
+		MoneyChance[5] *= 2;
+		MoneyChance[6] *= 2;
+		HealthChance[0] *= 2;
+		HealthChance[1] *= 2;
+		HealthChance[2] *= 2;
+		ArmorChance[0] *= 2;
+		ArmorChance[1] *= 2;
+		ArmorChance[2] *= 2;
+		ArmorChance[3] *= 2;
+		ArmorChance[4] *= 2;
+		PowerupChance *= 2;
+		RuneChance *= 2;
+		TokenChance *= 2;
+		AccessoryChance *= 2;
+		ShieldChance *= 2;
+		EPChance *= 2;
+	}
+
+	// Keep adding more
+	// ...
+
+	// Strength Item
+	if (Round(Damage * 100) > 0 && Round(Damage * 100) <= 8000)
+		GiveInventory(StrParam(s:"Strength", d:Round(Damage * 100)), 1);
+	
+	// Speed capping CVAR
+	if (Speed >= 1.0 + FixedMul(0.25, FixedDiv(GetCVAR("drpg_maxspeed"), 100)))
+		Speed = 1.0 + FixedMul(0.25, FixedDiv(GetCVAR("drpg_maxspeed"), 100));
+
+	// Apply Bonuses
+	SetActorProperty(0, APROP_SPAWNHEALTH, HealthMax);
+	SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor);
+	SetActorProperty(0, APROP_SPEED, Speed);
+	SetActorProperty(0, APROP_JUMPZ, JumpHeight);
+}
+
+function void EquipAccessory(int acc)
+{
+	if (CheckInventory(Accessory[acc][0]))
+	{
+		if (Accessories[acc] == 1)
+		{
+			ActivatorSound("misc/accessoryequip", 127);
+			AccessorySlotsUsed--;
+			Accessories[acc] = 0;
+		}
+		else
+		{
+			AccessorySlotsUsed++;
+			
+			if (AccessorySlotsUsed > MaxAccessorySlots)
+			{
+				ActivatorSound("menu/error", 127);
+				Print(s:"You don't have a free Accessory slot!");
+				AccessorySlotsUsed--;
+			}
+			else
+			{
+				ActivatorSound("misc/accessoryequip", 127);
+				Accessories[acc] = 1;
+			}
+		}
+	}
+}

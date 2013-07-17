@@ -1,0 +1,1487 @@
+#library "Skills"
+
+#include "zcommon.acs"
+
+#import "Stats.acs"
+#import "Shop.acs"
+#import "Utils.acs"
+#import "Menu.acs"
+#import "Shield.acs"
+
+#define MAX_CATAGORIES		6
+#define MAX_SKILLS			17
+
+// Energy Points (EP)
+global int 2 : EP;
+global int 3 : EPMax;
+
+// Skill-related vars
+global int 5 : Aura;
+global int 6 : AuraTimer;
+global int 25 : AuraTimerHUD;
+global int 26 : SkillCatagory;
+global int 27 : SkillIndex[];
+global int 28 : SkillLevel[];
+global int 29 : CurrentSkillLevel[];
+
+bool Overdrive;
+int SummonID = 2100;
+int SkillCostMult;
+int BulletTimeMode;
+int BulletTimeTimer;
+
+// Portal stuff
+int Portal1[4];
+int Portal2[4];
+bool Portal1Active;
+bool Portal2Active;
+
+// Skill Catagories
+str SkillCatagories[MAX_CATAGORIES] =
+{
+	"Healing",
+	"Powerups",
+	"Auras",
+	"Attacks",
+	"Summoning",
+	"Utility",
+};
+
+int CatagoryMax[MAX_CATAGORIES] =
+{
+	2, 9, 8, 2, 17, 6
+};
+
+// Skill Max Levels
+int SkillLevelMax[MAX_CATAGORIES][MAX_SKILLS] =
+{
+	// Healing
+	{ 1, 1 },
+	// Powerups
+	{ 10, 10, 2, 1, 1, 1, 1, 1, 1 },
+	// Auras
+	{ 3, 5, 1, 3, 4, 3, 4, 7 },
+	// Attacks
+	{ 10, 10, 0, 0, 0, 0, 0 },
+	// Summoning
+	{ 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+	// Utility
+	{ 1, 2, 1, 2, 1, 1 }
+};
+
+int SkillCosts[MAX_CATAGORIES][MAX_SKILLS] =
+{
+	// Healing
+	{ 50, 50 },
+	// Powerups
+	{ 50, 25, 250, 250, 250, 500, 500, 250, 250 },
+	// Auras
+	{ 100, 100, 100, 100, 100, 100, 100, 100, 100 },
+	// Attacks
+	{ 3, 3, 3, 3, 5, 5, 5 },
+	// Summoning
+	{ 25, 25, 50, 75, 75, 75, 100, 150, 200, 100, 500, 500, 500, 500, 750, 1000, 1000, },
+	// Utility
+	{ 50, 50, 50, 0, 50, 100 }
+};
+
+// Skill Icons
+str SkillIcons[MAX_CATAGORIES][MAX_SKILLS] =
+{
+	// Healing
+	{
+		"Heal",			// Heal
+		"Repair",		// Repair Armor
+	},
+	// Powerups
+	{
+		"Invuln",		// Invulnerability
+		"Invis",		// Invisibility
+		"TimeStop",		// Time Freeze
+		"IronFeet",		// Iron Feet
+		"NVision",		// Nightvision
+		"Berserk",		// Berserk
+		"Mapping",		// Mental Mapping
+		"RuneDrop",		// Rune Drop
+		"AmmoDrop",		// Ammo Drop
+	},
+	// Auras
+	{
+		"AuraRed",		// Red Aura
+		"AuraGree",		// Green Aura
+		"AuraPink",		// Pink Aura
+		"AuraCyan",		// Blue Aura
+		"AuraPurp",		// Purple Aura
+		"AuraOran",		// Orange Aura
+		"AuraBlue",		// Dark Blue Aura
+		"AuraYell",		// Yellow Aura
+	},
+	// Attacks
+	{
+		"Fireball",		// Fireball
+		"IceMiss",		// Ice Missile
+	},
+	// Summoning
+	{
+		"Marine",		// Summon Marine
+		"Zombie1",		// Summon Zombieman
+		"Zombie2",		// Summon Shotgun Guy
+		"Zombie3",		// Summon ChainGun Guy
+		"Demon1",		// Summon Imp
+		"Demon2",		// Summon Demon
+		"Demon3",		// Summon Cacodemon
+		"Knight1",		// Summon Hell Knight
+		"Knight2",		// Summon Baron of Hell
+		"LostSoul",		// Summon Lost Soul
+		"PainElem",		// Summon Pain Elemental
+		"Skeleton",		// Summon Revenant
+		"Mancubus",		// Summon Fatso
+		"Spider",		// Summon Arachnotron
+		"ArchVile",		// Summon Arch-Vile
+		"Boss1",		// Summon Cyberdemon
+		"Boss2",		// Summon Spider Mastermind
+	},
+	// Utility
+	{
+		"Credits",		// Breakdown Armor
+		"FField",		// Force Wall
+		"Rally",		// Rally
+		"Unsummon",		// Unsummon
+		"Magnet",		// Magnetize
+		"Teleport",		// Transport
+	},
+};
+
+// Skill Data
+int SkillData[MAX_CATAGORIES][MAX_SKILLS][20] =
+{
+	// Name, Description (Level 1), Description (Level 2), ...
+	
+	// Healing
+	{
+		{
+			"Heal",
+			"Recover (Energy * 10) HP",
+			"Recover (Energy * 20) HP",
+			"Recover (Energy * 30) HP",
+			"Recover (Energy * 40) HP",
+			"Recover (Energy * 50) HP"
+		},
+		{
+			"Repair Armor",
+			"Repair (Energy * 10) Armor",
+			"Repair (Energy * 20) Armor",
+			"Repair (Energy * 30) Armor",
+			"Repair (Energy * 40) Armor",
+			"Repair (Energy * 50) Armor"
+		}
+	},
+	
+	// Powerups
+	{
+		{
+			"Invulnerability",
+			"Invulnerability to all attacks\n\cd(6 Sec)",
+			"Invulnerability to all attacks\n\cd(12 Sec)",
+			"Invulnerability to all attacks\n\cd(18 Sec)",
+			"Invulnerability to all attacks\n\cd(24 Sec)",
+			"Invulnerability to all attacks\n\cd(30 Sec)",
+			"Invulnerability to all attacks\nProjectiles are reflectedback at enemies\n\cd(36 Sec)",
+			"Invulnerability to all attacks\nProjectiles are reflectedback at enemies\n\cd(42 Sec)",
+			"Invulnerability to all attacks\nProjectiles are reflectedback at enemies\n\cd(48 Sec)",
+			"Invulnerability to all attacks\nProjectiles are reflectedback at enemies\n\cd(54 Sec)",
+			"Invulnerability to all attacks\nProjectiles are reflectedback at enemies\n\cd(60 Sec)"
+		},
+		{
+			"Invisibility",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(6 sec)",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(12 sec)",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(18 sec)",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(24 sec)",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(30 sec)",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(36 sec)",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(42 sec)",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(48 sec)",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(54 sec)",
+			"Makes you invisible to enemies\nUse again to increase effect\n\cd(60 sec)"
+		},
+		{
+			"Freeze Time",
+			"Stutter Time",
+			"Freeze Time"
+		},
+		{
+			"Iron Feet",
+			"Protection from Damage Floors"
+		},
+		{
+			"Night Vision",
+			"Allows you to see in the dark"
+		},
+		{
+			"Berserk",
+			"Full Health\nIncreased Melee Damage"
+		},
+		{
+			"Mental Mapping",
+			"Full Map\nItem/Enemy Tracking"
+		},
+		{
+			"Rune Drop",
+			"Drops a random Rune at your locations"
+		},
+		{
+			"Ammo Drop",
+			"Drops a Backpack of ammo at your location"
+		},
+	},
+	
+	// Auras
+	{
+		{
+			"Red Aura",
+			"2x Damage",
+			"4x Damage",
+			"4x Damage\nInfinite Ammo",
+		},
+		{
+			"Green Aura",
+			"-2x Damage Taken",
+			"-4x Damage Taken",
+			"-4x Damage Taken\nDamage Floor Protection",
+			"Invulnerable",
+			"Invulnerable\nReflective Projectiles"
+		},
+		{
+			"Pink Aura",
+			"Drain Enemy HP"
+		},
+		{
+			"Blue Aura",
+			"25% Skill Cost Reduction",
+			"50% Skill Cost Reduction",
+			"75% Skill Cost Reduction"
+		},
+		{
+			"Purple Aura",
+			"2x HP/EP Regen Rate",
+			"3x HP/EP Regen Rate",
+			"4x HP/EP Regen Rate",
+			"4x HP/EP Regen Rate\nInstant Shield Charge"
+		},
+		{
+			"Orange Aura",
+			"Double Movement Speed",
+			"Double Movement Speed\nHigh Jump",
+			"Double Movement Speed\nHigh Jump\nDouble Firing Speed",
+		},
+		{
+			"Dark Blue Aura",
+			"Clip Regen",
+			"Clip Regen\nShell Regen",
+			"Clip Regen\nShell Regen\nRocket Regen",
+			"Clip Regen\nShell Regen\nRocket Regen\nCell Regen"
+		},
+		{
+			"Yellow Aura",
+			"Gradual Money Gain\n2x Credit Drop Chance",
+			"Slow Money Gain\n2x Credit Drop Chance\n2x Health Drop Chance",
+			"Medium Money Gain\n2x Credit Drop Chance\n2x Health Drop Chance\n2x Armor Drop Chance",
+			"Fast Money Gain\n2x Credit Drop Chance\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance",
+			"Very Fast Money Gain\n2x Credit Drop Chance\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance",
+			"Super Money Gain\n2x Credit Drop Chance\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance\n2x Token Drop Chance",
+			"Ultra Money Gain\n2x Credit Drop Chance\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance\n2x Token Drop Chance\n2x Accessory/Shield Part Drop Chance"
+		}
+	},
+	
+	// Attacks
+	{
+		{
+			"FireBall",
+			"Shoots a fireball\n\ca10 Fire Damage\n\cv(Energy) Projectiles",
+			"Shoots a fireball\n\ca20 Fire Damage\cv(Energy) Projectiles",
+			"Shoots a fireball\n\ca30 Fire Damage\cv(Energy) Projectiles",
+			"Shoots a fireball\n\ca40 Fire Damage\cv(Energy) Projectiles",
+			"Shoots a fireball\n\ca50 Fire Damage\cv(Energy) Projectiles",
+			"Shoots a fireball\n\ca60 Fire Damage\cv(Energy) Projectiles",
+			"Shoots a fireball\n\ca70 Fire Damage\cv(Energy) Projectiles",
+			"Shoots a fireball\n\ca80 Fire Damage\cv(Energy) Projectiles",
+			"Shoots a fireball\n\ca90 Fire Damage\cv(Energy) Projectiles",
+			"Shoots a fireball\n\ca100 Fire Damage\cv(Energy) Projectiles",
+		},
+		{
+			"Ice Missile",
+			"Shoots an Ice Missile\n\cn10 Ice Damage\n\cv(Energy) Projectiles",
+			"Shoots an Ice Missile\n\cn20 Ice Damage\n\cv(Energy) Projectiles",
+			"Shoots an Ice Missile\n\cn30 Ice Damage\n\cv(Energy) Projectiles",
+			"Shoots an Ice Missile\n\cn40 Ice Damage\n\cv(Energy) Projectiles",
+			"Shoots an Ice Missile\n\cn50 Ice Damage\n\cv(Energy) Projectiles",
+			"Shoots an Ice Missile\n\cn60 Ice Damage\n\cv(Energy) Projectiles",
+			"Shoots an Ice Missile\n\cn70 Ice Damage\n\cv(Energy) Projectiles",
+			"Shoots an Ice Missile\n\cn80 Ice Damage\n\cv(Energy) Projectiles",
+			"Shoots an Ice Missile\n\cn90 Ice Damage\n\cv(Energy) Projectiles",
+			"Shoots an Ice Missile\n\cn100 Ice Damage\n\cv(Energy) Projectiles",
+		},
+	},
+	
+	// Summoning
+	{
+		{
+			"Summon Marine",
+			"Summons a Marine to fight with you\n\cjPistol",
+			"Summons a Marine to fight with you\n\cjShotgun",
+			"Summons a Marine to fight with you\n\cjSuper Shotgun",
+			"Summons a Marine to fight with you\n\cjChaingun",
+			"Summons a Marine to fight with you\n\cjRocket Launcher",
+			"Summons a Marine to fight with you\n\cjPlasma Rifle",
+			"Summons a Marine to fight with you\n\cjRailgun",
+			"Summons a Marine to fight with you\n\cjBFG 9000",
+		},
+		{
+			"Summon Zombieman",
+			"Summons a Zombieman to fight with you",
+		},
+		{
+			"Summon Shotgun Guy",
+			"Summons a Shotgun Guy to fight with you",
+		},
+		{
+			"Summon Chaingun Guy",
+			"Summons a Chaingun Guy to fight with you",
+		},
+		{
+			"Summon Imp",
+			"Summons an Imp to fight with you",
+		},
+		{
+			"Summon Demon",
+			"Summons a Demon to fight with you",
+		},
+		{
+			"Summon Cacodemon",
+			"Summons a Cacodemon to fight with you",
+		},
+		{
+			"Summon Hell Knight",
+			"Summons a Hell Knight to fight with you",
+		},
+		{
+			"Summon Baron of Hell",
+			"Summons a Baron of Hell to fight with you",
+		},
+		{
+			"Summon Lost Soul",
+			"Summons a Lost Soul to fight with you",
+		},
+		{
+			"Summon Pain Elemental",
+			"Summons a Pain Elemental to fight with you",
+		},
+		{
+			"Summon Revenant",
+			"Summons a Revenant to fight with you",
+		},
+		{
+			"Summon Fatso",
+			"Summons a Fatso to fight with you",
+		},
+		{
+			"Summon Arachnotron",
+			"Summons an Arachnotron to fight with you",
+		},
+		{
+			"Summon Arch-Vile",
+			"Summons an Arch-Vile to fight with you",
+		},
+		{
+			"Summon Cyberdemon",
+			"Summons a Cyberdemon to fight with you",
+		},
+		{
+			"Summon Spider Mastermind",
+			"Summons a Spider Mastermind to fight with you",
+		},
+	},
+	
+	// Utility
+	{
+		{
+			"Breakdown Armor",
+			"Breaks down your current Armor into Credits",
+		},
+		{
+			"Force Wall",
+			"Creates a small force wall in front of you to absorb damage",
+			"Creates a large force wall in front of you to absorb damage",
+		},
+		{
+			"Rally",
+			"Teleports your summoned monsters to you",
+		},
+		{
+			"Umsummon",
+			"Banishes all of the friendly creatures under your control",
+			"Banishes all of the friendly creatures under your control\nEach creature banished restores\n25 EP",
+		},
+		{
+			"Magnetize",
+			"Pulls some dropped items to you",
+		},
+		{
+			"Transport",
+			"Brings you to the UAC Outpost\nUse in Outpost to return to current level"
+		},
+	}
+};
+
+// Use Skill Script
+script "UseSkill" (int SkillTest)
+{
+	// If you're dead, terminate
+	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+
+	// Vars
+	int EPCost = FixedDiv(SkillCosts[SkillCatagory][SkillIndex[SkillCatagory]] * CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]], SkillCostMult);
+	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
+	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
+	Overdrive = false;
+	
+	// Overdrive?
+	if (Buttons & BT_SPEED)
+		Overdrive = true;
+
+	// Scale EP costs to skill level
+	switch (GameSkill())
+	{
+		case 5: EPCost = FixedMul(EPCost, 1.5); break;
+		case 6: EPCost = FixedMul(EPCost, 2.0); break;
+		case 7: EPCost = FixedMul(EPCost, 2.5); break;
+	}
+
+	// If you're in the Skills menu, select the highlighted skill instead
+	if (InMenu && Menu == 3)
+	{
+		ActivatorSound("menu/move", 127);
+		SkillCatagory = SkillPage;
+		SkillIndex[SkillCatagory] = MenuIndex;
+		terminate;
+	}
+	
+	// Overdriving an unlearnt skill will learn it
+	if (Overdrive && CheckInventory("SkillToken") > 0 && !SkillLevel[(MAX_SKILLS * SkillCatagory) + SkillIndex[SkillCatagory]])
+	{
+		SkillLevel[(MAX_SKILLS * SkillCatagory) + SkillIndex[SkillCatagory]]++;
+		CurrentSkillLevel[(MAX_SKILLS * SkillCatagory) + SkillIndex[SkillCatagory]]++;
+		TakeInventory("SkillToken", 1);
+		FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
+		terminate;
+	}
+	
+	// Check if the Skill has been learned yet
+	if (SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] == 0 && SkillTest == 0)
+	{
+		SetFont("BIGFONT");
+		Print(s:"\cgYou don't know this skill yet");
+		ActivatorSound("skills/fail", 127);
+		terminate;
+	}
+
+	// Can't use skills while burned out
+	if (EP < 0)
+	{
+		SetFont("BIGFONT");
+		Print(s:"\chYou can't use skills while burned out");
+		ActivatorSound("skills/fail", 127);
+		terminate;
+	}
+	
+	// Normal skills
+	if (EP >= EPCost || Overdrive)
+	{
+		switch (SkillCatagory)
+		{
+			case 0: // Healing
+				switch (SkillIndex[SkillCatagory])
+				{
+					case 0:		Heal();								break; // Heal
+					case 1:		Repair();							break; // Repair Armor
+				}
+				break;
+			
+			case 1: // Powerups
+				switch (SkillIndex[SkillCatagory])
+				{
+					case 0:		Powerup(1);							break; // Invulnerability
+					case 1:		Powerup(2);							break; // Invisibility
+					case 2:		Powerup(3);							break; // Time Freeze
+					case 3:		Powerup(4);							break; // Iron Feet
+					case 4:		Powerup(5);							break; // Night Vision
+					case 5:		Powerup(6);							break; // Berserk
+					case 6:		Powerup(7);							break; // Mind Mapping
+					case 7:		Powerup(8);							break; // Drop Rune
+					case 8:		Powerup(9);							break; // Drop Ammo
+				}
+				break;
+			
+			case 2: // Auras
+				ActivatorSound("skills/buff", 127);
+				if (SkillIndex[SkillCatagory] == Aura - 1)
+					AuraTimer += 1050 + FixedMul(Energy, 5.25);
+				else
+					AuraTimer = 1050 + FixedMul(Energy, 5.25);
+				
+ 				switch (SkillIndex[SkillCatagory])
+				{
+					case 0:		Aura = 1;							break; // Red Aura
+					case 1:		Aura = 2;							break; // Green Aura
+					case 2:		Aura = 3;							break; // Pink Aura
+					case 3:		Aura = 4;							break; // Blue Aura
+					case 4:		Aura = 5;							break; // Purple Aura
+					case 5:		Aura = 6;							break; // Orange Aura
+					case 6:		Aura = 7;							break; // Dark Blue Aura
+					case 7:		Aura = 8;							break; // Yellow Aura
+				}
+				break;
+			
+			case 3: // Attacks
+				switch (SkillIndex[SkillCatagory])
+				{
+					case 0:		Projectile(1);						break; // Fireball
+					case 1:		Projectile(2);						break; // Ice Missile
+				}
+				break;
+			
+			case 4: // Summoning
+				switch (SkillIndex[SkillCatagory])
+				{
+					case 0:		Summon(1);							break; // Summon Marine
+					case 1:		Summon(2);							break; // Summon Zombieman
+					case 2:		Summon(3);							break; // Summon Shotgun Guy
+					case 3:		Summon(4);							break; // Summon Chaingun Guy
+					case 4:		Summon(5);							break; // Summon Imp
+					case 5:		Summon(6);							break; // Summon Demon
+					case 6:		Summon(7);							break; // Summon Cacodemon
+					case 7:		Summon(8);							break; // Summon Hell Knight
+					case 8:		Summon(9);							break; // Summon Baron of Hell
+					case 9:		Summon(10);							break; // Summon Lost Soul
+					case 10:	Summon(11);							break; // Summon Pain Elemental
+					case 11:	Summon(12);							break; // Summon Revenant
+					case 12:	Summon(13);							break; // Summon Fatso
+					case 13:	Summon(14);							break; // Summon Arachnotron
+					case 14:	Summon(15);							break; // Summon Arch-Vile
+					case 15:	Summon(16);							break; // Summon Cyberdemon
+					case 16:	Summon(17);							break; // Summon Spider Mastermind
+				}
+				break;
+				
+			case 5: // Utility
+				switch (SkillIndex[SkillCatagory])
+				{
+					case 0:		BreakdownArmor();					break; // Breakdown Armor
+					case 1:		ForceWall();						break; // Force Wall
+					case 2:		Rally();							break; // Rally
+					case 3:		Unsummon();							break; // Unsummon
+					case 4:		Magnet();							break; // Magnetize
+					case 5:		ACS_NamedExecute("Transport", 0);	break; // Transport
+				}
+				break;
+		}
+		
+		EP -= EPCost;
+	}
+	else // Not enough EP
+	{
+		SetFont("BIGFONT");
+		Print(s:"\cgNot enough EP to use this skill!");
+		ActivatorSound("skills/fail", 127);
+	}
+
+	// Special skills that need different behavior
+	{
+	}
+}
+
+// Skill HUD Script
+script "DrawSkillHUD" enter
+{
+	while (1)
+	{
+		// If you're dead, terminate
+		if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+		
+		// Set HUD Size
+		SetHUDSize(0, 0, false);
+		
+		// Get Position and Options from CVARs
+		str SkillIcon = SkillIcons[SkillCatagory][SkillIndex[SkillCatagory]];
+		int SkillHUDIcon = GetCVAR("drpg_skill_icon");
+		int SkillHUDDescription = GetCVAR("drpg_skill_description");
+		int SkillHUDAlign = GetCVAR("drpg_skill_align");
+		int SkillHUDX = -FixedDiv(GetCVAR("drpg_skill_x"), 100);
+		int SkillHUDY = FixedDiv(GetCVAR("drpg_skill_y"), 100);
+		
+		// Set HUD Size
+		// SetHUDSize(800, 600, false);
+		
+		// Alignment
+		if (SkillHUDAlign == 0) // Left
+		{
+			SkillHUDX = -FixedDiv(GetCVAR("drpg_skill_x"), 100);
+
+			if (SkillHUDIcon == 1)
+				PrintSprite(SkillIcon, 51, SkillHUDX, -SkillHUDY + 0.075, 0.1);
+		}
+		if (SkillHUDAlign == 1) // Centered/Right
+		{
+			SkillHUDX = FixedDiv(GetCVAR("drpg_skill_x"), 100) + 1.0;
+
+			if (SkillHUDIcon == 1)
+				PrintSprite(SkillIcon, 51, SkillHUDX, -SkillHUDY + 0.075, 0.1);
+		}
+
+		// Print the catagory
+		SetFont("SMALLFONT");
+		HudMessage(s:SkillCatagories[SkillCatagory];
+				   HUDMSG_PLAIN, 52, CR_WHITE, SkillHUDX, SkillHUDY, 0.1);
+
+		// Scale EP costs to skill level
+		int SkillLvl = CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+		int CurrentLevel = CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+		int MaxLevel = SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+		int SkillCost = SkillCosts[SkillCatagory][SkillIndex[SkillCatagory]] * CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+		switch (GameSkill())
+		{
+			case 5: SkillCost = FixedMul(SkillCost, 1.5); break;
+			case 6: SkillCost = FixedMul(SkillCost, 2.0); break;
+			case 7: SkillCost = FixedMul(SkillCost, 2.5); break;
+		}
+		
+		// Print the skill name
+		if (SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] == 0)
+			HudMessage(s:SkillData[SkillCatagory][SkillIndex[SkillCatagory]][0];
+					   HUDMSG_PLAIN, 53, CR_RED, SkillHUDX, SkillHUDY - 0.025, 0.1);
+		else
+			HudMessage(s:SkillData[SkillCatagory][SkillIndex[SkillCatagory]][0],
+					   s:" (", d:CurrentLevel, s:"/", d:MaxLevel, s:") \cn(", d:SkillCost, s:")";
+					   HUDMSG_PLAIN, 53, CR_GREEN, SkillHUDX, SkillHUDY - 0.025, 0.1);
+		
+		// Print the skill description
+		if (SkillHUDDescription == 1)
+			for (int i = 0; i < MAX_CATAGORIES; i++)
+				if (i == SkillCatagory)
+					if (CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] == 0)
+						HudMessage(s:SkillData[SkillCatagory][SkillIndex[SkillCatagory]][SkillLvl + 1];
+								   HUDMSG_FADEOUT, 54, CR_YELLOW, SkillHUDX, SkillHUDY - 0.06, 3.0, 1.0);
+					else
+						HudMessage(s:SkillData[SkillCatagory][SkillIndex[SkillCatagory]][SkillLvl];
+								   HUDMSG_FADEOUT, 54, CR_YELLOW, SkillHUDX, SkillHUDY - 0.06, 3.0, 1.0);
+		
+		delay(1);
+	}
+}
+
+script "SkillCatagoryUp" (void)
+{
+	// If you're dead, terminate
+	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+
+	if (SkillCatagory > 0)
+		SkillCatagory--;
+
+	ActivatorSound("menu/move", 127);
+}
+
+script "SkillCatagoryDown" (void)
+{
+	// If you're dead, terminate
+	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+
+	if (SkillCatagory < MAX_CATAGORIES - 1)
+		SkillCatagory++;
+
+	ActivatorSound("menu/move", 127);
+}
+
+script "SkillUp" (void)
+{
+	// If you're dead, terminate
+	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+
+	if (SkillIndex[SkillCatagory] > 0)
+		SkillIndex[SkillCatagory]--;
+	
+	ActivatorSound("menu/move", 127);
+}
+
+script "SkillDown" (void)
+{
+	// If you're dead, terminate
+	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+
+	if (SkillIndex[SkillCatagory] < CatagoryMax[SkillCatagory] - 1)
+		SkillIndex[SkillCatagory]++;
+	
+	ActivatorSound("menu/move", 127);
+}
+
+script "SkillLevelUp" (void)
+{
+	// If you're dead, terminate
+	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+
+	if (CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] < SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]])
+		CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]]++;
+
+	ActivatorSound("menu/move", 127);
+}
+
+script "SkillLevelDown" (void)
+{
+	// If you're dead, terminate
+	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+
+	if (CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] > 1)
+		CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]]--;
+
+	ActivatorSound("menu/move", 127);
+}
+
+// Handles the Transportation system
+script "Transport" (void)
+{
+	// Fade Screen
+	FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 1.0);
+	
+	// Freeze Player
+	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+	
+	// Delay and unfreeze Player
+	Delay(35);
+	SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+	
+	// Transport
+	if (!InBase)
+	{
+		LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+		Teleport_NewMap(999, 0, 0);
+		InBase = true;
+		Transported = true;
+	}
+	else
+	{
+		RefundEP();
+		Teleport_NewMap(LevelNum, 0, 0);
+		InBase = false;
+		Transported = true;
+	}
+}
+
+function void RefundEP(void)
+{
+	int EPCost = SkillCosts[SkillCatagory][SkillIndex[SkillCatagory]] * CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+	
+	// Scale EP costs to skill level
+	switch (GameSkill())
+	{
+		case 5: EPCost = FixedMul(EPCost, 1.5); break;
+		case 6: EPCost = FixedMul(EPCost, 2.0); break;
+		case 7: EPCost = FixedMul(EPCost, 2.5); break;
+	}
+	
+	EP += EPCost;
+}
+
+// Heal
+function void Heal(void)
+{
+	FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0, 1.0);
+	HealThing(Energy * 10);
+	ActivatorSound("skills/heal", 127);
+	
+	// Overdrive - Heal Summoned Monsters, Revive them if they are dead and haven't been deleted yet
+	if (Overdrive)
+	{
+		FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0, 2.0);
+		for (int i = 2100; i <= SummonID; i++)
+		{
+			SetActorProperty(i, APROP_HEALTH, GetActorProperty(i, APROP_HEALTH) + (Energy * 10));
+			
+			if (GetActorProperty(i, APROP_HEALTH) > GetActorProperty(i, APROP_SPAWNHEALTH))
+				SetActorProperty(i, APROP_HEALTH, GetActorProperty(i, APROP_SPAWNHEALTH));
+		}
+	}
+	
+	/* Refund - If your health is max or above
+	if (GetActorProperty(0, APROP_HEALTH) >= GetActorProperty(0, APROP_SPAWNHEALTH))
+		RefundEP();
+	*/
+}
+
+// Repair Armor
+function void Repair(void)
+{
+	int RepairLevel = CurrentSkillLevel[1];
+
+	FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
+	GiveInventory("ArmorBonus", Energy * 10);
+	ActivatorSound("skills/repair", 127);
+}
+
+// Powerups
+function void Powerup(int Type)
+{
+	// Levels
+	int InvulnLevel = CurrentSkillLevel[MAX_SKILLS + 0];
+	int InvisLevel = CurrentSkillLevel[MAX_SKILLS + 1];
+	int TimeLevel = CurrentSkillLevel[MAX_SKILLS + 2];
+	
+	switch (Type)
+	{
+		case 1: // Invulnerability
+			ActivatorSound("powerups/protect", 127);
+			GiveInventory(StrParam(s:"SkillInvulnerability", d:InvulnLevel), 1);
+			break;
+		case 2: // Invisibility
+			ActivatorSound("powerups/invis", 127);
+			GiveInventory(StrParam(s:"SkillInvisibility", d:InvisLevel), 1);
+			break;
+		case 3: // Time Freeze
+			BulletTime(TimeLevel);
+			break;
+		case 4: // Iron Feet
+			ActivatorSound("powerups/suit", 127);
+			GiveInventory("PowerIronFeet", 1);
+			break;
+		case 5: // Night Vision
+			ActivatorSound("powerups/light", 127);
+			GiveInventory("PowerLightAmp", 1);
+			break;
+		case 6: // Berserk
+			ActivatorSound("powerups/berserk", 127);
+			GiveInventory("Berserk", 1);
+			break;
+		case 7: // Mind Mapping
+			ActivatorSound("powerups/map", 127);
+			GiveInventory("AllMap", 1);
+			break;
+		case 8: // Drop Rune
+			DropRune();
+			break;
+		case 9: // Drop Ammo
+			DropAmmo();
+			break;
+	}
+}
+
+// Drops a random Rune in front of you
+function void DropRune(void)
+{
+	int Angle = GetActorAngle(0);
+	int X = GetActorX(0) + cos(Angle) * 96;
+	int Y = GetActorY(0) + sin(Angle) * 96;
+	int Z = GetActorZ(0) + 48.0;
+	str Rune;
+	
+	switch (Random(1, 9))
+	{
+		case 1: Rune = "StrengthRune";		break;
+		case 2: Rune = "DrainRune";			break;
+		case 3: Rune = "EndlessRune";		break;
+		case 4: Rune = "ResistanceRune";	break;
+		case 5: Rune = "RegenerationRune";	break;
+		case 6: Rune = "FrightRune";		break;
+		case 7: Rune = "GhostRune";			break;
+		case 8: Rune = "HighJumpRune";		break;
+		case 9: Rune = "HasteRune";			break;
+	}
+	
+	if (!Spawn(Rune, X, Y, Z, 0, Angle) == 0)
+	{
+		ActivatorSound("skills/drop", 127);
+		Spawn("TeleportFog", X, Y, Z, 0, Angle);
+	}
+	else
+	{
+		ActivatorSound("menu/error", 127);
+		RefundEP();
+	}
+}
+
+// Drops a backpack in front of you
+function void DropAmmo(void)
+{
+	int Angle = GetActorAngle(0);
+	int X = GetActorX(0) + cos(Angle) * 96;
+	int Y = GetActorY(0) + sin(Angle) * 96;
+	int Z = GetActorZ(0) + 48.0;
+	
+	if (!Spawn("BigBackPack", X, Y, Z, 0, Angle) == 0)
+	{
+		ActivatorSound("skills/drop", 127);
+		Spawn("TeleportFog", X, Y, Z, 0, Angle);
+	}
+	else
+	{
+		ActivatorSound("menu/error", 127);
+		RefundEP();
+	}
+}
+
+// Projecctile Attack skills will use this
+function void Projectile(int Type)
+{
+	int X = GetActorX(0);
+	int Y = GetActorY(0);
+	int Z = GetActorZ(0);
+	int Pitch = GetActorPitch(0);
+	int Angle = GetActorAngle(0);
+	int XSpeed = FixedMul(cos(Angle), FixedMul(cos(Pitch), 16.0));
+	int YSpeed = FixedMul(sin(Angle), FixedMul(cos(Pitch), 16.0));
+	int ZSpeed = -FixedMul(sin(Pitch), 16.0);
+	int FireHeight = GetActorViewHeight(0) * 780 / 1000;
+	int AngleAdd = FixedDiv(1.0, Energy);
+	int Radius = 64.0;
+	int Offset = 0;
+	str ProjType;
+	int ProjLevel;
+	
+	// Hack - Can't use projectile skills in the water)
+	if (GetActorProperty(0, APROP_WATERLEVEL) > 0)
+	{
+		AmbientSound("menu/error", 127);
+		RefundEP();
+		return;
+	}
+	
+	// Y Offset
+	if (!GetCVAR("drpg_ext_brutal"))
+		Offset = 74.0;
+	else
+		Offset = 8.0;
+	
+	// Projectiles
+	switch (Type)
+	{
+		case 1: ProjType = "Fireball"; 		ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 0]; break;
+		case 2: ProjType = "IceMissile"; 	ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 1]; break;
+	}
+
+	// Initial Projectile
+	SpawnProjectile(0, ProjType, 0, 0, 0, 0, 2001);
+	SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
+	SetActorAngle(2001, Angle);
+	SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
+	
+	// Multiple Projectiles
+	for (int i = 0; i < Energy; i++)
+	{
+		SpawnProjectile(0, StrParam(s:ProjType, d:ProjLevel), 0, 0, 0, 0, 2002);
+
+		// TODO: Overdrive
+		if (Overdrive)
+		{
+			X = GetActorX(0) + FixedMul(cos(Angle), Radius) + Random(-Radius, Radius);
+			Y = GetActorY(0) + FixedMul(sin(Angle), Radius) + Random(-Radius, Radius);
+		}
+		else
+			SetActorProperty(2002, APROP_ALPHA, 0.0);
+
+		SetActorVelocity(2002, XSpeed, YSpeed, ZSpeed, false, false);
+		SetActorAngle(2002, Angle);
+		SetActorPosition(2002, X, Y, Z + FireHeight + Offset, 0);
+	}
+}
+
+// Summoning
+function void Summon(int Type)
+{
+	int Angle = GetActorAngle(0);
+	int X = GetActorX(0) + cos(Angle) * 96;
+	int Y = GetActorY(0) + sin(Angle) * 96;
+	int Z = GetActorZ(0);
+	int MarineLevel = CurrentSkillLevel[(MAX_SKILLS * 4) + 0];
+	bool Success;
+	
+	switch (Type)
+	{
+		// Marines
+		case 1:
+			if (!GetCVAR("drpg_ext_brutal"))
+				Switch (MarineLevel)
+				{
+					case 1: Success = Spawn("Marine", X, Y, Z, ++SummonID, Angle);					break;
+					case 2: Success = Spawn("Marine_Shotgun", X, Y, Z, ++SummonID, Angle);			break;
+					case 3: Success = Spawn("Marine_SSG", X, Y, Z, ++SummonID, Angle);				break;
+					case 4: Success = Spawn("Marine_Minigun", X, Y, Z, ++SummonID, Angle);			break;
+					case 5: Success = Spawn("Marine_Rocket", X, Y, Z, ++SummonID, Angle);			break;
+					case 6: Success = Spawn("Marine_Plasma", X, Y, Z, ++SummonID, Angle);			break;
+					case 7: Success = Spawn("Marine_Railgun", X, Y, Z, ++SummonID, Angle);			break;
+					case 8: Success = Spawn("Marine_BFG", X, Y, Z, ++SummonID, Angle);				break;
+				}
+			else
+				Switch (MarineLevel)
+				{
+					case 1: Success = Spawn("MarinePistol", X, Y, Z, ++SummonID, Angle);			break;
+					case 2: Success = Spawn("MarineShotgun", X, Y, Z, ++SummonID, Angle);			break;
+					case 3: Success = Spawn("MarineSSG", X, Y, Z, ++SummonID, Angle);				break;
+					case 4: Success = Spawn("MarineChaingun", X, Y, Z, ++SummonID, Angle);;			break;
+					case 5: Success = Spawn("MarineRocket", X, Y, Z, ++SummonID, Angle);			break;
+					case 6: Success = Spawn("MarinePlasma", X, Y, Z, ++SummonID, Angle);			break;
+					case 7: Success = Spawn("MarineRailgun", X, Y, Z, ++SummonID, Angle);			break;
+					case 8: Success = Spawn("MarineBFG", X, Y, Z, ++SummonID, Angle);				break;
+				}
+			break;
+		
+		// Monsters
+		case 2: 			Success = Spawn("FriendlyZombieman", X, Y, Z, ++SummonID, Angle);		break;
+		case 3: 			Success = Spawn("FriendlyShotgunGuy", X, Y, Z, ++SummonID, Angle);		break;
+		case 4: 			Success = Spawn("FriendlyChaingunGuy", X, Y, Z, ++SummonID, Angle);		break;
+		case 5: 			Success = Spawn("FriendlyDoomImp", X, Y, Z, ++SummonID, Angle);			break;
+		case 6: 			Success = Spawn("FriendlyDemon", X, Y, Z, ++SummonID, Angle);			break;
+		case 7: 			Success = Spawn("FriendlyCacodemon", X, Y, Z, ++SummonID, Angle);		break;
+		case 8: 			Success = Spawn("FriendlyHellKnight", X, Y, Z, ++SummonID, Angle);		break;
+		case 9: 			Success = Spawn("FriendlyBaronOfHell", X, Y, Z, ++SummonID, Angle);		break;
+		case 10: 			Success = Spawn("FriendlyLostSoul", X, Y, Z, ++SummonID, Angle);		break;
+		case 11: 			Success = Spawn("FriendlyPainElemental", X, Y, Z, ++SummonID, Angle);	break;
+		case 12: 			Success = Spawn("FriendlyRevenant", X, Y, Z, ++SummonID, Angle);		break;
+		case 13: 			Success = Spawn("FriendlyFatso", X, Y, Z, ++SummonID, Angle);			break;
+		case 14: 			Success = Spawn("FriendlyArachnotron", X, Y, Z, ++SummonID, Angle);		break;
+		case 15: 			Success = Spawn("FriendlyArchvile", X, Y, Z, ++SummonID, Angle);		break;
+		case 16: 			Success = Spawn("FriendlyCyberdemon", X, Y, Z, ++SummonID, Angle);		break;
+		case 17: 			Success = Spawn("FriendlySpiderMastermind", X, Y, Z, ++SummonID, Angle);break;
+	}
+	
+	Spawn("TeleportFog", X, Y, Z, SummonID, Angle);
+	SetActorAngle(SummonID, Angle);
+	SetActorProperty(SummonID, APROP_FRIENDLY, 1);
+	SetActorState(SummonID, "See");
+	SetThingSpecial(SummonID, 0, Type, SummonID);
+
+	// Refund - Give EP back if the summon failed
+	if (!Success)
+	{
+		ActivatorSound("menu/error", 127);
+		RefundEP();
+	}
+}
+
+// Breaks down current Armor into Credits
+function void BreakdownArmor(void)
+{
+	int Armor = CheckInventory("BasicArmor");
+
+	if (Armor > 0)
+	{
+		for (int i = 0; i <= Armor - 1; i++)
+		{
+			TakeInventory("BasicArmor", 1);
+			GiveInventory("Credits1", 1);
+		}
+		ActivatorSound("skills/breakdown", 127);
+	}
+	else
+		Print(s:"You aren't wearing any Armor!");
+}
+
+// Drops a backpack in front of you
+function void ForceWall(void)
+{
+	int Angle = GetActorAngle(0);
+	int X = GetActorX(0) + cos(Angle) * 96;
+	int Y = GetActorY(0) + sin(Angle) * 96;
+	int Z = GetActorZ(0);
+	int WallLevel = CurrentSkillLevel[(MAX_SKILLS * 5) + 1];
+	
+	switch (WallLevel)
+	{
+		case 1:
+			if (!Spawn("ForceField", X, Y, Z, 1999, Angle) == 0) {}
+			else
+			{
+				ActivatorSound("menu/error", 127);
+				RefundEP();
+			}
+			break;
+		case 2:
+			if (!Spawn("ForceField2", X, Y, Z, 1999, Angle) == 0) {}
+			else
+			{
+				ActivatorSound("menu/error", 127);
+				RefundEP();
+			}
+			break;
+	}
+}
+
+// Rallies (teleports) your summoned monster/marines around you
+function void Rally(void)
+{
+	int X = GetActorX(0);
+	int Y = GetActorY(0);
+	int Z = GetActorZ(0);
+	int Angle = GetActorAngle(0);
+	
+	for (int i = 2100; i < 3000; i++)
+		if (GetActorProperty(i, APROP_HEALTH) > 0)
+			SetActorPosition(i, X, Y, Z, true);
+		
+	ActivatorSound("skills/rally", 127);
+}
+
+// Unsummon - Removes all actors under the player's control
+function void Unsummon(void)
+{
+	bool Kill = Overdrive;
+	int UnsummonLevel = CurrentSkillLevel[(MAX_SKILLS * 5) + 2];
+	int EPAdd;
+	
+	// Refund if you have no summons active
+	if (SummonID == 2100)
+	{
+		ActivatorSound("menu/error", 127);
+		SetFont("BIGFONT");
+		Print(s:"\cgYou have no summoned monsters");
+		return;
+	}
+	
+	for (int i = 2100; i <= SummonID; i++)
+	{
+		if (!Kill && UnsummonLevel == 2 && GetActorProperty(i, APROP_HEALTH) > 0)
+			EPAdd += 25;
+		
+		// Overdrive - Remove summons (teleport out) instead of killing them
+		if (Kill && GetActorProperty(i, APROP_HEALTH) > 0)
+			Thing_Damage(i, 1000000);
+		else
+		{
+			SpawnForced("TeleportFog", GetActorX(i), GetActorY(i), GetActorZ(i), 0, 0);
+			Thing_Remove(i);
+		}
+	}
+	
+	if (UnsummonLevel == 2)
+	{
+		EP += EPAdd;
+		if (EP > EPMax) EP = EPMax;
+	}
+
+	SummonID = 2100;
+	ActivatorSound("skills/unsummon", 127);
+	FadeRange(192, 0, 0, 0.5, 192, 0, 0, 0.0, 1.0);
+}
+
+// Magnetize - Pull some (Luck based for now) items to the player's position
+function void Magnet(void)
+{
+	int X;
+	int Y;
+	int Z;
+	int Angle;
+	int AngleAdd;
+	int Radius;
+
+	// Determine Circie Size
+	for (int j = 3000; j <= MaxItems; j++)
+		if (IsTIDUsed(j)) AngleAdd++;
+	
+	// Set Circle Size
+	Radius = GetCVAR("drpg_skill_radius") << 16;
+	AngleAdd = FixedDiv(1.0, AngleAdd);
+
+	// Create the Circle
+	for (int i = 3000; i <= MaxItems; i++)
+	{
+		X = GetActorX(0) + FixedMul(cos(Angle), Radius);
+		Y = GetActorY(0) + FixedMul(sin(Angle), Radius);
+		Z = GetActorZ(0) + 48.0;
+		
+		if (!IsTIDUsed(i)) continue;
+		
+		if (Overdrive)
+			SetActorPosition(i, GetActorX(0), GetActorY(0), GetActorZ(0), 0);
+		else
+			SetActorPosition(i, X, Y, Z, 0);
+			
+		Angle += AngleAdd;
+	}
+	
+	// FX
+	FadeRange(0, 0, 0, 0.75, 0, 0, 0, 0.0, 1.0);
+	ActivatorSound("skills/magnet", 127);
+}
+
+// Abuse PowerTimeFreezer to create a bullet-time effect
+function void BulletTime(int Mode)
+{
+	BulletTimeMode = Mode;
+	BulletTimeTimer = 350;
+	
+	// Remove duplicate TimeFreezerSounds
+	Thing_Remove(1998);
+	Thing_Remove(1999);
+	
+	if (Mode == 1)
+	{
+		SpawnForced("TimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
+		SetActorState(1999, "Spawn");
+		TakeInventory("PowerTimeFreezer", 1);
+		GiveInventory("TimeFreezerQuick", 1);
+	}
+	if (Mode == 2)
+	{
+		SpawnForced("TimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
+		SetActorState(1999, "Spawn");
+		GiveInventory("TimeFreezer", 1);
+	}
+}
+
+// Because delays don't fucking work in functions...
+function void CheckSkills(void)
+{
+	// Aura-related vars to save typing :P
+	int X = GetActorX(0);
+	int Y = GetActorY(0);
+	int Z = GetActorZ(0);
+	int RedAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 0];
+	int GreenAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 1];
+	int PinkAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 2];
+	int BlueAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 3];
+	int PurpleAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 4];
+	int OrangeAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 5];
+	int DarkBlueAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 6];
+	int YellowAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 7];
+	int Gained = 0;
+	SkillCostMult = 1.0;
+	
+	// Give the player the Aura item while an Aura is active (for SBARINFO hax)
+	if (AuraTimer > 0)
+		GiveInventory("Aura", 1);
+	else
+		TakeInventory("Aura", 1);
+	
+	// Aura Timer handling
+	if (AuraTimer > 0)
+	{
+		if (!CheckInventory("MenuFreezer")) // lolhax
+			switch (Aura)
+			{
+				// Red Aura
+				case 1:
+					SpawnForced("RedAura", X, Y, Z + 32, 2300, 0);
+					FadeRange(255, 0, 0, 0.1, 255, 0, 0, 0.0, 1.0);
+					if (RedAuraLevel >= 1)
+						GiveInventory("RedAura1", 1);
+					if (RedAuraLevel >= 2)
+						GiveInventory("RedAura2", 1);
+					if (RedAuraLevel >= 3)
+						GiveInventory("RedAura3", 1);
+					break;
+				// Green Aura
+				case 2:
+					SpawnForced("GreenAura", X, Y, Z + 32, 2300, 0);
+					FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0.0, 1.0);
+					if (GreenAuraLevel >= 1 && GreenAuraLevel < 2)
+						DamageFactor /= 2;
+					if (GreenAuraLevel >= 2)
+						DamageFactor /= 4;
+					if (GreenAuraLevel == 3)
+						GiveInventory("GreenAura1", 1);
+					if (GreenAuraLevel == 4)
+						GiveInventory("GreenAura2", 1);
+					if (GreenAuraLevel >= 5)
+						GiveInventory("GreenAura3", 1);
+					break;
+				// Pink Aura
+				case 3:
+					SpawnForced("PinkAura", X, Y, Z + 32, 2300, 0);
+					FadeRange(255, 0, 255, 0.1, 255, 0, 255, 0.0, 1.0);
+					if (PinkAuraLevel >= 1)
+						GiveInventory("PinkAura2", 1);
+					break;
+				// Blue Aura
+				case 4:
+					SpawnForced("CyanAura", X, Y, Z + 32, 2300, 0);
+					FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 1.0);
+					if (BlueAuraLevel == 1)
+						SkillCostMult = 1.33;
+					if (BlueAuraLevel == 2)
+						SkillCostMult = 2.0;
+					if (BlueAuraLevel == 3)
+						SkillCostMult = 4.0;
+					break;
+				// Purple Aura
+				case 5:
+					SpawnForced("PurpleAura", X, Y, Z + 32, 2300, 0);
+					FadeRange(255, 0, 128, 0.1, 255, 0, 128, 0.0, 1.0);
+					if (PurpleAuraLevel == 1)
+					{
+						HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
+						EPRate += FixedMul(Energy, 1.25) + FixedMul(Energy, 1.25);
+					}
+					if (PurpleAuraLevel == 2)
+					{
+						HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25) * 2;
+						EPRate += FixedMul(Energy, 1.25) + FixedMul(Energy, 1.25) * 2;
+					}
+					if (PurpleAuraLevel == 3)
+					{
+						HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25) * 3;
+						EPRate += FixedMul(Energy, 1.25) + FixedMul(Energy, 1.25) * 3;
+					}
+					if (PurpleAuraLevel == 4)
+					{
+						HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25) * 3;
+						EPRate += FixedMul(Energy, 1.25) + FixedMul(Energy, 1.25) * 3;
+						ShieldTimer = 0;
+					}
+					break;
+				// Orange Aura
+				case 6:
+					SpawnForced("OrangeAura", X, Y, Z + 32, 2300, 0);
+					FadeRange(255, 128, 0, 0.1, 255, 128, 0, 0.0, 1.0);
+					if (OrangeAuraLevel >= 1)
+						GiveInventory("OrangeAura1", 1);
+					if (OrangeAuraLevel >= 2)
+						GiveInventory("OrangeAura2", 1);
+					if (OrangeAuraLevel >= 3)
+						GiveInventory("OrangeAura3", 1);
+					break;
+				// Dark Blue Aura
+				case 7:
+					SpawnForced("BlueAura", X, Y, Z + 32, 2300, 0);
+					FadeRange(0, 0, 128, 0.1, 0, 0, 128, 0.0, 1.0);
+					if (Random(1, 350) < 35)
+					{
+						if (DarkBlueAuraLevel >= 1)
+							GiveInventory("Clip", 1);
+						if (DarkBlueAuraLevel >= 2)
+							GiveInventory("Shell", 1);
+						if (DarkBlueAuraLevel >= 3)
+							GiveInventory("RocketAmmo", 1);
+						if (DarkBlueAuraLevel >= 4)
+							GiveInventory("Cell", 1);
+					}
+					break;
+				// Yellow Aura
+				case 8:
+					SpawnForced("YellowAura", X, Y, Z + 32, 2300, 0);
+					FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 1.0);
+					if (YellowAuraLevel >= 1)
+					{
+						if (Random(1, 350) < 35)
+							GiveInventory("Credits", Random(0, RankLevel + 1));
+						MoneyChance[0] *= 2;
+						MoneyChance[1] *= 2;
+						MoneyChance[2] *= 2;
+						MoneyChance[3] *= 2;
+						MoneyChance[4] *= 2;
+						MoneyChance[5] *= 2;
+						MoneyChance[6] *= 2;
+					}
+					if (YellowAuraLevel >= 2)
+					{
+						if (Random(1, 350) < 35)
+							GiveInventory("Credits", Random(0, RankLevel + 1));
+						HealthChance[0] *= 2;
+						HealthChance[1] *= 2;
+						HealthChance[2] *= 2;
+					}
+					if (YellowAuraLevel >= 3)
+					{
+						if (Random(1, 350) < 35)
+							GiveInventory("Credits", Random(0, RankLevel + 1));
+						ArmorChance[0] *= 2;
+						ArmorChance[1] *= 2;
+						ArmorChance[2] *= 2;
+						ArmorChance[3] *= 2;
+						ArmorChance[4] *= 2;
+					}
+					if (YellowAuraLevel >= 4)
+					{
+						if (Random(1, 350) < 35)
+							GiveInventory("Credits", Random(0, RankLevel + 1));
+						PowerupChance *= 2;
+					}
+					if (YellowAuraLevel >= 5)
+					{
+						if (Random(1, 350) < 35)
+							GiveInventory("Credits", Random(0, RankLevel + 1));
+						RuneChance *= 2;
+					}
+					if (YellowAuraLevel >= 6)
+					{
+						if (Random(1, 350) < 35)
+							GiveInventory("Credits", Random(0, RankLevel + 1));
+						TokenChance *= 2;
+					}
+					if (YellowAuraLevel >= 7)
+					{
+						if (Random(1, 350) < 35)
+							GiveInventory("Credits", Random(0, RankLevel + 1));
+						AccessoryChance *= 2;
+						ShieldChance *= 2;
+					}
+					break;
+			}
+		
+		// Stupid hack so that the AuraTimer doesn't decrease when PowerTimeFreezer is active
+		if ((AuraTimer > 0 || AuraTimer < 1050) && CheckInventory("MenuFreezer") > 0)
+			AuraTimer++;
+
+		// Decrease timer this tic and calculate HUD timer amount
+		AuraTimer--;
+		AuraTimerHUD = AuraTimer / 35 + 1;
+	}
+	
+	// Force Wall Handling
+	if (GetActorProperty(1999, APROP_ALPHA) > 0)
+	{
+		int WallAngle = GetActorAngle(0);
+		int WallX = GetActorX(0) + cos(WallAngle) * 96;
+		int WallY = GetActorY(0) + sin(WallAngle) * 96;
+		int WallZ = GetActorZ(0);
+		
+		SetActorPosition(1999, WallX, WallY, WallZ, false);
+		SetActorAngle(1999, WallAngle);
+	}
+	
+	// Bullet-Time timer handling
+	if (BulletTimeTimer >= 0)
+	{
+		/* Sigh, this is broken because SOMEBODY decided sounds shouldn't play
+		   when PowerTimeFreezer is active -_-
+		if (BulletTimeTimer % 100)
+			ActivatorSound("skills/bullettime", 127);
+		*/
+		
+		if (BulletTimeTimer % 3)
+			GiveInventory("TimeFreezerQuick", 1);
+		
+		BulletTimeTimer--;
+	}
+}
+
+// Updates Skills with dynamic descriptions (calculations, etc)
+function void CheckSkillDescriptions(void)
+{
+	int Healing;
+	int RepairArmor;
+	int Fireball;
+	int IceMissile;
+	
+	// Healing - Heal
+	for (Healing = 1; Healing <= SkillLevelMax[0][0]; Healing++)
+		SkillData[0][0][Healing] = StrParam(s:"Recover ", d:Energy * 10, s:" HP");
+
+	// Healing - Repair Armor
+	for (RepairArmor = 1; RepairArmor <= SkillLevelMax[0][1]; RepairArmor++)
+		SkillData[0][1][RepairArmor] = StrParam(s:"Repair ", d:Energy * 10, s:" Armor");
+	
+	// Attacks - Fireball
+	for (Fireball = 1; Fireball <= SkillLevelMax[3][0]; Fireball++)
+		SkillData[3][0][Fireball] = StrParam(s:"Shoots a fireball\n\ca", d:Fireball * 10, s:" Fire Damage\n\cv", d:Energy, s:" Projectiles");
+
+	// Attacks - Ice Missile
+	for (IceMissile = 1; IceMissile <= SkillLevelMax[3][1]; IceMissile++)
+		SkillData[3][1][IceMissile] = StrParam(s:"Shoots an Ice Missile\n\cn", d:IceMissile * 10, s:" Ice Damage\n\cv", d:Energy, s:" Projectiles");
+}

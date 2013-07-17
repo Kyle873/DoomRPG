@@ -1,0 +1,88 @@
+// Base class for all Grenades
+actor BaseGrenade
+{
+	Damage 50
+	Speed 20
+	Gravity 0.5
+	BounceType "Doom"
+	
+	Projectile
+	-NOGRAVITY
+	+GRENADETRAIL
+	
+	DeathSound "grenade/explode"
+	
+	States
+	{
+	Spawn:
+		GRN1 A -1 Bright 
+		Stop
+	Death:
+		MISL B 8 Bright A_Explode
+		MISL C 6 Bright
+		MISL D 4 Bright
+		Stop
+	Grenade:
+		GRN1 A 1000 A_Die
+		Wait
+	Detonate:
+		MISL B 4 A_Scream
+		MISL C 6 A_Detonate
+		MISL D 10
+		Stop
+	}
+}
+
+// Frag Grenade
+actor GrenadeFrag : ArtiPoisonBagShooter 10099
+{
+	-FLOATBOB
+	+INVBAR
+	
+	MissileType "FragGrenade"
+	
+	Inventory.Amount 1
+	Inventory.DefMaxAmount
+	Inventory.PickupMessage "You got a Frag Grenade"
+	Inventory.UseSound "grenade/out"
+	Inventory.Icon "GRN1A0"
+	
+	States
+	{
+	Spawn:
+		GRN1 A 1 Bright
+		Loop
+	}
+}
+
+actor FragGrenade : BaseGrenade
+{
+}
+
+// Poison Grenade
+actor GrenadePoison : GrenadeFrag
+{
+	MissileType "PoisonGrenade"
+	
+	Inventory.PickupMessage "You got a Poison Grenade"
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 0]"
+}
+
+actor PoisonGrenade : BaseGrenade
+{
+	Damage 20
+	DamageType Poison
+	PoisonDamage 100, 350
+	
+	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 0]"
+	
+	States
+	{
+	Death:
+		MISL B 8 Bright A_Explode
+		MISL C 6 Bright
+		MISL D 4 Bright
+		Stop
+	}
+}
