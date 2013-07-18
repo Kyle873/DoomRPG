@@ -227,16 +227,16 @@ Credits
 
 Testers
 -------
-Ryan Cordell
-LordMisfit
-Serious Cacodemon
-yoshi314
-karmakazi
-valherran
--Ghost-
-Ribo Zurai
-Frozenwolf150
-dijosef
+- Ryan Cordell
+- LordMisfit
+- Serious Cacodemon
+- yoshi314
+- karmakazi
+- valherran
+- -Ghost-
+- Ribo Zurai
+- Frozenwolf150
+- dijosef
 
 Resources
 ---------
