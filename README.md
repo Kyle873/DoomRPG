@@ -199,7 +199,6 @@ In order
 
 - Configurable base X/Y offset for redone menu system
 - Add some sort of teleporter beacon you can buy at the store that lets you call in marine reinforcements?
-- Scripted auto-healing/auto-armor with configurable percentage checks
 - Option to auto buy ammo for current weapon when it's about to run out.
 - Finish unique monster system
 
