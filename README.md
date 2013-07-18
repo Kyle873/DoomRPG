@@ -240,9 +240,9 @@ dijosef
 
 Resources
 ---------
-SBrightmaps by z86 (http://forum.zdoom.org/viewtopic.php?f=19&t=29792)
-Cosmetic Doom by DecemberMan (http://forum.zdoom.org/viewtopic.php?f=19&t=32622)
-Brutal Doom by Sergeant_Mark_IV (http://forum.zdoom.org/viewtopic.php?t=28920)
-Doom Center by Katamori (http://www.doomworld.com/vb/wads-mods/54022-doom-center-do-you-know-that)
+- SBrightmaps by z86 (http://forum.zdoom.org/viewtopic.php?f=19&t=29792)-
+- Cosmetic Doom by DecemberMan (http://forum.zdoom.org/viewtopic.php?f=19&t=32622)
+- Brutal Doom by Sergeant_Mark_IV (http://forum.zdoom.org/viewtopic.php?t=28920)
+- Doom Center by Katamori (http://www.doomworld.com/vb/wads-mods/54022-doom-center-do-you-know-that)
 
 If I forgot or missed anyone, be sure to come and yell at me about it, I'm kind of forgetful sometimes...
