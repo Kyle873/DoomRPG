@@ -793,13 +793,15 @@ function void IncreaseStat(int Stat)
 		case 7: StatAmount = Luck; 			break;
 	}
 
+	if (GetCVAR("drpg_statcost") == 0) // Normal Costs
+		StatAmount = 1;
 	if (GetCVAR("drpg_statcost") == 1) // Progressive Costs
 		StatAmount = StatAmount + 1;
 	if (GetCVAR("drpg_statcost") == 2) // Tiered Costs
-		StatAmount = StatAmount / 10 + 1;
+		StatAmount = (StatAmount / 10) + 1;
 
 	// Make sure you have enough Stat Tokens
-	if (StatTokens <= StatAmount && Stat == 0)
+	if (StatTokens < StatAmount && Stat == 0)
 	{
 		ActivatorSound("menu/error", 127);
 		SetFont("BIGFONT");
@@ -823,10 +825,7 @@ function void IncreaseStat(int Stat)
 	if (Stat == 0)
 		ActivatorSound("menu/move", 127);
 		
-	if (GetCVAR("drpg_statcost") > 0) // Tiered or Progressive Stat Costs
-		TakeInventory("StatToken", StatAmount);
-	else							  // Normal Stat Costs
-		TakeInventory("StatToken", 1);
+	TakeInventory("StatToken", StatAmount);
 }
 
 function void IncreaseSkill(void)
