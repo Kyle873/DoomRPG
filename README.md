@@ -220,3 +220,29 @@ Elemental System
 - Give monsters elements
 - Projectile, nova, aura, hitscan? skills for each element as well as enemy attacks
 - Resistance/amplification accessories
+
+
+Credits
+=======
+
+Testers
+-------
+Ryan Cordell
+LordMisfit
+Serious Cacodemon
+yoshi314
+karmakazi
+valherran
+-Ghost-
+Ribo Zurai
+Frozenwolf150
+dijosef
+
+Resources
+---------
+SBrightmaps by z86 (http://forum.zdoom.org/viewtopic.php?f=19&t=29792)
+Cosmetic Doom by DecemberMan (http://forum.zdoom.org/viewtopic.php?f=19&t=32622)
+Brutal Doom by Sergeant_Mark_IV (http://forum.zdoom.org/viewtopic.php?t=28920)
+Doom Center by Katamori (http://www.doomworld.com/vb/wads-mods/54022-doom-center-do-you-know-that)
+
+If I forgot or missed anyone, be sure to come and yell at me about it, I'm kind of forgetful sometimes...
