@@ -434,6 +434,18 @@ int SkillData[MAX_CATAGORIES][MAX_SKILLS][20] =
 	}
 };
 
+function int ScaleEPCost(int Cost)
+{
+	switch (GameSkill())
+	{
+		case 5: Cost = FixedMul(Cost, 1.5); break;
+		case 6: Cost = FixedMul(Cost, 2.0); break;
+		case 7: Cost = FixedMul(Cost, 2.5); break;
+	}
+	
+	return Cost;
+}
+
 // Use Skill Script
 script "UseSkill" (int SkillTest)
 {
@@ -451,12 +463,7 @@ script "UseSkill" (int SkillTest)
 		Overdrive = true;
 
 	// Scale EP costs to skill level
-	switch (GameSkill())
-	{
-		case 5: EPCost = FixedMul(EPCost, 1.5); break;
-		case 6: EPCost = FixedMul(EPCost, 2.0); break;
-		case 7: EPCost = FixedMul(EPCost, 2.5); break;
-	}
+	EPCost = ScaleEPCost(EPCost);
 
 	// If you're in the Skills menu, select the highlighted skill instead
 	if (InMenu && Menu == 3)
@@ -620,6 +627,15 @@ script "DrawSkillHUD" enter
 		int SkillHUDX = -FixedDiv(GetCVAR("drpg_skill_x"), 100);
 		int SkillHUDY = FixedDiv(GetCVAR("drpg_skill_y"), 100);
 		
+		// Skill Level/Cost vars
+		int SkillLvl = CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+		int CurrentLevel = CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+		int MaxLevel = SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+		int SkillCost = SkillCosts[SkillCatagory][SkillIndex[SkillCatagory]] * CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+		
+		// Scale EP costs to skill level
+		SkillCost = ScaleEPCost(SkillCost);
+
 		// Set HUD Size
 		// SetHUDSize(800, 600, false);
 		
@@ -643,18 +659,6 @@ script "DrawSkillHUD" enter
 		SetFont("SMALLFONT");
 		HudMessage(s:SkillCatagories[SkillCatagory];
 				   HUDMSG_PLAIN, 52, CR_WHITE, SkillHUDX, SkillHUDY, 0.1);
-
-		// Scale EP costs to skill level
-		int SkillLvl = CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
-		int CurrentLevel = CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
-		int MaxLevel = SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
-		int SkillCost = SkillCosts[SkillCatagory][SkillIndex[SkillCatagory]] * CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
-		switch (GameSkill())
-		{
-			case 5: SkillCost = FixedMul(SkillCost, 1.5); break;
-			case 6: SkillCost = FixedMul(SkillCost, 2.0); break;
-			case 7: SkillCost = FixedMul(SkillCost, 2.5); break;
-		}
 		
 		// Print the skill name
 		if (SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] == 0)
@@ -781,13 +785,8 @@ function void RefundEP(void)
 	int EPCost = SkillCosts[SkillCatagory][SkillIndex[SkillCatagory]] * CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
 	
 	// Scale EP costs to skill level
-	switch (GameSkill())
-	{
-		case 5: EPCost = FixedMul(EPCost, 1.5); break;
-		case 6: EPCost = FixedMul(EPCost, 2.0); break;
-		case 7: EPCost = FixedMul(EPCost, 2.5); break;
-	}
-	
+	EPCost = ScaleEPCost(EPCost);
+
 	EP += EPCost;
 }
 
@@ -928,6 +927,7 @@ function void DropAmmo(void)
 }
 
 // Projecctile Attack skills will use this
+// WHY DOES THIS NEVER WORK RIGHT FJDFHDJGKLDHJFDGHDKSAGD
 function void Projectile(int Type)
 {
 	int X = GetActorX(0);
@@ -1083,7 +1083,7 @@ function void BreakdownArmor(void)
 		Print(s:"You aren't wearing any Armor!");
 }
 
-// Drops a backpack in front of you
+// Drops a Force Field in front of you
 function void ForceWall(void)
 {
 	int Angle = GetActorAngle(0);

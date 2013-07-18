@@ -210,7 +210,7 @@ script "OpenShop" (void)
 {
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
-
+	
 	InMenu = false;
 	
 	if (InShop)
@@ -255,6 +255,7 @@ script "SellAll" (int SellPage, int Silent)
 		for (int j = 0; j < ItemMax; j++)
 			if (CheckInventory(Shop[SellPage][i][0]) > 0)
 			{
+					// Oh god...
 					if (Shop[SellPage][i][0] == "HealthBonus" || Shop[SellPage][i][0] == "ArmorBonus") continue;
 					
 					TakeInventory(Shop[SellPage][i][0], 1);
@@ -267,15 +268,17 @@ script "SellAll" (int SellPage, int Silent)
 	if (SellPage == 7)
 		for (int k = 0; k < 8; k++)
 		{
-			Accessories[k] = 0;
+			Accessories[k] = false;
 			AccessorySlotsUsed = 0;
 		}
 
 	// Display Message
-	if (Silent == 1) terminate;
-	HudMessage(s:"Sold all ", s:ShopNames[SellPage], s:" items for ", d:Total, s:" Credits";
-			   HUDMSG_FADEOUT, 0, CR_GOLD, 0.5, 0.5, 5.0, 5.0);
-	ActivatorSound("credits/payout", 127);
+	if (!Silent)
+	{
+		HudMessage(s:"Sold all ", s:ShopNames[SellPage], s:" items for ", d:Total, s:" Credits";
+				   HUDMSG_FADEOUT, 0, CR_GOLD, 0.5, 0.5, 5.0, 5.0);
+		ActivatorSound("credits/payout", 127);
+	}
 }
 
 function void ShopLoop(void)
@@ -419,12 +422,8 @@ function void SellItem(str Item)
 	// If it's an Accessory, unequip it too
 	if (Page == 7 && Accessories[ShopIndex] == 1)
 	{
+		Accessories[ShopIndex] = false;
 		AccessorySlotsUsed--;
-		Accessories[ShopIndex] = 0;
-		
-		// Sanity Check
-		if (AccessorySlotsUsed < 0)
-			AccessorySlotsUsed = 0;
 	}
 	
 	// Sell the Item

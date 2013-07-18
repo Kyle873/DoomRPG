@@ -464,7 +464,8 @@ function void DrawSkillMenu(void)
 	SetFont("SMALLFONT");
 	HudMessage(s:"Up/Down to select\nLeft/Right to switch Catagory\nUse to Increase Skill Level\nUse Skill to Select Current Skill";
 			   HUDMSG_PLAIN, 5004, CR_RED,
-			   0.1, 204.1, 0.05); */
+			   0.1, 204.1, 0.05);
+	*/
 }
 
 function void DrawShieldMenu(void)
@@ -779,56 +780,34 @@ function void IncreaseStat(int Stat)
 	if (Stat > 0)
 		MenuIndex = Stat;
 
+	// Determine which Stat we're working with for Stat amount calculation on upgrade
+	switch (MenuIndex)
+	{
+		case 0: StatAmount = Strength; 		break;
+		case 1: StatAmount = Defense; 		break;
+		case 2: StatAmount = Vitality; 		break;
+		case 3: StatAmount = Energy; 		break;
+		case 4: StatAmount = Regeneration; 	break;
+		case 5: StatAmount = Agility; 		break;
+		case 6: StatAmount = Capacity; 		break;
+		case 7: StatAmount = Luck; 			break;
+	}
+
 	if (GetCVAR("drpg_statcost") == 1) // Progressive Costs
-	{
-		switch (MenuIndex)
-		{
-			case 0: StatAmount = Strength; 		break;
-			case 1: StatAmount = Defense; 		break;
-			case 2: StatAmount = Vitality; 		break;
-			case 3: StatAmount = Energy; 		break;
-			case 4: StatAmount = Regeneration; 	break;
-			case 5: StatAmount = Agility; 		break;
-			case 6: StatAmount = Capacity; 		break;
-			case 7: StatAmount = Luck; 			break;
-		}
-		
 		StatAmount = StatAmount + 1;
-
-		if (StatTokens <= StatAmount && Stat == 0)
-		{
-			ActivatorSound("menu/error", 127);
-			SetFont("BIGFONT");
-			Print(s:"\cgYou don't have enough Stat Tokens");
-			return;
-		}
-	}
-	
 	if (GetCVAR("drpg_statcost") == 2) // Tiered Costs
-	{
-		switch (MenuIndex)
-		{
-			case 0: StatAmount = Strength; 		break;
-			case 1: StatAmount = Defense; 		break;
-			case 2: StatAmount = Vitality; 		break;
-			case 3: StatAmount = Energy; 		break;
-			case 4: StatAmount = Regeneration; 	break;
-			case 5: StatAmount = Agility; 		break;
-			case 6: StatAmount = Capacity; 		break;
-			case 7: StatAmount = Luck; 			break;
-		}
-		
 		StatAmount = StatAmount / 10 + 1;
-		
-		if (StatTokens < StatAmount && Stat == 0)
-		{
-			ActivatorSound("menu/error", 127);
-			SetFont("BIGFONT");
-			Print(s:"\cgYou don't have enough Stat Tokens");
-			return;
-		}
+
+	// Make sure you have enough Stat Tokens
+	if (StatTokens <= StatAmount && Stat == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		SetFont("BIGFONT");
+		Print(s:"\cgYou don't have enough Stat Tokens");
+		return;
 	}
 
+	// Upgrade the Stat
 	switch (MenuIndex)
 	{
 		case 0: if (Strength >= StatCap) 		{ PrintStatError();		return; }	else Strength++; 		Break;
@@ -844,9 +823,9 @@ function void IncreaseStat(int Stat)
 	if (Stat == 0)
 		ActivatorSound("menu/move", 127);
 		
-	if (GetCVAR("drpg_statcost") > 0)
+	if (GetCVAR("drpg_statcost") > 0) // Tiered or Progressive Stat Costs
 		TakeInventory("StatToken", StatAmount);
-	else
+	else							  // Normal Stat Costs
 		TakeInventory("StatToken", 1);
 }
 
