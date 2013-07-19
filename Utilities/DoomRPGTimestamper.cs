@@ -17,13 +17,13 @@ namespace DoomRPG
                 {
                     string date = DateTime.Now.ToLongDateString();
                     string time = DateTime.Now.ToLongTimeString();
-                    string line = "str TimeStamp = \"" + date + " at " + time + "\"";
+                    string line = "str TimeStamp = \"" + date + " at " + time + "\";";
                     contents[i] = line;
                     File.WriteAllLines(filename, contents);
+                    Console.WriteLine("Updated Timestamp!");
+                    Console.ResetColor();
+                    return;
                 }
-
-            Console.WriteLine("Updated Timestamp!");
-            Console.ResetColor();
 		}
 	}
 }
