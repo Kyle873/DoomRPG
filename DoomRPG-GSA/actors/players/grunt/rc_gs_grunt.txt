@@ -1,0 +1,281 @@
+// -------------
+// -- Bruiser --
+// -------------
+
+/*
+A marine close to death that was put under the experimental super soldier program,
+'Grunt', as he's known, is a giant lumbering mass of muscle, proving to be the only
+successful example of the super soldier project.
+
+However, in contrast with the two other marines in his group, he is the slowest
+of the trio, yet he can endure the strongest of attacks.
+*/
+
+ACTOR RC_GS_Grunt : PlayerPawn
+{
+   Game Doom
+   Decal BloodSmear
+   BloodType "RC_GS_NewBlood_Spawner"
+   Player.ColorRange 112, 127
+   //Player.CrouchSprite "PLYC"
+   Player.DisplayName "Grunt"
+   
+   //Weapon slots
+   Player.WeaponSlot 1, RC_GS_GruntFists, RC_GS_DreadLaser
+   Player.WeaponSlot 2, RC_GS_BattleRifle
+   Player.WeaponSlot 3, RC_GS_HadronGun
+   Player.WeaponSlot 4, AR_GS_FlakCannon
+   Player.WeaponSlot 5, RC_GS_StormCannon
+   Player.WeaponSlot 6, RC_GS_Boomer
+   Player.WeaponSlot 7, RC_GS_MassDriver
+   Player.WeaponSlot 8, RC_GS_FusionRepeater
+   Player.WeaponSlot 9, RC_GS_PulsarRifle
+
+//Unique ability & identifier
+   Player.StartItem "RC_GS_Endurance", 1
+   Player.StartItem "RC_GS_IsGrunt", 1
+
+//Items
+   Player.StartItem "UsedGreenArmor", 1
+
+//Weapons
+   Player.StartItem "RC_GS_BattleRifle", 1
+   Player.StartItem "RC_GS_BattleRifleMagazine", 35
+   Player.StartItem "RC_GS_Cartridge", 30
+   Player.StartItem "RC_GS_GruntFists", 1
+
+//Script-Items
+   Player.StartItem "Action_Bob", 1
+   Player.StartItem "Action_Reload", 1
+   Player.StartItem "Action_ReloadCancel", 1
+   Player.StartItem "Action_Thirdfire", 1
+   Player.StartItem "Action_Switchmode", 1
+   Player.StartItem "Action_DropWeapon", 1
+
+//Misc
+   Player.StartItem "RC_GS_FutureHud", 1
+   Player.StartItem "RC_GS_HadronElement", 1
+   Player.StartItem "AR_GS_GruntHealth", 1
+
+//Damage types
+   DamageFactor "Smoke", 0.0
+   DamageFactor "RC_GS_DODGE", 0.0
+   DamageFactor "RC_GS_ActualDodge", 0.0
+   DamageFactor "Ion", 0.95
+   DamageFactor "IonRifle", 0.95
+   DamageFactor "Player", 0.0
+   DamageFactor "Normal", 0.95
+   PainChance "Smoke", 20
+   Player.SoundClass "grunt"
+   Player.MaxHealth 200
+   Player.ForwardMove 0.6, 0.75
+   Player.SideMove 0.6, 0.75
+   Player.ViewHeight 55
+   Player.AttackZOffset 25
+   Player.JumpZ 10
+   YScale 0.9
+   
+
+    Health 		150
+    Radius 		20
+    Height 		57
+    Mass 		0x7FFFFFFF
+    PainChance 	200
+	Scale		0.8
+	Gravity		2
+	var int		user_shockcircle;
+   States
+   {
+   Spawn:
+	  GRNT A 0
+	  GRNT A 0 SetPlayerProperty(0,1,2)
+	  GRNT A 0 A_SetUservar("user_shockcircle",0)
+	  GRNT A 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  GRNT A 1
+	  Loop
+   See:
+	  GRNT A 0 A_SpawnItemEx("RC_GS_GruntDubstep",0,0,0,0,0,-2)
+	  GRNT AAAAABBBBB 1
+	  GRNT C 0 A_SpawnItemEx("RC_GS_GruntDubstep",0,0,0,0,0,-2)
+	  GRNT CCCCCDDDDD 1
+	  GRNT ABCD 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  Goto Spawn
+   Missile:
+	  GRNT EFGH 5
+	  GRNT E 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  Goto Spawn
+   Melee:
+	  GRNT EFGH 5  BRIGHT
+	  GRNT F 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  Goto Missile
+   Dash:
+	  GRNT D 1
+	  GRNT D 1 A_SpawnItemEx("RC_GS_GruntTrail",0,0,0)
+	  Loop
+   Charge:
+      GRNT D 0 A_Explode(random(50,60),128,false)
+      GRNT D 1 A_RadiusThrust(12500,256,RTF_NOIMPACTDAMAGE | RTF_NOTMISSILE,192)
+	  GRNT D 0 A_Stop
+   Shockspawn:
+	  GRNT D 0 A_SpawnItemEx("RC_GS_GruntDashwave", sin(angle)-150, cos(angle)-150, 0, sin(user_shockcircle)*4, cos(user_shockcircle)*4, 0, user_shockcircle)
+	  GRNT D 0 A_SetUserVar("user_shockcircle",user_shockcircle+3)
+	  GRNT D 0 A_JumpIf(user_shockcircle == 360, "Spawn")
+	  Loop
+   Pain:
+	  GRNT E 4
+	  GRNT E 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  GRNT E 4 A_Pain
+	  Goto Spawn
+   Pain.Endurance:
+	  GRNT E 4
+	  GRNT E 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  GRNT E 0 A_TakeInventory("RC_GS_Endurance",1)
+	  GRNT E 0 A_TakeInventory("PowerEndurance",1)
+	  GRNT E 0 ACS_NamedExecute("RC_GS_EnduranceLost",0)
+	  GRNT E 4 A_Pain
+	  Goto Spawn
+   Pain.Drowning:
+	  GRNT E 4 A_CustomMissile("Bubble",0,0,0,0,0)
+	  GRNT E 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  GRNT E 4 A_Pain
+	  Goto Spawn
+   Pain.Smoke:
+	  GRNT E 0 A_Jump(201,"Spawn")
+	  GRNT E 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  GRNT E 1 A_PlaySoundEx("*cough","Body",0)
+	  Goto Spawn
+   Death:
+   XDeath:
+	  GRNT I 10 A_PlayerSkinCheck("AltSkinDeath")
+	  GRNT J 10 A_PlayerScream
+	  GRNT K 10 A_NoBlocking
+	  GRNT LM 10
+	  GRNT N -1
+	  Stop
+   Burn:
+	  BURN ABCDEFGHI 4
+	  BURN J 4 A_NoBlocking
+	  BURN KLMOPQRST 4
+	  BURN UV 4 A_SpawnItemEx("FSmoke",2,8,0)
+	  BURN V -1
+	  Stop
+   AltSkinDeath:
+	  PLAY H 6
+	  PLAY I 6 A_PlayerScream
+	  PLAY JK 6
+	  PLAY L 6 A_NoBlocking
+	  PLAY MNO 6
+	  PLAY P -1
+	  Stop
+   AltSkinXDeath:
+	  PLAY Q 5 A_PlayerScream
+	  PLAY R 0 A_NoBlocking
+	  PLAY R 5
+	  PLAY STUVWX 5
+	  PLAY Y -1
+	  Stop
+   }
+}
+
+ACTOR RC_GS_GruntTrail
+{
+	Radius 		1
+	Height 		1
+	Renderstyle Translucent
+	Alpha		0.6
+	YScale		0.9
+	+NOGRAVITY
+	+NOINTERACTION
+	States
+	{
+		Spawn:
+			TNT1 A 2
+			GRNT DDDD 5 A_FadeOut
+			Loop
+	}
+}
+
+//All the thanks to the Hammerhound from the Boss Resource wad!
+//Cheers, LWM!
+ACTOR RC_GS_GruntDashwave
+{
+	Speed 		8
+	Damage 		(random(0,1))
+	Radius 		12
+	Height 		16
+	Renderstyle Translucent
+	Alpha 		0.1
+	PROJECTILE
+	+RIPPER
+	+DROPOFF
+	+FLOORHUGGER
+	+BLOODLESSIMPACT
+	-NOGRAVITY
+	States
+	{
+		Spawn:
+			HSHK CCAABBCCC 6 A_Gravity
+		Death:
+			HSHK C 1
+			Stop
+	}
+}
+
+ACTOR RC_GS_IsGrunt : Inventory
+{
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	-INVBAR
+}
+
+ACTOR RC_GS_NoEndurance : Inventory
+{
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	-INVBAR
+}
+
+//Wubwub.
+ACTOR RC_GS_GruntDubstep
+{
+	Damage		0
+	Radius		10
+	Speed		20
+	DeathSound	"grunt/walk"
+	PROJECTILE
+	+NOBLOOD
+	+DONTBLAST
+	+DONTSPLASH
+	States
+	{
+		Spawn:
+			TNT1 A 1
+			Stop
+		Death:
+			TNT1 A 0
+			TNT1 A 6 A_Quake(1, 4, 0, 201, none) 
+			Stop
+	}
+}
+
+ACTOR PowerEndurance : PowerProtection
+{
+	DamageFactor "Superplasma", 0.0
+	DamageFactor "Instadeath", 0.0
+}
+
+actor RC_GS_Endurance : PowerupGiver
+{
+ inventory.maxamount 0
+ inventory.usesound "pickups/slowmo"
+ powerup.type Endurance
+ powerup.duration 0x7FFFFFFF
+ +AUTOACTIVATE
+ +INVENTORY.FANCYPICKUPSOUND
+   states
+ {
+ Spawn:
+   TNT1 A 1
+   loop
+ }
+}

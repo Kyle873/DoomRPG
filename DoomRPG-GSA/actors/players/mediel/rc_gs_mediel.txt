@@ -1,0 +1,119 @@
+// ------------
+// -- Mediel --
+// ------------
+
+/*
+Demon of unknown origin, his species is reputed to be that of the common Hell Legion imps.
+Compared to his weaker bretheren though, Mediel managed to become a powerful sorcerer in his
+own right, however, he still has no rank within the Legion itself, only being known as 
+'The Traitor'.
+
+He always expressed interest in claiming Hell for himself, trying to find out a way to best
+the Icon of Sin as the almighty demon king..
+*/
+
+ACTOR RC_GS_Mediel : PlayerPawn
+{
+   Decal BloodSmear
+   BloodType "RC_GS_NewBlood_Spawner"
+   //Player.ColorRange 112, 127
+   Player.DisplayName " "
+   
+   //Weapon slots
+   Player.WeaponSlot 1, RC_GS_Empryr
+   //Player.WeaponSlot 2, RC_GS_ChaoticBlast - Similar to Grunt's dash, repels enemies
+   Player.WeaponSlot 3, RC_GS_ArcSpell //- Similar to the Hexen Mage's lightning spell
+   //Player.WeaponSlot 4, RC_GS_HellLegionWeapon2
+   //Player.WeaponSlot 5, RC_GS_Immolate - Archvile attack
+   //Player.WeaponSlot 6, RC_GS_Heal - radius heal
+   //Player.WeaponSlot 7, RC_GS_Resurrection - Archvile ressurection
+   Player.WeaponSlot 8, RC_GS_Pyroblast //- Shocker Trooper signature move
+   Player.WeaponSlot 9, RC_GS_Vyrkouid
+   //Player.WeaponSlot 0, RC_GS_HeartSpell - Demon King Heart power blast
+
+//Weapons
+   Player.StartItem "RC_GS_Empryr", 1
+   Player.StartItem "RC_GS_Vyrkouid", 1
+
+//Script-Items
+   Player.StartItem "Action_DropWeapon", 1
+
+//Misc
+   Player.StartItem "AR_GS_MedielHealth", 1
+
+//Damage types
+   DamageFactor "Smoke", 0.0
+   DamageFactor "RC_GS_DODGE", 0.0
+   DamageFactor "RC_GS_ActualDodge", 0.0
+   DamageFactor "Ion", 0.9
+   DamageFactor "IonRifle", 1.0
+   DamageFactor "Fire", 0.5
+   PainChance "Smoke", 20
+   Player.ViewHeight 62
+   Player.ForwardMove 0.95, 1.05
+   Player.SideMove 0.95, 1.05
+   Player.SoundClass "traitor"
+   Player.AttackZOffset 25
+   Player.MaxHealth 400
+   Obituary "%o faced himself with the Hell Legion's best and lost."
+
+    Health 400
+    Radius 16
+    Height 64
+    Mass 84
+    PainChance 255
+	Scale 1.0
+	var int user_firing;
+	+NOMENU
+   States
+   {
+   Spawn:
+	  MDIL A 0
+	  MDIL A 0 SetPlayerProperty(0,1,2)
+	  MDIL A 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  MDIL A 1
+	  Loop
+   See:
+	  MDIL AB 8
+	  MDIL AB 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  Goto Spawn
+   Missile:
+	  MDIL E 10
+	  MDIL FE 8 BRIGHT
+	  MDIL EFE 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  Goto Spawn
+   Melee:
+	  MDIL EFE 5
+	  MDIL EFE 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  Goto Missile
+   Pain:
+	  MDIL C 4
+	  MDIL C 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  MDIL C 4 A_Pain
+	  Goto Spawn
+   Pain.Drowning:
+	  MDIL CCCC 1 A_CustomMissile("Bubble",random(-2,2),random(-2,2),0,0,0)
+	  MDIL C 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  MDIL C 4 A_Pain
+	  Goto Spawn
+   Pain.Smoke:
+	  MDIL C 0 A_Jump(201,"Spawn")
+	  MDIL C 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  MDIL C 1 A_PlaySoundEx("*cough","Body",0)
+	  Goto Spawn
+   Death:
+	  MDIL G 6
+	  MDIL H 6 A_PlayerScream
+	  MDIL I 6 A_NoBlocking
+	  MDIL JKLMNO 6
+	  MDIL P -1
+	  Stop
+   XDeath:
+	  MDIL G 6 
+	  MDIL H 6 A_PlayerScream
+	  MDIL I 6 A_NoBlocking
+	  MDIL JKLMNO 6 A_SpawnItemEx("RC_GS_GibGenerator",0,0,0,0)
+	  MDIL P -1
+	  Stop
+   }
+}

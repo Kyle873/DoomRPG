@@ -1,0 +1,150 @@
+// -----------------
+// -- Speed Demon --
+// -----------------
+
+/*
+Known as Amber 'Crash' Hale, this marine was not known for her endurance or for
+her strength, however, she was the fastest and most acrobatic amongst her peers,
+her bizarre biology letting her leap many times her height. Twice, even.
+
+Credit for the sprites goes to Virtue.
+*/
+ACTOR RC_GS_Crash : PlayerPawn
+{
+   Game Doom
+   Decal BloodSmear
+   BloodType "RC_GS_NewBlood_Spawner"
+   Player.ColorRange 112, 127
+   Player.DisplayName "Crash"
+   
+   //Weapon slots
+   Player.WeaponSlot 1, RC_GS_Chainsaw, RC_GS_UNLimitLaser, RC_GS_DreadLaser
+   Player.WeaponSlot 2, RC_GS_IonSMG
+   Player.WeaponSlot 3, RC_GS_Acidspitter
+   Player.WeaponSlot 4, RC_GS_RepeaterGun
+   Player.WeaponSlot 5, RC_GS_MX14
+   Player.WeaponSlot 6, RC_GS_RailCannon
+   Player.WeaponSlot 7, RC_GS_GTXSeeker
+   Player.WeaponSlot 8, RC_GS_Wavegun
+   Player.WeaponSlot 9, RC_GS_Destabilizer
+
+//Unique identifier
+   Player.StartItem "RC_GS_IsCrash", 1
+
+//Items
+   Player.StartItem "UsedGreenArmor", 1
+
+//Weapons
+   Player.StartItem "RC_GS_IonSMG", 1
+   Player.StartItem "RC_GS_IonSMGMagazine", 1
+   Player.StartItem "RC_GS_Clip", 120
+   Player.StartItem "RC_GS_Chainsaw", 1
+
+//Script-Items
+   Player.StartItem "Action_Bob", 1
+   Player.StartItem "Action_Reload", 1
+   Player.StartItem "Action_ReloadCancel", 1
+   Player.StartItem "Action_Thirdfire", 1
+   Player.StartItem "Action_Switchmode", 1
+   Player.StartItem "Action_DropWeapon", 1
+   
+//Misc
+   Player.StartItem "RC_GS_FutureHud", 1
+   Player.StartItem "AR_GS_CrashHealth", 1
+
+//Face!
+   Player.Face "BDF"
+
+//Damage types
+   DamageFactor "Smoke", 0.0
+   DamageFactor "RC_GS_DODGE", 0.0
+   DamageFactor "RC_GS_ActualDodge", 0.0
+   DamageFactor "Ion", 1.0
+   DamageFactor "IonRifle", 1.0
+   DamageFactor "Player", 0.0
+   PainChance "Smoke", 20
+   Player.FallingScreamSpeed 50.0, 80.0
+   Player.MaxHealth 100
+   Player.SoundClass "crash"
+   Player.SideMove 1 1.26
+   Player.ForwardMove 1, 1.46
+   Player.JumpZ 12.0
+   Player.ViewHeight 46
+   Player.AttackZOffset 20
+   
+
+    Health 75
+    Radius 15
+    Height 53
+    Mass 54
+    PainChance 255
+	var int user_firing;
+   States
+   {
+   Spawn:
+	  CRSH A 0
+	  CRSH A 0 SetPlayerProperty(0,1,2)
+	  CRSH A 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  CRSH A 1
+	  Loop
+   See:
+	  CRSH ABCD 4
+	  CRSH ABCD 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  Goto Spawn
+   Missile:
+	  CRSH EF 6
+	  CRSH E 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  Goto Spawn
+   Melee:
+	  CRSH E 6  BRIGHT
+	  CRSH E 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  Goto Missile
+   Pain:
+	  CRSH G 4
+	  CRSH G 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  CRSH G 4 A_Pain
+	  Goto Spawn
+   Pain.Drowning:
+	  CRSH G 4 A_CustomMissile("Bubble",0,0,0,0,0)
+	  CRSH G 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  CRSH G 4 A_Pain
+	  Goto Spawn
+   Pain.Smoke:
+	  CRSH G 0 A_Jump(201,"Spawn")
+	  CRSH G 0 A_TakeInventory("RC_GS_IsReloading_Check",1)
+	  CRSH G 1 A_PlaySoundEx("*cough","Body",0)
+	  Goto Spawn
+   Death:
+	  CRSH H 10
+	  CRSH I 10
+	  CRSH J 10
+	  CRSH KLM 10
+	  CRSH N -1
+	  Stop
+   XDeath:
+	  CRSH OO 0 A_SpawnItemEx("RC_GS_GibGenerator",0,0,0,0)
+	  CRSH O 5
+	  CRSH P 0 A_SpawnItemEx("RC_GS_GibGenerator",0,0,0,0)
+	  CRSH P 5 A_XScream
+	  CRSH Q 0 A_SpawnItemEx("RC_GS_GibGenerator",0,0,0,0)
+	  CRSH Q 5 A_NoBlocking
+	  CRSH R 0 A_SpawnItemEx("RC_GS_GibGenerator",0,0,0,0)
+	  CRSH RSTUV 5
+	  CRSH W -1
+	  Stop
+   Burn:
+	  BURN ABCDEFGHI 4
+	  BURN J 4 A_NoBlocking
+	  BURN KLMOPQRST 4
+	  BURN UV 4 A_SpawnItemEx("FSmoke",2,8,0)
+	  BURN V -1
+	  Stop
+   }
+}
+
+ACTOR RC_GS_IsCrash : Inventory
+{
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	-INVBAR
+}
