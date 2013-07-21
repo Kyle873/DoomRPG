@@ -62,7 +62,7 @@ int SkillLevelMax[MAX_CATAGORIES][MAX_SKILLS] =
 	// Auras
 	{ 3, 5, 1, 3, 4, 3, 4, 7 },
 	// Attacks
-	{ 10, 10, 0, 0, 0, 0, 0 },
+	{ 1, 1, 0, 0, 0, 0, 0 },
 	// Summoning
 	{ 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
 	// Utility
@@ -78,7 +78,7 @@ int SkillCosts[MAX_CATAGORIES][MAX_SKILLS] =
 	// Auras
 	{ 100, 100, 100, 100, 100, 100, 100, 100, 100 },
 	// Attacks
-	{ 3, 3, 3, 3, 5, 5, 5 },
+	{ 2, 4, 0, 0, 0, 0, 0 },
 	// Summoning
 	{ 25, 25, 50, 75, 75, 75, 100, 150, 200, 100, 500, 500, 500, 500, 750, 1000, 1000, },
 	// Utility
@@ -940,8 +940,7 @@ function void Projectile(int Type)
 	int ZSpeed = -FixedMul(sin(Pitch), 16.0);
 	int FireHeight = GetActorViewHeight(0) * 780 / 1000;
 	int AngleAdd = FixedDiv(1.0, Energy);
-	int Radius = 64.0;
-	int Offset = 0;
+	int Offset = 8.0;
 	str ProjType;
 	int ProjLevel;
 	
@@ -953,17 +952,11 @@ function void Projectile(int Type)
 		return;
 	}
 	
-	// Y Offset
-	if (!GetCVAR("drpg_ext_brutal"))
-		Offset = 74.0;
-	else
-		Offset = 8.0;
-	
 	// Projectiles
 	switch (Type)
 	{
-		case 1: ProjType = "Fireball"; 		ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 0]; break;
-		case 2: ProjType = "IceMissile"; 	ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 1]; break;
+		case 1: ProjType = "Fireball"; 		ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 0]; break;	// Fireball
+		case 2: ProjType = "IceMissile"; 	ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 1]; break;	// Ice Missile
 	}
 
 	// Initial Projectile
@@ -971,25 +964,6 @@ function void Projectile(int Type)
 	SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
 	SetActorAngle(2001, Angle);
 	SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
-	
-	// Multiple Projectiles
-	for (int i = 0; i < Energy; i++)
-	{
-		SpawnProjectile(0, StrParam(s:ProjType, d:ProjLevel), 0, 0, 0, 0, 2002);
-
-		// TODO: Overdrive
-		if (Overdrive)
-		{
-			X = GetActorX(0) + FixedMul(cos(Angle), Radius) + Random(-Radius, Radius);
-			Y = GetActorY(0) + FixedMul(sin(Angle), Radius) + Random(-Radius, Radius);
-		}
-		else
-			SetActorProperty(2002, APROP_ALPHA, 0.0);
-
-		SetActorVelocity(2002, XSpeed, YSpeed, ZSpeed, false, false);
-		SetActorAngle(2002, Angle);
-		SetActorPosition(2002, X, Y, Z + FireHeight + Offset, 0);
-	}
 }
 
 // Summoning
@@ -1461,6 +1435,16 @@ function void CheckSkills(void)
 	}
 }
 
+// Used from DECORATE to get dynamic projectile damage rates
+script "SetProjectileDamage" (int Type)
+{
+	switch (Type)
+	{
+		case 0: SetResultValue(Round(Energy * 0.5));	// Fireball
+		case 1: SetResultValue(Round(Energy * 0.75));	// Ice Missile
+	}
+}
+
 // Updates Skills with dynamic descriptions (calculations, etc)
 function void CheckSkillDescriptions(void)
 {
@@ -1479,9 +1463,9 @@ function void CheckSkillDescriptions(void)
 	
 	// Attacks - Fireball
 	for (Fireball = 1; Fireball <= SkillLevelMax[3][0]; Fireball++)
-		SkillData[3][0][Fireball] = StrParam(s:"Shoots a fireball\n\ca", d:Fireball * 10, s:" Fire Damage\n\cv", d:Energy, s:" Projectiles");
+		SkillData[3][0][Fireball] = StrParam(s:"Shoots a fireball\n\ca", d:Round(Energy * 0.5), s:" Fire Damage");
 
 	// Attacks - Ice Missile
 	for (IceMissile = 1; IceMissile <= SkillLevelMax[3][1]; IceMissile++)
-		SkillData[3][1][IceMissile] = StrParam(s:"Shoots an Ice Missile\n\cn", d:IceMissile * 10, s:" Ice Damage\n\cv", d:Energy, s:" Projectiles");
+		SkillData[3][1][IceMissile] = StrParam(s:"Shoots an Ice Missile\n\cn", d:Round(Energy * 0.75), s:" Ice Damage\n");
 }
