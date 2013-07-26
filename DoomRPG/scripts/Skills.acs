@@ -1102,12 +1102,31 @@ function void Projectile(int Type)
 		case 1: ProjType = "Fireball"; 		ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 0]; break;	// Fireball
 		case 2: ProjType = "IceMissile"; 	ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 1]; break;	// Ice Missile
 	}
-
-	// Initial Projectile
-	SpawnProjectile(0, ProjType, 0, 0, 0, 0, 2001);
-	SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
-	SetActorAngle(2001, Angle);
-	SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
+	
+	// Overdrive - Spreadfire
+	if (Overdrive)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			XSpeed = FixedMul(cos(Angle - 2730 + (i * 2730)), FixedMul(cos(Pitch), 16.0));
+			YSpeed = FixedMul(sin(Angle - 2730 + (i * 2730)), FixedMul(cos(Pitch), 16.0));
+			ZSpeed = -FixedMul(sin(Pitch), 16.0);
+			
+			SpawnProjectile(0, ProjType, 0, 0, 0, 0, 2001);
+			SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
+			SetActorAngle(2001, Angle);
+			SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
+			Thing_ChangeTID(2001, UniqueTID());
+		}
+	}
+	else
+	{
+		SpawnProjectile(0, ProjType, 0, 0, 0, 0, 2001);
+		SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
+		SetActorAngle(2001, Angle);
+		SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
+		Thing_ChangeTID(2001, UniqueTID());
+	}
 }
 
 // Summoning
