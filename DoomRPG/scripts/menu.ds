@@ -1,9 +1,8 @@
 #include <zcommon.acs>
 
-#include "RPG.dh"
-#include "Menu.dh"
 #include "Stats.dh"
 #include "Skills.dh"
+#include "Menu.dh"
 
 extscript "ACS" OpenMenu() -> void
 {
@@ -24,22 +23,13 @@ extscript "ACS" OpenMenu() -> void
 	
 	if (InMenu)
 	{
-		if (Menu > 0) 
-		{
-			Menu = 0;
-			MenuIndex = 0;
-			return; // terminate
-		}
-		else;
-		{
-			ActivatorSound("menu/leave", 127);
-			SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-			InMenu = false;
-			MenuIndex = 0;
-			Menu = 0;
-		};
+		ActivatorSound("menu/leave", 127);
+		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+		InMenu = false;
+		MenuIndex = 0;
+		Menu = 0;
 	}
-	else;
+	else
 	{
 		ActivatorSound("menu/enter", 127);
 		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
@@ -49,12 +39,14 @@ extscript "ACS" OpenMenu() -> void
 
 function void MenuLoop()
 {
+	if (!InMenu) return;
+	
 	// Freeze the game if the option is active
 	if (GetCVar("drpg_menufreeze"))
 		GiveInventory("MenuFreezer", 1);
 	
 	// CHECK: Set the HUD Size
-	// SetHUDSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 	
 	// Get the Menu's Origin X/Y
 	MenuX = GetCVar("drpg_menu_x");
@@ -71,8 +63,8 @@ function void MenuLoop()
 	// if (Menu == 3)	DrawSkillMenu();
 	// if (Menu == 4)	DrawShieldMenu();
 	
-	// CHECK: Handle menu input
-		// MenuInput();
+	// Handle menu input
+		MenuInput();
 };
 
 function void DrawMainMenu()
@@ -117,24 +109,24 @@ function void DrawMainMenu()
 	PrintSprite("TOKCD0", 0, 16.1, 228.1, 0.05);
 	PrintSprite("ACCBA0", 0, 16.1, 246.1, 0.05);
 	SetFont("BIGFONT");
-	HudMessage("%d", StatTokens, 																		HUDMSG_PLAIN, 0, CR_RED,  		40.1, 178.0, 0.05);
+	HudMessage("%d", StatTokens, 																HUDMSG_PLAIN, 0, CR_RED,  		40.1, 178.0, 0.05);
 	HudMessage("%d / 100", CheckInventory("StatCapToken"), 										HUDMSG_PLAIN, 0, CR_YELLOW,  	40.1, 198.0, 0.05);
-	HudMessage("%d", SkillTokens, 																	HUDMSG_PLAIN, 0, CR_GREEN,  	40.1, 218.0, 0.05);
-	// CHECK: HudMessage("%d / %d", AccessorySlotsUsed, MaxAccessorySlots, 								HUDMSG_PLAIN, 0, CR_GOLD,  		40.1, 238.0, 0.05);
+	HudMessage("%d", SkillTokens, 																HUDMSG_PLAIN, 0, CR_GREEN,  	40.1, 218.0, 0.05);
+	// CHECK: HudMessage("%d / %d", AccessorySlotsUsed, MaxAccessorySlots, 						HUDMSG_PLAIN, 0, CR_GOLD,  		40.1, 238.0, 0.05);
 	
 	// Level Stats
 	if (KillBonus)
-		HudMessage("Monster %d / %d", CurrentKills, TotalKills, 								HUDMSG_PLAIN, 0, Color,  		140.1, 178.0, 0.05)
+		HudMessage("Monsters: %d / %d", CurrentKills, TotalKills, 								HUDMSG_PLAIN, 0, Color,  		140.1, 178.0, 0.05)
 	else
-		HudMessage("Monster %d / %d", CurrentKills, TotalKills, 								HUDMSG_PLAIN, 0, CR_BRICK,  	140.1, 178.0, 0.05);
+		HudMessage("Monsters: %d / %d", CurrentKills, TotalKills, 								HUDMSG_PLAIN, 0, CR_BRICK,  	140.1, 178.0, 0.05);
 	if (ItemsBonus)
-		HudMessage("Item %d / %d", CurrentItems, TotalItems, 									HUDMSG_PLAIN, 0, Color,  		140.1, 193.0, 0.05)
+		HudMessage("Items: %d / %d", CurrentItems, TotalItems, 									HUDMSG_PLAIN, 0, Color,  		140.1, 193.0, 0.05)
 	else
-		HudMessage("Item %d / %d", CurrentItems, TotalItems, 									HUDMSG_PLAIN, 0, CR_LIGHTBLUE,  140.1, 193.0, 0.05);
+		HudMessage("Items: %d / %d", CurrentItems, TotalItems, 									HUDMSG_PLAIN, 0, CR_LIGHTBLUE,  140.1, 193.0, 0.05);
 	if (SecretsBonus)
-		HudMessage("Secret %d / %d", CurrentSecretsFound, TotalSecretsFound, 					HUDMSG_PLAIN, 0, Color,  		140.1, 207.0, 0.05)
+		HudMessage("Secrets: %d / %d", CurrentSecretsFound, TotalSecretsFound, 					HUDMSG_PLAIN, 0, Color,  		140.1, 207.0, 0.05)
 	else
-		HudMessage("Secret %d / %d", CurrentSecretsFound, TotalSecretsFound, 					HUDMSG_PLAIN, 0, CR_GOLD,  		140.1, 207.0, 0.05);
+		HudMessage("Secrets: %d / %d", CurrentSecretsFound, TotalSecretsFound, 					HUDMSG_PLAIN, 0, CR_GOLD,  		140.1, 207.0, 0.05);
 };
 
 function void DrawStatsMenu()
@@ -172,23 +164,23 @@ function void DrawStatsMenu()
 		
 		// Secondary Stats
 		SetFont("SMALLFONT");
-		HudMessage("+%d Damage", Round(Damage * 100), 												HUDMSG_PLAIN, 0, CR_RED, 		30.1, 	36.0, 	0.05);
-		HudMessage("-%d Damage", Round(DamageFactor * 100), 										HUDMSG_PLAIN, 0, CR_GREEN,		230.1, 	36.0, 	0.05);
+		HudMessage("+%I%% Damage", Damage * 100, 												HUDMSG_PLAIN, 0, CR_RED, 		30.1, 	36.0, 	0.05);
+		HudMessage("-%I%% Damage", DamageFactor * 100, 										HUDMSG_PLAIN, 0, CR_GREEN,		230.1, 	36.0, 	0.05);
 		HudMessage("%d Max HP", HealthMax,															HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	86.0, 	0.05);
-		HudMessage("%d HP/sec", Vitality * 1.25 / 100,												HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	94.0, 	0.05);
+		HudMessage("%I HP/sec", Vitality * 1.25 / 100,												HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	94.0, 	0.05);
 		HudMessage("%d Max EP", EPMax,																HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	86.0, 	0.05);
-		HudMessage("%d EP/sec", Energy * 1.25 / 100,												HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	94.0, 	0.05);
+		HudMessage("%I EP/sec", Energy * 1.25 / 100,												HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	94.0, 	0.05);
 		HudMessage("%d Sec Aura Time", (1050 + Energy * 5.25) / 35,									HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	102.0, 	0.05);
-		HudMessage("+%d HP/Sec", Regeneration * 1.25 / 100,											HUDMSG_PLAIN, 0, CR_PURPLE,		30.1, 	136.0, 	0.05);
-		HudMessage("+%d EP/Sec", Regeneration * 1.25 / 100,											HUDMSG_PLAIN, 0, CR_PURPLE,		30.1, 	144.0, 	0.05);
-		HudMessage("Speed: %d", Round(Speed * 100), 												HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	136.0, 	0.05);
-		HudMessage("Jump Height: %d", Round(JumpHeight), 											HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	144.0, 	0.05);
-		HudMessage("%d Weapon Speed", WeaponSpeed, 													HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	152.0, 	0.05);
+		HudMessage("+%I HP/Sec", Regeneration * 1.25 / 100,											HUDMSG_PLAIN, 0, CR_PURPLE,		30.1, 	136.0, 	0.05);
+		HudMessage("+%I EP/Sec", Regeneration * 1.25 / 100,											HUDMSG_PLAIN, 0, CR_PURPLE,		30.1, 	144.0, 	0.05);
+		HudMessage("Speed: %I", Speed * 100, 												HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	136.0, 	0.05);
+		HudMessage("Jump Height: %I", JumpHeight, 											HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	144.0, 	0.05);
+		HudMessage("%d%% Weapon Speed", WeaponSpeed, 													HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	152.0, 	0.05);
 		HudMessage("Bullet: %d/%d", CheckInventory("Clip"), GetAmmoCapacity("Clip"), 				HUDMSG_PLAIN, 0, CR_BRICK, 	 	30.1, 	186.0, 	0.05);
 		HudMessage("Shell: %d/%d", CheckInventory("Shell"), GetAmmoCapacity("Shell"), 				HUDMSG_PLAIN, 0, CR_ORANGE,  	30.1, 	194.0, 	0.05);
 		HudMessage("Rocket: %d/%d", CheckInventory("RocketAmmo"), GetAmmoCapacity("RocketAmmo"),	HUDMSG_PLAIN, 0, CR_GREY, 	 	30.1, 	202.0, 	0.05);
 		HudMessage("Cell: %d/%d", CheckInventory("Cell"), GetAmmoCapacity("Cell"), 					HUDMSG_PLAIN, 0, CR_GREEN, 	 	30.1, 	210.0, 	0.05);
-		HudMessage("%d Survival Bonus", SurvivalBonus / 10, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	186.0, 	0.05);
+		HudMessage("%d%% Survival Bonus", SurvivalBonus / 10, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	186.0, 	0.05);
 		
 		// Stat Upgrade Cursor
 		if (StatTokens > 0)
@@ -286,4 +278,286 @@ function void DrawStatsMenu()
 		PrintSprite("SHLDA0", 											0, 							236.1, 	226.1, 	0.05);
 		PrintSprite("EPUPB0", 											0, 							238.1, 	223.1, 	0.05);
 	};
+};
+
+function void MenuInput()
+{
+	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
+	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
+	int MenuMax;
+	
+	MenuBlock = false;
+	
+	// Main Menu
+	if (Menu == 0)
+	{
+		if (GetCVar("drpg_shoptype") == 1)
+			MenuMax = 5
+		else
+			MenuMax = 4;
+		
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && MenuIndex > 0)
+		{
+			ActivatorSound("menu/move", 127);
+			MenuIndex--;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < MenuMax - 1)
+		{
+			ActivatorSound("menu/move", 127);
+			MenuIndex++;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			if (MenuIndex == 4)
+				ACS_NamedExecuteAlways("OpenShop", 0, 1)
+			else
+			{
+				ActivatorSound("menu/move", 127);
+				Menu = MenuIndex + 1;
+				MenuIndex = 0;
+				MenuBlock = true;
+			};
+		};
+	};
+	// Status menu
+	if (Menu == 1) // Page Switching
+		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+			if (StatPage) StatPage = 0 else StatPage = 1;
+	if (Menu == 1 && StatTokens > 0 && !StatPage && !MenuBlock)
+	{
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && MenuIndex > 1)
+		{
+			ActivatorSound("menu/move", 127);
+			MenuIndex -= 2;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < 7 - 1)
+		{
+			ActivatorSound("menu/move", 127);
+			MenuIndex += 2;
+		};
+        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
+			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT)
+		    && MenuIndex > 0)
+        {
+			ActivatorSound("menu/move", 127);
+			MenuIndex--;
+        };
+        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT)
+		    && MenuIndex < 8 - 1)
+        {
+			ActivatorSound("menu/move", 127);
+			MenuIndex++;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+			IncreaseStat(0);
+	};
+	// Accessories menu
+	if (Menu == 2 && !MenuBlock)
+	{
+		// Stop under/overflow
+		if (MenuIndex <= 0) MenuIndex = 0;
+		if (MenuIndex > 30 - 1) MenuIndex = 30 - 1;
+		
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && MenuIndex > 0)
+		{
+            ActivatorSound("menu/move", 127);
+			MenuIndex -= 10;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < 30 - 1)
+		{
+            ActivatorSound("menu/move", 127);
+			MenuIndex += 10;
+		};
+        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
+			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT)
+		    && MenuIndex > 0)
+        {
+			ActivatorSound("menu/move", 127);
+			MenuIndex--;
+        };
+        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT)
+		    && MenuIndex < 30 - 1)
+        {
+			ActivatorSound("menu/move", 127);
+			MenuIndex++;
+		};
+		// if (Buttons == BT_USE && OldButtons != BT_USE)
+			// CHECK: EquipAccessory(MenuIndex);
+	};
+	// Skills Menu
+	if (Menu == 3 && !MenuBlock)
+	{
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && MenuIndex >= 0)
+		{
+			if (MenuIndex <= 0) MenuIndex = CatagoryMax[SkillPage];
+            ActivatorSound("menu/move", 127);
+			MenuIndex--;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < CatagoryMax[SkillPage])
+		{
+			if (MenuIndex >= CatagoryMax[SkillPage] - 1) MenuIndex = -1;
+            ActivatorSound("menu/move", 127);
+			MenuIndex++;
+		};
+        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT && SkillPage > 0) ||
+			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && SkillPage >= 0))
+        {
+			if (SkillPage <= 0) SkillPage = MAX_CATAGORIES;
+			ActivatorSound("menu/move", 127);
+			MenuIndex = 0;
+			SkillPage--;
+        };
+        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && SkillPage < MAX_CATAGORIES) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && SkillPage < MAX_CATAGORIES))
+        {
+			if (SkillPage >= MAX_CATAGORIES - 1) SkillPage = -1;
+			ActivatorSound("menu/move", 127);
+			MenuIndex = 0;
+			SkillPage++;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+			IncreaseSkill();
+	};
+	// Shield Menu
+	if (Menu == 4 && !MenuBlock)
+	{
+		// Stop under/overflow
+		if (MenuIndex <= 0) MenuIndex = 0;
+		if (MenuIndex > 29) MenuIndex = 29;
+		
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && MenuIndex > 0)
+		{
+            ActivatorSound("menu/move", 127);
+			MenuIndex -= 6;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < 30 - 1)
+		{
+            ActivatorSound("menu/move", 127);
+			MenuIndex += 6;
+		};
+        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
+			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
+        {
+			ActivatorSound("menu/move", 127);
+			MenuIndex--;
+			
+			if (ShieldPage > 0 && (MenuIndex == -1 || MenuIndex == 5 || MenuIndex == 11 || MenuIndex == 17 || MenuIndex == 23 || MenuIndex == 30))
+			{
+				ShieldPage--;
+				MenuIndex += 6;
+			};
+        };
+        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
+        {
+			ActivatorSound("menu/move", 127);
+			MenuIndex++;
+			
+			if (ShieldPage < 3 && (MenuIndex == 6 || MenuIndex == 12 || MenuIndex == 18 || MenuIndex == 24 || MenuIndex == 30))
+			{
+				ShieldPage++;
+				MenuIndex -= 6;
+			};
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			if (MenuIndex < ShieldPartsMax)
+			{
+				/* CHECK
+				ActivatorSound("shield/equip", 127);
+				ShieldTimer = 175 + ShieldStats[0][ShieldBody  - 1][2] + ShieldStats[1][ShieldBattery - 1][2] + ShieldStats[2][ShieldCapacitor - 1][2];
+				
+				if (ShieldPage == 0 && CheckInventory(ShieldData[0][MenuIndex][0])) ShieldBody = MenuIndex + 1;
+				if (ShieldPage == 1 && CheckInventory(ShieldData[1][MenuIndex][0])) ShieldBattery = MenuIndex + 1;
+				if (ShieldPage == 2 && CheckInventory(ShieldData[2][MenuIndex][0])) ShieldCapacitor = MenuIndex + 1;
+				if (ShieldPage == 3 && CheckInventory(ShieldData[3][MenuIndex][0])) ShieldAccessory = MenuIndex + 1;
+				*/
+			};
+		};
+	};
+};
+
+function void IncreaseStat(int Stat)
+{
+	if (Stat > 0)
+		MenuIndex = Stat;
+
+	// Determine which Stat we're working with for Stat amount calculation on upgrade
+	switch (MenuIndex)
+	{
+		case 0: StatAmount = Strength; 		break;
+		case 1: StatAmount = Defense; 		break;
+		case 2: StatAmount = Vitality; 		break;
+		case 3: StatAmount = Energy; 		break;
+		case 4: StatAmount = Regeneration; 	break;
+		case 5: StatAmount = Agility; 		break;
+		case 6: StatAmount = Capacity; 		break;
+		case 7: StatAmount = Luck; 			break;
+	};
+
+	if (GetCVar("drpg_statcost") == 0) // Normal Costs
+		StatAmount = 1;
+	if (GetCVar("drpg_statcost") == 1) // Progressive Costs
+		StatAmount = StatAmount + 1;
+	if (GetCVar("drpg_statcost") == 2) // Tiered Costs
+		StatAmount = (StatAmount / 10) + 1;
+
+	// Make sure you have enough Stat Tokens
+	if (StatTokens < StatAmount && Stat == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		SetFont("BIGFONT");
+		printf("\cgYou don't have enough Stat Tokens");
+		return;
+	};
+
+	// Upgrade the Stat
+	switch (MenuIndex)
+	{
+		case 0: if (Strength >= StatCap) 		{ PrintStatError();		return; }	else Strength++; 		break;
+		case 1: if (Defense >= StatCap) 		{ PrintStatError(); 	return;	}	else Defense++; 		break;
+		case 2: if (Vitality >= StatCap) 		{ PrintStatError();		return; }	else Vitality++; 		break;
+		case 3: if (Energy >= StatCap) 			{ PrintStatError();		return; }	else Energy++; 			break;
+		case 4: if (Regeneration >= StatCap) 	{ PrintStatError();		return; }	else Regeneration++; 	break;
+		case 5: if (Agility >= StatCap) 		{ PrintStatError();		return; }	else Agility++; 		break;
+		case 6: if (Capacity >= StatCap) 		{ PrintStatError();		return; }	else Capacity++; 		break;
+		case 7: if (Luck >= StatCap) 			{ PrintStatError();		return; }	else Luck++; 			break;
+	};
+	
+	if (Stat == 0)
+		ActivatorSound("menu/move", 127);
+		
+	TakeInventory("StatToken", StatAmount);
+};
+
+function void IncreaseSkill()
+{
+	int Lvl = SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex];
+	int LvlMax = SkillLevelMax[SkillPage][MenuIndex];
+	
+	if (SkillTokens > 0)
+	{
+		if (Lvl < LvlMax && SkillTokens > Lvl)
+		{
+			// If you are upgrading an aura, and it's the same one as you've got active, kill it
+			if (Aura == MenuIndex + 1)
+				AuraTimer = 0;
+			
+			SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]++;
+			CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] = SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex];
+			TakeInventory("SkillToken", Lvl + 1);
+			ActivatorSound("menu/move", 127);
+		};
+	}
+	else
+		ActivatorSound("menu/error", 127);
+};
+
+function void PrintStatError()
+{
+	ActivatorSound("menu/error", 127);
+	SetFont("BIGFONT");
+	printf("\cjYou cannot increase stats past %d!", StatCap);
 };

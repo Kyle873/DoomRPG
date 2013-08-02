@@ -1,6 +1,5 @@
 #include <zcommon.acs>
 
-#include "RPG.dh"
 #include "Stats.dh"
 
 function void CheckCombo()
@@ -285,7 +284,8 @@ function void CheckStats()
 	DamageFactor = (1.0 - 0.25) * Defense / 100;
 	HealthMax = Vitality * 10;
 	EPMax = Energy * 10;
-	Speed = 1.0 + 0.25 * Agility / 100;
+	Speed = 1 + 0.25 * Agility / 100;
+	printf("Speed: %I", Speed);
 	JumpHeight = 8.0 + Agility * 0.04;
 	WeaponSpeed = Agility;
 	SetAmmoCapacity("Clip", Capacity * 20);
@@ -324,14 +324,14 @@ function void CheckStats()
 			GiveInventory(StrParam(s:"Strength", d:Round(Damage * 100)), 1);
 	*/
 	// Speed capping CVAR
-	if (Speed >= FixedDiv(GetCVar("drpg_maxspeed"), 100))
-		Speed = FixedDiv(GetCVar("drpg_maxspeed"), 100);
+	if (Speed >= GetCVar("drpg_maxspeed") * 100)
+		Speed = GetCVar("drpg_maxspeed") * 100;
 	
 	// Now apply the Stats
 	SetActorProperty(0, APROP_SpawnHealth, HealthMax);
 	SetActorProperty(0, APROP_DamageFactor, DamageFactor);
-	SetActorProperty(0, APROP_Speed, Speed);
-	SetActorProperty(0, APROP_JumpZ, JumpHeight);
+	// SetActorProperty(0, APROP_Speed, Round(Speed));
+	SetActorProperty(0, APROP_JumpZ, Round(JumpHeight));
 	
 	// Survival Bonus
 	if (Random(1, 1000) <= SurvivalBonus)

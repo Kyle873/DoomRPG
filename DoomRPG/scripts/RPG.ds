@@ -7,21 +7,71 @@
 
 extscript "ACS" Init() enter
 {
-	if (!firstRun)
+	if (!FirstRun)
 	{
+		EP = 100;
+		RankString = Ranks[0];
+		Vitality = 10;
+		Energy = 10;
+		Agility = 10;
+		Capacity = 10;
+		ComboTimer = -100;
+		// CHECK
+		// ShieldTimer = 175;
+		// ShieldBody = 1;
+		// ShieldBattery = 1;
+		// ShieldCapacitor = 1;
+		// ShieldAccessory = 1;
+		
+		int Tokens = Round(10 - GameSkill() * 0.75);
+		GiveInventory("StatToken", Tokens);
+		GiveInventory("SkillToken", Tokens);
+		// DefaultLoadout();
+		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+		FirstRun = true;
+
+		// Version Info
+		printf("\cnDoom RPG %s (%s) loaded", Version, TimeStamp);
 	};
 	
-	// Version Info
-	// Log(s:"\cnDoom RPG ", s:Version, s:" (", s:TimeStamp, s:") ", s:"loaded!");
-	
+	// CHECK: Setup the max Accessory count and XP/Rank tables
+	// SetAccessorySlots();
+	SetupTables();
+
+	// CHECK: Execute Game Loops
 	ACS_NamedExecuteAlways("Loop", 0);
+	// ACS_NamedExecuteAlways("Speed", 0);
+	// ACS_NamedExecuteAlways("ShieldRegen", 0);
+	
+	// Give the player the Difficulty Strength/Defense/
+	MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
+	if (MapNumber > 30) MapNumber = 30;
+	GiveInventory(StrParam("MonsterDefense%d", MapNumber), 1);
+	
+	// CHECK: Reset the menus if they were open in the last level
+	InMenu = false;
+	// InShop = false;
 };
 
 extscript "ACS" Loop() -> void
 {
 Start:
-	if (InMenu)
-		MenuLoop();
+	// CHECK: Update Functions
+	CheckStats();
+	CheckLuck();
+	CheckStatCap();
+	CheckHealth();
+	CheckArmorMax();
+	CheckCombo();
+	CheckLevel();
+	CheckRank();
+	CheckLevelInfo();
+	// CheckAccessories();
+	// CheckSkills();
+	// CheckSkillDescriptions();
+	CheckBurnout();
+
+	MenuLoop();
 	
 	Delay(1);
 	goto Start;
