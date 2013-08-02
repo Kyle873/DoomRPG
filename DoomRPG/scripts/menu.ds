@@ -5,7 +5,7 @@
 #include "Stats.dh"
 #include "Skills.dh"
 
-script OpenMenu()
+extscript "ACS" OpenMenu() -> void
 {
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_Health) <= 0) return; // terminate
@@ -45,6 +45,34 @@ script OpenMenu()
 		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
 		InMenu = true;
 	};
+};
+
+function void MenuLoop()
+{
+	// Freeze the game if the option is active
+	if (GetCVar("drpg_menufreeze"))
+		GiveInventory("MenuFreezer", 1);
+	
+	// CHECK: Set the HUD Size
+	// SetHUDSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+	
+	// Get the Menu's Origin X/Y
+	MenuX = GetCVar("drpg_menu_x");
+	MenuY = GetCVar("drpg_menu_y");
+	
+	// Draw the background
+	if (GetCVar("drpg_menudim"))
+		FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
+
+	// CHECK: Draw current menu
+	if (Menu == 0)	DrawMainMenu();
+	if (Menu == 1)	DrawStatsMenu();
+	// if (Menu == 2)	DrawAccessoriesMenu();
+	// if (Menu == 3)	DrawSkillMenu();
+	// if (Menu == 4)	DrawShieldMenu();
+	
+	// CHECK: Handle menu input
+		// MenuInput();
 };
 
 function void DrawMainMenu()
@@ -258,32 +286,4 @@ function void DrawStatsMenu()
 		PrintSprite("SHLDA0", 											0, 							236.1, 	226.1, 	0.05);
 		PrintSprite("EPUPB0", 											0, 							238.1, 	223.1, 	0.05);
 	};
-};
-
-function void MenuLoop()
-{
-	// Freeze the game if the option is active
-	if (GetCVar("drpg_menufreeze"))
-		GiveInventory("MenuFreezer", 1);
-	
-	// CHECK: Set the HUD Size
-	// SetHUDSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
-	
-	// Get the Menu's Origin X/Y
-	MenuX = GetCVar("drpg_menu_x");
-	MenuY = GetCVar("drpg_menu_y");
-	
-	// Draw the background
-	if (GetCVar("drpg_menudim"))
-		FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
-
-	// CHECK: Draw current menu
-	if (Menu == 0)	DrawMainMenu();
-	if (Menu == 1)	DrawStatsMenu();
-	// if (Menu == 2)	DrawAccessoriesMenu();
-	// if (Menu == 3)	DrawSkillMenu();
-	// if (Menu == 4)	DrawShieldMenu();
-	
-	// CHECK: Handle menu input
-		// MenuInput();
 };
