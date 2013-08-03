@@ -6,16 +6,16 @@
 int RandomizedStartTokens;
 
 // Level & XP
-int Level @ 2;
-int XP @ 3;
+int Level;
+int XP;
 int XPNext;
 
 // Rank
 str RankString;
-int RankLevel @ 4;
-int Rank @ 5;
+int RankLevel;
+int Rank;
 int RankNext;
-int PayTimer @ 6;
+int PayTimer;
 
 // HUD Stuff
 int Credits;
@@ -31,14 +31,14 @@ fixed XPMult;
 fixed StyleMult;
 
 // Primary Stats
-int Strength @ 7;				// Increases Damage
-int Defense9 @ 8;				// Reduces Damage taken
-int Vitality @ 9;				// Increases max Health and HP regen rate
-int Energy @ 10;				// Increases max EP and EP regen rate
-int Regeneration @ 11;			// Increases both HP/EP regen rate
-int Agility @ 12;				// Increases movement speed and jump height (and optionally weapon speed)
-int Capacity @ 13;				// Increases max ammo capacities
-int Luck @ 14;					// Increases Survivability bonus and drop chances
+int Strength;					// Increases Damage
+int Defense9;					// Reduces Damage taken
+int Vitality;					// Increases max Health and HP regen rate
+int Energy;						// Increases max EP and EP regen rate
+int Regeneration;				// Increases both HP/EP regen rate
+int Agility;					// Increases movement speed and jump height (and optionally weapon speed)
+int Capacity;					// Increases max ammo capacities
+int Luck;						// Increases Survivability bonus and drop chances
 int HealthMax;					// Max player Health
 int ArmorMax;					// Max Armor that the player's current armor can go up to
 
@@ -193,7 +193,7 @@ function void CheckLevel()
 		Level++;
 		GiveInventory("StatToken", 10 - GameSkill());
 		GiveInventory("SkillToken", 1);
-		if (EP <= 0) EP = 0 else EP = GetEPMax();
+		if (EP <= 0) EP = 0 else EP = ACS_NamedExecuteWithResult("GetEPMax", 0);
 		HealThing(1000000);
 		FadeRange(255, 255, 255, 0.75, 255, 255, 255, 0, 1.0);
 		// Log(s:"You have reached level ", d:Level);
@@ -278,7 +278,7 @@ function void CheckLevelInfo()
 	if (CurrentItems >= GetLevelInfo(LEVELINFO_TOTAL_ITEMS) && !ItemsBonus)
 	{
 		FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
-		EP = GetEPMax();
+		EP = ACS_NamedExecuteWithResult("GetEPMax", 0);
 		ComboTimer = 100;
 		if (GetCVar("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
 		HealThing(1000000);
@@ -317,7 +317,7 @@ function void CheckLevelInfo()
 		RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
 		XPGained += XPBonus;
 		RankGained += RankBonus;
-		EP = GetEPMax();
+		EP = ACS_NamedExecuteWithResult("GetEPMax", 0);
 		ComboTimer = 100;
 		if (GetCVar("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
 		if (GetCVar("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
@@ -401,8 +401,7 @@ function void CheckStats()
 	DamageFactor = (1.0 - 0.25) * Defense / 100;
 	HealthMax = Vitality * 10;
 	EPMax = Energy * 10;
-	Speed = 1 + 0.25 * Agility / 100;
-	printf("Speed: %I", Speed);
+	Speed = (1 + 0.25) * (Agility / 100);
 	JumpHeight = 8.0 + Agility * 0.04;
 	WeaponSpeed = Agility;
 	SetAmmoCapacity("Clip", Capacity * 20);
@@ -447,8 +446,8 @@ function void CheckStats()
 	// Now apply the Stats
 	SetActorProperty(0, APROP_SpawnHealth, HealthMax);
 	SetActorProperty(0, APROP_DamageFactor, DamageFactor);
-	// SetActorProperty(0, APROP_Speed, Round(Speed));
-	SetActorProperty(0, APROP_JumpZ, Round(JumpHeight));
+	// SetActorProperty(0, APROP_Speed, Speed);
+	// SetActorProperty(0, APROP_JumpZ, JumpHeight);
 	
 	// Survival Bonus
 	if (Random(1, 1000) <= SurvivalBonus)
