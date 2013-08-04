@@ -5,9 +5,8 @@ For Players
 
 PLEASE READ THIS!
 -----------------
-- When starting the game for the first time, you will need to go into Options -> Doom RPG Options and restore the options to defaults. If you don't do this, you will have many issues including not being able to move and other oddities.
-- DoomRPG-Brutal.pk3 and DoomRPG-Extras.pk3 CAN NOT BE USED TOGETHER, you must use either one or the other, or else loading will fail.
-- When using DoomRPG-Brutal.pk3 (Brutal Doom Doom RPG Patch), make sure you have Brutal Doom Compatibility enabled in the Doom RPG Options menu. If you don't do this, there will be errors and/or strange issues.
+- The DoomRPG-Brutal and DoomRPG-Extras packages CAN NOT BE USED TOGETHER, you must use either one or the other, or else loading will fail.
+- When using DoomRPG-Brutal (Brutal Doom Doom RPG Patch), make sure you have Brutal Doom Compatibility enabled in the Doom RPG Options menu. If you don't do this, there will be errors and/or strange issues.
 - If you need help, have questions, or find bugs, please post them in the Doom RPG Thread on the ZDoom forum.
 
 TIPS
