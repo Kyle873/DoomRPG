@@ -26,7 +26,7 @@ global int 60 : TargetHealth;
 global int 61 : TargetHealthMax;
 
 str Version = "v0.91 Beta";
-str TimeStamp = "Sunday, August 3rd, 2013 at 7:56:30 PM";
+str TimeStamp = "Sunday, August 6th, 2013 at 4:27:49 PM";
 
 int MapNumber;
 
@@ -81,10 +81,11 @@ script "Init" enter
 		Transported = false;
 	}
 	
-	// Give the player the Difficulty Strength/Defense/
+	// Give the player the fake difficulty Monster Defense enhancing items
 	MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
 	if (MapNumber > 30) MapNumber = 30;
-	GiveInventory(StrParam(s:"MonsterDefense", d:MapNumber), 1);
+	if (GetCVAR("drpg_monster_defense"))
+		GiveInventory(StrParam(s:"MonsterDefense", d:MapNumber), 1);
 	
 	// Reset the menus if they were open in the last level
 	InMenu = false;
@@ -152,6 +153,10 @@ script "Loop" (void)
 	if (TargetHealth >= 2147418142) TargetHealth = 0;			// Dafuq?
 	if (TargetHealthMax >= 2147418142) TargetHealthMax = 0;
 		
+	// Give the player the fake difficulty Monster Attack enhancing items
+	if (GetCVAR("drpg_monster_attack"))
+		SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor + (MapNumber * 0.03125));
+
 	// Luck Inventory Item
 //	TakeInventory("Luck", 200);
 //	GiveInventory("Luck", Luck);
