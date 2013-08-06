@@ -8,7 +8,7 @@ namespace DoomRPG
 		public static void Main(string[] Args)
 		{
             Console.ForegroundColor = ConsoleColor.Green;
-            string filename = @"..\DoomRPG\Scripts\RPG.acs";
+            string filename = @"..\DoomRPG\Scripts\ACS\RPG.acs";
             string[] contents = File.ReadAllLines(filename);
             Console.WriteLine("Opening RPG.acs...");
             

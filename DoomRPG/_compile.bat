@@ -5,7 +5,7 @@ set PATH=C:\Games\Doom\ACC
 set SRC=.\scripts\acs
 set OBJ=.\acs
 
-rem _timestamp
+_timestamp
 
 acc -i %SRC% %SRC%\Accessories %OBJ%\Accessories
 acc -i %SRC% %SRC%\Menu %OBJ%\Menu
