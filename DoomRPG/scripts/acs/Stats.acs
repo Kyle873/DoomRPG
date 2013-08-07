@@ -507,8 +507,35 @@ function void DoRegen(void)
 	// Now increment the timers
 	if (!CheckInventory("MenuFreezer"))
 	{
-		HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
-		EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
+		int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
+		
+		// Movement/Crouching/Idling mechanics
+		if (GetCVAR("drpg_regen_movement"))
+		{
+			if (Buttons & BT_FORWARD || Buttons & BT_BACK ||	// Movement - 50% Regen Rate
+				Buttons & BT_LEFT || Buttons & BT_MOVELEFT ||
+				Buttons & BT_RIGHT || Buttons & BT_MOVERIGHT ||
+				Buttons & BT_ATTACK || Buttons & BT_JUMP)
+			{
+				HPRate += FixedMul(FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25), 0.5);
+				EPRate += FixedMul(FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25), 0.5);
+			}
+			else if (Buttons & BT_CROUCH) // Crouch - 125%
+			{
+				HPRate += FixedMul(FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25), 1.5);
+				EPRate += FixedMul(FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25), 1.5);
+			}
+			else // Idle - 100% Regen Rate
+			{
+				HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
+				EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
+			}
+		}
+		else
+		{
+			HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
+			EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
+		}
 	}
 }
 
