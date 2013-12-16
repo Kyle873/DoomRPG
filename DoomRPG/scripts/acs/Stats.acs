@@ -269,14 +269,14 @@ function void CheckLevelInfo(void)
 	int CurrentItems = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
 	int CurrentSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
 	
-	int XPBonus = Random(XPGained * 100, RankLevel * 100 + Random(0, 100));
-	int RankBonus = RankLevel * 10000;
+	int XPBonus = 0; // Random(XPGained * 100, RankLevel * 100 + Random(0, 100));
+	int RankBonus = 0; // RankLevel * 10000;
 	
 	// Set HUD Size and Font
 	SetHUDSize(0, 0, false);
 	SetFont("SMALLFONT");
 	
-	// Check to see if any total stats are 0, if they are, silently flag them as recieved already
+	// Check to see if any total stats are 0, if they are, silently flag them as received already
 	if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
 		KillBonus = true;
 	if (GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0)
@@ -289,9 +289,16 @@ function void CheckLevelInfo(void)
 	{
 		FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
 		XPBonus = Random(Level * 10, Level * 100);
-		XPGained += XPBonus;
-		ComboTimer = 100;
-		if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+		
+		if (GetCVAR("drpg_combo"))
+		{
+			Combo += GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+			XPGained += XPBonus;
+			ComboTimer = 100;
+		}
+		else
+			XP += XPBonus;
+		
 		HudMessage(s:"100% Monsters Killed!\n", d:XPBonus, s:" XP Bonus";
 				   HUDMSG_TYPEON, 0, CR_BRICK, 1.5, 0.4, 3.0, 0.1, 3.0);
 		KillBonus = true;
@@ -314,18 +321,32 @@ function void CheckLevelInfo(void)
 	if (CurrentSecretsFound == SecretsFound + 1 && RankLevel < 25)
 	{
 		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
-		RankGained += Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
-		ComboTimer = 100;
-		if (GetCVAR("drpg_combo")) Combo++;
+		RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
+		
+		if (GetCVAR("drpg_combo"))
+		{
+			Combo++;
+			RankGained += RankBonus;
+			ComboTimer = 100;
+		}
+		else
+			Rank += RankBonus;
 		
 		// 100% Secrets
 		if (CurrentSecretsFound >= GetLevelInfo(LEVELINFO_TOTAL_SECRETS) && !SecretsBonus)
 		{
 			FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
 			RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
-			Rank += RankBonus;
-			ComboTimer += 100;
-			if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+			
+			if (GetCVAR("drpg_combo"))
+			{
+				Combo += GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+				RankGained += RankBonus;
+				ComboTimer = 100;
+			}
+			else
+				Rank += RankBonus;
+
 			HudMessage(s:"100% Secrets Found!\n", d:RankBonus, s:" Rank Bonus";
 					   HUDMSG_TYPEON, 0, CR_YELLOW, 1.5, 0.8, 3.0, 0.1, 3.0);
 			SecretsBonus = true;
@@ -338,14 +359,25 @@ function void CheckLevelInfo(void)
 		FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
 		XPBonus = Random(Level * 100, Level * 1000);
 		RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
-		XPGained += XPBonus;
-		RankGained += RankBonus;
+		
+		if (GetCVAR("drpg_combo"))
+		{
+			Combo += GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+			Combo += GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+			Combo += GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+			XPGained += XPBonus;
+			RankGained += RankBonus;
+			ComboTimer = 100;
+		}
+		else
+		{
+			XP += XPBonus;
+			Rank += RankBonus;
+		}
+		
 		EP = GetEPMax();
-		ComboTimer = 100;
-		if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
-		if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
-		if (GetCVAR("drpg_combo")) Combo += GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
 		HealThing(1000000);
+		
 		HudMessage(s:"100% Monsters killed!\n100% Items Found!\n100% Secrets Found!\n\n",
 				   d:XPBonus, s:" XP Bonus\n", d:RankBonus, s:" Rank Bonus\nFull HP/EP Restore";
 				   HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
