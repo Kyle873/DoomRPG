@@ -22,7 +22,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.91 Beta";
-str TimeStamp = "Tuesday, December 17, 2013 at 10:25:05 PM";
+str TimeStamp = "Wednesday, December 18, 2013 at 12:15:01 AM";
 
 int MapNumber;
 
@@ -47,7 +47,6 @@ script "Init" enter
 		GiveInventory("StatToken", Tokens);
 		GiveInventory("SkillToken", Tokens);
 		DefaultLoadout();
-		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
 		FirstRun = 1;
 
 		// Version Info
@@ -63,12 +62,13 @@ script "Init" enter
 	ACS_NamedExecuteAlways("Speed", 0);
 	ACS_NamedExecuteAlways("ShieldRegen", 0);
 	
-	/* Auras are not transferred between levels
-	 * Should I leave this in or out? Maybe a CVAR?
-	Aura = 0;
-	AuraTimer = 0;
-	AuraTimerHUD = 0;
-	*/
+	// Remove Aura if the keep Aura CVAR is off
+	if (!GetCVAR("drpg_skill_keepauras"))
+	{
+		Aura = 0;
+		AuraTimer = 0;
+		AuraTimerHUD = 0;
+	}
 	
 	// Transport from/to Outpost Screen Fading
 	if (Transported)
@@ -139,15 +139,11 @@ script "Loop" (void)
 	TakeInventory("EP", 100);
 	GiveInventory("EP", FixedMul(FixedDiv(EP, EPMax), 100));
 	
-	// Give the player the fake difficulty Monster Attack enhancing items
+	// Increase the monster difficulty depending on the map number if that CVAR is set
 	if (GetCVAR("drpg_monster_attack"))
 		SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor + (MapNumber * 0.03125));
-
-	// Luck Inventory Item
-//	TakeInventory("Luck", 200);
-//	GiveInventory("Luck", Luck);
 	
-	// Make you invincible while in the Menus
+	// Make you invincible while in the Menus and menu freezing is enabled
 	if ((InMenu || InShop) && GetCVAR("drpg_menufreeze"))
 		SetActorProperty(0, APROP_DAMAGEFACTOR, 0);
 		
@@ -171,9 +167,6 @@ script "Speed" (void)
 	
 	Delay(Time + 1);
 	restart;
-	
-	// For the future...
-	// SetResultValue(Speed);
 }
 
 // Quick Heal
@@ -250,7 +243,6 @@ script "QuickAmmo" (void) net
 }
 
 // Death Script
-// This will give you a huge penalty if you resurrect yourself
 script "Death" death
 {
 	// Taunt the Player
@@ -309,7 +301,7 @@ function void DefaultLoadout(void)
 	// Fists/Melee
 	if (GetCVAR("drpg_ext_brutal"))
 		GiveInventory("Melee_Attacks", 1);
-	else
+	else // Weapons and Ammo
 	{
 		GiveInventory("Fist", 1);
 		GiveInventory("Clip", 30);
