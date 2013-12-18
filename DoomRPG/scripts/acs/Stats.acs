@@ -76,6 +76,7 @@ int AllBonus;
 int HPRate;
 int EPRate;
 int LowHealthTimer;
+int RegenBoostTimer;
 
 // XP & Rank Tables
 int XPTable[1001];
@@ -542,6 +543,15 @@ function void DoRegen(void)
 	{
 		int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 		
+		// Regen Boost
+		if (RegenBoostTimer > 0)
+		{
+			HPRate += RegenBoostTimer;
+			EPRate += RegenBoostTimer;
+			RegenBoostTimer -= 10;
+			FadeRange(255, 0, 128, 0.1, 255, 0, 128, 0.0, 1.0);
+		}
+
 		// Movement/Crouching/Idling mechanics
 		if (GetCVAR("drpg_regen_movement"))
 		{
@@ -553,7 +563,7 @@ function void DoRegen(void)
 				HPRate += FixedMul(FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25), 0.5);
 				EPRate += FixedMul(FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25), 0.5);
 			}
-			else if (Buttons & BT_CROUCH) // Crouch - 125%
+			else if (Buttons & BT_CROUCH) // Crouch - 150% Regen Rate
 			{
 				HPRate += FixedMul(FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25), 1.5);
 				EPRate += FixedMul(FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25), 1.5);
