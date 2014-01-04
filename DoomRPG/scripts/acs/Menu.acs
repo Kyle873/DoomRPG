@@ -10,7 +10,7 @@
 #import "Shield.acs"
 #import "Utils.acs"
 
-#define MAX_CATAGORIES		6
+#define MAX_CATEGORIES		6
 #define MAX_SKILLS			17
 
 str MainMenu[5] = {
@@ -390,8 +390,8 @@ function void DrawSkillMenu(void)
 	if (SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] == SkillLevelMax[SkillPage][MenuIndex])
 		HudMessage(s:""; HUDMSG_PLAIN, 5001, CR_RED, 238.1, 56.1, 0.05);
 
-	// Skill Catagory
-	HudMessage(s:SkillCatagories[SkillPage];
+	// Skill Category
+	HudMessage(s:SkillCategories[SkillPage];
 			   HUDMSG_PLAIN, 5002, CR_WHITE,
 			   0.1, 25.0, 0.05);
 
@@ -409,40 +409,46 @@ function void DrawSkillMenu(void)
 
 	// Skill List
 	SetFont("SMALLFONT");
-	for (int i = 0; i < CatagoryMax[SkillPage]; i++)
-		if (i == MenuIndex)
+	for (int i = 0; i < CategoryMax[SkillPage]; i++)
+	{
+		int color = CR_WHITE;
+				
+		if (i == MenuIndex && i == SkillIndex[SkillPage])
+			Color = CR_YELLOW;
+		else if (i == MenuIndex)
+			Color = CR_GREEN;
+		else if (i == SkillIndex[SkillPage])
+			Color = CR_CYAN;
+		else if (SkillLevel[(SkillPage * MAX_SKILLS) + i] == 0)
+			Color = CR_RED;
+
+		if (SkillLevel[(SkillPage * MAX_SKILLS) + i] > 0)
+			HudMessage(s:SkillData[SkillPage][i][0],
+					   s:" (",
+					   d:SkillLevel[(SkillPage * MAX_SKILLS) + i],
+					   s:" / ",
+					   d:SkillLevelMax[SkillPage][i],
+					   s:")",
+					   s:" [",
+					   d:CurrentSkillLevel[(SkillPage * MAX_SKILLS) + i],
+					   s:"]";
+					   HUDMSG_PLAIN, 5006 + i, Color,
+				       0.1, 40.0 + (8.0 * i), 0.05);
+		else
 			HudMessage(s:SkillData[SkillPage][i][0],
 					   s:" (",
 					   d:SkillLevel[(SkillPage * MAX_SKILLS) + i],
 					   s:" / ",
 					   d:SkillLevelMax[SkillPage][i],
 					   s:")";
-					   HUDMSG_PLAIN, 5006 + i, CR_GREEN,
+					   HUDMSG_PLAIN, 5006 + i, Color,
 					   0.1, 40.0 + (8.0 * i), 0.05);
-		else
-			if (SkillLevel[(SkillPage * MAX_SKILLS) + i] == 0)
-				HudMessage(s:SkillData[SkillPage][i][0],
-						   s:" (",
-						   d:SkillLevel[(SkillPage * MAX_SKILLS) + i],
-						   s:" / ",
-						   d:SkillLevelMax[SkillPage][i],
-						   s:")";
-						   HUDMSG_PLAIN, 5006 + i, CR_RED,
-						   0.1, 40.0 + (8.0 * i), 0.05);
-			else
-				HudMessage(s:SkillData[SkillPage][i][0],
-						   s:" (",
-						   d:SkillLevel[(SkillPage * MAX_SKILLS) + i],
-						   s:" / ",
-						   d:SkillLevelMax[SkillPage][i],
-						   s:")";
-						   HUDMSG_PLAIN, 5006 + i, CR_WHITE,
-						   0.1, 40.0 + (8.0 * i), 0.05);
-
+	}
+	
 	// Skill Description
 	SetFont("SMALLFONT");
 	if (SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] > 0)
-		HudMessage(s:SkillData[SkillPage][MenuIndex][SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]];
+		HudMessage(s:SkillData[SkillPage][MenuIndex][CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]];
 			   HUDMSG_PLAIN, 5005, CR_YELLOW,
 			   0.1, 173.1, 0.05);
 	else
@@ -455,7 +461,7 @@ function void DrawSkillMenu(void)
 
 	/* Help Text
 	SetFont("SMALLFONT");
-	HudMessage(s:"Up/Down to select\nLeft/Right to switch Catagory\nUse to Increase Skill Level\nUse Skill to Select Current Skill";
+	HudMessage(s:"Up/Down to select\nLeft/Right to switch Category\nUse to Increase Skill Level\nUse Skill to Select Current Skill";
 			   HUDMSG_PLAIN, 5004, CR_RED,
 			   0.1, 204.1, 0.05);
 	*/
@@ -685,32 +691,48 @@ function void MenuInput(void)
 	{
 		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && MenuIndex >= 0)
 		{
-			if (MenuIndex <= 0) MenuIndex = CatagoryMax[SkillPage];
+			if (MenuIndex <= 0) MenuIndex = CategoryMax[SkillPage];
             ActivatorSound("menu/move", 127);
 			MenuIndex--;
 		}
-		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < CatagoryMax[SkillPage])
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < CategoryMax[SkillPage])
 		{
-			if (MenuIndex >= CatagoryMax[SkillPage] - 1) MenuIndex = -1;
+			if (MenuIndex >= CategoryMax[SkillPage] - 1) MenuIndex = -1;
             ActivatorSound("menu/move", 127);
 			MenuIndex++;
 		}
-        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT && SkillPage > 0) ||
+        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT && SkillPage >= 0) ||
 			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && SkillPage >= 0))
         {
-			if (SkillPage <= 0) SkillPage = MAX_CATAGORIES;
+			if (SkillPage <= 0) SkillPage = MAX_CATEGORIES;
 			ActivatorSound("menu/move", 127);
 			MenuIndex = 0;
 			SkillPage--;
-        }
-        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && SkillPage < MAX_CATAGORIES) ||
-			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && SkillPage < MAX_CATAGORIES))
+		}
+        if (Buttons & BT_SPEED &&
+			(Buttons & BT_SPEED && Buttons & BT_LEFT && !(OldButtons & BT_LEFT) && SkillPage >= 0) ||
+			(Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && SkillPage >= 0))
+			if (CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] > 1)
+			{
+				CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]--;
+				ActivatorSound("menu/move", 127);
+			}
+        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && SkillPage < MAX_CATEGORIES) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && SkillPage < MAX_CATEGORIES))
         {
-			if (SkillPage >= MAX_CATAGORIES - 1) SkillPage = -1;
+			if (SkillPage >= MAX_CATEGORIES - 1) SkillPage = -1;
 			ActivatorSound("menu/move", 127);
 			MenuIndex = 0;
 			SkillPage++;
 		}
+        if (Buttons & BT_SPEED &&
+			(Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT) && Buttons & BT_SPEED && SkillPage < MAX_CATEGORIES) ||
+			(Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT) && Buttons & BT_SPEED && SkillPage < MAX_CATEGORIES))
+			if (CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] < SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex])
+			{
+				CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]++;
+				ActivatorSound("menu/move", 127);
+			}
 		if (Buttons == BT_USE && OldButtons != BT_USE)
 			IncreaseSkill();
 	}

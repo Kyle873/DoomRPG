@@ -8,7 +8,7 @@
 #import "Menu.acs"
 #import "Shield.acs"
 
-#define MAX_CATAGORIES		6
+#define MAX_CATEGORIES		6
 #define MAX_SKILLS			17
 
 // Energy Points (EP)
@@ -19,15 +19,11 @@ global int 3 : EPMax;
 global int 5 : Aura;
 global int 6 : AuraTimer;
 global int 25 : AuraTimerHUD;
-global int 26 : SkillCatagory;
 global int 27 : SkillIndex[];
 global int 28 : SkillLevel[];
 global int 29 : CurrentSkillLevel[];
 
 bool Overdrive;
-bool SkillGridOpen;
-int SkillGridCatagory;
-int SkillGridIndex;
 int SummonID = 2100;
 int SkillCostMult;
 int BulletTimeMode;
@@ -40,7 +36,7 @@ bool Portal1Active;
 bool Portal2Active;
 
 // Skill Catagories
-str SkillCatagories[MAX_CATAGORIES] =
+str SkillCategories[MAX_CATEGORIES] =
 {
 	"Healing",
 	"Powerups",
@@ -50,13 +46,13 @@ str SkillCatagories[MAX_CATAGORIES] =
 	"Utility",
 };
 
-int CatagoryMax[MAX_CATAGORIES] =
+int CategoryMax[MAX_CATEGORIES] =
 {
 	2, 9, 9, 2, 17, 6
 };
 
 // Skill Max Levels
-int SkillLevelMax[MAX_CATAGORIES][MAX_SKILLS] =
+int SkillLevelMax[MAX_CATEGORIES][MAX_SKILLS] =
 {
 	// Healing
 	{ 1, 1 },
@@ -72,7 +68,7 @@ int SkillLevelMax[MAX_CATAGORIES][MAX_SKILLS] =
 	{ 1, 2, 1, 2, 1, 1 }
 };
 
-int SkillCosts[MAX_CATAGORIES][MAX_SKILLS] =
+int SkillCosts[MAX_CATEGORIES][MAX_SKILLS] =
 {
 	// Healing
 	{ 50, 50 },
@@ -89,7 +85,7 @@ int SkillCosts[MAX_CATAGORIES][MAX_SKILLS] =
 };
 
 // Skill Icons
-str SkillIcons[MAX_CATAGORIES][MAX_SKILLS] =
+str SkillIcons[MAX_CATEGORIES][MAX_SKILLS] =
 {
 	// Healing
 	{
@@ -157,7 +153,7 @@ str SkillIcons[MAX_CATAGORIES][MAX_SKILLS] =
 };
 
 // Skill Data
-int SkillData[MAX_CATAGORIES][MAX_SKILLS][20] =
+int SkillData[MAX_CATEGORIES][MAX_SKILLS][20] =
 {
 	// Name, Description (Level 1), Description (Level 2), ...
 	
@@ -443,13 +439,13 @@ function int ScaleEPCost(int Cost)
 }
 
 // Use Skill Script
-script "UseSkill" (int SkillTest)
+script "UseSkill" (int Category)
 {
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 
 	// Vars
-	int EPCost = FixedDiv(SkillCosts[SkillCatagory][SkillIndex[SkillCatagory]] * CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]], SkillCostMult);
+	int EPCost = FixedDiv(SkillCosts[Category][SkillIndex[Category]] * CurrentSkillLevel[(Category * MAX_SKILLS) + SkillIndex[Category]], SkillCostMult);
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
 	Overdrive = false;
@@ -461,27 +457,27 @@ script "UseSkill" (int SkillTest)
 	// Scale EP costs to skill level
 	EPCost = ScaleEPCost(EPCost);
 
-	// If you're in the Skills menu, select the highlighted skill instead
+	// If you're in the Skills menu, select the highlighted skill for that category
+	// Re-write for multicast system
 	if (InMenu && Menu == 3)
 	{
 		ActivatorSound("menu/move", 127);
-		SkillCatagory = SkillPage;
-		SkillIndex[SkillCatagory] = MenuIndex;
+		SkillIndex[SkillPage] = MenuIndex;
 		terminate;
 	}
 	
 	// Overdriving an unlearnt skill will learn it
-	if (Overdrive && CheckInventory("SkillToken") > 0 && !SkillLevel[(MAX_SKILLS * SkillCatagory) + SkillIndex[SkillCatagory]])
+	if (Overdrive && CheckInventory("SkillToken") > 0 && !SkillLevel[(MAX_SKILLS * Category) + SkillIndex[Category]])
 	{
-		SkillLevel[(MAX_SKILLS * SkillCatagory) + SkillIndex[SkillCatagory]]++;
-		CurrentSkillLevel[(MAX_SKILLS * SkillCatagory) + SkillIndex[SkillCatagory]]++;
+		SkillLevel[(MAX_SKILLS * Category) + SkillIndex[Category]]++;
+		CurrentSkillLevel[(MAX_SKILLS * Category) + SkillIndex[Category]]++;
 		TakeInventory("SkillToken", 1);
 		FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
 		terminate;
 	}
 	
 	// Check if the Skill has been learned yet
-	if (SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] == 0 && SkillTest == 0)
+	if (SkillLevel[(Category * MAX_SKILLS) + SkillIndex[Category]] == 0)
 	{
 		SetFont("BIGFONT");
 		Print(s:"\cgYou don't know this skill yet");
@@ -501,10 +497,10 @@ script "UseSkill" (int SkillTest)
 	// Normal skills
 	if (EP >= EPCost || Overdrive)
 	{
-		switch (SkillCatagory)
+		switch (Category)
 		{
 			case 0: // Healing
-				switch (SkillIndex[SkillCatagory])
+				switch (SkillIndex[Category])
 				{
 					case 0:		Heal();								break; // Heal
 					case 1:		Repair();							break; // Repair Armor
@@ -512,7 +508,7 @@ script "UseSkill" (int SkillTest)
 				break;
 			
 			case 1: // Powerups
-				switch (SkillIndex[SkillCatagory])
+				switch (SkillIndex[Category])
 				{
 					case 0:		Powerup(1);							break; // Invulnerability
 					case 1:		Powerup(2);							break; // Invisibility
@@ -528,12 +524,12 @@ script "UseSkill" (int SkillTest)
 			
 			case 2: // Auras
 				ActivatorSound("skills/buff", 127);
-				if (SkillIndex[SkillCatagory] == Aura - 1)
+				if (SkillIndex[Category] == Aura - 1)
 					AuraTimer += 1050 + FixedMul(Energy, 5.25);
 				else
 					AuraTimer = 1050 + FixedMul(Energy, 5.25);
 				
- 				switch (SkillIndex[SkillCatagory])
+ 				switch (SkillIndex[Category])
 				{
 					case 0:		Aura = 1;							break; // Red Aura
 					case 1:		Aura = 2;							break; // Green Aura
@@ -548,7 +544,7 @@ script "UseSkill" (int SkillTest)
 				break;
 			
 			case 3: // Attacks
-				switch (SkillIndex[SkillCatagory])
+				switch (SkillIndex[Category])
 				{
 					case 0:		Projectile(1);						break; // Fireball
 					case 1:		Projectile(2);						break; // Ice Missile
@@ -556,7 +552,7 @@ script "UseSkill" (int SkillTest)
 				break;
 			
 			case 4: // Summoning
-				switch (SkillIndex[SkillCatagory])
+				switch (SkillIndex[Category])
 				{
 					case 0:		Summon(1);							break; // Summon Marine
 					case 1:		Summon(2);							break; // Summon Zombieman
@@ -579,7 +575,7 @@ script "UseSkill" (int SkillTest)
 				break;
 				
 			case 5: // Utility
-				switch (SkillIndex[SkillCatagory])
+				switch (SkillIndex[Category])
 				{
 					case 0:		BreakdownArmor();					break; // Breakdown Armor
 					case 1:		ForceWall();						break; // Force Wall
@@ -613,279 +609,37 @@ script "DrawSkillHUD" enter
 		// If you're dead, terminate
 		if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 		
-		// Set HUD Size
-		SetHUDSize(0, 0, false);
-		
-		// Get Position and Options from CVARs
-		str SkillIcon = SkillIcons[SkillCatagory][SkillIndex[SkillCatagory]];
-		int SkillHUDIcon = GetCVAR("drpg_skill_icon");
-		int SkillHUDDescription = GetCVAR("drpg_skill_description");
-		int SkillHUDAlign = GetCVAR("drpg_skill_align");
-		int SkillHUDX = -FixedDiv(GetCVAR("drpg_skill_x"), 100);
-		int SkillHUDY = FixedDiv(GetCVAR("drpg_skill_y"), 100);
-		
-		// Skill Level/Cost vars
-		int SkillLvl = CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
-		int CurrentLevel = CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
-		int MaxLevel = SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
-		int SkillCost = SkillCosts[SkillCatagory][SkillIndex[SkillCatagory]] * CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
-		
-		// Scale EP costs to skill level
-		SkillCost = ScaleEPCost(SkillCost);
-
-		// Set HUD Size
-		// SetHUDSize(800, 600, false);
-		
-		// Alignment
-		if (SkillHUDAlign == 0) // Left
+		for (int i = 0; i < MAX_CATEGORIES; i++)
 		{
-			SkillHUDX = -FixedDiv(GetCVAR("drpg_skill_x"), 100);
+			int SkillCost = ScaleEPCost(SkillCosts[i][SkillIndex[i]] * SkillLevel[(i * MAX_SKILLS) + SkillIndex[i]]);
+			int Color = CR_GREEN;
+			
+			if (EP < SkillCost)
+				Color = CR_RED;
 
-			if (SkillHUDIcon == 1)
-				PrintSprite(SkillIcon, 51, SkillHUDX, -SkillHUDY + 0.075, 0.1);
+			if (CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]] == 0)
+			{
+				Color = CR_RED;
+				
+				HudMessage(s:SkillData[i][SkillIndex[i]][0];
+						   HUDMSG_PLAIN, 0, Color,
+						   1.0, 1.0 - (0.025 * i), 0.05);
+			}
+			else
+				HudMessage(s:SkillData[i][SkillIndex[i]][0],
+						   s:" (",
+						   d:CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]],
+						   s:"/",
+						   d:SkillLevel[(i * MAX_SKILLS) + SkillIndex[i]],
+						   s:") [\cn",
+						   d:SkillCost,
+						   s:"\c-]";
+						   HUDMSG_PLAIN, 0, Color,
+						   1.0, 1.0 - (0.025 * i), 0.05);
 		}
-		if (SkillHUDAlign == 1) // Centered/Right
-		{
-			SkillHUDX = FixedDiv(GetCVAR("drpg_skill_x"), 100) + 1.0;
-
-			if (SkillHUDIcon == 1)
-				PrintSprite(SkillIcon, 51, SkillHUDX, -SkillHUDY + 0.075, 0.1);
-		}
-
-		// Print the catagory
-		SetFont("SMALLFONT");
-		HudMessage(s:SkillCatagories[SkillCatagory];
-				   HUDMSG_PLAIN, 52, CR_WHITE, SkillHUDX, SkillHUDY, 0.1);
-		
-		// Print the skill name
-		if (SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] == 0)
-			HudMessage(s:SkillData[SkillCatagory][SkillIndex[SkillCatagory]][0];
-					   HUDMSG_PLAIN, 53, CR_RED, SkillHUDX, SkillHUDY - 0.025, 0.1);
-		else
-			HudMessage(s:SkillData[SkillCatagory][SkillIndex[SkillCatagory]][0],
-					   s:" (", d:CurrentLevel, s:"/", d:MaxLevel, s:") \cn(", d:SkillCost, s:")";
-					   HUDMSG_PLAIN, 53, CR_GREEN, SkillHUDX, SkillHUDY - 0.025, 0.1);
-		
-		// Print the skill description
-		if (SkillHUDDescription == 1)
-			for (int i = 0; i < MAX_CATAGORIES; i++)
-				if (i == SkillCatagory)
-					if (CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] == 0)
-						HudMessage(s:SkillData[SkillCatagory][SkillIndex[SkillCatagory]][SkillLvl + 1];
-								   HUDMSG_FADEOUT, 54, CR_YELLOW, SkillHUDX, SkillHUDY - 0.06, 3.0, 1.0);
-					else
-						HudMessage(s:SkillData[SkillCatagory][SkillIndex[SkillCatagory]][SkillLvl];
-								   HUDMSG_FADEOUT, 54, CR_YELLOW, SkillHUDX, SkillHUDY - 0.06, 3.0, 1.0);
 		
 		delay(1);
 	}
-}
-
-script "ToggleSkillGrid" (void)
-{
-	SkillGridOpen = !SkillGridOpen;
-	
-	if (SkillGridOpen)
-		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-	else
-		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-}
-
-function void SkillGrid(void)
-{
-	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
-	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
-	int i, j, Index = 0;
-	
-	// Freeze the game if the option is active
-	if (GetCVAR("drpg_menufreeze"))
-		GiveInventory("MenuFreezer", 1);
-	
-	// Draw the background
-	if (GetCVAR("drpg_menudim"))
-		FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
-
-	// Set the HUD Size
-	SetHUDSize(GetCVAR("drpg_menu_width"), GetCVAR("drpg_menu_height"), true);
-	
-	// Titles
-	SetFont("BIGFONT");
-	HudMessage(s:"Skills"; HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 10.0, 0.05);
-	HudMessage(s:SkillCatagories[0]; HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 28.0, 0.05);
-	HudMessage(s:SkillCatagories[1]; HUDMSG_PLAIN, 0, CR_CYAN, 0.1, 78.0, 0.05);
-	HudMessage(s:SkillCatagories[2]; HUDMSG_PLAIN, 0, CR_GOLD, 0.1, 196.0, 0.05);
-	HudMessage(s:SkillCatagories[3]; HUDMSG_PLAIN, 0, CR_RED, 160.1, 28.0, 0.05);
-	HudMessage(s:SkillCatagories[4]; HUDMSG_PLAIN, 0, CR_BRICK, 160.1, 78.0, 0.05);
-	HudMessage(s:SkillCatagories[5]; HUDMSG_PLAIN, 0, CR_ORANGE, 160.1, 196.0, 0.05);
-	
-	// Healing Skills
-	for (i = 0; i < CatagoryMax[0]; i++)
-	{
-		if (SkillGridCatagory == 0)
-			if (i == SkillGridIndex)
-				PrintSprite("SelectBo", 0, 0.1 + i * 32.0, 52.0, 0.05);
-		
-		// PrintSprite(SkillIcons[0][0], 0, 0.1 + i * 32.0, 52.0, 0.05);
-		PrintSprite("ArtiBox", 0, 0.1 + i * 32.0, 52.0, 0.05);
-	}
-	
-	// Powerup Skills
-	for (i = 0; i < CatagoryMax[1] / 3; i++)
-		for (j = 0; j < CatagoryMax[1] / 3; j++)
-		{
-			Index = j + (i * CatagoryMax[1] / 3);
-			// PrintSprite(SkillIcons[0][0], 0, 0.1 + i * 32.0, 104.0 + j * 32.0, 0.05);
-			if (SkillGridCatagory == 1)
-				if (Index == SkillGridIndex)
-					PrintSprite("SelectBo", 0, 0.1 + j * 32.0, 104.0 + i * 32.0, 0.05);
-			
-			PrintSprite("ArtiBox", 0, 0.1 + j * 32.0, 104.0 + i * 32.0, 0.05);
-		}
-	
-	// Aura Skills
-	for (i = 0; i < CatagoryMax[2] / 4; i++)
-		for (j = 0; j < CatagoryMax[2] / 2; j++)
-		{
-			Index = j + (i * CatagoryMax[2] / 2);
-			if (SkillGridCatagory == 2)
-				if (Index == SkillGridIndex)
-					PrintSprite("SelectBo", 0, 0.1 + j * 32.0, 224.0 + i * 32.0, 0.05);
-			
-			PrintSprite(SkillIcons[2][Index], 0, 0.1 + j * 32.0, 256.0 + i * 32.0, 0.05);
-			PrintSprite("ArtiBox", 0, 0.1 + j * 32.0, 224.0 + i * 32.0, 0.05);
-		}
-	
-	// Attack Skills
-	for (i = 0; i < CatagoryMax[3]; i++)
-	{
-		if (SkillGridCatagory == 3)
-			if (i == SkillGridIndex)
-				PrintSprite("SelectBo", 0, 160.1 + i * 32.0, 52.0, 0.05);
-
-		PrintSprite("ArtiBox", 0, 160.1 + i * 32.0, 52.0, 0.05);
-	}
-	
-	// Summoning Skills
-	for (i = 0; i < 3; i++)
-		for (j = 0; j < 6; j++)
-		{
-			Index = j + (i * 6);
-			if (SkillGridCatagory == 4)
-				if (Index == SkillGridIndex)
-					PrintSprite("SelectBo", 0, 160.1 + j * 32.0, 104.0 + i * 32.0, 0.05);
-
-			PrintSprite("ArtiBox", 0, 160.1 + j * 32.0, 104.0 + i * 32.0, 0.05);
-		}
-	
-	// Utility Skills
-	for (i = 0; i < CatagoryMax[5]; i++)
-	{
-		if (SkillGridCatagory == 5)
-			if (i == SkillGridIndex)
-				PrintSprite("SelectBo", 0, 160.1 + i * 32.0, 224.0, 0.05);
-
-		PrintSprite("ArtiBox", 0, 160.1 + i * 32.0, 224.0, 0.05);
-	}
-	
-	// Input
-	if (SkillGridCatagory < 0) SkillGridCatagory = MAX_CATAGORIES - 1;
-	if (SkillGridCatagory > MAX_CATAGORIES - 1) SkillGridCatagory = 0;
-	if (SkillGridIndex < 0) SkillGridIndex = CatagoryMax[SkillGridCatagory] - 1;
-	if (SkillGridIndex > CatagoryMax[SkillGridCatagory] - 1) SkillGridIndex = 0;
-	if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && SkillGridCatagory >= 0)
-	{
-		ActivatorSound("menu/move", 127);
-		SkillGridCatagory--;
-		SkillGridIndex = 0;
-	}
-	if (Buttons == BT_BACK && OldButtons != BT_BACK && SkillGridCatagory <= MAX_CATAGORIES - 1)
-	{
-		ActivatorSound("menu/move", 127);
-		SkillGridCatagory++;
-		SkillGridIndex = 0;
-	}
-	if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
-		(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT)
-		&& SkillGridIndex >= 0)
-	{
-		ActivatorSound("menu/move", 127);
-		SkillGridIndex--;
-	}
-	if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
-		(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT)
-		&& SkillGridIndex <= CatagoryMax[SkillGridCatagory] - 1)
-	{
-		ActivatorSound("menu/move", 127);
-		SkillGridIndex++;
-	}
-//	if (Buttons == BT_USE && OldButtons != BT_USE)
-//		EquipAccessory(MenuIndex);
-}
-
-script "SkillCatagoryUp" (void)
-{
-	// If you're dead, terminate
-	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
-
-	if (SkillCatagory > 0)
-		SkillCatagory--;
-
-	ActivatorSound("menu/move", 127);
-}
-
-script "SkillCatagoryDown" (void)
-{
-	// If you're dead, terminate
-	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
-
-	if (SkillCatagory < MAX_CATAGORIES - 1)
-		SkillCatagory++;
-
-	ActivatorSound("menu/move", 127);
-}
-
-script "SkillUp" (void)
-{
-	// If you're dead, terminate
-	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
-
-	if (SkillIndex[SkillCatagory] > 0)
-		SkillIndex[SkillCatagory]--;
-	
-	ActivatorSound("menu/move", 127);
-}
-
-script "SkillDown" (void)
-{
-	// If you're dead, terminate
-	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
-
-	if (SkillIndex[SkillCatagory] < CatagoryMax[SkillCatagory] - 1)
-		SkillIndex[SkillCatagory]++;
-	
-	ActivatorSound("menu/move", 127);
-}
-
-script "SkillLevelUp" (void)
-{
-	// If you're dead, terminate
-	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
-
-	if (CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] < SkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]])
-		CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]]++;
-
-	ActivatorSound("menu/move", 127);
-}
-
-script "SkillLevelDown" (void)
-{
-	// If you're dead, terminate
-	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
-
-	if (CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]] > 1)
-		CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]]--;
-
-	ActivatorSound("menu/move", 127);
 }
 
 // Handles the Transportation system
@@ -911,16 +665,16 @@ script "Transport" (void)
 	}
 	else
 	{
-		RefundEP();
+		RefundEP(6);
 		Teleport_NewMap(LevelNum, 0, 0);
 		InBase = false;
 		Transported = true;
 	}
 }
 
-function void RefundEP(void)
+function void RefundEP(int Category)
 {
-	int EPCost = SkillCosts[SkillCatagory][SkillIndex[SkillCatagory]] * CurrentSkillLevel[(SkillCatagory * MAX_SKILLS) + SkillIndex[SkillCatagory]];
+	int EPCost = SkillCosts[Category][SkillIndex[Category]] * CurrentSkillLevel[(Category * MAX_SKILLS) + SkillIndex[Category]];
 	
 	// Scale EP costs to skill level
 	EPCost = ScaleEPCost(EPCost);
@@ -948,10 +702,9 @@ function void Heal(void)
 		}
 	}
 	
-	/* Refund - If your health is max or above
+	// Refund - If your health is max or above
 	if (GetActorProperty(0, APROP_HEALTH) >= GetActorProperty(0, APROP_SPAWNHEALTH))
-		RefundEP();
-	*/
+		RefundEP(1);
 }
 
 // Repair Armor
@@ -1040,7 +793,7 @@ function void DropRune(void)
 	else
 	{
 		ActivatorSound("menu/error", 127);
-		RefundEP();
+		RefundEP(2);
 	}
 }
 
@@ -1060,7 +813,7 @@ function void DropAmmo(void)
 	else
 	{
 		ActivatorSound("menu/error", 127);
-		RefundEP();
+		RefundEP(2);
 	}
 }
 
@@ -1085,7 +838,7 @@ function void Projectile(int Type)
 	if (GetActorProperty(0, APROP_WATERLEVEL) > 0)
 	{
 		AmbientSound("menu/error", 127);
-		RefundEP();
+		RefundEP(4);
 		return;
 	}
 	
@@ -1191,7 +944,7 @@ function void Summon(int Type)
 	if (!Success)
 	{
 		ActivatorSound("menu/error", 127);
-		RefundEP();
+		RefundEP(5);
 	}
 }
 
@@ -1229,7 +982,7 @@ function void ForceWall(void)
 			else
 			{
 				ActivatorSound("menu/error", 127);
-				RefundEP();
+				RefundEP(6);
 			}
 			break;
 		case 2:
@@ -1237,7 +990,7 @@ function void ForceWall(void)
 			else
 			{
 				ActivatorSound("menu/error", 127);
-				RefundEP();
+				RefundEP(6);
 			}
 			break;
 	}
