@@ -714,11 +714,26 @@ function void Heal(void)
 // Repair Armor
 function void Repair(void)
 {
-	int RepairLevel = CurrentSkillLevel[1];
-
-	FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
-	GiveInventory("ArmorBonus", Energy * 10);
-	ActivatorSound("skills/repair", 127);
+	if (CheckInventory("Armor") < ArmorMax && CheckArmorType() != "")
+	{
+		print(d:ArmorMax);
+		
+		FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
+		GiveInventory("ArmorBonus", Energy * 10);
+		
+		if (CheckInventory("Armor") > ArmorMax)
+		{
+			int ArmorOverflow = CheckInventory("BasicArmor") - ArmorMax;
+			TakeInventory("BasicArmor", ArmorOverflow);
+		}
+		
+		ActivatorSound("skills/repair", 127);
+	}
+	else
+	{
+		ActivatorSound("menu/error", 127);
+		RefundEP(0);
+	}
 }
 
 // Powerups
