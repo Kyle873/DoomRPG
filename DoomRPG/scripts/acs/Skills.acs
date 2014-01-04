@@ -611,7 +611,7 @@ script "DrawSkillHUD" enter
 		
 		for (int i = MAX_CATEGORIES - 1; i >= 0; i--)
 		{
-			int SkillCost = ScaleEPCost(SkillCosts[i][SkillIndex[i]] * CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]]);
+			int SkillCost = FixedDiv(ScaleEPCost(SkillCosts[i][SkillIndex[i]] * CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]]), SkillCostMult);
 			int Color = CR_GREEN;
 			
 			if (EP < SkillCost)
@@ -1122,17 +1122,16 @@ function void BulletTime(int Mode)
 	BulletTimeTimer = 350;
 	
 	// Remove duplicate TimeFreezerSounds
-	Thing_Remove(1998);
 	Thing_Remove(1999);
 	
-	if (Mode == 1)
+	if (Mode == 1) // Stutter Time
 	{
 		SpawnForced("TimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
 		SetActorState(1999, "Spawn");
 		TakeInventory("PowerTimeFreezer", 1);
 		GiveInventory("TimeFreezerQuick", 1);
 	}
-	if (Mode == 2)
+	if (Mode == 2) // Freeze Time
 	{
 		SpawnForced("TimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
 		SetActorState(1999, "Spawn");
@@ -1140,7 +1139,6 @@ function void BulletTime(int Mode)
 	}
 }
 
-// Because delays don't fucking work in functions...
 function void CheckSkills(void)
 {
 	// Aura-related vars to save typing :P
@@ -1157,7 +1155,10 @@ function void CheckSkills(void)
 	int DarkBlueAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 7];
 	int YellowAuraLevel = CurrentSkillLevel[(MAX_SKILLS * 2) + 8];
 	int Gained = 0;
-	SkillCostMult = 1.0;
+	
+	// Reset the Skill multiplier from the Blue Aura
+	if (Aura != 5)
+		SkillCostMult = 1.0;
 	
 	// Give the player the Aura item while an Aura is active (for SBARINFO hax)
 	if (AuraTimer > 0)
