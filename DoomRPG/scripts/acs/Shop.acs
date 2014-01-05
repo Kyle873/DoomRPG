@@ -293,6 +293,8 @@ function void ShopLoop(void)
 	int Discount = FixedMul(RankLevel, 2.1);
 	int Cost = ShopCosts[page][ShopIndex] - ShopCosts[page][ShopIndex] * Discount / 100;
 	int SellPrice = ShopCosts[Page][ShopIndex] / 2;
+	
+	// Ammo is sold for 1/4th of normal sell price
 	if (Page == 1) SellPrice /= 4;
 	
 	if (InShop)
@@ -399,10 +401,15 @@ function void ShopLoop(void)
             Page++;
         }
         if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			/*
 			if (CheckInventory("Credits") >= Cost)
 				BuyItem(Shop[Page][ShopIndex][0], Cost);
 			else
 				ActivatorSound("menu/error", 127);
+			*/
+			BuyItem(Shop[Page][ShopIndex][0], Cost);
+		}
 		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
 			if (CheckInventory(Shop[Page][ShopIndex][0]) > 0)
 				SellItem(Shop[Page][ShopIndex][0]);
@@ -417,12 +424,30 @@ function void BuyItem(str Item, int Cost)
 	if (Item == "StatToken") 	Item = "SmallStatToken";
 	if (Item == "StatCapToken") Item = "SmallStatCapToken";
 	if (Item == "SkillToken")	Item = "SmallSkillToken";
-
-	// Buy Types
+	
+	// Buy Type
 	if (GetCVAR("drpg_shopbuytype"))
 	{
-		if (CheckInventory(Item) < CheckInventoryMax(Item))
-			GiveInventory(Item, 1);
+		int Amount = 1;
+		
+		// If it's ammo, we need to get the real amounts to give if you're using the Give buy mode
+		if (Item == "Clip")			Amount = 10;
+		if (Item == "ClipBox")		Amount = 50;
+		if (Item == "Shell")		Amount = 4;
+		if (Item == "ShellBox")		Amount = 20;
+		if (Item == "RocketAmmo")	Amount = 1;
+		if (Item == "RocketBox")	Amount = 5;
+		if (Item == "Cell")			Amount = 20;
+		if (Item == "CellPack")		Amount = 100;
+		
+		// If it's ammo and it's the large version, just change it down to the base type
+		if (Item == "ClipBox")		Item = "Clip";
+		if (Item == "ShellBox")		Item = "Shell";
+		if (Item == "RocketBox")	Item = "RocketAmmo";
+		if (Item == "CellPack")		Item = "Cell";
+
+		if (CheckInventory(Item) == 0 || CheckInventory(Item) < CheckInventoryMax(Item))
+			GiveInventory(Item, Amount);
 		else
 		{
 			ActivatorSound("menu/error", 127);
