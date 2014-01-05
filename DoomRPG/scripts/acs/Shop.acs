@@ -413,18 +413,31 @@ function void ShopLoop(void)
 
 function void BuyItem(str Item, int Cost)
 {
-	ActivatorSound("menu/buy", 127);
-
 	// If it's a Token, use alternate handling due to bullshit
 	if (Item == "StatToken") 	Item = "SmallStatToken";
 	if (Item == "StatCapToken") Item = "SmallStatCapToken";
 	if (Item == "SkillToken")	Item = "SmallSkillToken";
 
-	if (InBase && !GetCVAR("drpg_shoptype"))
-		SpawnSpotForced(Item, ShopSpotID, 0, 0);
+	// Buy Types
+	if (GetCVAR("drpg_shopbuytype"))
+	{
+		if (CheckInventory(Item) < CheckInventoryMax(Item))
+			GiveInventory(Item, 1);
+		else
+		{
+			ActivatorSound("menu/error", 127);
+			return;
+		}
+	}
 	else
-		SpawnForced(Item, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+	{
+		if (InBase && !GetCVAR("drpg_shoptype"))
+			SpawnSpotForced(Item, ShopSpotID, 0, 0);
+		else
+			SpawnForced(Item, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+	}
 	
+	ActivatorSound("menu/buy", 127);
 	TakeInventory("Credits", Cost);
 }
 
