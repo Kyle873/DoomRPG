@@ -1,0 +1,333 @@
+#library "Arena"
+
+#include "zcommon.acs"
+
+#import "Menu.acs"
+#import "Shop.acs"
+#import "Skills.acs"
+
+// Arena defines
+#libdefine MAX_MUSIC           1
+#libdefine MAX_MODS            1
+#libdefine MAX_ENVIRONMENTS    0
+#libdefine MAX_BONUS           7
+
+int ArenaActive = false;
+int ArenaWave = 0;
+int ArenaTimer = 0;
+int ArenaTimerMax = 35 * 10;
+int ArenaCount = 0;
+int ArenaWeight = 0;
+int ArenaMod = 0;
+
+str ArenaMods[MAX_MODS] =
+{
+    "More Unique Monsters"
+};
+
+/*
+str ArenaEnvironments[MAX_ENVIRONMENTS] =
+{
+}; */
+
+str ArenaBonus[MAX_BONUS] =
+{
+    "\cgFull Health",
+    "\cvFull EP",
+    "\cfMoney Drop",
+    "\cuAmmo Drop",
+    "\cgHealth Drop",
+    "\cdArmor Drop",
+    "\cuWeapon Drop"
+};
+
+str Tier1[6] =
+{
+    "ZombieMan", "ShotgunGuy", "ChaingunGuy", "DoomImp", "Demon", "Spectre"
+};
+
+str Tier2[4] =
+{
+    "HellKnight", "BaronOfHell", "Cacodemon", "LostSoul"
+};
+
+str Tier3[5] =
+{
+    "PainElemental", "Revenant", "Fatso", "Arachnotron", "ArchVile"
+};
+
+str TierBoss[2] =
+{
+    "Cyberdemon", "SpIDerMastermind"
+};
+
+// Arena Script
+script "ArenaLoop" (int Start)
+{
+    if (Start)
+    {
+        SetMusic(StrParam(s:"Arena", d:Random(1, MAX_MUSIC)));
+        
+        ArenaWave = 0;
+    }
+    
+    while (1)
+    {
+        // If you're dead, terminate
+        if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+        
+        // Stop the script if the Arena is stopped
+        if (!ArenaActive)
+            terminate;
+        
+        // Arena HUD
+        SetFont("SMALLFONT");
+        if (ArenaMod >= 0)
+            HudMessage(s:ArenaMods[ArenaMod];
+                       HUDMSG_Plain, 4, CR_WHITE, 0.0225, 0.55, 0.05);
+        if (ArenaTimer > 0)
+            HudMessage(s:"Time: ",
+                       d:ArenaTimer / 35 + 1;
+                       HUDMSG_Plain, 3, CR_GREEN, 0.0225, 0.575, 0.05);
+        HudMessage(s:"Wave: ",
+                   d:ArenaWave;
+                   HUDMSG_Plain, 2, CR_GREEN, 0.0225, 0.6, 0.05);
+        if (ArenaCount > 0)
+            HudMessage(s:"Monsters: ",
+                       d:ArenaCount;
+                       HUDMSG_Plain, 1, CR_GREEN, 0.0225, 0.625, 0.05);
+        
+        // Keep count of the current monsters in the arena
+        ArenaCount = ThingCount(0, 1002);
+        
+        // Make you invincible during the intermission period
+        if (ArenaTimer > 0)
+            SetActorProperty(0, APROP_Invulnerable, 1);
+        else
+            SetActorProperty(0, APROP_Invulnerable, 0);
+        
+        // Main Loop
+        if (ArenaCount <= 0)
+        {
+            int TierRandomizer;
+            int SpawnRandomizer;
+            int ModRandomizer;
+            int EnvironmentRandomizer;
+            int BonusRandomizer;
+            int Tier;
+            int TierMax;
+            str SpawnName;
+            str SpawnItem;
+            int i;
+
+            // Set the intermission timer
+            if (ArenaWave >= 1 && ArenaTimer <= 0)
+                ArenaTimer = ArenaTimerMax;
+            
+            // Arena Bonus between waves
+            if (ArenaTimer >= ArenaTimerMax)
+            {
+                BonusRandomizer = Random(-10, MAX_BONUS - 1);
+                if (BonusRandomizer >= 0)
+                {
+                    SetFont("BIGFONT");
+                    HudMessage(s:ArenaBonus[BonusRandomizer]; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+                    ActivatorSound("misc/secret", 127);
+                }
+                switch (BonusRandomizer)
+                {
+                    case 0: // Full Health
+                        HealThing(1000000);
+                        break;
+                    case 1: // Full EP
+                        EP = EPMax;
+                        break;
+                    case 2: // Money Drop
+                        SpawnSpot("TeleportFog", 1200, 0, 0);
+                        for (i = 0; i < ArenaWave; i++)
+                            if (Random(1, 3) <= 1)
+                            {
+                                SpawnSpot("MoneyDropper", 1200, 1201, 0);
+                                SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
+                                Thing_ChangeTID(1201, 0);
+                            }
+                        break;
+                    case 3: // Ammo Drop
+                        SpawnSpot("TeleportFog", 1200, 0, 0);
+                        for (i = 0; i < ArenaWave; i++)
+                            if (Random(1, 3) <= 1)
+                            {
+                                switch (Random(1, 8))
+                                {
+                                    case 1: SpawnItem = "Clip";         break;
+                                    case 2: SpawnItem = "ClipBox";      break;
+                                    case 3: SpawnItem = "Shell";        break;
+                                    case 4: SpawnItem = "ShellBox";     break;
+                                    case 5: SpawnItem = "RocketAmmo";   break;
+                                    case 6: SpawnItem = "RocketBox";    break;
+                                    case 7: SpawnItem = "Cell";         break;
+                                    case 8: SpawnItem = "CellPack";     break;
+                                }
+                                
+                                SpawnSpot(SpawnItem, 1200, 1201, 0);
+                                SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
+                                Thing_ChangeTID(1201, 0);
+                            }
+                        break;
+                    case 4: // Health Drop
+                        SpawnSpot("TeleportFog", 1200, 0, 0);
+                        for (i = 0; i < ArenaWave; i++)
+                            if (Random(1, 3) <= 1)
+                            {
+                                if (Random(1, 2) == 1)
+                                    SpawnItem = "HealthDropper1";
+                                else
+                                    SpawnItem = "HealthDropper2";
+                                
+                                SpawnSpot(SpawnItem, 1200, 1201, 0);
+                                SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
+                                Thing_ChangeTID(1201, 0);
+                            }
+                        break;
+                    case 5: // Armor Drop
+                        SpawnSpot("TeleportFog", 1200, 0, 0);
+                        for (i = 0; i < ArenaWave; i++)
+                            if (Random(1, 3) <= 1)
+                            {
+                                SpawnItem = "ArmorDropper";
+                                
+                                SpawnSpot(SpawnItem, 1200, 1201, 0);
+                                SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
+                                Thing_ChangeTID(1201, 0);
+                            }
+                        break;
+                    case 6: // Weapon Drop
+                        SpawnSpot("TeleportFog", 1200, 0, 0);
+                        SpawnItem = "WeaponDropper";
+                        SpawnSpot(SpawnItem, 1200, 1201, 0);
+                        SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
+                        Thing_ChangeTID(1201, 0);
+                        break;
+                }
+            }
+            
+            if (ArenaTimer <= 1)
+            {
+                // Next wave, re-determine the Arena Weight based on the new wave
+                ArenaWave++;
+                ArenaWeight = (ArenaWave * Random(1, 10));
+
+                // Apply the randomized mod
+                ModRandomizer = Random(-10, MAX_MODS - 1);
+                ArenaMod = ModRandomizer;
+                
+                for (i = 1100; i < 1100 + 30; i++)
+                {
+                    // Use the Arena weight to get a random tier
+                    TierRandomizer = Random(1, ArenaWeight);
+                    
+                    // Get the max indices within a tier depending on the selected tier
+                    if (TierRandomizer > 0 && TierRandomizer < 100)
+                    {
+                        Tier = 1;
+                        TierMax = 6;
+                    }
+                    if (TierRandomizer > 101 && TierRandomizer < 200)
+                    {
+                        Tier = 2;
+                        TierMax = 4;
+                    }
+                    if (TierRandomizer > 201 && TierRandomizer < 300)
+                    {
+                        Tier = 3;
+                        TierMax = 5;
+                    }
+                    
+                    // Get a random monster from the selected tier
+                    SpawnRandomizer = Random(-TierMax + 1, TierMax - 1);
+                    switch (Tier)
+                    {
+                        case 1: SpawnName = Tier1[SpawnRandomizer]; break;
+                        case 2: SpawnName = Tier2[SpawnRandomizer]; break;
+                        case 3: SpawnName = Tier3[SpawnRandomizer]; break;
+                    }
+                    
+                    // Skip this spawn spot if < 0 is hit by the randomizer
+                    if (SpawnRandomizer < 0)
+                        continue;
+                        
+                    // Apply mod
+                    switch (ArenaMod)
+                    {
+                        case 0: // More Unique Monsters
+                            int ColorRandomizer = Random(-1, 9);
+                            switch (ColorRandomizer)
+                            {
+                                case -1:                                                break;
+                                case 0: SpawnName = StrParam(s:SpawnName, s:"Red");     break;
+                                case 1: SpawnName = StrParam(s:SpawnName, s:"Green");   break;
+                                case 2: SpawnName = StrParam(s:SpawnName, s:"White");   break;
+                                case 3: SpawnName = StrParam(s:SpawnName, s:"Orange");  break;
+                                case 4: SpawnName = StrParam(s:SpawnName, s:"Pink");    break;
+                                case 5: SpawnName = StrParam(s:SpawnName, s:"Blue");    break;
+                                case 6: SpawnName = StrParam(s:SpawnName, s:"Purple");  break;
+                                case 7: SpawnName = StrParam(s:SpawnName, s:"DarkBlue");break;
+                                case 8: SpawnName = StrParam(s:SpawnName, s:"Yellow");  break;
+                                case 9: SpawnName = StrParam(s:SpawnName, s:"Black");   break;
+                            }
+                            break;
+                    }
+                    
+                    // Spawn the monster
+                    if (SpawnSpotFacingForced(SpawnName, i, 1002))
+                        SpawnSpotForced("TeleportFog", i, 0, 0);
+
+                    /* Debugging
+                    Log(s:"Arena Spawn: Wave ",
+                        d:ArenaWave,
+                        s:", ModRandomizer = ",
+                        d:ModRandomizer,
+                        s:", BonusRandomizer = ",
+                        d:BonusRandomizer,
+                        s:", TierRandomizer = ",
+                        d:TierRandomizer,
+                        s:", SpawnRandomizer = ",
+                        d:SpawnRandomizer,
+                        s:", SpawnName = ",
+                        s:SpawnName);
+                    */
+                }
+            }
+        }
+        
+        // Decrement the timer, also don't decrement if you have menu freezing enabled and you're in the menus
+        if (ArenaTimer > 0 && !(GetCVAR("drpg_menufreeze") && (InMenu || InShop)))
+            ArenaTimer--;
+        
+        Delay(1);
+    }
+}
+
+// Stop the Arena session
+script "ArenaStop" (voID)
+{
+    ArenaWave = 0;
+    ArenaTimer = 0;
+    ArenaCount = 0;
+    ArenaWeight = 0;
+    ArenaMod = 0;
+    
+    if (CheckActorProperty(0, APROP_Invulnerable, 1))
+        SetActorProperty(0, APROP_Invulnerable, 0);
+    
+    for (int i = 1100; i < 1130; i++)
+        Thing_Remove(1002);
+    
+    SetMusic("Outpost");
+}
+
+// Set Arena vars
+script "SetArena" (int Wave)
+{
+    if (Wave > 0) ArenaWave = Wave;
+}

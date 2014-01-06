@@ -8,6 +8,7 @@ set OBJ=.\acs
 _timestamp
 
 acc -i %SRC% %SRC%\Accessories %OBJ%\Accessories
+acc -i %SRC% %SRC%\Arena %OBJ%\Arena
 acc -i %SRC% %SRC%\Menu %OBJ%\Menu
 acc -i %SRC% %SRC%\RPG %OBJ%\RPG
 acc -i %SRC% %SRC%\Shield %OBJ%\Shield
