@@ -48,7 +48,7 @@ str SkillCategories[MAX_CATEGORIES] =
 
 int CategoryMax[MAX_CATEGORIES] =
 {
-	2, 9, 9, 2, 17, 6
+	2, 9, 9, 4, 17, 6
 };
 
 // Skill Max Levels
@@ -61,7 +61,7 @@ int SkillLevelMax[MAX_CATEGORIES][MAX_SKILLS] =
 	// Auras
 	{ 3, 5, 5, 1, 3, 4, 3, 4, 7 },
 	// Attacks
-	{ 1, 1 },
+	{ 1, 10, 1, 10 },
 	// Summoning
 	{ 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
 	// Utility
@@ -77,7 +77,7 @@ int SkillCosts[MAX_CATEGORIES][MAX_SKILLS] =
 	// Auras
 	{ 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 },
 	// Attacks
-	{ 25, 30 },
+	{ 5, 25, 10, 50 },
 	// Summoning
 	{ 25, 25, 50, 75, 75, 75, 100, 150, 200, 100, 500, 500, 500, 500, 750, 1000, 1000, },
 	// Utility
@@ -119,7 +119,9 @@ str SkillIcons[MAX_CATEGORIES][MAX_SKILLS] =
 	// Attacks
 	{
 		"Fireball",		// Fireball
+		"Fireball",		// Fireball Nova
 		"IceMiss",		// Ice Missile
+		"IceMiss",		// Ice Nova
 	},
 	// Summoning
 	{
@@ -309,9 +311,17 @@ int SkillData[MAX_CATEGORIES][MAX_SKILLS][20] =
 			"Shoots a fireball\n\caFire Damage"
 		},
 		{
-			"Ice Missile",
-			"Shoots an Ice Missile\n\cnIce Damage"
+			"Fireball Nova",
+			"Shoots fireballs in a circular nova around you\n\caFire Damage"
 		},
+		{
+			"Ice Missile",
+			"Shoots an ice missile\n\cnIce Damage"
+		},
+		{
+			"Ice Nova",
+			"Shoots ice missles in a circular nova around you\n\cnIce Damage"
+		}
 	},
 	
 	// Summoning
@@ -546,8 +556,10 @@ script "UseSkill" (int Category)
 			case 3: // Attacks
 				switch (SkillIndex[Category])
 				{
-					case 0:		Projectile(1);						break; // Fireball
-					case 1:		Projectile(2);						break; // Ice Missile
+					case 0:		Attack(1, 1);					break; // Fireball
+					case 1:		Attack(1, 2);					break; // Fireball Nova
+					case 2:		Attack(2, 1);					break; // Ice Missile
+					case 3:		Attack(2, 2);					break; // Ice Nova
 				}
 				break;
 			
@@ -838,8 +850,8 @@ function void DropAmmo(void)
 	}
 }
 
-// Projectile Attack skills will use this
-function void Projectile(int Type)
+// Attack skills will use this
+function void Attack(int Element, int Type)
 {
 	int X = GetActorX(0);
 	int Y = GetActorY(0);
@@ -850,50 +862,62 @@ function void Projectile(int Type)
 	int YSpeed = FixedMul(sin(Angle), FixedMul(cos(Pitch), 16.0));
 	int ZSpeed = -FixedMul(sin(Pitch), 16.0);
 	int FireHeight = GetActorViewHeight(0) * 780 / 1000;
-	int AngleAdd = FixedDiv(1.0, Energy);
 	int Offset = 8.0;
-	str ProjType;
-	int ProjLevel;
+	int AngleAdd;
+	str AttackType;
+	int AttackLevel;
+	int Projectiles;
+	int i;
 	
 	// Hack - Can't use projectile skills in the water)
-	if (GetActorProperty(0, APROP_WATERLEVEL) > 0)
+	if (Type == 1 && GetActorProperty(0, APROP_WATERLEVEL) > 0)
 	{
 		AmbientSound("menu/error", 127);
 		RefundEP(3);
 		return;
 	}
 	
-	// Projectiles
-	switch (Type)
+	// Apply proper projectile type from the specified element
+	switch (Element)
 	{
-		case 1: ProjType = "Fireball"; 		ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 0]; break;	// Fireball
-		case 2: ProjType = "IceMissile"; 	ProjLevel = SkillLevel[(MAX_SKILLS * 3) + 1]; break;	// Ice Missile
+		case 1: AttackType = "Fireball";	break;
+		case 2: AttackType = "IceMissile";	break;
 	}
 	
-	// Overdrive - Spreadfire
-	if (Overdrive)
+	if (Type == 1) // Projectile
 	{
-		for (int i = 0; i < 3; i++)
-		{
-			XSpeed = FixedMul(cos(Angle - 2730 + (i * 2730)), FixedMul(cos(Pitch), 16.0));
-			YSpeed = FixedMul(sin(Angle - 2730 + (i * 2730)), FixedMul(cos(Pitch), 16.0));
-			ZSpeed = -FixedMul(sin(Pitch), 16.0);
-			
-			SpawnProjectile(0, ProjType, 0, 0, 0, 0, 2001);
-			SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
-			SetActorAngle(2001, Angle);
-			SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
-			Thing_ChangeTID(2001, UniqueTID());
-		}
-	}
-	else
-	{
-		SpawnProjectile(0, ProjType, 0, 0, 0, 0, 2001);
+		AttackLevel = SkillLevel[(MAX_SKILLS * 3) + ((Element * 2))];
+		SpawnProjectile(0, AttackType, 0, 0, 0, 0, 2001);
 		SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
 		SetActorAngle(2001, Angle);
 		SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
 		Thing_ChangeTID(2001, UniqueTID());
 	}
+	if (Type == 2) // Nova
+	{
+		AttackLevel = SkillLevel[(MAX_SKILLS * 3) + (Element * 2 - 1)];
+		Projectiles = AttackLevel * 8;
+		AngleAdd = FixedDiv(1.0, Projectiles) >> 16;
+		
+		for (i = 0; i < Projectiles; i++)
+		{
+			XSpeed = FixedMul(cos(Angle), FixedMul(cos(Pitch), 16.0));
+			YSpeed = FixedMul(sin(Angle), FixedMul(cos(Pitch), 16.0));
+			ZSpeed = -FixedMul(sin(Pitch), 16.0);
+			
+			SpawnProjectile(0, AttackType, 0, 0, 0, 0, 2001);
+			SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
+			SetActorAngle(2001, Angle);
+			SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
+			Thing_ChangeTID(2001, UniqueTID());
+			
+			Angle += AngleAdd;
+		}
+	}
+	if (Type == 3) // Hitscan?
+	{
+	}
+	// etc
 }
 
 // Summoning
@@ -1391,32 +1415,37 @@ script "SetProjectileDamage" (int Type)
 {
 	switch (Type)
 	{
-		case 0: SetResultValue(Round(Energy * 0.25));	break;	// Fireball
-		case 1: SetResultValue(Round(Energy * 0.3));	break;	// Ice Missile
+		case 1: SetResultValue(Round(Energy * 0.25));	break;	// Fire
+		case 2: SetResultValue(Round(Energy * 0.3));	break;	// Ice
 	}
 }
 
 // Updates Skills with dynamic descriptions (calculations, etc)
 function void CheckSkillDescriptions(void)
 {
-	int Healing;
-	int RepairArmor;
-	int Fireball;
-	int IceMissile;
+	int i;
 	
 	// Healing - Heal
-	for (Healing = 1; Healing <= SkillLevelMax[0][0]; Healing++)
-		SkillData[0][0][Healing] = StrParam(s:"Recover ", d:Energy * 10, s:" HP");
+	for (i = 1; i <= SkillLevelMax[0][0]; i++)
+		SkillData[0][0][i] = StrParam(s:"Recover ", d:Energy * 10, s:" HP");
 
 	// Healing - Repair Armor
-	for (RepairArmor = 1; RepairArmor <= SkillLevelMax[0][1]; RepairArmor++)
-		SkillData[0][1][RepairArmor] = StrParam(s:"Repair ", d:Energy * 10, s:" Armor");
+	for (i = 1; i <= SkillLevelMax[0][1]; i++)
+		SkillData[0][1][i] = StrParam(s:"Repair ", d:Energy * 10, s:" Armor");
 	
 	// Attacks - Fireball
-	for (Fireball = 1; Fireball <= SkillLevelMax[3][0]; Fireball++)
-		SkillData[3][0][Fireball] = StrParam(s:"Shoots a fireball\n\ca", d:Round(Energy * 0.25), s:" Fire Damage");
+	for (i = 1; i <= SkillLevelMax[3][0]; i++)
+		SkillData[3][0][i] = StrParam(s:"Shoots a fireball\n\ca", d:Round(Energy * 0.25), s:" Fire Damage");
+
+	// Attacks - Fireball Nova
+	for (i = 1; i <= SkillLevelMax[3][1]; i++)
+		SkillData[3][1][i] = StrParam(s:"Shoots fireballs in a circular nova around you\n\ca", d:Round(Energy * 0.25), s:" Fire Damage");
 
 	// Attacks - Ice Missile
-	for (IceMissile = 1; IceMissile <= SkillLevelMax[3][1]; IceMissile++)
-		SkillData[3][1][IceMissile] = StrParam(s:"Shoots an Ice Missile\n\cn", d:Round(Energy * 0.3), s:" Ice Damage\n");
+	for (i = 1; i <= SkillLevelMax[3][2]; i++)
+		SkillData[3][2][i] = StrParam(s:"Shoots an Ice Missile\n\cn", d:Round(Energy * 0.3), s:" Ice Damage\n");
+	
+	// Attacks - Ice Nova
+	for (i = 1; i <= SkillLevelMax[3][3]; i++)
+		SkillData[3][3][i] = StrParam(s:"Shoots ice missiles in a circular nova around you\n\cn", d:Round(Energy * 0.3), s:" Ice Damage\n");
 }
