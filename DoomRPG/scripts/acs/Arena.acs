@@ -5,12 +5,13 @@
 #import "Menu.acs"
 #import "Shop.acs"
 #import "Skills.acs"
+#import "Stats.acs"
 
 // Arena defines
 #libdefine MAX_MUSIC           1
 #libdefine MAX_MODS            1
 #libdefine MAX_ENVIRONMENTS    0
-#libdefine MAX_BONUS           7
+#libdefine MAX_BONUS           8
 
 int ArenaActive = false;
 int ArenaWave = 0;
@@ -19,6 +20,8 @@ int ArenaTimerMax = 35 * 10;
 int ArenaCount = 0;
 int ArenaWeight = 0;
 int ArenaMod = 0;
+int ArenaSpotSpawns = 1100;
+int ArenaTagEnvironments = 100;
 
 str ArenaMods[MAX_MODS] =
 {
@@ -38,7 +41,8 @@ str ArenaBonus[MAX_BONUS] =
     "\cuAmmo Drop",
     "\cgHealth Drop",
     "\cdArmor Drop",
-    "\cuWeapon Drop"
+    "\cuWeapon Drop",
+	"\cfLuck Drop"
 };
 
 str Tier1[6] =
@@ -208,6 +212,19 @@ script "ArenaLoop" (int Start)
                         SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
                         Thing_ChangeTID(1201, 0);
                         break;
+					case 7: // Luck Drop
+						int LuckRandomizer = (100 - (ArenaWave - Luck));
+						if (LuckRandomizer < 10) LuckRandomizer = 10;
+                        for (i = 0; i < ArenaWave; i++)
+							if (Random(1, LuckRandomizer) < 5)
+							{
+								SpawnSpot("TeleportFog", 1200, 0, 0);
+								SpawnItem = "WeaponDropper";
+								SpawnSpot(SpawnItem, 1200, 1201, 0);
+								SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
+								Thing_ChangeTID(1201, 0);
+							}
+						break;
                 }
             }
             
@@ -221,7 +238,7 @@ script "ArenaLoop" (int Start)
                 ModRandomizer = Random(-10, MAX_MODS - 1);
                 ArenaMod = ModRandomizer;
                 
-                for (i = 1100; i < 1100 + 30; i++)
+                for (i = ArenaSpotSpawns; i < ArenaSpotSpawns + 30; i++)
                 {
                     // Use the Arena weight to get a random tier
                     TierRandomizer = Random(1, ArenaWeight);
@@ -253,6 +270,7 @@ script "ArenaLoop" (int Start)
                     }
                     
                     // Skip this spawn spot if < 0 is hit by the randomizer
+					// TODO: This should be based on wave progression, and not a static determination by the randomizer
                     if (SpawnRandomizer < 0)
                         continue;
                         
@@ -330,4 +348,8 @@ script "ArenaStop" (voID)
 script "SetArena" (int Wave)
 {
     if (Wave > 0) ArenaWave = Wave;
+}
+
+function void ArenaSetEnvironment(int ID)
+{
 }
