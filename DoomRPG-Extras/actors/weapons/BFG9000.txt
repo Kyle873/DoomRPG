@@ -1,0 +1,170 @@
+//**********
+// BFG-9001
+//**********
+
+
+Actor BFG9001 : BFG9000 replaces BFG9000
+{
+Weapon.Selectionorder 280
+inventory.pickupsound "weapons/bfg/pickup"
+weapon.upsound "weapons/bfg/draw"
+states
+	{
+	Select:
+//		TNT1 A 0 A_raise
+		BFGN A 1 A_Raise
+		loop
+	Deselect:
+//		TNT1 A 0 A_lower
+		BFGN A 1 A_lower
+		loop
+	Ready:
+		BFGN A 1 A_Weaponready
+		loop
+		loop
+	Fire:
+		TNT1 A 0
+		TNT1 A 0 A_playsound("weapons/bfg/start")
+		BFGN ABCDE 4
+		BFGF ABCDE 2
+		TNT1 A 0 Radius_Quake(3,20,0,2,0)
+		BFGF F 5 bright A_firecustommissile("BFGBall1",0,1)
+		BFGF EBA 2
+		TNT1 A 0 A_ReFire
+		TNT1 A 0 A_Playsound("weapons/bfg/cool")
+		BFGN EEEEDDDDCCCCBBBBAAAA 1 A_FireCustomMissile("SmokeSpawner",0,0,random(-5,5),random(-4,-6))
+		goto ready
+	}
+}
+
+
+Actor BFGBall1 : BFGBall replaces BFGBall
+{
+damagetype BFGDamage
++FORCEXYBILLBOARD
++THRUGHOST
+renderstyle ADD
+alpha 1.0
+decal BFGLightning
+seesound "weapons/bfg/fire"
+deathsound "weapons/bfg/explosion"
+translation "192:207=112:127"
+scale .8
+States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 A_CustomMissile("BFGTrail",random(-24,24),random(-24,24),180)
+		BFGB A 1 bright A_SpawnItem("BFGLightTrail")
+		TNT1 A 0 A_CustomMissile("BFGTrail",random(-24,24),random(-24,24),180)
+		BFGB B 1 bright A_SpawnItem("BFGLightTrail")
+		TNT1 A 0 A_CustomMissile("BFGTrail",random(-24,24),random(-24,24),180)
+		BFGB C 1 bright A_SpawnItem("BFGLightTrail")
+		TNT1 A 0 A_CustomMissile("BFGTrail",random(-24,24),random(-24,24),180)
+		BFGB D 1 bright A_SpawnItem("BFGLightTrail")
+		TNT1 A 0 A_CustomMissile("BFGTrail",random(-24,24),random(-24,24),180)
+		BFGB E 1 bright A_SpawnItem("BFGLightTrail")
+		TNT1 A 0 A_CustomMissile("BFGTrail",random(-24,24),random(-24,24),180)
+		BFGB F 1 bright A_SpawnItem("BFGLightTrail")
+		TNT1 A 0 A_CustomMissile("BFGTrail",random(-24,24),random(-24,24),180)
+		BFGB G 1 bright A_SpawnItem("BFGLightTrail")
+		TNT1 A 0 A_CustomMissile("BFGTrail",random(-24,24),random(-24,24),180)
+		BFGB H 1 bright A_SpawnItem("BFGLightTrail")
+		loop
+	Death:
+		TNT1 A 0
+		TNT1 A 0 Radius_Quake(4,34,0,4,0)
+		BFE1 AB 8 bright
+		BFE1 C 8 bright A_BFGSpray
+		BFE1 DEF 8 bright
+		stop
+	}
+}
+
+Actor BFGLightTrail
+{
++FORCEXYBILLBOARD
+renderstyle ADD
+scale 4
+alpha 0.05
++NOTDMATCH
++NOCLIP
++NOINTERACTION
++NOGRAVITY
+//translation "192:207=112:127"
+states
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 Thing_ChangeTid(0,390)
+		LENG A 7 A_fadeout(0.01)
+//		BFGB ABCDEFGH 2 A_fadeout(0.01)
+		loop
+	}
+}
+
+Actor BFGTrail
+{
++FORCEXYBILLBOARD
+renderstyle ADD
+scale .25
+alpha 0.3
++NOTDMATCH
++NOCLIP
++NOINTERACTION
++NOGRAVITY
+translation "192:207=112:127"
+states
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 Thing_ChangeTid(0,390)
+		BFGB ABCDEFGH 2 A_fadeout(0.01)
+		loop
+	}
+}
+
+
+// not used since ver. 3.4
+Actor BFGBall2 : BFGBall1
+{
+decal BFGScorch
+scale 0.2
+damage 30
+	States
+	{
+	Spawn:
+		BFGB ABCDEFGH 1 bright A_Spawnitem("BFGTrail1")
+		loop
+	Death:
+		BFE1 A 8 bright A_Explode(160,128,0)
+		BFE1 BCDEF 8 bright
+		stop
+	}
+}
+
+Actor BFGTrail1 : BFGTRail
+{
+scale 0.2
+states
+	{
+	Spawn:
+		BFGB A 1 A_fadeout(0.08)
+		loop
+	}
+}
+
+actor BFGExtra2 : BFGExtra replaces BFGExtra
+{
+  damagetype BFGDamage
+  +NOBLOCKMAP
+  +NOGRAVITY
+  RenderStyle Add
+  Alpha 0.75
+  States
+  {
+  Spawn:
+    BFE2 ABCD 8 bright
+    stop
+  }
+}

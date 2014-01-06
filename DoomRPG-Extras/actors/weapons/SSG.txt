@@ -1,0 +1,137 @@
+//**************
+// SUPERSHOTGUN
+//**************
+
+// ADVICE: don't forget to include checkup for ammo so your SSG won't shoot
+// when having less than 2 shells. This check may be done in may different ways.
+
+Actor SSG : Supershotgun replaces Supershotgun
+{
+weapon.kickback 300
+weapon.selectionorder 40
+decal Bulletchip
+inventory.pickupsound "weapons/ssg/close"
+weapon.upsound "weapons/ssgdraw"
+	Weapon.Ammouse 1
+	Weapon.AmmoUse2 1
+	Weapon.AmmoType2 "Shell"
+	attacksound ""
+states
+{
+	Select:
+		SH2N A 1 A_Raise
+		loop
+	Deselect:
+		TNT1 A 0 A_Lower
+		SH2N A 1 A_Lower
+		loop
+	Ready:
+		TNT1 A 0 A_JumpIfInventory("SSGShot",1,3)
+		SH2N A 1 A_WeaponReady
+		wait
+		TNT1 A 0
+		SH2N B 1 A_weaponready
+		wait
+	Fire:
+		TNT1 A 0 A_jumpifinventory("SSGShot",1,"Reload1")
+		TNT1 A 0 A_PlaysoundEx("weapons/ssg/fire","soundslot5")
+		TNT1 A 0 A_Gunflash
+		SH2F X 1 bright A_FireBullets(11.2,7.1,10,5,"BulletPuffed") // equivalent of A_FireShotgun2
+		TNT1 A 0 A_JumpIfNoAmmo(8)																	// but with half of the bullets
+		TNT1 A 0 A_PlaysoundEx("weapons/ssg/fire","soundslot6")		 // because it is only one barrel
+		TNT1 A 0 A_Gunflash
+		SH2F Y 1 bright A_FireBullets(11.2,7.1,10,5,"BulletPuffed")
+		SH2F A 2 A_FireCustomMissile("SmokeSpawner",0,0,1,-5)
+		SH2F B 2 A_FireCustomMissile("SmokeSpawner",0,0,-1,-5)
+		SH2N C 2
+		goto reload
+		TNT1 A 0
+		TNT1 A 0 A_Giveinventory("SSGShot",1)
+		TNT1 A 0 A_FireCustomMissile("SmokeSpawner",0,0,1,-2)
+		SH2F CD 2
+		SH2N B 2
+		goto Ready
+	AltFire:
+		TNT1 A 0 A_JumpIfInventory("SSGShot",1,9)
+		TNT1 A 0 A_Giveinventory("SSGShot",1)
+		TNT1 A 0 A_PlayWeaponsound("weapons/ssg/fire")
+		TNT1 A 0 A_Gunflash
+		SH2F X 1 bright A_FireBullets(10,6.5,10,5,"BulletPuffed")
+		TNT1 A 0 A_FireCustomMissile("SmokeSpawner",0,0,1,-5)
+		SH2F CD 2
+		SH2N B 5
+		goto ready
+		TNT1 A 0 A_Takeinventory("SSGShot",1)
+		TNT1 A 0 A_PlayWeaponsound("weapons/ssg/fire")
+		TNT1 A 0 A_Gunflash
+		SH2F Y 1 bright A_FireBullets(10,6.5,10,5,"BulletPuffed")
+		TNT1 A 0 A_FireCustomMissile("SmokeSpawner",0,0,-1,-5)
+		SH2F AB 2
+		SH2N C 5
+		goto Reload
+	Reload:
+		SH2R ABCDEFGH 1
+		SH2R I 1 A_playsound("weapons/ssg/open")
+		SH2R JKL 1
+		TNT1 A 0 A_FireCustomMissile("SSGCasingSpawner",0,0,-10)
+		TNT1 A 0 A_FireCustomMissile("SSGCasingSpawner",0,0,-10)
+		SH2R M 2
+		SH2R NOPR 2
+		SH2R S 2 A_playsound("weapons/ssg/in")
+		SH2R TUVWX 2
+		SH2R Y 2 A_playsound("weapons/ssg/in")
+		SH2R Z 1
+		SH2S ABCDEF 1
+		TNT1 A 0 A_playsound("weapons/ssg/close")
+		TNT1 A 0 A_ReFire //("Fire")
+		SH2S G 3 
+		SH2S H 1
+		SH2R A 1
+		goto ready
+	Reload1:
+		TNT1 A 0 A_TakeInventory("SSGShot")
+		SH2R ABCDEFGH 1
+		SH2R I 1 A_playsound("weapons/ssg/open")
+		SH2R JKL 1
+		TNT1 A 0 A_FireCustomMissile("SSGCasingSpawner",0,0,-10)
+		SH2R U 3
+		SH2R VWX 2
+		SH2R Y 2 A_playsound("weapons/ssg/in")
+		SH2R Z 1
+		SH2S ABCDEF 1
+		TNT1 A 0 A_playsound("weapons/ssg/close")
+		TNT1 A 0 A_ReFire //("Fire")
+		SH2S G 3
+		SH2S H 1
+		SH2R A 1
+		goto ready		
+	Flash:
+		TNT1 A 1 A_Light2
+		TNT1 A 1 A_light1
+		goto lightdone
+	AltFlash:
+		TNT1 A 2 A_Light2
+		TNT1 A 2 A_light1
+		goto lightdone
+	}
+}
+
+Actor SSGShot : Inventory
+{
+inventory.maxamount 1
+}
+
+Actor SSGCasingSpawner : ShotgunCasingSpawner
+{
+		States
+		{
+		Spawn:
+			TNT1 A 0
+			TNT1 A 0 Thing_ChangeTID(0,390)
+				TNT1 A 1
+				Goto Death
+		Death:
+				TNT1 A 0 A_CustomMissile("ShotgunCasing",0,0,random(80,100),2,random(50,70))
+				Stop
+		}
+}
