@@ -14,9 +14,11 @@
 global int 1 : FirstRun;
 
 str Version = "v0.92 Beta";
-str TimeStamp = "Monday, January 06, 2014 at 2:01:46 AM";
+str TimeStamp = "Monday, January 06, 2014 at 8:34:44 PM";
 
 int MapNumber;
+int MapTime;
+int ParBonus;
 
 // Init Script
 script "Init" enter
@@ -149,7 +151,10 @@ script "Loop" (void)
 	// Make you invincible while in the Menus and if menu freezing is enabled
 	if ((InMenu || InShop) && GetCVAR("drpg_menufreeze"))
 		SetActorProperty(0, APROP_DAMAGEFACTOR, 0);
-		
+	
+	// Increase the map timer
+	MapTime++;
+	
 	// Loop
 	Delay(1);
 	restart;
@@ -296,6 +301,39 @@ script "Death" death
 		ShieldAccessory = 0;
 		
 		Delay(1);
+	}
+}
+
+// Level exit script
+// Can't use NamedExecute in xlat, lame
+script 30000 (int Secret)
+{
+	int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
+	
+	// If there's no par time, or you somehow already activated this script, terminate
+	if (ParTime <= 0 || ParBonus) terminate;
+	
+	if ((MapTime / 35) <= ParTime)
+	{
+		int RankBonus = Random(10000 * RankLevel, 10000 * RankLevel * MapNumber);
+		if (RankLevel == 0) RankBonus = 10000;
+		
+		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
+		ActivatorSound("misc/secret", 127);
+		Combo++;
+		RankGained += RankBonus;
+		
+		HudMessage(s:"Par Time Beaten!\n",
+				   d:RankBonus, s:" Rank Bonus";
+				   HUDMSG_FADEOUT, 0, CR_GOLD, 0.5, 0.5, 3.0, 2.0);
+		
+		ParBonus = true;
+		Delay(35 * 8);
+		
+		if (Secret)
+			Exit_Secret(0);
+		else
+			Exit_Normal(0);
 	}
 }
 
