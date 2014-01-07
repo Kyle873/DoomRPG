@@ -7,6 +7,17 @@
 #import "Shield.acs"
 #import "Utils.acs"
 
+#libdefine AUG_STRENGTH		0
+#libdefine AUG_DEFENSE		1
+#libdefine AUG_VITALITY		2
+#libdefine AUG_ENERGY		3
+#libdefine AUG_REGENERATION	4
+#libdefine AUG_AGILITY		5
+#libdefine AUG_CAPACITY		6
+#libdefine AUG_LUCK			7
+#libdefine AUG_BLACKMARKET	8
+#libdefine MAX_AUGS			9
+
 str AugData[30][4] =
 {
 	// Class name, Nice name, Description, Icon
@@ -77,23 +88,23 @@ function void CheckAugs(void)
 		AugSlotsUsed = 0;
 
 	// Strength Aug
-	if (Augs[0])
+	if (Augs[AUG_STRENGTH])
 		Damage = FixedMul(Damage, 2.0);
 	
 	// Defense Aug
-	if (Augs[1])
+	if (Augs[AUG_DEFENSE])
 		DamageFactor = FixedDiv(DamageFactor, 2.0);
 	
 	// Vitality Aug
-	if (Augs[2])
+	if (Augs[AUG_VITALITY])
 		HealthMax *= 2;
 	
 	// Energy Aug
-	if (Augs[3])
+	if (Augs[AUG_ENERGY])
 		EPMax *= 2;
 	
 	// Regeneration Aug
-	if (Augs[4])
+	if (Augs[AUG_REGENERATION])
 	{
 		HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
 		EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
@@ -102,21 +113,21 @@ function void CheckAugs(void)
 	}
 
 	// Agility Aug
-	if (Augs[5])
+	if (Augs[AUG_AGILITY])
 	{
 		Speed *= 2;
 		JumpHeight *= 2;
 	}
 	
 	// Capacity Aug
-	if (Augs[6] || Augs[8])
+	if (Augs[AUG_CAPACITY] || Augs[AUG_BLACKMARKET])
 	{
 		SetAmmoCapacity("Clip", Capacity * 20 * 2);
 		SetAmmoCapacity("Shell", Capacity * 10 * 2);
 		SetAmmoCapacity("RocketAmmo", Capacity * 5 * 2);
 		SetAmmoCapacity("Cell", Capacity * 30 * 2);
 	}
-	if (Augs[6] && Augs[8])
+	if (Augs[AUG_CAPACITY] && Augs[AUG_BLACKMARKET])
 	{
 		SetAmmoCapacity("Clip", Capacity * 20 * 4);
 		SetAmmoCapacity("Shell", Capacity * 10 * 4);
@@ -125,7 +136,7 @@ function void CheckAugs(void)
 	}
 
 	// Luck Aug
-	if (Augs[7])
+	if (Augs[AUG_LUCK])
 	{
 		MoneyChance[0] *= 2;
 		MoneyChance[1] *= 2;
@@ -151,7 +162,7 @@ function void CheckAugs(void)
 	}
 	
 	// Rainbow Aug
-	if (Augs[8])
+	if (Augs[AUG_BLACKMARKET])
 	{
 		Damage = FixedMul(Damage, 2.0);
 		DamageFactor = FixedDiv(DamageFactor, 2.0);
@@ -192,10 +203,6 @@ function void CheckAugs(void)
 	// Strength Item
 	if (Round(Damage * 100) > 0 && Round(Damage * 100) <= 8000)
 		GiveInventory(StrParam(s:"Strength", d:Round(Damage * 100)), 1);
-	
-	// Speed capping CVAR
-	if (Speed >= 1.0 + FixedMul(0.25, FixedDiv(GetCVAR("drpg_maxspeed"), 100)))
-		Speed = 1.0 + FixedMul(0.25, FixedDiv(GetCVAR("drpg_maxspeed"), 100));
 
 	// Apply Bonuses
 	SetActorProperty(0, APROP_SPAWNHEALTH, HealthMax);
@@ -204,7 +211,7 @@ function void CheckAugs(void)
 	SetActorProperty(0, APROP_JUMPZ, JumpHeight);
 }
 
-function void EquipAccessory(int Aug)
+function void EquipAug(int Aug)
 {
 	if (CheckInventory(AugData[Aug][0]))
 	{
