@@ -1,4 +1,4 @@
-#library "Accessories"
+#library "Augs"
 
 #include "zcommon.acs"
 
@@ -7,7 +7,7 @@
 #import "Shield.acs"
 #import "Utils.acs"
 
-str Accessory[30][4] =
+str AugData[30][4] =
 {
 	// Class name, Nice name, Description, Icon
 	
@@ -46,54 +46,54 @@ str Accessory[30][4] =
 	{ "", "", "", "" }
 };
 
-global int 48 : Accessories[];
-global int 49 : AccessorySlotsUsed;
+global int 48 : Augs[];
+global int 49 : AugSlotsUsed;
 
-int MaxAccessorySlots;
+int MaxAugSlots;
 
-function void CheckAccessorySlots(void)
+function void CheckAugSlots(void)
 {
 	// How many slots will you get on your difficulty?
 	int Skill = GameSkill();
 	if (Skill == 1 || Skill == 2 || Skill == 3)
-		MaxAccessorySlots = 5;
+		MaxAugSlots = 5;
 	if (Skill == 4)
-		MaxAccessorySlots = 4;
+		MaxAugSlots = 4;
 	if (Skill == 5)
-		MaxAccessorySlots = 3;
+		MaxAugSlots = 3;
 	if (Skill == 6)
-		MaxAccessorySlots = 2;
+		MaxAugSlots = 2;
 	if (Skill == 7)
-		MaxAccessorySlots = 1;
+		MaxAugSlots = 1;
 		
 	// Additional slots given
-	MaxAccessorySlots += CheckInventory("AccessorySlotUpgrade");
+	MaxAugSlots += CheckInventory("AccessorySlotUpgrade");
 }
 
-function void CheckAccessories(void)
+function void CheckAugs(void)
 {
 	// Sanity check to prevent negative slots used
-	if (AccessorySlotsUsed < 0)
-		AccessorySlotsUsed = 0;
+	if (AugSlotsUsed < 0)
+		AugSlotsUsed = 0;
 
 	// Strength Badge
-	if (Accessories[0])
+	if (Augs[0])
 		Damage = FixedMul(Damage, 2.0);
 	
 	// Defense Badge
-	if (Accessories[1])
+	if (Augs[1])
 		DamageFactor = FixedDiv(DamageFactor, 2.0);
 	
 	// Vitality Badge
-	if (Accessories[2])
+	if (Augs[2])
 		HealthMax *= 2;
 	
 	// Energy Badge
-	if (Accessories[3])
+	if (Augs[3])
 		EPMax *= 2;
 	
 	// Regeneration Badge
-	if (Accessories[4])
+	if (Augs[4])
 	{
 		HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
 		EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
@@ -102,21 +102,21 @@ function void CheckAccessories(void)
 	}
 
 	// Agility Badge
-	if (Accessories[5])
+	if (Augs[5])
 	{
 		Speed *= 2;
 		JumpHeight *= 2;
 	}
 	
 	// Capacity Badge
-	if (Accessories[6] || Accessories[8])
+	if (Augs[6] || Augs[8])
 	{
 		SetAmmoCapacity("Clip", Capacity * 20 * 2);
 		SetAmmoCapacity("Shell", Capacity * 10 * 2);
 		SetAmmoCapacity("RocketAmmo", Capacity * 5 * 2);
 		SetAmmoCapacity("Cell", Capacity * 30 * 2);
 	}
-	if (Accessories[6] && Accessories[8])
+	if (Augs[6] && Augs[8])
 	{
 		SetAmmoCapacity("Clip", Capacity * 20 * 4);
 		SetAmmoCapacity("Shell", Capacity * 10 * 4);
@@ -125,7 +125,7 @@ function void CheckAccessories(void)
 	}
 
 	// Luck Badge
-	if (Accessories[7])
+	if (Augs[7])
 	{
 		MoneyChance[0] *= 2;
 		MoneyChance[1] *= 2;
@@ -145,13 +145,13 @@ function void CheckAccessories(void)
 		PowerupChance *= 2;
 		RuneChance *= 2;
 		TokenChance *= 2;
-		AccessoryChance *= 2;
+		AugChance *= 2;
 		ShieldChance *= 2;
 		EPChance *= 2;
 	}
 	
 	// Rainbow Badge
-	if (Accessories[8])
+	if (Augs[8])
 	{
 		Damage = FixedMul(Damage, 2.0);
 		DamageFactor = FixedDiv(DamageFactor, 2.0);
@@ -181,7 +181,7 @@ function void CheckAccessories(void)
 		PowerupChance *= 2;
 		RuneChance *= 2;
 		TokenChance *= 2;
-		AccessoryChance *= 2;
+		AugChance *= 2;
 		ShieldChance *= 2;
 		EPChance *= 2;
 	}
@@ -204,30 +204,30 @@ function void CheckAccessories(void)
 	SetActorProperty(0, APROP_JUMPZ, JumpHeight);
 }
 
-function void EquipAccessory(int acc)
+function void EquipAccessory(int Aug)
 {
-	if (CheckInventory(Accessory[acc][0]))
+	if (CheckInventory(AugData[Aug][0]))
 	{
-		if (Accessories[acc])
+		if (Augs[Aug])
 		{
 			ActivatorSound("misc/accessoryequip", 127);
-			AccessorySlotsUsed--;
-			Accessories[acc] = false;
+			AugSlotsUsed--;
+			Augs[Aug] = false;
 		}
 		else
 		{
-			AccessorySlotsUsed++;
+			AugSlotsUsed++;
 			
-			if (AccessorySlotsUsed > MaxAccessorySlots)
+			if (AugSlotsUsed > MaxAugSlots)
 			{
 				ActivatorSound("menu/error", 127);
 				Print(s:"You don't have a free Accessory slot!");
-				AccessorySlotsUsed--;
+				AugSlotsUsed--;
 			}
 			else
 			{
 				ActivatorSound("misc/accessoryequip", 127);
-				Accessories[acc] = true;
+				Augs[Aug] = true;
 			}
 		}
 	}

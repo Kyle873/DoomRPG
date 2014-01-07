@@ -5,13 +5,13 @@
 #import "RPG.acs"
 #import "stats.acs"
 #import "Skills.acs"
-#import "Accessories.acs"
+#import "Augs.acs"
 #import "Shop.acs"
 #import "Shield.acs"
 #import "Utils.acs"
 
 str MainMenu[5] = {
-	"Stats", "Accessories", "Skills", "Shield", "Shop"
+	"Stats", "Augmentations", "Skills", "Shield", "Shop"
 };
 
 int MainMenuColor[5] = {
@@ -102,7 +102,7 @@ function void MenuLoop(void)
 	// Draw current menu
 	if (Menu == 0)	DrawMainMenu();
 	if (Menu == 1)	DrawStatsMenu();
-	if (Menu == 2)	DrawAccessoriesMenu();
+	if (Menu == 2)	DrawAugsMenu();
 	if (Menu == 3)	DrawSkillMenu();
 	if (Menu == 4)	DrawShieldMenu();
 	
@@ -155,7 +155,7 @@ function void DrawMainMenu(void)
 	HudMessage(d:StatTokens; 																			HUDMSG_PLAIN, 0, CR_RED,  		40.1, 178.0, 0.05);
 	HudMessage(d:CheckInventory("StatCapToken"), s:" / ", d:100; 										HUDMSG_PLAIN, 0, CR_YELLOW,  	40.1, 198.0, 0.05);
 	HudMessage(d:SkillTokens; 																			HUDMSG_PLAIN, 0, CR_GREEN,  	40.1, 218.0, 0.05);
-	HudMessage(d:AccessorySlotsUsed, s:" / ", d:MaxAccessorySlots; 										HUDMSG_PLAIN, 0, CR_GOLD,  		40.1, 238.0, 0.05);
+	HudMessage(d:AugSlotsUsed, s:" / ", d:MaxAugSlots; 													HUDMSG_PLAIN, 0, CR_GOLD,  		40.1, 238.0, 0.05);
 	
 	// Level Stats
 	if (KillBonus)
@@ -309,7 +309,7 @@ function void DrawStatsMenu(void)
 		HudMessage(d:PowerupChance, s:"%";			HUDMSG_PLAIN, 	0, 		CR_GREEN, 			64.1, 	178.0, 	0.05);
 		HudMessage(d:RuneChance, s:"%";				HUDMSG_PLAIN, 	0, 		CR_BRICK, 			64.1, 	208.0, 	0.05);
 		HudMessage(d:TokenChance, s:"%";			HUDMSG_PLAIN, 	0, 		CR_WHITE, 			184.1, 	176.0, 	0.05);
-		HudMessage(d:AccessoryChance, s:"%";		HUDMSG_PLAIN, 	0, 		CR_GOLD, 			184.1, 	208.0, 	0.05);
+		HudMessage(d:AugChance, s:"%";				HUDMSG_PLAIN, 	0, 		CR_GOLD, 			184.1, 	208.0, 	0.05);
 		HudMessage(d:ShieldChance, s:"%";			HUDMSG_PLAIN, 	0, 		CR_CYAN,	 		280.1, 	176.0, 	0.05);
 		HudMessage(d:EPChance, s:"%";				HUDMSG_PLAIN, 	0, 		CR_LIGHTBLUE,	 	280.1, 	208.0, 	0.05);
 		PrintSprite("PINVA0", 										0, 							16.1, 	190.1, 	0.05);
@@ -323,46 +323,46 @@ function void DrawStatsMenu(void)
 	}
 }
 
-function void DrawAccessoriesMenu(void)
+function void DrawAugsMenu(void)
 {
 	// Titles
 	SetFont("BIGFONT");
-	HudMessage(s:"Accessories (", d:AccessorySlotsUsed,
-			   s:" / ", d:MaxAccessorySlots, s:")";
+	HudMessage(s:"Augmentations (", d:AugSlotsUsed,
+			   s:" / ", d:MaxAugSlots, s:")";
 			   HUDMSG_PLAIN, 5000, CR_GREEN, 0.1, 10.0, 0.05);
 	
-	// Draw Accessories slots
+	// Draw Aug slots
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 10; j++)
 		{
 			int Index = j + (i * 10);
-			int Amount = CheckInventory(Accessory[Index][0]);
+			int Amount = CheckInventory(AugData[Index][0]);
 			
 			// Draw the cursor
 			if (MenuIndex == Index)
 				PrintSprite("SelectBo", 0, j * 32.0 + 0.1, 36.0 + (i * 32.0), 0.05);
 			
-			// Draw the accessories that we have
+			// Draw the augs that we have
 			SetFont("SMALLFONT");
 			
 			// Draw the E if it's equipped
-			if (CheckInventory(Accessory[Index][0]) && Accessories[Index])
+			if (CheckInventory(AugData[Index][0]) && Augs[Index])
 				HudMessage(s:"E"; 		HUDMSG_PLAIN, 0, CR_LIGHTBLUE, j * 32.0 + 0.1, 48.0 + (i * 32.0), 0.05);
 			
 			// Draw the quantity if you have more then one
-			if (CheckInventory(Accessory[Index][0]) > 1)
+			if (CheckInventory(AugData[Index][0]) > 1)
 				HudMessage(d:Amount; 	HUDMSG_PLAIN, 0, CR_WHITE, 30.2 + (j * 32.0), 48.0 + (i * 32.0), 0.05);
 			
 			// If we have it, draw it
-			if (CheckInventory(Accessory[Index][0]))
-				PrintSprite(Accessory[Index][3], 0, 0.1 + j * 32.0, 36.1 + (i * 32.0), 0.05);
+			if (CheckInventory(AugData[Index][0]))
+				PrintSprite(AugData[Index][3], 0, 0.1 + j * 32.0, 36.1 + (i * 32.0), 0.05);
 			
 			// Currently highlighted accessory's name/description
 			SetFont("SMALLFONT");
 			if (MenuIndex == Index)
-				if (CheckInventory(Accessory[MenuIndex][0]))
-					HudMessage(s:"\ca", s:Accessory[MenuIndex][1],
-							   s:"\n", s:Accessory[Index][2];
+				if (CheckInventory(AugData[MenuIndex][0]))
+					HudMessage(s:"\ca", s:AugData[MenuIndex][1],
+							   s:"\n", s:AugData[Index][2];
 							   HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 120.1, 0.05);
 
 			// Draw the boxes
