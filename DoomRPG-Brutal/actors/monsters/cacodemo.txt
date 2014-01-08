@@ -1,693 +1,24 @@
-//===========================================================================
-//
-// Cacodemon
-//
-//===========================================================================
-ACTOR Cacodemon_ : Cacodemon Replaces Cacodemon
+actor CacodemonRPG : Cacodemon_ replaces Cacodemon
 {
-	Game Doom
-  bloodtype "Blue_Blood"
-  bloodcolor DarkBlue
-	SpawnID 19
-    GibHealth 25
-    damagefactor "Crush", 10.0
-	Radius 31
-	Height 56
-	Mass 400
-	Speed 10
-	Health 320
-	PainChance 128
-	PainChance "Kick", 255
-	PainChance "Avoid", 190
-	Monster
-	Scale 0.9
-	+FLOAT +NOGRAVITY
-	SeeSound "caco/sight"
-	PainSound "caco/pain"
-	DeathSound "caco/death"
-	ActiveSound "caco/active"
-	Obituary "$OB_CACO"
-	HitObituary "$OB_CACOHIT"
-
-damagefactor "Blood", 0.0 damagefactor "BlueBlood", 0.0 damagefactor "GreenBlood", 0.0
-	States
-	{
-	Pain.Avoid: 
-	  TNT1 A 0
-	  TNT1 A 0 A_Jump(255, "AvoidLeft", "AvoidRight")
-	  Goto AvoidLeft
-	  
-	  AvoidLeft:
-	    HEAD A 1 A_FaceTarget
-	    TNT1 A 0 ThrustThing(angle*256/360+192, 15, 0, 0)
-        HEAD A 5 A_FaceTarget
-        Goto Missile
-	AvoidRight:
-	    HEAD A 1 A_FaceTarget
-	    TNT1 A 0 ThrustThing(angle*256/360+64, 15, 0, 0)
-        HEAD A 5 A_FaceTarget
-        Goto Missile
-	
-	Spawn:
-		HEAD A 1 A_Look
-		TNT1 A 0 A_JumpIfInventory("Curbstomp_Marine", 1, "FatalityMarine")
-		HEAD A 10 A_Look
-		Loop
-	See:
-		HEAD A 3 A_Chase
-		TNT1 A 0 A_JumpIfCloser(99, "Melee")
-		Loop
-	Missile:
-	    TNT1 A 0 A_JumpIfCloser(140, "Melee")
-        TNT1 A 0 A_Jump (198, 3)
-        Goto Avoid
-        TNT1 AAA 0
-		HEAD B 4 A_FaceTarget
-		HEAD C 4 A_FaceTarget
-		HEAD D 4 BRIGHT A_CustomMissile("CacodemonBall", 34, 0, 0, 0)
-		Goto See
-		
-	Melee:	
-		HEAD B 4 A_Facetarget
-		HEAD C 4 A_Recoil(-5)
-		TNT1 A 0 A_CustomMissile("CacodemonBite", 34, 0, 0, 0)
-		//TNT1 A 0 A_JumpIfInventory("Fatality_Marine", 1, "FatalityMarine")
-		HEAD D 4
-		TNT1 A 0 A_JumpIfInventory("Curbstomp_Marine", 1, "FatalityMarine")
-	Goto See
-	
-	Pain:
-		HEAD E 3
-		HEAD E 3 A_Pain
-		HEAD F 6
-		Goto See
-
-	Pain.Kick:
-        TNT1 A 0 A_FaceTarget
-		HEAD E 6 A_Recoil(5)
-		HEAD E 6 A_Pain
-		HEAD F 10
-		Goto See
-
-Pain:
-		HEAD E 3
-		HEAD E 3 A_Pain
-        TNT1 A 0 A_Jump (128, 3)
-        Goto Avoid
-        TNT1 AAA 0
-		HEAD F 6
-        Goto See
-
-
-	Avoid:
-         NULL A 0 A_FaceTarget
-         HEAD A 6 A_FastChase
-         NULL A 0 A_FaceTarget
-         HEAD A 6 A_FastChase
-         NULL A 0 A_FaceTarget
-         HEAD A 6 A_FastChase
-         NULL A 0 A_FaceTarget
-         HEAD A 6 A_FastChase
-		HEAD B 5 A_FaceTarget
-		HEAD C 5 A_FaceTarget
-		HEAD D 5 BRIGHT A_HeadAttack
-
-		HEAD B 5 A_FaceTarget
-		HEAD C 5 A_FaceTarget
-		HEAD D 5 BRIGHT A_HeadAttack
-		 Goto See
-
-
-	Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-		HEAD G 8 A_Scream
-		HEAD H 8 A_NoBlocking
-		HEAD IJ 8
-        TNT1 AAAA 0 A_CustomMissile ("Blue_FlyingBlood", 15, 0, random (0, 360), 2, random (0, 160))
-        HEAD KL 6
-        HEAD L 1
-        TNT1 A 0 A_SpawnItem ("DeadCacoDemon", 1)
-        Stop
-		
-	   Death.Fatality:
-        TNT1 A 0 A_NoBlocking
-		TNT1 A 0 A_GiveToTarget("GoFatality", 1)
-        TNT1 A 0 A_Jump(128,5)
-        TNT1 A 0 A_GiveToTarget("CacoDemonFatality", 1)
-        Stop
-        TNT1 AAAAAAA 0
-        TNT1 A 0 A_GiveToTarget("CacoDemonFatality2", 1)
-        TNT1 A 1
-        TNT1 A 0
-		Stop
-		
-	Death.cut:
-		TNT1 O 0 A_Jump(180, 2)
-		Goto Death
-        TNT1 A 0 A_SetFloorClip
-        TNT1 A 0 A_SetFloorClip
-		TNT1 A 0 A_Scream
-		TNT1 O 0 A_NoBlocking
-		TNT1 A 0 A_CustomMissile ("RipCaco", 0, 0, random (0, 360), 2, random (0, 160))
-        CACL A 1
-        TNT1 A 0 A_SpawnItem ("DeadHalfCacoDemon", 1)
-        Stop
-	Death.cutless:
-		TNT1 O 0 A_Jump(180, 2)
-		Goto Death
-        TNT1 A 0 A_SetFloorClip
-        TNT1 A 0 A_SetFloorClip
-		TNT1 A 0 A_Scream
-		TNT1 O 0 A_NoBlocking
-		TNT1 A 0 A_CustomMissile ("RipCaco", 0, 0, random (0, 360), 2, random (0, 160))
-        CACL A 1
-        TNT1 A 0 A_SpawnItem ("DeadHalfCacoDemon", 1)
-        Stop
-		Death.SuperPlasma:
-    Death.Plasma: Death.Plasma2:
-        TNT1 A 0
-        TNT1 A 0 A_Scream
-        TNT1 A 0 A_NoBlocking
-		EXPL AAAAA 0 A_CustomMissile ("ExplosionSmoke", 32, 0, random (0, 360), 2, random (0, 360))
-        CACB A 10 A_CustomMissile ("PlasmaSmoke", 24, 0, random (0, 180), 2, random (0, 180))
-        CACB A 0 A_CustomMissile ("XDeathBurnedBlueMeat1", 0, 0, random (0, 360), 2, random (0, 160))
-        CACB A 0 A_CustomMissile ("XDeathBurnedBlueMeat2", 0, 0, random (0, 360), 2, random (0, 160))
-        CACB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB 8 A_CustomMissile ("PlasmaSmoke", 16, 0, random (0, 180), 2, random (0, 180))
-        CACB B -1
-        Stop
-		
-        Death.fire:
-        TNT1 A 0
-        TNT1 A 0 A_Scream
-        TNT1 A 0 A_NoBlocking
-		TNT1 A 0 A_Playsound("props/redfire")
-        CACB A 1 A_CustomMissile ("PlasmaSmoke", 24, 0, random (0, 180), 2, random (0, 180))
-        CACB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB 2 A_CustomMissile ("FlameTrails", 22, 0, random (0, 180), 2, random (0, 180))
-		CACB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB 8 A_CustomMissile ("PlasmaSmoke", 22, 0, random (0, 180), 2, random (0, 180))
-        CACB B -1
-        Stop
-		
-	Death.SSG:
-	XDeath:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-		TNT1 A 0 A_XScream
-		TNT1 A 0 A_NoBlocking
-        TNT1 A 0 A_CustomMissile ("CacoXDeath", 0, 0, random (0, 360), 2, random (0, 160))
-        Stop
-	Raise:
-		HEAD L 8 A_UnSetFloorClip
-		HEAD KJIHG 8
-		Goto See
-    Crush:
-        TNT1 A 0 A_PlaySound("misc/xdeath4")
-        CRS2 B 5
-        CRS2 B -1
-        Stop
-
-    Pain.KillMe:
-    Pain.Taunt:
-        TNT1 A 0
-        Goto Missile
-    Death.KillMe:
-    Death.Taunt:
-	    TNT1 A 0 A_ChangeFlag("SOLID", 0)
-        TNT1 A 0 A_SpawnItem("CacoDemon")
-        Stop
-		
-
-FatalityMarine:
-        TNT1 A 0 A_SetInvulnerable
-       CFPF A 1
-	   TNT1 A 0 A_PlaySound("DSFDTHE")
-       CFPF A 10
-		 TNT1 AAA 0 A_CustomMissile ("XDeath1", 1, 0, random (0, 360), 2, random (0, 160))
-         TNT1 AA 0 A_CustomMissile ("BrainBlood", 25, 0, random (0, 360), 2, random (0, 160))
-	  
-	  CFPF B 9
-		 TNT1 AAA 0 A_CustomMissile ("XDeath1", 1, 0, random (0, 360), 2, random (0, 160))
-         TNT1 AA 0 A_CustomMissile ("BrainBlood", 25, 0, random (0, 360), 2, random (0, 160))
-	  CFPF C 9
-	  
-	  
-	  	  CFPF B 9
-		 TNT1 AAA 0 A_CustomMissile ("XDeath1", 1, 0, random (0, 360), 2, random (0, 160))
-         TNT1 AA 0 A_CustomMissile ("BrainBlood", 25, 0, random (0, 360), 2, random (0, 160))
-	  CFPF C 9
-	  
-	  	  CFPF B 9
-		 TNT1 AAA 0 A_CustomMissile ("XDeath1", 1, 0, random (0, 360), 2, random (0, 160))
-         TNT1 AA 0 A_CustomMissile ("BrainBlood", 25, 0, random (0, 360), 2, random (0, 160))
-	  CFPF C 9
-	  
-	  CFPF B 9
-	   TNT1 AAA 0 A_CustomMissile ("XDeath1", 1, 0, random (0, 360), 2, random (0, 160))
-      TNT1 AA 0 A_CustomMissile ("BrainBlood", 25, 0, random (0, 360), 2, random (0, 160))
-	  CFPF C 9
-       TNT1 A 0 A_TakeInventory("Curbstomp_Marine",1)
-TNT1 A 0 A_SpawnItem ("PlayerJustGotCutInHalf", 1)
-TNT1 A 0 A_UnSetInvulnerable
-Goto See
-		
-	}
+	DropItem "Dropper"
+	DropItem "LuckDropper"
 }
 
-//===========================================================================
-//
-// Cacodemon plasma ball
-//
-//===========================================================================
-ACTOR CacodemonBall_ Replaces CacodemonBall
+actor CacodemonBoss : CacodemonRPG
 {
-	Game Doom
-	SpawnID 126
-	Radius 6
-	Height 6
-	Speed 19
-	FastSpeed 19
-	Damage (random(20,25))
-	Projectile 
-	+RANDOMIZE
-	+THRUGHOST
-	RenderStyle Add
-	Alpha 1
-    damagetype Plasma
-	SeeSound "caco/attack"
-	DeathSound "caco/shotx"
-	Decal "Scorch"
-	States
-	{
-	Spawn:
-		BAL2 AA 2 BRIGHT A_SpawnItem("RedFlareMedium",0,0)
-		BAL2 BB 2 BRIGHT A_SpawnItem("BlueFlareMedium",0,0)
-		Loop
-	Death:
-        TNT1 AAAA 0 A_CustomMissile ("ShoqueAzul", 3, 0, random (0, 360), 2, random (0, 360))
-		TNT1 A 0 A_SpawnItem("Spark_UpOnce")
-		BAL2 CDE 6 BRIGHT
-		Stop
-	}
+	Health 800
 }
 
-ACTOR Shoque
-{
-	Game Doom
-	Radius 1
-	Height 1
-	Speed 3
-	Damage 0 
-    +NOBLOCKMAP
-    +NOTELEPORT
-    +DONTSPLASH
-	+MISSILE
-	+FORCEXYBILLBOARD
-    +CLIENTSIDEONLY
-	RenderStyle Add
-    Scale 1.0
-	Gravity 0
-	States
-	{
-    Spawn:
-        TNT1 A 1
-        SHOQ ABCDEFG 3 BRIGHT
-        Stop
-	}
-}
-
-
-ACTOR ShoqueAzul
-{
-	Game Doom
-	Radius 1
-	Height 1
-	Speed 3
-	Damage 0 
-    +NOBLOCKMAP
-    +NOTELEPORT
-    +DONTSPLASH
-	+MISSILE
-	+FORCEXYBILLBOARD
-    +CLIENTSIDEONLY
-	RenderStyle Add
-    Scale 1.0
-	Gravity 0
-	States
-	{
-    Spawn:
-        TNT1 A 1
-        SH1K ABCDEFG 2 BRIGHT
-        Stop
-	}
-}
-
-
-actor BlueBloodTrails
-{
-Decal BloodSplat
- game Doom
-	Alpha 0.5
-+FORCEXYBILLBOARD
-+GHOST
-+NOBLOCKMAP
-Gravity 0.2
-+NOCLIP
-+DONTSPLASH
--ALLOWPARTICLES 
-+CLIENTSIDEONLY
-Scale 1.2
-translation "168:191=192:207","16:47=240:247"
- states
- {
-  Spawn:
-	    TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-        BLER GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG 1 A_FadeOut(0.01)
-        //TNT1 AAA 0 A_CustomMissile ("NashGore_FlyingBloodFast", 0, 0, random (0, 360), 2, random (0, 180))
-        BLOD BCD 0
-        stop
-	Splash:
-        BLOD A 0
-        stop
- }
-}
-
-ACTOR CacoXdeath1
-{
-translation "168:191=192:207"
-    Radius 8
-    Height 8
-    Speed 15
-    Scale 1.1
-	Mass 1
-    +NOBLOCKMAP
-	+MISSILE
-    +NOTELEPORT
-    +MOVEWITHSECTOR
-    +CLIENTSIDEONLY
-    +RIPPER
-    +BLOODLESSIMPACT 
-Decal BlueBloodSplat
-damagetype Blood
-    SeeSound "misc/xdeath4"
-    DeathSound "misc/xdeath1"
-	Decal Blue_BloodSpot
-    States
-    {
-    Spawn:
-        TNT1 AAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-	    TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-        CCP1 A 4 A_CustomMissile("BlueBloodTrails",0,0,180,2)
-        Loop
-    Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-        TNT1 A 0 A_SpawnItem("Blue_BloodSpot",0,0,0,1)
-        CCP1 B -1
-        Stop
-        TNT1 A 1
-     Splash:
-        TNT1 A 0
-        Stop
-    }
-}
-
-
-ACTOR CacoXdeath2: CacoXDeath1
-{
-    SeeSound "misc/xdeath3"
-    DeathSound "misc/xdeath1"
-    States
-    {
-    Spawn:
-        TNT1 AAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-	    TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-        CCP1 A 4 A_CustomMissile("BlueBloodTrails",0,0,180,2)
-        Loop
-    Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-        TNT1 A 0 A_SpawnItem("Blue_BloodSpot",0,0,0,1)
-        CCP1 C -1
-        Stop
-        TNT1 A 1
-    }
-}
-
-
-ACTOR CacoXdeath3: CacoXDeath1
-{
-    SeeSound "misc/xdeath3"
-    DeathSound "misc/xdeath1"
-    States
-    {
-    Spawn:
-        TNT1 AAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-	    TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-        CCP2 A 4 A_CustomMissile("BlueBloodTrails",0,0,180,2)
-        Loop
-    Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-        TNT1 A 0 A_SpawnItem("Blue_BloodSpot",0,0,0,1)
-        CCP2 B -1
-        Stop
-        TNT1 A 1
-    }
-}
-
-ACTOR CacoXdeath4: CacoXDeath1
-{
-    SeeSound "misc/xdeath3"
-    DeathSound "misc/xdeath1"
-    States
-    {
-    Spawn:
-        TNT1 AAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-	    TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-        CCP2 A 4 A_CustomMissile("BlueBloodTrails",0,0,180,2)
-        Loop
-    Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-        TNT1 A 0 A_SpawnItem("Blue_BloodSpot",0,0,0,1)
-        CCP2 C -1
-        Stop
-        TNT1 A 1
-    }
-}
-
-ACTOR CacoXdeath5: CacoXDeath1
-{
-    SeeSound "misc/xdeath3"
-    DeathSound "misc/xdeath1"
-    States
-    {
-    Spawn:
-        TNT1 AAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-	    TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-        CCP3 A 4 A_CustomMissile("BlueBloodTrails",0,0,180,2)
-        Loop
-    Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-        TNT1 A 0 A_SpawnItem("Blue_BloodSpot",0,0,0,1)
-        CCP3 B -1
-        Stop
-        TNT1 A 1
-    }
-}
-
-ACTOR CacoXdeath6: CacoXDeath1
-{
-Scale 1.3
-Gravity 0.6
-    States
-    {
-    Spawn:
-        TNT1 AAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-	    TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-        CCP4 ABCDEFG 4
-        Loop
-    Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_CustomMissile ("Blue_FlyingBloodTrail", 0, 0, random (0, 180), 2, random (0, 180))
-        TNT1 A 0 A_SpawnItem("Blue_BloodSpot",0,0,0,1)
-        CCP4 H -1
-        Stop
-        TNT1 A 1
-    }
-}
-
-ACTOR CacoXdeath7: CacoXDeath1
-{
-Scale 1.5
-    States
-    {
-    Spawn:
-	    TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-        CCP5 A 4
-        Loop
-    Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-       TNT1 A 0 A_SpawnItem("Blue_BloodSpot",0,0,0,1)
-        CCP5 A -1
-        Stop
-        TNT1 A 1
-    }
-}
-
-ACTOR HalfCacodemon
-{
-    Radius 8
-    Height 8
-	Speed 12
-	Mass 1
-    +NOBLOCKMAP
-	+MISSILE
-    +NOTELEPORT
-    +DONTSPLASH
-	+DOOMBOUNCE
-    +MOVEWITHSECTOR
-    +CLIENTSIDEONLY
-	SeeSound "misc/xdeath4"
-    DeathSound "misc/xdeath3"
-	Decal CacoBloodSplater
-	BounceFactor 0.5
-	Scale 0.9
-    States
-    {
-    Spawn:
-	    TNT1 A 0 A_JumpIf(waterlevel > 1, "Death")
-		CACX ABCDEFGH 2 A_CustomMissile("Blue_FlyingBlood", 15, 0, random (0, 360), 2, random (0, 160))
-		Loop
-	Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-	    CACX I -1
-		Stop
-    }
-}
-
-
-Actor DeadCacoDemon1
-{
-    Radius 12
-    Height 40
-    Scale 0.9
-    +SHOOTABLE
-    -SOLID
-    +NOTELEPORT
-    +MOVEWITHSECTOR
-    +CORPSE
-  bloodtype "Blue_Blood"
-  bloodcolor darkblue
-    Mass 1000
-    Health 200
-    damagefactor "Blood", 0.0
-    damagefactor "Trample", 0.0
-States
-    {
-    Spawn:
-		HEAD L -1
-        Stop
-	Raise:
-	Raise:
-		HEAD L 8
-		HEAD KJIHG 8
-        TNT1 A 0 A_SpawnItem ("CacoDemon_", 3)
-		Stop
-    Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-  	     TNT1 AAAA 0 A_CustomMissile ("CacoXDeath7", 0, 0, random (0, 360), 2, random (0, 160))
-         Stop
-	Death.cut:
-		TNT1 O 0 A_Jump(180, 2)
-		Goto Death
-        TNT1 A 0 A_SetFloorClip
-        TNT1 A 0 A_SetFloorClip
-		TNT1 A 0 A_Scream
-		TNT1 O 0 A_NoBlocking
-		TNT1 A 0 A_CustomMissile ("RipCaco", 0, 0, random (0, 360), 2, random (0, 160))
-        CACL A 1
-        TNT1 A 0 A_SpawnItem ("DeadHalfCacoDemon", 3)
-        Stop
-	Death.cutless:
-		TNT1 O 0 A_Jump(180, 2)
-		Goto Death
-        TNT1 A 0 A_SetFloorClip
-        TNT1 A 0 A_SetFloorClip
-		TNT1 A 0 A_Scream
-		TNT1 O 0 A_NoBlocking
-		TNT1 A 0 A_CustomMissile ("RipCaco", 0, 0, random (0, 360), 2, random (0, 160))
-        CACL A 1
-        TNT1 A 0 A_SpawnItem ("DeadHalfCacoDemon", 3)
-        Stop
-    Death.Plasma: Death.Plasma2:
-        TNT1 O 0 A_Jump(220, 2)
-		Goto Death
-        TNT1 A 0
-        TNT1 A 0 A_Scream
-        TNT1 A 0 A_NoBlocking
-		EXPL AAAAA 0 A_CustomMissile ("ExplosionSmoke", 32, 0, random (0, 360), 2, random (0, 360))
-        CACB A 10 A_CustomMissile ("PlasmaSmoke", 24, 0, random (0, 180), 2, random (0, 180))
-        CACB A 0 A_CustomMissile ("XDeathBurnedBlueMeat1", 0, 0, random (0, 360), 2, random (0, 160))
-        CACB A 0 A_CustomMissile ("XDeathBurnedBlueMeat2", 0, 0, random (0, 360), 2, random (0, 160))
-        CACB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB 8 A_CustomMissile ("PlasmaSmoke", 16, 0, random (0, 180), 2, random (0, 180))
-        CACB B -1
-        Stop}}
-
-Actor DeadHalfCacoDemon: DeadCacoDemon1
-{Health 200 States{Spawn:
-        CACL A -1
-        Stop    
-       Death.Cut:        Death.Cutless:	        Death:
-		TNT1 A 0 ACS_NamedExecuteAlways("AddXP", 0, Random(600, 1200))
-TNT1 AAAA 0 A_CustomMissile ("CacoXDeath7", 0, 0, random (0, 360), 2, random (0, 160))
-		Stop}}
-		
-		
-		
-		
-		
-ACTOR CacodemonBite: ImpAttack
-{
-    +THRUGHOST
-	DamageType HKFT
-    Damage 7
-}
-
-// --------------------------------------------------		
-// Doom RPG
-// 
-
-actor CacodemonRed : Cacodemon_ 10150
+actor CacodemonRed : CacodemonBoss
 {
 	BloodColor Red
 
 	DropItem "Dropper"
 	DropItem "LuckDropper"
 	DropItem "RuneDropper"
-	
-	States
-	{
-	Missile:
-	    TNT1 A 0 A_JumpIfCloser(140, "Melee")
-        TNT1 A 0 A_Jump (198, 3)
-        Goto Avoid
-        TNT1 AAA 0
-		HEAD B 2 A_FaceTarget
-		HEAD C 2 A_FaceTarget
-		HEAD D 2 BRIGHT A_CustomMissile("CacodemonBall", 34, 0, 0, 0)
-		Goto See
-	Melee:	
-		HEAD B 2 A_Facetarget
-		HEAD C 2 A_Recoil(-5)
-		TNT1 A 0 A_CustomMissile("CacodemonBite", 34, 0, 0, 0)
-		//TNT1 A 0 A_JumpIfInventory("Fatality_Marine", 1, "FatalityMarine")
-		HEAD D 2
-		TNT1 A 0 A_JumpIfInventory("Curbstomp_Marine", 1, "FatalityMarine")
-		Goto See
-	}
 }
 
-actor CacodemonGreen : Cacodemon_ 10151
+actor CacodemonGreen : CacodemonBoss
 {
 	PainChance 0
 	
@@ -698,16 +29,16 @@ actor CacodemonGreen : Cacodemon_ 10151
 	DropItem "ArmorRandomizer"
 }
 
-actor CacodemonWhite : Cacodemon_ 10152
+actor CacodemonWhite : CacodemonBoss
 {
 	BloodColor White
 
 	DropItem "Dropper"
 	DropItem "LuckDropper"
-	DropItem "SmallTokenDropper"
+	DropItem "SmallTokenRandomizer"
 }
 
-actor CacodemonOrange : Cacodemon_ 10153
+actor CacodemonOrange : CacodemonBoss
 {
 	+ALWAYSFAST
 	+QUICKTORETALIATE
@@ -716,13 +47,15 @@ actor CacodemonOrange : Cacodemon_ 10153
 
 	DropItem "Dropper"
 	DropItem "LuckDropper"
-	DropItem "TimeSphere"
+	DropItem "HasteRune"
+	DropItem "HighJumpRune" 128
+	DropItem "TimeSphere" 64
 }
 
-actor CacodemonPink : Cacodemon_ 10154
+actor CacodemonPink : CacodemonBoss
 {
-	health 600
-	
+	Health 1600
+
 	BloodColor Pink
 
 	DropItem "Dropper"
@@ -730,34 +63,35 @@ actor CacodemonPink : Cacodemon_ 10154
 	DropItem "MedikitRandomizer"
 }
 
-actor CacodemonBlue : Cacodemon_ 10155
+actor CacodemonBlue : CacodemonBoss
 {
 	BloodColor Cyan
 
 	DropItem "Dropper"
 	DropItem "LuckDropper"
-	DropItem "EPCapsuke"
-	DropItem "BigEPCapsule"
+	DropItem "EPCapsule"
+	DropItem "BigEPCapsule" 128
 }
 
-actor CacodemonPurple : Cacodemon_ 10156
+actor CacodemonPurple : CacodemonBoss
 {
 	BloodColor Purple
 
 	DropItem "Dropper"
 	DropItem "LuckDropper"
-	DropItem "ShieldBooster"
+	DropItem "RegenSphere"
 }
 
-actor CacodemonDarkBlue : Cacodemon_ 10157
+actor CacodemonDarkBlue : CacodemonBoss
 {
 	BloodColor Blue
 
 	DropItem "Dropper"
 	DropItem "LuckDropper"
+	DropItem "BackpackRandomizer"
 }
 
-actor CacodemonYellow : Cacodemon_ 10158
+actor CacodemonYellow : CacodemonBoss
 {
 	BloodColor Yellow
 
@@ -766,17 +100,16 @@ actor CacodemonYellow : Cacodemon_ 10158
 	DropItem "LuckDropper"
 	DropItem "LuckDropper"
 	DropItem "LuckDropper"
-	DropItem "MoneyDropper"
 }
 
-actor CacodemonBlack : Cacodemon_ 10159
+actor CacodemonBlack : CacodemonBoss
 {
-	health 600
+	Health 3200
 	PainChance 0
 	
 	+ALWAYSFAST
 	+QUICKTORETALIATE
-	
+
 	BloodColor Black
 	RenderStyle Fuzzy
 	Alpha 0.5
@@ -787,33 +120,13 @@ actor CacodemonBlack : Cacodemon_ 10159
 	DropItem "LuckDropper"
 	DropItem "LuckDropper"
 	DropItem "MoneyDropper"
-	DropItem "RuneDropper"
-	DropItem "ArmorRandomizer"
-	DropItem "SmallTokenDropper"
-	DropItem "TimeSphere"
-	DropItem "MedikitRandomizer"
-	DropItem "EPCapsule"
-	DropItem "BigEPCapsule"
-	DropItem "ShieldBooster"
-
-	States
-	{
-	Missile:
-	    TNT1 A 0 A_JumpIfCloser(140, "Melee")
-        TNT1 A 0 A_Jump (198, 3)
-        Goto Avoid
-        TNT1 AAA 0
-		HEAD B 2 A_FaceTarget
-		HEAD C 2 A_FaceTarget
-		HEAD D 2 BRIGHT A_CustomMissile("CacodemonBall", 34, 0, 0, 0)
-		Goto See
-	Melee:	
-		HEAD B 2 A_Facetarget
-		HEAD C 2 A_Recoil(-5)
-		TNT1 A 0 A_CustomMissile("CacodemonBite", 34, 0, 0, 0)
-		//TNT1 A 0 A_JumpIfInventory("Fatality_Marine", 1, "FatalityMarine")
-		HEAD D 2
-		TNT1 A 0 A_JumpIfInventory("Curbstomp_Marine", 1, "FatalityMarine")
-		Goto See
-	}
+	DropItem "PowerupDropper"		128
+	DropItem "RuneDropper"			128
+	DropItem "ArmorRandomizer"		128
+	DropItem "SmallTokenRandomizer"	128
+	DropItem "TimeSphere"			128
+	DropItem "MedikitRandomizer"	128
+	DropItem "EPCapsule"			128
+	DropItem "BigEPCapsule"			128
+	DropItem "RegenSphere"			128
 }
