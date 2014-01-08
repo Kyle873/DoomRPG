@@ -533,25 +533,29 @@ function void DrawShieldMenu(void)
 	SetFont("BIGFONT");
 	HudMessage(s:"Body"; HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 26.0, 0.05);
 	SetFont("SMALLFONT");
-	HudMessage(s:ShieldData[0][ShieldBody - 1][1]; HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 34.1, 0.05);
+	if (ShieldBody > 0)
+		HudMessage(s:ShieldData[0][ShieldBody - 1][1]; HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 34.1, 0.05);
 	
 	// Shield - Battery
 	SetFont("BIGFONT");
 	HudMessage(s:"Battery"; HUDMSG_PLAIN, 0, CR_YELLOW, 200.1, 66.0, 0.05);
 	SetFont("SMALLFONT");
-	HudMessage(s:ShieldData[1][ShieldBattery - 1][1]; HUDMSG_PLAIN, 0, CR_YELLOW, 200.1, 74.1, 0.05);
+	if (ShieldBattery > 0)
+		HudMessage(s:ShieldData[1][ShieldBattery - 1][1]; HUDMSG_PLAIN, 0, CR_YELLOW, 200.1, 74.1, 0.05);
 
 	// Shield - Capacitor
 	SetFont("BIGFONT");
 	HudMessage(s:"Capacitor"; HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 200.1, 106.0, 0.05);
 	SetFont("SMALLFONT");
-	HudMessage(s:ShieldData[2][ShieldCapacitor - 1][1]; HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 200.1, 114.1, 0.05);
+	if (ShieldCapacitor > 0)
+		HudMessage(s:ShieldData[2][ShieldCapacitor - 1][1]; HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 200.1, 114.1, 0.05);
 	
 	// Shield - Accessory
 	SetFont("BIGFONT");
 	HudMessage(s:"Accessory"; HUDMSG_PLAIN, 0, CR_GREEN, 200.1, 146.0, 0.05);
 	SetFont("SMALLFONT");
-	HudMessage(s:ShieldData[3][ShieldAccessory - 1][1]; HUDMSG_PLAIN, 0, CR_GREEN, 200.1, 154.1, 0.05);
+	if (ShieldAccessory > 0)
+		HudMessage(s:ShieldData[3][ShieldAccessory - 1][1]; HUDMSG_PLAIN, 0, CR_GREEN, 200.1, 154.1, 0.05);
 	
 	// Shield Stats
 	HudMessage(d:Shield, s:" / ", d:ShieldCapacity; 			HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 192.0, 0.05);
@@ -559,10 +563,10 @@ function void DrawShieldMenu(void)
 	HudMessage(s:"Delay; ", d:ShieldDelayRate / 35, s:" sec"; 	HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 208.0, 0.05);
 	
 	// Build Shield Model
-	PrintSprite(ShieldData[2][ShieldCapacitor - 1][2], 	0, 212.1, 217.1, 0.05);
-	PrintSprite(ShieldData[0][ShieldBody - 1][2],		0, 212.1, 217.1, 0.05);
-	PrintSprite(ShieldData[1][ShieldBattery - 1][2],	0, 212.1, 217.1, 0.05);
-	PrintSprite(ShieldData[3][ShieldAccessory - 1][2], 	0, 212.1, 217.1, 0.05);
+	if (ShieldCapacitor > 0) 	PrintSprite(ShieldData[2][ShieldCapacitor - 1][2], 	0, 212.1, 217.1, 0.05);
+	if (ShieldBody > 0) 		PrintSprite(ShieldData[0][ShieldBody - 1][2],		0, 212.1, 217.1, 0.05);
+	if (ShieldBattery > 0) 		PrintSprite(ShieldData[1][ShieldBattery - 1][2],	0, 212.1, 217.1, 0.05);
+	if (ShieldAccessory > 0) 	PrintSprite(ShieldData[3][ShieldAccessory - 1][2], 	0, 212.1, 217.1, 0.05);
 }
 
 function void MenuInput(void)
@@ -771,6 +775,18 @@ function void MenuInput(void)
 				if (ShieldPage == 1 && CheckInventory(ShieldData[1][MenuIndex][0])) ShieldBattery = MenuIndex + 1;
 				if (ShieldPage == 2 && CheckInventory(ShieldData[2][MenuIndex][0])) ShieldCapacitor = MenuIndex + 1;
 				if (ShieldPage == 3 && CheckInventory(ShieldData[3][MenuIndex][0])) ShieldAccessory = MenuIndex + 1;
+			}
+		}
+        if (Buttons & BT_USE && !(OldButtons & BT_USE) && Buttons & BT_SPEED)
+		{
+			if (MenuIndex < ShieldPartsMax)
+			{
+				ActivatorSound("shield/unequip", 127);
+				
+				if (ShieldPage == 0) ShieldBody = 0;
+				if (ShieldPage == 1) ShieldBattery = 0;
+				if (ShieldPage == 2) ShieldCapacitor = 0;
+				if (ShieldPage == 3) ShieldAccessory = 0;
 			}
 		}
 	}

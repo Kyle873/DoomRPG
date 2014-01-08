@@ -220,7 +220,10 @@ script "ToggleShield" (void)
 {
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
-
+	
+	// If you have no Shield parts equipped, terminate
+	if (ShieldBody == 0 && ShieldBattery == 0 && ShieldCapacitor == 0 && ShieldAccessory == 0) terminate;
+	
 	FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
 	
 	if (!CheckInventory("Shield"))
@@ -279,7 +282,7 @@ function void CheckShields(void)
 {
 	// EP -> Shield Charging (WIP)
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
-	if (Buttons & BT_SPEED && Buttons & BT_USE && Shield < ShieldCapacity)
+	if ((!InMenu && !InShop) && Buttons & BT_SPEED && Buttons & BT_USE && Shield < ShieldCapacity)
 	{
 		FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
 		// ActivatorSound("regen/shield", 64);
@@ -287,11 +290,11 @@ function void CheckShields(void)
 		Shield++;
 	}
 	
-	// If a part is sold/dropped/nuked from orbit/etc, revert that part to the Standard part
-	if (!CheckInventory(ShieldData[0][ShieldBody - 1][0])) 		ShieldBody = 1;
-	if (!CheckInventory(ShieldData[1][ShieldBattery - 1][0])) 	ShieldBattery = 1;
-	if (!CheckInventory(ShieldData[2][ShieldCapacitor - 1][0]))	ShieldCapacitor = 1;
-	if (!CheckInventory(ShieldData[3][ShieldAccessory - 1][0]))	ShieldAccessory = 1;
+	// If a part is sold/dropped/nuked from orbit/etc, unequip it
+	if (!CheckInventory(ShieldData[0][ShieldBody - 1][0])) 		ShieldBody = 0;
+	if (!CheckInventory(ShieldData[1][ShieldBattery - 1][0])) 	ShieldBattery = 0;
+	if (!CheckInventory(ShieldData[2][ShieldCapacitor - 1][0]))	ShieldCapacitor = 0;
+	if (!CheckInventory(ShieldData[3][ShieldAccessory - 1][0]))	ShieldAccessory = 0;
 	
 	// Apply Components stats to Shield
 	ShieldCapacity = ShieldStats[0][ShieldBody - 1][0] + ShieldStats[1][ShieldBattery - 1][0] + ShieldStats[2][ShieldCapacitor - 1][0];
