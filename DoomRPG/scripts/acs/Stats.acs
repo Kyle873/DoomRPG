@@ -433,7 +433,7 @@ function void CheckStats(void)
 {
 	// VERY IMPORTANT CODE RIGHT HERE
 	// If you're reading this and you'd like to modify stat curves, this is where you'd do it
-	Damage = Strength * 0.01;
+	Damage = Strength;
 	DamageFactor = 1.0 - FixedMul(0.25, FixedDiv(Defense, 100));
 	HealthMax = Vitality * 10;
 	EPMax = Energy * 10;
@@ -446,43 +446,11 @@ function void CheckStats(void)
 	SetAmmoCapacity("Cell", Capacity * 30);
 	SurvivalBonus = Luck;
 
-	// Prevent Underflow of DamageFactor
-	if (DamageFactor < 0.01)
-		DamageFactor = 0.01;
-	
-	// Prevent stats from going overboard
-	CapStats(HardStatCap);
-	
-	// Prevent Shield Capacity from under/overflowing
-	if (Shield <= 0)
-		Shield = 0;
-	if (Shield > ShieldCapacity)
-		Shield = ShieldCapacity;
-	
-	// Cap Weapon Speed
-	if (WeaponSpeed > 100)
-		WeaponSpeed = 100;
-	
 	// Keep misc counts handy for the SBARINFO HUD and such
 	Credits = CheckInventory("Credits");
 	Continues = CheckInventory("Continue");
 	StatTokens = CheckInventory("StatToken");
 	SkillTokens = CheckInventory("SkillToken");
-	
-	// Give the Strength boosting item
-	if (Augs[AUG_STRENGTH] && Augs[AUG_BLACKMARKET])
-		if (Round(Damage * 100) > 0 && Round(Damage * 100) <= 8000)
-			GiveInventory(StrParam(s:"Strength", d:Round(Damage * 100)), 1);
-		
-	// Speed capping CVAR
-	if (Speed > GetCVAR("drpg_maxspeed"))
-		Speed = GetCVAR("drpg_maxspeed");
-	
-	// Now apply the Stats
-	SetActorProperty(0, APROP_SPAWNHEALTH, HealthMax);
-	SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor);
-	SetActorProperty(0, APROP_SPEED, Speed);
-	SetActorProperty(0, APROP_JUMPZ, JumpHeight);
 	
 	// Survival Bonus
 	if (Random(1, 1000) <= SurvivalBonus)
@@ -511,7 +479,6 @@ function void CheckStats(void)
 // Keep the Stat Cap (SoftStatCap + Stat Cap Tokens) updated
 function void CheckStatCap(void)
 {
-	StatCap = SoftStatCap + CheckInventory("StatCapToken");
 }
 
 // Regeneration
@@ -595,24 +562,26 @@ function void SetupTables(void)
 }
 
 // Keep stats capped at certain values
-function void CapStats(int Cap)
+function void CheckStatCaps(void)
 {
+	StatCap = SoftStatCap + CheckInventory("StatCapToken");
+
 	if (Strength < 0)			Strength = 0;
-	if (Strength > Cap)			Strength = Cap;
+	if (Strength > StatCap)		Strength = StatCap;
 	if (Defense < 0)			Defense = 0;
-	if (Defense > Cap)			Defense = Cap;
+	if (Defense > StatCap)		Defense = StatCap;
 	if (Vitality < 0)			Vitality = 0;
-	if (Vitality > Cap)			Vitality = Cap;
+	if (Vitality > StatCap)		Vitality = StatCap;
 	if (Energy < 0)				Energy = 0;
-	if (Energy > Cap)			Energy = Cap;
+	if (Energy > StatCap)		Energy = StatCap;
 	if (Regeneration < 0)		Regeneration = 0;
-	if (Regeneration > Cap)		Regeneration = Cap;
+	if (Regeneration > StatCap)	Regeneration = StatCap;
 	if (Agility < 0)			Agility = 0;
-	if (Agility > Cap)			Agility = Cap;
+	if (Agility > StatCap)		Agility = StatCap;
 	if (Capacity < 0)			Capacity = 0;
-	if (Capacity > Cap)			Capacity = Cap;
+	if (Capacity > StatCap)		Capacity = StatCap;
 	if (Luck < 0)				Luck = 0;
-	if (Luck > Cap)				Luck = Cap;
+	if (Luck > StatCap)			Luck = StatCap;
 }
 
 // TODO: Recalculate stats after something (Aug, aura) has modified them
@@ -625,6 +594,31 @@ function void RecalculateStats(void)
 	
 	// SetActorProperty(0, APROP_HEALTH, CurrentHP);
 	// EP = CurrentEP;
+}
+
+function void CheckStatBounds(void)
+{
+	// Prevent Overflow of EP
+	if (EP > EPMax)
+		EP = EPMax;
+
+	// Prevent Underflow of DamageFactor
+	if (DamageFactor < 0.01)
+		DamageFactor = 0.01;
+	
+	// Prevent Shield Capacity from under/overflowing
+	if (Shield < 0)
+		Shield = 0;
+	if (Shield > ShieldCapacity)
+		Shield = ShieldCapacity;
+	
+	// Cap Weapon Speed
+	if (WeaponSpeed > 100)
+		WeaponSpeed = 100;
+	
+	// Speed capping CVAR
+	if (Speed > GetCVAR("drpg_maxspeed"))
+		Speed = GetCVAR("drpg_maxspeed");
 }
 
 // Luck Chances

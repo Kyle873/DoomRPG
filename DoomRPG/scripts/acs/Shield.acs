@@ -18,16 +18,17 @@ global int 55 : ShieldAccessory;
 global str 56 : ArmorType;
 global int 57 : ArmorAmount;
 
-str ShieldData[4][30][3] =
+str ShieldData[4][30][4] =
 {
-	// Item, Description, Icon
+	// Item, Name, Description, Icon
 	
 	// Bodies
 	{
 		// Standard Body
 		{
-			"ShieldBodyStandard",
-			"Standard Body\n+50 Capacity",
+			"ShieldBodyPluggy",
+			"Pluggy",
+			"+50 Capacity",
 			"SHBOA0",
 		},
 	},
@@ -36,8 +37,9 @@ str ShieldData[4][30][3] =
 	{
 		// Standard Battery
 		{
-			"ShieldBatteryStandard",
-			"Standard Battery\n+50 Capacity",
+			"ShieldBatteryDoubleA",
+			"Double-A",
+			"+50 Capacity",
 			"SHBAA0",
 		},
 	},
@@ -47,35 +49,40 @@ str ShieldData[4][30][3] =
 		// Standard Capacitor
 		{
 			"ShieldCapacitorStandard",
-			"Standard Capacitor\n+1 Charge Rate/sec",
+			"\ctStandard",
+			"+1 Charge Rate/sec",
 			"SHCAA0",
 		},
 		
 		// Cooled Capacitor
 		{
 			"ShieldCapacitorCooled",
-			"Cooled Capacitor\n+2 Charge Rate/sec",
+			"\cnCooled",
+			"+2 Charge Rate/sec",
 			"SHCAB0",
 		},
 
 		// Energized Capacitor
 		{
 			"ShieldCapacitorEnergized",
-			"Energized Capacitor\n+3 Charge Rate/sec",
+			"\cdEnergized",
+			"+3 Charge Rate/sec",
 			"SHCAC0",
 		},
 
 		// Infused Capacitor
 		{
 			"ShieldCapacitorInfused",
-			"Infused Capacitor\n+4 Charge Rate/sec",
+			"\ckInfused",
+			"+4 Charge Rate/sec",
 			"SHCAD0",
 		},
 		
 		// Mega Capacitor
 		{
 			"ShieldCapacitorMega",
-			"Mega Capacitor\n+5 Charge Rate/sec",
+			"\caFiery",
+			"+5 Charge Rate/sec",
 			"SHCAE0",
 		},
 	},
@@ -84,8 +91,9 @@ str ShieldData[4][30][3] =
 	{
 		// Standard Capacitor
 		{
-			"ShieldAccessoryStandard",
-			"None",
+			"ShieldAccessoryAmp",
+			"Amplified",
+			"2x Damage at Full Capacity\nHalves Capacity on Attack",
 			"SHACA0",
 		},
 	}
@@ -300,4 +308,88 @@ function void CheckShields(void)
 	ShieldCapacity = ShieldStats[0][ShieldBody - 1][0] + ShieldStats[1][ShieldBattery - 1][0] + ShieldStats[2][ShieldCapacitor - 1][0];
 	ShieldChargeRate = ShieldStats[0][ShieldBody - 1][1] + ShieldStats[1][ShieldBattery- 1][1] + ShieldStats[2][ShieldCapacitor- 1][1];
 	ShieldDelayRate = 175 + ShieldStats[0][ShieldBody - 1][2] + ShieldStats[1][ShieldBattery - 1][2] + ShieldStats[2][ShieldCapacitor - 1][2];
+}
+
+// Amp, Absorb, Adaptive, Booster, Roid, Spike, Nova, Turtle, Immunity
+function void CheckShieldAccessory(void)
+{
+	int X;
+	int Y;
+	int Z;
+	int Angle;
+	
+	if (CheckInventory("Shield") && ShieldAccessory == 1) // Amp
+		if (Shield >= ShieldCapacity)
+		{
+			int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
+			
+			if (Buttons & BT_ATTACK)
+			{
+				ActivatorSound("shield/amp", 127);
+				FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.5);
+				Shield /= 2;
+			}
+			
+			Damage *= 2;
+		}
+	
+	if (CheckInventory("Shield") && ShieldAccessory == -2) // Booster
+		if (AfterArmor != BeforeArmor)
+			if (Random(1, 4) <= 1)
+			{
+				Angle = GetActorAngle(0);
+				X = GetActorX(0) + cos(Angle) * 96;
+				Y = GetActorY(0) + sin(Angle) * 96;
+				Z = GetActorZ(0) + 48.0;
+
+				Spawn("ShieldBooster", X, Y, Z, 0, Angle);
+			}
+	
+	if (CheckInventory("Shield") && ShieldAccessory == -3) // Roid
+		if (CheckWeapon("Fist") || CheckWeapon("Knuckle"))
+			Damage *= 2;
+	
+	if (ShieldAccessory == -4) // Turtle
+	{
+		ShieldCapacity *= 2;
+		HealthMax /= 2;
+	}
+	
+	if (ShieldAccessory == -5) // Nova
+		if (AfterArmor != BeforeArmor && Shield <= 0)
+		{
+			X = GetActorX(0);
+			Y = GetActorY(0);
+			Z = GetActorZ(0);
+			Angle = GetActorAngle(0);
+			
+			int Pitch = GetActorPitch(0);
+			int XSpeed = FixedMul(cos(Angle), 16.0);
+			int YSpeed = FixedMul(sin(Angle), 16.0);
+			int ZSpeed = -FixedMul(sin(Pitch), 16.0);
+			int FireHeight = GetActorViewHeight(0) * 780 / 1000;
+			int Offset = 8.0;
+			int Projectiles = 64;
+			int AngleAdd;
+			
+			AngleAdd = FixedDiv(1.0, Projectiles) >> 16;
+
+			for (int i = 0; i < Projectiles; i++)
+			{
+				XSpeed = FixedMul(cos(Angle), 16.0);
+				YSpeed = FixedMul(sin(Angle), 16.0);
+				ZSpeed = -FixedMul(sin(Pitch), 16.0);
+				
+				SpawnProjectile(0, "Fireball", 0, 0, 0, 0, 2001);
+				SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
+				SetActorAngle(2001, Angle);
+				SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
+				Thing_ChangeTID(2001, UniqueTID());
+				
+				Angle += AngleAdd;
+			}
+			
+			AfterArmor = 0;
+			BeforeArmor = 0;
+		}
 }

@@ -14,7 +14,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.92 Beta";
-str TimeStamp = "Tuesday, January 07, 2014 at 10:42:33 PM";
+str TimeStamp = "Wednesday, January 08, 2014 at 3:56:59 AM";
 
 int MapNumber;
 int MapTime;
@@ -31,11 +31,12 @@ script "Init" enter
 		Energy = 10;
 		Capacity = 10;
 		ComboTimer = -100;
+		
 		ShieldTimer = 175;
 		ShieldBody = 1;
 		ShieldBattery = 1;
 		ShieldCapacitor = 1;
-		ShieldAccessory = 1;
+		ShieldAccessory = 0;
 		
 		int Tokens = 10 - FixedMul(GameSkill(), 0.75);
 		GiveInventory("StatToken", Tokens);
@@ -100,8 +101,8 @@ script "Loop" (void)
 {
 	// Update Functions
 	CheckStats();
+	CheckStatCaps();
 	CheckLuck();
-	CheckStatCap();
 	CheckHealth();
 	CheckArmorMax();
 	CheckCombo();
@@ -113,6 +114,9 @@ script "Loop" (void)
 	CheckSkills();
 	CheckSkillDescriptions();
 	CheckBurnout();
+	CheckShields();
+	CheckShieldAccessory();
+	CheckStatBounds();
 	
 	// Main Menu
 	if (InMenu)
@@ -133,11 +137,20 @@ script "Loop" (void)
 		AfterHealth = GetActorProperty(0, APROP_HEALTH);
 		AfterArmor = CheckInventory("BasicArmor");
 	}
-	CheckShields();
 
 	// Regeneration
 	if (GetActorProperty(0, APROP_HEALTH) > 0)
 		DoRegen();
+
+	// Give the Strength boosting item
+	if (Damage > 0 && Damage <= 16000)
+		GiveInventory(StrParam(s:"Strength", d:Damage), 1);
+
+	// Apply Stats
+	SetActorProperty(0, APROP_SPAWNHEALTH, HealthMax);
+	SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor);
+	SetActorProperty(0, APROP_SPEED, Speed);
+	SetActorProperty(0, APROP_JUMPZ, JumpHeight);
 
 	// For EP Bar on HUD
 	TakeInventory("EP", 100);
@@ -356,10 +369,9 @@ function void DefaultLoadout(void)
 	}
 	
 	// Give Standard Shield Components
-	GiveInventory("ShieldBodyStandard", 1);
-	GiveInventory("ShieldBatteryStandard", 1);
+	GiveInventory("ShieldBodyPluggy", 1);
+	GiveInventory("ShieldBatteryDoubleA", 1);
 	GiveInventory("ShieldCapacitorStandard", 1);
-	GiveInventory("ShieldAccessoryStandard", 1);
 	
 	// Brutal Doom Equipment
 	if (GetCVAR("drpg_ext_brutal"))
