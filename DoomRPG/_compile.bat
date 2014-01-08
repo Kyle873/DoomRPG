@@ -17,5 +17,6 @@ acc -i %SRC% %SRC%\Shop %OBJ%\Shop
 acc -i %SRC% %SRC%\Skills %OBJ%\Skills
 acc -i %SRC% %SRC%\Stats %OBJ%\Stats
 acc -i %SRC% %SRC%\Utils %OBJ%\Utils
+acc -i %SRC% %SRC%\XP %OBJ%\XP
 
 pause >nul

@@ -1,0 +1,108 @@
+#library "XP"
+
+#include "zcommon.acs"
+
+#import "Stats.acs"
+#import "Skills.acs"
+
+#libdefine MAX_MONSTERS		99
+
+str MonsterID[MAX_MONSTERS] = {
+	"ZombieMan", "ZombieManRed", "ZombieManGreen", "ZombieManWhite", "ZombieManOrange", "ZombieManPink", "ZombieManBlue", "ZombieManPurple", "ZombieManDarkBlue", "ZombieManYellow", "ZombieManBlack", 
+	"ShotgunGuy", "ShotgunGuyRed", "ShotgunGuyGreen", "ShotgunGuyWhite", "ShotgunGuyOrange", "ShotgunGuyPink", "ShotgunGuyBlue", "ShotgunGuyPurple", "ShotgunGuyDarkBlue", "ShotgunGuyYellow", "ShotgunGuyBlack",
+	"ChaingunGuy", "ChaingunGuyRed", "ChaingunGuyGreen", "ChaingunGuyWhite", "ChaingunGuyOrange", "ChaingunGuyPink", "ChaingunGuyBlue", "ChaingunGuyPurple", "ChaingunGuyDarkBlue", "ChaingunGuyYellow", "ChaingunGuyBlack",
+	"DoomImp", "DoomImpRed", "DoomImpGreen", "DoomImpWhite", "DoomImpOrange", "DoomImpPink", "DoomImpBlue", "DoomImpPurple", "DoomImpDarkBlue", "DoomImpYellow", "DoomImpBlack",
+	"Demon", "DemonRed", "DemonGreen", "DemonWhite", "DemonOrange", "DemonPink", "DemonBlue", "DemonPurple", "DemonDarkBlue", "DemonYellow", "DemonBlack",
+	"Spectre",
+	"Cacodemon", "CacodemonRed", "CacodemonGreen", "CacodemonWhite", "CacodemonOrange", "CacodemonPink", "CacodemonBlue", "CacodemonPurple", "CacodemonDarkBlue", "CacodemonYellow", "CacodemonBlack", 
+	"HellKnight",
+	"BaronOfHell", "BaronOfHellRed", "BaronOfHellGreen", "BaronOfHellWhite", "BaronOfHellOrange", "BaronOfHellPink", "BaronOfHellBlue", "BaronOfHellPurple", "BaronOfHellDarkBlue", "BaronOfHellYellow", "BaronOfHellBlack",
+	"LostSoul",
+	"PainElemental",
+	"Revenant",
+	"Fatso",
+	"Arachnotron",
+	"ArchVile",
+	"WolfensteinSS",
+	"Cyberdemon", "CyberdemonRed", "CyberdemonGreen", "CyberdemonWhite", "CyberdemonOrange", "CyberdemonPink", "CyberdemonBlue", "CyberdemonPurple", "CyberdemonDarkBlue", "CyberdemonYellow", "CyberdemonBlack", 
+	"SpiderMastermind"
+};
+
+int MonsterXP[MAX_MONSTERS] =
+{
+	20, 40, 40, 40, 40, 80, 40, 40, 40, 40, 160,
+	30, 60, 60, 60, 60, 120, 60, 60, 60, 60, 240,
+	70, 140, 140, 140, 140, 280, 140, 140, 140, 140, 560,
+	60, 120, 120, 120, 120, 240, 120, 120, 120, 120, 480,
+	150, 300, 300, 300, 300, 600, 300, 300, 300, 300, 1200,
+	150,
+	400, 800, 800, 800, 800, 1600, 800, 800, 800, 800, 3200,
+	500,
+	1000,
+	100,
+	400,
+	300,
+	600,
+	500,
+	700,
+	50,
+	4000, 8000, 8000, 8000, 8000, 16000, 8000, 8000, 8000, 8000, 32000,
+	3000
+};
+
+int MonsterCounts[MAX_MONSTERS];
+
+function void AddXP(int Amount)
+{
+	// Scale XP/Rank Gains using the XP Scaling Option
+	switch (GetCVAR("drpg_scalexp"))
+	{
+		case 2: Amount = FixedMul(Amount, 2.0);	 	break;
+		case 3: Amount = FixedMul(Amount, 4.0);  	break;
+		case 4: Amount = FixedMul(Amount, 8.0);  	break;
+		case 5: Amount = FixedMul(Amount, 0.75); 	break;
+		case 6: Amount = FixedMul(Amount, 0.5);  	break;
+		case 7: Amount = FixedMul(Amount, 0.25); 	break;
+	}
+	
+	if (GetCVAR("drpg_combo"))
+	{
+		TotalGained += Amount;
+		if (Aura == 3 && CurrentSkillLevel[(MAX_SKILLS * 2) + 2] >= 3) TotalGained += Amount;
+		XPGained = 0;
+		RankGained = 0;
+		Combo++;
+		if (Aura == 3) Combo++;
+		ComboTimer = 100;
+	}
+	else
+	{
+		XP += Amount;
+		Rank += Amount;
+	}
+}
+
+function void CountMonsters(void)
+{
+	for (int i = 0; i < MAX_MONSTERS - 1; i++)
+		MonsterCounts[i] = ThingCount(MonsterID[i], 0);
+}
+
+function void CheckMonsters(void)
+{
+	for (int i = 0; i < MAX_MONSTERS - 1; i++)
+	{
+		int count = ThingCountName(MonsterID[i], 0);
+		
+		if (count < MonsterCounts[i])
+		{
+			for (int j = 0; j < MonsterCounts[i] - count; j++)
+				AddXP(Random(MonsterXP[i], MonsterXP[i] * 2));
+
+			MonsterCounts[i] = count;
+		}
+		
+		if (count > MonsterCounts[i])
+			MonsterCounts[i] = count;
+	}
+}
