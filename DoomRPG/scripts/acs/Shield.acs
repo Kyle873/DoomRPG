@@ -30,48 +30,6 @@ str ShieldData[4][30][3] =
 			"Standard Body\n+50 Capacity",
 			"SHBOA0",
 		},
-		
-		// Bronze Body
-		{
-			"ShieldBodyBronze",
-			"Bronze Body\n+100 Capacity\n+1 Charge Rate/sec",
-			"SHBOB0",
-		},
-
-		// Silver Body
-		{
-			"ShieldBodySilver",
-			"Silver Body\n+200 Capacity\n+2 Charge Rate/sec",
-			"SHBOC0",
-		},
-
-		// Gold Body
-		{
-			"ShieldBodyGold",
-			"Gold Body\n+250 Capacity\n+3 Charge Rate/sec",
-			"SHBOD0",
-		},
-
-		// Diamond Body
-		{
-			"ShieldBodyDiamond",
-			"Diamond  Body\n+500 Capacity\n+4 Charge Rate/sec",
-			"SHBOE0",
-		},
-
-		// Demon Body
-		{
-			"ShieldBodyDemon",
-			"Demon Body\n+750 Capacity\n+5 Charge Rate/sec",
-			"SHBOF0",
-		},
-
-		// Turtle Body
-		{
-			"ShieldBodyTurtle",
-			"Turtle Body\n+1000 Capacity\n+5 Delay/sec",
-			"SHBOG0",
-		},
 	},
 	
 	// Batteries
@@ -90,7 +48,35 @@ str ShieldData[4][30][3] =
 		{
 			"ShieldCapacitorStandard",
 			"Standard Capacitor\n+1 Charge Rate/sec",
-			"",
+			"SHCAA0",
+		},
+		
+		// Cooled Capacitor
+		{
+			"ShieldCapacitorCooled",
+			"Cooled Capacitor\n+2 Charge Rate/sec",
+			"SHCAB0",
+		},
+
+		// Energized Capacitor
+		{
+			"ShieldCapacitorEnergized",
+			"Energized Capacitor\n+3 Charge Rate/sec",
+			"SHCAC0",
+		},
+
+		// Infused Capacitor
+		{
+			"ShieldCapacitorInfused",
+			"Infused Capacitor\n+4 Charge Rate/sec",
+			"SHCAD0",
+		},
+		
+		// Mega Capacitor
+		{
+			"ShieldCapacitorMega",
+			"Mega Capacitor\n+5 Charge Rate/sec",
+			"SHCAE0",
 		},
 	},
 
@@ -98,26 +84,20 @@ str ShieldData[4][30][3] =
 	{
 		// Standard Capacitor
 		{
-			"",
+			"ShieldAccessoryStandard",
 			"None",
-			"",
+			"SHACA0",
 		},
 	}
 };
 
 // Shield Stats
-int ShieldStats[4][30][3] =
+int ShieldStats[3][30][3] =
 {
 	// Capacity, Charge Rate, Delay Rate
 	// Bodies
 	{
 		{ 50, 0, 0 }, 		// Standard Body
-		{ 100, 1, 0 }, 		// Bronze Body
-		{ 200, 2, 0 }, 		// Silver Body
-		{ 250, 3, 0 }, 		// Gold Body
-		{ 500, 4, 0 }, 		// Platinum Body
-		{ 750, 5, 0 }, 		// Diamond Body
-		{ 1000, 0, 175 },	// Turtle Body
 	},
 
 	// Batteries
@@ -128,11 +108,10 @@ int ShieldStats[4][30][3] =
 	// Capacitor
 	{
 		{ 0, 1, 0 }, 		// Standard Capacitor
-	},
-
-	// Accessories
-	{
-		{ 0, 0, 0 },		// None
+		{ 0, 2, 0 }, 		// Cooled Capacitor
+		{ 0, 3, 0 }, 		// Energized Capacitor
+		{ 0, 4, 0 }, 		// Infused Capacitor
+		{ 0, 5, 0 } 		// Mega Capacitor
 	}
 };
 
@@ -145,6 +124,7 @@ int BeforeArmor;
 int AfterArmor;
 int ArmorLoss;
 int ShieldTimer;
+int ShieldInterval;
 bool ShieldFull = false;
 
 script "Shield" (void)
@@ -153,6 +133,7 @@ script "Shield" (void)
 	BeforeArmor = CheckInventory("Armor");
 	HealthLoss = BeforeHealth - AfterHealth;
 	ArmorLoss = BeforeArmor - AfterArmor;
+	ShieldInterval = 35;
 	
 	/* Debugging
 	SetFont("BIGFONT");
@@ -207,42 +188,32 @@ script "Shield" (void)
 		ShieldFull = false;
 	}
 	
-	// Reset the Shield Timer if your Health is damaged
-	if (HealthLoss <= 0)
-		ShieldTimer = ShieldDelayRate;
-	
-	// Shield Timer
-	if (ShieldTimer > 0)
-		ShieldTimer--;
-		
-	Delay(1);
-}
-
-script "ShieldRegen" (void)
-{
-	int Interval = 35;
-	
 	// Accessory Handling
 	if (Augs[AUG_REGENERATION]) // Regeneration Aug
 	{
-		Interval /= 2;
 		ShieldChargeRate *= 2;
 		ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
+		ShieldInterval /= 2;
 	}
 	if (Augs[AUG_BLACKMARKET]) // Black Market Aug
 	{
-		Interval /= 2;
 		ShieldChargeRate *= 2;
 		ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
+		ShieldInterval /= 2;
 	}
 
 	// Increase Charge
-	if (CheckInventory("Shield"))
-		if (ShieldTimer == 0)
-			Shield += ShieldChargeRate;
+	if (ShieldTimer == 0)
+	{
+		Shield += ShieldChargeRate;
+		ShieldTimer = ShieldInterval;
+	}
+
+	// Shield Timer
+	if (ShieldTimer > 0)
+		ShieldTimer--;
 	
-	Delay(Interval);
-	restart;
+	Delay(1);
 }
 
 script "ToggleShield" (void)
@@ -320,7 +291,7 @@ function void CheckShields(void)
 	if (!CheckInventory(ShieldData[0][ShieldBody - 1][0])) 		ShieldBody = 1;
 	if (!CheckInventory(ShieldData[1][ShieldBattery - 1][0])) 	ShieldBattery = 1;
 	if (!CheckInventory(ShieldData[2][ShieldCapacitor - 1][0]))	ShieldCapacitor = 1;
-//	if (!CheckInventory(ShieldData[3][ShieldAccessory - 1][0]))	ShieldAccessory = 1;
+	if (!CheckInventory(ShieldData[3][ShieldAccessory - 1][0]))	ShieldAccessory = 1;
 	
 	// Apply Components stats to Shield
 	ShieldCapacity = ShieldStats[0][ShieldBody - 1][0] + ShieldStats[1][ShieldBattery - 1][0] + ShieldStats[2][ShieldCapacitor - 1][0];
