@@ -2,7 +2,7 @@
 color F
 
 set PATH=C:\Games\Doom\ACC
-set SRC=.\scripts\acs
+set SRC=.\scripts
 set OBJ=.\acs
 
 _timestamp
