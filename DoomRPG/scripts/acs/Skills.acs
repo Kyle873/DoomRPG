@@ -19,6 +19,7 @@ global int 3 : EPMax;
 global int 5 : Aura;
 global int 6 : AuraTimer;
 global int 25 : AuraTimerHUD;
+global int 26 : SkillCatagory[];
 global int 27 : SkillIndex[];
 global int 28 : SkillLevel[];
 global int 29 : CurrentSkillLevel[];
@@ -442,6 +443,16 @@ int SkillData[MAX_CATEGORIES][MAX_SKILLS][20] =
 	}
 };
 
+function int GetSkillSlot(int Slot)
+{
+	return (SkillCatagory[Slot] * MAX_SKILLS) + SkillIndex[Slot];
+}
+
+function int GetSkillID(int Catagory, int ID)
+{
+	return (Catagory * MAX_SKILLS) + ID;
+}
+
 function int ScaleEPCost(int Cost)
 {
 	if (!GetCVAR("drpg_skill_costscale")) return Cost;
@@ -457,18 +468,19 @@ function int ScaleEPCost(int Cost)
 }
 
 // Use Skill Script
-script "UseSkill" (int Category)
+script "UseSkill" (int Index)
 {
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 
 	// Vars
-	int EPCost = FixedDiv(SkillCosts[Category][SkillIndex[Category]] * CurrentSkillLevel[(Category * MAX_SKILLS) + SkillIndex[Category]], SkillCostMult);
+	int EPCost = FixedDiv(SkillCosts[SkillCatagory[Index]][SkillIndex[Index]] * CurrentSkillLevel[GetSkillSlot(Index)], SkillCostMult);
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
-	Overdrive = false;
+	int Success;
 	
 	// Overdrive?
+	Overdrive = false;
 	if (Buttons & BT_SPEED)
 		Overdrive = true;
 
@@ -477,25 +489,36 @@ script "UseSkill" (int Category)
 
 	// If you're in the Skills menu, select the highlighted skill for that category
 	// Re-write for multicast system
+	// Seriously, RE-WRITE
 	if (InMenu && Menu == 3)
 	{
 		ActivatorSound("menu/move", 127);
-		SkillIndex[SkillPage] = MenuIndex;
+		
+		// SkillIndex[SkillPage] = MenuIndex;
+		
+		if (SkillCatagory[Index] == SkillPage && SkillIndex[Index] == MenuIndex)
+			ActivatorSound("menu/error", 127);
+		else
+		{
+			SkillCatagory[Index] = SkillPage;
+			SkillIndex[Index] = MenuIndex;
+		}
+		
 		terminate;
 	}
 	
 	// Overdriving an unlearnt skill will learn it
-	if (Overdrive && CheckInventory("SkillToken") > 0 && !SkillLevel[(MAX_SKILLS * Category) + SkillIndex[Category]])
+	if (Overdrive && CheckInventory("SkillToken") > 0 && SkillLevel[GetSkillSlot(Index)] == 0)
 	{
-		SkillLevel[(MAX_SKILLS * Category) + SkillIndex[Category]]++;
-		CurrentSkillLevel[(MAX_SKILLS * Category) + SkillIndex[Category]]++;
+		SkillLevel[GetSkillSlot(Index)]++;
+		CurrentSkillLevel[GetSkillSlot(Index)]++;
 		TakeInventory("SkillToken", 1);
 		FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
 		terminate;
 	}
 	
 	// Check if the Skill has been learned yet
-	if (SkillLevel[(Category * MAX_SKILLS) + SkillIndex[Category]] == 0)
+	if (SkillLevel[GetSkillSlot(Index)] == 0)
 	{
 		SetFont("BIGFONT");
 		Print(s:"\cgYou don't know this skill yet");
@@ -515,39 +538,38 @@ script "UseSkill" (int Category)
 	// Normal skills
 	if (EP >= EPCost || Overdrive)
 	{
-		switch (Category)
+		switch (SkillCatagory[Index])
 		{
 			case 0: // Healing
-				switch (SkillIndex[Category])
+				switch (SkillIndex[Index])
 				{
-					case 0:		Heal();								break; // Heal
-					case 1:		Repair();							break; // Repair Armor
+					case 0:		Success = Heal();					break; // Heal
+					case 1:		Success = Repair();					break; // Repair Armor
 				}
 				break;
 			
 			case 1: // Powerups
-				switch (SkillIndex[Category])
+				switch (SkillIndex[Index])
 				{
-					case 0:		Powerup(1);							break; // Invulnerability
-					case 1:		Powerup(2);							break; // Invisibility
-					case 2:		Powerup(3);							break; // Time Freeze
-					case 3:		Powerup(4);							break; // Iron Feet
-					case 4:		Powerup(5);							break; // Night Vision
-					case 5:		Powerup(6);							break; // Berserk
-					case 6:		Powerup(7);							break; // Mind Mapping
-					case 7:		Powerup(8);							break; // Drop Rune
-					case 8:		Powerup(9);							break; // Drop Ammo
+					case 0:		Success = Powerup(1);				break; // Invulnerability
+					case 1:		Success = Powerup(2);				break; // Invisibility
+					case 2:		Success = Powerup(3);				break; // Time Freeze
+					case 3:		Success = Powerup(4);				break; // Iron Feet
+					case 4:		Success = Powerup(5);				break; // Night Vision
+					case 5:		Success = Powerup(6);				break; // Berserk
+					case 6:		Success = Powerup(7);				break; // Mind Mapping
+					case 7:		Success = Powerup(8);				break; // Drop Rune
+					case 8:		Success = Powerup(9);				break; // Drop Ammo
 				}
 				break;
 			
 			case 2: // Auras
 				ActivatorSound("skills/buff", 127);
-				if (SkillIndex[Category] == Aura - 1)
+				if (SkillIndex[Index] == Aura - 1)
 					AuraTimer += 1050 + FixedMul(Energy, 5.25);
 				else
 					AuraTimer = 1050 + FixedMul(Energy, 5.25);
-				
- 				switch (SkillIndex[Category])
+				switch (SkillIndex[Index])
 				{
 					case 0:		Aura = 1;							break; // Red Aura
 					case 1:		Aura = 2;							break; // Green Aura
@@ -559,46 +581,47 @@ script "UseSkill" (int Category)
 					case 7:		Aura = 8;							break; // Dark Blue Aura
 					case 8:		Aura = 9;							break; // Yellow Aura
 				}
+				Success = true;
 				break;
 			
 			case 3: // Attacks
-				switch (SkillIndex[Category])
+				switch (SkillIndex[Index])
 				{
-					case 0:		Attack(1, 1);					break; // Fireball
-					case 1:		Attack(1, 2);					break; // Fireball Nova
-					case 2:		Attack(2, 1);					break; // Ice Missile
-					case 3:		Attack(2, 2);					break; // Ice Nova
+					case 0:		Success = Attack(1, 1);				break; // Fireball
+					case 1:		Success = Attack(1, 2);				break; // Fireball Nova
+					case 2:		Success = Attack(2, 1);				break; // Ice Missile
+					case 3:		Success = Attack(2, 2);				break; // Ice Nova
 				}
 				break;
 			
 			case 4: // Summoning
-				switch (SkillIndex[Category])
+				switch (SkillIndex[Index])
 				{
-					case 0:		Summon(1);							break; // Summon Marine
-					case 1:		Summon(2);							break; // Summon Zombieman
-					case 2:		Summon(3);							break; // Summon Shotgun Guy
-					case 3:		Summon(4);							break; // Summon Chaingun Guy
-					case 4:		Summon(5);							break; // Summon Imp
-					case 5:		Summon(6);							break; // Summon Demon
-					case 6:		Summon(7);							break; // Summon Cacodemon
-					case 7:		Summon(8);							break; // Summon Hell Knight
-					case 8:		Summon(9);							break; // Summon Baron of Hell
-					case 9:		Summon(10);							break; // Summon Lost Soul
-					case 10:	Summon(11);							break; // Summon Pain Elemental
-					case 11:	Summon(12);							break; // Summon Revenant
-					case 12:	Summon(13);							break; // Summon Fatso
-					case 13:	Summon(14);							break; // Summon Arachnotron
-					case 14:	Summon(15);							break; // Summon Arch-Vile
-					case 15:	Summon(16);							break; // Summon Cyberdemon
-					case 16:	Summon(17);							break; // Summon Spider Mastermind
+					case 0:		Success = Summon(1);				break; // Summon Marine
+					case 1:		Success = Summon(2);				break; // Summon Zombieman
+					case 2:		Success = Summon(3);				break; // Summon Shotgun Guy
+					case 3:		Success = Summon(4);				break; // Summon Chaingun Guy
+					case 4:		Success = Summon(5);				break; // Summon Imp
+					case 5:		Success = Summon(6);				break; // Summon Demon
+					case 6:		Success = Summon(7);				break; // Summon Cacodemon
+					case 7:		Success = Summon(8);				break; // Summon Hell Knight
+					case 8:		Success = Summon(9);				break; // Summon Baron of Hell
+					case 9:		Success = Summon(10);				break; // Summon Lost Soul
+					case 10:	Success = Summon(11);				break; // Summon Pain Elemental
+					case 11:	Success = Summon(12);				break; // Summon Revenant
+					case 12:	Success = Summon(13);				break; // Summon Fatso
+					case 13:	Success = Summon(14);				break; // Summon Arachnotron
+					case 14:	Success = Summon(15);				break; // Summon Arch-Vile
+					case 15:	Success = Summon(16);				break; // Summon Cyberdemon
+					case 16:	Success = Summon(17);				break; // Summon Spider Mastermind
 				}
 				break;
 				
 			case 5: // Utility
-				switch (SkillIndex[Category])
+				switch (SkillIndex[Index])
 				{
-					case 0:		BreakdownArmor();					break; // Breakdown Armor
-					case 1:		ForceWall();						break; // Force Wall
+					case 0:		Success = BreakdownArmor();			break; // Breakdown Armor
+					case 1:		Success = ForceWall();				break; // Force Wall
 					case 2:		Rally();							break; // Rally
 					case 3:		Unsummon();							break; // Unsummon
 					case 4:		Magnet();							break; // Magnetize
@@ -607,7 +630,8 @@ script "UseSkill" (int Category)
 				break;
 		}
 		
-		EP -= EPCost;
+		if (Success)
+			EP -= EPCost;
 	}
 	else // Not enough EP
 	{
@@ -629,35 +653,35 @@ script "DrawSkillHUD" enter
 		// If you're dead, terminate
 		if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 	
-		for (int i = MAX_CATEGORIES - 1; i >= 0; i--)
+		for (int i = 0; i < 5; i++)
 		{
 			int x = GetCVAR("drpg_skill_x");
 			int y = GetCVAR("drpg_skill_y");
-			int SkillCost = FixedDiv(ScaleEPCost(SkillCosts[i][SkillIndex[i]] * CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]]), SkillCostMult);
+			int SkillCost = FixedDiv(ScaleEPCost(SkillCosts[i][SkillIndex[i]] * CurrentSkillLevel[GetSkillSlot(i)]), SkillCostMult);
 			int Color = CR_GREEN;
 			
 			if (EP < SkillCost)
 				Color = CR_RED;
 			
-			if (CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]] == 0)
+			if (CurrentSkillLevel[GetSkillSlot(i)] == 0)
 			{
 				Color = CR_RED;
 				
-				HudMessage(s:SkillData[i][SkillIndex[i]][0];
+				HudMessage(s:SkillData[SkillCatagory[i]][SkillIndex[i]][0];
 						   HUDMSG_PLAIN, 0, Color,
-						   x, y - (0.025 * (MAX_CATEGORIES - 1)) + (0.025 * i), 0.05);
+						   x, y - (0.025 * 4) + (0.025 * i), 0.05);
 			}
 			else
-				HudMessage(s:SkillData[i][SkillIndex[i]][0],
+				HudMessage(s:SkillData[SkillCatagory[i]][SkillIndex[i]][0],
 						   s:" (",
-						   d:CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]],
+						   d:CurrentSkillLevel[GetSkillSlot(i)],
 						   s:"/",
-						   d:SkillLevel[(i * MAX_SKILLS) + SkillIndex[i]],
+						   d:SkillLevel[GetSkillSlot(i)],
 						   s:") [\cn",
 						   d:SkillCost,
 						   s:"\c-]";
 						   HUDMSG_PLAIN, 0, Color,
-						   x, y - (0.025 * (MAX_CATEGORIES - 1)) + (0.025 * i), 0.05);
+						   x, y - (0.025 * 4) + (0.025 * i), 0.05);
 		}
 		
 		/* WIP for displaying the skill description stuff using SBARINFO instead of ACS
@@ -726,32 +750,21 @@ script "Transport" (void)
 	}
 	else
 	{
-		RefundEP(5);
+		EP += ScaleEPCost(25);
 		Teleport_NewMap(LevelNum, 0, 0);
 		InBase = false;
 		Transported = true;
 	}
 }
 
-function void RefundEP(int Category)
-{
-	int EPCost = SkillCosts[Category][SkillIndex[Category]] * CurrentSkillLevel[(Category * MAX_SKILLS) + SkillIndex[Category]];
-	
-	// Scale EP costs to skill level
-	EPCost = ScaleEPCost(EPCost);
-
-	EP += EPCost;
-}
-
 // Heal
-function void Heal(void)
+function int Heal(void)
 {
 	// Refund - If your health is max or above
 	if (GetActorProperty(0, APROP_HEALTH) >= GetActorProperty(0, APROP_SPAWNHEALTH))
 	{
 		ActivatorSound("menu/error", 127);
-		RefundEP(0);
-		return;
+		return false;
 	}
 
 	FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0, 1.0);
@@ -770,10 +783,12 @@ function void Heal(void)
 				SetActorProperty(i, APROP_HEALTH, GetActorProperty(i, APROP_SPAWNHEALTH));
 		}
 	}
+	
+	return true;
 }
 
 // Repair Armor
-function void Repair(void)
+function int Repair(void)
 {
 	if (CheckInventory("Armor") < ArmorMax && CheckArmorType() != "")
 	{
@@ -789,16 +804,19 @@ function void Repair(void)
 		}
 		
 		ActivatorSound("skills/repair", 127);
+		return true;
 	}
 	else
 	{
 		ActivatorSound("menu/error", 127);
-		RefundEP(0);
+		return false;
 	}
+	
+	return false;
 }
 
 // Powerups
-function void Powerup(int Type)
+function int Powerup(int Type)
 {
 	// Levels
 	int InvulnLevel = CurrentSkillLevel[MAX_SKILLS + 0];
@@ -835,16 +853,18 @@ function void Powerup(int Type)
 			GiveInventory("AllMap", 1);
 			break;
 		case 8: // Drop Rune
-			DropRune();
+			return DropRune();
 			break;
 		case 9: // Drop Ammo
-			DropAmmo();
+			return DropAmmo();
 			break;
 	}
+	
+	return true;
 }
 
 // Drops a random Rune in front of you
-function void DropRune(void)
+function int DropRune(void)
 {
 	int Angle = GetActorAngle(0);
 	int X = GetActorX(0) + cos(Angle) * 96;
@@ -869,16 +889,19 @@ function void DropRune(void)
 	{
 		ActivatorSound("skills/drop", 127);
 		Spawn("TeleportFog", X, Y, Z, 0, Angle);
+		return true;
 	}
 	else
 	{
 		ActivatorSound("menu/error", 127);
-		RefundEP(1);
+		return false;
 	}
+	
+	return false;
 }
 
 // Drops a backpack in front of you
-function void DropAmmo(void)
+function int DropAmmo(void)
 {
 	int Angle = GetActorAngle(0);
 	int X = GetActorX(0) + cos(Angle) * 96;
@@ -889,16 +912,19 @@ function void DropAmmo(void)
 	{
 		ActivatorSound("skills/drop", 127);
 		Spawn("TeleportFog", X, Y, Z, 0, Angle);
+		return true;
 	}
 	else
 	{
 		ActivatorSound("menu/error", 127);
-		RefundEP(1);
+		return false;
 	}
+
+	return false;
 }
 
 // Attack skills will use this
-function void Attack(int Element, int Type)
+function int Attack(int Element, int Type)
 {
 	int X = GetActorX(0);
 	int Y = GetActorY(0);
@@ -920,8 +946,7 @@ function void Attack(int Element, int Type)
 	if (Type == 1 && GetActorProperty(0, APROP_WATERLEVEL) > 0)
 	{
 		AmbientSound("menu/error", 127);
-		RefundEP(3);
-		return;
+		return false;
 	}
 	
 	// Apply proper projectile type from the specified element
@@ -939,6 +964,7 @@ function void Attack(int Element, int Type)
 		SetActorAngle(2001, Angle);
 		SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
 		Thing_ChangeTID(2001, UniqueTID());
+		return true;
 	}
 	if (Type == 2) // Nova
 	{
@@ -960,15 +986,20 @@ function void Attack(int Element, int Type)
 			
 			Angle += AngleAdd;
 		}
+	
+		return true;
 	}
 	if (Type == 3) // Hitscan?
 	{
+		return true;
 	}
 	// etc
+	
+	return false;
 }
 
 // Summoning
-function void Summon(int Type)
+function int Summon(int Type)
 {
 	int Angle = GetActorAngle(0);
 	int X = GetActorX(0) + cos(Angle) * 96;
@@ -1036,12 +1067,14 @@ function void Summon(int Type)
 	if (!Success)
 	{
 		ActivatorSound("menu/error", 127);
-		RefundEP(4);
+		return false;
 	}
+	
+	return true;
 }
 
 // Breaks down current Armor into Credits
-function void BreakdownArmor(void)
+function int BreakdownArmor(void)
 {
 	int Armor = CheckInventory("BasicArmor");
 
@@ -1053,16 +1086,19 @@ function void BreakdownArmor(void)
 			GiveInventory("Credits1", 1);
 		}
 		ActivatorSound("skills/breakdown", 127);
+		return true;
 	}
 	else
 	{
 		ActivatorSound("menu/error", 127);
-		RefundEP(5);
+		return false;
 	}
+	
+	return false;
 }
 
 // Drops a Force Field in front of you
-function void ForceWall(void)
+function int ForceWall(void)
 {
 	int Angle = GetActorAngle(0);
 	int X = GetActorX(0) + cos(Angle) * 96;
@@ -1073,22 +1109,24 @@ function void ForceWall(void)
 	switch (WallLevel)
 	{
 		case 1:
-			if (!Spawn("ForceField", X, Y, Z, 1998, Angle) == 0) {}
+			if (!Spawn("ForceField", X, Y, Z, 1998, Angle) == 0) return true;
 			else
 			{
 				ActivatorSound("menu/error", 127);
-				RefundEP(5);
+				return false;
 			}
 			break;
 		case 2:
-			if (!Spawn("ForceField2", X, Y, Z, 1998, Angle) == 0) {}
+			if (!Spawn("ForceField2", X, Y, Z, 1998, Angle) == 0) return true;
 			else
 			{
 				ActivatorSound("menu/error", 127);
-				RefundEP(5);
+				return false;
 			}
 			break;
 	}
+
+	return false;
 }
 
 // Rallies (teleports) your summoned monster/marines around you
