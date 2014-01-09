@@ -371,9 +371,9 @@ function void DrawSkillMenu(void)
 	HudMessage(d:CheckInventory("SkillToken"); HUDMSG_PLAIN, 0, CR_DARKGREEN, 238.1, 46.0, 0.05);
 	
 	// Skill Buy Cost
-	HudMessage(s:"-", d:SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] + 1;
+	HudMessage(s:"-", d:SkillLevel[GetSkillID(SkillPage, MenuIndex)] + 1;
 			   HUDMSG_PLAIN, 5001, CR_RED, 238.1, 56.1, 0.05);
-	if (SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] == SkillLevelMax[SkillPage][MenuIndex])
+	if (SkillLevel[GetSkillID(SkillPage, MenuIndex)] == SkillLevelMax[SkillPage][MenuIndex])
 		HudMessage(s:""; HUDMSG_PLAIN, 5001, CR_RED, 238.1, 56.1, 0.05);
 
 	// Skill Category
@@ -382,14 +382,14 @@ function void DrawSkillMenu(void)
 			   0.1, 25.0, 0.05);
 
 	// Scale EP Costs to Skill Level
-	int SkillCost = FixedDiv(ScaleEPCost(SkillCosts[SkillPage][MenuIndex] * CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]), SkillCostMult);
-	int SkillCostNext = FixedDiv(ScaleEPCost(SkillCosts[SkillPage][MenuIndex] * (SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] + 1)), SkillCostMult);
+	int SkillCost = FixedDiv(ScaleEPCost(SkillCosts[SkillPage][MenuIndex] * CurrentSkillLevel[GetSkillID(SkillPage, MenuIndex)]), SkillCostMult);
+	int SkillCostNext = FixedDiv(ScaleEPCost(SkillCosts[SkillPage][MenuIndex] * (SkillLevel[GetSkillID(SkillPage, MenuIndex)] + 1)), SkillCostMult);
 
 	// Skill Cost/Next Level Cost
 	HudMessage(s:"EP: ", d:SkillCost,
 			   s:" (", d:SkillCostNext, s:")";
 			   HUDMSG_PLAIN, 5003, CR_LIGHTBLUE, 200.1, 25.0, 0.05);
-	if (SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] == SkillLevelMax[SkillPage][MenuIndex])
+	if (SkillLevel[GetSkillID(SkillPage, MenuIndex)] == SkillLevelMax[SkillPage][MenuIndex])
 		HudMessage(s:"EP: ", d:SkillCost;
 				   HUDMSG_PLAIN, 5003, CR_LIGHTBLUE, 200.1, 25.0, 0.05);
 
@@ -399,42 +399,45 @@ function void DrawSkillMenu(void)
 	{
 		int color = CR_WHITE;
 				
-		if (i == MenuIndex && i == SkillIndex[SkillPage])
-			Color = CR_YELLOW;
-		else if (i == MenuIndex)
+		if (i == MenuIndex)
 			Color = CR_GREEN;
-		else if (i == SkillIndex[SkillPage])
-			Color = CR_CYAN;
 		else if (SkillLevel[(SkillPage * MAX_SKILLS) + i] == 0)
 			Color = CR_RED;
-
+		
 		if (SkillLevel[(SkillPage * MAX_SKILLS) + i] > 0)
 			HudMessage(s:SkillData[SkillPage][i][0],
 					   s:" (",
-					   d:SkillLevel[(SkillPage * MAX_SKILLS) + i],
+					   d:SkillLevel[GetSkillID(SkillPage, i)],
 					   s:" / ",
 					   d:SkillLevelMax[SkillPage][i],
 					   s:")",
 					   s:" [",
-					   d:CurrentSkillLevel[(SkillPage * MAX_SKILLS) + i],
+					   d:CurrentSkillLevel[GetSkillID(SkillPage, i)],
 					   s:"]";
 					   HUDMSG_PLAIN, 5006 + i, Color,
 				       0.1, 40.0 + (8.0 * i), 0.05);
 		else
 			HudMessage(s:SkillData[SkillPage][i][0],
 					   s:" (",
-					   d:SkillLevel[(SkillPage * MAX_SKILLS) + i],
+					   d:SkillLevel[GetSkillID(SkillPage, i)],
 					   s:" / ",
 					   d:SkillLevelMax[SkillPage][i],
 					   s:")";
 					   HUDMSG_PLAIN, 5006 + i, Color,
 					   0.1, 40.0 + (8.0 * i), 0.05);
+
+		// If a skill key is assigned to this skill, draw an indicator
+		for (int j = 0; j < 5; j++)
+				if (GetSkillSlot(j) == GetSkillID(SkillPage, i))
+					HudMessage(d:j + 1, s:"->";
+							   HUDMSG_PLAIN, 5050 + MAX_SKILLS + j, CR_CYAN,
+							   -20.1, 40.0 + (8.0 * i), 0.05);
 	}
-	
+
 	// Skill Description
 	SetFont("SMALLFONT");
-	if (SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] > 0)
-		HudMessage(s:SkillData[SkillPage][MenuIndex][CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]];
+	if (SkillLevel[GetSkillID(SkillPage, MenuIndex)] > 0)
+		HudMessage(s:SkillData[SkillPage][MenuIndex][CurrentSkillLevel[GetSkillID(SkillPage, MenuIndex)]];
 			   HUDMSG_PLAIN, 5005, CR_YELLOW,
 			   0.1, 173.1, 0.05);
 	else

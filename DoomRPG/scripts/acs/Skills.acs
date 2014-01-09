@@ -487,23 +487,19 @@ script "UseSkill" (int Index)
 	// Scale EP costs to skill level
 	EPCost = ScaleEPCost(EPCost);
 
-	// If you're in the Skills menu, select the highlighted skill for that category
-	// Re-write for multicast system
-	// Seriously, RE-WRITE
+	// If you're in the Skills menu, assign the key to the selected skill
 	if (InMenu && Menu == 3)
 	{
+		for (int i = 0; i < 5; i++)
+			if (SkillCatagory[i] == SkillPage && SkillIndex[i] == MenuIndex)
+			{
+				ActivatorSound("menu/error", 127);
+				terminate;
+			}
+		
 		ActivatorSound("menu/move", 127);
-		
-		// SkillIndex[SkillPage] = MenuIndex;
-		
-		if (SkillCatagory[Index] == SkillPage && SkillIndex[Index] == MenuIndex)
-			ActivatorSound("menu/error", 127);
-		else
-		{
-			SkillCatagory[Index] = SkillPage;
-			SkillIndex[Index] = MenuIndex;
-		}
-		
+		SkillCatagory[Index] = SkillPage;
+		SkillIndex[Index] = MenuIndex;
 		terminate;
 	}
 	
@@ -657,7 +653,7 @@ script "DrawSkillHUD" enter
 		{
 			int x = GetCVAR("drpg_skill_x");
 			int y = GetCVAR("drpg_skill_y");
-			int SkillCost = FixedDiv(ScaleEPCost(SkillCosts[i][SkillIndex[i]] * CurrentSkillLevel[GetSkillSlot(i)]), SkillCostMult);
+			int SkillCost = FixedDiv(ScaleEPCost(SkillCosts[SkillCatagory[i]][SkillIndex[i]] * CurrentSkillLevel[GetSkillSlot(i)]), SkillCostMult);
 			int Color = CR_GREEN;
 			
 			if (EP < SkillCost)
