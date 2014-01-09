@@ -23,6 +23,14 @@ global int 27 : SkillIndex[];
 global int 28 : SkillLevel[];
 global int 29 : CurrentSkillLevel[];
 
+// Skill descriptions for SBARINFO (WIP)
+global str 58 : SkillDescriptionRecovery;
+global str 59 : SkillDescriptionPowerup;
+global str 60 : SkillDescriptionAura;
+global str 61 : SkillDescriptionAttack;
+global str 62 : SkillDescriptionSummon;
+global str 63 : SkillDescriptionUtility;
+
 bool Overdrive;
 int SummonID = 2100;
 int SkillCostMult;
@@ -620,7 +628,7 @@ script "DrawSkillHUD" enter
 	{
 		// If you're dead, terminate
 		if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
-		
+	
 		for (int i = MAX_CATEGORIES - 1; i >= 0; i--)
 		{
 			int x = GetCVAR("drpg_skill_x");
@@ -630,7 +638,7 @@ script "DrawSkillHUD" enter
 			
 			if (EP < SkillCost)
 				Color = CR_RED;
-
+			
 			if (CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]] == 0)
 			{
 				Color = CR_RED;
@@ -651,6 +659,45 @@ script "DrawSkillHUD" enter
 						   HUDMSG_PLAIN, 0, Color,
 						   x, y - (0.025 * (MAX_CATEGORIES - 1)) + (0.025 * i), 0.05);
 		}
+		
+		/* WIP for displaying the skill description stuff using SBARINFO instead of ACS
+		str Color;
+		int SkillCost;
+		str Description;
+		
+		for (int i = 0; i <= MAX_CATEGORIES - 1; i++)
+		{
+			Color = "\cd";
+			SkillCost = FixedDiv(ScaleEPCost(SkillCosts[i][SkillIndex[i]] * CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]]), SkillCostMult);
+			
+			// Set color to red if not learned or not enough EP
+			if (SkillLevel[(i * MAX_SKILLS) + SkillIndex[i]] == 0 || EP < SkillCost)
+				Color = "\cg";
+			
+			if (SkillLevel[(i * MAX_SKILLS) + SkillIndex[i]] == 0)
+				Description = StrParam(s:Color,
+									   s:SkillData[i][SkillIndex[i]][0]);
+			else
+				Description = StrParam(s:Color,
+									   s:SkillData[i][SkillIndex[i]][0],
+									   s:" (",
+									   d:CurrentSkillLevel[(i * MAX_SKILLS) + SkillIndex[i]],
+									   s:"/",
+									   d:SkillLevel[(i * MAX_SKILLS) + SkillIndex[i]],
+									   s:") [\cn",
+									   d:SkillCost,
+									   s:Color,
+									   s:"]");
+
+			
+			if (i == 0) SkillDescriptionRecovery = Description;
+			if (i == 1) SkillDescriptionPowerup = Description;
+			if (i == 2) SkillDescriptionAura = Description;
+			if (i == 3) SkillDescriptionAttack = Description;
+			if (i == 4) SkillDescriptionSummon = Description;
+			if (i == 5) SkillDescriptionUtility = Description;
+		}
+		*/
 		
 		delay(1);
 	}
