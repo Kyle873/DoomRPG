@@ -35,6 +35,7 @@ global str 63 : SkillDescriptionUtility;
 
 bool Overdrive;
 int SummonID = 2100;
+int MaxSummons;
 int SkillCostMult;
 int BulletTimeMode;
 int BulletTimeTimer;
@@ -629,9 +630,9 @@ script "UseSkill" (int Index)
 				{
 					case 0:		Success = BreakdownArmor();			break; // Breakdown Armor
 					case 1:		Success = ForceWall();				break; // Force Wall
-					case 2:		Rally();							break; // Rally
-					case 3:		Unsummon();							break; // Unsummon
-					case 4:		Magnet();							break; // Magnetize
+					case 2:		Success = Rally();					break; // Rally
+					case 3:		Success = Unsummon();				break; // Unsummon
+					case 4:		Success = Magnet();					break; // Magnetize
 					case 5:		ACS_NamedExecute("Transport", 0);	break; // Transport
 				}
 				break;
@@ -1019,6 +1020,7 @@ function int Summon(int Type)
 	int Y = GetActorY(0) + sin(Angle) * 96;
 	int Z = GetActorZ(0);
 	int MarineLevel = CurrentSkillLevel[GetSkillID(4, 0)];
+	int NewID = SummonID + MaxSummons;
 	bool Success;
 	
 	switch (Type)
@@ -1028,53 +1030,54 @@ function int Summon(int Type)
 			if (GetCVAR("drpg_ext_brutal"))
 				switch (MarineLevel)
 				{
-					case 1: Success = Spawn("Marine", X, Y, Z, ++SummonID, Angle);					break;
-					case 2: Success = Spawn("Marine_Shotgun", X, Y, Z, ++SummonID, Angle);			break;
-					case 3: Success = Spawn("Marine_SSG", X, Y, Z, ++SummonID, Angle);				break;
-					case 4: Success = Spawn("Marine_Minigun", X, Y, Z, ++SummonID, Angle);			break;
-					case 5: Success = Spawn("Marine_Rocket", X, Y, Z, ++SummonID, Angle);			break;
-					case 6: Success = Spawn("Marine_Plasma", X, Y, Z, ++SummonID, Angle);			break;
-					case 7: Success = Spawn("Marine_Railgun", X, Y, Z, ++SummonID, Angle);			break;
-					case 8: Success = Spawn("Marine_BFG", X, Y, Z, ++SummonID, Angle);				break;
+					case 1: Success = Spawn("Marine_Pistol", X, Y, Z, NewID, Angle);			break;
+					case 2: Success = Spawn("Marine_Shotgun", X, Y, Z, NewID, Angle);			break;
+					case 3: Success = Spawn("Marine_SSG", X, Y, Z, NewID, Angle);				break;
+					case 4: Success = Spawn("Marine_Minigun", X, Y, Z, NewID, Angle);			break;
+					case 5: Success = Spawn("Marine_Rocket", X, Y, Z, NewID, Angle);			break;
+					case 6: Success = Spawn("Marine_Plasma", X, Y, Z, NewID, Angle);			break;
+					case 7: Success = Spawn("Marine_Railgun", X, Y, Z, NewID, Angle);			break;
+					case 8: Success = Spawn("Marine_BFG", X, Y, Z, NewID, Angle);				break;
 				}
 			else
 				switch (MarineLevel)
 				{
-					case 1: Success = Spawn("MarinePistol", X, Y, Z, ++SummonID, Angle);			break;
-					case 2: Success = Spawn("MarineShotgun", X, Y, Z, ++SummonID, Angle);			break;
-					case 3: Success = Spawn("MarineSSG", X, Y, Z, ++SummonID, Angle);				break;
-					case 4: Success = Spawn("MarineChaingun", X, Y, Z, ++SummonID, Angle);;			break;
-					case 5: Success = Spawn("MarineRocket", X, Y, Z, ++SummonID, Angle);			break;
-					case 6: Success = Spawn("MarinePlasma", X, Y, Z, ++SummonID, Angle);			break;
-					case 7: Success = Spawn("MarineRailgun", X, Y, Z, ++SummonID, Angle);			break;
-					case 8: Success = Spawn("MarineBFG", X, Y, Z, ++SummonID, Angle);				break;
+					case 1: Success = Spawn("MarinePistol", X, Y, Z, NewID, Angle);				break;
+					case 2: Success = Spawn("MarineShotgun", X, Y, Z, NewID, Angle);			break;
+					case 3: Success = Spawn("MarineSSG", X, Y, Z, NewID, Angle);				break;
+					case 4: Success = Spawn("MarineChaingun", X, Y, Z, NewID, Angle);;			break;
+					case 5: Success = Spawn("MarineRocket", X, Y, Z, NewID, Angle);				break;
+					case 6: Success = Spawn("MarinePlasma", X, Y, Z, NewID, Angle);				break;
+					case 7: Success = Spawn("MarineRailgun", X, Y, Z, NewID, Angle);			break;
+					case 8: Success = Spawn("MarineBFG", X, Y, Z, NewID, Angle);				break;
 				}
 			break;
 		
 		// Monsters
-		case 2: 			Success = Spawn("FriendlyZombieman", X, Y, Z, ++SummonID, Angle);		break;
-		case 3: 			Success = Spawn("FriendlyShotgunGuy", X, Y, Z, ++SummonID, Angle);		break;
-		case 4: 			Success = Spawn("FriendlyChaingunGuy", X, Y, Z, ++SummonID, Angle);		break;
-		case 5: 			Success = Spawn("FriendlyDoomImp", X, Y, Z, ++SummonID, Angle);			break;
-		case 6: 			Success = Spawn("FriendlyDemon", X, Y, Z, ++SummonID, Angle);			break;
-		case 7: 			Success = Spawn("FriendlyCacodemon", X, Y, Z, ++SummonID, Angle);		break;
-		case 8: 			Success = Spawn("FriendlyHellKnight", X, Y, Z, ++SummonID, Angle);		break;
-		case 9: 			Success = Spawn("FriendlyBaronOfHell", X, Y, Z, ++SummonID, Angle);		break;
-		case 10: 			Success = Spawn("FriendlyLostSoul", X, Y, Z, ++SummonID, Angle);		break;
-		case 11: 			Success = Spawn("FriendlyPainElemental", X, Y, Z, ++SummonID, Angle);	break;
-		case 12: 			Success = Spawn("FriendlyRevenant", X, Y, Z, ++SummonID, Angle);		break;
-		case 13: 			Success = Spawn("FriendlyFatso", X, Y, Z, ++SummonID, Angle);			break;
-		case 14: 			Success = Spawn("FriendlyArachnotron", X, Y, Z, ++SummonID, Angle);		break;
-		case 15: 			Success = Spawn("FriendlyArchvile", X, Y, Z, ++SummonID, Angle);		break;
-		case 16: 			Success = Spawn("FriendlyCyberdemon", X, Y, Z, ++SummonID, Angle);		break;
-		case 17: 			Success = Spawn("FriendlySpiderMastermind", X, Y, Z, ++SummonID, Angle);break;
+		case 2: 			Success = Spawn("FriendlyZombieman", X, Y, Z, NewID, Angle);		break;
+		case 3: 			Success = Spawn("FriendlyShotgunGuy", X, Y, Z, NewID, Angle);		break;
+		case 4: 			Success = Spawn("FriendlyChaingunGuy", X, Y, Z, NewID, Angle);		break;
+		case 5: 			Success = Spawn("FriendlyDoomImp", X, Y, Z, NewID, Angle);			break;
+		case 6: 			Success = Spawn("FriendlyDemon", X, Y, Z, NewID, Angle);			break;
+		case 7: 			Success = Spawn("FriendlyCacodemon", X, Y, Z, NewID, Angle);		break;
+		case 8: 			Success = Spawn("FriendlyHellKnight", X, Y, Z, NewID, Angle);		break;
+		case 9: 			Success = Spawn("FriendlyBaronOfHell", X, Y, Z, NewID, Angle);		break;
+		case 10: 			Success = Spawn("FriendlyLostSoul", X, Y, Z, NewID, Angle);			break;
+		case 11: 			Success = Spawn("FriendlyPainElemental", X, Y, Z, NewID, Angle);	break;
+		case 12: 			Success = Spawn("FriendlyRevenant", X, Y, Z, NewID, Angle);			break;
+		case 13: 			Success = Spawn("FriendlyFatso", X, Y, Z, NewID, Angle);			break;
+		case 14: 			Success = Spawn("FriendlyArachnotron", X, Y, Z, NewID, Angle);		break;
+		case 15: 			Success = Spawn("FriendlyArchvile", X, Y, Z, NewID, Angle);			break;
+		case 16: 			Success = Spawn("FriendlyCyberdemon", X, Y, Z, NewID, Angle);		break;
+		case 17: 			Success = Spawn("FriendlySpiderMastermind", X, Y, Z, NewID, Angle);	break;
 	}
 	
-	Spawn("TeleportFog", X, Y, Z, SummonID, Angle);
-	SetActorAngle(SummonID, Angle);
-	SetActorProperty(SummonID, APROP_FRIENDLY, 1);
-	SetActorState(SummonID, "See");
-	SetThingSpecial(SummonID, 0, Type, SummonID);
+	SpawnForced("TeleportFog", X, Y, Z, NewID, Angle);
+	SetActorAngle(NewID, Angle);
+	SetActorProperty(NewID, APROP_FRIENDLY, 1);
+	SetActorState(NewID, "See");
+	SetThingSpecial(NewID, 0, Type, SummonID);
+	MaxSummons++;
 
 	// Refund - Give EP back if the summon failed
 	if (!Success)
@@ -1143,37 +1146,43 @@ function int ForceWall(void)
 }
 
 // Rallies (teleports) your summoned monster/marines around you
-function void Rally(void)
+function int Rally(void)
 {
 	int X = GetActorX(0);
 	int Y = GetActorY(0);
 	int Z = GetActorZ(0);
 	int Angle = GetActorAngle(0);
 	
-	for (int i = 2100; i < 3000; i++)
+	// Fail if you have no summons active
+	if (MaxSummons == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	}
+	
+	for (int i = SummonID; i < SummonID + MaxSummons; i++)
 		if (GetActorProperty(i, APROP_HEALTH) > 0)
 			SetActorPosition(i, X, Y, Z, true);
-		
+	
 	ActivatorSound("skills/rally", 127);
+	return true;
 }
 
 // Unsummon - Removes all actors under the player's control
-function void Unsummon(void)
+function int Unsummon(void)
 {
 	bool Kill = Overdrive;
 	int UnsummonLevel = CurrentSkillLevel[GetSkillID(5, 2)];
 	int EPAdd;
 	
-	// Refund if you have no summons active
-	if (SummonID == 2100)
+	// Fail if you have no summons active
+	if (MaxSummons == 0)
 	{
 		ActivatorSound("menu/error", 127);
-		SetFont("BIGFONT");
-		Print(s:"\cgYou have no summoned monsters");
-		return;
+		return false;
 	}
 	
-	for (int i = 2100; i <= SummonID; i++)
+	for (int i = SummonID; i <= SummonID + MaxSummons; i++)
 	{
 		if (!Kill && UnsummonLevel == 2 && GetActorProperty(i, APROP_HEALTH) > 0)
 			EPAdd += 25;
@@ -1188,19 +1197,19 @@ function void Unsummon(void)
 		}
 	}
 	
+	if (Kill)
+		ActivatorSound("skills/unsummon", 127);
+	
 	if (UnsummonLevel == 2)
-	{
 		EP += EPAdd;
-		if (EP > EPMax) EP = EPMax;
-	}
 
-	SummonID = 2100;
-	ActivatorSound("skills/unsummon", 127);
+	MaxSummons = 0;
 	FadeRange(192, 0, 0, 0.5, 192, 0, 0, 0.0, 1.0);
+	return true;
 }
 
 // Magnetize - Pull some (Luck based for now) items to the player's position
-function void Magnet(void)
+function int Magnet(void)
 {
 	int X;
 	int Y;
@@ -1208,17 +1217,23 @@ function void Magnet(void)
 	int Angle;
 	int AngleAdd;
 	int Radius;
-
+	
+	// Fail if there are no pullable items on the ground
+	if (MaxItems == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	}
+	
 	// Determine Circie Size
-	for (int j = 3000; j <= MaxItems; j++)
-		if (IsTIDUsed(j)) AngleAdd++;
+		AngleAdd += MaxItems;
 	
 	// Set Circle Size
 	Radius = GetCVAR("drpg_skill_radius");
 	AngleAdd = FixedDiv(1.0, AngleAdd);
 
 	// Create the Circle
-	for (int i = 3000; i <= MaxItems; i++)
+	for (int i = ItemID; i <= ItemID + MaxItems; i++)
 	{
 		X = GetActorX(0) + FixedMul(cos(Angle), Radius);
 		Y = GetActorY(0) + FixedMul(sin(Angle), Radius);
@@ -1237,6 +1252,7 @@ function void Magnet(void)
 	// FX
 	FadeRange(0, 0, 0, 0.75, 0, 0, 0, 0.0, 1.0);
 	ActivatorSound("skills/magnet", 127);
+	return true;
 }
 
 // Abuse PowerTimeFreezer to create a bullet-time effect
