@@ -474,7 +474,6 @@ script "UseSkill" (int Index)
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 
-	// Vars
 	int EPCost = FixedDiv(SkillCosts[SkillCatagory[Index]][SkillIndex[Index]] * CurrentSkillLevel[GetSkillSlot(Index)], SkillCostMult);
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
@@ -491,6 +490,14 @@ script "UseSkill" (int Index)
 	// If you're in the Skills menu, assign the key to the selected skill
 	if (InMenu && Menu == 3)
 	{
+		if (Buttons & BT_SPEED)
+		{
+			ActivatorSound("menu/move", 127);
+			SkillCatagory[Index] = -1;
+			SkillIndex[Index] = -1;
+			terminate;
+		}
+
 		for (int i = 0; i < 5; i++)
 			if (SkillCatagory[i] == SkillPage && SkillIndex[i] == MenuIndex)
 			{
@@ -504,6 +511,9 @@ script "UseSkill" (int Index)
 		terminate;
 	}
 	
+	// If the key is unassigned, terminate
+	if (SkillCatagory[Index] == -1 || SkillIndex[Index] == -1) terminate;
+
 	// Overdriving an unlearnt skill will learn it
 	if (Overdrive && CheckInventory("SkillToken") > 0 && SkillLevel[GetSkillSlot(Index)] == 0)
 	{
@@ -650,13 +660,17 @@ script "DrawSkillHUD" enter
 		// If you're dead, terminate
 		if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 	
-		for (int i = 0; i < 5; i++)
+		int x = GetCVAR("drpg_skill_x");
+		int y = GetCVAR("drpg_skill_y");
+
+		for (int i = 4; i >= 0; i--)
 		{
-			int x = GetCVAR("drpg_skill_x");
-			int y = GetCVAR("drpg_skill_y");
+			// If the skill key is blank, skip
+			if (SkillCatagory[i] == -1 || SkillIndex[i] == -1) continue;
+			
 			int SkillCost = FixedDiv(ScaleEPCost(SkillCosts[SkillCatagory[i]][SkillIndex[i]] * CurrentSkillLevel[GetSkillSlot(i)]), SkillCostMult);
 			int Color = CR_GREEN;
-			
+
 			if (EP < SkillCost)
 				Color = CR_RED;
 			
@@ -666,7 +680,7 @@ script "DrawSkillHUD" enter
 				
 				HudMessage(s:SkillData[SkillCatagory[i]][SkillIndex[i]][0];
 						   HUDMSG_PLAIN, 0, Color,
-						   x, y - (0.025 * 4) + (0.025 * i), 0.05);
+						   x, y, 0.05);
 			}
 			else
 				HudMessage(s:SkillData[SkillCatagory[i]][SkillIndex[i]][0],
@@ -678,7 +692,9 @@ script "DrawSkillHUD" enter
 						   d:SkillCost,
 						   s:"\c-]";
 						   HUDMSG_PLAIN, 0, Color,
-						   x, y - (0.025 * 4) + (0.025 * i), 0.05);
+						   x, y, 0.05);
+			
+			y -= 0.025;
 		}
 		
 		/* WIP for displaying the skill description stuff using SBARINFO instead of ACS
