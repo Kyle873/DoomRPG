@@ -15,7 +15,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.93 Beta";
-str TimeStamp = "Thursday, January 09, 2014 at 8:19:52 PM";
+str TimeStamp = "Thursday, January 09, 2014 at 9:35:10 PM";
 
 int MapNumber;
 int MapTime;
@@ -102,6 +102,10 @@ script "Init" enter
 	if (GetCVAR("drpg_monster_defense"))
 		GiveInventory(StrParam(s:"MonsterDefense", d:MapNumber), 1);
 	
+	// IF you have the Nova Shield Accessory and move to a new level, make sure to check the Nova flag
+	if (CheckInventory("Shield") && ShieldAccessory == 5)
+		Nova = false;
+	
 	// Reset the menus if they were open in the last level
 	InMenu = false;
 	InShop = false;
@@ -143,12 +147,9 @@ script "Loop" (void)
 		ACS_NamedExecuteAlways("QuickHeal", 0);
 
 	// Shield Handling
+	BeforeHealth = GetActorProperty(0, APROP_HEALTH);
 	if (CheckInventory("Shield"))
-	{
 		ACS_NamedExecuteAlways("Shield", 0);
-		AfterHealth = GetActorProperty(0, APROP_HEALTH);
-		AfterArmor = CheckInventory("BasicArmor");
-	}
 
 	// Regeneration
 	if (GetActorProperty(0, APROP_HEALTH) > 0)
@@ -181,6 +182,11 @@ script "Loop" (void)
 	
 	// Loop
 	Delay(1);
+	
+	// These need to be done in a seperate tic
+	AfterHealth = GetActorProperty(0, APROP_HEALTH);
+	AfterArmor = CheckInventory("BasicArmor");
+	
 	restart;
 }
 

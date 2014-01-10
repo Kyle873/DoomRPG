@@ -242,10 +242,10 @@ int ArmorLoss;
 int ShieldTimer;
 int ShieldInterval;
 bool ShieldFull = false;
+bool Nova = true;
 
 script "Shield" (void)
 {
-	BeforeHealth = GetActorProperty(0, APROP_HEALTH);
 	BeforeArmor = CheckInventory("Armor");
 	HealthLoss = BeforeHealth - AfterHealth;
 	ArmorLoss = BeforeArmor - AfterArmor;
@@ -294,6 +294,7 @@ script "Shield" (void)
 		if (ArmorLoss >= -1000000 && ArmorLoss <= -999000)
 			ArmorLoss = 0; // INCOMING TERRIBLE HACKS, BEWARE
 		Thing_Damage(0, Abs(ArmorLoss));
+		Shield += ArmorLoss;
 		ShieldFull = false;
 		FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
 		ActivatorSound("shield/hit", 127);
@@ -351,6 +352,7 @@ script "ToggleShield" (void)
 		ArmorType = CheckArmorType();
 		ArmorAmount = CheckInventory("BasicArmor");
 		GiveInventory("Shield", 1);
+		Nova = false;
 	}
 	else
 	{
@@ -358,6 +360,7 @@ script "ToggleShield" (void)
 		GiveArmor();
 		if (GetCVAR("drpg_shield_reset"))
 			Shield = 0;
+		Nova = true;
 	}
 }
 
@@ -468,8 +471,8 @@ function void CheckShieldAccessory(void)
 		HealthMax /= 2;
 	}
 	
-	if (ShieldAccessory == 5) // Nova
-		if (AfterArmor != BeforeArmor && Shield <= 0)
+	if (ShieldAccessory == 5 && !Nova) // Nova
+		if (AfterHealth != BeforeHealth && Shield <= 0)
 		{
 			X = GetActorX(0);
 			Y = GetActorY(0);
@@ -502,7 +505,6 @@ function void CheckShieldAccessory(void)
 				Angle += AngleAdd;
 			}
 			
-			AfterArmor = 0;
-			BeforeArmor = 0;
+			Nova = true;
 		}
 }
