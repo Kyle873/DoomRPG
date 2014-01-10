@@ -458,7 +458,6 @@ function void DrawSkillMenu(void)
 
 function void DrawShieldMenu(void)
 {
-	// Vars
 	str Description = "";
 	int Amount;
 	
@@ -514,7 +513,36 @@ function void DrawShieldMenu(void)
 						
 						// Set Description
 						if (Index == MenuIndex && Index < ShieldPartsMax)
-							Description = ShieldData[k][Index][2];
+						{
+							// Name
+							Description = StrParam(s:ShieldData[ShieldPage][Index][1], s:"\n");
+							
+							// Capacity
+							if (ShieldStats[ShieldPage][Index][0] > 0)
+								Description = StrParam(s:Description,
+													   s:"\cv+",
+													   d:ShieldStats[ShieldPage][Index][0],
+													   s:" Capacity\n");
+							
+							// Charge Rate
+							if (ShieldStats[ShieldPage][Index][1] > 0)
+								Description = StrParam(s:Description,
+													   s:"\cd",
+													   d:ShieldStats[ShieldPage][Index][1],
+													   s:" Charge Rate/sec\n");
+							
+							// Delay Rate
+							if (ShieldStats[ShieldPage][Index][2] < 0)
+								Description = StrParam(s:Description,
+													   s:"\ca",
+													   d:ShieldStats[ShieldPage][Index][2] / 35,
+													   s:" Delay Rate/sec\n");
+							
+							// Extra Description
+							if (ShieldData[ShieldPage][Index][2] != "")
+								Description = StrParam(s:Description,
+													   s:ShieldData[ShieldPage][Index][2]);
+						}
 					}
 				}
 			}
@@ -541,7 +569,7 @@ function void DrawShieldMenu(void)
 	
 	// Component Description
 	SetFont("SMALLFONT");
-	HudMessage(s:Description; HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 134.1, 0.05);
+	HudMessage(s:Description; HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 144.1, 0.05);
 	
 	/* Shield - Body
 	SetFont("BIGFONT");
@@ -573,9 +601,9 @@ function void DrawShieldMenu(void)
 	*/
 
 	// Shield Stats
-	HudMessage(d:Shield, s:" / ", d:ShieldCapacity; 			HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 98.0, 0.05);
-	HudMessage(s:"Charge: ", d:ShieldChargeRate, s:"/sec"; 		HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 106.0, 0.05);
-	HudMessage(s:"Delay; ", d:ShieldDelayRate / 35, s:" sec"; 	HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 114.0, 0.05);
+	HudMessage(s:"\cv", d:Shield, s:" / ", d:ShieldCapacity; 			HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 98.0, 0.05);
+	HudMessage(s:"\cdCharge: ", d:ShieldChargeRate, s:"/sec"; 		HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 106.0, 0.05);
+	HudMessage(s:"\caDelay; ", d:ShieldDelayRate / 35, s:" sec"; 	HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 114.0, 0.05);
 	
 	// Build Shield Model
 	if (ShieldCapacitor > 0) 	PrintSprite(ShieldData[2][ShieldCapacitor - 1][3], 	0, 18.1, 120.1, 0.05);
