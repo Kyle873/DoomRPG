@@ -775,7 +775,7 @@ script "Transport" (void)
 function int Heal(void)
 {
 	// Refund - If your health is max or above
-	if (GetActorProperty(0, APROP_HEALTH) >= GetActorProperty(0, APROP_SPAWNHEALTH))
+	if (!Overdrive && GetActorProperty(0, APROP_HEALTH) >= GetActorProperty(0, APROP_SPAWNHEALTH))
 	{
 		ActivatorSound("menu/error", 127);
 		return false;
@@ -785,18 +785,10 @@ function int Heal(void)
 	HealThing(Energy * 10);
 	ActivatorSound("skills/heal", 127);
 	
-	// Overdrive - Heal Summoned Monsters, Revive them if they are dead and haven't been deleted yet
+	// Overdrive - Heal Summoned Monsters
 	if (Overdrive)
-	{
-		FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0, 2.0);
-		for (int i = 2100; i <= SummonID; i++)
-		{
-			SetActorProperty(i, APROP_HEALTH, GetActorProperty(i, APROP_HEALTH) + (Energy * 10));
-			
-			if (GetActorProperty(i, APROP_HEALTH) > GetActorProperty(i, APROP_SPAWNHEALTH))
-				SetActorProperty(i, APROP_HEALTH, GetActorProperty(i, APROP_SPAWNHEALTH));
-		}
-	}
+		for (int i = SummonID; i <= SummonID + MaxSummons; i++)
+			SetActorProperty(i, APROP_HEALTH, GetActorProperty(i, APROP_SPAWNHEALTH));
 	
 	return true;
 }
@@ -1039,6 +1031,18 @@ function int Summon(int Type)
 					case 7: Success = Spawn("Marine_Railgun", X, Y, Z, NewID, Angle);			break;
 					case 8: Success = Spawn("Marine_BFG", X, Y, Z, NewID, Angle);				break;
 				}
+			else if (GetCVAR("drpg_ext_extras"))
+				switch (MarineLevel)
+				{
+					case 1: Success = Spawn("MarinePistol2", X, Y, Z, NewID, Angle);			break;
+					case 2: Success = Spawn("MarineShotgun2", X, Y, Z, NewID, Angle);			break;
+					case 3: Success = Spawn("MarineSSG2", X, Y, Z, NewID, Angle);				break;
+					case 4: Success = Spawn("MarineChaingun2", X, Y, Z, NewID, Angle);;			break;
+					case 5: Success = Spawn("MarineRocket2", X, Y, Z, NewID, Angle);			break;
+					case 6: Success = Spawn("MarinePlasma2", X, Y, Z, NewID, Angle);			break;
+					case 7: Success = Spawn("MarineRailgun2", X, Y, Z, NewID, Angle);			break;
+					case 8: Success = Spawn("MarineBFG2", X, Y, Z, NewID, Angle);				break;
+				}
 			else
 				switch (MarineLevel)
 				{
@@ -1075,8 +1079,6 @@ function int Summon(int Type)
 	SpawnForced("TeleportFog", X, Y, Z, NewID, Angle);
 	SetActorAngle(NewID, Angle);
 	SetActorProperty(NewID, APROP_FRIENDLY, 1);
-	SetActorState(NewID, "See");
-	SetThingSpecial(NewID, 0, Type, SummonID);
 	MaxSummons++;
 
 	// Refund - Give EP back if the summon failed

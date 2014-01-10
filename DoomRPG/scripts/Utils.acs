@@ -528,7 +528,9 @@ script "FullShield" (void)
 script "DamageNumber" (void)
 {
 	// Translations
-	CreateTranslation(1, 0 : 255 = 180 : 180);	// Critical Hit
+	CreateTranslation(1, 0 : 255 = 176 : 176);	// Overkill
+	CreateTranslation(2, 0 : 255 = 112 : 112);	// Healed
+	CreateTranslation(3, 0 : 255 = 100 : 100);	// Scratch
 	
 	GiveInventory("MonsterHeightCheck", GetActorProperty(0, APROP_HEIGHT));
 
@@ -537,40 +539,39 @@ script "DamageNumber" (void)
 		SetInventory("MonsterCurrentHealth", GetActorProperty(0, APROP_HEALTH));
 		SetInventory("MonsterHasTicked", 0);
 		
-		Delay(1);
+		// Lag handling
+		int DelayRate = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) / 100;
+		Delay(1 + DelayRate);
 		
 		if (GetActorProperty(0, APROP_HEALTH) != CheckInventory("MonsterCurrentHealth"))
-		{
 			if (CheckInventory("MonsterHasTicked") == 0)
 			{
 				int NewHealth = CheckInventory("MonsterCurrentHealth") - GetActorProperty(0, APROP_HEALTH);
 				
-				if (NewHealth > 0)
+				if (NewHealth > 9999)
+					NewHealth = 9999;
+				
+				if (NewHealth != 0)
 				{
-					int Digit1 = GetDigit(NewHealth, 0);
-					int Digit2 = GetDigit(NewHealth, 1);
-					int Digit3 = GetDigit(NewHealth, 2);
-					int Digit4 = GetDigit(NewHealth, 3);
+					int Digit1 = GetDigit(Abs(NewHealth), 0);
+					int Digit2 = GetDigit(Abs(NewHealth), 1);
+					int Digit3 = GetDigit(Abs(NewHealth), 2);
+					int Digit4 = GetDigit(Abs(NewHealth), 3);
 					
 					int X = GetActorX(0) + 1.0;
 					int Y = GetActorY(0) + Random(-10.0, 10.0);
 					int Z;
 					int ActorHeight = CheckInventory("MonsterHeightCheck");
 					int DigitID = Random(4000, 5000);
+					bool Healed = (NewHealth < 0);
+					
+					if (Healed)
+						Log(s:"\cd", d:NewHealth);
 					
 					if (ActorHeight > 0)
 						Z = GetActorZ(0) + Random(ActorHeight, ActorHeight + 6);
 					else
 						Z = GetActorZ(0) + GetActorProperty(0, APROP_HEIGHT) + Random(0.0, 6.0);
-					
-					/* Debugging
-					Log(d:"Z: ", d:Z,
-						s:", Digit 1: ", d:Digit1,
-						s:", Digit 2: ", d:Digit2,
-						s:", Digit 3: ", d:Digit3,
-						s:", Digit 4: ", d:Digit4
-						);
-					*/
 					
 					switch (Digit1)
 					{
@@ -586,7 +587,7 @@ script "DamageNumber" (void)
 						case 9:	Spawn("Digit1Num9", X, Y, Z, DigitID, 0);	break;
 					}
 					
-					if (NewHealth >= 10)
+					if (NewHealth >= 10 || NewHealth <= -10)
 						switch (Digit2)
 						{
 							case 0:	Spawn("Digit2Num0", X, Y, Z, DigitID, 0);	break;
@@ -601,7 +602,7 @@ script "DamageNumber" (void)
 							case 9:	Spawn("Digit2Num9", X, Y, Z, DigitID, 0);	break;
 						}
 					
-					if (NewHealth >= 100)
+					if (NewHealth >= 100 || NewHealth <= -100)
 						switch (Digit3)
 						{
 							case 0:	Spawn("Digit3Num0", X, Y, Z, DigitID, 0);	break;
@@ -616,7 +617,7 @@ script "DamageNumber" (void)
 							case 9:	Spawn("Digit3Num9", X, Y, Z, DigitID, 0);	break;
 						}
 					
-					if (NewHealth >= 1000)
+					if (NewHealth >= 1000 || NewHealth <= -1000)
 						switch (Digit4)
 						{
 							case 0:	Spawn("Digit4Num0", X, Y, Z, DigitID, 0);	break;
@@ -635,11 +636,18 @@ script "DamageNumber" (void)
 					if (NewHealth >= GetActorProperty(0, APROP_SPAWNHEALTH))
 						Thing_SetTranslation(DigitID, 1);
 
+					// Healed
+					if (Healed)
+						Thing_SetTranslation(DigitID, 2);
+
+					// Scratch
+					if (NewHealth == 1)
+						Thing_SetTranslation(DigitID, 3);
+						
 					SetActorVelocity(DigitID, 0, Random(-1.0, 1.0), 0.5, 0, 0);
 					SetInventory("MonsterHasTicked", 1);
 				}
 			}
-		}
 	}
 }
 
@@ -682,7 +690,7 @@ function int SetInventory(str Item, int Count)
 // For Damage Digits
 function int GetDigit(int Num, int Digit)
 {
-	return (Num / pow(10, Digit)) % 10;
+	return (Num / Pow(10, Digit)) % 10;
 }
 
 // Returns integer value
