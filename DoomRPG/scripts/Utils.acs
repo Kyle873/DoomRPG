@@ -528,18 +528,21 @@ script "FullShield" (void)
 	GiveInventory("ShieldAccessory7", 1);
 }
 
-// Handles Damage Numbers
-script "DamageNumber" (void)
+// Nonster Init Script
+script "MonsterInit" (void)
 {
-	// Translations
-	CreateTranslation(1, 0 : 255 = 176 : 176);	// Overkill
-	CreateTranslation(2, 0 : 255 = 112 : 112);	// Healed
-	CreateTranslation(3, 0 : 255 = 100 : 100);	// Scratch
+	// Start Damage Numbers script
+	ACS_NamedExecuteAlways("DamageNumbers", 0);
 	
-	GiveInventory("MonsterHeightCheck", GetActorProperty(0, APROP_HEIGHT));
+	// Potential for a monster stat system? :O
+}
 
+// Handles Damage Numbers
+script "DamageNumbers" (void)
+{
 	while (GetActorProperty(0, APROP_HEALTH) > 0 && GetUserCVAR(0, "drpg_damagenumbers"))
 	{
+		GiveInventory("MonsterHeightCheck", GetActorProperty(0, APROP_HEIGHT));
 		SetInventory("MonsterCurrentHealth", GetActorProperty(0, APROP_HEALTH));
 		SetInventory("MonsterHasTicked", 0);
 		
@@ -567,9 +570,6 @@ script "DamageNumber" (void)
 					int ActorHeight = CheckInventory("MonsterHeightCheck");
 					int DigitID = Random(4000, 5000);
 					bool Healed = (NewHealth < 0);
-					
-					if (Healed)
-						Log(s:"\cd", d:NewHealth);
 					
 					if (ActorHeight > 0)
 						Z = GetActorZ(0) + Random(ActorHeight, ActorHeight + 6);
