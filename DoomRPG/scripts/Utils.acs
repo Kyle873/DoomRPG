@@ -534,14 +534,13 @@ script "DamageNumber" (void)
 	
 	GiveInventory("MonsterHeightCheck", GetActorProperty(0, APROP_HEIGHT));
 
-	while (GetActorProperty(0, APROP_HEALTH) > 0)
+	while (GetActorProperty(0, APROP_HEALTH) > 0 && GetUserCVAR(0, "drpg_damagenumbers"))
 	{
 		SetInventory("MonsterCurrentHealth", GetActorProperty(0, APROP_HEALTH));
 		SetInventory("MonsterHasTicked", 0);
 		
 		// Lag handling
-		int DelayRate = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) / 100;
-		Delay(1 + DelayRate);
+		Delay(1 + GetUserCVAR(0, "drpg_damagenumbers_delay"));
 		
 		if (GetActorProperty(0, APROP_HEALTH) != CheckInventory("MonsterCurrentHealth"))
 			if (CheckInventory("MonsterHasTicked") == 0)
@@ -648,6 +647,8 @@ script "DamageNumber" (void)
 					SetInventory("MonsterHasTicked", 1);
 				}
 			}
+			
+		if (!GetUserCVAR(0, "drpg_damagenumbers")) terminate;
 	}
 }
 
