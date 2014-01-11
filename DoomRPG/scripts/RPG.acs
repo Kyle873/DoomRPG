@@ -15,7 +15,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.94 Beta";
-str TimeStamp = "Saturday, January 11, 2014 at 11:48:13 AM";
+str TimeStamp = "Saturday, January 11, 2014 at 2:00:41 PM";
 
 int MapNumber;
 int MapTime;
@@ -136,6 +136,30 @@ script "MonsterLoop" (void)
 	// If dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 	
+	// Init
+	if (!CheckInventory("MonsterInit"))
+	{
+		int MonsterLevel;
+		int MonsterStrength;
+		int MonsterDefense;
+		int MonsterRegen;
+		
+		// level
+		MonsterLevel = Level + Random(-(GameSkill()), GameSkill());
+		SetInventory("MonsterLevel", MonsterLevel);
+		
+		// Strength
+		MonsterStrength = Level + Random(-(MonsterLevel - (10 - GameSkill())), MonsterLevel + GameSkill());
+		SetInventory("MonsterStrength", MonsterStrength);
+		
+		// Defense
+		MonsterDefense = Level + Random(-(MonsterLevel - (10 - GameSkill())), MonsterLevel + GameSkill());
+		SetInventory("MonsterDefense", MonsterDefense);
+		
+		// Finished Init
+		GiveInventory("MonsterInit", 1);
+	}
+
 	Delay(1);
 	restart;
 }
@@ -504,6 +528,10 @@ script "HealthBars" (void)
 		
 		int X = GetUserCVAR(0, "drpg_healthbars_x");
 		int Y = GetUserCVAR(0, "drpg_healthbars_y");
+		int CurrentLevel = CheckInventory("MonsterLevel");
+		int CurrentStrength = CheckInventory("MonsterStrength");
+		int CurrentDefense = CheckInventory("MonsterDefense");
+		int CurrentRegen = CheckInventory("MonsterRegeneration");
 		int CurrentHealth = GetActorProperty(0, APROP_HEALTH);
 		int MaxHealth = GetActorProperty(0, APROP_SPAWNHEALTH);
 		bool Friendly = GetActorProperty(0, APROP_FRIENDLY);
@@ -549,15 +577,29 @@ script "HealthBars" (void)
 				else
 					PrintSprite("HPBar", 4000, X, Y, 0.05);
 
-				SetFont("SmallFont");
+				SetFont("SMALLFONT");
 				HudMessage(d:CurrentHealth, s:"/", d:MaxHealth; HUDMSG_PLAIN, 4001, CR_GREEN, X, Y, 0.05);
+				
+				/* Stats
+				SetFont("BIGFONT");
+				HudMessage(d:CurrentLevel; HUDMSG_PLAIN, 4002, CR_WHITE, X - 96.1, Y + 21.0, 0.05);
+				HudMessage(d:CurrentStrength; HUDMSG_PLAIN, 4003, CR_RED, X - 2.1, Y + 21.0, 0.05);
+				HudMessage(d:CurrentDefense; HUDMSG_PLAIN, 4004, CR_GREEN, X + 44.1, Y + 21.0, 0.05);
+				HudMessage(d:CurrentRegen; HUDMSG_PLAIN, 4005, CR_PURPLE, X + 92.1, Y + 21.0, 0.05);
+				
+				// Stat Icons
+				PrintSprite("MonLevel", 0, X - 107.0, Y + 20.0, 0.05);
+				PrintSprite("MonSTR", 0, X - 13.0, Y + 21.0, 0.05);
+				PrintSprite("MonDEF", 0, X + 36.0, Y + 21.0, 0.05);
+				PrintSprite("MonREG", 0, X + 84.0, Y + 20.0, 0.05);
+				*/
 				
 				// Prevent bar overflow
 				if (HealthPercent > 100)
 					HealthPercent = 100;
 				
 				for (int i = 0; i <= HealthPercent; i++)
-					PrintSprite(FillType, 4002 + i, (X - 97.0) + (i * 2.0), Y, 0.05);
+					PrintSprite(FillType, 4100 + i, (X - 97.0) + (i * 2.0), Y, 0.05);
 			}
 		}
 	}
