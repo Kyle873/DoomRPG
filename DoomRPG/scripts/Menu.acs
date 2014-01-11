@@ -29,7 +29,6 @@ int StatAmount;
 int SkillPage;
 int SkillMax;
 int ShieldPage;
-int ShieldPartsMax; 	// For capping the drawing until more parts are added
 
 script "OpenMenu" (void)
 {
@@ -478,41 +477,35 @@ function void DrawShieldMenu(void)
 		{
 			int Index = j + (i * 6);
 			
-			switch (ShieldPage)
-			{
-				case 0: ShieldPartsMax = 7; break;
-				case 1: ShieldPartsMax = 7; break;
-				case 2: ShieldPartsMax = 5; break;
-				case 3: ShieldPartsMax = 5; break;
-			}
-			
 			// Draw Available Components
 			for (int k = 0; k < 4; k++)
 			{
-				// Draw Equipped Status
-				SetFont("SMALLFONT");
-				if (ShieldPage == 0 && ShieldBody == Index + 1) 						HudMessage(s:"E"; HUDMSG_PLAIN, 0, CR_WHITE, 		0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-				if (ShieldPage == 1 && ShieldBattery == Index + 1) 						HudMessage(s:"E"; HUDMSG_PLAIN, 0, CR_GOLD, 		0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-				if (ShieldPage == 2 && ShieldCapacitor == Index + 1) 					HudMessage(s:"E"; HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-				if (ShieldPage == 3 && ShieldAccessory == Index + 1) 					HudMessage(s:"E"; HUDMSG_PLAIN, 0, CR_GREEN, 		0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-				
-				// Draw Quantity if you have more then one
-				if (ShieldPage == 0 && CheckInventory(ShieldData[0][Index][0]) > 1) 	HudMessage(d:CheckInventory(ShieldData[0][Index][0]); 	HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-				if (ShieldPage == 1 && CheckInventory(ShieldData[1][Index][0]) > 1) 	HudMessage(d:CheckInventory(ShieldData[1][Index][0]); 	HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-				if (ShieldPage == 2 && CheckInventory(ShieldData[2][Index][0]) > 1) 	HudMessage(d:CheckInventory(ShieldData[2][Index][0]); 	HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-				if (ShieldPage == 3 && CheckInventory(ShieldData[3][Index][0]) > 1) 	HudMessage(d:CheckInventory(ShieldData[3][Index][0]); 	HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+				if (Index < ShieldPartsMax[ShieldPage])
+				{
+					// Draw Equipped Status
+					SetFont("SMALLFONT");
+					if (ShieldPage == 0 && ShieldBody == Index + 1) 						HudMessage(s:"E"; HUDMSG_PLAIN, 0, CR_WHITE, 		0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+					if (ShieldPage == 1 && ShieldBattery == Index + 1) 						HudMessage(s:"E"; HUDMSG_PLAIN, 0, CR_GOLD, 		0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+					if (ShieldPage == 2 && ShieldCapacitor == Index + 1) 					HudMessage(s:"E"; HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+					if (ShieldPage == 3 && ShieldAccessory == Index + 1) 					HudMessage(s:"E"; HUDMSG_PLAIN, 0, CR_GREEN, 		0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+					
+					// Draw Quantity if you have more then one
+					if (ShieldPage == 0 && CheckInventory(ShieldData[0][Index][0]) > 1) 	HudMessage(d:CheckInventory(ShieldData[0][Index][0]); 	HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+					if (ShieldPage == 1 && CheckInventory(ShieldData[1][Index][0]) > 1) 	HudMessage(d:CheckInventory(ShieldData[1][Index][0]); 	HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+					if (ShieldPage == 2 && CheckInventory(ShieldData[2][Index][0]) > 1) 	HudMessage(d:CheckInventory(ShieldData[2][Index][0]); 	HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+					if (ShieldPage == 3 && CheckInventory(ShieldData[3][Index][0]) > 1) 	HudMessage(d:CheckInventory(ShieldData[3][Index][0]); 	HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+				}
 
 				// Draw Components and set Description
 				if (ShieldPage == k)
 				{
-					if (CheckInventory(ShieldData[k][Index][0]))
+					if (Index < ShieldPartsMax[ShieldPage] && CheckInventory(ShieldData[k][Index][0]))
 					{
 						// Draw Component
-						if (Index < ShieldPartsMax)
-							PrintSprite(ShieldData[k][Index][3], 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.05);
+						PrintSprite(ShieldData[k][Index][3], 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.05);
 						
 						// Set Description
-						if (Index == MenuIndex && Index < ShieldPartsMax)
+						if (Index == MenuIndex)
 						{
 							// Name
 							Description = StrParam(s:ShieldData[ShieldPage][Index][1], s:"\n");
@@ -810,7 +803,7 @@ function void MenuInput(void)
 		}
 		if (Buttons == BT_USE && OldButtons != BT_USE)
 		{
-			if (MenuIndex < ShieldPartsMax)
+			if (MenuIndex < ShieldPartsMax[ShieldPage])
 			{
 				ShieldTimer = 175 + ShieldStats[0][ShieldBody  - 1][2] + ShieldStats[1][ShieldBattery - 1][2] + ShieldStats[2][ShieldCapacitor - 1][2];
 				
@@ -829,7 +822,7 @@ function void MenuInput(void)
 		}
         if (Buttons & BT_USE && !(OldButtons & BT_USE) && Buttons & BT_SPEED)
 		{
-			if (MenuIndex < ShieldPartsMax)
+			if (MenuIndex < ShieldPartsMax[ShieldPage])
 				for (i = 0; i < 4; i++)
 					if (i == ShieldPage)
 					{
