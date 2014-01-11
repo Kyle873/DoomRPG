@@ -15,7 +15,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.94 Beta";
-str TimeStamp = "Saturday, January 11, 2014 at 2:00:41 PM";
+str TimeStamp = "Saturday, January 11, 2014 at 2:20:01 PM";
 
 int MapNumber;
 int MapTime;
@@ -139,27 +139,36 @@ script "MonsterLoop" (void)
 	// Init
 	if (!CheckInventory("MonsterInit"))
 	{
-		int MonsterLevel;
-		int MonsterStrength;
-		int MonsterDefense;
-		int MonsterRegen;
-		
-		// level
-		MonsterLevel = Level + Random(-(GameSkill()), GameSkill());
-		SetInventory("MonsterLevel", MonsterLevel);
-		
-		// Strength
-		MonsterStrength = Level + Random(-(MonsterLevel - (10 - GameSkill())), MonsterLevel + GameSkill());
-		SetInventory("MonsterStrength", MonsterStrength);
-		
-		// Defense
-		MonsterDefense = Level + Random(-(MonsterLevel - (10 - GameSkill())), MonsterLevel + GameSkill());
-		SetInventory("MonsterDefense", MonsterDefense);
+		// Monster Level System
+		if (GetCVAR("drpg_monster_levels"))
+		{
+			int MonsterLevel;
+			int MonsterStrength;
+			int MonsterDefense;
+			int MonsterRegen;
+			
+			// level
+			MonsterLevel = Level + Random(-(GameSkill()), GameSkill());
+			SetInventory("MonsterLevel", MonsterLevel);
+			
+			// Strength
+			MonsterStrength = Level + Random(-(MonsterLevel - (10 - GameSkill())), MonsterLevel + GameSkill());
+			SetInventory("MonsterStrength", MonsterStrength);
+			
+			// Defense
+			MonsterDefense = Level + Random(-(MonsterLevel - (10 - GameSkill())), MonsterLevel + GameSkill());
+			SetInventory("MonsterDefense", MonsterDefense);
+			SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.25, FixedDiv(MonsterDefense, 100)));
+		}
 		
 		// Finished Init
 		GiveInventory("MonsterInit", 1);
 	}
 
+	// Give Strength Item
+	if (MonsterStrength > 0 && GetCVAR("drpg_monster_levels"))
+		GiveInventory(StrParam(s:"Strength", d:(MonsterStrength * 2)), 1);
+	
 	Delay(1);
 	restart;
 }
@@ -580,19 +589,21 @@ script "HealthBars" (void)
 				SetFont("SMALLFONT");
 				HudMessage(d:CurrentHealth, s:"/", d:MaxHealth; HUDMSG_PLAIN, 4001, CR_GREEN, X, Y, 0.05);
 				
-				/* Stats
-				SetFont("BIGFONT");
-				HudMessage(d:CurrentLevel; HUDMSG_PLAIN, 4002, CR_WHITE, X - 96.1, Y + 21.0, 0.05);
-				HudMessage(d:CurrentStrength; HUDMSG_PLAIN, 4003, CR_RED, X - 2.1, Y + 21.0, 0.05);
-				HudMessage(d:CurrentDefense; HUDMSG_PLAIN, 4004, CR_GREEN, X + 44.1, Y + 21.0, 0.05);
-				HudMessage(d:CurrentRegen; HUDMSG_PLAIN, 4005, CR_PURPLE, X + 92.1, Y + 21.0, 0.05);
-				
-				// Stat Icons
-				PrintSprite("MonLevel", 0, X - 107.0, Y + 20.0, 0.05);
-				PrintSprite("MonSTR", 0, X - 13.0, Y + 21.0, 0.05);
-				PrintSprite("MonDEF", 0, X + 36.0, Y + 21.0, 0.05);
-				PrintSprite("MonREG", 0, X + 84.0, Y + 20.0, 0.05);
-				*/
+				// Stats
+				if (GetCVAR("drpg_monster_levels"))
+				{
+					SetFont("BIGFONT");
+					HudMessage(d:CurrentLevel; HUDMSG_PLAIN, 4002, CR_WHITE, X - 96.1, Y + 21.0, 0.05);
+					HudMessage(d:CurrentStrength; HUDMSG_PLAIN, 4003, CR_RED, X - 2.1, Y + 21.0, 0.05);
+					HudMessage(d:CurrentDefense; HUDMSG_PLAIN, 4004, CR_GREEN, X + 44.1, Y + 21.0, 0.05);
+					// HudMessage(d:CurrentRegen; HUDMSG_PLAIN, 4005, CR_PURPLE, X + 92.1, Y + 21.0, 0.05);
+					
+					// Stat Icons
+					PrintSprite("MonLevel", 0, X - 107.0, Y + 20.0, 0.05);
+					PrintSprite("MonSTR", 0, X - 13.0, Y + 21.0, 0.05);
+					PrintSprite("MonDEF", 0, X + 36.0, Y + 21.0, 0.05);
+					// PrintSprite("MonREG", 0, X + 84.0, Y + 20.0, 0.05);
+				}
 				
 				// Prevent bar overflow
 				if (HealthPercent > 100)
