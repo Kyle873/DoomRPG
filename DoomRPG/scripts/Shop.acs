@@ -211,7 +211,8 @@ int ShopMax[SHOP_CATEGORIES] =
 bool InShop;
 int ShopIndex;
 int ShopOffset;
-int Page;	
+int ShopPage;
+int SellTimer;
 int ShopSpotID = 1000;
 
 // Open the Shop
@@ -243,7 +244,7 @@ script "OpenShop" (void)
 }
 
 // Sell items in bulk
-script "SellAll" (int SellPage, int Silent)
+script "SellAll" (int SellShopPage, int Silent)
 {
 	int Total;
 	int ItemMax = 1000;
@@ -251,30 +252,30 @@ script "SellAll" (int SellPage, int Silent)
 	// Set font
 	SetFont("BIGFONT");
 	
-	// Invalid Pages
-	if (SellPage < 1)
+	// Invalid ShopPages
+	if (SellShopPage < 1)
 	{
-		print(s:"\cgInvalid Shop Page");
+		print(s:"\cgInvalid Shop ShopPage");
 		ActivatorSound("menu/error", 127);
 		terminate;
 	}
 	
 	// Sell Items
-	for (int i = 0; i < ShopMax[SellPage]; i++)
+	for (int i = 0; i < ShopMax[SellShopPage]; i++)
 		for (int j = 0; j < ItemMax; j++)
-			if (CheckInventory(Shop[SellPage][i][0]) > 0)
+			if (CheckInventory(Shop[SellShopPage][i][0]) > 0)
 			{
 					// Oh god...
-					if (Shop[SellPage][i][0] == "HealthBonus" || Shop[SellPage][i][0] == "ArmorBonus") continue;
+					if (Shop[SellShopPage][i][0] == "HealthBonus" || Shop[SellShopPage][i][0] == "ArmorBonus") continue;
 					
-					TakeInventory(Shop[SellPage][i][0], 1);
-					GiveInventory("Credits", ShopCosts[SellPage][i] / 2);
-					Total += ShopCosts[SellPage][i] / 2;
+					TakeInventory(Shop[SellShopPage][i][0], 1);
+					GiveInventory("Credits", ShopCosts[SellShopPage][i] / 2);
+					Total += ShopCosts[SellShopPage][i] / 2;
 			}
 			else continue;
 	
 	// Augmentation Handling
-	if (SellPage == 7)
+	if (SellShopPage == 7)
 		for (int k = 0; k < 8; k++)
 		{
 			Augs[k] = false;
@@ -284,7 +285,7 @@ script "SellAll" (int SellPage, int Silent)
 	// Display Message
 	if (!Silent)
 	{
-		HudMessage(s:"Sold all ", s:ShopNames[SellPage], s:" items for ", d:Total, s:" Credits";
+		HudMessage(s:"Sold all ", s:ShopNames[SellShopPage], s:" items for ", d:Total, s:" Credits";
 				   HUDMSG_FADEOUT, 0, CR_GOLD, 0.5, 0.5, 5.0, 5.0);
 		ActivatorSound("credits/payout", 127);
 	}
@@ -292,31 +293,28 @@ script "SellAll" (int SellPage, int Silent)
 
 function void ShopLoop(void)
 {
-	// Vars
-	int Catagories; // 8 vanilla catagories, 8 reserved for compatibility
+	int Categories = 8; // 8 vanilla Categories, 8 reserved for compatibility
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
 	int Discount = FixedMul(RankLevel, 2.1);
-	int Cost = ShopCosts[page][ShopIndex] - ShopCosts[page][ShopIndex] * Discount / 100;
-	int SellPrice = ShopCosts[Page][ShopIndex] / 2;
+	int Cost = ShopCosts[ShopPage][ShopIndex] - ShopCosts[ShopPage][ShopIndex] * Discount / 100;
+	int SellPrice = ShopCosts[ShopPage][ShopIndex] / 2;
 	
 	// Ammo is sold for 1/4th of normal sell price
-	if (Page == 1) SellPrice /= 4;
+	if (ShopPage == 1) SellPrice /= 4;
 	
+	// Compatibility handling - Brutal Doom
+	if (GetCVAR("drpg_ext_brutal"))
+	{
+		Categories = 9;
+		Shop[0][0][1] = "Assault Rifle";
+	}
+
 	if (InShop)
     {
 		// Freeze the game if the option is active
 		if (GetCVAR("drpg_menufreeze"))
 			GiveInventory("MenuFreezer", 1);
-
-		// Compatibility handling - Brutal Doom
-		if (GetCVAR("drpg_ext_brutal"))
-		{
-			Shop[0][0][1] = "Assault Rifle";
-			Catagories = 9;
-		}
-		else
-			Catagories = 8;
 		
 		// Set the HUD Size
 		SetHUDSize(GetCVAR("drpg_menu_width"), GetCVAR("drpg_menu_height"), true);
@@ -327,8 +325,8 @@ function void ShopLoop(void)
         
 		// Draw Shop
         SetFont("BIGFONT");
-        HudMessage(s:"Shop - ", s:ShopNames[Page],
-				   s:" (", d:Page + 1, s:"/", d:Catagories, s:")";
+        HudMessage(s:"Shop - ", s:ShopNames[ShopPage],
+				   s:" (", d:ShopPage + 1, s:"/", d:Categories, s:")";
                    HUDMSG_PLAIN, 3000, CR_GREEN,
                    24.1, 24.0, 0.1);
         
@@ -339,40 +337,40 @@ function void ShopLoop(void)
         
         /* Draw Help
         SetFont("SMALLFONT");
-		HudMessage(s:"Up/Down to move\nLeft/Right to change pages\nUse to buy\nRun to sell\nMenu to exit";
+		HudMessage(s:"Up/Down to move\nLeft/Right to change ShopPages\nUse to buy\nRun to sell\nMenu to exit";
 				   HUDMSG_PLAIN, 3022, CR_RED,
 				   0.1, 240.1, 0.1); */
         
 		// Draw Item List
-        for (int i = 0; i < ShopMax[Page]; i++)
+        for (int i = 0; i < ShopMax[ShopPage]; i++)
         {
 			SetFont("SMALLFONT");
             if (i == ShopIndex)
-				if (CheckInventory(Shop[Page][i][0]) > 0)
-					HudMessage(s:Shop[Page][i][1], s:" [", d:CheckInventory(Shop[Page][i][0]), s:"]";
+				if (CheckInventory(Shop[ShopPage][i][0]) > 0)
+					HudMessage(s:Shop[ShopPage][i][1], s:" [", d:CheckInventory(Shop[ShopPage][i][0]), s:"]";
 							   HUDMSG_PLAIN, 3001 + i, CR_GREEN,
 							   24.1, 50.0 + 8.0 * i, 0.1);
 				else
-					HudMessage(s:Shop[Page][i][1];
+					HudMessage(s:Shop[ShopPage][i][1];
 							   HUDMSG_PLAIN, 3001 + i, CR_GREEN,
 							   24.1, 50.0 + 8.0 * i, 0.1);
             else
-                if (CheckInventory("Credits") >= ShopCosts[Page][i] - ShopCosts[page][i] * Discount / 100)
-					if (CheckInventory(Shop[Page][i][0]) > 0)
-						HudMessage(s:Shop[Page][i][1], s:" [", d:CheckInventory(Shop[Page][i][0]), s:"]";
+                if (CheckInventory("Credits") >= ShopCosts[ShopPage][i] - ShopCosts[ShopPage][i] * Discount / 100)
+					if (CheckInventory(Shop[ShopPage][i][0]) > 0)
+						HudMessage(s:Shop[ShopPage][i][1], s:" [", d:CheckInventory(Shop[ShopPage][i][0]), s:"]";
 								   HUDMSG_PLAIN, 3001 + i, CR_WHITE,
 								   24.1, 50.0 + 8.0 * i, 0.1);
 					 else
-						HudMessage(s:Shop[Page][i][1];
+						HudMessage(s:Shop[ShopPage][i][1];
 								   HUDMSG_PLAIN, 3001 + i, CR_WHITE,
 								   24.1, 50.0 + 8.0 * i, 0.1);
                 else
-					if (CheckInventory(Shop[Page][i][0]) > 0)
-						HudMessage(s:Shop[Page][i][1], s:" [", d:CheckInventory(Shop[Page][i][0]), s:"]";
+					if (CheckInventory(Shop[ShopPage][i][0]) > 0)
+						HudMessage(s:Shop[ShopPage][i][1], s:" [", d:CheckInventory(Shop[ShopPage][i][0]), s:"]";
 								   HUDMSG_PLAIN, 3001 + i, CR_RED,
 								   24.1, 50.0 + 8.0 * i, 0.1);
 					else
-						HudMessage(s:Shop[Page][i][1];
+						HudMessage(s:Shop[ShopPage][i][1];
 								   HUDMSG_PLAIN, 3001 + i, CR_RED,
 								   24.1, 50.0 + 8.0 * i, 0.1);
         }
@@ -380,44 +378,56 @@ function void ShopLoop(void)
         // Check Input
         if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && ShopIndex >= 0)
         {
-			if (ShopIndex <= 0) ShopIndex = ShopMax[Page];
+			if (ShopIndex <= 0) ShopIndex = ShopMax[ShopPage];
             ActivatorSound("menu/move", 127);
             ShopIndex--;
         }
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && ShopIndex <= ShopMax[Page])
+        if (Buttons == BT_BACK && OldButtons != BT_BACK && ShopIndex <= ShopMax[ShopPage])
         {
-			if (ShopIndex >= ShopMax[Page] - 1) ShopIndex = -1;
+			if (ShopIndex >= ShopMax[ShopPage] - 1) ShopIndex = -1;
             ActivatorSound("menu/move", 127);
             ShopIndex++;
         }
-        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT && Page >= 0) ||
-			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && Page >= 0))
+        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT && ShopPage >= 0) ||
+			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && ShopPage >= 0))
         {
-			if (Page <= 0) Page = Catagories;
+			if (ShopPage <= 0) ShopPage = Categories;
             ActivatorSound("menu/move", 127);
 			ShopIndex = 0;
-            Page--;
+            ShopPage--;
         }
-        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && Page < Catagories) ||
-			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && Page < Catagories))
+        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && ShopPage < Categories) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && ShopPage < Categories))
         {
-			if (Page >= Catagories - 1) Page = -1;
+			if (ShopPage >= Categories - 1) ShopPage = -1;
             ActivatorSound("menu/move", 127);
 			ShopIndex = 0;
-            Page++;
+            ShopPage++;
         }
         if (Buttons == BT_USE && OldButtons != BT_USE)
 		{
 			if (CheckInventory("Credits") >= Cost)
-				BuyItem(Shop[Page][ShopIndex][0], Cost);
+				BuyItem(Shop[ShopPage][ShopIndex][0], Cost);
 			else
 				ActivatorSound("menu/error", 127);
 		}
 		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
-			if (CheckInventory(Shop[Page][ShopIndex][0]) > 0)
-				SellItem(Shop[Page][ShopIndex][0]);
+			if (CheckInventory(Shop[ShopPage][ShopIndex][0]) > 0)
+				SellItem(Shop[ShopPage][ShopIndex][0], false);
 			else
 				ActivatorSound("menu/error", 127);
+		if (Buttons & BT_SPEED)
+		{
+			SellTimer++;
+			
+			if (SellTimer > 35 * 3 && CheckInventory(Shop[ShopPage][ShopIndex][0]) > 0)
+			{
+				SellItem(Shop[ShopPage][ShopIndex][0], true);
+				SellTimer = 0;
+			}
+		}
+		else
+			SellTimer = 0;
     }
 }
 
@@ -482,16 +492,20 @@ function void BuyItem(str Item, int Cost)
 	TakeInventory("Credits", Cost);
 }
 
-function void SellItem(str Item)
+function void SellItem(str Item, int SellAll)
 {
-	int SellCost = ShopCosts[Page][ShopIndex] / 2;
+	int SellCost = ShopCosts[ShopPage][ShopIndex] / 2;
+	int Amount = 1;
+	
+	if (SellAll)
+		Amount = CheckInventory(Item);
 	
 	// If it's ammo, 1/4th the price to prevent abuse
 	if (Item == "Clip" || Item == "Shell" || Item == "RocketAmmo" || Item == "Cell")
 		SellCost /= 4;
 
 	// If it's an Augmentation, unequip it too
-	if (Page == 7 && Augs[ShopIndex])
+	if (ShopPage == 7 && Augs[ShopIndex])
 	{
 		Augs[ShopIndex] = false;
 		AugSlotsUsed--;
@@ -499,6 +513,6 @@ function void SellItem(str Item)
 	
 	// Sell the Item
 	ActivatorSound("credits/payout", 127);
-	TakeInventory(Item, 1);
-	GiveInventory("Credits", SellCost);
+	TakeInventory(Item, Amount);
+	GiveInventory("Credits", SellCost * Amount);
 }
