@@ -17,7 +17,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.94 Beta";
-str TimeStamp = "Saturday, January 11, 2014 at 6:19:21 PM";
+str TimeStamp = "Saturday, January 11, 2014 at 6:32:07 PM";
 
 int MapNumber;
 int ParBonus;
@@ -102,8 +102,7 @@ script "Init" enter
 		FirstRun = true;
 	}
 	
-	// Count all the monsters in the map and Setup the XP/Rank tables
-	CountMonsters();
+	// Setup the XP/Rank tables
 	SetupTables();
 	
 	// Execute Game Loops
@@ -156,8 +155,14 @@ script "MonsterInit" (void)
 // Monster Loop
 script "MonsterLoop" (void)
 {
-	// If dead, terminate
-	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+	// Death
+	if (GetActorProperty(0, APROP_HEALTH) <= 0)
+	{
+		int XPAmount = Random(GetActorProperty(0, APROP_SPAWNHEALTH), GetActorProperty(0, APROP_SPAWNHEALTH) * 2);
+		XPAmount *= 1 + (CheckInventory("MonsterLevel") / 100);
+		AddXP(XPAmount);
+		terminate;
+	}
 	
 	// Init
 	if (!CheckInventory("MonsterInit"))
@@ -200,7 +205,6 @@ script "MonsterLoop" (void)
 script "Loop" (void)
 {
 	// Update Functions
-	CheckMonsters();
 	CheckStats();
 	CheckStatCaps();
 	CheckLuck();
@@ -427,7 +431,7 @@ script "Death" death
 // Handles Damage Numbers
 script "DamageNumbers" (void)
 {
-	while (GetActorProperty(0, APROP_HEALTH) > 0 && GetUserCVAR(0, "drpg_damagenumbers"))
+	while (GetActorProperty(0, APROP_HEALTH) > 0 && GetCVAR("drpg_damagenumbers"))
 	{
 		GiveInventory("MonsterHeightCheck", GetActorProperty(0, APROP_HEIGHT));
 		SetInventory("MonsterCurrentHealth", GetActorProperty(0, APROP_HEALTH));
@@ -435,7 +439,7 @@ script "DamageNumbers" (void)
 		
 		// Lag handling
 		int DelayRate = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) / 100;
-		Delay(1 + DelayRate + GetUserCVAR(0, "drpg_damagenumbers_delay"));
+		Delay(1 + DelayRate + GetCVAR("drpg_damagenumbers_delay"));
 		
 		if (GetActorProperty(0, APROP_HEALTH) != CheckInventory("MonsterCurrentHealth"))
 			if (CheckInventory("MonsterHasTicked") == 0)
@@ -540,7 +544,7 @@ script "DamageNumbers" (void)
 				}
 			}
 			
-		if (!GetUserCVAR(0, "drpg_damagenumbers")) terminate;
+		if (!GetCVAR("drpg_damagenumbers")) terminate;
 	}
 }
 
@@ -555,8 +559,8 @@ script "HealthBars" (void)
 		
 		Delay(1);
 		
-		int X = GetUserCVAR(0, "drpg_healthbars_x");
-		int Y = GetUserCVAR(0, "drpg_healthbars_y");
+		int X = GetCVAR("drpg_healthbars_x");
+		int Y = GetCVAR("drpg_healthbars_y");
 		str Name = "";
 		int CurrentLevel = CheckInventory("MonsterLevel");
 		int CurrentStrength = CheckInventory("MonsterStrength");
