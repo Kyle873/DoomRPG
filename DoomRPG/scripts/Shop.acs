@@ -5,10 +5,12 @@
 #import "Stats.acs"
 #import "Skills.acs"
 #import "Augs.acs"
+#import "Shield.acs"
 #import "Menu.acs"
 #import "Utils.acs"
 
 #libdefine SHOP_CATEGORIES			16
+#libdefine SHOP_ITEMS				25
 
 str ShopNames[SHOP_CATEGORIES] =
 {
@@ -24,7 +26,7 @@ str ShopNames[SHOP_CATEGORIES] =
 };
 
 // Shop Array
-int Shop[SHOP_CATEGORIES][20][2] =
+int Shop[SHOP_CATEGORIES][SHOP_ITEMS][2] =
 {
     // Weapon
 	{
@@ -123,14 +125,7 @@ int Shop[SHOP_CATEGORIES][20][2] =
 	
 	// Shield
 	{
-		{ "ShieldBody1", "Shield Body - Pluggy" },
-		{ "ShieldBattery1", "Shield Battery - Double-A" },
-		{ "ShieldCapacitor1", "Shield Capacitor - Standard" },
-		{ "ShieldCapacitor2", "Shield Capacitor - Cooled" },
-		{ "ShieldCapacitor3", "Shield Capacitor - Energized" },
-		{ "ShieldCapacitor4", "Shield Capacitor - Infused" },
-		{ "ShieldCapacitor5", "Shield Capacitor - Fiery" },
-		{ "ShieldAccessory1", "Shield Accessory - Amplified" }
+		// Built Dynamically
 	},
 	
 	// Augmentations
@@ -159,7 +154,7 @@ int Shop[SHOP_CATEGORIES][20][2] =
 	},
 };
 
-int ShopCosts[SHOP_CATEGORIES][20] = {
+int ShopCosts[SHOP_CATEGORIES][SHOP_ITEMS] = {
     // Weapon
 	{
 		20, 75, 200, 300, 750, 1500, 3000, 300, 100
@@ -187,10 +182,7 @@ int ShopCosts[SHOP_CATEGORIES][20] = {
 	},
 	// Shields
 	{
-		1000, 							// Bodies
-		1000, 							// Batteries
-		1000, 2000, 4000, 8000, 16000,	// Capacitors
-		10000							// Accessories
+		// Built Dynamically
 	},
 	// Augmentations
 	{
@@ -205,10 +197,11 @@ int ShopCosts[SHOP_CATEGORIES][20] = {
 
 int ShopMax[SHOP_CATEGORIES] =
 {
-	8, 10, 13, 11, 20, 8, 8, 10, 7
+	8, 10, 13, 11, 20, 8, 0, 10, 7
 };
 
 bool InShop;
+int ShopCategories = 8; // 8 vanilla ShopCategories, 8 reserved for compatibility
 int ShopIndex;
 int ShopOffset;
 int ShopPage;
@@ -291,25 +284,93 @@ script "SellAll" (int SellShopPage, int Silent)
 	}
 }
 
+function void ShopBuildPages(void)
+{
+	int i, j, Index;
+	
+	// Shield Page
+	ShopMax[6] = 0;
+	for (i = 0; i < 4; i++)
+	{
+		str ShieldActorName = "";
+		str ShieldName = "";
+		int ShieldCost = 0;
+		
+		ShopMax[6] += ShieldPartsMax[i];
+		
+		switch (i)
+		{
+			case 0: ShieldActorName = "ShieldBody";			ShieldName = "Shield Body - ";		break;
+			case 1:	ShieldActorName = "ShieldBattery";		ShieldName = "Shield Battery - ";	break;
+			case 2:	ShieldActorName = "ShieldCapacitor";	ShieldName = "Shield Capacitor - ";	break;
+			case 3:	ShieldActorName = "ShieldAccessory";	ShieldName = "Shield Accessory - ";	break;
+		}
+		
+		for (j = 0; j < ShieldPartsMax[i]; j++)
+		{
+			// Name
+			Shop[6][Index][0] = StrParam(s:ShieldActorName, d:j + 1);
+			Shop[6][Index][1] = StrParam(s:ShieldName, s:ShieldData[i][j][1]);
+			
+			// Price
+			if (i < 3) // Bodies, Batteries, Capacitors
+			{
+				ShieldCost += ShieldStats[i][j][0] * 100;
+				ShieldCost += ShieldStats[i][j][1] * 1000;
+				ShieldCost += Abs((ShieldStats[i][j][2] * 10000) / 35);
+			}
+			else // Accessories
+			{
+				if (j == 0) ShieldCost = 50000;
+				if (j == 1) ShieldCost = 25000;
+				if (j == 2) ShieldCost = 10000;
+				if (j == 3) ShieldCost = 20000;
+				if (j == 4) ShieldCost = 50000;
+			}
+			ShopCosts[6][Index] = ShieldCost;
+			
+			Index++;
+		}
+	}
+	
+	// Compatibility handling - Extras
+	if (GetCVAR("drpg_ext_extras"))
+	{
+		// Weapons
+		Shop[0][0][0] = "Pistol1";
+		Shop[0][1][0] = "Shotgun1";
+		Shop[0][2][0] = "SSG";
+		Shop[0][3][0] = "Chaingun1";
+		Shop[0][4][0] = "RocketLauncher1";
+		Shop[0][5][0] = "Plasmagun";
+		Shop[0][6][0] = "BFG9001";
+		Shop[0][7][0] = "Chainsaw1";
+	}
+	
+	// Compatibility handling - Brutal Doom
+	if (GetCVAR("drpg_ext_brutal"))
+	{
+		ShopCategories = 9;
+		
+		// Weapons
+		Shop[0][0][1] = "Assault Rifle";
+	}
+}
+
 function void ShopLoop(void)
 {
-	int Categories = 8; // 8 vanilla Categories, 8 reserved for compatibility
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
 	int Discount = FixedMul(RankLevel, 2.1);
 	int Cost = ShopCosts[ShopPage][ShopIndex] - ShopCosts[ShopPage][ShopIndex] * Discount / 100;
 	int SellPrice = ShopCosts[ShopPage][ShopIndex] / 2;
 	
+	// Certain pages are built dynamically or require modifications depending on extension CVARs
+	ShopBuildPages();
+	
 	// Ammo is sold for 1/4th of normal sell price
 	if (ShopPage == 1) SellPrice /= 4;
 	
-	// Compatibility handling - Brutal Doom
-	if (GetCVAR("drpg_ext_brutal"))
-	{
-		Categories = 9;
-		Shop[0][0][1] = "Assault Rifle";
-	}
-
 	if (InShop)
     {
 		// Freeze the game if the option is active
@@ -326,13 +387,13 @@ function void ShopLoop(void)
 		// Draw Shop
         SetFont("BIGFONT");
         HudMessage(s:"Shop - ", s:ShopNames[ShopPage],
-				   s:" (", d:ShopPage + 1, s:"/", d:Categories, s:")";
+				   s:" (", d:ShopPage + 1, s:"/", d:ShopCategories, s:")";
                    HUDMSG_PLAIN, 3000, CR_GREEN,
                    24.1, 24.0, 0.1);
         
         // Draw Price
         HudMessage(s:"\cj", d:Cost, s:" C \ci(", d:SellPrice, s:" C) \ck(Discount: ", d:Discount, s:"%)";
-                   HUDMSG_PLAIN, 3021, CR_GOLD,
+                   HUDMSG_PLAIN, 3000 + SHOP_ITEMS, CR_GOLD,
                    24.1, 38.0, 0.1);
         
         /* Draw Help
@@ -391,15 +452,15 @@ function void ShopLoop(void)
         if ((Buttons == BT_LEFT && OldButtons != BT_LEFT && ShopPage >= 0) ||
 			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && ShopPage >= 0))
         {
-			if (ShopPage <= 0) ShopPage = Categories;
+			if (ShopPage <= 0) ShopPage = ShopCategories;
             ActivatorSound("menu/move", 127);
 			ShopIndex = 0;
             ShopPage--;
         }
-        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && ShopPage < Categories) ||
-			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && ShopPage < Categories))
+        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && ShopPage < ShopCategories) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && ShopPage < ShopCategories))
         {
-			if (ShopPage >= Categories - 1) ShopPage = -1;
+			if (ShopPage >= ShopCategories - 1) ShopPage = -1;
             ActivatorSound("menu/move", 127);
 			ShopIndex = 0;
             ShopPage++;
