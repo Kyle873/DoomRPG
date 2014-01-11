@@ -651,6 +651,57 @@ script "DamageNumber" (void)
 	}
 }
 
+// Handles HUD Health Bars
+script "HealthBars" (void)
+{
+	while (GetCVAR("drpg_healthbars"))
+	{
+		Thing_ChangeTID(0, 1000);
+		int Activator = ActivatorTID();
+		SetActivatorToTarget(1000);
+		
+		Delay(1);
+		
+		int CurrentHealth = GetActorProperty(0, APROP_HEALTH);
+		int MaxHealth = GetActorProperty(0, APROP_SPAWNHEALTH);
+		int HealthPercent;
+		str FillType;
+		
+		if (ActivatorTID() != Activator)
+		{
+			SetActivator(Activator);
+			SetActivatorToTarget(1000);
+			
+			SetActivator(Activator);
+			
+			HealthPercent = (CurrentHealth * 100) / MaxHealth;
+			
+			if (HealthPercent >= 75 && HealthPercent <= 100)
+				FillType = "Fill1";
+			if (HealthPercent >= 50 && HealthPercent <= 74)
+				FillType = "Fill2";
+			if (HealthPercent >= 25 && HealthPercent <= 49)
+				FillType = "Fill3";
+			if (HealthPercent <= 24)
+				FillType = "Fill4";
+			
+			if (CurrentHealth > 0)
+			{
+				SetHudSize(800, 600, false);
+				PrintSpriteFade("HPBar", 4000, 400.0, 100.0, 0.1, 0.25);
+				SetFont("SmallFont");
+				HudMessage(d:CurrentHealth, s:"/", d:MaxHealth; HUDMSG_FADEOUT, 4001, CR_GREEN, 400.0, 100.0, 0.1, 0.25);
+				
+					for (int i = 0; i < HealthPercent; i++)
+						PrintSpriteFade(FillType, 4002 + i, 303.0 + (i * 2.0), 100.0, 0.1, 0.25);
+			}
+		}
+	}
+	
+	Delay(1);
+	restart;
+}
+
 // Utility Functions
 // --------------------------------------------------
 
@@ -673,6 +724,12 @@ function void PrintSprite(str sprite, int id, int x, int y, int d)
 {
     SetFont(sprite);
     HudMessage(s:"A"; HUDMSG_PLAIN, id, CR_UNTRANSLATED, x, y, d);
+}
+
+function void PrintSpriteFade(str sprite, int id, int x, int y, int d, int h)
+{
+    SetFont(sprite);
+    HudMessage(s:"A"; HUDMSG_FADEOUT, id, CR_UNTRANSLATED, x, y, d, h);
 }
 
 function int SetInventory(str Item, int Count)
