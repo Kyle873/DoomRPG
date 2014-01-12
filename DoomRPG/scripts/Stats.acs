@@ -93,6 +93,9 @@ int AugChance;
 int ShieldChance;
 int EPChance;
 
+// Randomizer
+int LevelTokens;
+
 // Rank strings
 str Ranks[25] = {
 	"None",
@@ -196,13 +199,22 @@ function void CheckLevel(void)
 	// Now check for a level up
 	if (XP >= XPTable[Level] && Level < 1000)
 	{
+		int Tokens = 10 - GameSkill();
+		
+		if (GetCVAR("drpg_autospend"))
+			LevelTokens += Tokens;
+		
 		// Level Up
 		ActivatorSound("misc/levelup", 127);
+		
 		Level++;
-		GiveInventory("StatToken", 10 - GameSkill());
+		
+		GiveInventory("StatToken", Tokens);
 		GiveInventory("SkillToken", 1);
+		
 		if (EP <= 0) EP = 0; else EP = GetEPMax();
 		HealThing(1000000);
+
 		FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0, 2.0);
 		SetFont("BIGFONT");
 		SetHUDSize(0, 0, false);
@@ -461,28 +473,6 @@ function void CheckStats(void)
 		SetPlayerProperty(0, 1, PROP_BUDDHA);
 	else
 		SetPlayerProperty(0, 0, PROP_BUDDHA);
-	
-	// Only randomize your starting tokens
-	if (GetCVAR("drpg_randomstatgrowth") == 1 && !RandomizedStartTokens)
-	{
-		if (StatTokens > 0)
-			IncreaseStat(Random(0, 7));
-		if (StatTokens == 0)
-			RandomizedStartTokens = true;
-	}
-	// If we're playing with random leveling, tokens should automatically be used
-	if (GetCVAR("drpg_randomstatgrowth") == 2)
-		if (StatTokens > 0)
-			IncreaseStat(Random(0, 7));
-	// Autospend your tokens on level-up
-	if (GetCVAR("drpg_autospend"))
-		if (StatTokens > 0)
-			IncreaseStat(Random(1, 8));
-}
-
-// Keep the Stat Cap (SoftStatCap + Stat Cap Tokens) updated
-function void CheckStatCap(void)
-{
 }
 
 // Regeneration

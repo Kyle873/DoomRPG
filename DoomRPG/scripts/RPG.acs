@@ -17,7 +17,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.94 Beta";
-str TimeStamp = "Sunday, January 12, 2014 at 12:36:14 AM";
+str TimeStamp = "Sunday, January 12, 2014 at 1:10:32 AM";
 
 int MapNumber;
 int ParBonus;
@@ -103,6 +103,7 @@ script "Init" enter
 	// Execute Game Loops
 	ACS_NamedExecuteAlways("Loop", 0);
 	ACS_NamedExecuteAlways("Speed", 0);
+	ACS_NamedExecuteAlways("StatRandomizer", 0);
 	ACS_NamedExecuteAlways("DamageNumbers", 0);
 	ACS_NamedExecuteAlways("HealthBars", 0);
 	
@@ -288,6 +289,35 @@ script "Speed" (void)
 		GiveInventory("Speed", 1);
 	
 	Delay(Time + 1);
+	restart;
+}
+
+// Stat Token Randomizer Script
+script "StatRandomizer" (void)
+{
+	Delay(1);
+
+	// Only randomize your starting tokens
+	if (GetCVAR("drpg_randomstatgrowth") == 1 && !RandomizedStartTokens)
+	{
+		if (StatTokens > 0)
+			IncreaseStat(Random(1, 8));
+		else if (StatTokens == 0)
+			RandomizedStartTokens = true;
+	}
+	// Always spend Tokens, no matter how you got them
+	else if (GetCVAR("drpg_randomstatgrowth") == 2)
+		if (StatTokens > 0)
+			IncreaseStat(Random(1, 8));
+
+	// Spend Tokens only on level up
+	if (GetCVAR("drpg_autospend"))
+		while (LevelTokens > 0)
+		{
+			IncreaseStat(Random(1, 8));
+			Delay(1);
+		}
+	
 	restart;
 }
 
