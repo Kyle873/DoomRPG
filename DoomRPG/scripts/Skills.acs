@@ -1076,14 +1076,17 @@ function int Summon(int Type)
 		case 17: 			Success = Spawn("SpiderMastermind", X, Y, Z, NewID, Angle);			break;
 	}
 	
-	SpawnForced("TeleportFog", X, Y, Z, NewID, Angle);
-	SetActorAngle(NewID, Angle);
-	SetActorProperty(NewID, APROP_FRIENDLY, 1);
-	SetActorState(NewID, "Spawn");
-	MaxSummons++;
-	
+	if (Success)
+	{
+		SpawnForced("TeleportFog", X, Y, Z, NewID, Angle);
+		SetActorAngle(NewID, Angle);
+		SetActorProperty(NewID, APROP_FRIENDLY, 1);
+		SetActorState(NewID, "Spawn");
+		SetActorInventory(NewID, "MonsterUnsolid", 1);
+		MaxSummons++;
+	}
 	// Refund - Give EP back if the summon failed
-	if (!Success)
+	else
 	{
 		ActivatorSound("menu/error", 127);
 		return false;
@@ -1170,9 +1173,10 @@ function int Rally(void)
 		return false;
 	}
 	
-	for (int i = SummonID; i < SummonID + MaxSummons; i++)
-		if (GetActorProperty(i, APROP_HEALTH) > 0)
-			SetActorPosition(i, X, Y, Z, true);
+	SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
+
+	for (int i = SummonID; i <= SummonID + MaxSummons; i++)
+		SetActorPosition(i, X, Y, Z, 0);
 	
 	ActivatorSound("skills/rally", 127);
 	return true;
@@ -1236,11 +1240,10 @@ function int Magnet(void)
 	}
 	
 	// Determine Circie Size
-		AngleAdd += MaxItems;
+	AngleAdd += MaxItems;
 	
 	// Set Circle Size
 	Radius = GetCVAR("drpg_skill_radius");
-	AngleAdd = FixedDiv(1.0, AngleAdd);
 
 	// Create the Circle
 	for (int i = ItemID; i <= ItemID + MaxItems; i++)
@@ -1248,8 +1251,6 @@ function int Magnet(void)
 		X = GetActorX(0) + FixedMul(cos(Angle), Radius);
 		Y = GetActorY(0) + FixedMul(sin(Angle), Radius);
 		Z = GetActorZ(0) + 48.0;
-		
-		if (!IsTIDUsed(i)) continue;
 		
 		if (Overdrive)
 			SetActorPosition(i, GetActorX(0), GetActorY(0), GetActorZ(0), 0);
