@@ -14,37 +14,402 @@ Dark Blue (Capacity) - (Large Ammo, random Backpack size if they originally drop
 Yellow (Luck) - (Credits, 4x Luck Drops)
 Black (Mini-Boss) - Any combination of all of the above
 
---------------------------------------------------------------------------------
-// for copy and paste, saves time
-
-	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 0]"
-	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 0]"
-	Translation "0 : 255 = %[0, 0, 0] : [1, 1, 1]"
-	Translation "0 : 255 = %[0, 0, 0] : [1, 0.5, 0]"
-	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 0.5]"
-	Translation "0 : 255 = %[0, 0, 0] : [0, 1, 1]"
-	Translation "0 : 255 = %[0, 0, 0] : [1, 0, 1]"
-	Translation "0 : 255 = %[0, 0, 0] : [0, 0, 1]"
-	Translation "0 : 255 = %[0, 0, 0] : [1, 1, 0]"
-	Translation "0 : 255 = %[0, 0, 0] : [0, 0, 0]"
-
-	DropItem "LuckDropper"
-	DropItem "LuckDropper"
-	DropItem "LuckDropper"
-
-	DropItem "RuneDropper"
-	DropItem "ArmorRandomizer"
-	DropItem "SmallTokenRandomizer"
-	DropItem "HasteRune"
-	DropItem "HighJumpRune" 128
-	DropItem "TimeSphere" 64
-	DropItem "MedikitRandomizer"
-	DropItem "EPCapsule"
-	DropItem "BigEPCapsule" 128
-	DropItem "RegenSphere"
-	DropItem "BackpackRandomizer"
-
 */
+
+actor ZombieMan 3004
+{
+	Game Doom
+	SpawnID 4
+	Health 20
+	Radius 20
+	Height 56
+	Speed 8
+	PainChance 200
+	
+	Monster
+	+FLOORCLIP
+	
+	SeeSound "grunt/sight"
+	AttackSound "grunt/attack"
+	PainSound "grunt/pain"
+	DeathSound "grunt/death"
+	ActiveSound "grunt/active"
+	Obituary "$OB_ZOMBIE"
+	
+	DropItem "Pistol" 32
+	DropItem "Clip"
+
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+		Goto Idle
+	Idle:
+		POSS AB 10 A_Look
+		Loop
+	See:
+		POSS AABBCCDD 4 A_Chase
+		Loop
+	Missile:
+		POSS E 10 A_FaceTarget
+		POSS F 8 A_PosAttack
+		POSS E 8
+		Goto See
+	Pain:
+		POSS G 3
+		POSS G 3 A_Pain
+		Goto See
+	Death:
+		POSS H 5
+		POSS I 5 A_Scream
+		POSS J 5 A_NoBlocking
+		POSS K 5
+		POSS L -1
+		Stop
+	XDeath:
+		POSS M 5
+		POSS N 5 A_XScream
+		POSS O 5 A_NoBlocking
+		POSS PQRST 5
+		POSS U -1
+		Stop
+	Raise:
+		POSS K 5
+		POSS JIH 5
+		Goto See
+	}
+}
+
+actor ShotGunGuy 9
+{
+	Game Doom
+	SpawnID 1
+	Health 30
+	Radius 20
+	Height 56
+	Mass 100
+	Speed 8
+	PainChance 170
+	
+	Monster
+	+FLOORCLIP
+	
+	SeeSound "shotguy/sight"
+	AttackSound "shotguy/attack"
+	PainSound "shotguy/pain"
+	DeathSound "shotguy/death"
+	ActiveSound "shotguy/active"
+	Obituary "$OB_SHOTGUY"
+	
+	DropItem "Shotgun"
+
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+		Goto Idle
+	Idle:
+		SPOS AB 10 A_Look
+		Loop
+	See:
+		SPOS AABBCCDD 3 A_Chase
+		Loop
+	Missile:
+		SPOS E 10 A_FaceTarget
+		SPOS F 10 BRIGHT A_SposAttackUseAtkSound
+		SPOS E 10
+		Goto See
+	Pain:
+		SPOS G 3
+		SPOS G 3 A_Pain
+		Goto See
+	Death:
+		SPOS H 5
+		SPOS I 5 A_Scream
+		SPOS J 5 A_NoBlocking
+		SPOS K 5
+		SPOS L -1
+		Stop
+	XDeath:
+		SPOS M 5
+		SPOS N 5 A_XScream
+		SPOS O 5 A_NoBlocking
+		SPOS PQRST 5
+		SPOS U -1
+		Stop
+	Raise:
+		SPOS L 5
+		SPOS KJIH 5
+		Goto See
+	}
+}
+
+actor ChainGunGuy 65
+{
+	Game Doom
+	SpawnID 2
+	Health 70
+	Radius 20
+	Height 56
+	Mass 100
+	Speed 8
+	PainChance 170
+	
+	Monster
+	+FLOORCLIP
+	
+	SeeSound "chainguy/sight"
+	PainSound "chainguy/pain"
+	DeathSound "chainguy/death"
+	ActiveSound "chainguy/active"
+	AttackSound "chainguy/attack"
+	Obituary "$OB_CHAINGUY"
+	
+	DropItem "ClipBox" 32
+	DropItem "Chaingun"
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+		Goto Idle
+	Idle:
+		CPOS AB 10 A_Look
+		Loop
+	See:
+		CPOS AABBCCDD 3 A_Chase
+		Loop
+	Missile:
+		CPOS E 10 A_FaceTarget
+		CPOS FE 4 BRIGHT A_CPosAttack
+		CPOS F 1 A_CPosRefire
+		Goto Missile+1
+	Pain:
+		CPOS G 3
+		CPOS G 3 A_Pain
+		Goto See
+	Death:
+		CPOS H 5
+		CPOS I 5 A_Scream
+		CPOS J 5 A_NoBlocking
+		CPOS KLM 5
+		CPOS N -1
+		Stop
+	XDeath:
+		CPOS O 5 
+		CPOS P 5 A_XScream
+		CPOS Q 5 A_NoBlocking
+		CPOS RS 5
+		CPOS T -1
+		Stop
+	Raise:
+		CPOS N 5
+		CPOS MLKJIH 5
+		Goto See
+	}
+}
+
+actor DoomImp 3001
+{
+	Game Doom
+	SpawnID 5
+	Health 60
+	Radius 20
+	Height 56
+	Mass 100
+	Speed 8
+	PainChance 200
+	
+	Monster
+	+FLOORCLIP
+	
+	SeeSound "imp/sight"
+	PainSound "imp/pain"
+	DeathSound "imp/death"
+	ActiveSound "imp/active"
+	HitObituary "$OB_IMPHIT"
+	Obituary "$OB_IMP"
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+		Goto Idle
+	Idle:
+		TROO AB 10 A_Look
+		Loop
+	See:
+		TROO AABBCCDD 3 A_Chase
+		Loop
+	Melee:
+	Missile:
+		TROO EF 8 A_FaceTarget
+		TROO G 6 A_TroopAttack 
+		Goto See
+	Pain:
+		TROO H 2
+		TROO H 2 A_Pain
+		Goto See
+	Death:
+		TROO I 8
+		TROO J 8 A_Scream
+		TROO K 6
+		TROO L 6 A_NoBlocking
+		TROO M -1
+		Stop
+	XDeath:
+		TROO N 5
+		TROO O 5 A_XScream
+		TROO P 5
+		TROO Q 5 A_NoBlocking
+		TROO RST 5
+		TROO U -1
+		Stop
+	Raise:
+		TROO MLKJI 8
+		Goto See
+	}
+}
+
+actor Demon 3002
+{
+	Game Doom
+	SpawnID 8
+	Health 150
+	PainChance 180
+	Speed 10
+	Radius 30
+	Height 56
+	Mass 400
+	
+	Monster
+	+FLOORCLIP
+	
+	SeeSound "demon/sight"
+	AttackSound "demon/melee"
+	PainSound "demon/pain"
+	DeathSound "demon/death"
+	ActiveSound "demon/active"
+	Obituary "$OB_DEMONHIT"
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+		Goto Idle
+	Idle:
+		SARG AB 10 A_Look
+		Loop
+	See:
+		SARG AABBCCDD 2 Fast A_Chase
+		Loop
+	Melee:
+		SARG EF 8 Fast A_FaceTarget
+		SARG G 8 Fast A_SargAttack
+		Goto See
+	Pain:
+		SARG H 2 Fast
+		SARG H 2 Fast A_Pain
+		Goto See
+	Death:
+		SARG I 8
+		SARG J 8 A_Scream
+		SARG K 4
+		SARG L 4 A_NoBlocking
+		SARG M 4
+		SARG N -1
+		Stop
+	Raise:
+		SARG N 5
+		SARG MLKJI 5
+		Goto See
+	}
+}
+
+ACTOR Spectre : Demon 58
+{
+	Game Doom
+	SpawnID 9
+	
+	+SHADOW
+	
+	RenderStyle Fuzzy
+	Alpha 0.5
+	
+	SeeSound "spectre/sight"
+	AttackSound "spectre/melee"
+	PainSound "spectre/pain"
+	DeathSound "spectre/death"
+	ActiveSound "spectre/active"
+	HitObituary "$OB_SPECTREHIT"
+	
+	DropItem "BlurSphere" 32
+	DropItem "InvisibilityCharge" 8
+}
+
+actor Cacodemon 3005
+{
+	Game Doom
+	SpawnID 19
+	Health 400
+	Radius 31
+	Height 56
+	Mass 400
+	Speed 8
+	PainChance 128
+	
+	Monster
+	+FLOAT
+	+NOGRAVITY
+	
+	SeeSound "caco/sight"
+	PainSound "caco/pain"
+	DeathSound "caco/death"
+	ActiveSound "caco/active"
+	Obituary "$OB_CACO"
+	HitObituary "$OB_CACOHIT"
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+		Goto Idle
+	Idle:
+		HEAD A 10 A_Look
+		Loop
+	See:
+		HEAD A 3 A_Chase
+		Loop
+	Missile:
+		HEAD B 5 A_FaceTarget
+		HEAD C 5 A_FaceTarget
+		HEAD D 5 BRIGHT A_HeadAttack
+		Goto See
+	Pain:
+		HEAD E 3
+		HEAD E 3 A_Pain
+		HEAD F 6
+		Goto See
+	Death:
+		HEAD G 8
+		HEAD H 8 A_Scream
+		HEAD I 8
+		HEAD J 8
+		HEAD K 8 A_NoBlocking
+		HEAD L -1 A_SetFloorClip
+		Stop
+	Raise:
+		HEAD L 8 A_UnSetFloorClip
+		HEAD KJIHG 8
+		Goto See
+	}
+}
 
 actor HellKnight 69
 {
@@ -67,8 +432,6 @@ actor HellKnight 69
 	HitObituary "$OB_KNIGHTHIT"
 	Obituary "$OB_KNIGHT"
 	
-	DropItem "LuckDropper"
-
 	States
 	{
 	Spawn:
@@ -101,6 +464,64 @@ actor HellKnight 69
 	Raise:
 		BOS2 O 8
 		BOS2 NMLKJI  8
+		Goto See
+	}
+}
+
+actor BaronOfHell 3003
+{
+	Game Doom
+	SpawnID 3
+	Health 1000
+	Radius 24
+	Height 64
+	Mass 1000
+	Speed 8
+	PainChance 50
+	
+	Monster
+	+FLOORCLIP
+	+BOSSDEATH
+	
+	SeeSound "baron/sight"
+	PainSound "baron/pain"
+	DeathSound "baron/death"
+	ActiveSound "baron/active"
+	Obituary "$OB_BARON"
+	HitObituary "$OB_BARONHIT"
+
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+		Goto Idle
+	Idle:
+		BOSS AB 10 A_Look 
+		Loop
+	See:
+		BOSS AABBCCDD 3 A_Chase
+		Loop
+	Melee:
+	Missile:
+		BOSS EF 8 A_FaceTarget
+		BOSS G 8 A_BruisAttack
+		Goto See
+	Pain:
+		BOSS H  2
+		BOSS H  2 A_Pain
+		Goto See
+	Death:
+		BOSS I  8
+		BOSS J  8 A_Scream
+		BOSS K  8
+		BOSS L  8 A_NoBlocking
+		BOSS MN 8
+		BOSS O -1 A_BossDeath   
+		Stop
+	Raise:
+		BOSS O 8
+		BOSS NMLKJI  8
 		Goto See
 	}
 }
@@ -199,8 +620,6 @@ actor PainElemental 71
 	DeathSound "pain/death"
 	ActiveSound "pain/active"
 	
-	DropItem "LuckDropper"
-
 	States
 	{
 	Spawn:
@@ -260,7 +679,6 @@ actor Revenant 66
 	HitObituary "$OB_UNDEADHIT"
 	Obituary "$OB_UNDEAD"
 	
-	DropItem "LuckDropper"
 	DropItem "RocketAmmo" 32
 	DropItem "RocketBox" 8
 
@@ -327,8 +745,6 @@ actor Fatso 67
 	ActiveSound "fatso/active"
 	Obituary "$OB_FATSO"
 	
-	DropItem "LuckDropper"
-
 	States
 	{
 	Spawn:
@@ -389,7 +805,6 @@ ACTOR Arachnotron 68
 	ActiveSound "baby/active"
 	Obituary "$OB_BABY"
 	
-	DropItem "LuckDropper"
 	DropItem "Cell" 32
 	DropItem "CellPack" 8
 	
@@ -456,8 +871,6 @@ actor Archvile 64
 	MeleeSound "vile/stop"
 	Obituary "$OB_VILE"
 	
-	DropItem "LuckDropper"
-
 	States
 	{
 	Spawn:
@@ -496,6 +909,146 @@ actor Archvile 64
 	}
 }
 
+ACTOR WolfensteinSS 84
+{
+	Game Doom
+	SpawnID 116
+	Health 50
+	Radius 20
+	Height 56
+	Speed 8
+	PainChance 170
+	
+	Monster
+	+FLOORCLIP
+	
+	SeeSound "wolfss/sight"
+	PainSound "wolfss/pain"
+	DeathSound "wolfss/death"
+	ActiveSound "wolfss/active"
+	AttackSound "wolfss/attack"
+	Obituary "$OB_WOLFSS"
+	
+	DropItem "Clip"
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+		Goto Idle
+	Idle:
+		SSWV AB 10 A_Look
+		Loop
+	See:
+		SSWV AABBCCDD 3 A_Chase
+		Loop
+	Missile:
+		SSWV E 10 A_FaceTarget
+		SSWV F 10 A_FaceTarget
+		SSWV G 4 BRIGHT A_CPosAttack
+		SSWV F 6 A_FaceTarget
+		SSWV G 4 BRIGHT A_CPosAttack
+		SSWV F 1 A_CPosRefire
+		Goto Missile+1
+	Pain:
+		SSWV H 3
+		SSWV H 3 A_Pain
+		Goto See
+	Death:
+		SSWV I 5
+		SSWV J 5 A_Scream
+		SSWV K 5 A_NoBlocking
+		SSWV L 5
+		SSWV M -1
+		Stop
+	XDeath:
+		SSWV N 5 
+		SSWV O 5 A_XScream
+		SSWV P 5 A_NoBlocking
+		SSWV QRSTU 5
+		SSWV V -1
+		Stop
+	Raise:
+		SSWV M 5
+		SSWV LKJI 5
+		Goto See 
+	}
+}
+
+actor Cyberdemon 16
+{
+	Game Doom
+	SpawnID 114
+	Health 4000
+	Radius 40
+	Height 110
+	Mass 1000
+	Speed 16
+	PainChance 20
+	
+	Monster
+	MinMissileChance 160
+	
+	+BOSS 
+	+MISSILEMORE
+	+FLOORCLIP
+	+NORADIUSDMG
+	+DONTMORPH
+	+BOSSDEATH
+	
+	SeeSound "cyber/sight"
+	PainSound "cyber/pain"
+	DeathSound "cyber/death"
+	ActiveSound "cyber/active"
+	Obituary "$OB_CYBORG"
+	
+	DropItem "Credits1000"
+	DropItem "SoulsphereRandomizer"
+	DropItem "Continue" 128
+	DropItem "TokenDropper"
+	DropItem "RuneDropper"
+	DropItem "AccessoryDropper"
+	DropItem "ShieldDropper"
+
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+		Goto Idle
+	Idle:
+		CYBR AB 10 A_Look
+		Loop
+	See:
+		CYBR A 3 A_Hoof
+		CYBR ABBCC 3 A_Chase
+		CYBR D 3 A_Metal
+		CYBR D 3 A_Chase
+		Loop
+	Missile:
+		CYBR E 6 A_FaceTarget
+		CYBR F 12 A_CyberAttack
+		CYBR E 12 A_FaceTarget
+		CYBR F 12 A_CyberAttack
+		CYBR E 12 A_FaceTarget
+		CYBR F 12 A_CyberAttack
+		Goto See
+	Pain:
+		CYBR G 10 A_Pain
+		Goto See
+	Death:
+		CYBR H 10
+		CYBR I 10 A_Scream
+		CYBR JKL 10
+		CYBR M 10 A_NoBlocking
+		CYBR NO 10
+		CYBR P 30
+		CYBR P -1 A_BossDeath
+		Stop
+	}
+}
+
 actor SpiderMastermind 7
 {
 	Game Doom
@@ -524,17 +1077,13 @@ actor SpiderMastermind 7
 	ActiveSound "spider/active"
 	Obituary "$OB_SPIDER"
 	
-	DropItem "LuckDropper"
-	DropItem "LuckDropper"
-	DropItem "LuckDropper"
-	DropItem "LuckDropper"
 	DropItem "Credits1000"
-	DropItem "AtomicHealth"
+	DropItem "SoulSphereRandomizer"
 	DropItem "Continue" 128
 	DropItem "TokenDropper"
 	DropItem "RuneDropper"
 	DropItem "AccessoryDropper"
-	DropItem "ShieldPartDropper"
+	DropItem "ShieldDropper"
 
 	States
 	{

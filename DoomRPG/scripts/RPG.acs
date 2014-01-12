@@ -16,8 +16,8 @@
 // Flags
 global int 1 : FirstRun;
 
-str Version = "v0.94 Beta";
-str TimeStamp = "Sunday, January 12, 2014 at 3:31:18 AM";
+str Version = "v0.95 Beta";
+str TimeStamp = "Sunday, January 12, 2014 at 8:53:35 AM";
 
 int MapNumber;
 int ParBonus;
@@ -151,14 +151,25 @@ script "MonsterInit" (void)
 	if (GetCVAR("drpg_monster_levels"))
 	{
 		int MonsterLevel;
+		int MonsterAura;
 		int MonsterStrength;
 		int MonsterDefense;
 		int MonsterRegen;
+		int AuraRandomizer;
 		
 		// level
 		MonsterLevel = Level + Random(-(GameSkill() - 1), GameSkill() + 1);
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		SetInventory("MonsterLevel", MonsterLevel);
+		
+		// Aura
+		if (!GetActorProperty(0, APROP_FRIENDLY))
+		{
+			AuraRandomizer = Random(-10, 10);
+			if (AuraRandomizer > 0)
+				MonsterAura = AuraRandomizer;
+			SetInventory("MonsterAura", MonsterAura);
+		}
 		
 		// Strength
 		MonsterStrength = Random(MonsterLevel - (GameSkill() - 1), MonsterLevel + (GameSkill() + 1));
@@ -169,27 +180,153 @@ script "MonsterInit" (void)
 		SetInventory("MonsterDefense", MonsterDefense);
 		SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.075, FixedDiv(MonsterDefense, 100)));
 		if (GetActorProperty(0, APROP_DAMAGEFACTOR) == 0) SetActorProperty(0, APROP_DAMAGEFACTOR, 0.025);
+		
+		// Aura Effects
+		if (MonsterAura > 0)
+			SetActorProperty(0, APROP_HEALTH, GetActorProperty(0, APROP_SPAWNHEALTH) * 2);
+		switch (MonsterAura)
+		{
+			case 1: // Red Aura - Strength
+				SetInventory("MonsterStrength", MonsterStrength * 2);
+				break;
+			case 2: // Green Aura - Defense
+				SetInventory("MonsterDefense", MonsterDefense * 2);
+				SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.075, FixedDiv(MonsterDefense, 100)));
+				if (GetActorProperty(0, APROP_DAMAGEFACTOR) == 0) SetActorProperty(0, APROP_DAMAGEFACTOR, 0.025);
+				break;
+			case 4: // Orange Aura - Agility
+				SetActorProperty(0, APROP_SPEED, GetActorProperty(0, APROP_SPEED) * 2);
+				break;
+			case 5: // Pink Aura - Vitality
+				SetActorProperty(0, APROP_HEALTH, GetActorProperty(0, APROP_SPAWNHEALTH) * 4);
+				break;
+			case 10: // Black Aura - Miniboss
+				SetInventory("MonsterStrength", MonsterStrength * 2);
+				SetInventory("MonsterDefense", MonsterDefense * 2);
+				SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.075, FixedDiv(MonsterDefense, 100)));
+				if (GetActorProperty(0, APROP_DAMAGEFACTOR) == 0) SetActorProperty(0, APROP_DAMAGEFACTOR, 0.025);
+				SetActorProperty(0, APROP_SPEED, GetActorProperty(0, APROP_SPEED) * 2);
+				SetActorProperty(0, APROP_HEALTH, GetActorProperty(0, APROP_SPAWNHEALTH) * 8);
+				break;
+		}
 	}
 }
 
 // Monster Loop
 script "MonsterLoop" (void)
 {
+	int X = GetActorX(0);
+	int Y = GetActorY(0);
+	int Z = GetActorZ(0);
+	int AuraType = CheckInventory("MonsterAura");
+	
 	// Death
 	if (GetActorProperty(0, APROP_HEALTH) <= 0)
 	{
 		int XPAmount = Random(GetActorProperty(0, APROP_SPAWNHEALTH), GetActorProperty(0, APROP_SPAWNHEALTH) * 2);
 		XPAmount *= 1 + (CheckInventory("MonsterLevel") / 100);
 		
+		// Aura Drops
+		switch (AuraType)
+		{
+		case 1: // Red Aura - Strength
+			DropItem(0, "RuneDropper", 1, 128);
+			break;
+		case 2: // Green Aura - Defense
+			DropItem(0, "ArmorDropper", 1, 128);
+			break;
+		case 3: // White Aura - XP
+			DropItem(0, "SmallTokenDropper", 1, 128);
+			XPAmount *= 2;
+			break;
+		case 4: // Orange Aura - Agility
+			DropItem(0, "HasteRune", 1, 192);
+			DropItem(0, "HighJumpRune", 1, 128);
+			DropItem(0, "TimeSphere", 1, 64);
+			break;
+		case 5: // Pink Aura - Vitality
+			DropItem(0, "HealthDropper", 1, 128);
+			break;
+		case 6: // Blue Aura - Energy
+			DropItem(0, "EPCapsule", 1, 128);
+			DropItem(0, "BigEPCapsule", 1, 64);
+			break;
+		case 7: // Purple Aura - Regeneration
+			DropItem(0, "RegenSphere", 1, 128);
+			break;
+		case 8: // Dark Blue Aura - Capacity
+			DropItem(0, "SmallBackpack", 1, 128);
+			break;
+		case 9: // Yellow Aura - Luck
+			DropItem(0, "LuckDropper", 4, 255);
+			break;
+		case 10: // Black Aura - Miniboss
+			DropItem(0, "RuneDropper", 1, 64);
+			DropItem(0, "ArmorDropper", 1, 64);
+			DropItem(0, "SmallTokenDropper", 1, 64);
+			DropItem(0, "HasteRune", 1, 96);
+			DropItem(0, "HighJumpRune", 1, 64);
+			DropItem(0, "TimeSphere", 1, 32);
+			DropItem(0, "HealthDropper", 1, 64);
+			DropItem(0, "EPCapsule", 1, 64);
+			DropItem(0, "BigEPCapsule", 1, 32);
+			DropItem(0, "RegenSphere", 1, 64);
+			DropItem(0, "Backpack", 1, 64);
+			DropItem(0, "LuckDropper", 4, 255);
+			XPAmount *= 4;
+			break;
+		}
+		
+		// Add XP
 		if (!GetActorProperty(0, APROP_FRIENDLY))
 			AddXP(XPAmount);
-		
+
 		terminate;
 	}
 	
 	// Friendly Monster Aura
 	if (GetActorProperty(0, APROP_FRIENDLY))
-		SpawnForced("GreenAura", GetActorX(0), GetActorY(0), GetActorZ(0) + 32, 0, 0);
+		SpawnForced("FriendlyAura", X, Y, Z + 32, 0, 0);
+	
+	// Aura Loop Effects
+	switch (AuraType)
+	{
+		case 1: // Red Aura - Strength
+			SpawnForced("RedAura", X, Y, Z + 32, 0, 0);
+			break;
+		case 2: // Green Aura - Defense
+			SpawnForced("GreenAura", X, Y, Z + 32, 0, 0);
+			break;
+		case 3: // White Aura - XP
+			SpawnForced("WhiteAura", X, Y, Z + 32, 0, 0);
+			break;
+		case 4: // Orange Aura - Agility
+			SpawnForced("OrangeAura", X, Y, Z + 32, 0, 0);
+			break;
+		case 5: // Pink Aura - Vitality
+			SpawnForced("PinkAura", X, Y, Z + 32, 0, 0);
+			break;
+		case 6: // Blue Aura - Energy
+			SpawnForced("CyanAura", X, Y, Z + 32, 0, 0);
+			break;
+		case 7: // Purple Aura - Regeneration
+			SpawnForced("PurpleAura", X, Y, Z + 32, 0, 0);
+			int RegenAmount = FixedMul(0.1, GetActorProperty(0, APROP_HEALTH));
+			if (RegenAmount == 0) RegenAmount = 1;
+			if (GetActorProperty(0, APROP_HEALTH) < GetActorProperty(0, APROP_SPAWNHEALTH) && (Timer() % 35) == 1)
+				HealThing(RegenAmount);
+			break;
+		case 8: // Dark Blue Aura - Capacity
+			SpawnForced("BlueAura", X, Y, Z + 32, 0, 0);
+			break;
+		case 9: // Yellow Aura - Luck
+			SpawnForced("YellowAura", X, Y, Z + 32, 0, 0);
+			break;
+		case 10: // Black Aura - Miniboss
+			SetActorProperty(0, APROP_RENDERSTYLE, STYLE_FUZZY);
+			SpawnForced("BlackAura", X, Y, Z + 32, 0, 0);
+			break;
+	}
 	
 	// Give Strength Item
 	int MonsterStrength = CheckInventory("MonsterStrength");
@@ -596,6 +733,7 @@ script "HealthBars" (void)
 		int Y = GetCVAR("drpg_healthbars_y");
 		str Name = "";
 		int CurrentLevel = CheckInventory("MonsterLevel");
+		int CurrentAura = CheckInventory("MonsterAura");
 		int CurrentStrength = CheckInventory("MonsterStrength");
 		int CurrentDefense = CheckInventory("MonsterDefense");
 		int CurrentRegen = CheckInventory("MonsterRegeneration");
@@ -604,6 +742,7 @@ script "HealthBars" (void)
 		bool Friendly = GetActorProperty(0, APROP_FRIENDLY);
 		int HealthPercent;
 		str FillType;
+		str AuraType;
 		int i;
 		
 		if (ActivatorTID() != Activator)
@@ -674,6 +813,23 @@ script "HealthBars" (void)
 					// PrintSprite("MonREG", 0, X + 84.0, Y + 20.0, 0.05);
 				}
 				
+				// Aura
+				switch (CurrentAura)
+				{
+					case 1: 	AuraType = "AuraRed";	break;
+					case 2: 	AuraType = "AuraGree";	break;
+					case 3: 	AuraType = "AuraWhit";	break;
+					case 4: 	AuraType = "AuraOran";	break;
+					case 5: 	AuraType = "AuraPink";	break;
+					case 6: 	AuraType = "AuraCyan";	break;
+					case 7: 	AuraType = "AuraPurp";	break;
+					case 8: 	AuraType = "AuraBlue";	break;
+					case 9:		AuraType = "AuraYell";	break;
+					case 10: 	AuraType = "AuraBlac";	break;
+				}
+				if (CurrentAura > 0)
+					PrintSprite(AuraType, 0, X - 136.0, Y + 30.0, 0.05);
+				
 				// Prevent bar overflow
 				if (HealthPercent > 100)
 					HealthPercent = 100;
@@ -704,6 +860,7 @@ script 30000 (int Secret)
 		
 		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
 		ActivatorSound("misc/secret", 127);
+		ComboTimer = 100;
 		Combo++;
 		RankGained += RankBonus;
 		
