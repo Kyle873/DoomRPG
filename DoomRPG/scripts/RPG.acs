@@ -17,7 +17,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.95 Beta";
-str TimeStamp = "Sunday, January 12, 2014 at 12:03:12 PM";
+str TimeStamp = "Sunday, January 12, 2014 at 12:29:19 PM";
 
 int MapNumber;
 int ParBonus;
@@ -221,6 +221,7 @@ script "MonsterLoop" (void)
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterStrength = CheckInventory("MonsterStrength");
 	int AuraType = CheckInventory("MonsterAura");
+	int RegenAmount;
 	
 	// Death
 	if (GetActorProperty(0, APROP_HEALTH) <= 0)
@@ -313,7 +314,7 @@ script "MonsterLoop" (void)
 			break;
 		case 7: // Purple Aura - Regeneration
 			SpawnForced("PurpleAura", X, Y, Z + 32, 0, 0);
-			int RegenAmount = FixedMul(0.1, GetActorProperty(0, APROP_HEALTH));
+			RegenAmount = FixedMul(0.1, GetActorProperty(0, APROP_HEALTH));
 			if (RegenAmount == 0) RegenAmount = 1;
 			if (GetActorProperty(0, APROP_HEALTH) < GetActorProperty(0, APROP_SPAWNHEALTH) && (Timer() % 35) == 1)
 				HealThing(RegenAmount);
@@ -325,8 +326,12 @@ script "MonsterLoop" (void)
 			SpawnForced("YellowAura", X, Y, Z + 32, 0, 0);
 			break;
 		case 10: // Black Aura - Miniboss
-			SetActorProperty(0, APROP_RENDERSTYLE, STYLE_FUZZY);
 			SpawnForced("BlackAura", X, Y, Z + 32, 0, 0);
+			SetActorProperty(0, APROP_RENDERSTYLE, STYLE_FUZZY);
+			RegenAmount = FixedMul(0.1, GetActorProperty(0, APROP_HEALTH));
+			if (RegenAmount == 0) RegenAmount = 1;
+			if (GetActorProperty(0, APROP_HEALTH) < GetActorProperty(0, APROP_SPAWNHEALTH) && (Timer() % 35) == 1)
+				HealThing(RegenAmount);
 			break;
 	}
 	
