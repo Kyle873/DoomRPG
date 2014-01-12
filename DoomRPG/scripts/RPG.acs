@@ -17,7 +17,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.95 Beta";
-str TimeStamp = "Sunday, January 12, 2014 at 8:53:35 AM";
+str TimeStamp = "Sunday, January 12, 2014 at 9:29:55 AM";
 
 int MapNumber;
 int ParBonus;
@@ -162,15 +162,6 @@ script "MonsterInit" (void)
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		SetInventory("MonsterLevel", MonsterLevel);
 		
-		// Aura
-		if (!GetActorProperty(0, APROP_FRIENDLY))
-		{
-			AuraRandomizer = Random(-10, 10);
-			if (AuraRandomizer > 0)
-				MonsterAura = AuraRandomizer;
-			SetInventory("MonsterAura", MonsterAura);
-		}
-		
 		// Strength
 		MonsterStrength = Random(MonsterLevel - (GameSkill() - 1), MonsterLevel + (GameSkill() + 1));
 		SetInventory("MonsterStrength", MonsterStrength);
@@ -180,35 +171,44 @@ script "MonsterInit" (void)
 		SetInventory("MonsterDefense", MonsterDefense);
 		SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.075, FixedDiv(MonsterDefense, 100)));
 		if (GetActorProperty(0, APROP_DAMAGEFACTOR) == 0) SetActorProperty(0, APROP_DAMAGEFACTOR, 0.025);
-		
-		// Aura Effects
-		if (MonsterAura > 0)
-			SetActorProperty(0, APROP_HEALTH, GetActorProperty(0, APROP_SPAWNHEALTH) * 2);
-		switch (MonsterAura)
-		{
-			case 1: // Red Aura - Strength
-				SetInventory("MonsterStrength", MonsterStrength * 2);
-				break;
-			case 2: // Green Aura - Defense
-				SetInventory("MonsterDefense", MonsterDefense * 2);
-				SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.075, FixedDiv(MonsterDefense, 100)));
-				if (GetActorProperty(0, APROP_DAMAGEFACTOR) == 0) SetActorProperty(0, APROP_DAMAGEFACTOR, 0.025);
-				break;
-			case 4: // Orange Aura - Agility
-				SetActorProperty(0, APROP_SPEED, GetActorProperty(0, APROP_SPEED) * 2);
-				break;
-			case 5: // Pink Aura - Vitality
-				SetActorProperty(0, APROP_HEALTH, GetActorProperty(0, APROP_SPAWNHEALTH) * 4);
-				break;
-			case 10: // Black Aura - Miniboss
-				SetInventory("MonsterStrength", MonsterStrength * 2);
-				SetInventory("MonsterDefense", MonsterDefense * 2);
-				SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.075, FixedDiv(MonsterDefense, 100)));
-				if (GetActorProperty(0, APROP_DAMAGEFACTOR) == 0) SetActorProperty(0, APROP_DAMAGEFACTOR, 0.025);
-				SetActorProperty(0, APROP_SPEED, GetActorProperty(0, APROP_SPEED) * 2);
-				SetActorProperty(0, APROP_HEALTH, GetActorProperty(0, APROP_SPAWNHEALTH) * 8);
-				break;
-		}
+	}
+	
+	// Apply Aura
+	if (!GetActorProperty(0, APROP_FRIENDLY))
+	{
+		AuraRandomizer = Random(-20 + (GameSkill() * 2), 10);
+		if (AuraRandomizer > 0)
+			MonsterAura = AuraRandomizer;
+		SetInventory("MonsterAura", MonsterAura);
+	}
+	
+	// Aura Effects
+	if (MonsterAura > 0)
+		SetActorProperty(0, APROP_HEALTH, GetActorProperty(0, APROP_SPAWNHEALTH) * 2);
+	switch (MonsterAura)
+	{
+		case 1: // Red Aura - Strength
+			SetInventory("MonsterStrength", MonsterStrength * 2);
+			break;
+		case 2: // Green Aura - Defense
+			SetInventory("MonsterDefense", MonsterDefense * 2);
+			SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.075, FixedDiv(MonsterDefense, 100)));
+			if (GetActorProperty(0, APROP_DAMAGEFACTOR) == 0) SetActorProperty(0, APROP_DAMAGEFACTOR, 0.025);
+			break;
+		case 4: // Orange Aura - Agility
+			SetActorProperty(0, APROP_SPEED, GetActorProperty(0, APROP_SPEED) * 2);
+			break;
+		case 5: // Pink Aura - Vitality
+			SetActorProperty(0, APROP_HEALTH, GetActorProperty(0, APROP_SPAWNHEALTH) * 4);
+			break;
+		case 10: // Black Aura - Miniboss
+			SetInventory("MonsterStrength", MonsterStrength * 2);
+			SetInventory("MonsterDefense", MonsterDefense * 2);
+			SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.075, FixedDiv(MonsterDefense, 100)));
+			if (GetActorProperty(0, APROP_DAMAGEFACTOR) == 0) SetActorProperty(0, APROP_DAMAGEFACTOR, 0.025);
+			SetActorProperty(0, APROP_SPEED, GetActorProperty(0, APROP_SPEED) * 2);
+			SetActorProperty(0, APROP_HEALTH, GetActorProperty(0, APROP_SPAWNHEALTH) * 8);
+			break;
 	}
 }
 
