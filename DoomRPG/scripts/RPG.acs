@@ -17,7 +17,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.94 Beta";
-str TimeStamp = "Saturday, January 11, 2014 at 6:54:32 PM";
+str TimeStamp = "Saturday, January 11, 2014 at 7:19:33 PM";
 
 int MapNumber;
 int ParBonus;
@@ -150,6 +150,29 @@ script "MonsterInit" (void)
 	
 	// Start Monster Loop Script
 	ACS_NamedExecuteAlways("MonsterLoop", 0);
+	
+	// Monster Level System
+	if (GetCVAR("drpg_monster_levels"))
+	{
+		int MonsterLevel;
+		int MonsterStrength;
+		int MonsterDefense;
+		int MonsterRegen;
+		
+		// level
+		MonsterLevel = Level + Random(-(GameSkill() - 1), GameSkill() + 1);
+		if (MonsterLevel <= 0) MonsterLevel = 1;
+		SetInventory("MonsterLevel", MonsterLevel);
+		
+		// Strength
+		MonsterStrength = Random(MonsterLevel - (GameSkill() - 1), MonsterLevel + (GameSkill() + 1));
+		SetInventory("MonsterStrength", MonsterStrength);
+		
+		// Defense
+		MonsterDefense = Random(MonsterLevel - (GameSkill() - 1), MonsterLevel + (GameSkill() + 1));
+		SetInventory("MonsterDefense", MonsterDefense);
+		SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.25, FixedDiv(MonsterDefense, 100)));
+	}
 }
 
 // Monster Loop
@@ -166,37 +189,9 @@ script "MonsterLoop" (void)
 		
 		terminate;
 	}
-	
-	// Init
-	if (!CheckInventory("MonsterInit"))
-	{
-		// Monster Level System
-		if (GetCVAR("drpg_monster_levels"))
-		{
-			int MonsterLevel;
-			int MonsterStrength;
-			int MonsterDefense;
-			int MonsterRegen;
-			
-			// level
-			MonsterLevel = 1 + Level + Random(-(GameSkill()), GameSkill());
-			SetInventory("MonsterLevel", MonsterLevel);
-			
-			// Strength
-			MonsterStrength = Level + Random(-(MonsterLevel - (10 - GameSkill())), MonsterLevel + GameSkill());
-			SetInventory("MonsterStrength", MonsterStrength);
-			
-			// Defense
-			MonsterDefense = Level + Random(-(MonsterLevel - (10 - GameSkill())), MonsterLevel + GameSkill());
-			SetInventory("MonsterDefense", MonsterDefense);
-			SetActorProperty(0, APROP_DAMAGEFACTOR, 1.0 - FixedMul(0.25, FixedDiv(MonsterDefense, 100)));
-		}
-		
-		// Finished Init
-		GiveInventory("MonsterInit", 1);
-	}
 
 	// Give Strength Item
+	int MonsterStrength = CheckInventory("MonsterStrength");
 	if (MonsterStrength > 0 && GetCVAR("drpg_monster_levels"))
 		GiveInventory(StrParam(s:"Strength", d:(MonsterStrength * 2)), 1);
 	
@@ -627,7 +622,7 @@ script "HealthBars" (void)
 				HudMessage(d:CurrentHealth, s:"/", d:MaxHealth; HUDMSG_PLAIN, 4001, CR_GREEN, X, Y, 0.05);
 				
 				// Stats
-				if (GetCVAR("drpg_monster_levels") && CurrentLevel > 0 && CurrentStrength > 0 && CurrentDefense > 0)
+				if (GetCVAR("drpg_monster_levels") && CurrentLevel > 0)
 				{
 					SetFont("BIGFONT");
 					
