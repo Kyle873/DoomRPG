@@ -59,14 +59,14 @@ str SkillCategories[MAX_CATEGORIES] =
 
 int CategoryMax[MAX_CATEGORIES] =
 {
-	2, 9, 9, 4, 17, 6
+	3, 9, 9, 4, 17, 6
 };
 
 // Skill Max Levels
 int SkillLevelMax[MAX_CATEGORIES][MAX_SKILLS] =
 {
 	// Healing
-	{ 1, 1 },
+	{ 1, 1, 1 },
 	// Powerups
 	{ 10, 10, 2, 1, 1, 1, 1, 1, 1 },
 	// Auras
@@ -82,7 +82,7 @@ int SkillLevelMax[MAX_CATEGORIES][MAX_SKILLS] =
 int SkillCosts[MAX_CATEGORIES][MAX_SKILLS] =
 {
 	// Healing
-	{ 50, 50 },
+	{ 50, 100, 50 },
 	// Powerups
 	{ 50, 25, 250, 250, 250, 500, 500, 250, 250 },
 	// Auras
@@ -101,6 +101,7 @@ str SkillIcons[MAX_CATEGORIES][MAX_SKILLS] =
 	// Healing
 	{
 		"Heal",			// Heal
+		"Heal",			// Heal Summons
 		"Repair",		// Repair Armor
 	},
 	// Powerups
@@ -174,19 +175,15 @@ int SkillData[MAX_CATEGORIES][MAX_SKILLS][20] =
 	{
 		{
 			"Heal",
-			"Recover (Energy * 10) HP",
-			"Recover (Energy * 20) HP",
-			"Recover (Energy * 30) HP",
-			"Recover (Energy * 40) HP",
-			"Recover (Energy * 50) HP"
+			"Recover HP",
+		},
+		{
+			"Heal Summons",
+			"Summoned Monsters Recover all HP",
 		},
 		{
 			"Repair Armor",
-			"Repair (Energy * 10) Armor",
-			"Repair (Energy * 20) Armor",
-			"Repair (Energy * 30) Armor",
-			"Repair (Energy * 40) Armor",
-			"Repair (Energy * 50) Armor"
+			"Repair Armor",
 		}
 	},
 	
@@ -551,8 +548,9 @@ script "UseSkill" (int Index)
 			case 0: // Healing
 				switch (SkillIndex[Index])
 				{
-					case 0:		Success = Heal();					break; // Heal
-					case 1:		Success = Repair();					break; // Repair Armor
+					case 0:		Success = Heal(1);					break; // Heal
+					case 1:		Success = Heal(2);					break; // Heal Summons
+					case 2:		Success = Repair();					break; // Repair Armor
 				}
 				break;
 			
@@ -772,23 +770,36 @@ script "Transport" (void)
 }
 
 // Heal
-function int Heal(void)
+function int Heal(int Type)
 {
 	// Refund - If your health is max or above
-	if (!Overdrive && GetActorProperty(0, APROP_HEALTH) >= GetActorProperty(0, APROP_SPAWNHEALTH))
+	if (Type == 1 && GetActorProperty(0, APROP_HEALTH) >= GetActorProperty(0, APROP_SPAWNHEALTH))
 	{
 		ActivatorSound("menu/error", 127);
 		return false;
 	}
-
-	FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0, 1.0);
-	HealThing(Energy * 10);
-	ActivatorSound("skills/heal", 127);
 	
-	// Overdrive - Heal Summoned Monsters
-	if (Overdrive)
+	// Refund - If you have no summoned monsters
+	if (Type == 2 && MaxSummons == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	}
+	
+	FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0, 1.0);
+	
+	if (Type == 1) // Player
+	{
+		HealThing(Energy * 10);
+		ActivatorSound("skills/heal", 127);
+	}
+	if (Type == 2) // Summons
+	{
 		for (int i = SummonID; i <= SummonID + MaxSummons; i++)
 			SetActorProperty(i, APROP_HEALTH, GetActorProperty(i, APROP_SPAWNHEALTH));
+		
+		ActivatorSound("skills/heal2", 127);
+	}
 	
 	return true;
 }
@@ -1554,7 +1565,7 @@ function void CheckSkillDescriptions(void)
 
 	// Healing - Repair Armor
 	for (i = 1; i <= SkillLevelMax[0][1]; i++)
-		SkillData[0][1][i] = StrParam(s:"Repair ", d:Energy * 10, s:" Armor");
+		SkillData[0][2][i] = StrParam(s:"Repair ", d:Energy * 10, s:" Armor");
 	
 	// Attacks - Fireball
 	for (i = 1; i <= SkillLevelMax[3][0]; i++)
