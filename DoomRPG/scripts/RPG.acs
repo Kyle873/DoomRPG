@@ -17,7 +17,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.95 Beta";
-str TimeStamp = "Monday, January 13, 2014 at 2:02:51 AM";
+str TimeStamp = "Monday, January 13, 2014 at 6:45:48 AM";
 
 int MapNumber;
 int ParBonus;
@@ -151,6 +151,9 @@ script "MonsterInit" (void)
 	
 	// Start Monster Loop Script
 	ACS_NamedExecuteAlways("MonsterLoop", 0);
+	
+	// Give it a Health Bar
+	SetInventory("HealthBar", 1);
 	
 	// Monster Level System
 	if (GetCVAR("drpg_monster_levels"))
@@ -787,6 +790,7 @@ script "HealthBars" (void)
 		int X = GetCVAR("drpg_healthbars_x");
 		int Y = GetCVAR("drpg_healthbars_y");
 		str Name = "";
+		bool HasHealthBar = (CheckInventory("HealthBar") > 0);
 		int CurrentLevel = CheckInventory("MonsterLevel");
 		int CurrentAura = CheckInventory("MonsterAura");
 		int CurrentStrength = CheckInventory("MonsterStrength");
@@ -804,42 +808,41 @@ script "HealthBars" (void)
 		{
 			SetActivator(Activator);
 			SetActivatorToTarget(1000);
-			
 			SetActivator(Activator);
 			
-			// Divide-by-zero check
-			if (MaxHealth > 0)
-				HealthPercent = (CurrentHealth * 100) / MaxHealth;
-			
-			/* Name handling
-			for (i = 0; i < MAX_NAMES - 1; i++)
-				if (StrCmp(GetActorClass(0), MonsterNames[i][0]) == 0)
-					Name = MonsterNames[i][1];
-			*/
-			
-			if (HealthPercent > 100)
-				FillType = "Fill5";
-			if (HealthPercent >= 75 && HealthPercent <= 100)
-				FillType = "Fill1";
-			if (HealthPercent >= 50 && HealthPercent <= 74)
-				FillType = "Fill2";
-			if (HealthPercent >= 25 && HealthPercent <= 49)
-				FillType = "Fill3";
-			if (HealthPercent <= 24)
-				FillType = "Fill4";
-			
-			/* Multi-part lols
-			if (i >= 75 && i <= 100)
-				FillType = "Fill1";
-			if (i >= 50 && i <= 74)
-				FillType = "Fill2";
-			if (i >= 25 && i <= 49)
-				FillType = "Fill3";
-			if (i <= 24)
-				FillType = "Fill4"; */
-
-			if (CurrentHealth > 0 && (!InMenu && !InShop))
+			if (HasHealthBar && CurrentHealth > 0 && (!InMenu && !InShop))
 			{
+				// Divide-by-zero check
+				if (MaxHealth > 0)
+					HealthPercent = (CurrentHealth * 100) / MaxHealth;
+				
+				/* Name handling
+				for (i = 0; i < MAX_NAMES - 1; i++)
+					if (StrCmp(GetActorClass(0), MonsterNames[i][0]) == 0)
+						Name = MonsterNames[i][1];
+				*/
+				
+				if (HealthPercent > 100)
+					FillType = "Fill5";
+				if (HealthPercent >= 75 && HealthPercent <= 100)
+					FillType = "Fill1";
+				if (HealthPercent >= 50 && HealthPercent <= 74)
+					FillType = "Fill2";
+				if (HealthPercent >= 25 && HealthPercent <= 49)
+					FillType = "Fill3";
+				if (HealthPercent <= 24)
+					FillType = "Fill4";
+				
+				/* Multi-part lols
+				if (i >= 75 && i <= 100)
+					FillType = "Fill1";
+				if (i >= 50 && i <= 74)
+					FillType = "Fill2";
+				if (i >= 25 && i <= 49)
+					FillType = "Fill3";
+				if (i <= 24)
+					FillType = "Fill4"; */
+
 				SetHUDSize(800, 600, false);
 				
 				if (Friendly)
