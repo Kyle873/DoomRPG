@@ -17,13 +17,15 @@
 global int 1 : FirstRun;
 
 str Version = "v0.95 Beta";
-str TimeStamp = "Sunday, January 12, 2014 at 2:13:53 PM";
+str TimeStamp = "Monday, January 13, 2014 at 1:00:15 AM";
 
 int MapNumber;
 int ParBonus;
 
+// Status Effects
 int StatusType;
 int StatusTimer;
+global int 7 : StatusTimerHUD;
 
 // Monster Names
 str MonsterNames[MAX_NAMES][2] =
@@ -402,6 +404,16 @@ script "Loop" (void)
 	// For EP Bar on HUD
 	TakeInventory("EP", 100);
 	GiveInventory("EP", FixedMul(FixedDiv(EP, EPMax), 100));
+	
+	// Clear your Status Effect if the timer is empty
+	if (StatusTimer <= 0)
+		StatusType = 0;
+	
+	// HUD Status Effect Timer
+	if (StatusType > 0)
+		StatusTimerHUD = StatusTimer / 35 + 1;
+	else
+		StatusTimerHUD = 0;
 	
 	// Increase the monster difficulty depending on the map number if that CVAR is set
 	if (GetCVAR("drpg_monster_attack"))
