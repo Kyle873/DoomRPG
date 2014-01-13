@@ -10,7 +10,7 @@
 // Arena defines
 #libdefine MAX_MUSIC           1
 #libdefine MAX_MODS            1
-#libdefine MAX_ENVIRONMENTS    0
+#libdefine MAX_ENVIRONMENTS    6
 #libdefine MAX_BONUS           8
 
 int ArenaActive = false;
@@ -20,18 +20,24 @@ int ArenaTimerMax = 35 * 10;
 int ArenaCount = 0;
 int ArenaWeight = 0;
 int ArenaMod = 0;
+int ArenaEnvironment = 0;
 int ArenaSpotSpawns = 1100;
-int ArenaTagEnvironments = 100;
+int ArenaSectorTag = 100;
 
 str ArenaMods[MAX_MODS] =
 {
-    "More Unique Monsters"
+	"\cgNo Regeneration"
 };
 
-/*
 str ArenaEnvironments[MAX_ENVIRONMENTS] =
 {
-}; */
+	"\cmBlackout",
+	"\cjFoggy",
+	"\ciThe Floor is Lava",
+	"\cuDrop Zone",
+	"\cuGrayscale",
+	"\caCentral Pillar"
+};
 
 str ArenaBonus[MAX_BONUS] =
 {
@@ -82,24 +88,30 @@ script "ArenaLoop" (int Start)
         
         // Stop the script if the Arena is stopped
         if (!ArenaActive)
+		{
+			ArenaSetEnvironment(0);
             terminate;
+		}
         
         // Arena HUD
         SetFont("SMALLFONT");
+		if (ArenaEnvironment > 0)
+            HudMessage(s:ArenaEnvironments[ArenaEnvironment - 1];
+                       HUDMSG_PLAIN, 5, CR_WHITE, -0.0225, 0.525, 0.05);
         if (ArenaMod >= 0)
             HudMessage(s:ArenaMods[ArenaMod];
-                       HUDMSG_Plain, 4, CR_WHITE, 0.0225, 0.55, 0.05);
+                       HUDMSG_PLAIN, 4, CR_WHITE, -0.0225, 0.55, 0.05);
         if (ArenaTimer > 0)
             HudMessage(s:"Time: ",
                        d:ArenaTimer / 35 + 1;
-                       HUDMSG_Plain, 3, CR_GREEN, 0.0225, 0.575, 0.05);
+                       HUDMSG_PLAIN, 3, CR_GREEN, -0.0225, 0.575, 0.05);
         HudMessage(s:"Wave: ",
                    d:ArenaWave;
-                   HUDMSG_Plain, 2, CR_GREEN, 0.0225, 0.6, 0.05);
+                   HUDMSG_PLAIN, 2, CR_GREEN, -0.0225, 0.6, 0.05);
         if (ArenaCount > 0)
             HudMessage(s:"Monsters: ",
                        d:ArenaCount;
-                       HUDMSG_Plain, 1, CR_GREEN, 0.0225, 0.625, 0.05);
+                       HUDMSG_PLAIN, 1, CR_GREEN, -0.0225, 0.625, 0.05);
         
         // Keep count of the current monsters in the arena
         ArenaCount = ThingCount(0, 1002);
@@ -118,15 +130,19 @@ script "ArenaLoop" (int Start)
             int ModRandomizer;
             int EnvironmentRandomizer;
             int BonusRandomizer;
+			int LuckRandomizer;
             int Tier;
             int TierMax;
             str SpawnName;
             str SpawnItem;
             int i;
 
-            // Set the intermission timer
+            // Set the intermission timer and reset the environment
             if (ArenaWave >= 1 && ArenaTimer <= 0)
+			{
                 ArenaTimer = ArenaTimerMax;
+				ArenaSetEnvironment(0);
+			}
             
             // Arena Bonus between waves
             if (ArenaTimer >= ArenaTimerMax)
@@ -198,7 +214,10 @@ script "ArenaLoop" (int Start)
                         for (i = 0; i < ArenaWave; i++)
                             if (Random(1, 3) <= 1)
                             {
-                                SpawnItem = "ArmorDropper";
+								if (Random(1, 2) == 1)
+									SpawnItem = "GreenArmorRandomizer";
+								else
+									SpawnItem = "BlueArmorRandomizer";
                                 
                                 SpawnSpot(SpawnItem, 1200, 1201, 0);
                                 SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
@@ -213,13 +232,13 @@ script "ArenaLoop" (int Start)
                         Thing_ChangeTID(1201, 0);
                         break;
 					case 7: // Luck Drop
-						int LuckRandomizer = (100 - (ArenaWave - Luck));
+						LuckRandomizer = (100 - (ArenaWave - Luck));
 						if (LuckRandomizer < 10) LuckRandomizer = 10;
                         for (i = 0; i < ArenaWave; i++)
 							if (Random(1, LuckRandomizer) < 5)
 							{
 								SpawnSpot("TeleportFog", 1200, 0, 0);
-								SpawnItem = "WeaponDropper";
+								SpawnItem = "Dropper";
 								SpawnSpot(SpawnItem, 1200, 1201, 0);
 								SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
 								Thing_ChangeTID(1201, 0);
@@ -228,6 +247,7 @@ script "ArenaLoop" (int Start)
                 }
             }
             
+			// Next Wave
             if (ArenaTimer <= 1)
             {
                 // Next wave, re-determine the Arena Weight based on the new wave
@@ -238,6 +258,11 @@ script "ArenaLoop" (int Start)
                 ModRandomizer = Random(-10, MAX_MODS - 1);
                 ArenaMod = ModRandomizer;
                 
+				// Apply the randomized environment mod
+				EnvironmentRandomizer = Random(-10, MAX_ENVIRONMENTS);
+				if (EnvironmentRandomizer > 0)
+					ArenaSetEnvironment(EnvironmentRandomizer);
+				
                 for (i = ArenaSpotSpawns; i < ArenaSpotSpawns + 30; i++)
                 {
                     // Use the Arena weight to get a random tier
@@ -274,32 +299,10 @@ script "ArenaLoop" (int Start)
                     if (SpawnRandomizer < 0)
                         continue;
                         
-                    // Apply mod
-                    switch (ArenaMod)
-                    {
-                        case 0: // More Unique Monsters
-                            int ColorRandomizer = Random(-1, 9);
-                            switch (ColorRandomizer)
-                            {
-                                case -1:                                                break;
-                                case 0: SpawnName = StrParam(s:SpawnName, s:"Red");     break;
-                                case 1: SpawnName = StrParam(s:SpawnName, s:"Green");   break;
-                                case 2: SpawnName = StrParam(s:SpawnName, s:"White");   break;
-                                case 3: SpawnName = StrParam(s:SpawnName, s:"Orange");  break;
-                                case 4: SpawnName = StrParam(s:SpawnName, s:"Pink");    break;
-                                case 5: SpawnName = StrParam(s:SpawnName, s:"Blue");    break;
-                                case 6: SpawnName = StrParam(s:SpawnName, s:"Purple");  break;
-                                case 7: SpawnName = StrParam(s:SpawnName, s:"DarkBlue");break;
-                                case 8: SpawnName = StrParam(s:SpawnName, s:"Yellow");  break;
-                                case 9: SpawnName = StrParam(s:SpawnName, s:"Black");   break;
-                            }
-                            break;
-                    }
-                    
                     // Spawn the monster
                     if (SpawnSpotFacingForced(SpawnName, i, 1002))
                         SpawnSpotForced("TeleportFog", i, 0, 0);
-
+					
                     /* Debugging
                     Log(s:"Arena Spawn: Wave ",
                         d:ArenaWave,
@@ -318,8 +321,17 @@ script "ArenaLoop" (int Start)
             }
         }
         
+		// Arena Mods
+		switch (ArenaMod)
+		{
+			case 0: // No Regeneration
+				HPRate = 0;
+				EPRate = 0;
+				break;
+		}
+		
         // Decrement the timer, also don't decrement if you have menu freezing enabled and you're in the menus
-        if (ArenaTimer > 0 && !(GetCVAR("drpg_menufreeze") && (InMenu || InShop)))
+        if (ArenaTimer > 0 && !(InMenu || InShop) && !CheckInventory("PowerTimeFreezer"))
             ArenaTimer--;
         
         Delay(1);
@@ -338,18 +350,73 @@ script "ArenaStop" (voID)
     if (CheckActorProperty(0, APROP_Invulnerable, 1))
         SetActorProperty(0, APROP_Invulnerable, 0);
     
-    for (int i = 1100; i < 1130; i++)
+	for (int i = ArenaSpotSpawns; i < ArenaSpotSpawns + 30; i++)
         Thing_Remove(1002);
     
     SetMusic("Outpost");
 }
 
 // Set Arena vars
-script "SetArena" (int Wave)
+script "SetArena" (int Wave, int Environment)
 {
     if (Wave > 0) ArenaWave = Wave;
+	ArenaSetEnvironment(Environment);
 }
 
 function void ArenaSetEnvironment(int ID)
 {
+	switch (ID)
+	{
+		case 0: // Normal
+			Light_Fade(ArenaSectorTag, 192, 35);
+			Light_Fade(ArenaSectorTag + 1, 192, 35);
+			Sector_SetFade(ArenaSectorTag, 0, 0, 0);
+			Sector_SetFade(ArenaSectorTag + 1, 0, 0, 0);
+			ChangeFloor(ArenaSectorTag, "CEIL5_1");
+			ChangeFloor(ArenaSectorTag + 1, "CEIL5_1");
+			Sector_SetDamage(ArenaSectorTag, 0, 0);
+			Sector_SetDamage(ArenaSectorTag + 1, 0, 0);
+			if (ArenaEnvironment == 4)
+			{
+				Floor_RaiseInstant(ArenaSectorTag, 0, 2048);
+				Floor_RaiseInstant(ArenaSectorTag + 1, 0, 2048);
+			}
+			Sector_SetColor(ArenaSectorTag, 255, 255, 255);
+			Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255);
+			Floor_LowerToLowest(ArenaSectorTag + 1, 64);
+			break;
+		case 1: // Blackout
+			Light_Fade(ArenaSectorTag, 0, 35);
+			Light_Fade(ArenaSectorTag + 1, 0, 35);
+			break;
+		case 2: // Foggy
+			int r = Random(0, 255);
+			int g = Random(0, 255);
+			int b = Random(0, 255);
+			Light_Fade(ArenaSectorTag, 128, 35);
+			Light_Fade(ArenaSectorTag + 1, 128, 35);
+			Sector_SetFade(ArenaSectorTag, r, g, b);
+			Sector_SetFade(ArenaSectorTag + 1, r, g, b);
+			break;
+		case 3: // The Floor is Lava
+			ChangeFloor(ArenaSectorTag, "LAVA1");
+			ChangeFloor(ArenaSectorTag + 1, "LAVA1");
+			Sector_SetDamage(ArenaSectorTag, 1, 14);
+			Sector_SetDamage(ArenaSectorTag + 1, 1, 14);
+			break;
+		case 4: // Drop Zone
+			Floor_LowerInstant(ArenaSectorTag, 0, 2048);
+			Floor_LowerInstant(ArenaSectorTag + 1, 0, 2048);
+			break;
+		case 5: // Grayscale
+			Sector_SetColor(ArenaSectorTag, 255, 255, 255, 255);
+			Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255, 255);
+			break;
+		case 6: // Central Pillar
+			Teleport(1003);
+			Floor_RaiseToLowestCeiling(ArenaSectorTag + 1, 64);
+			break;
+	}
+	
+	ArenaEnvironment = ID;
 }
