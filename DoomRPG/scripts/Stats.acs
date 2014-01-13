@@ -133,27 +133,20 @@ function void CheckCombo(void)
 {
 	if (GetCVAR("drpg_combo"))
 	{
-		// Stupid hack so that the ComboTimer doesn't decrease when PowerTimeFreezer is active
-		if ((ComboTimer > 0 || ComboTimer < 100) && CheckInventory("MenuFreezer") > 0)
-			if (ComboTimer != 0)
-				ComboTimer++;
-		
 		// Subtract the combo timer each tick
-		if ((Combo > 0 || ComboTimer < 100) && !CheckInventory("PowerTimeFreezer"))
+		if ((Combo > 0 || ComboTimer < 100) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
 			ComboTimer--;
 		
 		// Set your Inventory Combo Item to the current ComboTimer aunt
 		if (ComboTimer < 100)
 		{
-			TakeInventory("Combo", 100);
-			TakeInventory("Combo2", 100);
-			GiveInventory("Combo", ComboTimer);
+			SetInventory("Combo", ComboTimer);
+			SetInventory("Combo2", 0);
 		}
 		if (ComboTimer < 0)
 		{
-			TakeInventory("Combo", 100);
-			TakeInventory("Combo2", 100);
-			GiveInventory("Combo2", ComboTimer + 100);
+			SetInventory("Combo", 0);
+			SetInventory("Combo2", ComboTimer + 100);
 		}
 		
 		// Add up and randomize the XP and Rank gain
@@ -162,7 +155,7 @@ function void CheckCombo(void)
 			int BonusXP = FixedMul(MapNumber, 0.1) + 1;
 			int BonusRank = FixedMul(MapNumber, 0.1) + 1;
 			
-			XPGained += TotalGained + Random(0, Combo + Combo * Level) * BonusXP;
+			XPGained += TotalGained + Random(0, Combo + Combo) * BonusXP;
 			RankGained += TotalGained + Random(0, Combo + Combo * RankLevel) * BonusRank;
 			
 			XP += XPGained;
