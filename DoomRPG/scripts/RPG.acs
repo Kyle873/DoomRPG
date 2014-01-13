@@ -17,8 +17,9 @@
 global int 1 : FirstRun;
 
 str Version = "v0.95 Beta";
-str TimeStamp = "Monday, January 13, 2014 at 7:37:42 AM";
+str TimeStamp = "Monday, January 13, 2014 at 8:56:11 AM";
 
+int PlayerTID = 31337;
 int MapNumber;
 int ParBonus;
 
@@ -158,12 +159,18 @@ script "MonsterInit" (void)
 	// Monster Level System
 	if (GetCVAR("drpg_monster_levels"))
 	{
+		int TID;
 		int MonsterLevel;
 		int MonsterAura;
 		int MonsterStrength;
 		int MonsterDefense;
 		int MonsterRegen;
 		int AuraRandomizer;
+		
+		/* Get a TID
+		TID = UniqueTID();
+		Thing_ChangeTID(0, TID);
+		*/
 		
 		// level
 		MonsterLevel = Level + Random(-(GameSkill() - 1), GameSkill() + 1);
@@ -429,7 +436,7 @@ script "Loop" (void)
 	// Loop
 	Delay(1);
 	
-	// These need to be done in a seperate tic
+	// These need to be done in a separate tic
 	AfterHealth = GetActorProperty(0, APROP_HEALTH);
 	AfterArmor = CheckInventory("BasicArmor");
 	
@@ -514,6 +521,35 @@ script "StatusEffect" (int Type, int Time, int Intensity)
 		
 		Delay(1);
 	}
+}
+
+// Handles EP Draining for Blue Aura Monsters
+// Unfortunately, this will probably never get used, because there's no way to guarantee the damage came from the monster with the TID
+script "EPDrain" (int TID)
+{
+	int Target;
+	int Before;
+	int After;
+	int Loss;
+	
+	SetActivatorToTarget(TID);
+	Target = ActivatorTID();
+	
+	if (Target == PlayerTID)
+	{
+		Before = GetActorProperty(PlayerTID, APROP_HEALTH);
+		Delay(4);
+		After = GetActorProperty(PlayerTID, APROP_HEALTH);
+		Loss = Before - After;
+		
+		if (Before > After)
+			EP -= Loss;
+	}
+	
+	SetActivator(TID);
+	
+	Delay(1);
+	restart;
 }
 
 // Quick Heal
@@ -781,9 +817,9 @@ script "HealthBars" (void)
 {
 	while (GetCVAR("drpg_healthbars"))
 	{
-		Thing_ChangeTID(0, 1000);
+		Thing_ChangeTID(0, PlayerTID);
 		int Activator = ActivatorTID();
-		SetActivatorToTarget(1000);
+		SetActivatorToTarget(PlayerTID);
 		
 		Delay(1);
 		
@@ -807,7 +843,7 @@ script "HealthBars" (void)
 		if (ActivatorTID() != Activator)
 		{
 			SetActivator(Activator);
-			SetActivatorToTarget(1000);
+			SetActivatorToTarget(PlayerTID);
 			SetActivator(Activator);
 			
 			if (HasHealthBar && CurrentHealth > 0 && (!InMenu && !InShop))
