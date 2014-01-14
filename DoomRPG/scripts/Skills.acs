@@ -50,7 +50,7 @@ str SkillCategories[MAX_CATEGORIES] =
 
 int CategoryMax[MAX_CATEGORIES] =
 {
-	3, 9, 9, 4, 17, 6
+	3, 9, 9, 4, 17, 7
 };
 
 // Skill Max Levels
@@ -67,7 +67,7 @@ int SkillLevelMax[MAX_CATEGORIES][MAX_SKILLS] =
 	// Summoning
 	{ 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
 	// Utility
-	{ 1, 2, 1, 2, 1, 1 }
+	{ 1, 2, 1, 2, 1, 1, 1 }
 };
 
 int SkillCosts[MAX_CATEGORIES][MAX_SKILLS] =
@@ -83,7 +83,7 @@ int SkillCosts[MAX_CATEGORIES][MAX_SKILLS] =
 	// Summoning
 	{ 100, 25, 50, 75, 75, 75, 100, 150, 200, 100, 500, 500, 500, 500, 750, 1000, 1000 },
 	// Utility
-	{ 50, 50, 50, 0, 50, 25 }
+	{ 50, 50, 50, 0, 50, 25, 0 }
 };
 
 // Skill Data
@@ -356,6 +356,10 @@ int SkillData[MAX_CATEGORIES][MAX_SKILLS][20] =
 			"Pulls some dropped items to you",
 		},
 		{
+			"Recall",
+			"Brings you to the beginning of the level"
+		},
+		{
 			"Transport",
 			"Brings you to the UAC Outpost\nUse in Outpost to return to current level"
 		},
@@ -553,7 +557,8 @@ script "UseSkill" (int Index)
 					case 2:		Success = Rally();					break; // Rally
 					case 3:		Success = Unsummon();				break; // Unsummon
 					case 4:		Success = Magnet();					break; // Magnetize
-					case 5:		ACS_NamedExecute("Transport", 0);	break; // Transport
+					case 5:		Success = Recall();					break; // Recall
+					case 6:		ACS_NamedExecute("Transport", 0);	break; // Transport
 				}
 				break;
 		}
@@ -684,7 +689,6 @@ script "Transport" (void)
 	}
 	else
 	{
-		EP += ScaleEPCost(25);
 		Teleport_NewMap(LevelNum, 0, 0);
 		InBase = false;
 		Transported = true;
@@ -1192,6 +1196,14 @@ function int Magnet(void)
 	// FX
 	FadeRange(0, 0, 0, 0.75, 0, 0, 0, 0.0, 1.0);
 	ActivatorSound("skills/magnet", 127);
+	return true;
+}
+
+// Recall - Return to the beginning of the map
+function int Recall(void)
+{
+	SetInventory("ArtiTeleport", 1);
+	UseInventory("ArtiTeleport");
 	return true;
 }
 
