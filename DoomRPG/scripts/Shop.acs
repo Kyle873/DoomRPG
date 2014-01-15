@@ -10,7 +10,8 @@
 #import "Utils.acs"
 
 #libdefine SHOP_CATEGORIES			16
-#libdefine SHOP_ITEMS				25
+#libdefine SHOP_ITEMS				100
+#libdefine SHOP_SCROLL				15
 
 str ShopNames[SHOP_CATEGORIES] =
 {
@@ -551,39 +552,47 @@ function void ShopLoop(void)
 		HudMessage(s:"Up/Down to move\nLeft/Right to change ShopPages\nUse to buy\nRun to sell\nMenu to exit";
 				   HUDMSG_PLAIN, 3022, CR_RED,
 				   0.1, 240.1, 0.1); */
-        
+		
+		// Determine Offset
+		if (ShopIndex > SHOP_SCROLL)
+			ShopOffset = ShopIndex - SHOP_SCROLL;
+		else
+			ShopOffset = 0;
+		
 		// Draw Item List
-        for (int i = 0; i < ShopMax[ShopPage]; i++)
+        for (int i = ShopOffset; i < ShopOffset + (SHOP_SCROLL * 2) + 1; i++)
         {
+			if (i > ShopMax[ShopPage] - 1) continue;
+			
 			SetFont("SMALLFONT");
             if (i == ShopIndex)
 				if (CheckInventory(Shop[ShopPage][i][0]) > 0)
 					HudMessage(s:Shop[ShopPage][i][1], s:" [", d:CheckInventory(Shop[ShopPage][i][0]), s:"]";
 							   HUDMSG_PLAIN, 3001 + i, CR_GREEN,
-							   24.1, 50.0 + 8.0 * i, 0.1);
+							   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
 				else
 					HudMessage(s:Shop[ShopPage][i][1];
 							   HUDMSG_PLAIN, 3001 + i, CR_GREEN,
-							   24.1, 50.0 + 8.0 * i, 0.1);
+							   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
             else
                 if (CheckInventory("Credits") >= ShopCosts[ShopPage][i] - ShopCosts[ShopPage][i] * Discount / 100)
 					if (CheckInventory(Shop[ShopPage][i][0]) > 0)
 						HudMessage(s:Shop[ShopPage][i][1], s:" [", d:CheckInventory(Shop[ShopPage][i][0]), s:"]";
 								   HUDMSG_PLAIN, 3001 + i, CR_WHITE,
-								   24.1, 50.0 + 8.0 * i, 0.1);
+								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
 					 else
 						HudMessage(s:Shop[ShopPage][i][1];
 								   HUDMSG_PLAIN, 3001 + i, CR_WHITE,
-								   24.1, 50.0 + 8.0 * i, 0.1);
+								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
                 else
 					if (CheckInventory(Shop[ShopPage][i][0]) > 0)
 						HudMessage(s:Shop[ShopPage][i][1], s:" [", d:CheckInventory(Shop[ShopPage][i][0]), s:"]";
 								   HUDMSG_PLAIN, 3001 + i, CR_RED,
-								   24.1, 50.0 + 8.0 * i, 0.1);
+								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
 					else
 						HudMessage(s:Shop[ShopPage][i][1];
 								   HUDMSG_PLAIN, 3001 + i, CR_RED,
-								   24.1, 50.0 + 8.0 * i, 0.1);
+								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
         }
         
         // Check Input
