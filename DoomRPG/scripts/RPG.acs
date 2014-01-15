@@ -17,7 +17,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.95 Beta";
-str TimeStamp = "Wednesday, January 15, 2014 at 5:53:43 AM";
+str TimeStamp = "Wednesday, January 15, 2014 at 6:27:14 AM";
 
 int PlayerTID = 31337;
 int MapNumber;
@@ -109,6 +109,7 @@ script "Init" enter
 	ACS_NamedExecuteAlways("Speed", 0);
 	ACS_NamedExecuteAlways("StatRandomizer", 0);
 	ACS_NamedExecuteAlways("DamageNumbers", 0);
+	ACS_NamedExecuteAlways("DamageNumbersHUD", 0);
 	ACS_NamedExecuteAlways("HealthBars", 0);
 	
 	// Remove Aura if the keep Aura CVAR is off
@@ -818,6 +819,26 @@ script "DamageNumbers" (void)
 			
 		if (!GetCVAR("drpg_damagenumbers")) terminate;
 	}
+}
+
+// Psuedo Damage Numbers on the HUD
+script "DamageNumbersHUD" (void)
+{
+	if (GetCVAR("drpg_damagenumbers_hud"))
+	{
+		BeforeHealth = GetActorProperty(0, APROP_HEALTH);
+		Delay(1);
+		AfterHealth = GetActorProperty(0, APROP_HEALTH);
+		HealthLoss = BeforeHealth - AfterHealth;
+		
+		SetFont("BIGFONT");
+		
+		if (BeforeHealth > AfterHealth)
+			HudMessage(d:HealthLoss; HUDMSG_FADEOUT, 0, CR_RED, 0.25 + Random(0.0, 0.5), 0.5 + Random(0.0, 0.25), 0.5, 1.0);
+	}
+
+	Delay(1);
+	restart;
 }
 
 // Handles HUD Health Bars
