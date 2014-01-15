@@ -17,7 +17,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.95 Beta";
-str TimeStamp = "Wednesday, January 15, 2014 at 8:54:31 AM";
+str TimeStamp = "Wednesday, January 15, 2014 at 8:59:51 AM";
 
 int PlayerTID = 31337;
 int MapNumber;
@@ -127,12 +127,8 @@ script "Init" enter
 		Transported = false;
 	}
 	
-	// Give the player the fake difficulty Monster Defense enhancing item
+	// Store the current map number
 	MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
-	if 		(MapNumber == 999)	MapNumber = 1;
-	else if (MapNumber > 30) 	MapNumber = 30;
-	if (GetCVAR("drpg_monster_defense"))
-		GiveInventory(StrParam(s:"MonsterDefense", d:MapNumber), 1);
 	
 	// IF you have the Nova Shield Accessory and move to a new level, make sure to check the Nova flag
 	if (CheckInventory("Shield") && ShieldAccessory == 5)
@@ -353,10 +349,6 @@ script "MonsterLoop" (void)
 			break;
 	}
 	
-	// Give Strength Item
-	if (MonsterStrength > 0 && GetCVAR("drpg_monster_levels"))
-		GiveInventory(StrParam(s:"Strength", d:MonsterStrength), 1);
-	
 	Delay(1);
 	restart;
 }
@@ -427,10 +419,6 @@ script "Loop" (void)
 		StatusTimerHUD = StatusTimer / 35 + 1;
 	else
 		StatusTimerHUD = 0;
-	
-	// Increase the monster difficulty depending on the map number if that CVAR is set
-	if (GetCVAR("drpg_monster_attack"))
-		SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor + (MapNumber * 0.03125));
 	
 	// Make you invincible while in the Menus and if menu freezing is enabled
 	if ((InMenu || InShop) && GetCVAR("drpg_menufreeze"))
