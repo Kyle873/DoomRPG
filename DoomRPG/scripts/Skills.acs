@@ -399,10 +399,10 @@ script "UseSkill" (int Index)
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 
-	int EPCost = FixedDiv(SkillCosts[SkillCatagory[Index]][SkillIndex[Index]] * CurrentSkillLevel[GetSkillSlot(Index)], SkillCostMult);
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
-	int Success;
+	int EPCost = FixedDiv(SkillCosts[SkillCatagory[Index]][SkillIndex[Index]] * CurrentSkillLevel[GetSkillSlot(Index)], SkillCostMult);
+	bool Success;
 	
 	// Overdrive?
 	Overdrive = false;
@@ -573,10 +573,6 @@ script "UseSkill" (int Index)
 		Print(s:"\cgNot enough EP to use this skill!");
 		ActivatorSound("skills/fail", 127);
 	}
-
-	// Special skills that need different behaviour
-	{
-	}
 }
 
 // Skill HUD Script
@@ -587,8 +583,8 @@ script "DrawSkillHUD" enter
 		// If you're dead, terminate
 		if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 	
-		int x = GetCVAR("drpg_skill_x");
-		int y = GetCVAR("drpg_skill_y");
+		int X = GetCVAR("drpg_skill_x");
+		int Y = GetCVAR("drpg_skill_y");
 
 		for (int i = 4; i >= 0; i--)
 		{
@@ -607,7 +603,7 @@ script "DrawSkillHUD" enter
 				
 				HudMessage(s:SkillData[SkillCatagory[i]][SkillIndex[i]][0];
 						   HUDMSG_PLAIN, 0, Color,
-						   x, y, 0.05);
+						   X, Y, 0.05);
 			}
 			else
 				HudMessage(s:SkillData[SkillCatagory[i]][SkillIndex[i]][0],
@@ -619,12 +615,12 @@ script "DrawSkillHUD" enter
 						   d:SkillCost,
 						   s:"\c-]";
 						   HUDMSG_PLAIN, 0, Color,
-						   x, y, 0.05);
+						   X, Y, 0.05);
 			
-			y -= 0.025;
+			Y -= 0.025;
 		}
 		
-		delay(1);
+		Delay(1);
 	}
 }
 
@@ -788,7 +784,7 @@ function int DropRune(void)
 		case 9: Rune = "HasteRune";			break;
 	}
 	
-	if (!Spawn(Rune, X, Y, Z, 0, Angle) == 0)
+	if (Spawn(Rune, X, Y, Z, 0, Angle))
 	{
 		ActivatorSound("skills/drop", 127);
 		Spawn("TeleportFog", X, Y, Z, 0, Angle);
@@ -811,7 +807,7 @@ function int DropAmmo(void)
 	int Y = GetActorY(0) + sin(Angle) * 96;
 	int Z = GetActorZ(0) + 48.0;
 	
-	if (!Spawn("BigBackPack", X, Y, Z, 0, Angle) == 0)
+	if (Spawn("BigBackPack", X, Y, Z, 0, Angle))
 	{
 		ActivatorSound("skills/drop", 127);
 		Spawn("TeleportFog", X, Y, Z, 0, Angle);
@@ -976,7 +972,6 @@ function int Summon(int Type)
 		SetActorProperty(NewID, APROP_FRIENDLY, 1);
 		MaxSummons++;
 	}
-	// Refund - Give EP back if the summon failed
 	else
 	{
 		ActivatorSound("menu/error", 127);
@@ -1437,12 +1432,6 @@ function void CheckSkills(void)
 	// Bullet-Time timer handling
 	if (BulletTimeTimer >= 0)
 	{
-		/* Sigh, this is broken because SOMEBODY decided sounds shouldn't play
-		   when PowerTimeFreezer is active -_-
-		if (BulletTimeTimer % 100)
-			ActivatorSound("skills/bullettime", 127);
-		*/
-		
 		if (BulletTimeTimer % 3)
 			GiveInventory("TimeFreezerQuick", 1);
 		
