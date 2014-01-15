@@ -17,7 +17,7 @@
 global int 1 : FirstRun;
 
 str Version = "v0.95 Beta";
-str TimeStamp = "Wednesday, January 15, 2014 at 9:30:34 AM";
+str TimeStamp = "Wednesday, January 15, 2014 at 10:06:58 AM";
 
 int PlayerTID = 31337;
 int MapNumber;
@@ -132,6 +132,7 @@ script "MonsterInit" (void)
 	{
 		int TID;
 		int MonsterLevel;
+		int MonsterCurve;
 		int MonsterAura;
 		int MonsterStrength;
 		int MonsterDefense;
@@ -144,7 +145,8 @@ script "MonsterInit" (void)
 		*/
 		
 		// level
-		MonsterLevel = Level + Random(-(GameSkill() * 2), GameSkill() * 2);
+		MonsterCurve = GetCVAR("drpg_monster_curve");
+		MonsterLevel = Level + Random(-(GameSkill() * 2), GameSkill() * 2) + Random(0, MonsterCurve);
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		SetInventory("MonsterLevel", MonsterLevel);
 		
@@ -324,6 +326,12 @@ script "MonsterLoop" (void)
 				HealThing(RegenAmount);
 			break;
 	}
+	
+	// Strength
+	if (MonsterStrength >= 3200)
+		SetInventory("Strength32000", 1);
+	else if (MonsterStrength > 0)
+		SetInventory(StrParam(s:"Strength", d:MonsterStrength * 10), 1);
 	
 	Delay(1);
 	restart;
