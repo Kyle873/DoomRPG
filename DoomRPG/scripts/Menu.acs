@@ -24,7 +24,6 @@ int MenuX;
 int MenuY;
 int MenuIndex;
 int MenuBlock;
-int StatPage;
 int StatAmount;
 int SkillPage;
 int SkillMax;
@@ -162,157 +161,89 @@ function void DrawMainMenu(void)
 
 function void DrawStatsMenu(void)
 {
-	// Main Stat Page
-	if (StatPage == 0)
+	// Title
+	SetFont("BIGFONT");
+	HudMessage(s:"Stats"; HUDMSG_PLAIN, 5000, CR_GREEN, 0.1, 10.0, 0.05);
+
+	// Stat Tokens
+	if (GetCVAR("drpg_randomstatgrowth") < 2)
 	{
-		// Title
+		PrintSprite("TOKAE0", 0, 16.1, 240.1, 0.05);
 		SetFont("BIGFONT");
-		HudMessage(s:"Stats"; HUDMSG_PLAIN, 5000, CR_GREEN, 0.1, 10.0, 0.05);
-
-		// Stat Tokens
-		if (GetCVAR("drpg_randomstatgrowth") < 2)
-		{
-			PrintSprite("TOKAE0", 0, 16.1, 240.1, 0.05);
-			SetFont("BIGFONT");
-			HudMessage(d:CheckInventory("StatToken"); HUDMSG_PLAIN, 0, CR_RED, 32.1, 224.1, 0.05);
-		}
-		
-		// Stat Cap Tokens
-		PrintSprite("TOKBE0", 0, 216.1, 240.1, 0.05);
-		SetFont("BIGFONT");
-		HudMessage(d:CheckInventory("StatCapToken"), s:" / ", d:100; HUDMSG_PLAIN, 0, CR_YELLOW, 232.1, 224.1, 0.05);
-
-		// Primary Stats
-		SetFont("BIGFONT");
-		HudMessage(s:"Strength: ", d:Strength; 			HUDMSG_PLAIN, 5001, CR_RED, 		0.1, 	25.0, 	0.05);
-		HudMessage(s:"Defense: ", d:Defense;			HUDMSG_PLAIN, 5002, CR_GREEN, 		200.1, 	25.0, 	0.05);
-		HudMessage(s:"Vitality: ", d:Vitality; 			HUDMSG_PLAIN, 5005, CR_BRICK, 		0.1, 	75.0, 	0.05);
-		HudMessage(s:"Energy: ", d:Energy;				HUDMSG_PLAIN, 5006, CR_LIGHTBLUE, 	200.1, 	75.0, 	0.05);
-		HudMessage(s:"Regen: ", d:Regeneration; 		HUDMSG_PLAIN, 5007, CR_PURPLE, 		0.1, 	125.0, 	0.05);
-		HudMessage(s:"Agility: ", d:Agility;			HUDMSG_PLAIN, 5004, CR_ORANGE, 		200.1, 	125.0, 	0.05);
-		HudMessage(s:"Capacity: ", d:Capacity;			HUDMSG_PLAIN, 5008, CR_BLUE, 		0.1, 	175.0, 	0.05);
-		HudMessage(s:"Luck: ", d:Luck; 					HUDMSG_PLAIN, 5009, CR_GOLD, 		200.1, 	175.0, 	0.05);
-		
-		// Secondary Stats
-		SetFont("SMALLFONT");
-		HudMessage(s:"+", d:Damage, s:"% Damage"; 															HUDMSG_PLAIN, 0, CR_RED, 		30.1, 	36.0, 	0.05);
-		HudMessage(d:Round(DamageFactor * 100), s:"% Damage Taken"; 										HUDMSG_PLAIN, 0, CR_GREEN,		230.1, 	36.0, 	0.05);
-		HudMessage(d:HealthMax, s:" Max HP";																HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	86.0, 	0.05);
-		HudMessage(f:Vitality * 1.25 / 100, s:" HP/Sec";													HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	94.0, 	0.05);
-		HudMessage(d:EPMax, s:" Max EP";																	HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	86.0, 	0.05);
-		HudMessage(f:Energy * 1.25 / 100, s:" EP/Sec";														HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	94.0, 	0.05);
-		HudMessage(d:(1050 + FixedMul(Energy, 5.25)) / 35, s:" Sec Aura Time";								HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	102.0, 	0.05);
-		HudMessage(s:"+", f:Regeneration * 1.25 / 100, s:" HP/Sec";											HUDMSG_PLAIN, 0, CR_PURPLE,		30.1, 	136.0, 	0.05);
-		HudMessage(s:"+", f:Regeneration * 1.25 / 100, s:" EP/Sec";											HUDMSG_PLAIN, 0, CR_PURPLE,		30.1, 	144.0, 	0.05);
-		HudMessage(s:"Speed: ", d:Round(Speed * 100); 														HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	136.0, 	0.05);
-		HudMessage(s:"Jump Height: ", f:JumpHeight; 														HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	144.0, 	0.05);
-		HudMessage(d:WeaponSpeed, s:"% Weapon Speed"; 														HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	152.0, 	0.05);
-		HudMessage(s:"Bullets: ", d:CheckInventory("Clip"), s:"/", d:GetAmmoCapacity("Clip"); 				HUDMSG_PLAIN, 0, CR_BRICK, 	 	30.1, 	186.0, 	0.05);
-		HudMessage(s:"Shells: ", d:CheckInventory("Shell"), s:"/", d:GetAmmoCapacity("Shell"); 				HUDMSG_PLAIN, 0, CR_ORANGE,  	30.1, 	194.0, 	0.05);
-		HudMessage(s:"Rockets: ", d:CheckInventory("RocketAmmo"), s:"/", d:GetAmmoCapacity("RocketAmmo");	HUDMSG_PLAIN, 0, CR_GREY, 	 	30.1, 	202.0, 	0.05);
-		HudMessage(s:"Cells: ", d:CheckInventory("Cell"), s:"/", d:GetAmmoCapacity("Cell"); 				HUDMSG_PLAIN, 0, CR_GREEN, 	 	30.1, 	210.0, 	0.05);
-		HudMessage(d:25 + FixedMul(Luck, 0.5), s:"% Credit Drop Chance"; 									HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	186.0, 	0.05);
-		HudMessage(d:SurvivalBonus / 10, s:"% Survival Bonus"; 												HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	194.0, 	0.05);
-		
-		// Stat Upgrade Cursor
-		if (StatTokens > 0)
-		{
-			int Color = Random(1, 32);
-			
-			SetFont("BIGFONT");
-			if (MenuIndex == 0)	HudMessage(s:"Strength: ", d:Strength; 			HUDMSG_PLAIN, 5001, Color, 			0.1, 	25.0, 	0.05);
-			if (MenuIndex == 1)	HudMessage(s:"Defense: ", d:Defense;			HUDMSG_PLAIN, 5002, Color, 			200.1, 	25.0, 	0.05);
-			if (MenuIndex == 2)	HudMessage(s:"Vitality: ", d:Vitality; 			HUDMSG_PLAIN, 5005, Color, 			0.1, 	75.0, 	0.05);
-			if (MenuIndex == 3)	HudMessage(s:"Energy: ", d:Energy;				HUDMSG_PLAIN, 5006, Color, 			200.1, 	75.0, 	0.05);
-			if (MenuIndex == 4)	HudMessage(s:"Regen: ", d:Regeneration; 		HUDMSG_PLAIN, 5007, Color, 			0.1, 	125.0, 	0.05);
-			if (MenuIndex == 5)	HudMessage(s:"Agility: ", d:Agility;			HUDMSG_PLAIN, 5004, Color, 			200.1, 	125.0, 	0.05);
-			if (MenuIndex == 6)	HudMessage(s:"Capacity: ", d:Capacity;			HUDMSG_PLAIN, 5008, Color, 			0.1, 	175.0, 	0.05);
-			if (MenuIndex == 7)	HudMessage(s:"Luck: ", d:Luck; 					HUDMSG_PLAIN, 5009, Color, 			200.1, 	175.0, 	0.05);
-		}
-
-		// Icons
-		PrintSprite("Attack", 0, 6.1, 35.1, 0.05);
-		PrintSprite("Defense", 0, 200.1, 35.1, 0.05);
-		PrintSprite("Vitality", 0, 12.1, 85.1, 0.05);
-		PrintSprite("Energy", 0, 205.1, 84.1, 0.05);
-		PrintSprite("Regen", 0, 6.1, 132.1, 0.05);
-		PrintSprite("Agility", 0, 202.1, 132.1, 0.05);
-		PrintSprite("Capacity", 0, 14.1, 192.1, 0.05);
-		PrintSprite("Luck", 0, 202.1, 185.1, 0.05);
+		HudMessage(d:CheckInventory("StatToken"); HUDMSG_PLAIN, 0, CR_RED, 32.1, 224.1, 0.05);
 	}
-	if (StatPage == 1) // Drop Rates
+	
+	// Stat Cap Tokens
+	PrintSprite("TOKBE0", 0, 16.1, 260.1, 0.05);
+	SetFont("BIGFONT");
+	HudMessage(d:CheckInventory("StatCapToken"), s:" / ", d:100; HUDMSG_PLAIN, 0, CR_YELLOW, 32.1, 244.1, 0.05);
+
+	// Primary Stats
+	SetFont("BIGFONT");
+	HudMessage(s:"Strength: ", d:Strength; 			HUDMSG_PLAIN, 5001, CR_RED, 		0.1, 	25.0, 	0.05);
+	HudMessage(s:"Defense: ", d:Defense;			HUDMSG_PLAIN, 5002, CR_GREEN, 		200.1, 	25.0, 	0.05);
+	HudMessage(s:"Vitality: ", d:Vitality; 			HUDMSG_PLAIN, 5005, CR_BRICK, 		0.1, 	75.0, 	0.05);
+	HudMessage(s:"Energy: ", d:Energy;				HUDMSG_PLAIN, 5006, CR_LIGHTBLUE, 	200.1, 	75.0, 	0.05);
+	HudMessage(s:"Regen: ", d:Regeneration; 		HUDMSG_PLAIN, 5007, CR_PURPLE, 		0.1, 	125.0, 	0.05);
+	HudMessage(s:"Agility: ", d:Agility;			HUDMSG_PLAIN, 5004, CR_ORANGE, 		200.1, 	125.0, 	0.05);
+	HudMessage(s:"Capacity: ", d:Capacity;			HUDMSG_PLAIN, 5008, CR_BLUE, 		0.1, 	175.0, 	0.05);
+	HudMessage(s:"Luck: ", d:Luck; 					HUDMSG_PLAIN, 5009, CR_GOLD, 		200.1, 	175.0, 	0.05);
+	
+	// Secondary Stats
+	SetFont("SMALLFONT");
+	HudMessage(s:"+", d:Damage, s:"% Damage"; 															HUDMSG_PLAIN, 0, CR_RED, 		30.1, 	36.0, 	0.05);
+	HudMessage(d:Round(DamageFactor * 100), s:"% Damage Taken"; 										HUDMSG_PLAIN, 0, CR_GREEN,		230.1, 	36.0, 	0.05);
+	HudMessage(d:HealthMax, s:" Max HP";																HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	86.0, 	0.05);
+	HudMessage(f:Vitality * 1.25 / 100, s:" HP/Sec";													HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	94.0, 	0.05);
+	HudMessage(d:EPMax, s:" Max EP";																	HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	86.0, 	0.05);
+	HudMessage(f:Energy * 1.25 / 100, s:" EP/Sec";														HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	94.0, 	0.05);
+	HudMessage(d:(1050 + FixedMul(Energy, 5.25)) / 35, s:" Sec Aura Time";								HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	102.0, 	0.05);
+	HudMessage(s:"+", f:Regeneration * 1.25 / 100, s:" HP/Sec";											HUDMSG_PLAIN, 0, CR_PURPLE,		30.1, 	136.0, 	0.05);
+	HudMessage(s:"+", f:Regeneration * 1.25 / 100, s:" EP/Sec";											HUDMSG_PLAIN, 0, CR_PURPLE,		30.1, 	144.0, 	0.05);
+	HudMessage(s:"Speed: ", d:Round(Speed * 100); 														HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	136.0, 	0.05);
+	HudMessage(s:"Jump Height: ", f:JumpHeight; 														HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	144.0, 	0.05);
+	HudMessage(d:WeaponSpeed, s:"% Weapon Speed"; 														HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	152.0, 	0.05);
+	HudMessage(s:"Bullets: ", d:CheckInventory("Clip"), s:"/", d:GetAmmoCapacity("Clip"); 				HUDMSG_PLAIN, 0, CR_BRICK, 	 	30.1, 	186.0, 	0.05);
+	HudMessage(s:"Shells: ", d:CheckInventory("Shell"), s:"/", d:GetAmmoCapacity("Shell"); 				HUDMSG_PLAIN, 0, CR_ORANGE,  	30.1, 	194.0, 	0.05);
+	HudMessage(s:"Rockets: ", d:CheckInventory("RocketAmmo"), s:"/", d:GetAmmoCapacity("RocketAmmo");	HUDMSG_PLAIN, 0, CR_GREY, 	 	30.1, 	202.0, 	0.05);
+	HudMessage(s:"Cells: ", d:CheckInventory("Cell"), s:"/", d:GetAmmoCapacity("Cell"); 				HUDMSG_PLAIN, 0, CR_GREEN, 	 	30.1, 	210.0, 	0.05);
+	HudMessage(d:25 + FixedMul(Luck, 0.5), s:"% Credit Drop Chance"; 									HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	186.0, 	0.05);
+	HudMessage(d:MoneyChance, s:"% Extra Credit Drop Bonus"; 											HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 194.0, 	0.05);
+	HudMessage(d:HealthChance, s:"% Health Drop Bonus"; 												HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 202.0, 	0.05);
+	HudMessage(d:EPChance, s:"% EP Capsule Drop Bonus"; 												HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 210.0, 	0.05);
+	HudMessage(d:ArmorChance, s:"% Armor Drop Bonus"; 													HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 218.0, 	0.05);
+	HudMessage(d:PowerupChance, s:"% Powerup Drop Bonus"; 												HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 226.0, 	0.05);
+	HudMessage(d:RuneChance, s:"% Rune Drop Bonus"; 													HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 234.0, 	0.05);
+	HudMessage(d:TokenChance, s:"% Token Drop Bonus"; 													HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 242.0, 	0.05);
+	HudMessage(d:AugChance, s:"% Aug Drop Bonus"; 														HUDMSG_PLAIN, 0, CR_GOLD, 		230.1, 250.0, 	0.05);
+	HudMessage(d:ShieldChance, s:"% Shield Part Drop Bonus"; 											HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 258.0, 	0.05);
+	HudMessage(d:SurvivalBonus / 10, s:"% Survival Bonus"; 												HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	266.0, 	0.05);
+	
+	// Stat Upgrade Cursor
+	if (StatTokens > 0)
 	{
-		// Title
-		SetFont("BIGFONT");
-		HudMessage(s:"Drop Rates \cf(Luck: ", d:Luck, s:")"; HUDMSG_PLAIN, 5000, CR_GREEN, 0.1, 10.0, 0.05);
+		int Color = Random(1, 32);
 		
-		// Credits
-		HudMessage(s:"Credits"; 					HUDMSG_PLAIN, 	0, 		CR_GOLD, 			0.1, 	28.0, 	0.05);
-		HudMessage(d:MoneyChance[0], s:"%";			HUDMSG_PLAIN, 	0, 		CR_GREEN, 			64.1, 	48.0, 	0.05);
-		HudMessage(d:MoneyChance[1], s:"%";			HUDMSG_PLAIN, 	0, 		CR_LIGHTBLUE, 		64.1, 	64.0, 	0.05);
-		HudMessage(d:MoneyChance[2], s:"%";			HUDMSG_PLAIN, 	0, 		CR_ORANGE, 			64.1, 	80.0, 	0.05);
-		HudMessage(d:MoneyChance[3], s:"%";			HUDMSG_PLAIN, 	0, 		CR_RED, 			64.1, 	96.0, 	0.05);
-		HudMessage(d:MoneyChance[4], s:"%";			HUDMSG_PLAIN, 	0, 		CR_PURPLE, 			64.1, 	112.0, 	0.05);
-		HudMessage(d:MoneyChance[5], s:"%";			HUDMSG_PLAIN, 	0, 		CR_GOLD, 			64.1, 	128.0, 	0.05);
-		PrintSprite("CREDA0", 										0, 							16.1, 	50.1, 	0.05);
-		PrintSprite("CREDB0",			 							0, 							16.1, 	66.1, 	0.05);
-		PrintSprite("CREDC0", 										0, 							16.1, 	82.1, 	0.05);
-		PrintSprite("CREDD0", 										0, 							16.1, 	98.1, 	0.05);
-		PrintSprite("CREDE0", 										0, 							16.1, 	114.1, 	0.05);
-		PrintSprite("CREDF0", 										0, 							16.1, 	130.1, 	0.05);
-		
-		// Health
 		SetFont("BIGFONT");
-		HudMessage(s:"Health"; 						HUDMSG_PLAIN, 	0, 		CR_RED, 			128.1, 	28.0, 	0.05);
-		HudMessage(d:HealthChance[0], s:"%";		HUDMSG_PLAIN, 	0, 		CR_RED, 			184.1, 	49.0, 	0.05);
-		HudMessage(d:HealthChance[1], s:"%";		HUDMSG_PLAIN, 	0, 		CR_RED, 			184.1, 	74.0, 	0.05);
-		HudMessage(d:HealthChance[2], s:"%";		HUDMSG_PLAIN, 	0, 		CR_RED, 			184.1, 	102.0, 	0.05);
-		PrintSprite("STIM", 										0, 							120.1, 	32.1, 	0.05);
-		PrintSprite("MEDI",			 								0, 							130.1, 	32.1, 	0.05);
-		PrintSprite("MED2", 										0, 							140.1, 	32.1, 	0.05);
-		PrintSprite("MED3", 										0, 							150.1, 	32.1, 	0.05);
-		PrintSprite("MED4", 										0, 							122.1, 	54.1, 	0.05);
-		PrintSprite("MED5", 										0, 							134.1, 	56.1, 	0.05);
-		PrintSprite("SOULA0", 										0, 							140.1, 	128.1, 	0.05);
-		PrintSprite("MED6A0", 										0, 							156.1, 	118.1, 	0.05);
-		PrintSprite("CONTA0", 										0, 							172.1, 	126.1, 	0.05);
-		
-		// Armor
-		if (!GetCVAR("drpg_ext_doomrl"))
-		{
-		SetFont("BIGFONT");
-			HudMessage(s:"Armor"; 						HUDMSG_PLAIN, 	0, 		CR_GREEN, 			224.1, 	28.0, 	0.05);
-			HudMessage(d:ArmorChance[0], s:"%";			HUDMSG_PLAIN, 	0, 		CR_GREEN, 			280.1, 	48.0, 	0.05);
-			HudMessage(d:ArmorChance[1], s:"%";			HUDMSG_PLAIN, 	0, 		CR_BLUE, 			280.1, 	65.0, 	0.05);
-			HudMessage(d:ArmorChance[2], s:"%";			HUDMSG_PLAIN, 	0, 		CR_YELLOW, 			280.1, 	82.0, 	0.05);
-			HudMessage(d:ArmorChance[3], s:"%";			HUDMSG_PLAIN, 	0, 		CR_RED, 			280.1, 	99.0, 	0.05);
-			HudMessage(d:ArmorChance[4], s:"%";			HUDMSG_PLAIN, 	0, 		CR_WHITE, 			280.1, 	116.0, 	0.05);
-			PrintSprite("ARM1A0", 										0, 							240.1, 	56.1, 	0.05);
-			PrintSprite("ARM2A0", 										0, 							240.1, 	73.1, 	0.05);
-			PrintSprite("ARM3A0", 										0, 							240.1, 	90.1, 	0.05);
-			PrintSprite("ARM4A0", 										0, 							240.1, 	107.1, 	0.05);
-			PrintSprite("ARM5A0", 										0, 							240.1, 	124.1, 	0.05);
-		}
-		
-		// Misc
-		SetFont("BIGFONT");
-		HudMessage(s:"Special"; 					HUDMSG_PLAIN, 	0, 		CR_WHITE, 			0.1, 	152.0, 	0.05);
-		HudMessage(d:PowerupChance, s:"%";			HUDMSG_PLAIN, 	0, 		CR_GREEN, 			64.1, 	178.0, 	0.05);
-		HudMessage(d:RuneChance, s:"%";				HUDMSG_PLAIN, 	0, 		CR_BRICK, 			64.1, 	208.0, 	0.05);
-		HudMessage(d:TokenChance, s:"%";			HUDMSG_PLAIN, 	0, 		CR_WHITE, 			184.1, 	176.0, 	0.05);
-		HudMessage(d:AugChance, s:"%";				HUDMSG_PLAIN, 	0, 		CR_DARKGREEN, 		184.1, 	208.0, 	0.05);
-		HudMessage(d:ShieldChance, s:"%";			HUDMSG_PLAIN, 	0, 		CR_CYAN,	 		280.1, 	176.0, 	0.05);
-		HudMessage(d:EPChance, s:"%";				HUDMSG_PLAIN, 	0, 		CR_LIGHTBLUE,	 	280.1, 	208.0, 	0.05);
-		PrintSprite("PINVA0", 										0, 							16.1, 	190.1, 	0.05);
-		PrintSprite("STRRA0", 										0, 							16.1, 	220.1, 	0.05);
-		PrintSprite("TOKAD0", 										0, 							132.1, 	186.1, 	0.05);
-		PrintSprite("TOKBD0", 										0, 							140.1, 	186.1, 	0.05);
-		PrintSprite("TOKCD0", 										0, 							148.1, 	186.1, 	0.05);
-		PrintSprite("AUGCA0", 										0, 							140.1, 	218.1, 	0.05);
-		PrintSprite("SHCAA0", 										0, 							238.1, 	193.1, 	0.05);
-		PrintSprite("SHBOA0", 										0, 							238.1, 	193.1, 	0.05);
-		PrintSprite("EPUPB0", 										0, 							238.1, 	223.1, 	0.05);
+		if (MenuIndex == 0)	HudMessage(s:"Strength: ", d:Strength; 			HUDMSG_PLAIN, 5001, Color, 			0.1, 	25.0, 	0.05);
+		if (MenuIndex == 1)	HudMessage(s:"Defense: ", d:Defense;			HUDMSG_PLAIN, 5002, Color, 			200.1, 	25.0, 	0.05);
+		if (MenuIndex == 2)	HudMessage(s:"Vitality: ", d:Vitality; 			HUDMSG_PLAIN, 5005, Color, 			0.1, 	75.0, 	0.05);
+		if (MenuIndex == 3)	HudMessage(s:"Energy: ", d:Energy;				HUDMSG_PLAIN, 5006, Color, 			200.1, 	75.0, 	0.05);
+		if (MenuIndex == 4)	HudMessage(s:"Regen: ", d:Regeneration; 		HUDMSG_PLAIN, 5007, Color, 			0.1, 	125.0, 	0.05);
+		if (MenuIndex == 5)	HudMessage(s:"Agility: ", d:Agility;			HUDMSG_PLAIN, 5004, Color, 			200.1, 	125.0, 	0.05);
+		if (MenuIndex == 6)	HudMessage(s:"Capacity: ", d:Capacity;			HUDMSG_PLAIN, 5008, Color, 			0.1, 	175.0, 	0.05);
+		if (MenuIndex == 7)	HudMessage(s:"Luck: ", d:Luck; 					HUDMSG_PLAIN, 5009, Color, 			200.1, 	175.0, 	0.05);
 	}
+
+	// Icons
+	PrintSprite("Attack", 0, 6.1, 35.1, 0.05);
+	PrintSprite("Defense", 0, 200.1, 35.1, 0.05);
+	PrintSprite("Vitality", 0, 12.1, 85.1, 0.05);
+	PrintSprite("Energy", 0, 205.1, 84.1, 0.05);
+	PrintSprite("Regen", 0, 6.1, 132.1, 0.05);
+	PrintSprite("Agility", 0, 202.1, 132.1, 0.05);
+	PrintSprite("Capacity", 0, 14.1, 192.1, 0.05);
+	PrintSprite("Luck", 0, 202.1, 185.1, 0.05);
 }
 
 function void DrawAugsMenu(void)
@@ -647,10 +578,7 @@ function void MenuInput(void)
 		}
 	}
 	// Status menu
-	if (Menu == 1) // Page Switching
-		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
-			if (StatPage) StatPage = 0; else StatPage = 1;
-	if (Menu == 1 && StatTokens > 0 && !StatPage && !MenuBlock)
+	if (Menu == 1 && StatTokens > 0 && !MenuBlock)
 	{
 		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && MenuIndex > 1)
 		{
