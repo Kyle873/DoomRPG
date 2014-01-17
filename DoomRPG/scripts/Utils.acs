@@ -291,9 +291,9 @@ script "Cheat" (int StatBoost)
 		}
 	
 	// Items - Tokens
-	// GiveInventory("StatToken", 10000);
+	GiveInventory("StatToken", 10000);
 	GiveInventory("StatCapToken", 100);
-	// GiveInventory("SkillToken", 10000);
+	GiveInventory("SkillToken", 10000);
 	
 	// Items - Health
 	GiveInventory("StimPack", ItemMax);
@@ -303,7 +303,7 @@ script "Cheat" (int StatBoost)
 	GiveInventory("XLMedikit", ItemMax);
 	GiveInventory("MedPack", ItemMax);
 	GiveInventory("SurgeryKit", ItemMax);
-	GiveInventory("Continue", 1000);
+	GiveInventory("Continue", ItemMax);
 	
 	// Items - Armor
 	TakeInventory("BasicArmor", 10000000);
@@ -333,34 +333,17 @@ script "Cheat" (int StatBoost)
 	GiveInventory("Berserk", ItemMax);
 	GiveInventory("AllMap", ItemMax);
 	
-	// Items - Weapons/Ammo
-	GiveInventory("Pistol", 1);
-	GiveInventory("Shotgun", 1);
-	GiveInventory("SuperShotgun", 1);
-	GiveInventory("ChainGun", 1);
-	GiveInventory("RocketLauncher", 1);
-	GiveInventory("PlasmaRifle", 1);
-	GiveInventory("BFG9000", 1);
-	GiveInventory("ChainSaw", 1);
-	GiveInventory("Pistol1", 1);
-	GiveInventory("Shotgun1", 1);
-	GiveInventory("SSG", 1);
-	GiveInventory("ChainGun1", 1);
-	GiveInventory("RocketLauncher1", 1);
-	GiveInventory("PlasmaGun", 1);
-	GiveInventory("BFG9001", 1);
-	GiveInventory("ChainSaw1", 1);
+	// Items - Ammo
 	GiveInventory("Clip", GetAmmoCapacity("Clip"));
 	GiveInventory("Shell", GetAmmoCapacity("Shell"));
 	GiveInventory("RocketAmmo", GetAmmoCapacity("RocketAmmo"));
 	GiveInventory("Cell", GetAmmoCapacity("Cell"));
-	// GiveInventory("GrenadeFrag", 100);
 	
 	// Items - Misc
 	ACS_NamedExecute("AllRunes", 0);
-	ACS_NamedExecute("GiveAugs", 0);
+	ACS_NamedExecute("GiveAugs", 0, 100, 100, 100);
+	ACS_NamedExecute("GiveCredits", 0);
 	ACS_NamedExecute("FullShield", 0);
-	GiveInventory("AugSlotUpgrade", 30);
 	GiveInventory("RedCard", 1);
 	GiveInventory("YellowCard", 1);
 	GiveInventory("BlueCard", 1);
@@ -371,7 +354,6 @@ script "Cheat" (int StatBoost)
 	GiveInventory("PowerShadow", 1);
 	GiveInventory("PowerIronFeet", 1);
 	GiveInventory("PowerLightAmp", 1);
-	GiveInventory("Credits", 1000000000);
 	
 	// Restore HP/EP/Shields
 	HealThing(1000000);
@@ -425,21 +407,21 @@ script "AllRunes" (void)
 	GiveInventory("FrightRune", 1);
 	GiveInventory("GhostRune", 1);
 	GiveInventory("HighJumpRune", 1);
-	GiveInventory("HAsteRune", 1);
+	GiveInventory("HasteRune", 1);
 }
 
 // Give all Augs
-script "GiveAugs" (void)
+script "GiveAugs" (int Canisters, int Upgrades, int Slots)
 {
-	GiveInventory("StrengthAug", 1);
-	GiveInventory("DefenseAug", 1);
-	GiveInventory("AgilityAug", 1);
-	GiveInventory("VitalityAug", 1);
-	GiveInventory("EnergyAug", 1);
-	GiveInventory("RegenerationAug", 1);
-	GiveInventory("CapacityAug", 1);
-	GiveInventory("LuckAug", 1);
-	GiveInventory("BlackMarketAug", 1);
+	if (Canisters)
+	{
+		GiveInventory("AugCanister", Canisters);
+		GiveInventory("AugUpgradeCanister", Upgrades);
+		GiveInventory("AugSlotUpgrade", Slots);
+	}
+	
+	for (int i = 0; i < MAX_AUGS; i++)
+		AugLevels[i] = AugLevelMax[i];
 }
 
 // Give all Shield Components
@@ -486,9 +468,7 @@ function int GetEPMax(void)
 	int MaxEP = EPMax;
 	
 	// Max EP Checks for Augs
-	if (Augs[AUG_ENERGY] || Augs[AUG_BLACKMARKET])
-		MaxEP *= 2;
-	if (Augs[AUG_ENERGY] && Augs[AUG_BLACKMARKET])
+	if (Augs[AUG_ENERGY])
 		MaxEP *= 2;
 	
 	return MaxEP;

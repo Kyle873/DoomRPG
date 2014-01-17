@@ -25,6 +25,7 @@ int MenuY;
 int MenuIndex;
 bool MenuBlock;
 int StatAmount;
+bool AugSelected;
 int SkillPage;
 int SkillMax;
 int ShieldPage;
@@ -138,7 +139,7 @@ function void DrawMainMenu(void)
 	PrintSprite("TOKAD0", 0, 16.1, 188.1, 0.05);
 	PrintSprite("TOKBD0", 0, 16.1, 208.1, 0.05);
 	PrintSprite("TOKCD0", 0, 16.1, 228.1, 0.05);
-	PrintSprite("AUGUA0", 0, 16.1, 248.1, 0.05);
+	PrintSprite("AUGUB0", 0, 16.1, 248.1, 0.05);
 	SetFont("BIGFONT");
 	HudMessage(d:StatTokens; 																			HUDMSG_PLAIN, 0, CR_RED,  		40.1, 178.0, 0.05);
 	HudMessage(d:CheckInventory("StatCapToken"), s:" / ", d:100; 										HUDMSG_PLAIN, 0, CR_YELLOW,  	40.1, 198.0, 0.05);
@@ -250,45 +251,66 @@ function void DrawAugsMenu(void)
 {
 	// Titles
 	SetFont("BIGFONT");
-	HudMessage(s:"Augmentations (", d:AugSlotsUsed,
-			   s:" / ", d:MaxAugSlots, s:")";
-			   HUDMSG_PLAIN, 5000, CR_GREEN, 0.1, 10.0, 0.05);
+	HudMessage(s:"Augmentations"; HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
 	
+	// Aug Canisters
+	PrintSprite("AUGCA0", 0, 200.0, 54.0, 0.05);
+	SetFont("BIGFONT");
+	HudMessage(d:CheckInventory("AugCanister"); HUDMSG_PLAIN, 0, CR_GREEN, 208.1, 30.0, 0.05);
+	
+	// Aug Upgrade Canisters
+	PrintSprite("AUGUA0", 0, 200.0, 72.0, 0.05);
+	SetFont("BIGFONT");
+	HudMessage(d:CheckInventory("AugUpgradeCanister"); HUDMSG_PLAIN, 0, CR_GREEN, 208.1, 53.0, 0.05);
+	
+	// Aug Slots
+	PrintSprite("AUGUB0", 0, 204.0, 102.0, 0.05);
+	SetFont("BIGFONT");
+	HudMessage(d:AugSlotsUsed, s:" / ", d:MaxAugSlots; HUDMSG_PLAIN, 0, CR_GREEN, 208.1, 76.0, 0.05);
+
 	// Draw Aug slots
-	for (int i = 0; i < 1; i++)
-		for (int j = 0; j < 10; j++)
+	for (int i = 0; i < 2; i++)
+		for (int j = 0; j < 5; j++)
 		{
-			int Index = j + (i * 10);
-			int Amount = CheckInventory(AugData[Index][0]);
+			int Index = j + (i * 5);
+			
+			// Catch to make sure unimplemented stuff isn't drawn
+			if (Index > MAX_AUGS - 1) continue;
 			
 			// Draw the augs that we have
 			SetFont("SMALLFONT");
 			
 			// Draw the E if it's equipped
-			if (CheckInventory(AugData[Index][0]) && Augs[Index])
-				HudMessage(s:"E"; 		HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+			if (Augs[Index])
+				HudMessage(s:"E"; HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
 			
-			// Draw the quantity if you have more then one
-			if (CheckInventory(AugData[Index][0]) > 1)
-				HudMessage(d:Amount; 	HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+			// Draw the level and max level
+			HudMessage(d:AugLevels[Index], s:"/", d:AugLevelMax[Index]; HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
 			
-			// If we have it, draw it
-			if (CheckInventory(AugData[Index][0]))
-				PrintSprite(AugData[Index][3], 0, 18.1 + (j * 34.0), 48.1 + (i * 34.0), 0.05);
+			// Icon
+			PrintSprite(StrParam(s:"Aug", d:Index + 1), 0, 9.1 + (j * 34.0), 28.1 + (i * 34.0), 0.05);
 			
 			// Currently highlighted accessory's name/description
 			SetFont("SMALLFONT");
 			if (MenuIndex == Index)
-				if (CheckInventory(AugData[MenuIndex][0]))
-					HudMessage(s:"\ca", s:AugData[MenuIndex][1],
-							   s:"\n", s:AugData[Index][2];
-							   HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 56.1, 0.05);
+			{
+				HudMessage(s:"\ca", s:AugData[MenuIndex][0];
+						   HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 128.1, 0.05);
+				
+				for (int k = 0; k < AugLevelMax[Index]; k++)
+					if (AugLevels[Index] < k + 1)
+						HudMessage(s:"\cu", s:AugData[MenuIndex][1 + k];
+								   HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 136.1 + (k * 8.0), 0.05);
+					else
+						HudMessage(s:"\cd", s:AugData[MenuIndex][1 + k];
+								   HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 136.1 + (k * 8.0), 0.05);
+			}
 
 			// Draw the cursor
 			if (MenuIndex == Index)
 				PrintSprite("SelectBo", 0, 2.1 + (j * 34.0), 36.0 + (i * 34.0), 0.05);
-			
-			// Draw the boxes
+
+			// Boxes
 			PrintSprite("ItemBox", 0, 0.1 + (j * 34.0), 36.0 + (i * 34.0), 0.05);
 		}
 }
@@ -621,18 +643,18 @@ function void MenuInput(void)
 	if (Menu == 2 && !MenuBlock)
 	{
 		// Stop under/overflow
-		if (MenuIndex <= 0) 	MenuIndex = 0;
-		if (MenuIndex > 10 - 1) MenuIndex = 10 - 1;
+		if (MenuIndex <= 0) 			MenuIndex = 0;
+		if (MenuIndex > MAX_AUGS - 1) 	MenuIndex = MAX_AUGS - 1;
 		
 		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && MenuIndex > 0)
 		{
             ActivatorSound("menu/move", 127);
-			MenuIndex -= 10;
+			MenuIndex -= 5;
 		}
-		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < 30 - 1)
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < MAX_AUGS - 1)
 		{
             ActivatorSound("menu/move", 127);
-			MenuIndex += 10;
+			MenuIndex += 5;
 		}
         if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
 			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT)
@@ -643,13 +665,20 @@ function void MenuInput(void)
         }
         if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
 			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT)
-		    && MenuIndex < 30 - 1)
+		    && MenuIndex < MAX_AUGS - 1)
         {
 			ActivatorSound("menu/move", 127);
 			MenuIndex++;
 		}
 		if (Buttons == BT_USE && OldButtons != BT_USE)
-			EquipAug(MenuIndex);
+		{
+			if (AugLevels[MenuIndex] == 0)
+				LevelUpAug(MenuIndex);
+			else
+				EquipAug(MenuIndex);
+		}
+		if (Buttons & BT_USE && !(OldButtons & BT_USE) && Buttons & BT_SPEED)
+			LevelUpAug(MenuIndex);
 	}
 	// Skills Menu
 	if (Menu == 3 && !MenuBlock)

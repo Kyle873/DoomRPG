@@ -15,33 +15,67 @@
 #libdefine AUG_AGILITY		5
 #libdefine AUG_CAPACITY		6
 #libdefine AUG_LUCK			7
-#libdefine AUG_BLACKMARKET	8
-#libdefine MAX_AUGS			9
 
-str AugData[MAX_AUGS][4] =
+#libdefine MAX_AUGS			8
+#libdefine AUG_LEVELS		5
+
+str AugData[MAX_AUGS][1 + AUG_LEVELS] =
 {
-	// Class name, Nice name, Description, Icon
+	// Name, Icon, Description...
 	
-	// Augsd
-	{ "StrengthAug", "Muscle Replacer", "2x Damage", "AUGCA0" },
-	{ "DefenseAug", "Dermal Armor", "-2x Damage Taken", "AUGCB0" },
-	{ "VitalityAug", "Pain Inhibitor", "2x Max Health\n2x Health Regen", "AUGCC0" },
-	{ "EnergyAug", "Psi Projector", "2x Max EP\n2x EP Regen", "AUGCD0" },
-	{ "RegenerationAug", "Adrenaline Booster", "2x HP/EP Regen\n2x Shield Charge Rate\n-2x Shield Delay Rate", "AUGCE0" },
-	{ "AgilityAug", "Wired Reflexes", "2x Movement Speed\n2x Jump Height", "AUGCF0" },
-	{ "CapacityAug", "Weight Distributor", "2x Ammo Limits", "AUGCG0" },
-	{ "LuckAug", "Precognition Unit", "2x Luck Drop Chances", "AUGCH0" },
-	{ "BlackMarketAug", "Black Market Module", "2x Damage\n-2x Damage Taken\n2x Max Health\n4x Health Regen\n2x Max EP\n4x EP Regen\n2x Shield Charge Rate\n-2x Shield Delay Rate\n2x Movement Speed\n2x Jump Height\n2x Ammo Limits\n2x Luck Drop Chances", "AUGCI0" }
+	// Augs
+	{
+		"Muscle Replacer",
+		"2x Damage"
+	},
+	{
+		"Dermal Armor",
+		"-2x Damage Taken"
+	},
+	{
+		"Pain Inhibitor",
+		"2x Max Health",
+		"2x Health Regen"
+	},
+	{
+		"Psi Projector",
+		"2x Max EP",
+		"2x EP Regen"
+	},
+	{
+		"Adrenaline Booster",
+		"2x HP/EP Regen",
+		"2x Shield Charge Rate",
+		"-2x Shield Delay Rate"
+	},
+	{
+		"Wired Reflexes",
+		"2x Movement Speed",
+		"2x Jump Height"
+	},
+	{
+		"Weight Distributor",
+		"2x Ammo Limits"
+	},
+	{
+		"Precognition Unit",
+		"2x Luck Drop Chances"
+	},
 };
 
-global int 48 : Augs[];
+int AugLevelMax[MAX_AUGS] =
+{
+	1, 1, 1, 1, 3, 2, 1, 1
+};
+
+global int 47 : Augs[];
+global int 48 : AugLevels[];
 global int 49 : AugSlotsUsed;
 
 int MaxAugSlots;
 
 function void CheckAugSlots(void)
 {
-	// Additional slots given
 	MaxAugSlots = (6 - GameSkill()) + CheckInventory("AugSlotUpgrade");
 }
 
@@ -70,63 +104,38 @@ function void CheckAugs(void)
 	// Regeneration Aug
 	if (Augs[AUG_REGENERATION])
 	{
-		HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
-		EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
-		ShieldChargeRate *= 2;
-		ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
+		if (AugLevels[AUG_REGENERATION] >= 1)
+		{
+			HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
+			EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
+		}
+		if (AugLevels[AUG_REGENERATION] >= 2)
+			ShieldChargeRate *= 2;
+		if (AugLevels[AUG_REGENERATION] >= 3)
+			ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
 	}
 
 	// Agility Aug
 	if (Augs[AUG_AGILITY])
 	{
-		Speed *= 2;
-		JumpHeight *= 2;
+		if (AugLevels[AUG_AGILITY] >= 1)
+			Speed *= 2;
+		if (AugLevels[AUG_AGILITY] >= 2)
+			JumpHeight *= 2;
 	}
 	
 	// Capacity Aug
-	if (Augs[AUG_CAPACITY] || Augs[AUG_BLACKMARKET])
+	if (Augs[AUG_CAPACITY])
 	{
 		SetAmmoCapacity("Clip", Capacity * 20 * 2);
 		SetAmmoCapacity("Shell", Capacity * 10 * 2);
 		SetAmmoCapacity("RocketAmmo", Capacity * 5 * 2);
 		SetAmmoCapacity("Cell", Capacity * 30 * 2);
 	}
-	if (Augs[AUG_CAPACITY] && Augs[AUG_BLACKMARKET])
-	{
-		SetAmmoCapacity("Clip", Capacity * 20 * 4);
-		SetAmmoCapacity("Shell", Capacity * 10 * 4);
-		SetAmmoCapacity("RocketAmmo", Capacity * 5 * 4);
-		SetAmmoCapacity("Cell", Capacity * 30 * 4);
-	}
 
 	// Luck Aug
 	if (Augs[AUG_LUCK])
 	{
-		MoneyChance *= 2;
-		HealthChance *= 2;
-		ArmorChance *= 2;
-		PowerupChance *= 2;
-		RuneChance *= 2;
-		TokenChance *= 2;
-		AugChance *= 2;
-		ShieldChance *= 2;
-		EPChance *= 2;
-	}
-	
-	// Black Market Aug
-	if (Augs[AUG_BLACKMARKET])
-	{
-		Damage *= 2;
-		DamageFactor /= 2;
-		HealthMax *= 2;
-		EPMax *= 2;
-		HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
-		EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
-		ShieldChargeRate *= 2;
-		ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
-		Speed *= 2;
-		JumpHeight *= 2;
-		MoneyChance *= 2;
 		HealthChance *= 2;
 		ArmorChance *= 2;
 		PowerupChance *= 2;
@@ -143,11 +152,11 @@ function void CheckAugs(void)
 
 function void EquipAug(int Aug)
 {
-	if (CheckInventory(AugData[Aug][0]))
+	if (AugLevels[Aug] > 0)
 	{
 		if (Augs[Aug])
 		{
-			ActivatorSound("misc/augequip", 127);
+			ActivatorSound("aug/equip", 127);
 			AugSlotsUsed--;
 			Augs[Aug] = false;
 		}
@@ -158,14 +167,43 @@ function void EquipAug(int Aug)
 			if (AugSlotsUsed > MaxAugSlots)
 			{
 				ActivatorSound("menu/error", 127);
-				Print(s:"You don't have a free Accessory slot!");
+				Print(s:"You don't have a free Augmentation slot!");
 				AugSlotsUsed--;
 			}
 			else
 			{
-				ActivatorSound("misc/augequip", 127);
+				ActivatorSound("aug/equip", 127);
 				Augs[Aug] = true;
 			}
+		}
+	}
+}
+
+function void LevelUpAug(int Aug)
+{
+	if (AugLevels[Aug] < AugLevelMax[Aug])
+	{
+		if (AugLevels[Aug] == 0)
+		{
+			if (CheckInventory("AugCanister"))
+			{
+				ActivatorSound("aug/levelup", 127);
+				TakeInventory("AugCanister", 1);
+				AugLevels[Aug]++;
+			}
+			else
+				ActivatorSound("menu/error", 127);
+		}
+		else
+		{
+			if (CheckInventory("AugUpgradeCanister"))
+			{
+				ActivatorSound("aug/levelup", 127);
+				TakeInventory("AugUpgradeCanister", 1);
+				AugLevels[Aug]++;
+			}
+			else
+				ActivatorSound("menu/error", 127);
 		}
 	}
 }
