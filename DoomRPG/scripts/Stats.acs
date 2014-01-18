@@ -24,6 +24,7 @@ global int 12 : RankLevel;
 global int 13 : Rank;
 global int 14 : RankNext;
 global int 15 : PayTimer;
+global int 16 : PayKills;
 
 // HUD Stuff
 global int 18 : Credits;
@@ -227,7 +228,8 @@ function void CheckRank(void)
 		Rank = RankTable[RankLevel];
 		RankNext = RankTable[RankLevel];
 	}
-		
+	
+	// Rank up
 	if (Rank >= RankTable[RankLevel] && RankLevel < 24)
 	{
 		ActivatorSound("misc/rankup", 127);
@@ -243,27 +245,23 @@ function void CheckRank(void)
 	PayTimer++;
 	if (PayTimer >= 35 * 60 * GetCVAR("drpg_pay_interval"))
 	{
-		PayTimer = 0;
-		
 		if (RankLevel > 0)
 		{
-			GiveInventory("Credits", 100 * RankLevel + 100);
+			int Pay = ((RankLevel + 1) * 10) + (PayKills * (RankLevel + 1)) * (1 + (MapNumber / 6));
+			
+			GiveInventory("Credits", Pay);
 			
 			FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0, 2.0);
 			SetFont("BIGFONT");
-			if (InMenu)
-				HudMessage(s:"+", d:100 * RankLevel + 100, s:" Credits";
-						   HUDMSG_FADEOUT, 0, CR_GOLD, 200.0, 234.0, 5.0, 5.0);
-			else
-			{
-				if (InShop)
-					SetHUDSize(0, 0, false);
-				HudMessage(s:"+", d:100 * RankLevel + 100, s:" Credits";
-						   HUDMSG_FADEOUT, 0, CR_GOLD, 0.025, 0.775, 5.0, 5.0);
-			}
+			SetHUDSize(0, 0, false);
+			HudMessage(s:"+", d:Pay, s:" Credits"; HUDMSG_FADEOUT, 0, CR_GOLD, -0.025, 0.775, 4.0, 2.0);
+			
 			ActivatorSound("credits/payout", 127);
-			Log(s:"\cfYou have been paid ", d:100 * RankLevel + 100, s:" Credits by the UAC");
+			Log(s:"\cfYou have been paid ", d:Pay, s:" Credits by the UAC");
 		}
+		
+		PayTimer = 0;
+		PayKills = 0;
 	}
 }
 
@@ -597,13 +595,20 @@ function void DoRegen(void)
 // Setup XP & Rank Tables
 function void SetupTables(void)
 {
+	int i;
+	
 	// XP Table
-	for (int i = 0; i < 1000; i++)
+	for (i = 0; i < 1000; i++)
 		XPTable[i] = 1000 + (1000 * i * i);
 	
 	// Rank Table
-	for (int j = 0; j < 25; j++)
-		RankTable[j] = 100000 + (100000 * j * j);
+	for (i = 0; i < 25; i++)
+		if (GameSkill() == 5)
+			RankTable[i] = 100000 + (100000 * i * i);
+		else if (GameSkill() > 2)
+			RankTable[i] = 50000 + (50000 * i * i);
+		else
+			RankTable[i] = 25000 + (25000 * i * i);
 }
 
 // Keep stats capped at certain values
