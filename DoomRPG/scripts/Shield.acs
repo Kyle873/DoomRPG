@@ -263,7 +263,6 @@ script "Shield" (void)
 	BeforeArmor = CheckInventory("Armor");
 	HealthLoss = BeforeHealth - AfterHealth;
 	ArmorLoss = BeforeArmor - AfterArmor;
-	ShieldInterval = 35;
 	
 	/* Debugging
 	SetFont("BIGFONT");
@@ -324,14 +323,6 @@ script "Shield" (void)
 		ShieldFull = false;
 	}
 	
-	// Accessory Handling
-	if (Augs[AUG_REGENERATION]) // Regeneration Aug
-	{
-		ShieldChargeRate *= 2;
-		ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
-		ShieldInterval /= 2;
-	}
-
 	// Increase Charge
 	if (ShieldTimer == 0)
 	{
@@ -425,6 +416,18 @@ function void CheckShields(void)
 	ShieldCapacity = ShieldStats[0][ShieldBody - 1][0] + ShieldStats[1][ShieldBattery - 1][0] + ShieldStats[2][ShieldCapacitor - 1][0];
 	ShieldChargeRate = ShieldStats[0][ShieldBody - 1][1] + ShieldStats[1][ShieldBattery- 1][1] + ShieldStats[2][ShieldCapacitor- 1][1];
 	ShieldDelayRate = 175 + ShieldStats[0][ShieldBody - 1][2] + ShieldStats[1][ShieldBattery - 1][2] + ShieldStats[2][ShieldCapacitor - 1][2];
+	ShieldInterval = 35;
+	
+	// Aug Handling
+	if (Augs[AUG_REGENERATION])
+	{
+		if (AugLevels[AUG_REGENERATION] >= 2)
+			ShieldChargeRate *= 2;
+		if (AugLevels[AUG_REGENERATION] >= 3)
+			ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
+		if (AugLevels[AUG_REGENERATION] >= 4)
+			ShieldInterval /= 2;
+	}
 }
 
 // Amp, Absorb, Adaptive, Booster, Roid, Spike, Nova, Turtle, Immunity
