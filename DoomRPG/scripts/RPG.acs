@@ -15,18 +15,21 @@
 
 // Flags
 global int 1 : FirstRun;
+global int 41 : MapsVisited[];
 
+// Version and Timestamp
 str Version = "v0.95 Beta";
-str TimeStamp = "Saturday, January 18, 2014 at 1:09:17 PM";
-
-int PlayerTID = 31337;
-int MapNumber;
-int ParBonus;
+str TimeStamp = "Saturday, January 18, 2014 at 2:55:21 PM";
 
 // Status Effects
 int StatusType;
 int StatusTimer;
 global int 7 : StatusTimerHUD;
+
+// Misc
+int PlayerTID = 31337;
+int MapNumber;
+int ParBonus;
 
 // Init Script
 script "Init" enter
@@ -111,6 +114,10 @@ script "Init" enter
 	// IF you have the Nova Shield Accessory and move to a new level, make sure to check the Nova flag
 	if (CheckInventory("Shield") && ShieldAccessory == 5)
 		Nova = false;
+	
+	// Flag this level as visited for the transporter
+	if (!MapsVisited[GetLevelInfo(LEVELINFO_LEVELNUM)])
+		MapsVisited[GetLevelInfo(LEVELINFO_LEVELNUM)] = true;
 	
 	// Reset the menus if they were open in the last level
 	InMenu = false;
@@ -949,6 +956,7 @@ script 30000 (int Secret)
 	// If there's no par time, or you somehow already activated this script, terminate
 	if (ParTime <= 0 || ParBonus) terminate;
 	
+	// Check par time and give bonus if you beat it
 	if ((Timer() / 35) <= ParTime)
 	{
 		int RankBonus = Random(10000 * RankLevel, 10000 * RankLevel * MapNumber);
@@ -966,7 +974,8 @@ script 30000 (int Secret)
 		ParBonus = true;
 		Delay(35 * 5);
 	}
-
+	
+	// Now exit the level
 	if (Secret)
 		Exit_Secret(0);
 	else
