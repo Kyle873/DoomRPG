@@ -47,7 +47,8 @@ str AugData[MAX_AUGS][1 + AUG_LEVELS] =
 	{
 		"Psi Projector",
 		"2x Max EP",
-		"2x EP Regen"
+		"2x EP Regen",
+		"2x Aura Timer"
 	},
 	{
 		"Adrenaline Booster",
@@ -67,14 +68,14 @@ str AugData[MAX_AUGS][1 + AUG_LEVELS] =
 	},
 	{
 		"Precognition Unit",
-		"2x Luck Drop Chances",
-		"2x Survival Chance"
+		"2x Survival Chance",
+		"2x Luck Drop Chances"
 	},
 };
 
 int AugLevelMax[MAX_AUGS] =
 {
-	4, 5, 2, 2, 3, 3, 1, 2
+	4, 5, 2, 3, 3, 3, 1, 2
 };
 
 global int 47 : Augs[];
@@ -124,11 +125,25 @@ function void CheckAugs(void)
 	
 	// Vitality Aug
 	if (Augs[AUG_VITALITY])
-		HealthMax *= 2;
+	{
+		if (AugLevels[AUG_VITALITY] >= 1)
+			HealthMax *= 2;
+		if (AugLevels[AUG_VITALITY] >= 2)
+			HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
+	}
 	
 	// Energy Aug
 	if (Augs[AUG_ENERGY])
-		EPMax *= 2;
+	{
+		if (AugLevels[AUG_ENERGY] >= 1)
+			EPMax *= 2;
+		if (AugLevels[AUG_ENERGY] >= 2)
+			EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
+		if (AugLevels[AUG_ENERGY] >= 3)
+			AuraBonus = true;
+		else
+			AuraBonus = false;
+	}
 	
 	// Regeneration Aug
 	if (Augs[AUG_REGENERATION])
@@ -168,6 +183,8 @@ function void CheckAugs(void)
 	if (Augs[AUG_LUCK])
 	{
 		if (AugLevels[AUG_LUCK] >= 1)
+			SurvivalBonus *= 2;
+		if (AugLevels[AUG_LUCK] >= 2)
 		{
 			HealthChance *= 2;
 			ArmorChance *= 2;
@@ -178,8 +195,6 @@ function void CheckAugs(void)
 			ShieldChance *= 2;
 			EPChance *= 2;
 		}
-		if (AugLevels[AUG_LUCK] >= 2)
-			SurvivalBonus *= 2;
 	}
 
 	// Keep adding more
