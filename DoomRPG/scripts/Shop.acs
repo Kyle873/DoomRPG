@@ -51,6 +51,7 @@ int Shop[SHOP_CATEGORIES][SHOP_ITEMS][2] =
 		{ "RocketBox", "Box of Rockets" },
 		{ "Cell", "Cell" },
 		{ "CellPack", "Cell Charge Pack" },
+		{ "SmallBackpack", "Small Backpack" },
 		{ "Backpack", "Backpack" },
 		{ "BigBackpack", "Big Backpack" }
 	},
@@ -143,7 +144,7 @@ int ShopCosts[SHOP_CATEGORIES][SHOP_ITEMS] = {
 	},
     // Ammo
 	{
-		10, 50, 25, 125, 50, 250, 200, 1000, 285, 6325
+		10, 50, 25, 125, 50, 250, 200, 1000, 285, 1425, 6325
 	},
     // Health
 	{
@@ -174,7 +175,7 @@ int ShopCosts[SHOP_CATEGORIES][SHOP_ITEMS] = {
 
 int ShopMax[SHOP_CATEGORIES] =
 {
-	8, 10, 13, 11, 20, 8, 0, 3
+	8, 11, 13, 11, 20, 8, 0, 3
 };
 
 bool InShop;
@@ -785,14 +786,16 @@ function void ShopLoop(void)
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
 	int Discount = FixedMul(RankLevel, 2.1);
 	int Cost = ShopCosts[ShopPage][ShopIndex] - ShopCosts[ShopPage][ShopIndex] * Discount / 100;
-	int SellPrice = ShopCosts[ShopPage][ShopIndex] / 2;
+	int SellPrice;
 	
 	// Certain pages are built dynamically or require modifications depending on extension CVARs
 	ShopBuildPages();
 	
-	// Some pages need modified sell behavior
-	if (ShopPage == 1) SellPrice /= 4; // Ammo
-	if (ShopPage == 5) SellPrice /= 5; // Tokens
+	// Get the sell price
+	if (ShopPage == 1) // Ammo
+		SellPrice = GetSellPrice(GetAmmoAmount(Shop[ShopPage][ShopIndex][0]));
+	else
+		SellPrice = GetSellPrice(1);
 	
 	if (InShop)
     {
@@ -923,15 +926,42 @@ function void ShopLoop(void)
     }
 }
 
+function int GetAmmoAmount(Str Item)
+{
+	int Amount = 1;
+	
+	// If it's ammo, we need to get the real amounts to give if you're using the Give buy mode
+	if (Item == "Clip")			Amount = 10;
+	if (Item == "ClipBox")		Amount = 50;
+	if (Item == "Shell")		Amount = 4;
+	if (Item == "ShellBox")		Amount = 20;
+	if (Item == "RocketAmmo")	Amount = 1;
+	if (Item == "RocketBox")	Amount = 5;
+	if (Item == "Cell")			Amount = 20;
+	if (Item == "CellPack")		Amount = 100;
+	
+	// If it's ammo and it's the large version, just change it down to the base type
+	if (Item == "ClipBox")		Item = "Clip";
+	if (Item == "ShellBox")		Item = "Shell";
+	if (Item == "RocketBox")	Item = "RocketAmmo";
+	if (Item == "CellPack")		Item = "Cell";
+	
+	// Now apply difficulty-based multipliers to the amount if it's ammo
+	if (Item == "Clip" || Item == "Shell" || Item == "RocketAmmo" || Item == "Cell")
+		if (GameSkill() == 1 || GameSkill() == 5)
+			FixedMul(Amount, 2.0);
+	
+	return Amount;
+}
+
 function void BuyItem(str Item, int Cost)
 {
-	/* If it has no price, fail
+	// If it has no price, fail
 	if (Cost == 0)
 	{
 		ActivatorSound("menu/error", 127);
 		return;
 	}
-	*/
 	
 	// If it's a Token, use alternate handling due to bullshit
 	if (Item == "StatToken") 	Item = "SmallStatToken";
@@ -943,30 +973,12 @@ function void BuyItem(str Item, int Cost)
 	{
 		int Amount = 1;
 		
-		// If it's ammo, we need to get the real amounts to give if you're using the Give buy mode
-		if (Item == "Clip")			Amount = 10;
-		if (Item == "ClipBox")		Amount = 50;
-		if (Item == "Shell")		Amount = 4;
-		if (Item == "ShellBox")		Amount = 20;
-		if (Item == "RocketAmmo")	Amount = 1;
-		if (Item == "RocketBox")	Amount = 5;
-		if (Item == "Cell")			Amount = 20;
-		if (Item == "CellPack")		Amount = 100;
-		
-		// If it's ammo and it's the large version, just change it down to the base type
-		if (Item == "ClipBox")		Item = "Clip";
-		if (Item == "ShellBox")		Item = "Shell";
-		if (Item == "RocketBox")	Item = "RocketAmmo";
-		if (Item == "CellPack")		Item = "Cell";
+		// Run through the ammo checker just in case
+		Amount = GetAmmoAmount(Item);
 		
 		// If it's an instant use health item, give it the proper amount
 		if (Item == "Soulsphere")	Amount = 100;
 		if (Item == "AtomicHealth")	Amount = 200;
-		
-		// Now apply difficulty-based multipliers to the amount if it's ammo
-		if (Item == "Clip" || Item == "Shell" || Item == "RocketAmmo" || Item == "Cell")
-			if (GameSkill() == 1 || GameSkill() == 5)
-				FixedMul(Amount, 2.0);
 		
 		if (CheckInventory(Item) == 0 || CheckInventory(Item) < CheckInventoryMax(Item))
 			GiveInventory(Item, Amount);
@@ -993,6 +1005,27 @@ function void BuyItem(str Item, int Cost)
 	TakeInventory("Credits", Cost);
 }
 
+function int GetSellPrice(int Amount)
+{
+	int SellCost = ShopCosts[ShopPage][ShopIndex];
+	int SellAmount = Amount;
+	
+	// Some pages need modified sell behavior
+	if (ShopPage == 1) // Ammo
+	{
+		SellAmount = GetAmmoAmount(Shop[ShopPage][ShopIndex][0]);
+		SellCost /= Amount;
+	}
+	if (ShopPage == 5) // Tokens
+		SellCost /= 5;
+	else
+		SellCost /= 2;
+	
+	if (SellCost == 0) SellCost = 1;
+	
+	return SellCost;
+}
+
 function void SellItem(str Item, bool SellAll)
 {
 	if (RankLevel == 0)
@@ -1003,16 +1036,16 @@ function void SellItem(str Item, bool SellAll)
 		return;
 	}
 	
-	int SellCost = ShopCosts[ShopPage][ShopIndex] / 2;
 	int Amount = 1;
 	
 	if (SellAll)
 		Amount = CheckInventory(Item);
 	
-	// Some pages need modified sell behavior
-	if (ShopPage == 1) SellCost /= 4; // Ammo
-	if (ShopPage == 5) SellCost /= 5; // Tokens
+	if (ShopPage == 1) // Ammo
+		Amount = GetAmmoAmount(Item);
 	
+	int SellCost = GetSellPrice(Amount);
+
 	// DoomRL Compatibility
 	if (GetCVAR("drpg_ext_doomrl"))
 	{
@@ -1026,15 +1059,13 @@ function void SellItem(str Item, bool SellAll)
 			TakeInventory("RLBootsInInventory", 1);
 	}
 	
-	// If it's an Augmentation, unequip it too
-	if (ShopPage == 7 && Augs[ShopIndex])
-	{
-		Augs[ShopIndex] = false;
-		AugSlotsUsed--;
-	}
-	
 	// Sell the Item
-	ActivatorSound("credits/payout", 127);
-	TakeInventory(Item, Amount);
-	GiveInventory("Credits", SellCost * Amount);
+	if (CheckInventory(Item) >= Amount)
+	{
+		ActivatorSound("credits/payout", 127);
+		TakeInventory(Item, Amount);
+		GiveInventory("Credits", SellCost * Amount);
+	}
+	else
+		ActivatorSound("menu/error", 127);
 }
