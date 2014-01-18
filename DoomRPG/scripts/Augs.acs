@@ -26,11 +26,18 @@ str AugData[MAX_AUGS][1 + AUG_LEVELS] =
 	// Augs
 	{
 		"Muscle Replacer",
-		"2x Damage"
+		"1.25x Damage",
+		"1.5x Damage",
+		"2x Damage",
+		"4x Damage"
 	},
 	{
 		"Dermal Armor",
-		"-2x Damage Taken"
+		"-10x Damage Taken",
+		"-20x Damage Taken",
+		"-30x Damage Taken",
+		"-40x Damage Taken",
+		"-50x Damage Taken"
 	},
 	{
 		"Pain Inhibitor",
@@ -51,7 +58,8 @@ str AugData[MAX_AUGS][1 + AUG_LEVELS] =
 	{
 		"Wired Reflexes",
 		"2x Movement Speed",
-		"2x Jump Height"
+		"2x Jump Height",
+		"Double Weapon Speed"
 	},
 	{
 		"Weight Distributor",
@@ -59,13 +67,14 @@ str AugData[MAX_AUGS][1 + AUG_LEVELS] =
 	},
 	{
 		"Precognition Unit",
-		"2x Luck Drop Chances"
+		"2x Luck Drop Chances",
+		"2x Survival Chance"
 	},
 };
 
 int AugLevelMax[MAX_AUGS] =
 {
-	1, 1, 1, 1, 3, 2, 1, 1
+	4, 5, 2, 2, 3, 3, 1, 2
 };
 
 global int 47 : Augs[];
@@ -87,11 +96,31 @@ function void CheckAugs(void)
 
 	// Strength Aug
 	if (Augs[AUG_STRENGTH])
-		Damage *= 2;
+	{
+		if (AugLevels[AUG_STRENGTH] == 1)
+			Damage = FixedMul(Damage, 1.25);
+		if (AugLevels[AUG_STRENGTH] == 2)
+			Damage = FixedMul(Damage, 1.5);
+		if (AugLevels[AUG_STRENGTH] == 3)
+			Damage *= 2;
+		if (AugLevels[AUG_STRENGTH] >= 4)
+			Damage *= 4;
+	}
 	
 	// Defense Aug
 	if (Augs[AUG_DEFENSE])
-		DamageFactor /= 2;
+	{
+		if (AugLevels[AUG_DEFENSE] == 1)
+			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.1);
+		if (AugLevels[AUG_DEFENSE] == 2)
+			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.2);
+		if (AugLevels[AUG_DEFENSE] == 3)
+			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.3);
+		if (AugLevels[AUG_DEFENSE] == 4)
+			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.4);
+		if (AugLevels[AUG_DEFENSE] >= 5)
+			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.5);
+	}
 	
 	// Vitality Aug
 	if (Augs[AUG_VITALITY])
@@ -122,6 +151,8 @@ function void CheckAugs(void)
 			Speed *= 2;
 		if (AugLevels[AUG_AGILITY] >= 2)
 			JumpHeight *= 2;
+		if (AugLevels[AUG_AGILITY] >= 3)
+			WeaponSpeed += 100;
 	}
 	
 	// Capacity Aug
@@ -136,14 +167,19 @@ function void CheckAugs(void)
 	// Luck Aug
 	if (Augs[AUG_LUCK])
 	{
-		HealthChance *= 2;
-		ArmorChance *= 2;
-		PowerupChance *= 2;
-		RuneChance *= 2;
-		TokenChance *= 2;
-		AugChance *= 2;
-		ShieldChance *= 2;
-		EPChance *= 2;
+		if (AugLevels[AUG_LUCK] >= 1)
+		{
+			HealthChance *= 2;
+			ArmorChance *= 2;
+			PowerupChance *= 2;
+			RuneChance *= 2;
+			TokenChance *= 2;
+			AugChance *= 2;
+			ShieldChance *= 2;
+			EPChance *= 2;
+		}
+		if (AugLevels[AUG_LUCK] >= 2)
+			SurvivalBonus *= 2;
 	}
 
 	// Keep adding more
