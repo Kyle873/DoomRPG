@@ -51,7 +51,7 @@ str SkillCategories[MAX_CATEGORIES] =
 
 int CategoryMax[MAX_CATEGORIES] =
 {
-	3, 9, 9, 4, 17, 7
+	3, 9, 9, 4, 17, 6
 };
 
 // Skill Max Levels
@@ -68,7 +68,7 @@ int SkillLevelMax[MAX_CATEGORIES][MAX_SKILLS] =
 	// Summoning
 	{ 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
 	// Utility
-	{ 1, 2, 1, 2, 1, 1, 1 }
+	{ 1, 2, 1, 2, 1, 1 }
 };
 
 int SkillCosts[MAX_CATEGORIES][MAX_SKILLS] =
@@ -84,7 +84,7 @@ int SkillCosts[MAX_CATEGORIES][MAX_SKILLS] =
 	// Summoning
 	{ 100, 25, 50, 75, 75, 75, 100, 150, 200, 100, 500, 500, 500, 500, 750, 1000, 1000 },
 	// Utility
-	{ 250, 50, 50, 0, 50, 25, 0 }
+	{ 250, 50, 50, 0, 25, 0 }
 };
 
 // Skill Data
@@ -353,10 +353,6 @@ int SkillData[MAX_CATEGORIES][MAX_SKILLS][20] =
 			"Banishes all of the friendly creatures under your control\nEach creature banished restores\n25 EP",
 		},
 		{
-			"Magnetize",
-			"Pulls some dropped items to you",
-		},
-		{
 			"Recall",
 			"Brings you to the beginning of the level"
 		},
@@ -559,9 +555,8 @@ script "UseSkill" (int Index)
 					case 1:		Success = ForceWall();										break; // Force Wall
 					case 2:		Success = Rally();											break; // Rally
 					case 3:		Success = Unsummon();										break; // Unsummon
-					case 4:		Success = Magnet();											break; // Magnetize
-					case 5:		Success = Recall();											break; // Recall
-					case 6:		ACS_NamedExecute("Transport", 0);							break; // Transport
+					case 4:		Success = Recall();											break; // Recall
+					case 5:		ACS_NamedExecute("Transport", 0);							break; // Transport
 				}
 				break;
 		}
@@ -1123,50 +1118,6 @@ function int Unsummon(void)
 
 	MaxSummons = 0;
 	FadeRange(192, 0, 0, 0.5, 192, 0, 0, 0.0, 1.0);
-	return true;
-}
-
-// Magnetize - Pull some (Luck based for now) items to the player's position
-function int Magnet(void)
-{
-	int X;
-	int Y;
-	int Z;
-	int Angle;
-	int AngleAdd;
-	int Radius;
-	
-	// Fail if there are no pullable items on the ground
-	if (MaxItems == 0)
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	// Determine Circie Size
-	AngleAdd += MaxItems;
-	
-	// Set Circle Size
-	Radius = GetCVAR("drpg_skill_radius");
-
-	// Create the Circle
-	for (int i = ItemID; i <= ItemID + MaxItems; i++)
-	{
-		X = GetActorX(0) + FixedMul(cos(Angle), Radius);
-		Y = GetActorY(0) + FixedMul(sin(Angle), Radius);
-		Z = GetActorZ(0) + 48.0;
-		
-		if (Overdrive)
-			SetActorPosition(i, GetActorX(0), GetActorY(0), GetActorZ(0), 0);
-		else
-			SetActorPosition(i, X, Y, Z, 0);
-			
-		Angle += AngleAdd;
-	}
-	
-	// FX
-	FadeRange(0, 0, 0, 0.75, 0, 0, 0, 0.0, 1.0);
-	ActivatorSound("skills/magnet", 127);
 	return true;
 }
 

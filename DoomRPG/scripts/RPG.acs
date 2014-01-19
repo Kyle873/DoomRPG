@@ -19,7 +19,7 @@ global int 41 : MapsVisited[];
 
 // Version and Timestamp
 str Version = "v0.95 Beta";
-str TimeStamp = "Sunday, January 19, 2014 at 1:18:44 PM";
+str TimeStamp = "Sunday, January 19, 2014 at 1:47:43 PM";
 
 // Status Effects
 int StatusType;
@@ -227,6 +227,7 @@ script "MonsterLoop" (void)
 	{
 		int XPAmount = Random(GetActorProperty(0, APROP_SPAWNHEALTH), GetActorProperty(0, APROP_SPAWNHEALTH) * 2);
 		int SkillDropMod = (GameSkill() - 1) * 32;
+		int LuckDrops = 1;
 		XPAmount *= 1 + (MonsterLevel / 100);
 		
 		// Aura Drops
@@ -261,7 +262,7 @@ script "MonsterLoop" (void)
 				DropItem(0, "BackpackRandomizer", 1, 255 - SkillDropMod);
 				break;
 			case 9: // Yellow Aura - Luck
-				DropItem(0, "LuckDropper", 4, 255);
+				LuckDrops = 4;
 				break;
 			case 10: // Black Aura - Miniboss
 				DropItem(0, "RuneDropper", 1, 255 - SkillDropMod);
@@ -275,13 +276,27 @@ script "MonsterLoop" (void)
 				DropItem(0, "BigEPCapsule", 1, 255 - SkillDropMod);
 				DropItem(0, "RegenSphere", 1, 255 - SkillDropMod);
 				DropItem(0, "BackpackRandomizer", 1, 255 - SkillDropMod);
-				DropItem(0, "LuckDropper", 4, 255);
+				LuckDrops = 4;
 				XPAmount *= 4;
 				break;
 		}
 		
-		// Luck Dropper
-		DropItem(0, "LuckDropper", 1, 255);
+		// Credit Drops
+		if (Random(1, 100) <= 10 + (FixedMul(Luck, 0.9)))
+			DropItem(0, "MoneyDropper", 1, 255);
+		
+		// Luck-based Drops
+		for (int i = 0; i < LuckDrops; i++)
+		{
+			if (Random(1, 100) < HealthChance)	DropItem(0, "HealthDropper", 1, 255);
+			if (Random(1, 100) < EPChance)		DropItem(0, "EPCapsule", 1, 255);
+			if (Random(1, 100) < ArmorChance)	DropItem(0, "ArmorDropper", 1, 255);
+			if (Random(1, 100) < PowerupChance)	DropItem(0, "PowerupDropper", 1, 255);
+			if (Random(1, 100) < RuneChance)	DropItem(0, "RuneDropper", 1, 255);
+			if (Random(1, 100) < TokenChance)	DropItem(0, "SmallTokenDropper", 1, 255);
+			if (Random(1, 100) < AugChance)		DropItem(0, "AccessoryDropper", 1, 255);
+			if (Random(1, 100) < ShieldChance)	DropItem(0, "ShieldDropper", 1, 255);
+		}
 		
 		// Boss phat lewt drops
 		if (MonsterBoss)
