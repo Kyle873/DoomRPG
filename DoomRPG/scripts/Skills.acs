@@ -11,6 +11,7 @@
 
 #libdefine MAX_CATEGORIES		6
 #libdefine MAX_SKILLS			17
+#libdefine MAX_LEVELS			10
 
 // Energy Points (EP)
 global int 2 : EP;
@@ -62,7 +63,7 @@ int SkillLevelMax[MAX_CATEGORIES][MAX_SKILLS] =
 	// Powerups
 	{ 10, 10, 2, 1, 1, 1, 1, 1, 1 },
 	// Auras
-	{ 3, 5, 5, 1, 3, 4, 3, 4, 7 },
+	{ 3, 3, 5, 1, 3, 4, 3, 4, 7 },
 	// Attacks
 	{ 1, 10, 1, 10 },
 	// Summoning
@@ -88,7 +89,7 @@ int SkillCosts[MAX_CATEGORIES][MAX_SKILLS] =
 };
 
 // Skill Data
-int SkillData[MAX_CATEGORIES][MAX_SKILLS][20] =
+int SkillData[MAX_CATEGORIES][MAX_SKILLS][1 + MAX_LEVELS] =
 {
 	// Name, Description (Level 1), Description (Level 2), ...
 	
@@ -177,11 +178,9 @@ int SkillData[MAX_CATEGORIES][MAX_SKILLS][20] =
 		},
 		{
 			"Green Aura",
-			"-2x Damage Taken",
-			"-4x Damage Taken",
-			"-4x Damage Taken\nDamage Floor Protection",
-			"Invulnerable",
-			"Invulnerable\nReflective Projectiles"
+			"-25% Damage Taken",
+			"-50% Damage Taken",
+			"-75% Damage Taken\nDamage Floor Protection"
 		},
 		{
 			"White Aura",
@@ -228,7 +227,7 @@ int SkillData[MAX_CATEGORIES][MAX_SKILLS][20] =
 			"Fast Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance",
 			"Very Fast Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance",
 			"Super Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance\n2x Token Drop Chance",
-			"Ultra Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance\n2x Token Drop Chance\n2x Augmentation Drop Chance",
+			"Mega Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance\n2x Token Drop Chance\n2x Augmentation Drop Chance",
 			"Ultra Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance\n2x Token Drop Chance\n2x Augmentation Drop Chance\n2x Shield Part Drop Chance"
 		}
 	},
@@ -1210,16 +1209,15 @@ function void CheckSkills(void)
 				case 2:
 					SpawnForced("GreenAura", X, Y, Z + 32, 2300, 0);
 					FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0.0, 1.0);
-					if (GreenAuraLevel >= 1 && GreenAuraLevel < 2)
-						DamageFactor /= 2;
-					if (GreenAuraLevel >= 2)
-						DamageFactor /= 4;
+					if (GreenAuraLevel == 1)
+						DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.25);
+					if (GreenAuraLevel == 2)
+						DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.5);
 					if (GreenAuraLevel == 3)
+					{
+						DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.75);
 						GiveInventory("GreenAura1", 1);
-					if (GreenAuraLevel == 4)
-						GiveInventory("GreenAura2", 1);
-					if (GreenAuraLevel >= 5)
-						GiveInventory("GreenAura3", 1);
+					}
 					break;
 				// White Aura
 				case 3:
@@ -1241,9 +1239,7 @@ function void CheckSkills(void)
 				case 4:
 					SpawnForced("PinkAura", X, Y, Z + 32, 2300, 0);
 					FadeRange(255, 0, 255, 0.1, 255, 0, 255, 0.0, 1.0);
-					if (PinkAuraLevel >= 1)
-						GiveInventory("PinkAura2", 1);
-					break;
+					GiveInventory("PinkAura1", 1);
 				// Blue Aura
 				case 5:
 					SpawnForced("CyanAura", X, Y, Z + 32, 2300, 0);
