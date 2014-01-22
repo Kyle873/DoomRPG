@@ -218,41 +218,24 @@ script "OpenShop" (int FromBase)
 script "SellAll" (int SellShopPage, int Silent)
 {
 	int Total;
-	int ItemMax = 1000;
 	
 	// Set font
 	SetFont("BIGFONT");
 	
 	// Invalid ShopPages
-	if (SellShopPage < 1)
+	if (SellShopPage < 0 || SellShopPage > SHOP_CATEGORIES)
 	{
-		print(s:"\cgInvalid Shop ShopPage");
+		print(s:"\cgInvalid Shop Page");
 		ActivatorSound("menu/error", 127);
 		terminate;
 	}
 	
 	// Sell Items
 	for (int i = 0; i < ShopMax[SellShopPage]; i++)
-		for (int j = 0; j < ItemMax; j++)
-			if (CheckInventory(Shop[SellShopPage][i][0]) > 0)
-			{
-					// Oh god...
-					if (Shop[SellShopPage][i][0] == "HealthBonus" || Shop[SellShopPage][i][0] == "ArmorBonus") continue;
-					
-					TakeInventory(Shop[SellShopPage][i][0], 1);
-					GiveInventory("Credits", ShopCosts[SellShopPage][i] / 2);
-					Total += ShopCosts[SellShopPage][i] / 2;
-			}
-			else continue;
+		if (CheckInventory(Shop[SellShopPage][i][0]) > 0)
+			Total += SellItem(Shop[SellShopPage][i][0], true);
+		else continue;
 	
-	// Augmentation Handling
-	if (SellShopPage == 7)
-		for (int k = 0; k < 8; k++)
-		{
-			Augs[k] = false;
-			AugSlotsUsed = 0;
-		}
-
 	// Display Message
 	if (!Silent)
 	{
@@ -1026,14 +1009,14 @@ function int GetSellPrice(int Amount)
 	return SellCost;
 }
 
-function void SellItem(str Item, bool SellAll)
+function int SellItem(str Item, bool SellAll)
 {
 	if (RankLevel == 0)
 	{
 		SetFont("BIGFONT");
 		Print(s:"\cgYou cannot sell items until you reach the first rank");
 		ActivatorSound("menu/error", 127);
-		return;
+		return 0;
 	}
 	
 	int Amount = 1;
@@ -1068,4 +1051,6 @@ function void SellItem(str Item, bool SellAll)
 	}
 	else
 		ActivatorSound("menu/error", 127);
+	
+	return SellCost;
 }
