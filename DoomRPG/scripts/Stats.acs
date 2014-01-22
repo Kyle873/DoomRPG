@@ -132,6 +132,36 @@ str LongRanks[25] = {
 	"Seargent Major of the Marine Corps", "Master Seargent Major of the Marine Corps"
 };
 
+function void AddXP(int Amount)
+{
+	// Scale XP/Rank Gains using the XP Scaling Option
+	switch (GetCVAR("drpg_scalexp"))
+	{
+		case 2: Amount = FixedMul(Amount, 2.0);	 	break;
+		case 3: Amount = FixedMul(Amount, 4.0);  	break;
+		case 4: Amount = FixedMul(Amount, 8.0);  	break;
+		case 5: Amount = FixedMul(Amount, 0.75); 	break;
+		case 6: Amount = FixedMul(Amount, 0.5);  	break;
+		case 7: Amount = FixedMul(Amount, 0.25); 	break;
+	}
+	
+	if (GetCVAR("drpg_combo"))
+	{
+		TotalGained += Amount;
+		if (Aura == 3 && CurrentSkillLevel[GetSkillID(2, 2)] >= 3) TotalGained += Amount;
+		XPGained = 0;
+		RankGained = 0;
+		Combo++;
+		if (Aura == 3 && AuraTimer > 0) Combo++;
+		ComboTimer = 100;
+	}
+	else
+	{
+		XP += Amount;
+		Rank += Amount;
+	}
+}
+
 function void CheckCombo(void)
 {
 	if (GetCVAR("drpg_combo"))
