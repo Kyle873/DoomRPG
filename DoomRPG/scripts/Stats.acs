@@ -50,7 +50,9 @@ global int 39 : HealthMax;		// Max player Health
 global int 40 : ArmorMax;		// Max Armor that the player's current armor can go up to
 
 // Secondary Stats
-int Damage;						// The player's DamageFactor against monsters
+int LevelDamage;				// Damage dependent on the player's level
+int BonusDamage;				// Damage bonus given by the Strength stat
+int TotalDamage;				// Combined LevelDamage and BonusDamage
 int DamageFactor;				// General damage the player will defend against
 bool AuraBonus;					// Whether to double the max Aura timer
 int Speed;						// Movement Speed
@@ -498,7 +500,9 @@ function void CheckStats(void)
 {
 	// VERY IMPORTANT CODE RIGHT HERE
 	// If you're reading this and you'd like to modify stat curves, this is where you'd do it
-	Damage = Strength;
+	LevelDamage = Level * (6 - GameSkill());
+	BonusDamage = Strength;
+	TotalDamage = LevelDamage + BonusDamage;
 	DamageFactor = 1.0 - FixedMul(0.25, FixedDiv(Defense, 100));
 	HealthMax = Vitality * 10;
 	EPMax = Energy * 10;
@@ -697,7 +701,7 @@ function void CheckBurnout(void)
 		FadeRange(0, 128, 255, Intensity, 0, 128, 255, 0, 0.25);
 		
 		// Penalties
-		Damage /= 2;
+		TotalDamage /= 2;
 		DamageFactor *= 2;
 		HealthMax /= 2;
 		EPMax /= 2;
