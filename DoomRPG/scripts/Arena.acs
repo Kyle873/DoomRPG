@@ -8,7 +8,6 @@
 #import "Stats.acs"
 
 // Arena defines
-#libdefine MAX_MUSIC			1
 #libdefine MAX_MODS				1
 #libdefine MAX_ENVIRONMENTS		4
 #libdefine MAX_BONUS			8
@@ -68,7 +67,7 @@ str Monsters[17] =
 // Arena Script
 script "ArenaLoop" (void)
 {
-	SetMusic(StrParam(s:"Arena", d:Random(1, MAX_MUSIC)));
+	SetMusic("Outpost", 3);
 	ArenaSetEnvironment(0);
 	
 	// Arena Loop
@@ -151,10 +150,13 @@ script "ArenaStop" (void)
     ArenaMod = -1;
 	ArenaSetEnvironment(0);
     
-	Ceiling_RaiseByValue(10, 64, 128);
+	Ceiling_RaiseByValue(ArenaSectorTag - 1, 64, 128);
 	Thing_Remove(1002);
-
-	SetMusic("Outpost");
+	
+	if (GetActorProperty(0, APROP_HEALTH) <= 0)
+		SetMusic("OutPost", 1);
+	else
+		SetMusic("Outpost", 0);
 }
 
 // Arena Test Script
@@ -341,27 +343,49 @@ function void ArenaSetEnvironment(int ID)
 	{
 		case 0: // Normal
 			Light_Fade(ArenaSectorTag, 192, 35);
+			Light_Fade(ArenaSectorTag + 1, 192, 35);
+			Light_Fade(ArenaSectorTag + 2, 192, 35);
 			Sector_SetFade(ArenaSectorTag, 0, 0, 0);
+			Sector_SetFade(ArenaSectorTag + 1, 0, 0, 0);
+			Sector_SetFade(ArenaSectorTag + 2, 0, 0, 0);
 			ChangeFloor(ArenaSectorTag, "CEIL5_1");
+			ChangeFloor(ArenaSectorTag + 1, "CEIL5_2");
+			ChangeFloor(ArenaSectorTag + 2, "FLAT3");
 			Sector_SetDamage(ArenaSectorTag, 0, 0);
+			Sector_SetDamage(ArenaSectorTag + 1, 0, 0);
+			Sector_SetDamage(ArenaSectorTag + 2, 0, 0);
 			Sector_SetColor(ArenaSectorTag, 255, 255, 255);
+			Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255);
+			Sector_SetColor(ArenaSectorTag + 2, 255, 255, 255);
 			break;
 		case 1: // Blackout
 			Light_Fade(ArenaSectorTag, 0, 35);
+			Light_Fade(ArenaSectorTag + 1, 0, 35);
+			Light_Fade(ArenaSectorTag + 2, 0, 35);
 			break;
 		case 2: // Foggy
 			int r = Random(0, 255);
 			int g = Random(0, 255);
 			int b = Random(0, 255);
 			Light_Fade(ArenaSectorTag, 128, 35);
+			Light_Fade(ArenaSectorTag + 1, 128, 35);
+			Light_Fade(ArenaSectorTag + 2, 128, 35);
 			Sector_SetFade(ArenaSectorTag, r, g, b);
+			Sector_SetFade(ArenaSectorTag + 1, r, g, b);
+			Sector_SetFade(ArenaSectorTag + 2, r, g, b);
 			break;
 		case 3: // The Floor is Lava
 			ChangeFloor(ArenaSectorTag, "LAVA1");
+			ChangeFloor(ArenaSectorTag + 1, "LAVA1");
+			ChangeFloor(ArenaSectorTag + 2, "LAVA1");
 			Sector_SetDamage(ArenaSectorTag, 1, 14);
+			Sector_SetDamage(ArenaSectorTag + 1, 1, 14);
+			Sector_SetDamage(ArenaSectorTag + 2, 1, 14);
 			break;
 		case 4: // Grayscale
 			Sector_SetColor(ArenaSectorTag, 255, 255, 255, 255);
+			Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255, 255);
+			Sector_SetColor(ArenaSectorTag + 2, 255, 255, 255, 255);
 			break;
 	}
 	
