@@ -63,7 +63,7 @@ int SkillLevelMax[MAX_CATEGORIES][MAX_SKILLS] =
 	// Powerups
 	{ 10, 10, 2, 1, 1, 1, 1, 1, 1 },
 	// Auras
-	{ 3, 3, 5, 1, 3, 4, 3, 4, 7 },
+	{ 3, 3, 5, 1, 3, 4, 3, 4, 5 },
 	// Attacks
 	{ 1, 10, 1, 10 },
 	// Summoning
@@ -222,13 +222,11 @@ int SkillData[MAX_CATEGORIES][MAX_SKILLS][1 + MAX_LEVELS] =
 		},
 		{
 			"Yellow Aura",
-			"Slow Money Gain\n2x Health Drop Chance",
-			"Medium Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance",
-			"Fast Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance",
-			"Very Fast Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance",
-			"Super Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance\n2x Token Drop Chance",
-			"Mega Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance\n2x Token Drop Chance\n2x Augmentation Drop Chance",
-			"Ultra Money Gain\n2x Health Drop Chance\n2x Armor Drop Chance\n2x Powerup Drop Chance\n2x Rune Drop Chance\n2x Token Drop Chance\n2x Augmentation Drop Chance\n2x Shield Part Drop Chance"
+			"Slow Money Gain\n1.25x Drop Chances",
+			"Medium Money Gain\n1.5x Drop Chances",
+			"Fast Money Gain\n2x Drop Chances",
+			"Very Fast Money Gain\n4x Drop Chances",
+			"Mega Money Gain\n8x Drop Chances"
 		}
 	},
 	
@@ -1172,7 +1170,7 @@ function void CheckSkills(void)
 	int OrangeAuraLevel = CurrentSkillLevel[GetSkillID(2, 6)];
 	int DarkBlueAuraLevel = CurrentSkillLevel[GetSkillID(2, 7)];
 	int YellowAuraLevel = CurrentSkillLevel[GetSkillID(2, 8)];
-	int Gained = 0;
+	int LuckMult = 1;
 	
 	// Reset the Skill multiplier from the Blue Aura
 	if (Aura != 5)
@@ -1309,22 +1307,26 @@ function void CheckSkills(void)
 				case 9:
 					SpawnForced("YellowAura", X, Y, Z + 32, 2300, 0);
 					FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 1.0);
-					if ((Timer() % 35 + (35 * (7 - YellowAuraLevel))) == 1)
-						GiveInventory("Credits", (RankLevel + 1) * 10);
-					if (YellowAuraLevel >= 1)
-						HealthChance *= 2;
-					if (YellowAuraLevel >= 2)
-						ArmorChance *= 2;
-					if (YellowAuraLevel >= 3)
-						PowerupChance *= 2;
-					if (YellowAuraLevel >= 4)
-						RuneChance *= 2;
-					if (YellowAuraLevel >= 5)
-						TokenChance *= 2;
-					if (YellowAuraLevel >= 6)
-						AugChance *= 2;
-					if (YellowAuraLevel >= 7)
-						ShieldChance *= 2;
+					if ((Timer() % 35) == 1)
+						GiveInventory("Credits", (RankLevel + 1) * (2 * YellowAuraLevel));
+					if (YellowAuraLevel == 1)
+						LuckMult = 1.25;
+					if (YellowAuraLevel == 2)
+						LuckMult = 1.5;
+					if (YellowAuraLevel == 3)
+						LuckMult = 2.0;
+					if (YellowAuraLevel == 4)
+						LuckMult = 4.0;
+					if (YellowAuraLevel == 5)
+						LuckMult = 8.0;
+					HealthChance = FixedMul(HealthChance, LuckMult);
+					EPChance = FixedMul(EPChance, LuckMult);
+					ArmorChance = FixedMul(ArmorChance, LuckMult);
+					PowerupChance = FixedMul(PowerupChance, LuckMult);
+					RuneChance = FixedMul(RuneChance, LuckMult);
+					TokenChance = FixedMul(TokenChance, LuckMult);
+					AugChance = FixedMul(AugChance, LuckMult);
+					ShieldChance = FixedMul(ShieldChance, LuckMult);
 					break;
 			}
 		
