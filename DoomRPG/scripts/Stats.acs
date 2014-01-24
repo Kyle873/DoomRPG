@@ -54,6 +54,7 @@ int LevelDamage;				// Damage dependent on the player's level
 int BonusDamage;				// Damage bonus given by the Strength stat
 int TotalDamage;				// Combined LevelDamage and BonusDamage
 int DamageFactor;				// General damage the player will defend against
+int Mass;						// Player mass, for preventing knockback
 bool AuraBonus;					// Whether to double the max Aura timer
 int Speed;						// Movement Speed
 int JumpHeight;					// Jump Height
@@ -542,6 +543,7 @@ function void CheckStats(void)
 	BonusDamage = Strength;
 	TotalDamage = LevelDamage + BonusDamage;
 	DamageFactor = 1.0 - FixedMul(0.25, FixedDiv(Defense, 100));
+	MAss = 100 + (Defense * 10);
 	HealthMax = Vitality * 10;
 	EPMax = Energy * 10;
 	Speed = 1.0 + FixedMul(0.25, FixedDiv(Agility, 100));
@@ -558,6 +560,10 @@ function void CheckStats(void)
 	Continues = CheckInventory("Continue");
 	StatTokens = CheckInventory("StatToken");
 	SkillTokens = CheckInventory("SkillToken");
+	
+	// Set mass stupid high when Invulnerable to prevent knockback
+	if (CheckInventory("PowerInvulnerable"))
+		Mass = 1000000;
 	
 	// Survival Bonus
 	if (Random(1, 1000) <= SurvivalBonus)
@@ -753,6 +759,7 @@ function void CheckBurnout(void)
 		// Penalties
 		TotalDamage /= 2;
 		DamageFactor *= 2;
+		Mass /= 2;
 		HealthMax /= 2;
 		EPMax /= 2;
 		Speed /= 2;
@@ -762,6 +769,7 @@ function void CheckBurnout(void)
 		// Now apply the Stats
 		SetActorProperty(0, APROP_SPAWNHEALTH, HealthMax);
 		SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor);
+		SetActorProperty(0, APROP_MASS, Mass);
 		SetActorProperty(0, APROP_SPEED, Speed);
 		SetActorProperty(0, APROP_JUMPZ, JumpHeight);
 	}
