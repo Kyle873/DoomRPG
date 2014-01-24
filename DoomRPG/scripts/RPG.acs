@@ -18,7 +18,7 @@ global int 41 : MapsVisited[];
 
 // Version and Timestamp
 str Version = "v0.95 Beta";
-str TimeStamp = "Thursday, January 23, 2014 at 6:50:11 PM";
+str TimeStamp = "Thursday, January 23, 2014 at 9:30:09 PM";
 
 // Status Effects
 int StatusType;
@@ -131,7 +131,8 @@ script "Init" enter
 }
 
 // Nonster Init Script
-script "MonsterInit" (int Boss)
+// Flags: 1 - Boss, 2 - Negative XP Gain, 4 - Not added to PayKills
+script "MonsterInit" (int Flags)
 {
 	// Start Damage Numbers Script
 	ACS_NamedExecuteAlways("DamageNumbers", 0);
@@ -142,8 +143,11 @@ script "MonsterInit" (int Boss)
 	// Give it a Health Bar
 	SetInventory("HealthBar", 1);
 	
+	// Apply monster flags
+	SetInventory("MonsterFlags", Flags);
+
 	// Monster Level System
-	if (GetCVAR("drpg_monster_levels"))
+	if (GetCVAR("drpg_monster_levels") && (!(Flags & 1)))
 	{
 		int MonsterLevel;
 		int MonsterCurve;
@@ -158,9 +162,6 @@ script "MonsterInit" (int Boss)
 		MonsterLevel = Level + Random(-(GameSkill() * 2), GameSkill() * 2) + Random(0, MonsterCurve);
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		
-		// Is this monster flagged as a boss?
-		if (Boss) SetInventory("MonsterBoss", 1);
-		
 		// Strength
 		MonsterStrength = Random(MonsterLevel - (GameSkill() * 2), MonsterLevel + (GameSkill() * 2));
 		
@@ -169,7 +170,7 @@ script "MonsterInit" (int Boss)
 	}
 	
 	// Apply Aura
-	if (!GetActorProperty(0, APROP_FRIENDLY) && GetActorClass(0) != "LostSoul")
+	if (!GetActorProperty(0, APROP_FRIENDLY))
 	{
 		AuraRandomizer = Random(-100 + ((GameSkill() * (GameSkill() * 2))), 10);
 		if (AuraRandomizer > 0)
@@ -223,7 +224,7 @@ script "MonsterLoop" (void)
 	int Y = GetActorY(0);
 	int Z = GetActorZ(0);
 	int MonsterLevel = CheckInventory("MonsterLevel");
-	int MonsterBoss = CheckInventory("MonsterBoss");
+	int MonsterFlags = CheckInventory("MonsterFlags");
 	int MonsterStrength = CheckInventory("MonsterStrength");
 	int AuraType = CheckInventory("MonsterAura");
 	int RegenAmount;
@@ -305,7 +306,7 @@ script "MonsterLoop" (void)
 		}
 		
 		// Boss phat lewt drops
-		if (MonsterBoss)
+		if (MonsterFlags & 1)
 		{
 			DropItem(0, "Credits1000", 1, 255);
 			DropItem(0, "SoulsphereRandomizer", 1, 255);
@@ -317,11 +318,14 @@ script "MonsterLoop" (void)
 		}
 		
 		// Add XP
-		if (!GetActorProperty(0, APROP_FRIENDLY))
+		if ((MonsterFlags & 2))
+			AddXP(-XPAmount);
+		else if (!GetActorProperty(0, APROP_FRIENDLY))
 			AddXP(XPAmount);
 			
 		// Add a kill to the pay kills
-		PayKills++;
+		if (!(MonsterFlags & 4))
+			PayKills++;
 
 		terminate;
 	}
