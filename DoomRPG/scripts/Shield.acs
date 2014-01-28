@@ -129,13 +129,13 @@ str ShieldData[4][MAX_PARTS][4] =
 	{
 		{
 			"ShieldCapacitor1",
-			"\ctStandard",
+			"\cjStandard",
 			"",
 			"SHCAA0",
 		},
 		{
 			"ShieldCapacitor2",
-			"\cnCooled",
+			"\cjCooled",
 			"",
 			"SHCAB0",
 		},
@@ -147,13 +147,13 @@ str ShieldData[4][MAX_PARTS][4] =
 		},
 		{
 			"ShieldCapacitor4",
-			"\ckInfused",
+			"\cnInfused",
 			"",
 			"SHCAD0",
 		},
 		{
 			"ShieldCapacitor5",
-			"\caFiery",
+			"\ckFiery",
 			"",
 			"SHCAE0",
 		},
@@ -212,24 +212,24 @@ int ShieldStats[3][MAX_PARTS][3] =
 	// Capacity, Charge Rate, Delay Rate
 	// Bodies
 	{
+		{ 25, 0, 0 },
 		{ 50, 0, 0 },
 		{ 100, 0, 0 },
+		{ 150, 0, 0 },
 		{ 200, 0, 0 },
 		{ 250, 0, 0 },
 		{ 500, 0, 0 },
-		{ 750, 0, 0 },
-		{ 1000, 0, 0 },
 	},
 
 	// Batteries
 	{
-		{ 50, 0, 0 },
+		{ 25, 0, 0 },
 		{ 50, 1, 0 },
 		{ 100, 1, 0 },
-		{ 100, 2, 0 },
-		{ 200, 3, -35 },
-		{ 250, 4, -70 },
-		{ 500, 5, -105 },
+		{ 150, 2, 0 },
+		{ 200, 3, -0.25 },
+		{ 250, 4, -0.5 },
+		{ 500, 5, -1.0 },
 	},
 
 	// Capacitor
@@ -237,8 +237,8 @@ int ShieldStats[3][MAX_PARTS][3] =
 		{ 0, 1, 0 },
 		{ 0, 2, 0 },
 		{ 0, 3, 0 },
-		{ 0, 4, -35 },
-		{ 0, 5, -35 }
+		{ 0, 4, -0.5 },
+		{ 0, 5, -1.0 }
 	}
 };
 
@@ -253,8 +253,9 @@ int HealthLoss;
 int BeforeArmor;
 int AfterArmor;
 int ArmorLoss;
-int ShieldTimer;
-int ShieldInterval;
+
+int ShieldTimer = 175;
+int ShieldInterval = 35;
 bool ShieldFull = false;
 bool Nova = true;
 
@@ -306,7 +307,7 @@ script "Shield" (void)
 	// Damage Handling
 	if (ArmorLoss < -Shield)
 	{
-		ShieldTimer = ShieldDelayRate;
+		ShieldTimer = FixedMul(35.0, ShieldDelayRate) >> 16;
 		TakeInventory("BasicArmor", 1000000);
 		if (ArmorLoss >= -1000000 && ArmorLoss <= -999000)
 			ArmorLoss = 0; // INCOMING TERRIBLE HACKS, BEWARE
@@ -323,7 +324,7 @@ script "Shield" (void)
 	{
 		FadeRange(255, 255, 255, 0.1, 255, 255, 255, 0.0, 0.1);
 		Shield += ArmorLoss;
-		ShieldTimer = ShieldDelayRate;
+		ShieldTimer = FixedMul(35.0, ShieldDelayRate) >> 16;
 		ShieldFull = false;
 	}
 	
@@ -341,13 +342,17 @@ script "Shield" (void)
 	Delay(1);
 }
 
-script "ToggleShield" (void)
+script "ToggleShield" (int Unequipped)
 {
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 	
-	// If you have no Shield parts equipped, terminate
-	if (ShieldBody == 0 && ShieldBattery == 0 && ShieldCapacitor == 0 && ShieldAccessory == 0) terminate;
+	// If you have no Shield parts equipped or are missing a part, terminate
+	if (!Unequipped && (ShieldBody == 0 || ShieldBattery == 0 || ShieldCapacitor == 0))
+	{
+		ActivatorSound("menu/error", 127);
+		terminate;
+	}
 	
 	// If you have indestructible armor, don't let you equip the shield
 	if (CheckInventory("BasicArmor") > 1000 && CheckArmorType() != "ShieldArmor" && CheckArmorType() != "ShieldArmorEmpty")
@@ -400,6 +405,14 @@ function void GiveArmor(void)
 
 function void CheckShields(void)
 {
+	// Check to make sure the Shield has components
+	if (CheckInventory("Shield") && (ShieldBody == 0 || ShieldBattery == 0 || ShieldCapacitor == 0))
+	{
+		ACS_NamedExecuteAlways("ToggleShield", 0, true);
+		Shield = 0;
+		ShieldTimer = FixedMul(35.0, ShieldDelayRate) >> 16;
+	}
+
 	// EP -> Shield Charging (WIP)
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	if ((!InMenu && !InShop) && Buttons & BT_SPEED && Buttons & BT_USE && Shield < ShieldCapacity && EP > 0)
@@ -419,7 +432,7 @@ function void CheckShields(void)
 	// Apply Components stats to Shield
 	ShieldCapacity = ShieldStats[0][ShieldBody - 1][0] + ShieldStats[1][ShieldBattery - 1][0] + ShieldStats[2][ShieldCapacitor - 1][0];
 	ShieldChargeRate = ShieldStats[0][ShieldBody - 1][1] + ShieldStats[1][ShieldBattery- 1][1] + ShieldStats[2][ShieldCapacitor- 1][1];
-	ShieldDelayRate = 175 + ShieldStats[0][ShieldBody - 1][2] + ShieldStats[1][ShieldBattery - 1][2] + ShieldStats[2][ShieldCapacitor - 1][2];
+	ShieldDelayRate = 5.0 + ShieldStats[0][ShieldBody - 1][2] + ShieldStats[1][ShieldBattery - 1][2] + ShieldStats[2][ShieldCapacitor - 1][2];
 	ShieldInterval = 35;
 	
 	// Aug Handling
