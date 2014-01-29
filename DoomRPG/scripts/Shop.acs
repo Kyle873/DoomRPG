@@ -13,6 +13,11 @@
 #libdefine SHOP_ITEMS				100
 #libdefine SHOP_SCROLL				15
 
+#libdefine DIR_UP					1
+#libdefine DIR_DOWN					2
+#libdefine DIR_LEFT					3
+#libdefine DIR_RIGHT				4
+
 str ShopNames[SHOP_CATEGORIES] =
 {
 	"Weapons",
@@ -183,7 +188,7 @@ int ShopCategories = 8; // 8 vanilla ShopCategories, 8 reserved for compatibilit
 int ShopIndex;
 int ShopOffset;
 int ShopPage;
-int SellTimer;
+int ShopTimer;
 int ShopSpotID = 1000;
 
 // Open the Shop
@@ -852,35 +857,32 @@ function void ShopLoop(void)
 								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
         }
         
+		// Check cursor movement for repeating
+        if (Buttons == BT_FORWARD)
+		{
+			ShopTimer++;
+			if (ShopTimer > 35)
+				MoveCursor(DIR_UP);
+		}
+        if (Buttons == BT_BACK)
+		{
+			ShopTimer++;
+			print(d:ShopTimer);
+			if (ShopTimer > 35)
+				MoveCursor(DIR_DOWN);
+		}
+		
         // Check Input
-        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && ShopIndex >= 0)
-        {
-			if (ShopIndex <= 0) ShopIndex = ShopMax[ShopPage];
-            ActivatorSound("menu/move", 127);
-            ShopIndex--;
-        }
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && ShopIndex <= ShopMax[ShopPage])
-        {
-			if (ShopIndex >= ShopMax[ShopPage] - 1) ShopIndex = -1;
-            ActivatorSound("menu/move", 127);
-            ShopIndex++;
-        }
-        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT && ShopPage >= 0) ||
-			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && ShopPage >= 0))
-        {
-			if (ShopPage <= 0) ShopPage = ShopCategories;
-            ActivatorSound("menu/move", 127);
-			ShopIndex = 0;
-            ShopPage--;
-        }
-        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && ShopPage < ShopCategories) ||
-			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && ShopPage < ShopCategories))
-        {
-			if (ShopPage >= ShopCategories - 1) ShopPage = -1;
-            ActivatorSound("menu/move", 127);
-			ShopIndex = 0;
-            ShopPage++;
-        }
+        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
+			MoveCursor(DIR_UP);
+        if (Buttons == BT_BACK && OldButtons != BT_BACK)
+			MoveCursor(DIR_DOWN);
+        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
+			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
+			MoveCursor(DIR_LEFT);
+        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
+			MoveCursor(DIR_RIGHT);
         if (Buttons == BT_USE && OldButtons != BT_USE)
 		{
 			if (CheckInventory("Credits") >= Cost)
@@ -895,17 +897,49 @@ function void ShopLoop(void)
 				ActivatorSound("menu/error", 127);
 		if (Buttons & BT_SPEED)
 		{
-			SellTimer++;
+			ShopTimer++;
 			
-			if (SellTimer > 35 * 2 && CheckInventory(Shop[ShopPage][ShopIndex][0]) > 0)
+			if (ShopTimer > 35 * 2 && CheckInventory(Shop[ShopPage][ShopIndex][0]) > 0)
 			{
 				SellItem(Shop[ShopPage][ShopIndex][0], true);
-				SellTimer = 0;
+				ShopTimer = 0;
 			}
 		}
-		else
-			SellTimer = 0;
+		
+		// Reset the Shop Timer if no buttons are pressed
+		if (Buttons == 0 && OldButtons == 0)
+			ShopTimer = 0;
     }
+}
+
+function void MoveCursor(int Direction)
+{
+	if (Direction == DIR_UP)
+	{
+		if (ShopIndex <= 0) ShopIndex = ShopMax[ShopPage];
+		ActivatorSound("menu/move", 127);
+		ShopIndex--;
+	}
+	if (Direction == DIR_DOWN)
+	{
+		if (ShopIndex >= ShopMax[ShopPage] - 1) ShopIndex = -1;
+		ActivatorSound("menu/move", 127);
+		ShopIndex++;
+	}
+	if (Direction == DIR_LEFT)
+	{
+		if (ShopPage <= 0) ShopPage = ShopCategories;
+		ActivatorSound("menu/move", 127);
+		ShopIndex = 0;
+		ShopPage--;
+	}
+	if (Direction == DIR_RIGHT)
+	{
+		if (ShopPage >= ShopCategories - 1) ShopPage = -1;
+		ActivatorSound("menu/move", 127);
+		ShopIndex = 0;
+		ShopPage++;
+	}
 }
 
 function int GetAmmoAmount(Str Item)
