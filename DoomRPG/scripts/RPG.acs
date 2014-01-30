@@ -26,7 +26,7 @@ global int 41 : MapsVisited[];
 
 // Version and Timestamp
 str Version = "v0.95 Beta";
-str TimeStamp = "Wednesday, January 29, 2014 at 7:51:49 AM";
+str TimeStamp = "Thursday, January 30, 2014 at 6:01:26 AM";
 
 // Status Effects
 int StatusType;
@@ -108,16 +108,33 @@ script "Init" enter
 	}
 	
 	// Transport from/to Outpost Screen Fading
-	if (Transported)
+	if (Transported == 1) // Normal
 	{
 		FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
-		Transported = false;
+		Transported = 0;
+	}
+	if (Transported == 2) // Death
+	{
+		int PenaltyPercent;
+		
+		switch (GameSkill())
+		{
+			case 1: PenaltyPercent = 1;		break;
+			case 2: PenaltyPercent = 5;		break;
+			case 3: PenaltyPercent = 10;	break;
+			case 4: PenaltyPercent = 20;	break;
+			case 5: PenaltyPercent = 25;	break;
+		}
+		
+		SetActorProperty(0, APROP_HEALTH, HealthMax / 10 + 1);
+		GiveInventory("Credits", Credits);
+		PayTimer = 35 * 60 * GetCVAR("drpg_pay_interval");
+		FadeRange(255, 0, 0, 1.0, 255, 0, 0, 0.0, 1.0);
+		Transported = 0;
 	}
 	
 	// Store the current map number
 	MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
-	if (MapNumber > 30)
-		MapNumber = 30;
 	
 	// IF you have the Nova Shield Accessory and move to a new level, make sure to check the Nova flag
 	if (CheckInventory("Shield") && ShieldAccessory == 5)
@@ -133,7 +150,6 @@ script "Init" enter
 }
 
 // Nonster Init Script
-// Flags: 1 - Boss, 2 - Negative XP Gain, 4 - Not added to PayKills
 script "MonsterInit" (int Flags)
 {
 	// Start Damage Numbers Script
@@ -647,52 +663,15 @@ script "Death" death
 	
 	while (1)
 	{
-		// Wipe out your entire inventory
-		ClearInventory();
-		
-		// Kill all the player's summons
-		for (int i = SummonID; i <= SummonID + MaxSummons; i++)
-			Thing_Damage(i, 1000000);
-		
-		// Reset a metric fuckton of variables to make death look cleaner
-		InMenu = false;
-		InShop = false;
-		Menu = 0;
-		MenuIndex = 0;
-		SkillPage = 0;
-		ShieldPage = 0;
-		ShopIndex = 0;
-		ShopPage = 0;
-		Strength = 0;
-		Defense = 0;
-		Vitality = 0;
-		Energy = 0;
-		Regeneration = 0;
-		Agility = 0;
-		Capacity = 0;
-		Luck = 0;
-		Level = 0;
-		XP = 0;
-		RankLevel = 0;
-		Rank = 0;
-		EP = 0;
-		Combo = 0;
-		ComboTimer = -100;
-		TotalGained = 0;
-		XPGained = 0;
-		RankGained = 0;
-		Aura = 0;
-		AuraTimer = 0;
-		AuraTimerHUD = 0;
-		PayTimer = 0;
-		Shield = 0;
-		ShieldBody = 0;
-		ShieldBattery = 0;
-		ShieldCapacitor = 0;
-		ShieldAccessory = 0;
-		StatusType = 0;
-		StatusTimer = 0;
-		StatusTimerHUD = 0;
+		if (GetPlayerInput(0, INPUT_BUTTONS) & BT_SPEED && GetPlayerInput(0, INPUT_BUTTONS) & BT_ATTACK)
+		{
+			FadeRange(255, 0, 0, 0.0, 255, 0, 0, 1.0, 1.0);
+			Delay(35);
+			LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+			Transported = 2;
+			InBase = true;
+			Teleport_NewMap(999, 1);
+		}
 		
 		Delay(1);
 	}
