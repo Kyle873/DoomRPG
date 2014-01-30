@@ -87,12 +87,10 @@ script "ArenaLoop" (void)
 		// Arena Status Handling
 		if (ArenaState == ARENA_INTERMISSION)
 		{
-			// Clean corpses every 5 waves
-            if (ArenaWave > 1 && ArenaTimer <= 1 && (ArenaWave % 4) == 1)
-				Thing_Remove(1002);
+			int BonusRandomizer = Random(-10, MAX_BONUS - 1);
 
 			ArenaMod = -1;
-			ArenaGetBonus();
+			ArenaGetBonus(BonusRandomizer);
 			ArenaSetEnvironment(0);
 			ArenaState = ARENA_WAITING;
 		}
@@ -116,6 +114,10 @@ script "ArenaLoop" (void)
 		}
 		else if (ArenaState == ARENA_READY)
 		{
+			// Clean corpses every 5 waves
+            if (ArenaWave > 1 && ArenaTimer <= 1 && (ArenaWave % 4) == 1)
+				Thing_Remove(1002);
+
 			ArenaWave++;
 			ArenaSetMod();
 			ArenaSetEnvironment(-1);
@@ -161,29 +163,45 @@ script "ArenaStop" (void)
 }
 
 // Arena Test Script
-script "SetArena" (int Wave, int Environment)
+script "SetArena" (int Wave, int Environment, int Bonus)
 {
-    if (Wave > 0) ArenaWave = Wave;
-	ArenaSetEnvironment(Environment);
+    if (Wave > 0)
+		ArenaWave = Wave;
+	
+	if (Environment >= 0)
+		ArenaSetEnvironment(Environment);
+	
+	if (Bonus >= 0)
+		ArenaGetBonus(Bonus);
 }
 
 function void ArenaDrawHUD(void)
 {
 	SetFont("SMALLFONT");
 	
+	// Environment
 	if (ArenaEnvironment > 0)
 		HudMessage(s:ArenaEnvironments[ArenaEnvironment - 1];
 				   HUDMSG_PLAIN, 5, CR_WHITE, -0.0225, 0.525, 0.05);
+
+	
+	// Mod
 	if (ArenaMod >= 0)
 		HudMessage(s:ArenaMods[ArenaMod];
 				   HUDMSG_PLAIN, 4, CR_WHITE, -0.0225, 0.55, 0.05);
+	
+	// Timer
 	if (ArenaTimer > 0)
 		HudMessage(s:"Time: ",
 				   d:ArenaTimer / 35 + 1;
 				   HUDMSG_PLAIN, 3, CR_GREEN, -0.0225, 0.575, 0.05);
+	
+	// Wave
 	HudMessage(s:"Wave: ",
 			   d:ArenaWave;
 			   HUDMSG_PLAIN, 2, CR_GREEN, -0.0225, 0.6, 0.05);
+	
+	// Monster Count
 	if (ArenaCount > 0)
 		HudMessage(s:"Monsters: ",
 				   d:ArenaCount;
@@ -207,19 +225,18 @@ function void ArenaCheckMod(void)
 	}
 }
 
-function void ArenaGetBonus(void)
+function void ArenaGetBonus(int Bonus)
 {
-	int BonusRandomizer = Random(-10, MAX_BONUS - 1);
 	str SpawnItem;
 	int i;
 	
-	if (BonusRandomizer >= 0)
+	if (Bonus >= 0)
 	{
 		SetFont("BIGFONT");
-		HudMessage(s:ArenaBonus[BonusRandomizer]; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+		HudMessage(s:ArenaBonus[Bonus]; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
 		ActivatorSound("misc/secret", 127);
 	}
-	switch (BonusRandomizer)
+	switch (Bonus)
 	{
 		case 0: // Full Health
 			HealThing(1000000);
