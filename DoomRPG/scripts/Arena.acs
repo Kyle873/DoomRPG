@@ -230,19 +230,25 @@ function void ArenaGetBonus(int Bonus)
 	str SpawnItem;
 	int i;
 	
-	if (Bonus >= 0)
-	{
-		SetFont("BIGFONT");
-		HudMessage(s:ArenaBonus[Bonus]; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
-		ActivatorSound("misc/secret", 127);
-	}
 	switch (Bonus)
 	{
 		case 0: // Full Health
-			HealThing(1000000);
+			if (GetActorProperty(0, APROP_HEALTH) >= HealthMax)
+			{
+				ArenaGetBonus(Random(0, MAX_BONUS - 1));
+				return;
+			}
+			else
+				HealThing(1000000);
 			break;
 		case 1: // Full EP
-			EP = EPMax;
+			if (EP >= EPMax)
+			{
+				ArenaGetBonus(Random(0, MAX_BONUS - 1));
+				return;
+			}
+			else
+				EP = EPMax;
 			break;
 		case 2: // Money Drop
 			SpawnSpot("TeleportFog", 1200, 0, 0);
@@ -297,6 +303,14 @@ function void ArenaGetBonus(int Bonus)
 			SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
 			Thing_ChangeTID(1201, 0);
 			break;
+	}
+	
+	// Bonus Message
+	if (Bonus >= 0)
+	{
+		SetFont("BIGFONT");
+		HudMessage(s:ArenaBonus[Bonus]; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+		ActivatorSound("misc/secret", 127);
 	}
 }
 
