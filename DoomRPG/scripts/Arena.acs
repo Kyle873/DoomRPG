@@ -21,15 +21,16 @@
 global int 30 : ArenaMaxWave;
 
 bool ArenaActive = false;
+bool ArenaTimerActive = false;
 int ArenaState = ARENA_READY;
+int ArenaSpotSpawns = 1100;
+int ArenaSectorTag = 100;
+
 int ArenaWave;
 int ArenaTimer;
-int ArenaTimerMax = 35 * 10;
 int ArenaCount;
 int ArenaMod;
 int ArenaEnvironment;
-int ArenaSpotSpawns = 1100;
-int ArenaSectorTag = 100;
 
 str ArenaMods[MAX_MODS] =
 {
@@ -114,12 +115,14 @@ script "ArenaLoop" (void)
 		}
 		else if (ArenaState == ARENA_READY)
 		{
-			// Clean corpses every 5 waves
-            if (ArenaWave > 1 && ArenaTimer <= 1 && (ArenaWave % 4) == 1)
+			int ModRandomizer = Random(-10, MAX_MODS - 1);
+			
+			// Clean corpses every couple of waves
+            if (ArenaWave > 1 && (ArenaWave % 4) == 1)
 				Thing_Remove(1002);
 
 			ArenaWave++;
-			ArenaSetMod();
+			ArenaMod = ModRandomizer;
 			ArenaSetEnvironment(-1);
 			ArenaSpawnMobs();
 			ArenaState = ARENA_ACTIVE;
@@ -130,6 +133,8 @@ script "ArenaLoop" (void)
 			ArenaCount = ThingCount(0, 1002);
 			if (ArenaCount <= 0)
 				ArenaState = ARENA_INTERMISSION;
+			if (ArenaTimerActive && ArenaTimer > 0)
+				ArenaTimer--;
 		}
 		
         Delay(1);
@@ -177,41 +182,50 @@ script "SetArena" (int Wave, int Environment, int Bonus)
 
 function void ArenaDrawHUD(void)
 {
+	int X = -0.0225;
+	int Y = 0.525;
+	
 	SetFont("SMALLFONT");
-	
-	// Environment
-	if (ArenaEnvironment > 0)
-		HudMessage(s:ArenaEnvironments[ArenaEnvironment - 1];
-				   HUDMSG_PLAIN, 5, CR_WHITE, -0.0225, 0.525, 0.05);
-
-	
-	// Mod
-	if (ArenaMod >= 0)
-		HudMessage(s:ArenaMods[ArenaMod];
-				   HUDMSG_PLAIN, 4, CR_WHITE, -0.0225, 0.55, 0.05);
-	
-	// Timer
-	if (ArenaTimer > 0)
-		HudMessage(s:"Time: ",
-				   d:ArenaTimer / 35 + 1;
-				   HUDMSG_PLAIN, 3, CR_GREEN, -0.0225, 0.575, 0.05);
 	
 	// Wave
 	HudMessage(s:"Wave: ",
 			   d:ArenaWave;
-			   HUDMSG_PLAIN, 2, CR_GREEN, -0.0225, 0.6, 0.05);
-	
+			   HUDMSG_PLAIN, 2, CR_GREEN, X, Y, 0.05);
+	y += 0.025;
+
 	// Monster Count
 	if (ArenaCount > 0)
+	{
 		HudMessage(s:"Monsters: ",
 				   d:ArenaCount;
-				   HUDMSG_PLAIN, 1, CR_GREEN, -0.0225, 0.625, 0.05);
-}
+				   HUDMSG_PLAIN, 1, CR_GREEN, X, Y, 0.05);
+		y += 0.025;
+	}
+	
+	// Timer
+	if (ArenaTimerActive && ArenaTimer > 0)
+	{
+		HudMessage(s:"Time: ",
+				   d:ArenaTimer / 35 + 1;
+				   HUDMSG_PLAIN, 3, CR_WHITE, X, Y, 0.05);
+		y += 0.025;
+	}
+	
+	// Mod
+	if (ArenaMod >= 0)
+	{
+		HudMessage(s:ArenaMods[ArenaMod];
+				   HUDMSG_PLAIN, 4, CR_WHITE, X, Y, 0.05);
+		y += 0.025;
+	}
 
-function void ArenaSetMod(void)
-{
-	int ModRandomizer = Random(-10, MAX_MODS - 1);
-	ArenaMod = ModRandomizer;
+	// Environment
+	if (ArenaEnvironment > 0)
+	{
+		HudMessage(s:ArenaEnvironments[ArenaEnvironment - 1];
+				   HUDMSG_PLAIN, 5, CR_WHITE, X, Y, 0.05);
+		y += 0.025;
+	}
 }
 
 function void ArenaCheckMod(void)
