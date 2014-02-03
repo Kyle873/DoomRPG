@@ -2,7 +2,167 @@
 
 #include "zcommon.acs"
 
+#import "Utils.acs"
+
+#libdefine MAX_HAND			8
+
 script "Hack" (int Difficulty)
 {
-	Print(s:"Test");
+}
+
+int Hand1[MAX_HAND];
+int Hand2[MAX_HAND];
+
+script "Blackjack" (int Bet)
+{
+	int i;
+	
+	// Make sure you have enough Credits to bet
+	if (CheckInventory("Credits") < Bet)
+	{
+		ActivatorSound("menu/error", 127);
+		SetFont("BIGFONT");
+		Print(s:"\cgYou don't have enough Credits");
+		terminate;
+	}
+	
+	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+	
+	// Wipe old HudMessage stuff from the last game if it's still up
+	for (i = 4998; i < 5020; i++)
+		HudMessage(s:""; HUDMSG_PLAIN, i, CR_WHITE, 0.0, 0.0, 0.0);
+	
+	// Reset hands
+	for (i = 0; i < MAX_HAND; i++)
+	{
+		Hand1[i] = 0;
+		Hand2[i] = 0;
+	}
+	
+	// Draw initial hands
+	Hand1[0] = Random(1, 13);
+	Hand2[0] = Random(1, 13);
+	
+	while (1)
+	{
+		int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
+		int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
+		int X1 = 100.1;
+		int X2 = 100.1;
+		int Total1 = 0;
+		int Total2 = 0;
+		int Size1 = 0;
+		int Size2 = 0;
+		
+		SetHUDSize(320, 240, false);
+		
+		// Draw bet
+		PrintSprite("CREDA0", 0, 160.1, 200.0, 3.0);
+		SetFont("BIGFONT");
+		HudMessage(d:Bet; HUDMSG_PLAIN, 0, CR_GOLD, 186.1, 192.0, 3.0);
+		
+		// Draw Player's hand
+		for (i = 0; i < MAX_HAND; i++)
+		{
+			// Add totals
+			if (Hand1[i] >= 11)
+				Total1 += 10;
+			else
+				Total1 += Hand1[i];
+			if (Hand2[i] >= 11)
+				Total2 += 10;
+			else
+				Total2 += Hand2[i];
+			
+			// Handle hand size
+			if (Hand1[i] > 0) Size1++;
+			if (Hand2[i] > 0) Size2++;
+			
+			// Player's hand
+			if (Hand1[i] == 1) // Ace
+				HudMessage(s:"A"; HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 3.0);
+			else if (Hand1[i] > 1 && Hand1[i] <= 10) // 2-10
+				HudMessage(d:Hand1[i]; HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 3.0);
+			else if (Hand1[i] == 11) // Jack
+				HudMessage(s:"J"; HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 3.0);
+			else if (Hand1[i] == 12) // King
+				HudMessage(s:"K"; HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 3.0);
+			else if (Hand1[i] == 13) // Queen
+				HudMessage(s:"Q"; HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 3.0);
+			
+			// CPU's hand
+			if (Hand2[i] == 1) // Ace
+				HudMessage(s:"A"; HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 3.0);
+			else if (Hand2[i] > 1 && Hand2[i] <= 10) // 2-10
+				HudMessage(d:Hand2[i]; HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 3.0);
+			else if (Hand2[i] == 11) // Jack
+				HudMessage(s:"J"; HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 3.0);
+			else if (Hand2[i] == 12) // King
+				HudMessage(s:"K"; HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 3.0);
+			else if (Hand2[i] == 13) // Queen
+				HudMessage(s:"Q"; HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 3.0);
+
+			// Alignment
+			if (Hand1[i] > 0)
+				X1 += 20.0;
+			if (Hand2[i] > 0)
+				X2 += 20.0;
+		}
+		
+		// Draw Totals
+		HudMessage(d:Total1; HUDMSG_PLAIN, 4998, CR_DARKGREEN, 60.1, 160.0, 3.0);
+		HudMessage(d:Total2; HUDMSG_PLAIN, 4999, CR_RED, 60.1, 80.0, 3.0);
+		
+		// Draw Help
+		
+		// Input
+        if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			Hand1[Size1] = Random(1, 13);
+			Hand2[Size2] = Random(1, 13);
+			ActivatorSound("menu/move", 127);
+		}
+		/*
+        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
+		{
+			Hand2[Size2] = Random(1, 13);
+			ActivatorSound("menu/move", 127);
+		}
+        if (Buttons & BT_BACK)
+		{
+			ActivatorSound("menu/move", 127);
+			break;
+		} */
+		
+		// Check for win, lose and draw
+		SetHUDSize(0, 0, false);
+		if (Total1 == 21 || (Total1 < 21 && Total2 > 21)) // You Win
+		{
+			HudMessage(s:"You Win!\n\ck+", d:Bet * 2, s:" Credits"; HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+			GiveInventory("Credits", Bet * 2);
+			ActivatorSound("credits/payout", 127);
+			break;
+		}
+		else if ((Total1 > 21 && Total2 <= 21) || Total2 == 21) // You Lose
+		{
+			HudMessage(s:"You Lose!\n\ck-", d:Bet, s:" Credits"; HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+			TakeInventory("Credits", Bet);
+			ActivatorSound("menu/error", 127);
+			break;
+		}
+		else if ((Total1 == 21 && Total2 == 21) || (Total1 > 21 && Total2 > 21)) // Draw
+		{
+			HudMessage(s:"Draw!"; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+			break;
+		}
+		else if (Size1 > MAX_HAND || Size2 > MAX_HAND) // Out of cards
+		{
+			HudMessage(s:"No more cards!"; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+			break;
+		}
+		
+		Delay(1);
+	}
+	
+	SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
 }
