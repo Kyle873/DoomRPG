@@ -9,6 +9,7 @@
 #import "Shop.acs"
 #import "Shield.acs"
 #import "Utils.acs"
+#import "Minigame.acs"
 
 str MainMenu[5] = {
 	"Stats", "Augmentations", "Skills", "Shield", "Shop"
@@ -29,12 +30,14 @@ bool AugSelected;
 int SkillPage;
 int SkillMax;
 int ShieldPage;
-int StatTimer;
 
 script "OpenMenu" (void)
 {
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+	
+	// If you're in any minigames, terminate
+	if (InMinigame) terminate;
 	
 	if (InShop && GetCVAR("drpg_shoptype") == 0)
 	{
@@ -607,7 +610,7 @@ function void MenuInput(void)
 				Menu = MenuIndex + 1;
 				MenuIndex = 0;
 				MenuBlock = true;
-				StatTimer = 0;
+				DelayTimer = 0;
 			}
 		}
 	}
@@ -642,13 +645,13 @@ function void MenuInput(void)
 			IncreaseStat(0);
 		if (Buttons & BT_USE)
 		{
-			StatTimer++;
+			DelayTimer++;
 			
-			if (StatTimer > 35 * 2)
+			if (DelayTimer > 35 * 2)
 				IncreaseStat(0);
 		}
 		else
-			StatTimer = 0;
+			DelayTimer = 0;
 	}
 	// Accessories menu
 	if (Menu == 2 && !MenuBlock)
@@ -931,7 +934,7 @@ function void IncreaseSkill(void)
 
 function void PrintStatError(void)
 {
-	if (StatTimer > 0) return;
+	if (DelayTimer > 0) return;
 	
 	ActivatorSound("menu/error", 127);
 	SetFont("BIGFONT");

@@ -8,6 +8,7 @@
 #import "Shield.acs"
 #import "Menu.acs"
 #import "Utils.acs"
+#import "Minigame.acs"
 
 #libdefine SHOP_CATEGORIES			16
 #libdefine SHOP_ITEMS				100
@@ -188,7 +189,6 @@ int ShopCategories = 8; // 8 vanilla ShopCategories, 8 reserved for compatibilit
 int ShopIndex;
 int ShopOffset;
 int ShopPage;
-int ShopTimer;
 int ShopSpotID = 1000;
 
 // Open the Shop
@@ -197,6 +197,10 @@ script "OpenShop" (int FromBase)
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 	
+	// If you're in any minigames, terminate
+	if (InMinigame) terminate;
+	
+	// Close the main menu if it's open
 	InMenu = false;
 	
 	if (InShop)
@@ -867,14 +871,14 @@ function void ShopLoop(void)
 		// Check cursor movement for repeating
         if (Buttons == BT_FORWARD)
 		{
-			ShopTimer++;
-			if (ShopTimer > 35)
+			DelayTimer++;
+			if (DelayTimer > 35)
 				MoveCursor(DIR_UP);
 		}
         if (Buttons == BT_BACK)
 		{
-			ShopTimer++;
-			if (ShopTimer > 35)
+			DelayTimer++;
+			if (DelayTimer > 35)
 				MoveCursor(DIR_DOWN);
 		}
 		
@@ -903,18 +907,18 @@ function void ShopLoop(void)
 				ActivatorSound("menu/error", 127);
 		if (Buttons & BT_SPEED)
 		{
-			ShopTimer++;
+			DelayTimer++;
 			
-			if (ShopTimer > 35 * 2 && CheckInventory(Shop[ShopPage][ShopIndex][0]) > 0)
+			if (DelayTimer > 35 * 2 && CheckInventory(Shop[ShopPage][ShopIndex][0]) > 0)
 			{
 				SellItem(Shop[ShopPage][ShopIndex][0], true);
-				ShopTimer = 0;
+				DelayTimer = 0;
 			}
 		}
 		
-		// Reset the Shop Timer if no buttons are pressed
+		// Reset the Delay Timer if no buttons are pressed
 		if (Buttons == 0 && OldButtons == 0)
-			ShopTimer = 0;
+			DelayTimer = 0;
     }
 }
 

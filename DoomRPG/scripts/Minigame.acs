@@ -6,10 +6,15 @@
 
 #libdefine MAX_HAND			8
 
+// Global Minigame vars
+bool InMinigame;
+int Bet;
+
 script "Hack" (int Difficulty)
 {
 }
 
+// Blackjack vars
 int Hand1[MAX_HAND];
 int Hand2[MAX_HAND];
 bool BlackjackOver;
@@ -19,9 +24,9 @@ script "Blackjack" (void)
 {
 	int Buttons;
 	int OldButtons;
-	int Bet;
 	int i;
 	
+	InMinigame = true;
 	BlackjackOver = false;
 	BlackjackStay = false;
 	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
@@ -41,8 +46,42 @@ script "Blackjack" (void)
 		
 		// Draw Help
 		SetFont("SMALLFONT");
-		HudMessage(s:"\cd", k:"+use", s:"\cj Place Bet\n\cd", k:"+forward", s:"/", k:"+back", s:"\cj Change Bet";
+		HudMessage(s:"\cd", k:"+use", s:"\cj Place Bet\n\cd",
+				   k:"+forward", s:"/", k:"+back", s:"\cj Change Bet\n\cd",
+				   k:"+speed", s:"\cjExit Game";
 				   HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05);
+		
+		// Delayed Input
+        if (Buttons == BT_FORWARD)
+		{
+			DelayTimer++;
+			if (DelayTimer > 35)
+			{
+				Bet += 100;
+				ActivatorSound("menu/move", 127);
+			}
+		}
+        if (Buttons == BT_BACK && Bet > 0)
+		{
+			DelayTimer++;
+			if (DelayTimer > 35)
+			{
+				Bet -= 100;
+				ActivatorSound("menu/move", 127);
+			}
+		}
+        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
+			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
+		{
+			Bet = 0;
+			ActivatorSound("menu/move", 127);
+		}
+        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
+		{
+			Bet = CheckInventory("Credits");
+			ActivatorSound("menu/move", 127);
+		}
 		
 		// Input
         if (Buttons == BT_USE && OldButtons != BT_USE)
@@ -53,25 +92,36 @@ script "Blackjack" (void)
 				ActivatorSound("menu/error", 127);
 				SetFont("BIGFONT");
 				Print(s:"\cgYou don't have enough Credits");
-				SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-				terminate;
 			}
-			
-			TakeInventory("Credits", Bet);
+			else
+			{
+				TakeInventory("Credits", Bet);
+				ActivatorSound("menu/move", 127);
+				Delay(1);
+				break;
+			}
+		}
+        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+		{
 			ActivatorSound("menu/move", 127);
-			Delay(1);
-			break;
+			SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+			InMinigame = false;
+			terminate;
 		}
         if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
 		{
 			Bet += 100;
 			ActivatorSound("menu/move", 127);
 		}
-        if (Buttons == BT_BACK && OldButtons != BT_BACK)
+        if (Buttons == BT_BACK && OldButtons != BT_BACK && Bet > 0)
 		{
-			if (Bet > 0) Bet -= 100;
+			Bet -= 100;
 			ActivatorSound("menu/move", 127);
 		}
+		
+		// Reset the Delay Timer if no buttons are pressed
+		if (Buttons == 0 && OldButtons == 0)
+			DelayTimer = 0;
 		
 		Delay(1);
 	}
@@ -87,7 +137,7 @@ script "Blackjack" (void)
 		Hand2[i] = 0;
 	}
 	
-	// Draw initial hands
+	// Draw initial cards
 	Hand1[0] = Random(1, 13);
 	Hand1[1] = Random(1, 13);
 	Hand2[0] = Random(1, 13);
@@ -117,10 +167,12 @@ script "Blackjack" (void)
 		// Draw Help
 		SetFont("SMALLFONT");
 		if (!BlackjackOver)
-			HudMessage(s:"\cd", k:"+use", s:"\cj Hit\n\cd", k:"+speed", s:"\cj Stay";
+			HudMessage(s:"\cd", k:"+use", s:"\cj Hit\n\cd",
+					   k:"+speed", s:"\cj Stay";
 					   HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05);
 		else
-			HudMessage(s:"\cd", k:"+use", s:"\cj Play Again\n\cd", k:"+speed", s:"\cj End Game";
+			HudMessage(s:"\cd", k:"+use", s:"\cj Play Again\n\cd",
+					   k:"+speed", s:"\cj End Game";
 					   HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05);
 		
 		SetFont("BIGFONT");
@@ -253,12 +305,14 @@ script "Blackjack" (void)
 			else if ((Total1 == 21 && Total2 == 21) || (Total1 > 21 && Total2 > 21) || (BlackjackStay && Total1 == Total2)) // Draw
 			{
 				HudMessage(s:"Draw!"; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+				GiveInventory("Credits", Bet);
 				BlackjackStay = false;
 				BlackjackOver = true;
 			}
 			else if (Size1 > MAX_HAND || Size2 > MAX_HAND) // Out of cards
 			{
 				HudMessage(s:"No more cards!"; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+				GiveInventory("Credits", Bet);
 				BlackjackStay = false;
 				BlackjackOver = true;
 			}
@@ -267,4 +321,5 @@ script "Blackjack" (void)
 	}
 	
 	SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+	InMinigame = false;
 }
