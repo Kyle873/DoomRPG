@@ -15,22 +15,66 @@ int Hand2[MAX_HAND];
 bool BlackjackOver;
 bool BlackjackStay;
 
-script "Blackjack" (int Bet)
+script "Blackjack" (void)
 {
+	int Buttons;
+	int OldButtons;
+	int Bet;
 	int i;
-	
-	// Make sure you have enough Credits to bet
-	if (CheckInventory("Credits") < Bet)
-	{
-		ActivatorSound("menu/error", 127);
-		SetFont("BIGFONT");
-		Print(s:"\cgYou don't have enough Credits");
-		terminate;
-	}
 	
 	BlackjackOver = false;
 	BlackjackStay = false;
 	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+	
+	// Bet Loop
+	while (1)
+	{
+		Buttons = GetPlayerInput(0, INPUT_BUTTONS);
+		OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
+		
+		SetHUDSize(320, 240, false);
+		
+		// Draw bet
+		PrintSprite("CREDA0", 0, 160.1, 200.0, 0.05);
+		SetFont("BIGFONT");
+		HudMessage(d:Bet; HUDMSG_PLAIN, 0, CR_GOLD, 186.1, 192.0, 0.05);
+		
+		// Draw Help
+		SetFont("SMALLFONT");
+		HudMessage(s:"\cd", k:"+use", s:"\cj Place Bet\n\cd", k:"+forward", s:"/", k:"+back", s:"\cj Change Bet";
+				   HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05);
+		
+		// Input
+        if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			// Make sure you have enough Credits to bet
+			if (CheckInventory("Credits") < Bet)
+			{
+				ActivatorSound("menu/error", 127);
+				SetFont("BIGFONT");
+				Print(s:"\cgYou don't have enough Credits");
+				SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+				terminate;
+			}
+			
+			TakeInventory("Credits", Bet);
+			ActivatorSound("menu/move", 127);
+			Delay(1);
+			break;
+		}
+        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
+		{
+			Bet += 100;
+			ActivatorSound("menu/move", 127);
+		}
+        if (Buttons == BT_BACK && OldButtons != BT_BACK)
+		{
+			if (Bet > 0) Bet -= 100;
+			ActivatorSound("menu/move", 127);
+		}
+		
+		Delay(1);
+	}
 	
 	// Wipe old HudMessage stuff from the last game if it's still up
 	for (i = 4999; i < 5020; i++)
@@ -49,16 +93,19 @@ script "Blackjack" (int Bet)
 	Hand2[0] = Random(1, 13);
 	Hand2[1] = Random(1, 13);
 	
+	// Game Loop
 	while (1)
 	{
-		int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
-		int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
+		int HandThreshold = Random(18, 20);
 		int X1 = 100.1;
 		int X2 = 100.1;
 		int Total1 = 0;
 		int Total2 = 0;
 		int Size1 = 0;
 		int Size2 = 0;
+		
+		Buttons = GetPlayerInput(0, INPUT_BUTTONS);
+		OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
 		
 		SetHUDSize(320, 240, false);
 		
@@ -73,7 +120,7 @@ script "Blackjack" (int Bet)
 			HudMessage(s:"\cd", k:"+use", s:"\cj Hit\n\cd", k:"+speed", s:"\cj Stay";
 					   HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05);
 		else
-			HudMessage(s:"\cd", k:"+use", s:"\cj End Game\n\cd", k:"+speed", s:"\cj Play Again";
+			HudMessage(s:"\cd", k:"+use", s:"\cj Play Again\n\cd", k:"+speed", s:"\cj End Game";
 					   HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05);
 		
 		SetFont("BIGFONT");
@@ -85,11 +132,21 @@ script "Blackjack" (int Bet)
 			if (Hand1[i] >= 11)
 				Total1 += 10;
 			else
-				Total1 += Hand1[i];
+			{
+				if (Hand1[i] == 1 && Total1 <= 10)
+					Total1 += 11;
+				else
+					Total1 += Hand1[i];
+			}
 			if (Hand2[i] >= 11)
 				Total2 += 10;
 			else
-				Total2 += Hand2[i];
+			{
+				if (Hand2[i] == 1 && Total2 <= 10)
+					Total2 += 11;
+				else
+					Total2 += Hand2[i];
+			}
 			
 			// Handle hand sizes
 			if (Hand1[i] > 0) Size1++;
@@ -133,21 +190,24 @@ script "Blackjack" (int Bet)
 		// Input
         if (Buttons == BT_USE && OldButtons != BT_USE)
 		{
-			if (BlackjackOver) break;
-			
+			if (BlackjackOver)
+			{
+				ActivatorSound("menu/move", 127);
+				Delay(1);
+				restart;
+			}
+
 			Hand1[Size1] = Random(1, 13);
-			Hand2[Size2] = Random(1, 13);
+			if (Total2 < HandThreshold)
+				Hand2[Size2] = Random(1, 13);
+			
 			ActivatorSound("menu/move", 127);
 		}
         if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
 		{
-			if (BlackjackOver)
-			{
-				Delay(1);
-				restart;
-			}
+			if (BlackjackOver) break;
 			
-			if (Total2 <= Random(14, 20))
+			if (Total2 < HandThreshold && Total1 != Total2)
 			{
 				Hand2[Size2] = Random(1, 13);
 				if (Hand2[Size2] >= 11)
@@ -165,15 +225,24 @@ script "Blackjack" (int Bet)
 		// Check for win, lose and draw
 		SetHUDSize(0, 0, false);
 		if (!BlackjackOver || (BlackjackStay && BlackjackOver))
-			if (Total1 == 21 || (Total1 < 21 && Total2 > 21) || (BlackjackStay && Total1 > Total2)) // You Win
+			if ((Total1 == 21 && Total2 != 21) || (Total1 < 21 && Total2 > 21) || (BlackjackStay && Total1 > Total2)) // You Win
 			{
-				HudMessage(s:"You Win!\n\ck+", d:Bet * 2, s:" Credits"; HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
-				GiveInventory("Credits", Bet * 2);
+				if ((Hand1[0] == 1 && Hand1[1] >= 10) || (Hand1[1] == 1 && Hand1[0] >= 10)) // Blackjack
+				{
+					HudMessage(s:"Blackjack!\n\ck+", d:Bet * 4, s:" Credits"; HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+					GiveInventory("Credits", Bet * 4);
+				}
+				else
+				{
+					HudMessage(s:"You Win!\n\ck+", d:Bet * 2, s:" Credits"; HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+					GiveInventory("Credits", Bet * 2);
+				}
+				
 				ActivatorSound("credits/payout", 127);
 				BlackjackStay = false;
 				BlackjackOver = true;
 			}
-			else if ((Total1 > 21 && Total2 <= 21) || Total2 == 21 || (BlackjackStay && Total2 > Total1)) // You Lose
+			else if ((Total1 > 21 && Total2 <= 21) || (Total2 == 21 && Total1 != 21) || (BlackjackStay && Total2 > Total1)) // You Lose
 			{
 				HudMessage(s:"You Lose!\n\ck-", d:Bet, s:" Credits"; HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
 				TakeInventory("Credits", Bet);
