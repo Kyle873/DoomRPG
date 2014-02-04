@@ -48,7 +48,7 @@ script "Blackjack" (void)
 		SetFont("SMALLFONT");
 		HudMessage(s:"\cd", k:"+use", s:"\cj Place Bet\n\cd",
 				   k:"+forward", s:"/", k:"+back", s:"\cj Change Bet\n\cd",
-				   k:"+speed", s:"\cjExit Game";
+				   k:"+speed", s:"\cj Exit Game";
 				   HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05);
 		
 		// Delayed Input
@@ -127,7 +127,7 @@ script "Blackjack" (void)
 	}
 	
 	// Wipe old HudMessage stuff from the last game if it's still up
-	for (i = 4999; i < 5020; i++)
+	for (i = 4997; i < 5000 + (MAX_HAND * 2); i++)
 		HudMessage(s:""; HUDMSG_PLAIN, i, CR_WHITE, 0.0, 0.0, 0.0);
 	
 	// Reset hands
@@ -281,12 +281,18 @@ script "Blackjack" (void)
 			{
 				if ((Hand1[0] == 1 && Hand1[1] >= 10) || (Hand1[1] == 1 && Hand1[0] >= 10)) // Blackjack
 				{
-					HudMessage(s:"Blackjack!\n\ck+", d:Bet * 4, s:" Credits"; HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+					if (Bet > 0)
+						HudMessage(s:"Blackjack!\n\ck+", d:Bet * 4, s:" Credits"; HUDMSG_FADEOUT, 4997, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+					else
+						HudMessage(s:"Blackjack!"; HUDMSG_FADEOUT, 4997, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
 					GiveInventory("Credits", Bet * 4);
 				}
 				else
 				{
-					HudMessage(s:"You Win!\n\ck+", d:Bet * 2, s:" Credits"; HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+					if (Bet > 0)
+						HudMessage(s:"You Win!\n\ck+", d:Bet * 2, s:" Credits"; HUDMSG_FADEOUT, 4997, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+					else
+						HudMessage(s:"You Win!"; HUDMSG_FADEOUT, 4997, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
 					GiveInventory("Credits", Bet * 2);
 				}
 				
@@ -296,7 +302,10 @@ script "Blackjack" (void)
 			}
 			else if ((Total1 > 21 && Total2 <= 21) || (Total2 == 21 && Total1 != 21) || (BlackjackStay && Total2 > Total1)) // You Lose
 			{
-				HudMessage(s:"You Lose!\n\ck-", d:Bet, s:" Credits"; HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+				if (Bet > 0)
+					HudMessage(s:"You Lose!\n\ck-", d:Bet, s:" Credits"; HUDMSG_FADEOUT, 4997, CR_RED, 0.5, 0.5, 2.0, 1.0);
+				else
+					HudMessage(s:"You Lose!"; HUDMSG_FADEOUT, 4997, CR_RED, 0.5, 0.5, 2.0, 1.0);
 				TakeInventory("Credits", Bet);
 				ActivatorSound("menu/error", 127);
 				BlackjackStay = false;
@@ -304,14 +313,14 @@ script "Blackjack" (void)
 			}
 			else if ((Total1 == 21 && Total2 == 21) || (Total1 > 21 && Total2 > 21) || (BlackjackStay && Total1 == Total2)) // Draw
 			{
-				HudMessage(s:"Draw!"; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+				HudMessage(s:"Draw!"; HUDMSG_FADEOUT, 4997, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
 				GiveInventory("Credits", Bet);
 				BlackjackStay = false;
 				BlackjackOver = true;
 			}
 			else if (Size1 > MAX_HAND || Size2 > MAX_HAND) // Out of cards
 			{
-				HudMessage(s:"No more cards!"; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+				HudMessage(s:"No more cards!"; HUDMSG_FADEOUT, 4997, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
 				GiveInventory("Credits", Bet);
 				BlackjackStay = false;
 				BlackjackOver = true;
