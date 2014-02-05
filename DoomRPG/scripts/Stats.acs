@@ -10,6 +10,9 @@
 #import "Shield.acs"
 #import "Utils.acs"
 
+#libdefine MAX_LEVEL	100
+#libdefine MAX_RANK		24
+
 // CVARS/Options
 global int 4 : RandomizedStartTokens;	// Whether the tokens given at the beginning of the game have been used
 
@@ -219,10 +222,10 @@ function void CheckCombo(void)
 // Keeps current level and XP updated
 function void CheckLevel(void)
 {
-	if (Level < 100)
+	if (Level < MAX_LEVEL)
 		XPNext = XPTable[Level];
 
-	if (Level > 99)
+	if (Level > MAX_LEVEL - 1)
 	{
 		XP = XPTable[Level - 1];
 		XPNext = XPTable[Level - 1];
@@ -261,10 +264,10 @@ function void CheckRank(void)
 {
 	RankString = Ranks[RankLevel];
 	
-	if (RankLevel < 25)
+	if (RankLevel < MAX_RANK + 1)
 		RankNext = RankTable[RankLevel];
 	
-	if (RankLevel >= 24)
+	if (RankLevel >= MAX_RANK)
 	{
 		Rank = RankTable[RankLevel];
 		RankNext = RankTable[RankLevel];
@@ -646,11 +649,11 @@ function void SetupTables(void)
 	int i;
 	
 	// XP Table
-	for (i = 0; i < 101; i++)
-		XPTable[i] = 1000 + FixedMul(XPTable[i - 1], 1.1);
+	for (i = 0; i < MAX_LEVEL + 1; i++)
+		XPTable[i] = 1000 + FixedMul(XPTable[i - 1], 1.125);
 	
 	// Rank Table
-	for (i = 0; i < 25; i++)
+	for (i = 0; i < MAX_RANK + 1; i++)
 		if (GameSkill() == 5)
 			RankTable[i] = 100000 + (100000 * i * i);
 		else if (GameSkill() > 2)
