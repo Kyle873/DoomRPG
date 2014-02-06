@@ -87,8 +87,8 @@ int LowHealthTimer;
 int RegenBoostTimer;
 
 // XP & Rank Tables
-int XPTable[101];
-int RankTable[25];
+int XPTable[MAX_LEVEL + 1];
+int RankTable[MAX_RANK + 1];
 
 // Luck Chance Percentages
 int CreditChance;
@@ -225,14 +225,14 @@ function void CheckLevel(void)
 	if (Level < MAX_LEVEL)
 		XPNext = XPTable[Level];
 
-	if (Level > MAX_LEVEL - 1)
+	if (Level > MAX_LEVEL)
 	{
-		XP = XPTable[Level - 1];
-		XPNext = XPTable[Level - 1];
+		XP = XPTable[MAX_LEVEL - 1];
+		XPNext = XPTable[MAX_LEVEL - 1];
 	}
 	
 	// Now check for a level up
-	if (XP >= XPTable[Level] && Level < 1000)
+	if (XP >= XPTable[Level] && Level < MAX_LEVEL)
 	{
 		if (GetCVAR("drpg_autospend"))
 			LevelTokens += 5;
@@ -274,7 +274,7 @@ function void CheckRank(void)
 	}
 	
 	// Rank up
-	if (Rank >= RankTable[RankLevel] && RankLevel < 24)
+	if (Rank >= RankTable[RankLevel] && RankLevel < MAX_RANK)
 	{
 		ActivatorSound("misc/rankup", 127);
 		RankLevel++;
@@ -650,7 +650,10 @@ function void SetupTables(void)
 	
 	// XP Table
 	for (i = 0; i < MAX_LEVEL + 1; i++)
-		XPTable[i] = 1000 + FixedMul(XPTable[i - 1], 1.125);
+	{
+		XPTable[i] = 2000 + FixedMul(XPTable[i - 1], 1.125);
+		Log(s:"\cd", d:XPTable[i]);
+	}
 	
 	// Rank Table
 	for (i = 0; i < MAX_RANK + 1; i++)
