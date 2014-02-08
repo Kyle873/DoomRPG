@@ -82,7 +82,11 @@ bool AllBonus;
 
 // HP/EP Regen Timers
 int HPRate;
+int HPTime;
+int HPAmount;
 int EPRate;
+int EPTime;
+int EPAmount;
 int LowHealthTimer;
 int RegenBoostTimer;
 
@@ -577,21 +581,32 @@ function void CheckStats(void)
 
 // Regeneration
 function void DoRegen(void)
-{
+{	
+	// Determine the max timer amounts
+	HPTime = (700 - FixedMul(Regeneration, 3.325)) * 2;
+	EPTime = (700 - FixedMul(Regeneration, 3.325)) * 2;
+	
+	// Cap the max timer amounts to 1 second
+	if (HPTime < 35)
+		HPTime = 35;
+	if (EPTime < 35)
+		EPTime = 35;
+	
+	// Determine the max regen amounts
+	HPAmount = 1 + Vitality / 50;
+	EPAmount = 1 + Energy / 50;
+	
 	// HP Regen
-	if (HPRate >= 3500 && GetActorProperty(0, APROP_HEALTH) >= 0)
+	if (HPRate >= HPTime && GetActorProperty(0, APROP_HEALTH) >= 0)
 	{
-		HealThing(1);
+		HealThing(HPAmount);
 		HPRate = 0;
 	}
 
 	// EP Regen
-	if (EPRate >= 3500 && EP <= EPMax)
+	if (EPRate >= EPTime && EP <= EPMax)
 	{
-		EP++;
-		if (EP > EPMax)
-			EP = EPMax;
-		
+		EP += EPAmount;
 		EPRate = 0;
 	}
 	
@@ -609,7 +624,7 @@ function void DoRegen(void)
 		{
 			HPRate += RegenBoostTimer;
 			EPRate += RegenBoostTimer;
-			RegenBoostTimer -= 10;
+			RegenBoostTimer--;
 			FadeRange(255, 0, 128, 0.1, 255, 0, 128, 0.0, 1.0);
 		}
 
@@ -621,24 +636,24 @@ function void DoRegen(void)
 				Buttons & BT_RIGHT || Buttons & BT_MOVERIGHT ||
 				Buttons & BT_ATTACK || Buttons & BT_JUMP)
 			{
-				HPRate += FixedMul(FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25), 0.5);
-				EPRate += FixedMul(FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25), 0.5);
+				HPRate++;
+				EPRate++;
 			}
 			else if (Buttons & BT_CROUCH) // Crouch - 150% Regen Rate
 			{
-				HPRate += FixedMul(FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25), 1.5);
-				EPRate += FixedMul(FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25), 1.5);
+				HPRate += 3;
+				EPRate += 3;
 			}
 			else // Idle - 100% Regen Rate
 			{
-				HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
-				EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
+				HPRate += 2;
+				EPRate += 2;
 			}
 		}
 		else
 		{
-			HPRate += FixedMul(Regeneration, 1.25);
-			EPRate += FixedMul(Regeneration, 1.25);
+			HPRate += 2;
+			EPRate += 2;
 		}
 	}
 }
