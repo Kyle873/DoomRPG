@@ -7,7 +7,7 @@ namespace DoomRPG
 	{
 		public static void Main(string[] Args)
 		{
-			float strength = 1.01f;
+			float strength = 0.01f;
             TextWriter output = File.CreateText("Strength.txt");
 			
             for (int i = 1; i <= 32000; i++)
