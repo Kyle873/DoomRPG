@@ -14,11 +14,12 @@
 
 // Monster Flags
 #libdefine MF_BOSS			1
-#libdefine MF_NEGATIVEXP	2
-#libdefine MF_NOSTATS		4
-#libdefine MF_NOAURA		8
-#libdefine MF_NOPAYKILL		16
-#libdefine MF_NODROPS		32
+#libdefine MF_NOXP			2
+#libdefine MF_NEGATIVEXP	4
+#libdefine MF_NOSTATS		8
+#libdefine MF_NOAURA		16
+#libdefine MF_NOPAYKILL		32
+#libdefine MF_NODROPS		64
 
 // Flags
 global int 1 : FirstRun;
@@ -26,7 +27,7 @@ global int 41 : MapsVisited[];
 
 // Version and Timestamp
 str Version = "v0.95 Beta";
-str TimeStamp = "Tuesday, February 11, 2014 at 12:05:08 AM";
+str TimeStamp = "Tuesday, February 11, 2014 at 10:34:39 AM";
 
 // Status Effects
 int StatusType;
@@ -328,20 +329,19 @@ script "MonsterLoop" (void)
 			{
 				DropItem(0, "Credits1000", 1, 255);
 				DropItem(0, "SoulsphereRandomizer", 1, 255);
-				DropItem(0, "Continue", 1, 255 - SkillDropMod);
 				DropItem(0, "TokenDropper", 1, 255 - SkillDropMod);
 				DropItem(0, "RuneDropper", 1, 255 - SkillDropMod);
-				DropItem(0, "AugDropper", 1, 255 - SkillDropMod);
-				DropItem(0, "ShieldDropper", 1, 255 - SkillDropMod);
+				DropItem(0, "AugDropper", 1, 160 - SkillDropMod);
+				DropItem(0, "ShieldDropper", 1, 160 - SkillDropMod);
 			}
 		}
 		
 		// Add XP
 		if ((MonsterFlags & MF_NEGATIVEXP))
 			AddXP(-XPAmount);
-		else if (!GetActorProperty(0, APROP_FRIENDLY))
+		else if (!(MonsterFlags & MF_NOXP) && !GetActorProperty(0, APROP_FRIENDLY))
 			AddXP(XPAmount);
-			
+		
 		// Add a kill to the pay kills
 		if (!(MonsterFlags & MF_NOPAYKILL))
 			PayKills++;
@@ -470,6 +470,7 @@ script "Loop" (void)
 	// Apply Stats
 	SetActorProperty(0, APROP_SPAWNHEALTH, HealthMax);
 	SetActorProperty(0, APROP_DAMAGEFACTOR, DamageFactor);
+	SetActorProperty(0, APROP_MASS, Mass);
 	SetActorProperty(0, APROP_SPEED, Speed);
 	SetActorProperty(0, APROP_JUMPZ, JumpHeight);
 
