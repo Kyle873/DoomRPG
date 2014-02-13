@@ -8,9 +8,9 @@ namespace DoomRPG
 		public static void Main(string[] Args)
 		{
             Console.ForegroundColor = ConsoleColor.Green;
-            string filename = @"..\DoomRPG\Scripts\RPG.acs";
+            string filename = @"..\DoomRPG\Scripts\RPG.ds";
             string[] contents = File.ReadAllLines(filename);
-            Console.WriteLine("Opening RPG.acs...");
+            Console.WriteLine("Opening RPG.ds...");
             
             for (int i = 0; i < contents.Length; i++)
                 if (contents[i].Contains("TimeStamp"))
