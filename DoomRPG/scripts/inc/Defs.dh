@@ -3,10 +3,13 @@ __library("Defs");
 
 #define script __extscript "ACS"
 #define enter __enter
-#define lib(arg1) __library((arg1))
 #define true 1
 #define false 0
 #define CallACS(arg1) ACS_NamedExecuteAlways((arg1), 0)
+#define Print(arg1) __printf<__printf_print>(arg1)
+#define Log(arg1) __printf<__printf_log>(arg1)
+#define GlobalArray(arg1) __global_array((arg1))
+#define GlobalRegister(arg1) __global_register((arg1))
 
 #define MAX_NAMES		19
 
@@ -16,24 +19,49 @@ __library("Defs");
 #define MF_NEGATIVEXP	4
 #define MF_NOSTATS		8
 #define MF_NOAURA		16
-#define MF_NOPAYKILL		32
+#define MF_NOPAYKILL	32
 #define MF_NODROPS		64
 
-__function void Print(str arg1)
-{
-	argd = StrParam(arg1, "\n");
-	__printf<__printf_print>(argd);
-};
+#define V_VERS 0
+#define V_TIME 1
 
-__function void Log(str arg1)
-{
-	argd = StrParam(arg1, "\n");
-	__printf<__printf_log>(argd);
-};
+#define M_PTID 0
+#define M_MAPN 1
+#define M_PBON 2
+
+#libdefine MAX_CATEGORIES		6
+#libdefine MAX_SKILLS			17
+#libdefine MAX_LEVELS			10
+
+// Energy Points (EP)
+GlobalRegister(2) int EP;
+GlobalRegister(3) int EPMax;
+
+// Skill-related vars
+GlobalRegister(5) int Aura;
+GlobalRegister(6) int AuraTimer;
+GlobalRegister(25) int AuraTimerHUD;
+GlobalArray(26) int[] SkillCatagory;
+GlobalRegister(27) int[] SkillIndex;
+GlobalRegister(28) int[] SkillLevel;
+GlobalRegister(29) int[] CurrentSkillLevel;
+
+bool Overdrive;
+int SummonID = 2100;
+int MaxSummons;
+int SkillCostMult;
+int BulletTimeMode;
+int BulletTimeTimer;
+
+// Portal stuff
+int[4] Portal1;
+int[4] Portal2;
+bool Portal1Active;
+bool Portal2Active;
 
 // Flags
-global int 1 : FirstRun;
-global int[] 41 : MapsVisited;
+GlobalRegister(1) int FirstRun;
+GlobalArray(41) int[] MapsVisited;
 
 // Version and Timestamp
 str[2] Ver =
@@ -43,16 +71,16 @@ str[2] Ver =
 };
 
 // Previously StatusType, StatusTimer
-int[2] _SARR1 =
+int[2] StatusArray =
 {
 	0;
 	0;
 };
-// Previously StatusTimerHUD
-global int 7 : _SARR2;
+
+__global_register(7) int StatusTimerHUD;
 
 // Previously PlayerTID, MapNumber, ParBonus
-int[3] _MMISC =
+int[3] MiscArray =
 {
 	31337;
 	0;
