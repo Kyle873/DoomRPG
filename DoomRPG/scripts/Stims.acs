@@ -3,6 +3,7 @@
 #include "zcommon.acs"
 
 #import "Stats.acs"
+#import "Utils.acs"
 
 #libdefine MAX_COMPONENTS	10
 
@@ -29,11 +30,13 @@ int CompoundColors[MAX_COMPONENTS] =
 	CR_DARKGRAY, CR_WHITE
 };
 
+global int 42 : StimTimerHUD;
+global int 43 : Vials[];
+global int 44 : Stim[];
+global int 45 : LastStim[];
+global int 46 : StimSize;
+
 bool StimActive;
-int Vials[MAX_COMPONENTS];
-int Stim[MAX_COMPONENTS];
-int LastStim[MAX_COMPONENTS];
-int StimSize;
 int StimAmount;
 int StimCapacity;
 int StimTimer;
@@ -110,7 +113,18 @@ function void CheckStim(void)
 		StimCapacity = 50;
 	if (StimSize == 3)
 		StimCapacity = 100;
-		
+	
+	// Calculate the current Stim amount
+	StimAmount = 0;
+	for (int i = 0; i < MAX_COMPONENTS; i++)
+		StimAmount += Stim[i];
+	
+	// Calculate timer for HUD
+	StimTimerHUD = StimTimer / 35 + 1;
+	
+	// Set StimActive dummy item for the HUD
+	SetInventory("StimActive", StimActive);
+	
 	// Decrease Stim Timer
 	if (StimTimer > 0); StimTimer--;
 	
@@ -142,7 +156,6 @@ function void MixStim(int Type)
 	ActivatorSound("menu/move", 127);
 	Vials[Type] -= 5;
 	Stim[Type] += 5;
-	StimAmount += 5;
 }
 
 function void SetStim(int Type)
