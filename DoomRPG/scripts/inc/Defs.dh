@@ -1,15 +1,16 @@
 __library("Defs");
 #include <zcommon.acs>
 
-#define script __extscript "ACS"
-#define enter __enter
-#define true 1
-#define false 0
-#define CallACS(arg1) ACS_NamedExecuteAlways((arg1), 0)
-#define Print(arg1) __printf<__printf_print>(arg1)
-#define Log __printf<__printf_log>
-#define GlobalArray(arg1) __global_array((arg1))
-#define GlobalRegister(arg1) __global_register((arg1))
+#define script			__extscript "ACS"
+#define enter			__enter
+#define true			1
+#define false			0
+#define CallACS(arg1)	ACS_NamedExecuteAlways((arg1), 0)
+#define Print			__printf<__printf_print>
+#define Log				__printf<__printf_log>
+#define GlobalArr		__global_array
+#define GlobalReg		__global_register
+#define AddrSpace		__address_space
 
 #define MAX_NAMES		19
 
@@ -32,19 +33,12 @@ __library("Defs");
 #define MAX_CATEGORIES	6
 #define MAX_SKILLS		17
 #define MAX_LEVELS		10
+#define MAX_PARTS		12
 
-// Energy Points (EP)
-GlobalRegister(2) int EP;
-GlobalRegister(3) int EPMax;
+#define MAX_LEVEL		100
+#define MAX_RANK		24
 
-// Skill-related vars
-GlobalRegister(5) int Aura;
-GlobalRegister(6) int AuraTimer;
-GlobalRegister(25) int AuraTimerHUD;
-GlobalArray(26) int[] SkillCatagory;
-GlobalArray(27) int[] SkillIndex;
-GlobalArray(28) int[] SkillLevel;
-GlobalArray(29) int[] CurrentSkillLevel;
+AddrSpace GlobalArr GlobalVar;
 
 bool Overdrive;
 int SummonID = 2100;
@@ -53,10 +47,6 @@ int SkillCostMult;
 int BulletTimeMode;
 int BulletTimeTimer;
 
-// Flags
-GlobalRegister(1) int FirstRun;
-GlobalArray(41) int[] MapsVisited;
-
 // Version and Timestamp
 str[2] Ver =
 {
@@ -64,56 +54,84 @@ str[2] Ver =
 	"Thursday, February 13, 2014 at 11:44:20 AM";
 };
 
-// Previously StatusType, StatusTimer
-int[2] StatusArray;
+int StatusType;
+int StatusTimer;
 
-GlobalRegister(7) int StatusTimerHUD;
+int PlayerTID = 31337;
+int MapNumber;
+int ParBonus;
 
-// Previously PlayerTID, MapNumber, ParBonus
-int[3] MiscArray = {31337;0;0;};
+// Flags
+GlobalVar		int FirstRun;
 
-#define MAX_LEVEL	100
-#define MAX_RANK	24
+// Energy Points (EP)
+GlobalReg(2)	int EP;
+GlobalReg(3)	int EPMax;
 
 // CVARS/Options
 // Whether the tokens given at the beginning of the game have been used
-GlobalRegister(4) int RandomizedStartTokens;
+GlobalVar		int RandomizedStartTokens;
 
+GlobalReg(7)	int StatusTimerHUD;
 // Level & XP
-GlobalRegister(8) int Level;
-GlobalRegister(9) int XP;
-GlobalRegister(10) int XPNext;
+GlobalVar		int Level;
+GlobalVar		int XP;
+GlobalVar		int XPNext;
 
 // Rank
-GlobalRegister(11) str RankString;
-GlobalRegister(12) int RankLevel;
-GlobalRegister(13) int Rank;
-GlobalRegister(14) int RankNext;
-GlobalRegister(15) int PayTimer;
-GlobalRegister(16) int PayKills;
+GlobalVar		str RankString;
+GlobalVar		int RankLevel;
+GlobalVar		int Rank;
+GlobalVar		int RankNext;
+GlobalVar		int PayTimer;
+GlobalVar		int PayKills;
 
 // HUD Stuff
-GlobalRegister(18) int Credits;
-GlobalRegister(19) int Continues;
+GlobalReg(18)	int Credits;
+GlobalReg(19)	int Continues;
 
 // Combo System
-GlobalRegister(20) int Combo;
-GlobalRegister(21) int ComboTimer;
-GlobalRegister(22) int TotalGained;
-GlobalRegister(23) int XPGained;
-GlobalRegister(24) int RankGained;
+GlobalReg(20)	int Combo;
+GlobalVar		int ComboTimer;
+GlobalReg(22)	int TotalGained;
+GlobalReg(23)	int XPGained;
+GlobalReg(24)	int RankGained;
+
+// Skill-related vars
+GlobalVar		int Aura;
+GlobalVar		int AuraTimer;
+GlobalReg(25)	int AuraTimerHUD;
+GlobalVar		int[] SkillCatagory;
+GlobalVar		int[] SkillIndex;
+GlobalVar		int[] SkillLevel;
+GlobalVar		int[] CurrentSkillLevel;
 
 // Primary Stats
-GlobalRegister(31) int Strength;		// Increases Damage
-GlobalRegister(32) int Defense;			// Reduces Damage taken
-GlobalRegister(33) int Vitality;		// Increases max Health and HP regen rate
-GlobalRegister(34) int Energy;			// Increases max EP and EP regen rate
-GlobalRegister(35) int Regeneration;	// Increases both HP/EP regen rate
-GlobalRegister(36) int Agility;			// Increases movement speed and jump height (and optionally weapon speed)
-GlobalRegister(37) int Capacity;		// Increases max ammo capacities
-GlobalRegister(38) int Luck;			// Increases Survivability bonus and drop chances
-GlobalRegister(39) int HealthMax;		// Max player Health
-GlobalRegister(40) int ArmorMax;		// Max Armor that the player's current armor can go up to
+GlobalVar		int Strength;		// Increases Damage
+GlobalVar		int Defense;		// Reduces Damage taken
+GlobalVar		int Vitality;		// Increases max Health and HP regen rate
+GlobalVar		int Energy;		// Increases max EP and EP regen rate
+GlobalVar		int Regeneration;	// Increases both HP/EP regen rate
+GlobalVar		int Agility;		// Increases movement speed and jump height (and optionally weapon speed)
+GlobalVar		int Capacity;		// Increases max ammo capacities
+GlobalVar		int Luck;			// Increases Survivability bonus and drop chances
+GlobalReg(39)	int HealthMax;	// Max player Health
+GlobalReg(40)	int ArmorMax;		// Max Armor that the player's current armor can go up to
+GlobalVar		int[] MapsVisited;
+
+GlobalReg(50)	int Shield;
+GlobalReg(51)	int ShieldCapacity;
+GlobalVar		int ShieldBody;
+GlobalVar		int ShieldBattery;
+GlobalVar		int ShieldCapacitor;
+GlobalVar		int ShieldAccessory;
+GlobalVar		str ArmorType;
+GlobalVar		int ArmorAmount;
+
+// Level and Flags
+GlobalVar		int LevelNum;		// track the level number for the transport system and monster difficulty scaling
+GlobalVar		int InBase;		// Whether you are at the UAC Outpost or not
+GlobalVar		int Transported;	// True if you are using the Transportation System
 
 // Stat Bonuses
 int StrengthBonus;
@@ -168,8 +186,15 @@ int[MAX_LEVEL + 1] XPTable;
 int[MAX_RANK + 1] RankTable;
 
 // Luck Chance Percentages
-// Previously CreditChance, HealthChance, ArmorChance, PowerupChance, RuneChance, TokenChance, AugChance, ShieldChance, EPChance
-int[9] LuckChances;
+int CreditChance;
+int HealthChance;
+int ArmorChance;
+int PowerupChance;
+int RuneChance;
+int TokenChance;
+int AugChance;
+int ShieldChance;
+int EPChance;
 
 // Randomizer
 int LevelTokens;
@@ -207,6 +232,20 @@ str[25] LongRanks = {
 	"Sergeant Major of the Marine Corps"; "Master Sergeant Major of the Marine Corps";
 };
 
+// Skill Level Names
+str[5] SkillLevels =
+{
+	"Easy";
+	"Normal";
+	"Hard";
+	"Nightmare";
+	"Hell";
+};
+
+/****************
+*** FUNCTIONS ***
+****************/
+
 __function void DefaultLoadout(void)
 {
 	// Extras Compatibility
@@ -243,3 +282,4 @@ function void SetupTables(void)
 		else
 			{RankTable[i] = 25000 + (25000 * i * i);};
 };
+
