@@ -35,9 +35,26 @@ __library("Defs");
 #define MAX_LEVEL		100
 #define MAX_RANK		24
 
+#define MAX_MENU		6
+
+// Arena defines
+#define MAX_MODS			1
+#define MAX_ENVIRONMENTS	4
+#define MAX_BONUS			9
+
+// Arena State Defines
+#define ARENA_INTERMISSION	1
+#define ARENA_WAITING		2
+#define ARENA_READY			3
+#define ARENA_ACTIVE		4
+
 /******************
 *** GLOBAL VARS ***
 *******************/
+
+// All of these globalvars are used in SBARINFO:
+// 2, 3, 7, 18, 19, 20, 22, 23, 24, 25, 39, 40, 42, 50, 51
+// SO DON'T REMOVE 'EM
 
 AddrSpace GlobalArr GlobalVar;
 
@@ -85,6 +102,8 @@ GlobalVar		int[] SkillCatagory;
 GlobalVar		int[] SkillIndex;
 GlobalVar		int[] SkillLevel;
 GlobalVar		int[] CurrentSkillLevel;
+
+GlobalVar		int ArenaMaxWave;
 
 // Primary Stats
 GlobalVar		int Strength;		// Increases Damage
@@ -214,6 +233,38 @@ int ShieldInterval = 35;
 bool ShieldFull = false;
 bool Nova = true;
 
+bool InMenu;
+int Menu;
+int MenuX;
+int MenuY;
+int MenuIndex;
+bool MenuBlock;
+int StatAmount;
+bool AugSelected;
+int SkillPage;
+int SkillMax;
+int ShieldPage;
+int StimSelected;
+
+bool InShop;
+int ShopCategories = 8; // 8 vanilla ShopCategories, 8 reserved for compatibility
+int ShopIndex;
+int ShopOffset;
+int ShopPage;
+int ShopSpotID = 1000;
+
+bool ArenaActive = false;
+bool ArenaTimerActive = false;
+int ArenaState = ARENA_READY;
+int ArenaSpotSpawns = 1100;
+int ArenaSectorTag = 100;
+
+int ArenaWave;
+int ArenaTimer;
+int ArenaCount;
+int ArenaMod;
+int ArenaEnvironment;
+
 /*****************
 *** MAP ARRAYS ***
 ******************/
@@ -268,6 +319,16 @@ str[2] Ver =
 	"Thursday, February 13, 2014 at 11:44:20 AM";
 };
 
+str[MAX_MENU] MainMenu =
+{
+	"Stats"; "Augmentations"; "Skills"; "Shield"; "Stims"; "Shop";
+};
+
+int[MAX_MENU] MainMenuColor =
+{
+	CR_RED; CR_GREEN; CR_LIGHTBLUE; CR_CYAN; CR_GRAY; CR_GOLD;
+};
+
 /****************
 *** FUNCTIONS ***
 *****************/
@@ -305,5 +366,17 @@ function void SetupTables(void)
 			{RankTable[i] = 50000 + (50000 * i * i);}
 		else
 			{RankTable[i] = 25000 + (25000 * i * i);};
+};
+
+function int SetInventory(str Item, int Count)
+{
+	int n = Count - CheckInventory(Item);
+	
+	if (n > 0)
+		{GiveInventory(Item, n);}
+	else if (n < 0)
+		{TakeInventory(Item, -n);};
+	
+	return n;
 };
 
