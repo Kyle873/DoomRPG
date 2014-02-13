@@ -1,29 +1,19 @@
-#library "Stats"
-
-#include "zcommon.acs"
-
-#import "RPG.acs"
-#import "Skills.acs"
-#import "Augs.acs"
-#import "Shop.acs"
-#import "Menu.acs"
-#import "Shield.acs"
-#import "Utils.acs"
+lib("Stats");
 
 function void AddXP(int Amount)
 {
 	// Scale XP/Rank Gains using the XP Scaling Option
-	switch (GetCVAR("drpg_scalexp"))
+	switch (GetCVar("drpg_scalexp"))
 	{
-		case 2: Amount = FixedMul(Amount, 2.0);	 	break;
-		case 3: Amount = FixedMul(Amount, 4.0);  	break;
-		case 4: Amount = FixedMul(Amount, 8.0);  	break;
-		case 5: Amount = FixedMul(Amount, 0.75); 	break;
-		case 6: Amount = FixedMul(Amount, 0.5);  	break;
-		case 7: Amount = FixedMul(Amount, 0.25); 	break;
-	}
+		case 2: Amount = FixedMul(Amount, 2.0);	break;
+		case 3: Amount = FixedMul(Amount, 4.0);	break;
+		case 4: Amount = FixedMul(Amount, 8.0);	break;
+		case 5: Amount = FixedMul(Amount, 0.75);	break;
+		case 6: Amount = FixedMul(Amount, 0.5);	break;
+		case 7: Amount = FixedMul(Amount, 0.25);	break;
+	};
 	
-	if (GetCVAR("drpg_combo"))
+	if (GetCVar("drpg_combo"))
 	{
 		TotalGained += Amount;
 		if (Aura == 3 && CurrentSkillLevel[GetSkillID(2, 2)] >= 3) TotalGained += Amount;
@@ -39,14 +29,13 @@ function void AddXP(int Amount)
 		
 		// You cannot gain Negative XP, but you can lose Rank
 		if (Amount < 0) Amount = 0;
-
 		XP += Amount;
-	}
-}
+	};
+};
 
 function void CheckCombo(void)
 {
-	if (GetCVAR("drpg_combo"))
+	if (GetCVar("drpg_combo"))
 	{
 		// Subtract the combo timer each tick
 		if ((Combo > 0 || ComboTimer < 100) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
@@ -57,12 +46,12 @@ function void CheckCombo(void)
 		{
 			SetInventory("Combo", ComboTimer);
 			SetInventory("Combo2", 0);
-		}
+		};
 		if (ComboTimer < 0)
 		{
 			SetInventory("Combo", 0);
 			SetInventory("Combo2", ComboTimer + 100);
-		}
+		};
 		
 		// Add up and randomize the XP and Rank gain
 		if (ComboTimer == 0)
@@ -78,7 +67,7 @@ function void CheckCombo(void)
 			
 			TotalGained = 0;
 			Combo = 0;
-		}
+		};
 		
 		if (ComboTimer < -100)
 		{
@@ -86,28 +75,28 @@ function void CheckCombo(void)
 			XPGained = 0;
 			RankGained = 0;
 			ComboTimer = 100;
-		}
+		};
 	}
 	else
-		ComboTimer = -100;
-}
+		{ComboTimer = -100;};
+};
 
 // Keeps current level and XP updated
 function void CheckLevel(void)
 {
 	if (Level < MAX_LEVEL)
 		XPNext = XPTable[Level];
-
+	
 	if (Level >= MAX_LEVEL)
 	{
 		XP = XPTable[MAX_LEVEL - 1];
 		XPNext = XPTable[MAX_LEVEL - 1];
-	}
+	};
 	
 	// Now check for a level up
 	if (XP >= XPTable[Level] && Level < MAX_LEVEL)
 	{
-		if (GetCVAR("drpg_autospend"))
+		if (GetCVar("drpg_autospend"))
 			LevelTokens += 5;
 		
 		// Level Up
@@ -118,19 +107,19 @@ function void CheckLevel(void)
 		GiveInventory("StatToken", 5 + (Level / 10));
 		GiveInventory("SkillToken", 1);
 		
-		if (GetCVAR("drpg_levelup_heal"))
+		if (GetCVar("drpg_levelup_heal"))
 		{
-			if (EP <= 0) EP = 0; else EP = GetEPMax();
+			if (EP <= 0) {EP = 0;} else {EP = GetEPMax();};
 			HealThing(1000000);
-		}
+		};
 
 		FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0, 2.0);
 		SetFont("BIGFONT");
-		SetHUDSize(0, 0, false);
+		SetHudSize(0, 0, false);
 		HudMessage(s:"You have reached level ", d:Level;
 				   HUDMSG_FADEOUT, 4999, CR_WHITE, 0.5, 0.5, 2.0, 2.0);
-	}
-}
+	};
+};
 
 // Keeps current Rank updated
 function void CheckRank(void)
@@ -144,7 +133,7 @@ function void CheckRank(void)
 	{
 		Rank = RankTable[MAX_RANK - 1];
 		RankNext = RankTable[MAX_RANK - 1];
-	}
+	};
 	
 	// Rank up
 	if (Rank >= RankTable[RankLevel] && RankLevel < MAX_RANK)
@@ -153,14 +142,14 @@ function void CheckRank(void)
 		RankLevel++;
 		FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0, 2.0);
 		SetFont("BIGFONT");
-		SetHUDSize(0, 0, false);
+		SetHudSize(0, 0, false);
 		HudMessage(s:"You have reached rank level ", d:RankLevel, s:": ", s:LongRanks[RankLevel];
 				   HUDMSG_FADEOUT, 4999, CR_GOLD, 0.5, 0.5, 4.0, 2.0);
-	}
+	};
 	
 	// Payment
 	PayTimer++;
-	if (PayTimer >= 35 * 60 * GetCVAR("drpg_pay_interval"))
+	if (PayTimer >= 35 * 60 * GetCVar("drpg_pay_interval"))
 	{
 		if (RankLevel > 0)
 		{
@@ -170,17 +159,17 @@ function void CheckRank(void)
 			
 			FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0, 2.0);
 			SetFont("BIGFONT");
-			SetHUDSize(0, 0, false);
+			SetHudSize(0, 0, false);
 			HudMessage(s:"+", d:Pay, s:" Credits"; HUDMSG_FADEOUT, 0, CR_GOLD, -0.025, 0.775, 4.0, 2.0);
 			
 			ActivatorSound("credits/payout", 127);
 			Log(s:"\cfYou have been paid ", d:Pay, s:" Credits by the UAC");
-		}
+		};
 		
 		PayTimer = 0;
 		PayKills = 0;
-	}
-}
+	};
+};
 
 // Gives rewards for finding a secret and 100% Kills/Items/Secrets
 function void CheckLevelInfo(void)
@@ -193,7 +182,7 @@ function void CheckLevelInfo(void)
 	int RankBonus;
 	
 	// Set HUD Size and Font
-	SetHUDSize(0, 0, false);
+	SetHudSize(0, 0, false);
 	SetFont("SMALLFONT");
 	
 	// Check to see if any total stats are 0, if they are, silently flag them as received already
@@ -219,7 +208,7 @@ function void CheckLevelInfo(void)
 		HudMessage(s:"100% Monsters Killed!\n", d:XPBonus, s:" XP Bonus";
 				   HUDMSG_TYPEON, 0, CR_BRICK, 1.5, 0.4, 3.0, 0.1, 3.0);
 		KillBonus = true;
-	}
+	};
 	
 	// 100% Items
 	if (CurrentItems >= GetLevelInfo(LEVELINFO_TOTAL_ITEMS) && !ItemsBonus)
@@ -232,7 +221,7 @@ function void CheckLevelInfo(void)
 		HudMessage(s:"100% Items Found!\nFull HP/EP Restore";
 				   HUDMSG_TYPEON, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 0.1, 3.0);
 		ItemsBonus = true;
-	}
+	};
 
 	// Secrets
 	if (CurrentSecretsFound == SecretsFound + 1 && RankLevel < 25)
@@ -253,8 +242,8 @@ function void CheckLevelInfo(void)
 			HudMessage(s:"100% Secrets Found!\n", d:RankBonus, s:" Rank Bonus";
 					   HUDMSG_TYPEON, 0, CR_YELLOW, 1.5, 0.8, 3.0, 0.1, 3.0);
 			SecretsBonus = true;
-		}
-	}
+		};
+	};
 	
 	// All Kills/Items/Secrets 100%
 	if ((KillBonus && ItemsBonus && SecretsBonus) && !AllBonus)
@@ -274,13 +263,13 @@ function void CheckLevelInfo(void)
 				   d:XPBonus, s:" XP Bonus\n", d:RankBonus, s:" Rank Bonus\nFull HP/EP Restore";
 				   HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
 		AllBonus = true;
-	}
+	};
 	
 	
 	CurrentKills = Kills;
 	CurrentItems = Items;
 	SecretsFound = CurrentSecretsFound;
-}
+};
 
 function void CheckHealth(void)
 {
@@ -288,7 +277,7 @@ function void CheckHealth(void)
 	{
 		ActivatorSound("health/low", 64);
 		LowHealthTimer = 0;
-	}
+	};
 	
 	if (CheckInventory("Health") <= GetActorProperty(0, APROP_SPAWNHEALTH) / 10 && CheckInventory("Health") > 0)
 	{
@@ -298,8 +287,8 @@ function void CheckHealth(void)
 		// Halve Movement Speed and Jump Height
 		Speed /= 2;
 		JumpHeight /= 2;
-	}
-}
+	};
+};
 
 function void CheckArmorMax(void)
 {
@@ -317,7 +306,7 @@ function void CheckArmorMax(void)
 	if (GetArmorType("WhiteArmor", 0) > 0) 			ArmorMax = 1000;
 	
 	// DoomRL Compatibility
-	if (GetCVAR("drpg_ext_doomrl"))
+	if (GetCVar("drpg_ext_doomrl"))
 	{
 		// Armors which have ridiculous high save amounts to simulate it being indestructible, can I get a record for "most ridiculous if statement ever?"
 		if ((GetArmorType("RLGreenArmor", 0) > 0) ||
@@ -370,7 +359,7 @@ function void CheckArmorMax(void)
 			(GetArmorType("RLPlasmaShieldArmorRenegade", 0) > 0) ||
 			(GetArmorType("RLNecroArmorRenegade", 0) > 0) ||
 			(GetArmorType("RLAngelicArmorRenegade", 0) > 0))
-			ArmorMax = 100;
+				{ArmorMax = 100;}
 		else // Armors which have differing Save Amounts
 		{
 			if (GetArmorType("RLTowerShieldArmor", 0) > 0)			ArmorMax = 150;
@@ -379,91 +368,91 @@ function void CheckArmorMax(void)
 			if (GetArmorType("RLTowerShieldArmorRenegade", 0) > 0)	ArmorMax = 150;
 			if (GetArmorType("RLFireShieldArmorRenegade", 0) > 0)	ArmorMax = 200;
 			if (GetArmorType("RLGothicArmorRenegade", 0) > 0) 		ArmorMax = 200;
-		}
-	}
-}
+		};
+	};
+};
 
 function str CheckArmorType(void)
 {
 	if (GetArmorType("BasicArmorBonus", 0) > 0) 						return "BasicArmorBonus";
-	if (GetArmorType("GreenArmor", 0) > 0) 								return "GreenArmor";
-	if (GetArmorType("UsedGreenArmor", 0) > 0) 							return "UsedGreenArmor";
+	if (GetArmorType("GreenArmor", 0) > 0) 							return "GreenArmor";
+	if (GetArmorType("UsedGreenArmor", 0) > 0) 						return "UsedGreenArmor";
 	if (GetArmorType("BlueArmor", 0) > 0) 								return "BlueArmor";
 	if (GetArmorType("UsedBlueArmor", 0) > 0) 							return "UsedBlueArmor";
 	if (GetArmorType("YellowArmor", 0) > 0) 							return "YellowArmor";
 	if (GetArmorType("UsedYellowArmor", 0) > 0) 						return "UsedYellowArmor";
 	if (GetArmorType("RedArmor", 0) > 0) 								return "RedArmor";
 	if (GetArmorType("UsedRedArmor", 0) > 0) 							return "UsedRedArmor";
-	if (GetArmorType("WhiteArmor", 0) > 0) 								return "WhiteArmor";
-	if (GetArmorType("UsedWhiteArmor", 0) > 0) 							return "UsedWhiteArmor";
+	if (GetArmorType("WhiteArmor", 0) > 0) 							return "WhiteArmor";
+	if (GetArmorType("UsedWhiteArmor", 0) > 0) 						return "UsedWhiteArmor";
 	if (GetArmorType("ShieldArmor", 0) > 0) 							return "ShieldArmor";
 	if (GetArmorType("ShieldArmorEmpty", 0) > 0) 						return "ShieldArmorEmpty";
 	
 	// DoomRL Compatibility
-	if (GetCVAR("drpg_ext_doomrl"))
+	if (GetCVar("drpg_ext_doomrl"))
 	{
 		if (GetArmorType("RLGreenArmor", 0) > 0)						return "RLGreenArmor";
-		if (GetArmorType("RLBlueArmor", 0) > 0)							return "RLBlueArmor";
+		if (GetArmorType("RLBlueArmor", 0) > 0)						return "RLBlueArmor";
 		if (GetArmorType("RLRedArmor", 0) > 0)							return "RLRedArmor";
-		if (GetArmorType("RLCerberusArmor", 0) > 0)						return "RLCerberusArmor";
+		if (GetArmorType("RLCerberusArmor", 0) > 0)					return "RLCerberusArmor";
 		if (GetArmorType("RLFireShieldArmor", 0) > 0)					return "RLFireShieldArmor";
-		if (GetArmorType("RLTacticalArmor", 0) > 0)						return "RLTacticalArmor";
+		if (GetArmorType("RLTacticalArmor", 0) > 0)					return "RLTacticalArmor";
 		if (GetArmorType("RLBallisticGreenArmor", 0) > 0)				return "RLBallisticGreenArmor";
 		if (GetArmorType("RLBallisticBlueArmor", 0) > 0)				return "RLBallisticBlueArmor";
-		if (GetArmorType("RLBallisticRedArmor", 0) > 0)					return "RLBallisticRedArmor";
+		if (GetArmorType("RLBallisticRedArmor", 0) > 0)				return "RLBallisticRedArmor";
 		if (GetArmorType("RLFireproofGreenArmor", 0) > 0)				return "RLFireproofGreenArmor";
 		if (GetArmorType("RLFireproofBlueArmor", 0) > 0)				return "RLFireproofBlueArmor";
-		if (GetArmorType("RLFireproofRedArmor", 0) > 0)					return "RLFireproofRedArmor";
+		if (GetArmorType("RLFireproofRedArmor", 0) > 0)				return "RLFireproofRedArmor";
 		if (GetArmorType("RLPowerGreenArmor", 0) > 0)					return "RLPowerGreenArmor";
 		if (GetArmorType("RLPowerBlueArmor", 0) > 0)					return "RLPowerBlueArmor";
-		if (GetArmorType("RLPowerRedArmor", 0) > 0)						return "RLPowerRedArmor";
+		if (GetArmorType("RLPowerRedArmor", 0) > 0)					return "RLPowerRedArmor";
 		if (GetArmorType("RLBallisticShieldArmor", 0) > 0)				return "RLBallisticShieldArmor";
 		if (GetArmorType("RLBallisticVestArmor", 0) > 0)				return "RLBallisticVestArmor";
 		if (GetArmorType("RLBulletProofVestArmor", 0) > 0)				return "RLBulletProofVestArmor";
 		if (GetArmorType("RLDuelistArmor", 0) > 0)						return "RLDuelistArmor";
 		if (GetArmorType("RLEnergyShieldedVestArmor", 0) > 0)			return "RLEnergyShieldedVestArmor";
-		if (GetArmorType("RLEnergyShieldArmor", 0) > 0)					return "RLEnergyShieldArmor";
+		if (GetArmorType("RLEnergyShieldArmor", 0) > 0)				return "RLEnergyShieldArmor";
 		if (GetArmorType("RLMedicalArmor", 0) > 0)						return "RLMedicalArmor";
 		if (GetArmorType("RLPhaseshiftArmor", 0) > 0)					return "RLPhaseshiftArmor";
-		if (GetArmorType("RLPlasmaShieldArmor", 0) > 0)					return "RLPlasmaShieldArmor";
+		if (GetArmorType("RLPlasmaShieldArmor", 0) > 0)				return "RLPlasmaShieldArmor";
 		if (GetArmorType("RLNecroArmor", 0) > 0)						return "RLNecroArmor";
 		if (GetArmorType("RLAngelicArmor", 0) > 0)						return "RLAngelicArmor";
 		if (GetArmorType("RLOModDuelistArmor", 0) > 0)					return "RLOModDuelistArmor";
 		if (GetArmorType("RLTowerShieldArmor", 0) > 0)					return "RLTowerShieldArmor";
 		if (GetArmorType("RLGothicArmor", 0) > 0)						return "RLGothicArmor";
 		if (GetArmorType("RLGreenArmorRenegade", 0) > 0)				return "RLGreenArmorRenegade";
-		if (GetArmorType("RLBlueArmorRenegade", 0) > 0)					return "RLBlueArmorRenegade";
+		if (GetArmorType("RLBlueArmorRenegade", 0) > 0)				return "RLBlueArmorRenegade";
 		if (GetArmorType("RLRedArmorRenegade", 0) > 0)					return "RLRedArmorRenegade";
-		if (GetArmorType("RLCerberusArmorRenegade", 0) > 0)				return "RLCerberusArmorRenegade";
+		if (GetArmorType("RLCerberusArmorRenegade", 0) > 0)			return "RLCerberusArmorRenegade";
 		if (GetArmorType("RLFireShieldArmorRenegade", 0) > 0)			return "RLFireShieldArmorRenegade";
-		if (GetArmorType("RLTacticalArmorRenegade", 0) > 0)				return "RLTacticalArmorRenegade";
+		if (GetArmorType("RLTacticalArmorRenegade", 0) > 0)			return "RLTacticalArmorRenegade";
 		if (GetArmorType("RLBallisticGreenArmorRenegade", 0) > 0)		return "RLBallisticGreenArmorRenegade";
 		if (GetArmorType("RLBallisticBlueArmorRenegade", 0) > 0)		return "RLBallisticBlueArmorRenegade";
-		if (GetArmorType("RLBallisticRedArmorRenegade", 0) > 0)			return "RLBallisticRedArmorRenegade";
+		if (GetArmorType("RLBallisticRedArmorRenegade", 0) > 0)		return "RLBallisticRedArmorRenegade";
 		if (GetArmorType("RLFireproofGreenArmorRenegade", 0) > 0)		return "RLFireproofGreenArmorRenegade";
 		if (GetArmorType("RLFireproofBlueArmorRenegade", 0) > 0)		return "RLFireproofBlueArmorRenegade";
-		if (GetArmorType("RLFireproofRedArmorRenegade", 0) > 0)			return "RLFireproofRedArmorRenegade";
+		if (GetArmorType("RLFireproofRedArmorRenegade", 0) > 0)		return "RLFireproofRedArmorRenegade";
 		if (GetArmorType("RLPowerGreenArmorRenegade", 0) > 0)			return "RLPowerGreenArmorRenegade";
 		if (GetArmorType("RLPowerBlueArmorRenegade", 0) > 0)			return "RLPowerBlueArmorRenegade";
-		if (GetArmorType("RLPowerRedArmorRenegade", 0) > 0)				return "RLPowerRedArmorRenegade";
+		if (GetArmorType("RLPowerRedArmorRenegade", 0) > 0)			return "RLPowerRedArmorRenegade";
 		if (GetArmorType("RLBallisticShieldArmorRenegade", 0) > 0)		return "RLBallisticShieldArmorRenegade";
 		if (GetArmorType("RLBallisticVestArmorRenegade", 0) > 0)		return "RLBallisticVestArmorRenegade";
 		if (GetArmorType("RLBulletProofVestArmorRenegade", 0) > 0)		return "RLBulletProofVestArmorRenegade";
 		if (GetArmorType("RLDuelistArmorRenegade", 0) > 0)				return "RLDuelistArmorRenegade";
 		if (GetArmorType("RLEnergyShieldedVestArmorRenegade", 0) > 0)	return "RLEnergyShieldedVestArmorRenegade";
-		if (GetArmorType("RLEnergyShieldArmorRenegade", 0) > 0)			return "RLEnergyShieldArmorRenegade";
+		if (GetArmorType("RLEnergyShieldArmorRenegade", 0) > 0)		return "RLEnergyShieldArmorRenegade";
 		if (GetArmorType("RLMedicalArmorRenegade", 0) > 0)				return "RLMedicalArmorRenegade";
 		if (GetArmorType("RLPhaseshiftArmorRenegade", 0) > 0)			return "RLPhaseshiftArmorRenegade";
-		if (GetArmorType("RLPlasmaShieldArmorRenegade", 0) > 0)			return "RLPlasmaShieldArmorRenegade";
+		if (GetArmorType("RLPlasmaShieldArmorRenegade", 0) > 0)		return "RLPlasmaShieldArmorRenegade";
 		if (GetArmorType("RLNecroArmorRenegade", 0) > 0)				return "RLNecroArmorRenegade";
 		if (GetArmorType("RLAngelicArmorRenegade", 0) > 0)				return "RLAngelicArmorRenegade";
 		if (GetArmorType("RLOModDuelistArmorRenegade", 0) > 0)			return "RLOModDuelistArmorRenegade";
 		if (GetArmorType("RLTowerShieldArmorRenegade", 0) > 0)			return "RLTowerShieldArmorRenegade";
 		if (GetArmorType("RLGothicArmorRenegade", 0) > 0)				return "RLGothicArmorRenegade";
-	}
+	};
 	
 	return "";
-}
+};
 
 function void CheckStats(void)
 {
@@ -497,10 +486,10 @@ function void CheckStats(void)
 	
 	// Survival Bonus
 	if (Random(1, 1000) <= SurvivalBonus)
-		SetPlayerProperty(0, 1, PROP_BUDDHA);
+		{SetPlayerProperty(0, 1, PROP_BUDDHA);}
 	else
-		SetPlayerProperty(0, 0, PROP_BUDDHA);
-}
+		{SetPlayerProperty(0, 0, PROP_BUDDHA);};
+};
 
 function void CheckStatBonus(void)
 {
@@ -521,7 +510,7 @@ function void CheckStatBonus(void)
 	AgilityBonus = 0;
 	CapacityBonus = 0;
 	LuckBonus = 0;
-}
+};
 
 // Regeneration
 function void DoRegen(void)
@@ -539,14 +528,14 @@ function void DoRegen(void)
 	{
 		HealThing(HPAmount);
 		HPRate = 0;
-	}
+	};
 
 	// EP Regen
 	if (EPRate >= EPTime && EP <= EPMax)
 	{
 		EP += EPAmount;
 		EPRate = 0;
-	}
+	};
 	
 	// If damaged, reset the Healing timer
 	if (HealthLoss != 0)
@@ -564,10 +553,10 @@ function void DoRegen(void)
 			EPRate += RegenBoostTimer;
 			RegenBoostTimer--;
 			FadeRange(255, 0, 128, 0.1, 255, 0, 128, 0.0, 1.0);
-		}
+		};
 
 		// Movement/Crouching/Idling mechanics
-		if (GetCVAR("drpg_regen_movement"))
+		if (GetCVar("drpg_regen_movement"))
 		{
 			if (Buttons & BT_FORWARD || Buttons & BT_BACK ||	// Movement - 50% Regen Rate
 				Buttons & BT_LEFT || Buttons & BT_MOVELEFT ||
@@ -576,69 +565,69 @@ function void DoRegen(void)
 			{
 				HPRate++;
 				EPRate++;
-			}
+			};
 			else if (Buttons & BT_CROUCH) // Crouch - 150% Regen Rate
 			{
 				HPRate += 3;
 				EPRate += 3;
-			}
+			};
 			else // Idle - 100% Regen Rate
 			{
 				HPRate += 2;
 				EPRate += 2;
-			}
-		}
+			};
+		};
 		else
 		{
 			HPRate += 2;
 			EPRate += 2;
-		}
-	}
-}
+		};
+	};
+};
 
 // Keep stats capped at certain values
 function void CheckStatCaps(void)
 {
 	StatCap = SoftStatCap + CheckInventory("StatCapToken");
 
-	if (Strength < 0)			Strength = 0;
+	if (Strength < 0)				Strength = 0;
 	if (Strength > StatCap)		Strength = StatCap;
-	if (Defense < 0)			Defense = 0;
-	if (Defense > StatCap)		Defense = StatCap;
-	if (Vitality < 0)			Vitality = 0;
+	if (Defense < 0)				Defense = 0;
+	if (Defense > StatCap)			Defense = StatCap;
+	if (Vitality < 0)				Vitality = 0;
 	if (Vitality > StatCap)		Vitality = StatCap;
 	if (Energy < 0)				Energy = 0;
-	if (Energy > StatCap)		Energy = StatCap;
-	if (Regeneration < 0)		Regeneration = 0;
+	if (Energy > StatCap)			Energy = StatCap;
+	if (Regeneration < 0)			Regeneration = 0;
 	if (Regeneration > StatCap)	Regeneration = StatCap;
-	if (Agility < 0)			Agility = 0;
-	if (Agility > StatCap)		Agility = StatCap;
-	if (Capacity < 0)			Capacity = 0;
+	if (Agility < 0)				Agility = 0;
+	if (Agility > StatCap)			Agility = StatCap;
+	if (Capacity < 0)				Capacity = 0;
 	if (Capacity > StatCap)		Capacity = StatCap;
-	if (Luck < 0)				Luck = 0;
+	if (Luck < 0)					Luck = 0;
 	if (Luck > StatCap)			Luck = StatCap;
-}
+};
 
 // Keep stats capped at the hard value
 function void CheckHardHardStatCaps(void)
 {
-	if (Strength < 0)				Strength = 0;
+	if (Strength < 0)					Strength = 0;
 	if (Strength > HardStatCap)		Strength = HardStatCap;
-	if (Defense < 0)				Defense = 0;
-	if (Defense > HardStatCap)		Defense = HardStatCap;
-	if (Vitality < 0)				Vitality = 0;
+	if (Defense < 0)					Defense = 0;
+	if (Defense > HardStatCap)			Defense = HardStatCap;
+	if (Vitality < 0)					Vitality = 0;
 	if (Vitality > HardStatCap)		Vitality = HardStatCap;
 	if (Energy < 0)					Energy = 0;
-	if (Energy > HardStatCap)		Energy = HardStatCap;
-	if (Regeneration < 0)			Regeneration = 0;
+	if (Energy > HardStatCap)			Energy = HardStatCap;
+	if (Regeneration < 0)				Regeneration = 0;
 	if (Regeneration > HardStatCap)	Regeneration = HardStatCap;
-	if (Agility < 0)				Agility = 0;
-	if (Agility > HardStatCap)		Agility = HardStatCap;
-	if (Capacity < 0)				Capacity = 0;
+	if (Agility < 0)					Agility = 0;
+	if (Agility > HardStatCap)			Agility = HardStatCap;
+	if (Capacity < 0)					Capacity = 0;
 	if (Capacity > HardStatCap)		Capacity = HardStatCap;
-	if (Luck < 0)					Luck = 0;
+	if (Luck < 0)						Luck = 0;
 	if (Luck > HardStatCap)			Luck = HardStatCap;
-}
+};
 
 // TODO: Recalculate stats after something (Aug, aura) has modified them
 function void RecalculateStats(void)
@@ -650,7 +639,7 @@ function void RecalculateStats(void)
 	
 	// SetActorProperty(0, APROP_HEALTH, CurrentHP);
 	// EP = CurrentEP;
-}
+};
 
 function void CheckStatBounds(void)
 {
@@ -682,21 +671,21 @@ function void CheckStatBounds(void)
 	if (CreditChance > 100) 	CreditChance = 100;
 	if (HealthChance > 100) 	HealthChance = 100;
 	if (EPChance > 100) 		EPChance = 100;
-	if (ArmorChance > 100) 		ArmorChance = 100;
+	if (ArmorChance > 100) 	ArmorChance = 100;
 	if (PowerupChance > 100) 	PowerupChance = 100;
 	if (RuneChance > 100) 		RuneChance = 100;
-	if (TokenChance > 100) 		TokenChance = 100;
+	if (TokenChance > 100) 	TokenChance = 100;
 	if (AugChance > 100) 		AugChance = 100;
 	if (ShieldChance > 100) 	ShieldChance = 100;
 
 	// Speed capping CVAR
-	if (Speed > GetCVAR("drpg_maxspeed"))
-		Speed = GetCVAR("drpg_maxspeed");
+	if (Speed > GetCVar("drpg_maxspeed"))
+		Speed = GetCVar("drpg_maxspeed");
 		
 	// Jump Height capping CVAR
-	if (JumpHeight > GetCVAR("drpg_maxjump"))
-		JumpHeight = GetCVAR("drpg_maxjump");
-}
+	if (JumpHeight > GetCVar("drpg_maxjump"))
+		JumpHeight = GetCVar("drpg_maxjump");
+};
 
 // Luck Chances
 function void CheckLuck(void)
@@ -710,7 +699,7 @@ function void CheckLuck(void)
 	TokenChance = FixedMul(Luck, 0.01);
 	AugChance = FixedMul(Luck, 0.01);
 	ShieldChance = FixedMul(Luck, 0.01);
-}
+};
 
 function void CheckBurnout(void)
 {
@@ -733,5 +722,6 @@ function void CheckBurnout(void)
 		Speed /= 2;
 		JumpHeight /= 2;
 		SurvivalBonus /= 2;
-	}
-}
+	};
+};
+

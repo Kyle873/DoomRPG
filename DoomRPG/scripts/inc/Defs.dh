@@ -12,6 +12,7 @@ __library("Defs");
 #define GlobalReg		__global_register
 #define AddrSpace		__address_space
 #define function		__function
+#define lib				__library
 
 #define MAX_NAMES		19
 
@@ -48,13 +49,28 @@ __library("Defs");
 #define ARENA_READY			3
 #define ARENA_ACTIVE		4
 
+#define MAX_COMPONENTS		10
+
+// Aug stuff
+#define AUG_STRENGTH		0
+#define AUG_DEFENSE			1
+#define AUG_VITALITY		2
+#define AUG_ENERGY			3
+#define AUG_REGENERATION	4
+#define AUG_AGILITY			5
+#define AUG_CAPACITY		6
+#define AUG_LUCK			7
+
+#define MAX_AUGS			8
+#define AUG_LEVELS			5
+
 /******************
 *** GLOBAL VARS ***
 *******************/
 
 // All of these globalvars are used in SBARINFO:
 // 2, 3, 7, 18, 19, 20, 22, 23, 24, 25, 39, 40, 42, 50, 51
-// SO DON'T REMOVE 'EM
+// SO DON'T TOUCH 'EM
 
 AddrSpace GlobalArr GlobalVar;
 
@@ -117,6 +133,16 @@ GlobalVar		int Luck;			// Increases Survivability bonus and drop chances
 GlobalReg(39)	int HealthMax;		// Max player Health
 GlobalReg(40)	int ArmorMax;		// Max Armor that the player's current armor can go up to
 GlobalVar		int[] MapsVisited;
+
+GlobalReg(42)	int StimTimerHUD;
+GlobalVar		int[] Vials;
+GlobalVar		int[] Stim;
+GlobalVar		int[] LastStim;
+GlobalVar		int StimSize;
+
+GlobalVar		int[] Augs;
+GlobalVar		int[] AugLevels;
+GlobalVar		int AugSlotsUsed;
 
 GlobalReg(50)	int Shield;
 GlobalReg(51)	int ShieldCapacity;
@@ -265,6 +291,11 @@ int ArenaCount;
 int ArenaMod;
 int ArenaEnvironment;
 
+bool StimActive;
+int StimAmount;
+int StimCapacity;
+int StimTimer;
+
 /*****************
 *** MAP ARRAYS ***
 ******************/
@@ -380,3 +411,120 @@ function int SetInventory(str Item, int Count)
 	return n;
 };
 
+function void AddCompound(int Type, int Amount)
+{
+	Vials[Type] += Amount;
+	
+	if (Vials[Type] > 100)
+		Vials[Type] = 100;
+};
+
+function void CheckStim(void)
+{
+	// Stim maximum capacities
+	if (StimSize == 1)
+		StimCapacity = 20;
+	if (StimSize == 2)
+		StimCapacity = 50;
+	if (StimSize == 3)
+		StimCapacity = 100;
+	
+	// Calculate the current Stim amount
+	StimAmount = 0;
+	for (int i = 0; i < MAX_COMPONENTS; i++)
+		StimAmount += Stim[i];
+	
+	// Calculate timer for HUD
+	StimTimerHUD = StimTimer / 35 + 1;
+	
+	// Set StimActive dummy item for the HUD
+	SetInventory("StimActive", StimActive);
+	
+	// Decrease Stim Timer
+	if (StimTimer > 0); StimTimer--;
+	
+	// Remove bonuses when Stim has expired
+	if (StimTimer <= 0 && StimActive)
+	{
+		StrengthBonus = -LastStim[0];
+		DefenseBonus = -LastStim[1];
+		VitalityBonus = -LastStim[2];
+		EnergyBonus = -LastStim[3];
+		RegenerationBonus = -LastStim[4];
+		AgilityBonus = -LastStim[5];
+		CapacityBonus = -LastStim[6];
+		LuckBonus = -LastStim[7];
+		StimActive = false;
+	};
+};
+
+function void MixStim(int Type)
+{
+	// You need at least 5% for mixing and the stim can't be full
+	if (Vials[Type] < 5 || StimAmount > StimCapacity - 5)
+	{
+		ActivatorSound("menu/error", 127);
+		return;
+	};
+	
+	// Add from vial to stim
+	ActivatorSound("menu/move", 127);
+	Vials[Type] -= 5;
+	Stim[Type] += 5;
+};
+
+function void SetStim(int Type)
+{
+	if ((Type == 0 && !CheckInventory("StimSmall")) || 
+	    (Type == 1 && !CheckInventory("StimMedium")) ||
+		(Type == 2 && !CheckInventory("StimLarge")))
+	{
+		ActivatorSound("menu/error", 127);
+		return;
+	};
+	
+	StimSize = Type + 1;
+	ActivatorSound("menu/move", 127);
+	
+	if (Type == 0) TakeInventory("StimSmall", 1);
+	if (Type == 1) TakeInventory("StimMedium", 1);
+	if (Type == 2) TakeInventory("StimLarge", 1);
+};
+
+function int GetSkillSlot(int Slot)
+{
+	return (SkillCatagory[Slot] * MAX_SKILLS) + SkillIndex[Slot];
+};
+
+function int GetSkillID(int Catagory, int ID)
+{
+	return (Catagory * MAX_SKILLS) + ID;
+};
+
+function int ScaleEPCost(int Cost)
+{
+	if (!GetCVar("drpg_skill_costscale")) return Cost;
+
+	switch (GameSkill())
+	{
+		case 1: Cost = FixedMul(Cost, 0.5); break;
+		case 2: Cost = FixedMul(Cost, 1.0); break;
+		case 3: Cost = FixedMul(Cost, 1.5); break;
+		case 4: Cost = FixedMul(Cost, 2.0); break;
+		case 5: Cost = FixedMul(Cost, 2.5); break;
+	};
+	
+	return Cost;
+};
+
+// Gets Max EP after all bonuses are applied to it
+function int GetEPMax(void)
+{
+	int MaxEP = EPMax;
+	
+	// Max EP Checks for Augs
+	if (Augs[AUG_ENERGY])
+		MaxEP *= 2;
+	
+	return MaxEP;
+};
