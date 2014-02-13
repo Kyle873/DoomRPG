@@ -11,6 +11,7 @@ __library("Defs");
 #define GlobalArr		__global_array
 #define GlobalReg		__global_register
 #define AddrSpace		__address_space
+#define function		__function
 
 #define MAX_NAMES		19
 
@@ -26,10 +27,6 @@ __library("Defs");
 #define V_VERS			0
 #define V_TIME			1
 
-#define M_PTID			0
-#define M_MAPN			1
-#define M_PBON			2
-
 #define MAX_CATEGORIES	6
 #define MAX_SKILLS		17
 #define MAX_LEVELS		10
@@ -38,28 +35,11 @@ __library("Defs");
 #define MAX_LEVEL		100
 #define MAX_RANK		24
 
+/******************
+*** GLOBAL VARS ***
+*******************/
+
 AddrSpace GlobalArr GlobalVar;
-
-bool Overdrive;
-int SummonID = 2100;
-int MaxSummons;
-int SkillCostMult;
-int BulletTimeMode;
-int BulletTimeTimer;
-
-// Version and Timestamp
-str[2] Ver =
-{
-	"v0.95 Beta";
-	"Thursday, February 13, 2014 at 11:44:20 AM";
-};
-
-int StatusType;
-int StatusTimer;
-
-int PlayerTID = 31337;
-int MapNumber;
-int ParBonus;
 
 // Flags
 GlobalVar		int FirstRun;
@@ -110,12 +90,12 @@ GlobalVar		int[] CurrentSkillLevel;
 GlobalVar		int Strength;		// Increases Damage
 GlobalVar		int Defense;		// Reduces Damage taken
 GlobalVar		int Vitality;		// Increases max Health and HP regen rate
-GlobalVar		int Energy;		// Increases max EP and EP regen rate
+GlobalVar		int Energy;			// Increases max EP and EP regen rate
 GlobalVar		int Regeneration;	// Increases both HP/EP regen rate
 GlobalVar		int Agility;		// Increases movement speed and jump height (and optionally weapon speed)
 GlobalVar		int Capacity;		// Increases max ammo capacities
 GlobalVar		int Luck;			// Increases Survivability bonus and drop chances
-GlobalReg(39)	int HealthMax;	// Max player Health
+GlobalReg(39)	int HealthMax;		// Max player Health
 GlobalReg(40)	int ArmorMax;		// Max Armor that the player's current armor can go up to
 GlobalVar		int[] MapsVisited;
 
@@ -130,8 +110,26 @@ GlobalVar		int ArmorAmount;
 
 // Level and Flags
 GlobalVar		int LevelNum;		// track the level number for the transport system and monster difficulty scaling
-GlobalVar		int InBase;		// Whether you are at the UAC Outpost or not
+GlobalVar		int InBase;			// Whether you are at the UAC Outpost or not
 GlobalVar		int Transported;	// True if you are using the Transportation System
+
+/***************
+*** MAP VARS ***
+****************/
+
+bool Overdrive;
+int SummonID = 2100;
+int MaxSummons;
+int SkillCostMult;
+int BulletTimeMode;
+int BulletTimeTimer;
+
+int StatusType;
+int StatusTimer;
+
+int PlayerTID = 31337;
+int MapNumber;
+int ParBonus;
 
 // Stat Bonuses
 int StrengthBonus;
@@ -199,6 +197,27 @@ int EPChance;
 // Randomizer
 int LevelTokens;
 
+// Max Shield Parts per page
+int[4] ShieldPartsMax = { 7; 7; 5; 7; };
+
+int ShieldChargeRate;
+int ShieldDelayRate;
+int BeforeHealth;
+int AfterHealth;
+int HealthLoss;
+int BeforeArmor;
+int AfterArmor;
+int ArmorLoss;
+
+int ShieldTimer = 175;
+int ShieldInterval = 35;
+bool ShieldFull = false;
+bool Nova = true;
+
+/*****************
+*** MAP ARRAYS ***
+******************/
+
 // Rank strings
 str[25] Ranks = {
 	"None";
@@ -242,11 +261,18 @@ str[5] SkillLevels =
 	"Hell";
 };
 
+// Version and Timestamp
+str[2] Ver =
+{
+	"v0.95 Beta";
+	"Thursday, February 13, 2014 at 11:44:20 AM";
+};
+
 /****************
 *** FUNCTIONS ***
-****************/
+*****************/
 
-__function void DefaultLoadout(void)
+function void DefaultLoadout(void)
 {
 	// Extras Compatibility
 	if(GetCVar("drpg_ext_extras"))
@@ -267,14 +293,12 @@ __function void DefaultLoadout(void)
 // Setup XP & Rank Tables
 function void SetupTables(void)
 {
-	int i;
-	
 	// XP Table
-	for (i = 0; i < MAX_LEVEL; i++)
+	for (int i = 0; i < MAX_LEVEL; i++)
 		XPTable[i] = 2000 + XPTable[i - 1] * 1.125;
 	
 	// Rank Table
-	for (i = 0; i < MAX_RANK; i++)
+	for (int i = 0; i < MAX_RANK; i++)
 		if (GameSkill() == 5)
 			{RankTable[i] = 100000 + (100000 * i * i);}
 		else if (GameSkill() > 2)
