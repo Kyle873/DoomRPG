@@ -1,79 +1,102 @@
-#library "Augs"
+lib("Augs");
 
-#include "zcommon.acs"
-
-#import "Stats.acs"
-#import "Skills.acs"
-#import "Shield.acs"
-#import "Utils.acs"
-
-str AugData[MAX_AUGS][1 + AUG_LEVELS] =
+str[MAX_AUGS][AUG_LEVELS + 1] AugData =
 {
 	// Name, Icon, Description...
 	
 	// Augs
 	{
-		"Muscle Replacer",
-		"1.25x Damage",
-		"1.5x Damage",
-		"2x Damage",
-		"4x Damage"
-	},
+		"Muscle Replacer";
+		"1.25x Damage";
+		"1.5x Damage";
+		"2x Damage";
+		"4x Damage";
+	};
 	{
-		"Dermal Armor",
-		"-10x Damage Taken",
-		"-20x Damage Taken",
-		"-30x Damage Taken",
-		"-40x Damage Taken",
-		"-50x Damage Taken"
-	},
+		"Dermal Armor";
+		"-10x Damage Taken";
+		"-20x Damage Taken";
+		"-30x Damage Taken";
+		"-40x Damage Taken";
+		"-50x Damage Taken";
+	};
 	{
-		"Pain Inhibitor",
-		"2x Max Health",
-		"2x Health Regen"
-	},
+		"Pain Inhibitor";
+		"2x Max Health";
+		"2x Health Regen";
+	};
 	{
-		"Psi Projector",
-		"2x Max EP",
-		"2x EP Regen",
-		"2x Aura Timer"
-	},
+		"Psi Projector";
+		"2x Max EP";
+		"2x EP Regen";
+		"2x Aura Timer";
+	};
 	{
-		"Adrenaline Booster",
-		"2x HP/EP Regen Amounts",
-		"-2x HP/EP Regen Timers",
-		"2x Shield Charge Rate",
-		"-2x Shield Delay Rate",
-		"-2x Shield Charge Interval"
-	},
+		"Adrenaline Booster";
+		"2x HP/EP Regen Amounts";
+		"-2x HP/EP Regen Timers";
+		"2x Shield Charge Rate";
+		"-2x Shield Delay Rate";
+		"-2x Shield Charge Interval";
+	};
 	{
-		"Wired Reflexes",
-		"2x Movement Speed",
-		"2x Jump Height",
-		"Double Weapon Speed",
-		"2x Survival Chance"
-	},
+		"Wired Reflexes";
+		"2x Movement Speed";
+		"2x Jump Height";
+		"Double Weapon Speed";
+		"2x Survival Chance";
+	};
 	{
-		"Weight Distributor",
-		"2x Ammo Limits",
-		"4x Ammo Limits"
-	},
+		"Weight Distributor";
+		"2x Ammo Limits";
+		"4x Ammo Limits";
+	};
 	{
-		"Precognition Unit",
-		"1.25x Luck Drop Chances",
-		"1.5x Luck Drop Chances",
-		"2x Luck Drop Chances",
-		"3x Luck Drop Chances",
-		"4x Luck Drop Chances"
-	},
+		"Precognition Unit";
+		"1.25x Luck Drop Chances";
+		"1.5x Luck Drop Chances";
+		"2x Luck Drop Chances";
+		"3x Luck Drop Chances";
+		"4x Luck Drop Chances";
+	};
 };
 
-int AugLevelMax[MAX_AUGS] =
+int[MAX_AUGS] AugLevelMax =
 {
-	4, 5, 2, 3, 5, 4, 2, 5
+	4; 5; 2; 3; 5; 4; 2; 5;
 };
 
 int MaxAugSlots;
+
+function void EquipAug(int Aug)
+{
+	if (AugLevels[Aug] > 0)
+	{
+		if (Augs[Aug])
+		{
+			ActivatorSound("aug/equip", 127);
+			AugSlotsUsed--;
+			Augs[Aug] = false;
+		}
+		else
+		{
+			AugSlotsUsed++;
+			
+			if (AugSlotsUsed > MaxAugSlots)
+			{
+				ActivatorSound("menu/error", 127);
+				SetFont("BIGFONT");
+				Print("\cgYou don't have a free Augmentation slot!\n");
+				AugSlotsUsed--;
+			}
+			else
+			{
+				ActivatorSound("aug/equip", 127);
+				Augs[Aug] = true;
+			};
+		};
+	};
+};
 
 function void CheckAugSlots(void)
 {
@@ -86,8 +109,8 @@ function void CheckAugSlots(void)
 			{
 				EquipAug(i);
 				break;
-			}
-}
+			};
+};
 
 function void CheckAugs(void)
 {
@@ -106,7 +129,7 @@ function void CheckAugs(void)
 			TotalDamage = FixedMul(TotalDamage, 2.0);
 		if (AugLevels[AUG_STRENGTH] >= 4)
 			TotalDamage = FixedMul(TotalDamage, 4.0);
-	}
+	};
 	
 	// Defense Aug
 	if (Augs[AUG_DEFENSE])
@@ -121,7 +144,7 @@ function void CheckAugs(void)
 			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.4);
 		if (AugLevels[AUG_DEFENSE] >= 5)
 			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.5);
-	}
+	};
 	
 	// Vitality Aug
 	if (Augs[AUG_VITALITY])
@@ -130,7 +153,7 @@ function void CheckAugs(void)
 			HealthMax *= 2;
 		if (AugLevels[AUG_VITALITY] >= 2)
 			HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
-	}
+	};
 	
 	// Energy Aug
 	if (Augs[AUG_ENERGY])
@@ -140,10 +163,10 @@ function void CheckAugs(void)
 		if (AugLevels[AUG_ENERGY] >= 2)
 			EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
 		if (AugLevels[AUG_ENERGY] >= 3)
-			AuraBonus = true;
+			{AuraBonus = true;}
 		else
-			AuraBonus = false;
-	}
+			{AuraBonus = false;};
+	};
 	
 	// Regeneration Aug
 	if (Augs[AUG_REGENERATION])
@@ -152,13 +175,13 @@ function void CheckAugs(void)
 		{
 			HPAmount *= 2;
 			EPAmount *= 2;
-		}
+		};
 		if (AugLevels[AUG_REGENERATION] >= 2)
 		{
 			HPTime /= 2;
 			EPTime /= 2;
-		}
-	}
+		};
+	};
 
 	// Agility Aug
 	if (Augs[AUG_AGILITY])
@@ -171,7 +194,7 @@ function void CheckAugs(void)
 			WeaponSpeed += 100;
 		if (AugLevels[AUG_AGILITY] >= 4)
 			SurvivalBonus *= 2;
-	}
+	};
 	
 	// Capacity Aug
 	if (Augs[AUG_CAPACITY])
@@ -187,7 +210,7 @@ function void CheckAugs(void)
 		SetAmmoCapacity("Shell", Capacity * 10 * AmmoMult);
 		SetAmmoCapacity("RocketAmmo", Capacity * 5 * AmmoMult);
 		SetAmmoCapacity("Cell", Capacity * 30 * AmmoMult);
-	}
+	};
 
 	// Luck Aug
 	if (Augs[AUG_LUCK])
@@ -213,41 +236,11 @@ function void CheckAugs(void)
 		TokenChance = FixedMul(TokenChance, LuckMult);
 		AugChance = FixedMul(AugChance, LuckMult);
 		ShieldChance = FixedMul(ShieldChance, LuckMult);
-	}
+	};
 
 	// Keep adding more
 	// ...
-}
-
-function void EquipAug(int Aug)
-{
-	if (AugLevels[Aug] > 0)
-	{
-		if (Augs[Aug])
-		{
-			ActivatorSound("aug/equip", 127);
-			AugSlotsUsed--;
-			Augs[Aug] = false;
-		}
-		else
-		{
-			AugSlotsUsed++;
-			
-			if (AugSlotsUsed > MaxAugSlots)
-			{
-				ActivatorSound("menu/error", 127);
-				SetFont("BIGFONT");
-				Print(s:"\cgYou don't have a free Augmentation slot!");
-				AugSlotsUsed--;
-			}
-			else
-			{
-				ActivatorSound("aug/equip", 127);
-				Augs[Aug] = true;
-			}
-		}
-	}
-}
+};
 
 function void LevelUpAug(int Aug)
 {
@@ -262,7 +255,7 @@ function void LevelUpAug(int Aug)
 				AugLevels[Aug]++;
 			}
 			else
-				ActivatorSound("menu/error", 127);
+				{ActivatorSound("menu/error", 127);};
 		}
 		else
 		{
@@ -273,7 +266,8 @@ function void LevelUpAug(int Aug)
 				AugLevels[Aug]++;
 			}
 			else
-				ActivatorSound("menu/error", 127);
-		}
-	}
-}
+				{ActivatorSound("menu/error", 127);};
+		};
+	};
+};
+

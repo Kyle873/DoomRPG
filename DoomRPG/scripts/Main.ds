@@ -4,16 +4,8 @@
 #include "inc/Func.dh"
 
 #include "inc/Stats.dh"
-lib("RPG");
-
-/*
-#include "inc/Skills.dh"
 #include "inc/Augs.dh"
-#include "inc/Shop.dh"
-#include "inc/Menu.dh"
-#include "inc/Shield.dh"
-#include "inc/Stims.dh"
-#include "inc/Utils.dh"*/
+lib("RPG");
 
 // Init Script
 script Init(void) enter
@@ -420,10 +412,11 @@ script MonsterLoop(void)
 	goto Start;
 	Suspend();
 };
-/*
+
 // Loop Script
-script "Loop" (void)
+script Loop(void)
 {
+	Start:
 	// Update Functions
 	CheckStats();
 	CheckStatBonus();
@@ -502,12 +495,14 @@ script "Loop" (void)
 	AfterHealth = GetActorProperty(0, APROP_Health);
 	AfterArmor = CheckInventory("BasicArmor");
 	
-	restart;
-}
+	goto Start;
+	Suspend();
+};
 
 // Handles Weapon Firing Speed
-script "Speed" (void)
+script Speed(void)
 {
+	Start:
 	int Time;
 	
 	if (Agility <= 100)
@@ -519,26 +514,28 @@ script "Speed" (void)
 		GiveInventory("Speed", 1);
 	
 	Delay(Time + 1);
-	restart;
-}
+	goto Start;
+	Suspend();
+};
 
 // Stat Token Randomizer Script
-script "StatRandomizer" (void)
+script StatRandomizer(void)
 {
+	Start:
 	Delay(1);
 
 	// Only randomize your starting tokens
 	if (GetCVar("drpg_randomstatgrowth") == 1 && !RandomizedStartTokens)
 	{
 		if (StatTokens > 0)
-			IncreaseStat(Random(1, 8));
+			{IncreaseStat(Random(1, 8));}
 		else if (StatTokens == 0)
-			RandomizedStartTokens = true;
+			{RandomizedStartTokens = true;}
 	}
 	// Always spend Tokens, no matter how you got them
 	else if (GetCVar("drpg_randomstatgrowth") == 2)
-		if (StatTokens > 0)
-			IncreaseStat(Random(1, 8));
+		{if (StatTokens > 0)
+			IncreaseStat(Random(1, 8));};
 
 	// Spend Tokens only on level up
 	if (GetCVar("drpg_autospend"))
@@ -548,11 +545,12 @@ script "StatRandomizer" (void)
 			Delay(1);
 		}
 	
-	restart;
-}
+	goto Start;
+	Suspend();
+};
 
 // Handles Status Effects
-script "StatusEffect" (int Type, int Time, int Intensity)
+script StatusEffect(int Type, int Time, int Intensity)
 {
 	StatusType = Type;
 	StatusTimer = Time * 35;
@@ -566,7 +564,7 @@ script "StatusEffect" (int Type, int Time, int Intensity)
 		{
 			SetActorAngle(0, GetActorAngle(0) + FixedMul(1024, cos(Timer() * (Intensity * 0.01))));
 			SetActorPitch(0, FixedMul(1024 * 8, cos(Timer() * (Intensity * 0.01))));
-		}
+		};
 		
 		if (Type == 2) // Blind
 			FadeRange(0, 0, 0, (0.75 + FixedDiv(Intensity, 400)) - (FixedMul(1024 * 8, sin(Timer() * 0.01))), 0, 0, 0, 0.0, 0.5);
@@ -576,58 +574,62 @@ script "StatusEffect" (int Type, int Time, int Intensity)
 			{
 				DamageThing(Intensity);
 				FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + FixedDiv(Intensity, 100)));
-			}
+			};
 		
 		if (StatusTimer > 0)
 			StatusTimer--;
 		
 		Delay(1);
-	}
-}
+	};
+	Suspend();
+};
 
 // Handles EP Draining from the EP Drain Orb
-script "EPDrain" (int X, int Y, int Z)
+script EPDrain(int X, int Y, int Z)
 {
 	// TODO
-}
+	Suspend();
+};
 
 // Quick Heal
-script "QuickHeal" (int Quick)
+script QuickHeal(int Quick)
 {
 	// If you're dead, terminate
-	if (GetActorProperty(0, APROP_Health) <= 0) terminate;
+	if (GetActorProperty(0, APROP_Health) <= 0) Suspend();
 	
 	int Health = GetActorProperty(0, APROP_Health);
 	int Percent = GetCVar("drpg_auto_heal_percent");
 	
 	if ((Health < HealthMax / Percent) || Quick)
-			 if (CheckInventory("StimPack")) 		UseInventory("StimPack");
-		else if (CheckInventory("SmallMedikit")) 	UseInventory("SmallMedikit");
-		else if (CheckInventory("Medikit")) 		UseInventory("Medikit");
-		else if (CheckInventory("LargeMedikit")) 	UseInventory("LargeMedikit");
-		else if (CheckInventory("XLMedikit")) 		UseInventory("XLMedikit");
-		else if (CheckInventory("MedPack")) 		UseInventory("MedPack");
-		else if (CheckInventory("SuperMedPack")) 	UseInventory("SuperMedPack");
-		else if (CheckInventory("SurgeryKit")) 		UseInventory("SurgeryKit");
-}
+			 if (CheckInventory("StimPack")) {			UseInventory("StimPack");}
+		else if (CheckInventory("SmallMedikit")) {	UseInventory("SmallMedikit");}
+		else if (CheckInventory("Medikit")) {			UseInventory("Medikit");}
+		else if (CheckInventory("LargeMedikit")) {	UseInventory("LargeMedikit");}
+		else if (CheckInventory("XLMedikit")) {		UseInventory("XLMedikit");}
+		else if (CheckInventory("MedPack")) {			UseInventory("MedPack");}
+		else if (CheckInventory("SuperMedPack")) {	UseInventory("SuperMedPack");}
+		else if (CheckInventory("SurgeryKit")) {		UseInventory("SurgeryKit");};
+	Suspend();
+};
 
 // Quick Armor
-script "QuickArmor" (void)
+script QuickArmor(void)
 {
-		 if (CheckInventory("WhiteArmor")) 		UseInventory("WhiteArmor");
-	else if (CheckInventory("WhiteArmorUsed")) 	UseInventory("WhiteArmorUsed");
-	else if (CheckInventory("RedArmor")) 		UseInventory("RedArmor");
-	else if (CheckInventory("RedArmorUsed")) 	UseInventory("RedArmorUsed");
-	else if (CheckInventory("YellowArmor")) 	UseInventory("YellowArmor");
-	else if (CheckInventory("YellowArmorUsed")) UseInventory("YellowArmorUsed");
-	else if (CheckInventory("BlueArmor")) 		UseInventory("BlueArmor");
-	else if (CheckInventory("BlueArmorUsed")) 	UseInventory("BlueArmorUsed");
-	else if (CheckInventory("GreenArmor")) 		UseInventory("GreenArmor");
-	else if (CheckInventory("GreenArmorUsed")) 	UseInventory("GreenArmorUsed");
-}
+		 if (CheckInventory("WhiteArmor")) {		UseInventory("WhiteArmor");}
+	else if (CheckInventory("WhiteArmorUsed")) {	UseInventory("WhiteArmorUsed");}
+	else if (CheckInventory("RedArmor")) {		UseInventory("RedArmor");}
+	else if (CheckInventory("RedArmorUsed")) {	UseInventory("RedArmorUsed");}
+	else if (CheckInventory("YellowArmor")) {		UseInventory("YellowArmor");}
+	else if (CheckInventory("YellowArmorUsed")) {	UseInventory("YellowArmorUsed");}
+	else if (CheckInventory("BlueArmor")) {		UseInventory("BlueArmor");}
+	else if (CheckInventory("BlueArmorUsed")) {	UseInventory("BlueArmorUsed");}
+	else if (CheckInventory("GreenArmor")) {		UseInventory("GreenArmor");}
+	else if (CheckInventory("GreenArmorUsed")) {	UseInventory("GreenArmorUsed");};
+	Suspend();
+};
 
 // Buy Ammo for selected Weapon
-script "QuickAmmo" (void)
+script QuickAmmo(void)
 {
 	// Weapon, Ammo Type and Amount
 	int Weapon;
@@ -636,26 +638,26 @@ script "QuickAmmo" (void)
 	
 	// Get the current Weapon to determine the ammo type
 	if 		(CheckWeapon("Pistol") || CheckWeapon("ChainGun")) 		{ AmmoType = 0; Amount = 10; }
-	else if (CheckWeapon("Shotgun") || CheckWeapon("SuperShotgun")) { AmmoType = 2; Amount = 4;  }
+	else if (CheckWeapon("Shotgun") || CheckWeapon("SuperShotgun"))	{ AmmoType = 2; Amount = 4;  }
 	else if (CheckWeapon("RocketLauncher"))							{ AmmoType = 4; Amount = 1;  }
-	else if (CheckWeapon("PlasmaRifle") || CheckWeapon("BFG9000"))	{ AmmoType = 6; Amount = 20; }
+	else if (CheckWeapon("PlasmaRifle") || CheckWeapon("BFG9000"))	{ AmmoType = 6; Amount = 20; };
 	
 	// ... And the alternate Extras versions too -_-
 	else if (CheckWeapon("Pistol1") || CheckWeapon("ChainGun1")) 	{ AmmoType = 0; Amount = 10; }
 	else if (CheckWeapon("Shotgun1") || CheckWeapon("SSG")) 		{ AmmoType = 2; Amount = 4;  }
 	else if (CheckWeapon("RocketLauncher1"))						{ AmmoType = 4; Amount = 1;  }
-	else if (CheckWeapon("PlasmaGun") || CheckWeapon("BFG9001"))	{ AmmoType = 6; Amount = 20; }
+	else if (CheckWeapon("PlasmaGun") || CheckWeapon("BFG9001"))	{ AmmoType = 6; Amount = 20; };
 	
 	// AND Brutal Doom -__-
 	else if (CheckWeapon("BrutalPistol") || CheckWeapon("Rifle") || CheckWeapon("Mini_Gun")) 									{ AmmoType = 0; Amount = 10; }
-	else if (CheckWeapon("Shot_Gun") || CheckWeapon("SSG")) 																	{ AmmoType = 2; Amount = 4;  }
+	else if (CheckWeapon("Shot_Gun") || CheckWeapon("SSG")) 																		{ AmmoType = 2; Amount = 4;  }
 	else if (CheckWeapon("Rocket_Launcher") || CheckWeapon("Grenade_Launcher"))													{ AmmoType = 4; Amount = 1;  }
 	else if (CheckWeapon("Plasma_Gun") || CheckWeapon("Rail_Gun") || CheckWeapon("BIG_FUCKING_GUN") || CheckWeapon("BFG10000"))	{ AmmoType = 6; Amount = 20; }
 	else
 	{
 		ActivatorSound("menu/error", 127);
-		terminate;
-	}
+		Suspend();
+	};
 	
 	// Discount and Cost
 	int Discount = FixedMul(RankLevel, 2.1);
@@ -669,11 +671,13 @@ script "QuickAmmo" (void)
 		GiveInventory(Shop[1][AmmoType][0], Amount);
 	}
 	else
-		ActivatorSound("menu/error", 127);
-}
+		{ActivatorSound("menu/error", 127);};
+	Suspend();
+};
 
 // Death Script
-script "Death" death
+// Sorry Kyle, but the underscores here are required!
+script Death __death
 {
 	// Taunt the Player
 	ActivatorSound("Taunt", 127);
@@ -695,12 +699,13 @@ script "Death" death
 			Transported = 2;
 			InBase = true;
 			Teleport_NewMap(999, 1);
-		}
+		};
 		
 		Delay(1);
-	}
+	};
+	Suspend();
 }
-
+/*
 // Handles Damage Numbers
 script "DamageNumbers" (void)
 {
