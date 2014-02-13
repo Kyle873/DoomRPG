@@ -116,8 +116,8 @@ function void CheckLevel(void)
 		FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0, 2.0);
 		SetFont("BIGFONT");
 		SetHudSize(0, 0, false);
-		HudMessage(s:"You have reached level ", d:Level;
-				   HUDMSG_FADEOUT, 4999, CR_WHITE, 0.5, 0.5, 2.0, 2.0);
+		HudMessage("You have reached level %d\n", Level,
+					HUDMSG_FADEOUT, 4999, CR_WHITE, 0.5, 0.5, 2.0, 2.0);
 	};
 };
 
@@ -143,7 +143,7 @@ function void CheckRank(void)
 		FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0, 2.0);
 		SetFont("BIGFONT");
 		SetHudSize(0, 0, false);
-		HudMessage(s:"You have reached rank level ", d:RankLevel, s:": ", s:LongRanks[RankLevel];
+		HudMessage("You have reached rank level %d: %s\n", RankLevel, LongRanks[RankLevel],
 				   HUDMSG_FADEOUT, 4999, CR_GOLD, 0.5, 0.5, 4.0, 2.0);
 	};
 	
@@ -160,10 +160,10 @@ function void CheckRank(void)
 			FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0, 2.0);
 			SetFont("BIGFONT");
 			SetHudSize(0, 0, false);
-			HudMessage(s:"+", d:Pay, s:" Credits"; HUDMSG_FADEOUT, 0, CR_GOLD, -0.025, 0.775, 4.0, 2.0);
+			HudMessage("+%d Credits\n", Pay, HUDMSG_FADEOUT, 0, CR_GOLD, -0.025, 0.775, 4.0, 2.0);
 			
 			ActivatorSound("credits/payout", 127);
-			Log(s:"\cfYou have been paid ", d:Pay, s:" Credits by the UAC");
+			Log("\cfYou have been paid %d Credits by the UAC\n", Pay);
 		};
 		
 		PayTimer = 0;
@@ -205,7 +205,7 @@ function void CheckLevelInfo(void)
 		XPBonus = Random(Level * 10, Level * 100);
 		XP += XPBonus;
 		
-		HudMessage(s:"100% Monsters Killed!\n", d:XPBonus, s:" XP Bonus";
+		HudMessage("100%% Monsters Killed!\n%d XP Bonus\n", XPBonus,
 				   HUDMSG_TYPEON, 0, CR_BRICK, 1.5, 0.4, 3.0, 0.1, 3.0);
 		KillBonus = true;
 	};
@@ -218,7 +218,7 @@ function void CheckLevelInfo(void)
 		EP = GetEPMax();
 		HealThing(1000000);
 		
-		HudMessage(s:"100% Items Found!\nFull HP/EP Restore";
+		HudMessage("100%% Items Found!\nFull HP/EP Restore\n",
 				   HUDMSG_TYPEON, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 0.1, 3.0);
 		ItemsBonus = true;
 	};
@@ -239,7 +239,7 @@ function void CheckLevelInfo(void)
 			RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
 			Rank += RankBonus;
 
-			HudMessage(s:"100% Secrets Found!\n", d:RankBonus, s:" Rank Bonus";
+			HudMessage("100%% Secrets Found!\n%d Rank Bonus\n", RankBonus,
 					   HUDMSG_TYPEON, 0, CR_YELLOW, 1.5, 0.8, 3.0, 0.1, 3.0);
 			SecretsBonus = true;
 		};
@@ -259,9 +259,9 @@ function void CheckLevelInfo(void)
 		EP = GetEPMax();
 		HealThing(1000000);
 		
-		HudMessage(s:"100% Monsters killed!\n100% Items Found!\n100% Secrets Found!\n\n",
-				   d:XPBonus, s:" XP Bonus\n", d:RankBonus, s:" Rank Bonus\nFull HP/EP Restore";
-				   HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
+		HudMessage(
+"100%% Monsters killed!\n100%% Items Found!\n100%% Secrets Found!\n\n%d XP Bonus\n%d Rank Bonus\n Full HP/EP Restore\n"
+				   ,XPBonus, RankBonus, HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
 		AllBonus = true;
 	};
 	
@@ -279,7 +279,7 @@ function void CheckHealth(void)
 		LowHealthTimer = 0;
 	};
 	
-	if (CheckInventory("Health") <= GetActorProperty(0, APROP_SPAWNHEALTH) / 10 && CheckInventory("Health") > 0)
+	if (CheckInventory("Health") <= GetActorProperty(0, APROP_SpawnHealth) / 10 && CheckInventory("Health") > 0)
 	{
 		FadeRange(LowHealthTimer + 155, 0, 0, 0.25, LowHealthTimer + 155, 0, 0, 0.0, 1.0);
 		LowHealthTimer++;
@@ -462,7 +462,7 @@ function void CheckStats(void)
 	BonusDamage = Strength;
 	TotalDamage = LevelDamage + BonusDamage;
 	DamageFactor = 1.0 - FixedMul(0.25, FixedDiv(Defense, 100));
-	MAss = 100 + (Defense * 10);
+	Mass = 100 + (Defense * 10);
 	HealthMax = Vitality * 10;
 	EPMax = Energy * 10;
 	Speed = 1.0 + FixedMul(0.25, FixedDiv(Agility, 100));
@@ -524,7 +524,7 @@ function void DoRegen(void)
 	EPAmount = 1 + Energy / 50;
 	
 	// HP Regen
-	if (HPRate >= HPTime && GetActorProperty(0, APROP_HEALTH) >= 0)
+	if (HPRate >= HPTime && GetActorProperty(0, APROP_Health) >= 0)
 	{
 		HealThing(HPAmount);
 		HPRate = 0;
@@ -565,18 +565,18 @@ function void DoRegen(void)
 			{
 				HPRate++;
 				EPRate++;
-			};
+			}
 			else if (Buttons & BT_CROUCH) // Crouch - 150% Regen Rate
 			{
 				HPRate += 3;
 				EPRate += 3;
-			};
+			}
 			else // Idle - 100% Regen Rate
 			{
 				HPRate += 2;
 				EPRate += 2;
 			};
-		};
+		}
 		else
 		{
 			HPRate += 2;
@@ -632,12 +632,12 @@ function void CheckHardHardStatCaps(void)
 // TODO: Recalculate stats after something (Aug, aura) has modified them
 function void RecalculateStats(void)
 {
-	int HPRatio = (GetActorProperty(0, APROP_HEALTH) * 100) / GetActorProperty(0, APROP_SPAWNHEALTH);
-	int CurrentHP = (HPRatio * GetActorProperty(0, APROP_SPAWNHEALTH)) / 100;
+	int HPRatio = (GetActorProperty(0, APROP_Health) * 100) / GetActorProperty(0, APROP_SpawnHealth);
+	int CurrentHP = (HPRatio * GetActorProperty(0, APROP_SpawnHealth)) / 100;
 	int EPRatio = (EP * 100) / EPMax;
 	int CurrentEP = (EPRatio * EPMax) / 100;
 	
-	// SetActorProperty(0, APROP_HEALTH, CurrentHP);
+	// SetActorProperty(0, APROP_Health, CurrentHP);
 	// EP = CurrentEP;
 };
 
@@ -707,7 +707,7 @@ function void CheckBurnout(void)
 	if (EP < 0)
 	{
 		// Dynamic Intensity
-		int Intensity = Abs(FixedDiv(EP, EPMax));
+		fixed Intensity = Abs(EP / EPMax);
 		if (Intensity > 0.75) Intensity = 0.75;
 		
 		// Screen Effect
