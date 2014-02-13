@@ -22,16 +22,16 @@ __library("Defs");
 #define MF_NOPAYKILL	32
 #define MF_NODROPS		64
 
-#define V_VERS 0
-#define V_TIME 1
+#define V_VERS			0
+#define V_TIME			1
 
-#define M_PTID 0
-#define M_MAPN 1
-#define M_PBON 2
+#define M_PTID			0
+#define M_MAPN			1
+#define M_PBON			2
 
-#libdefine MAX_CATEGORIES		6
-#libdefine MAX_SKILLS			17
-#libdefine MAX_LEVELS			10
+#define MAX_CATEGORIES	6
+#define MAX_SKILLS		17
+#define MAX_LEVELS		10
 
 // Energy Points (EP)
 GlobalRegister(2) int EP;
@@ -42,9 +42,9 @@ GlobalRegister(5) int Aura;
 GlobalRegister(6) int AuraTimer;
 GlobalRegister(25) int AuraTimerHUD;
 GlobalArray(26) int[] SkillCatagory;
-GlobalRegister(27) int[] SkillIndex;
-GlobalRegister(28) int[] SkillLevel;
-GlobalRegister(29) int[] CurrentSkillLevel;
+GlobalArray(27) int[] SkillIndex;
+GlobalArray(28) int[] SkillLevel;
+GlobalArray(29) int[] CurrentSkillLevel;
 
 bool Overdrive;
 int SummonID = 2100;
@@ -52,12 +52,6 @@ int MaxSummons;
 int SkillCostMult;
 int BulletTimeMode;
 int BulletTimeTimer;
-
-// Portal stuff
-int[4] Portal1;
-int[4] Portal2;
-bool Portal1Active;
-bool Portal2Active;
 
 // Flags
 GlobalRegister(1) int FirstRun;
@@ -71,18 +65,162 @@ str[2] Ver =
 };
 
 // Previously StatusType, StatusTimer
-int[2] StatusArray =
-{
-	0;
-	0;
-};
+int[2] StatusArray;
 
-__global_register(7) int StatusTimerHUD;
+GlobalRegister(7) int StatusTimerHUD;
 
 // Previously PlayerTID, MapNumber, ParBonus
-int[3] MiscArray =
+int[3] MiscArray = {31337;0;0;};
+
+#define MAX_LEVEL	100
+#define MAX_RANK	24
+
+// CVARS/Options
+// Whether the tokens given at the beginning of the game have been used
+GlobalRegister(4) int RandomizedStartTokens;
+
+// Level & XP
+GlobalRegister(8) int Level;
+GlobalRegister(9) int XP;
+GlobalRegister(10) int XPNext;
+
+// Rank
+GlobalRegister(11) str RankString;
+GlobalRegister(12) int RankLevel;
+GlobalRegister(13) int Rank;
+GlobalRegister(14) int RankNext;
+GlobalRegister(15) int PayTimer;
+GlobalRegister(16) int PayKills;
+
+// HUD Stuff
+GlobalRegister(18) int Credits;
+GlobalRegister(19) int Continues;
+
+// Combo System
+GlobalRegister(20) int Combo;
+GlobalRegister(21) int ComboTimer;
+GlobalRegister(22) int TotalGained;
+GlobalRegister(23) int XPGained;
+GlobalRegister(24) int RankGained;
+
+// Primary Stats
+GlobalRegister(31) int Strength;		// Increases Damage
+GlobalRegister(32) int Defense;			// Reduces Damage taken
+GlobalRegister(33) int Vitality;		// Increases max Health and HP regen rate
+GlobalRegister(34) int Energy;			// Increases max EP and EP regen rate
+GlobalRegister(35) int Regeneration;	// Increases both HP/EP regen rate
+GlobalRegister(36) int Agility;			// Increases movement speed and jump height (and optionally weapon speed)
+GlobalRegister(37) int Capacity;		// Increases max ammo capacities
+GlobalRegister(38) int Luck;			// Increases Survivability bonus and drop chances
+GlobalRegister(39) int HealthMax;		// Max player Health
+GlobalRegister(40) int ArmorMax;		// Max Armor that the player's current armor can go up to
+
+// Stat Bonuses
+int StrengthBonus;
+int DefenseBonus;
+int VitalityBonus;
+int EnergyBonus;
+int RegenerationBonus;
+int AgilityBonus;
+int CapacityBonus;
+int LuckBonus;
+
+// Secondary Stats
+int LevelDamage;				// Damage dependent on the player's level
+int BonusDamage;				// Damage bonus given by the Strength stat
+int TotalDamage;				// Combined LevelDamage and BonusDamage
+int DamageFactor;				// General damage the player will defend against
+int Mass;						// Player mass, for preventing knockback
+bool AuraBonus;					// Whether to double the max Aura timer
+int Speed;						// Movement Speed
+int JumpHeight;					// Jump Height
+int WeaponSpeed;				// Weapon Speed Increase bsed on Agility
+int SurvivalBonus;				// Chance that you will survive a fatal hit
+
+// Misc stat/token stuff
+int StatTokens;					// Current Stat Tokens
+int SkillTokens;				// Current Skill Tokens
+int StatCap;					// Current Stat Cap
+int SoftStatCap = 100;			// Soft Stat Cap, this cannot be passed with tokens
+int HardStatCap = 400;			// Hard Stat Cap, this cap cannot be passed period
+
+// 100% Bonuses
+int Kills;
+bool KillBonus;
+int Items;
+bool ItemsBonus;
+int SecretsFound;
+bool SecretsBonus;
+bool AllBonus;
+
+// HP/EP Regen Timers
+int HPRate;
+int HPTime;
+int HPAmount;
+int EPRate;
+int EPTime;
+int EPAmount;
+int LowHealthTimer;
+int RegenBoostTimer;
+
+// XP & Rank Tables
+int[MAX_LEVEL + 1] XPTable;
+int[MAX_RANK + 1] RankTable;
+
+// Luck Chance Percentages
+// Previously CreditChance, HealthChance, ArmorChance, PowerupChance, RuneChance, TokenChance, AugChance, ShieldChance, EPChance
+int[9] LuckChances;
+
+// Randomizer
+int LevelTokens;
+
+// Rank strings
+str[25] Ranks = {
+	"None";
+	"Pvt"; "Pvt +";
+	"PFC"; "PFC +";
+	"LCpl"; "LCpl +";
+	"Cpl"; "Cpl +";
+	"Sgt"; "Sgt +";
+	"SSgt"; "SSgt +";
+	"GySgt"; "GySgt +";
+	"MSgt"; "MSgt +";
+	"1stSgt"; "1stSgt +";
+	"MGySgt"; "MGySgt +";
+	"SgtMaj"; "SgtMaj +";
+	"SgtMajMarCor"; "MSgtMarCor";
+};
+
+str[25] LongRanks = {
+	"None";
+	"Private"; "Private +";
+	"Private First Class"; "Private First Class +";
+	"Lance Corporal"; "Lance Corporal +";
+	"Corporal"; "Corporal +";
+	"Seargent"; "Seargent +";
+	"Staff Seargent"; "Staff Seargent +";
+	"Gunnery Seargent"; "Gunnery Seargent +";
+	"Master Seargent"; "Master Seargent +";
+	"First Seargent"; "First Seargent +";
+	"Master Gunnery Seargent"; "Master Gunnery Seargent +";
+	"Seargent Major"; "Seargent Major +";
+	"Seargent Major of the Marine Corps"; "Master Seargent Major of the Marine Corps";
+};
+
+__function void DefaultLoadout(void)
 {
-	31337;
-	0;
-	0;
+	// Extras Compatibility
+	if(GetCVAR("drpg_ext_extras"))
+		SetWeapon("Pistol1");
+	
+	// Brutal Doom Compatibility
+	if (GetCVAR("drpg_ext_brutal"))
+	{
+		GiveInventory("Melee_Attacks", 1);
+		GiveInventory("BrutalPistol", 1);
+	};
+
+	// DoomRL Compatibility
+	if (GetCVAR("drpg_ext_doomrl"))
+		SetWeapon("RLPistol");
 };
