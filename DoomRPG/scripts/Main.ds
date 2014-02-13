@@ -11,7 +11,7 @@ lib("RPG")
 #include "inc/Utils.dh"
 
 // Init Script
-script "Init" __enter
+script "Init" enter
 {
 	if(!FirstRun)
 	{
@@ -22,7 +22,7 @@ script "Init" __enter
 		Capacity = 10;
 		ComboTimer = -100;
 		
-		if (!GetCVAR("drpg_hardstart"))
+		if(!GetCVAR("drpg_hardstart"))
 		{
 			GiveInventory("StatToken", 5);
 			GiveInventory("SkillToken", 5);
@@ -36,40 +36,40 @@ script "Init" __enter
 				case 3: StartCredits = 250; 	break;
 				case 4: StartCredits = 100; 	break;
 				case 5: StartCredits = 0; 		break;
-			}
+			};
 			GiveInventory("Credits", StartCredits);
-		}
+		};
 		
 		// Give the default loadout based on compatibility switches
 		DefaultLoadout();
 
 		// Version Info
-		Log(s:"\cnDoom RPG ", s:Version, s:" (", s:TimeStamp, s:") ", s:"loaded!");
+		Log(s:"\cnDoom RPG ", s:Ver[0], s:" (", s:Ver[1], s:") ", s:"loaded!");
 		
 		// Set the default skill indices
 		for (int i = 0; i < 5; i++)
 		{
 			SkillCatagory[i] = -1;
 			SkillIndex[i] = -1;
-		}
+		};
 		
 		// The first map should always be accessible
 		MapsVisited[1] = true;
 		
 		// Done first run
-		FirstRun = 1;
+		FirstRun = true;
 	};
 	
 	// Setup the XP/Rank tables
 	SetupTables();
 	
 	// Execute Game Loops
-	ACS_NamedExecuteAlways("Loop", 0);
-	ACS_NamedExecuteAlways("Speed", 0);
-	ACS_NamedExecuteAlways("StatRandomizer", 0);
-	ACS_NamedExecuteAlways("DamageNumbers", 0);
-	ACS_NamedExecuteAlways("DamageNumbersHUD", 0);
-	ACS_NamedExecuteAlways("HealthBars", 0);
+	RUNS("Loop");
+	RUNS("Speed");
+	RUNS("StatRandomizer");
+	RUNS("DamageNumbers");
+	RUNS("DamageNumbersHUD");
+	RUNS("HealthBars");
 	
 	// Remove Aura if the keep Aura CVAR is off
 	if (!GetCVAR("drpg_skill_keepauras"))
@@ -77,33 +77,33 @@ script "Init" __enter
 		Aura = 0;
 		AuraTimer = 0;
 		AuraTimerHUD = 0;
-	}
+	};
 	
 	// Transport from/to Outpost Screen Fading
 	if (Transported == 1) // Normal
 	{
 		FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
 		Transported = 0;
-	}
+	};
 	if (Transported == 2) // Death
 	{
 		int PenaltyPercent;
 		
 		switch (GameSkill())
 		{
-			case 1: PenaltyPercent = 1;		break;
-			case 2: PenaltyPercent = 5;		break;
+			case 1: PenaltyPercent = 1;	break;
+			case 2: PenaltyPercent = 5;	break;
 			case 3: PenaltyPercent = 10;	break;
 			case 4: PenaltyPercent = 20;	break;
 			case 5: PenaltyPercent = 25;	break;
-		}
+		};
 		
 		SetActorProperty(0, APROP_HEALTH, HealthMax / 10 + 1);
 		GiveInventory("Credits", Credits);
 		PayTimer = 35 * 60 * GetCVAR("drpg_pay_interval");
 		FadeRange(255, 0, 0, 1.0, 255, 0, 0, 0.0, 1.0);
 		Transported = 0;
-	}
+	};
 	
 	// Store the current map number
 	MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
@@ -120,16 +120,16 @@ script "Init" __enter
 	// Reset the menus if they were open in the last level
 	InMenu = false;
 	InShop = false;
-}
+};
 
-// Nonster Init Script
+// Monster Init Script
 script "MonsterInit" (int Flags)
 {
 	// Start Damage Numbers Script
-	ACS_NamedExecuteAlways("DamageNumbers", 0);
+	RUNS("DamageNumbers");
 	
 	// Start Monster Loop Script
-	ACS_NamedExecuteAlways("MonsterLoop", 0);
+	RUNS("MonsterLoop");
 	
 	// Give it a Health Bar
 	SetInventory("HealthBar", 1);
@@ -445,12 +445,12 @@ script "Loop" (void)
 		
 	// Always Quick Heal if CVAR is set
 	if (GetCVAR("drpg_auto_heal"))
-		ACS_NamedExecuteAlways("QuickHeal", 0);
+		RUNS("QuickHeal");
 
 	// Shield Handling
 	BeforeHealth = GetActorProperty(0, APROP_HEALTH);
 	if (CheckInventory("Shield"))
-		ACS_NamedExecuteAlways("Shield", 0);
+		RUNS("Shield");
 
 	// Regeneration
 	if (GetActorProperty(0, APROP_HEALTH) > 0)
