@@ -7,7 +7,7 @@ __library("Defs");
 #define false 0
 #define CallACS(arg1) ACS_NamedExecuteAlways((arg1), 0)
 #define Print(arg1) __printf<__printf_print>(arg1)
-#define Log(arg1) __printf<__printf_log>(arg1)
+#define Log __printf<__printf_log>
 #define GlobalArray(arg1) __global_array((arg1))
 #define GlobalRegister(arg1) __global_register((arg1))
 
@@ -210,17 +210,36 @@ str[25] LongRanks = {
 __function void DefaultLoadout(void)
 {
 	// Extras Compatibility
-	if(GetCVAR("drpg_ext_extras"))
+	if(GetCVar("drpg_ext_extras"))
 		SetWeapon("Pistol1");
 	
 	// Brutal Doom Compatibility
-	if (GetCVAR("drpg_ext_brutal"))
+	if (GetCVar("drpg_ext_brutal"))
 	{
 		GiveInventory("Melee_Attacks", 1);
 		GiveInventory("BrutalPistol", 1);
 	};
 
 	// DoomRL Compatibility
-	if (GetCVAR("drpg_ext_doomrl"))
+	if (GetCVar("drpg_ext_doomrl"))
 		SetWeapon("RLPistol");
+};
+
+// Setup XP & Rank Tables
+function void SetupTables(void)
+{
+	int i;
+	
+	// XP Table
+	for (i = 0; i < MAX_LEVEL; i++)
+		XPTable[i] = 2000 + XPTable[i - 1] * 1.125;
+	
+	// Rank Table
+	for (i = 0; i < MAX_RANK; i++)
+		if (GameSkill() == 5)
+			{RankTable[i] = 100000 + (100000 * i * i);}
+		else if (GameSkill() > 2)
+			{RankTable[i] = 50000 + (50000 * i * i);}
+		else
+			{RankTable[i] = 25000 + (25000 * i * i);};
 };

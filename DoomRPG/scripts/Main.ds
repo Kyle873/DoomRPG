@@ -23,7 +23,7 @@ script Init(void) enter
 		Capacity = 10;
 		ComboTimer = -100;
 		
-		if(!GetCVAR("drpg_hardstart"))
+		if(!GetCVar("drpg_hardstart"))
 		{
 			GiveInventory("StatToken", 5);
 			GiveInventory("SkillToken", 5);
@@ -45,7 +45,7 @@ script Init(void) enter
 		DefaultLoadout();
 
 		// Version Info
-		Log(s:"\cnDoom RPG ", s:Ver[V_VERS], s:" (", s:Ver[V_TIME], s:") ", s:"loaded!");
+		Log("\cnDoom RPG ", Ver[V_VERS], " (", Ver[V_TIME], ") ", "loaded!");
 		
 		// Set the default skill indices
 		for(int i = 0; i < 5; i++)
@@ -73,7 +73,7 @@ script Init(void) enter
 	CallACS("HealthBars");
 	
 	// Remove Aura if the keep Aura CVAR is off
-	if(!GetCVAR("drpg_skill_keepauras"))
+	if(!GetCVar("drpg_skill_keepauras"))
 	{
 		Aura = 0;
 		AuraTimer = 0;
@@ -101,7 +101,7 @@ script Init(void) enter
 		
 		SetActorProperty(0, APROP_HEALTH, HealthMax / 10 + 1);
 		GiveInventory("Credits", Credits);
-		PayTimer = 35 * 60 * GetCVAR("drpg_pay_interval");
+		PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
 		FadeRange(255, 0, 0, 1.0, 255, 0, 0, 0.0, 1.0);
 		Transported = 0;
 	};
@@ -139,7 +139,7 @@ script "MonsterInit" (int Flags)
 	SetInventory("MonsterFlags", Flags);
 
 	// Monster Level System
-	if(GetCVAR("drpg_monster_levels") && (!(Flags & MF_NOSTATS)))
+	if(GetCVar("drpg_monster_levels") && (!(Flags & MF_NOSTATS)))
 	{
 		int MonsterLevel;
 		int MonsterCurve;
@@ -150,7 +150,7 @@ script "MonsterInit" (int Flags)
 		int AuraRandomizer;
 		
 		// level
-		MonsterCurve = GetCVAR("drpg_monster_curve");
+		MonsterCurve = GetCVar("drpg_monster_curve");
 		MonsterLevel = Level + Random(-(GameSkill() * 2), GameSkill() * 2) + Random(0, MonsterCurve);
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		
@@ -339,7 +339,7 @@ script "MonsterLoop" (void)
 			PayKills++;
 			
 		// SHOTGUNS!
-		if (GetCVAR("drpg_shotguns"))
+		if (GetCVar("drpg_shotguns"))
 			DropItem(0, "ShotSpawn", Random(1, 4), 255);
 		
 		terminate;
@@ -400,7 +400,7 @@ script "MonsterLoop" (void)
 		SetInventory(StrParam(s:"Strength", d:MonsterStrength * (GameSkill() * 2)), 1);
 	
 	// Overhead Health Bars
-	if (GetCVAR("drpg_healthbars_overhead"))
+	if (GetCVar("drpg_healthbars_overhead"))
 	{
 		int BarHealth = FixedMul(FixedDiv(GetActorProperty(0, APROP_HEALTH), GetActorProperty(0, APROP_SPAWNHEALTH)), 32.0);
 		if (BarHealth > 63.0) BarHealth = 63.0;
@@ -445,7 +445,7 @@ script "Loop" (void)
 		ShopLoop();
 		
 	// Always Quick Heal if CVAR is set
-	if (GetCVAR("drpg_auto_heal"))
+	if (GetCVar("drpg_auto_heal"))
 		CallACS("QuickHeal");
 
 	// Shield Handling
@@ -483,7 +483,7 @@ script "Loop" (void)
 		StatusTimerHUD = 0;
 	
 	// Make you invincible while in the Menus and if menu freezing is enabled
-	if ((InMenu || InShop) && GetCVAR("drpg_menufreeze"))
+	if ((InMenu || InShop) && GetCVar("drpg_menufreeze"))
 		SetActorProperty(0, APROP_DAMAGEFACTOR, 0);
 	
 	// Loop
@@ -506,7 +506,7 @@ script "Speed" (void)
 	else
 		Time = 0;
 	
-	if (GetCVAR("drpg_stat_weaponspeed"))
+	if (GetCVar("drpg_stat_weaponspeed"))
 		GiveInventory("Speed", 1);
 	
 	Delay(Time + 1);
@@ -519,7 +519,7 @@ script "StatRandomizer" (void)
 	Delay(1);
 
 	// Only randomize your starting tokens
-	if (GetCVAR("drpg_randomstatgrowth") == 1 && !RandomizedStartTokens)
+	if (GetCVar("drpg_randomstatgrowth") == 1 && !RandomizedStartTokens)
 	{
 		if (StatTokens > 0)
 			IncreaseStat(Random(1, 8));
@@ -527,12 +527,12 @@ script "StatRandomizer" (void)
 			RandomizedStartTokens = true;
 	}
 	// Always spend Tokens, no matter how you got them
-	else if (GetCVAR("drpg_randomstatgrowth") == 2)
+	else if (GetCVar("drpg_randomstatgrowth") == 2)
 		if (StatTokens > 0)
 			IncreaseStat(Random(1, 8));
 
 	// Spend Tokens only on level up
-	if (GetCVAR("drpg_autospend"))
+	if (GetCVar("drpg_autospend"))
 		while (LevelTokens > 0)
 		{
 			IncreaseStat(Random(1, 8));
@@ -589,7 +589,7 @@ script "QuickHeal" (int Quick)
 	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
 	
 	int Health = GetActorProperty(0, APROP_HEALTH);
-	int Percent = GetCVAR("drpg_auto_heal_percent");
+	int Percent = GetCVar("drpg_auto_heal_percent");
 	
 	if ((Health < HealthMax / Percent) || Quick)
 			 if (CheckInventory("StimPack")) 		UseInventory("StimPack");
@@ -700,7 +700,7 @@ script "DamageNumbers" (void)
 	CreateTranslation(2, 81 : 111 = 112 : 112);	// Healed
 	CreateTranslation(3, 81 : 111 = 100 : 100);	// Scratch
 
-	while (GetActorProperty(0, APROP_HEALTH) > 0 && GetCVAR("drpg_damagenumbers"))
+	while (GetActorProperty(0, APROP_HEALTH) > 0 && GetCVar("drpg_damagenumbers"))
 	{
 		GiveInventory("MonsterHeightCheck", GetActorProperty(0, APROP_HEIGHT));
 		SetInventory("MonsterCurrentHealth", GetActorProperty(0, APROP_HEALTH));
@@ -708,7 +708,7 @@ script "DamageNumbers" (void)
 		
 		// Lag handling
 		int DelayRate = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) / 100;
-		Delay(1 + DelayRate + GetCVAR("drpg_damagenumbers_delay"));
+		Delay(1 + DelayRate + GetCVar("drpg_damagenumbers_delay"));
 		
 		if (GetActorProperty(0, APROP_HEALTH) != CheckInventory("MonsterCurrentHealth"))
 			if (CheckInventory("MonsterHasTicked") == 0)
@@ -862,7 +862,7 @@ script "DamageNumbers" (void)
 				}
 			}
 			
-		if (!GetCVAR("drpg_damagenumbers")) terminate;
+		if (!GetCVar("drpg_damagenumbers")) terminate;
 	}
 }
 
@@ -872,9 +872,9 @@ script "DamageNumbersHUD" (void)
 	int Before = GetActorProperty(0, APROP_HEALTH);
 	Delay(1);
 
-	if (GetCVAR("drpg_damagenumbers_hud"))
+	if (GetCVar("drpg_damagenumbers_hud"))
 	{
-		int Color = GetCVAR("drpg_damagenumbers_hud_color");
+		int Color = GetCVar("drpg_damagenumbers_hud_color");
 		int After = GetActorProperty(0, APROP_HEALTH);
 		int Loss = Before - After;
 		
@@ -893,7 +893,7 @@ script "DamageNumbersHUD" (void)
 // Handles HUD Health Bars
 script "HealthBars" (void)
 {
-	while (GetCVAR("drpg_healthbars"))
+	while (GetCVar("drpg_healthbars"))
 	{
 		Thing_ChangeTID(0, MiscArray[M_PTID]);
 		int Activator = ActivatorTID();
@@ -901,8 +901,8 @@ script "HealthBars" (void)
 		
 		Delay(1);
 		
-		int X = GetCVAR("drpg_healthbars_x");
-		int Y = GetCVAR("drpg_healthbars_y");
+		int X = GetCVar("drpg_healthbars_x");
+		int Y = GetCVar("drpg_healthbars_y");
 		str Name = "";
 		bool HasHealthBar = (CheckInventory("HealthBar") > 0);
 		int CurrentLevel = CheckInventory("MonsterLevel");
@@ -944,12 +944,12 @@ script "HealthBars" (void)
 				SetHUDSize(800, 600, false);
 				
 				if (Friendly)
-					if (GetCVAR("screenblocks") == 10)
+					if (GetCVar("screenblocks") == 10)
 						PrintSprite("HPBarSS", 4000, X, Y, 0.05);
 					else
 					PrintSprite("HPBar2", 4000, X, Y, 0.05);
 				else
-					if (GetCVAR("screenblocks") == 10)
+					if (GetCVar("screenblocks") == 10)
 						PrintSprite("HPBarSS", 4000, X, Y, 0.05);
 					else
 						PrintSprite("HPBar", 4000, X, Y, 0.05);
@@ -958,7 +958,7 @@ script "HealthBars" (void)
 				HudMessage(d:CurrentHealth, s:"/", d:MaxHealth; HUDMSG_PLAIN, 4001, CR_GREEN, X, Y, 0.05);
 				
 				// Stats
-				if (GetCVAR("drpg_monster_levels") && CurrentLevel > 0)
+				if (GetCVar("drpg_monster_levels") && CurrentLevel > 0)
 				{
 					SetFont("BIGFONT");
 					
@@ -994,7 +994,7 @@ script "HealthBars" (void)
 				if (HealthPercent > 100)
 					HealthPercent = 100;
 				
-				if (GetCVAR("screenblocks") == 10)
+				if (GetCVar("screenblocks") == 10)
 					for (i = 0; i <= FixedMul(HealthPercent, 1.165); i++)
 						PrintSprite(FillType, 4100 + i, (X - 120.0) + (i * 2.0), Y, 0.05);
 				else
