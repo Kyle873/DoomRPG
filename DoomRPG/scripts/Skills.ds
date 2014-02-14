@@ -173,13 +173,13 @@ script UseSkill(int Index)
 					case 7:		Success = Summon(8);										break; // Summon Hell Knight
 					case 8:		Success = Summon(9);										break; // Summon Baron of Hell
 					case 9:		Success = Summon(10);										break; // Summon Lost Soul
-					case 10:		Success = Summon(11);									break; // Summon Pain Elemental
-					case 11:		Success = Summon(12);									break; // Summon Revenant
-					case 12:		Success = Summon(13);									break; // Summon Fatso
-					case 13:		Success = Summon(14);									break; // Summon Arachnotron
-					case 14:		Success = Summon(15);									break; // Summon Arch-Vile
-					case 15:		Success = Summon(16);									break; // Summon Cyberdemon
-					case 16:		Success = Summon(17);									break; // Summon Spider Mastermind
+					case 10:	Success = Summon(11);										break; // Summon Pain Elemental
+					case 11:	Success = Summon(12);										break; // Summon Revenant
+					case 12:	Success = Summon(13);										break; // Summon Fatso
+					case 13:	Success = Summon(14);										break; // Summon Arachnotron
+					case 14:	Success = Summon(15);										break; // Summon Arch-Vile
+					case 15:	Success = Summon(16);										break; // Summon Cyberdemon
+					case 16:	Success = Summon(17);										break; // Summon Spider Mastermind
 				};
 				break;
 				
@@ -205,8 +205,6 @@ script UseSkill(int Index)
 		Print("\cgNot enough EP to use this skill!\n");
 		ActivatorSound("skills/fail", 127);
 	};
-	
-	return;
 };
 
 // Skill HUD Script
@@ -254,12 +252,10 @@ script DrawSkillHUD() enter
 		
 		Delay(1);
 	};
-	
-	return;
 };
 
 // Heal
-function int Heal(int Type)
+function bool Heal(int Type)
 {
 	// Refund - If your health is max or above
 	if (Type == 1 && GetActorProperty(0, APROP_Health) >= GetActorProperty(0, APROP_SpawnHealth))
@@ -294,7 +290,7 @@ function int Heal(int Type)
 };
 
 // Repair Armor
-function int Repair()
+function bool Repair()
 {
 	if (CheckInventory("Armor") < ArmorMax && CheckArmorType() != "")
 	{
@@ -320,7 +316,7 @@ function int Repair()
 };
 
 // Powerups
-function int Powerup(int Type)
+function bool Powerup(int Type)
 {
 	// Levels
 	int InvulnLevel = CurrentSkillLevel[MAX_SKILLS + 0];
@@ -392,7 +388,7 @@ function void BulletTime(int Mode)
 };
 
 // Drops a random Rune in front of you
-function int DropRune()
+function bool DropRune()
 {
 	int Angle = GetActorAngle(0);
 	int X = GetActorX(0) + Cos(Angle) * 96;
@@ -429,7 +425,7 @@ function int DropRune()
 };
 
 // Drops a backpack in front of you
-function int DropAmmo()
+function bool DropAmmo()
 {
 	int Angle = GetActorAngle(0);
 	int X = GetActorX(0) + Cos(Angle) * 96;
@@ -452,7 +448,7 @@ function int DropAmmo()
 };
 
 // Summoning
-function int Summon(int Type)
+function bool Summon(int Type)
 {
 	int Angle = GetActorAngle(0);
 	int X = GetActorX(0) + Cos(Angle) * 96;
@@ -546,7 +542,7 @@ function int Summon(int Type)
 };
 
 // Breaks down current Armor into Credits
-function int BreakdownArmor()
+function bool BreakdownArmor()
 {
 	int Armor = CheckInventory("BasicArmor");
 	
@@ -592,7 +588,7 @@ function int BreakdownArmor()
 };
 
 // Drops a Force Field in front of you
-function int ForceWall()
+function bool ForceWall()
 {
 	int Angle = GetActorAngle(0);
 	int X = GetActorX(0) + Cos(Angle) * 96;
@@ -624,7 +620,7 @@ function int ForceWall()
 };
 
 // Rallies (teleports) your summoned monster/marines around you
-function int Rally()
+function bool Rally()
 {
 	int X = GetActorX(0);
 	int Y = GetActorY(0);
@@ -648,7 +644,7 @@ function int Rally()
 };
 
 // Unsummon - Removes all actors under the player's control
-function int Unsummon()
+function bool Unsummon()
 {
 	bool Kill = Overdrive;
 	int UnsummonLevel = CurrentSkillLevel[GetSkillID(5, 2)];
@@ -688,7 +684,7 @@ function int Unsummon()
 };
 
 // Recall - Return to the beginning of the map
-function int Recall()
+function bool Recall()
 {
 	// Fail if you're in the Arena
 	if (ArenaActive)
@@ -731,7 +727,6 @@ script Transport()
 	};
 	return;
 };
-
 // Attack skills will use this
 script AttackSkill(int Element, int Type)
 {
@@ -802,7 +797,6 @@ script AttackSkill(int Element, int Type)
 		SetResultValue(0);
 	};
 	// etc
-	return;
 };
 
 // Used from DECORATE to get dynamic projectile damage rates
@@ -810,9 +804,10 @@ script SetProjectileDamage(int Type)
 {
 	switch (Type)
 	{
-		case 1: SetResultValue(Round(Energy * 0.25));	break;	// Fire
-		case 2: SetResultValue(Round(Energy * 0.3));	break;	// Ice
+		case 1: return Round(Energy * 0.25);	break;	// Fire
+		case 2: return Round(Energy * 0.3);		break;	// Ice
 	};
+	
 	return;
 };
 
