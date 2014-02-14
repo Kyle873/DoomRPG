@@ -1,7 +1,7 @@
 @echo off
 color F
 
-set PATH=..\..\\DH-ACC
+set PATH=..\..\DH-ACC
 set SRC=.\scripts
 set OBJ=.\acs
 
