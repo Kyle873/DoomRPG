@@ -9,6 +9,7 @@ rem _timestamp
 
 DH-acc -Z -i %SRC%\inc %SRC%\Arena.ds -o %OBJ%\Arena.o
 DH-acc -Z -i %SRC%\inc %SRC%\Augs.ds -o %OBJ%\Augs.o
+DH-acc -Z -i %SRC%\inc %SRC%\Menu.ds -o %OBJ%\Menu.o
 DH-acc -Z -i %SRC%\inc %SRC%\Minigame.ds -o %OBJ%\Minigame.o
 DH-acc -Z -i %SRC%\inc %SRC%\RPG.ds -o %OBJ%\RPG.o
 DH-acc -Z -i %SRC%\inc %SRC%\Shop.ds -o %OBJ%\Shop.o
