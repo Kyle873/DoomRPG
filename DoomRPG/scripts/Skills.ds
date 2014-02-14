@@ -1,5 +1,310 @@
 #include "inc/Skills.dh"
 
+// Skill Catagories
+str[MAX_CATEGORIES] SkillCategories =
+{
+	"Healing";
+	"Powerups";
+	"Auras";
+	"Attacks";
+	"Summoning";
+	"Utility";
+};
+
+int[MAX_CATEGORIES] CategoryMax =
+{
+	3; 9; 9; 4; 17; 6;
+};
+
+// Skill Max Levels
+int[MAX_CATEGORIES][MAX_SKILLS] SkillLevelMax =
+{
+	// Healing
+	{ 1; 1; 1; };
+	// Powerups
+	{ 2; 2; 2; 1; 1; 1; 1; 1; 1; };
+	// Auras
+	{ 3; 3; 5; 1; 3; 4; 3; 4; 5; };
+	// Attacks
+	{ 1; 10; 1; 10; };
+	// Summoning
+	{ 8; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; };
+	// Utility
+	{ 1; 2; 1; 2; 1; 1; };
+};
+
+int[MAX_CATEGORIES][MAX_SKILLS] SkillCosts =
+{
+	// Healing
+	{ 50; 100; 250; };
+	// Powerups
+	{ 250; 100; 250; 250; 250; 500; 500; 250; 250; };
+	// Auras
+	{ 100; 100; 100; 100; 100; 100; 100; 100; 100; 100; };
+	// Attacks
+	{ 5; 25; 10; 50; };
+	// Summoning
+	{ 100; 25; 50; 75; 75; 75; 100; 150; 200; 100; 500; 500; 500; 500; 750; 1000; 1000; };
+	// Utility
+	{ 250; 50; 50; 0; 25; 0; };
+};
+
+// Skill Data
+str[MAX_CATEGORIES][MAX_SKILLS][1 + MAX_LEVELS] SkillData =
+{
+	// Name, Description (Level 1), Description (Level 2), ...
+	
+	// Healing
+	{
+		{
+			"Heal";
+			"Recover HP";
+		};
+		{
+			"Heal Summons";
+			"Summoned Monsters Recover all HP";
+		};
+		{
+			"Repair Armor";
+			"Repair Armor";
+		};
+	};
+	
+	// Powerups
+	{
+		{
+			"Invulnerability";
+			"Invulnerability to all attacks\n\cd(30 Sec)";
+			"Invulnerability to all attacks\nProjectiles are reflected back at enemies\n\cd(30 Sec)";
+		};
+		{
+			"Invisibility";
+			"Makes you invisible to enemies\n\cd(30 sec)";
+			"Makes you invisible to enemies\nSome projectiles pass through you\n\cd(30 sec)";
+		};
+		{
+			"Freeze Time";
+			"Stutter Time";
+			"Freeze Time";
+		};
+		{
+			"Iron Feet";
+			"Protection from Damage Floors";
+		};
+		{
+			"Night Vision";
+			"Allows you to see in the dark";
+		};
+		{
+			"Berserk";
+			"Full Health\nIncreased Melee Damage";
+		};
+		{
+			"Mental Mapping";
+			"Full Map\nItem/Enemy Tracking";
+		};
+		{
+			"Rune Drop";
+			"Drops a random Rune at your locations";
+		};
+		{
+			"Ammo Drop";
+			"Drops a Backpack of ammo at your location";
+		};
+	};
+	
+	// Auras
+	{
+		{
+			"Red Aura";
+			"2x Damage";
+			"4x Damage";
+			"4x Damage\nInfinite Ammo";
+		};
+		{
+			"Green Aura";
+			"-25% Damage Taken";
+			"-50% Damage Taken";
+			"-75% Damage Taken\nDamage Floor Protection";
+		};
+		{
+			"White Aura";
+			"Double Combo";
+			"Double Combo\nConstant Combo";
+			"Double Combo\nConstant Combo\n2x XP per kill";
+			"Double Combo\nConstant Combo\n2x XP per kill\nSlow XP Gain";
+			"Double Combo\nConstant Combo\n2x XP per kill\nFast XP Gain";
+		};
+		{
+			"Pink Aura";
+			"Drain Enemy HP";
+		};
+		{
+			"Blue Aura";
+			"25% Skill Cost Reduction";
+			"50% Skill Cost Reduction";
+			"75% Skill Cost Reduction";
+		};
+		{
+			"Purple Aura";
+			"2x HP/EP Regen Amount";
+			"3x HP/EP Regen Amount";
+			"4x HP/EP Regen Amount";
+			"4x HP/EP Regen Amount\n-2x HP/EP Regen Timers";
+		};
+		{
+			"Orange Aura";
+			"Double Movement Speed";
+			"Double Movement Speed\nHigh Jump";
+			"Double Movement Speed\nHigh Jump\nDouble Firing Speed";
+		};
+		{
+			"Dark Blue Aura";
+			"Clip Regen";
+			"Clip Regen\nShell Regen";
+			"Clip Regen\nShell Regen\nRocket Regen";
+			"Clip Regen\nShell Regen\nRocket Regen\nCell Regen";
+		};
+		{
+			"Yellow Aura";
+			"Slow Money Gain\n1.25x Drop Chances";
+			"Medium Money Gain\n1.5x Drop Chances";
+			"Fast Money Gain\n2x Drop Chances";
+			"Very Fast Money Gain\n4x Drop Chances";
+			"Mega Money Gain\n8x Drop Chances";
+		};
+	};
+	
+	// Attacks
+	{
+		{
+			"FireBall";
+			"Shoots a fireball\n\caFire Damage";
+		};
+		{
+			"Fireball Nova";
+			"Shoots fireballs in a circular nova around you\n\caFire Damage";
+		};
+		{
+			"Ice Missile";
+			"Shoots an ice missile\n\cnIce Damage";
+		};
+		{
+			"Ice Nova";
+			"Shoots ice missles in a circular nova around you\n\cnIce Damage";
+		};
+	};
+	
+	// Summoning
+	{
+		{
+			"Summon Marine";
+			"Summons a Marine to fight with you\n\cjPistol";
+			"Summons a Marine to fight with you\n\cjShotgun";
+			"Summons a Marine to fight with you\n\cjSuper Shotgun";
+			"Summons a Marine to fight with you\n\cjChaingun";
+			"Summons a Marine to fight with you\n\cjRocket Launcher";
+			"Summons a Marine to fight with you\n\cjPlasma Rifle";
+			"Summons a Marine to fight with you\n\cjRailgun";
+			"Summons a Marine to fight with you\n\cjBFG 9000";
+		};
+		{
+			"Summon Zombieman";
+			"Summons a Zombieman to fight with you";
+		};
+		{
+			"Summon Shotgun Guy";
+			"Summons a Shotgun Guy to fight with you";
+		};
+		{
+			"Summon Chaingun Guy";
+			"Summons a Chaingun Guy to fight with you";
+		};
+		{
+			"Summon Imp";
+			"Summons an Imp to fight with you";
+		};
+		{
+			"Summon Demon";
+			"Summons a Demon to fight with you";
+		};
+		{
+			"Summon Cacodemon";
+			"Summons a Cacodemon to fight with you";
+		};
+		{
+			"Summon Hell Knight";
+			"Summons a Hell Knight to fight with you";
+		};
+		{
+			"Summon Baron of Hell";
+			"Summons a Baron of Hell to fight with you";
+		};
+		{
+			"Summon Lost Soul";
+			"Summons a Lost Soul to fight with you";
+		};
+		{
+			"Summon Pain Elemental";
+			"Summons a Pain Elemental to fight with you";
+		};
+		{
+			"Summon Revenant";
+			"Summons a Revenant to fight with you";
+		};
+		{
+			"Summon Fatso";
+			"Summons a Fatso to fight with you";
+		};
+		{
+			"Summon Arachnotron";
+			"Summons an Arachnotron to fight with you";
+		};
+		{
+			"Summon Arch-Vile";
+			"Summons an Arch-Vile to fight with you";
+		};
+		{
+			"Summon Cyberdemon";
+			"Summons a Cyberdemon to fight with you";
+		};
+		{
+			"Summon Spider Mastermind";
+			"Summons a Spider Mastermind to fight with you";
+		};
+	};
+	
+	// Utility
+	{
+		{
+			"Breakdown Armor";
+			"Breaks down your current Armor into Credits";
+		};
+		{
+			"Force Wall";
+			"Creates a small force wall in front of you to reflect projectiles";
+			"Creates a large force wall in front of you to reflect projectiles";
+		};
+		{
+			"Rally";
+			"Teleports your summoned monsters to you";
+		};
+		{
+			"Unsummon";
+			"Banishes all of the friendly creatures under your control";
+			"Banishes all of the friendly creatures under your control\nEach creature banished restores\n25 EP";
+		};
+		{
+			"Recall";
+			"Brings you to the beginning of the level";
+		};
+		{
+			"Transport";
+			"Brings you to the UAC Outpost\nUse in Outpost to return to current level";
+		};
+	};
+};
+
 function int GetSkillSlot(int Slot)
 {
 	return (SkillCatagory[Slot] * MAX_SKILLS) + SkillIndex[Slot];
