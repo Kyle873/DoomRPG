@@ -1,0 +1,726 @@
+#include "inc/Stats.dh"
+
+function void AddXP(int Amount)
+{
+	// Scale XP/Rank Gains using the XP Scaling Option
+	switch (GetCVar("drpg_scalexp"))
+	{
+		case 2: Amount = FixedMul(Amount, 2.0);	break;
+		case 3: Amount = FixedMul(Amount, 4.0);	break;
+		case 4: Amount = FixedMul(Amount, 8.0);	break;
+		case 5: Amount = FixedMul(Amount, 0.75);	break;
+		case 6: Amount = FixedMul(Amount, 0.5);	break;
+		case 7: Amount = FixedMul(Amount, 0.25);	break;
+	};
+	
+	if (GetCVar("drpg_combo"))
+	{
+		TotalGained += Amount;
+		// FIX
+		// if (Aura == 3 && CurrentSkillLevel[GetSkillID(2, 2)] >= 3) TotalGained += Amount;
+		XPGained = 0;
+		RankGained = 0;
+		Combo++;
+		if (Aura == 3 && AuraTimer > 0) Combo++;
+		ComboTimer = 100;
+	}
+	else
+	{
+		Rank += Amount;
+		
+		// You cannot gain Negative XP, but you can lose Rank
+		if (Amount < 0) Amount = 0;
+		XP += Amount;
+	};
+};
+
+function void CheckCombo()
+{
+	if (GetCVar("drpg_combo"))
+	{
+		// Subtract the combo timer each tick
+		if ((Combo > 0 || ComboTimer < 100) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
+			ComboTimer--;
+		
+		// Set your Inventory Combo Item to the current ComboTimer aunt
+		if (ComboTimer < 100)
+		{
+			SetInventory("Combo", ComboTimer);
+			SetInventory("Combo2", 0);
+		};
+		if (ComboTimer < 0)
+		{
+			SetInventory("Combo", 0);
+			SetInventory("Combo2", ComboTimer + 100);
+		};
+		
+		// Add up and randomize the XP and Rank gain
+		if (ComboTimer == 0)
+		{
+			XPGained += TotalGained + Random(0, FixedMul(FixedDiv(Combo, (1000 - (MapNumber * 10))), TotalGained));
+			RankGained += TotalGained + Random(0, FixedMul(FixedDiv(Combo, (1000 - (MapNumber * 10))), TotalGained));
+			
+			// You cannot gain Negative XP, but you can lose Rank
+			if (XPGained < 0) XPGained = 0;
+
+			XP += XPGained;
+			Rank += RankGained;
+			
+			TotalGained = 0;
+			Combo = 0;
+		};
+		
+		if (ComboTimer < -100)
+		{
+			TotalGained = 0;
+			XPGained = 0;
+			RankGained = 0;
+			ComboTimer = 100;
+		};
+	}
+	else
+		{ComboTimer = -100;};
+};
+
+// Keeps current level and XP updated
+function void CheckLevel()
+{
+	if (Level < MAX_LEVEL)
+		XPNext = XPTable[Level];
+	
+	if (Level >= MAX_LEVEL)
+	{
+		XP = XPTable[MAX_LEVEL - 1];
+		XPNext = XPTable[MAX_LEVEL - 1];
+	};
+	
+	// Now check for a level up
+	if (XP >= XPTable[Level] && Level < MAX_LEVEL)
+	{
+		if (GetCVar("drpg_autospend"))
+			LevelTokens += 5;
+		
+		// Level Up
+		ActivatorSound("misc/levelup", 127);
+		
+		Level++;
+		
+		GiveInventory("StatToken", 5 + (Level / 10));
+		GiveInventory("SkillToken", 1);
+		
+		if (GetCVar("drpg_levelup_heal"))
+		{
+			if (EP <= 0) {EP = 0;} else {EP = GetEPMax();};
+			HealThing(1000000);
+		};
+
+		FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0, 2.0);
+		SetFont("BIGFONT");
+		SetHudSize(0, 0, false);
+		HudMessage("You have reached level %d\n", Level,
+					HUDMSG_FADEOUT, 4999, CR_WHITE, 0.5, 0.5, 2.0, 2.0);
+	};
+};
+
+// Keeps current Rank updated
+function void CheckRank()
+{
+	RankString = Ranks[RankLevel];
+	
+	if (RankLevel < MAX_RANK)
+		RankNext = RankTable[RankLevel];
+	
+	if (RankLevel >= MAX_RANK)
+	{
+		Rank = RankTable[MAX_RANK - 1];
+		RankNext = RankTable[MAX_RANK - 1];
+	};
+	
+	// Rank up
+	if (Rank >= RankTable[RankLevel] && RankLevel < MAX_RANK)
+	{
+		ActivatorSound("misc/rankup", 127);
+		RankLevel++;
+		FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0, 2.0);
+		SetFont("BIGFONT");
+		SetHudSize(0, 0, false);
+		HudMessage("You have reached rank level %d: %s\n", RankLevel, LongRanks[RankLevel],
+				   HUDMSG_FADEOUT, 4999, CR_GOLD, 0.5, 0.5, 4.0, 2.0);
+	};
+	
+	// Payment
+	PayTimer++;
+	if (PayTimer >= 35 * 60 * GetCVar("drpg_pay_interval"))
+	{
+		if (RankLevel > 0)
+		{
+			int Pay = ((RankLevel + 1) * 10) + (PayKills * (RankLevel + 1)) * (1 + (MapNumber / 6));
+			
+			GiveInventory("Credits", Pay);
+			
+			FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0, 2.0);
+			SetFont("BIGFONT");
+			SetHudSize(0, 0, false);
+			HudMessage("+%d Credits\n", Pay, HUDMSG_FADEOUT, 0, CR_GOLD, -0.025, 0.775, 4.0, 2.0);
+			
+			ActivatorSound("credits/payout", 127);
+			Log("\cfYou have been paid %d Credits by the UAC\n", Pay);
+		};
+		
+		PayTimer = 0;
+		PayKills = 0;
+	};
+};
+
+// Gives rewards for finding a secret and 100% Kills/Items/Secrets
+function void CheckLevelInfo()
+{
+	int CurrentKills = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+	int CurrentItems = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+	int CurrentSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+	
+	int XPBonus;
+	int RankBonus;
+	
+	// Set HUD Size and Font
+	SetHudSize(0, 0, false);
+	SetFont("SMALLFONT");
+	
+	// Check to see if any total stats are 0, if they are, silently flag them as received already
+	if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
+		KillBonus = true;
+	if (GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0)
+		ItemsBonus = true;
+	if (GetLevelInfo(LEVELINFO_TOTAL_SECRETS) == 0)
+		SecretsBonus = true;
+	
+	// If all the total stats are 0, no bonuses at all
+	if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0 && GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0 && GetLevelInfo(LEVELINFO_TOTAL_SECRETS) == 0)
+		AllBonus = true;
+	
+	// 100% Kills
+	if (CurrentKills >= GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) && !KillBonus)
+	{
+		FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
+		
+		XPBonus = Random(Level * 10, Level * 100);
+		XP += XPBonus;
+		
+		HudMessage("100%% Monsters Killed!\n%d XP Bonus\n", XPBonus,
+				   HUDMSG_TYPEON, 0, CR_BRICK, 1.5, 0.4, 3.0, 0.1, 3.0);
+		KillBonus = true;
+	};
+	
+	// 100% Items
+	if (CurrentItems >= GetLevelInfo(LEVELINFO_TOTAL_ITEMS) && !ItemsBonus)
+	{
+		FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
+		
+		EP = GetEPMax();
+		HealThing(1000000);
+		
+		HudMessage("100%% Items Found!\nFull HP/EP Restore\n",
+				   HUDMSG_TYPEON, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 0.1, 3.0);
+		ItemsBonus = true;
+	};
+
+	// Secrets
+	if (CurrentSecretsFound == SecretsFound + 1 && RankLevel < 25)
+	{
+		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
+		
+		RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
+		Rank += RankBonus;
+		
+		// 100% Secrets
+		if (CurrentSecretsFound >= GetLevelInfo(LEVELINFO_TOTAL_SECRETS) && !SecretsBonus)
+		{
+			FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
+			
+			RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
+			Rank += RankBonus;
+
+			HudMessage("100%% Secrets Found!\n%d Rank Bonus\n", RankBonus,
+					   HUDMSG_TYPEON, 0, CR_YELLOW, 1.5, 0.8, 3.0, 0.1, 3.0);
+			SecretsBonus = true;
+		};
+	};
+	
+	// All Kills/Items/Secrets 100%
+	if ((KillBonus && ItemsBonus && SecretsBonus) && !AllBonus)
+	{
+		FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
+		
+		XPBonus = Random(Level * 100, Level * 1000);
+		RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
+		
+		XP += XPBonus;
+		Rank += RankBonus;
+		
+		EP = GetEPMax();
+		HealThing(1000000);
+		
+		HudMessage("100%% Monsters killed!\n100%% Items Found!\n100%% Secrets Found!\n\n%d XP Bonus\n%d Rank Bonus\n Full HP/EP Restore\n"
+				   ,XPBonus, RankBonus, HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
+		AllBonus = true;
+	};
+	
+	
+	CurrentKills = Kills;
+	CurrentItems = Items;
+	SecretsFound = CurrentSecretsFound;
+};
+
+function void CheckHealth()
+{
+	if (LowHealthTimer >= 100 && CheckInventory("Health") > 0)
+	{
+		ActivatorSound("health/low", 64);
+		LowHealthTimer = 0;
+	};
+	
+	if (CheckInventory("Health") <= GetActorProperty(0, APROP_SpawnHealth) / 10 && CheckInventory("Health") > 0)
+	{
+		FadeRange(LowHealthTimer + 155, 0, 0, 0.25, LowHealthTimer + 155, 0, 0, 0.0, 1.0);
+		LowHealthTimer++;
+		
+		// Halve Movement Speed and Jump Height
+		Speed /= 2;
+		JumpHeight /= 2;
+	};
+};
+
+function void CheckArmorMax()
+{
+	if (!GetArmorType("none", 0)) 					ArmorMax = 0;
+	if (GetArmorType("ArmorBonus", 0) > 0) 			ArmorMax = 100;
+	if (GetArmorType("UsedGreenArmor", 0) > 0) 		ArmorMax = 50;
+	if (GetArmorType("GreenArmor", 0) > 0) 			ArmorMax = 100;
+	if (GetArmorType("UsedBlueArmor", 0) > 0) 		ArmorMax = 125;
+	if (GetArmorType("BlueArmor", 0) > 0) 			ArmorMax = 250;
+	if (GetArmorType("UsedYellowArmor", 0) > 0) 	ArmorMax = 250;
+	if (GetArmorType("YellowArmor", 0) > 0) 		ArmorMax = 500;
+	if (GetArmorType("UsedRedArmor", 0) > 0) 		ArmorMax = 375;
+	if (GetArmorType("RedArmor", 0) > 0) 			ArmorMax = 750;
+	if (GetArmorType("UsedWhiteArmor", 0) > 0) 		ArmorMax = 500;
+	if (GetArmorType("WhiteArmor", 0) > 0) 			ArmorMax = 1000;
+	
+	// DoomRL Compatibility
+	if (GetCVar("drpg_ext_doomrl"))
+	{
+		// Armors which have ridiculous high save amounts to simulate it being indestructible, can I get a record for "most ridiculous if statement ever?"
+		if ((GetArmorType("RLGreenArmor", 0) > 0) ||
+			(GetArmorType("RLBlueArmor", 0) > 0) ||
+			(GetArmorType("RLRedArmor", 0) > 0) ||
+			(GetArmorType("RLCerberusArmor", 0) > 0) ||
+			(GetArmorType("RLTacticalArmor", 0) > 0) ||
+			(GetArmorType("RLBallisticGreenArmor", 0) > 0) ||
+			(GetArmorType("RLBallisticBlueArmor", 0) > 0) ||
+			(GetArmorType("RLBallisticRedArmor", 0) > 0) ||
+			(GetArmorType("RLFireproofGreenArmor", 0) > 0) ||
+			(GetArmorType("RLFireproofBlueArmor", 0) > 0) ||
+			(GetArmorType("RLFireproofRedArmor", 0) > 0) ||
+			(GetArmorType("RLPowerGreenArmor", 0) > 0) ||
+			(GetArmorType("RLPowerBlueArmor", 0) > 0) ||
+			(GetArmorType("RLPowerRedArmor", 0) > 0) ||
+			(GetArmorType("RLBallisticShieldArmor", 0) > 0) ||
+			(GetArmorType("RLBallisticVestArmor", 0) > 0) ||
+			(GetArmorType("RLBulletProofVestArmor", 0) > 0) ||
+			(GetArmorType("RLDuelistArmor", 0) > 0) ||
+			(GetArmorType("RLEnergyShieldedVestArmor", 0) > 0) ||
+			(GetArmorType("RLEnergyShieldArmor", 0) > 0) ||
+			(GetArmorType("RLMedicalArmor", 0) > 0) ||
+			(GetArmorType("RLPhaseshiftArmor", 0) > 0) ||
+			(GetArmorType("RLPlasmaShieldArmor", 0) > 0) ||
+			(GetArmorType("RLNecroArmor", 0) > 0) ||
+			(GetArmorType("RLAngelicArmor", 0) > 0) ||
+			(GetArmorType("RLGreenArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLBlueArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLRedArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLCerberusArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLTacticalArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLBallisticGreenArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLBallisticBlueArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLBallisticRedArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLFireproofGreenArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLFireproofBlueArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLFireproofRedArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLPowerGreenArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLPowerBlueArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLPowerRedArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLBallisticShieldArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLBallisticVestArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLBulletProofVestArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLDuelistArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLEnergyShieldedVestArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLEnergyShieldArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLMedicalArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLPhaseshiftArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLPlasmaShieldArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLNecroArmorRenegade", 0) > 0) ||
+			(GetArmorType("RLAngelicArmorRenegade", 0) > 0))
+				{ArmorMax = 100;}
+		else // Armors which have differing Save Amounts
+		{
+			if (GetArmorType("RLTowerShieldArmor", 0) > 0)			ArmorMax = 150;
+			if (GetArmorType("RLFireShieldArmor", 0) > 0)			ArmorMax = 200;
+			if (GetArmorType("RLGothicArmor", 0) > 0) 				ArmorMax = 200;
+			if (GetArmorType("RLTowerShieldArmorRenegade", 0) > 0)	ArmorMax = 150;
+			if (GetArmorType("RLFireShieldArmorRenegade", 0) > 0)	ArmorMax = 200;
+			if (GetArmorType("RLGothicArmorRenegade", 0) > 0) 		ArmorMax = 200;
+		};
+	};
+};
+
+function str CheckArmorType()
+{
+	if (GetArmorType("BasicArmorBonus", 0) > 0) 						return "BasicArmorBonus";
+	if (GetArmorType("GreenArmor", 0) > 0) 							return "GreenArmor";
+	if (GetArmorType("UsedGreenArmor", 0) > 0) 						return "UsedGreenArmor";
+	if (GetArmorType("BlueArmor", 0) > 0) 								return "BlueArmor";
+	if (GetArmorType("UsedBlueArmor", 0) > 0) 							return "UsedBlueArmor";
+	if (GetArmorType("YellowArmor", 0) > 0) 							return "YellowArmor";
+	if (GetArmorType("UsedYellowArmor", 0) > 0) 						return "UsedYellowArmor";
+	if (GetArmorType("RedArmor", 0) > 0) 								return "RedArmor";
+	if (GetArmorType("UsedRedArmor", 0) > 0) 							return "UsedRedArmor";
+	if (GetArmorType("WhiteArmor", 0) > 0) 							return "WhiteArmor";
+	if (GetArmorType("UsedWhiteArmor", 0) > 0) 						return "UsedWhiteArmor";
+	if (GetArmorType("ShieldArmor", 0) > 0) 							return "ShieldArmor";
+	if (GetArmorType("ShieldArmorEmpty", 0) > 0) 						return "ShieldArmorEmpty";
+	
+	// DoomRL Compatibility
+	if (GetCVar("drpg_ext_doomrl"))
+	{
+		if (GetArmorType("RLGreenArmor", 0) > 0)						return "RLGreenArmor";
+		if (GetArmorType("RLBlueArmor", 0) > 0)						return "RLBlueArmor";
+		if (GetArmorType("RLRedArmor", 0) > 0)							return "RLRedArmor";
+		if (GetArmorType("RLCerberusArmor", 0) > 0)					return "RLCerberusArmor";
+		if (GetArmorType("RLFireShieldArmor", 0) > 0)					return "RLFireShieldArmor";
+		if (GetArmorType("RLTacticalArmor", 0) > 0)					return "RLTacticalArmor";
+		if (GetArmorType("RLBallisticGreenArmor", 0) > 0)				return "RLBallisticGreenArmor";
+		if (GetArmorType("RLBallisticBlueArmor", 0) > 0)				return "RLBallisticBlueArmor";
+		if (GetArmorType("RLBallisticRedArmor", 0) > 0)				return "RLBallisticRedArmor";
+		if (GetArmorType("RLFireproofGreenArmor", 0) > 0)				return "RLFireproofGreenArmor";
+		if (GetArmorType("RLFireproofBlueArmor", 0) > 0)				return "RLFireproofBlueArmor";
+		if (GetArmorType("RLFireproofRedArmor", 0) > 0)				return "RLFireproofRedArmor";
+		if (GetArmorType("RLPowerGreenArmor", 0) > 0)					return "RLPowerGreenArmor";
+		if (GetArmorType("RLPowerBlueArmor", 0) > 0)					return "RLPowerBlueArmor";
+		if (GetArmorType("RLPowerRedArmor", 0) > 0)					return "RLPowerRedArmor";
+		if (GetArmorType("RLBallisticShieldArmor", 0) > 0)				return "RLBallisticShieldArmor";
+		if (GetArmorType("RLBallisticVestArmor", 0) > 0)				return "RLBallisticVestArmor";
+		if (GetArmorType("RLBulletProofVestArmor", 0) > 0)				return "RLBulletProofVestArmor";
+		if (GetArmorType("RLDuelistArmor", 0) > 0)						return "RLDuelistArmor";
+		if (GetArmorType("RLEnergyShieldedVestArmor", 0) > 0)			return "RLEnergyShieldedVestArmor";
+		if (GetArmorType("RLEnergyShieldArmor", 0) > 0)				return "RLEnergyShieldArmor";
+		if (GetArmorType("RLMedicalArmor", 0) > 0)						return "RLMedicalArmor";
+		if (GetArmorType("RLPhaseshiftArmor", 0) > 0)					return "RLPhaseshiftArmor";
+		if (GetArmorType("RLPlasmaShieldArmor", 0) > 0)				return "RLPlasmaShieldArmor";
+		if (GetArmorType("RLNecroArmor", 0) > 0)						return "RLNecroArmor";
+		if (GetArmorType("RLAngelicArmor", 0) > 0)						return "RLAngelicArmor";
+		if (GetArmorType("RLOModDuelistArmor", 0) > 0)					return "RLOModDuelistArmor";
+		if (GetArmorType("RLTowerShieldArmor", 0) > 0)					return "RLTowerShieldArmor";
+		if (GetArmorType("RLGothicArmor", 0) > 0)						return "RLGothicArmor";
+		if (GetArmorType("RLGreenArmorRenegade", 0) > 0)				return "RLGreenArmorRenegade";
+		if (GetArmorType("RLBlueArmorRenegade", 0) > 0)				return "RLBlueArmorRenegade";
+		if (GetArmorType("RLRedArmorRenegade", 0) > 0)					return "RLRedArmorRenegade";
+		if (GetArmorType("RLCerberusArmorRenegade", 0) > 0)			return "RLCerberusArmorRenegade";
+		if (GetArmorType("RLFireShieldArmorRenegade", 0) > 0)			return "RLFireShieldArmorRenegade";
+		if (GetArmorType("RLTacticalArmorRenegade", 0) > 0)			return "RLTacticalArmorRenegade";
+		if (GetArmorType("RLBallisticGreenArmorRenegade", 0) > 0)		return "RLBallisticGreenArmorRenegade";
+		if (GetArmorType("RLBallisticBlueArmorRenegade", 0) > 0)		return "RLBallisticBlueArmorRenegade";
+		if (GetArmorType("RLBallisticRedArmorRenegade", 0) > 0)		return "RLBallisticRedArmorRenegade";
+		if (GetArmorType("RLFireproofGreenArmorRenegade", 0) > 0)		return "RLFireproofGreenArmorRenegade";
+		if (GetArmorType("RLFireproofBlueArmorRenegade", 0) > 0)		return "RLFireproofBlueArmorRenegade";
+		if (GetArmorType("RLFireproofRedArmorRenegade", 0) > 0)		return "RLFireproofRedArmorRenegade";
+		if (GetArmorType("RLPowerGreenArmorRenegade", 0) > 0)			return "RLPowerGreenArmorRenegade";
+		if (GetArmorType("RLPowerBlueArmorRenegade", 0) > 0)			return "RLPowerBlueArmorRenegade";
+		if (GetArmorType("RLPowerRedArmorRenegade", 0) > 0)			return "RLPowerRedArmorRenegade";
+		if (GetArmorType("RLBallisticShieldArmorRenegade", 0) > 0)		return "RLBallisticShieldArmorRenegade";
+		if (GetArmorType("RLBallisticVestArmorRenegade", 0) > 0)		return "RLBallisticVestArmorRenegade";
+		if (GetArmorType("RLBulletProofVestArmorRenegade", 0) > 0)		return "RLBulletProofVestArmorRenegade";
+		if (GetArmorType("RLDuelistArmorRenegade", 0) > 0)				return "RLDuelistArmorRenegade";
+		if (GetArmorType("RLEnergyShieldedVestArmorRenegade", 0) > 0)	return "RLEnergyShieldedVestArmorRenegade";
+		if (GetArmorType("RLEnergyShieldArmorRenegade", 0) > 0)		return "RLEnergyShieldArmorRenegade";
+		if (GetArmorType("RLMedicalArmorRenegade", 0) > 0)				return "RLMedicalArmorRenegade";
+		if (GetArmorType("RLPhaseshiftArmorRenegade", 0) > 0)			return "RLPhaseshiftArmorRenegade";
+		if (GetArmorType("RLPlasmaShieldArmorRenegade", 0) > 0)		return "RLPlasmaShieldArmorRenegade";
+		if (GetArmorType("RLNecroArmorRenegade", 0) > 0)				return "RLNecroArmorRenegade";
+		if (GetArmorType("RLAngelicArmorRenegade", 0) > 0)				return "RLAngelicArmorRenegade";
+		if (GetArmorType("RLOModDuelistArmorRenegade", 0) > 0)			return "RLOModDuelistArmorRenegade";
+		if (GetArmorType("RLTowerShieldArmorRenegade", 0) > 0)			return "RLTowerShieldArmorRenegade";
+		if (GetArmorType("RLGothicArmorRenegade", 0) > 0)				return "RLGothicArmorRenegade";
+	};
+	
+	return "";
+};
+
+function void CheckStats()
+{
+	// VERY IMPORTANT CODE RIGHT HERE
+	// If you're reading this and you'd like to modify stat curves, this is where you'd do it
+	LevelDamage = Level * (6 - GameSkill());
+	BonusDamage = Strength;
+	TotalDamage = LevelDamage + BonusDamage;
+	DamageFactor = 1.0 - FixedMul(0.25, FixedDiv(Defense, 100));
+	Mass = 100 + (Defense * 10);
+	HealthMax = Vitality * 10;
+	EPMax = Energy * 10;
+	Speed = 1.0 + FixedMul(0.25, FixedDiv(Agility, 100));
+	JumpHeight = 8.0 + FixedMul(8.0, FixedDiv(Agility, 100));
+	WeaponSpeed = Agility;
+	SetAmmoCapacity("Clip", Capacity * 20);
+	SetAmmoCapacity("Shell", Capacity * 10);
+	SetAmmoCapacity("RocketAmmo", Capacity * 5);
+	SetAmmoCapacity("Cell", Capacity * 30);
+	SurvivalBonus = Agility;
+
+	// Keep misc counts handy for the SBARINFO HUD and such
+	Credits = CheckInventory("Credits");
+	Continues = CheckInventory("Continue");
+	StatTokens = CheckInventory("StatToken");
+	SkillTokens = CheckInventory("SkillToken");
+	
+	// Set mass stupid high when Invulnerable to prevent knockback
+	if (CheckInventory("PowerInvulnerable"))
+		Mass *= 128;
+	
+	// Survival Bonus
+	if (Random(1, 1000) <= SurvivalBonus)
+		{SetPlayerProperty(0, 1, PROP_BUDDHA);}
+	else
+		{SetPlayerProperty(0, 0, PROP_BUDDHA);};
+};
+
+function void CheckStatBonus()
+{
+	Strength += StrengthBonus;
+	Defense += DefenseBonus;
+	Vitality += VitalityBonus;
+	Energy += EnergyBonus;
+	Regeneration += RegenerationBonus;
+	Agility += AgilityBonus;
+	Capacity += CapacityBonus;
+	Luck += LuckBonus;
+	
+	StrengthBonus = 0;
+	DefenseBonus = 0;
+	VitalityBonus = 0;
+	EnergyBonus = 0;
+	RegenerationBonus = 0;
+	AgilityBonus = 0;
+	CapacityBonus = 0;
+	LuckBonus = 0;
+};
+
+// Regeneration
+function void DoRegen()
+{	
+	// Determine the max timer amounts
+	HPTime = (700 - FixedMul(Regeneration, 3.325)) * 2;
+	EPTime = (700 - FixedMul(Regeneration, 3.325)) * 2;
+	
+	// Determine the max regen amounts
+	HPAmount = 1 + Vitality / 50;
+	EPAmount = 1 + Energy / 50;
+	
+	// HP Regen
+	if (HPRate >= HPTime && GetActorProperty(0, APROP_Health) >= 0)
+	{
+		HealThing(HPAmount);
+		HPRate = 0;
+	};
+
+	// EP Regen
+	if (EPRate >= EPTime && EP <= EPMax)
+	{
+		EP += EPAmount;
+		EPRate = 0;
+	};
+	
+	// If damaged, reset the Healing timer
+	if (HealthLoss != 0)
+		HPRate = 0;
+	
+	// Now increment the timers
+	if (!CheckInventory("MenuFreezer"))
+	{
+		int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
+		
+		// Regen Boost
+		if (RegenBoostTimer > 0)
+		{
+			HPRate += RegenBoostTimer;
+			EPRate += RegenBoostTimer;
+			RegenBoostTimer--;
+			FadeRange(255, 0, 128, 0.1, 255, 0, 128, 0.0, 1.0);
+		};
+
+		// Movement/Crouching/Idling mechanics
+		if (GetCVar("drpg_regen_movement"))
+		{
+			if (Buttons & BT_FORWARD || Buttons & BT_BACK ||	// Movement - 50% Regen Rate
+				Buttons & BT_LEFT || Buttons & BT_MOVELEFT ||
+				Buttons & BT_RIGHT || Buttons & BT_MOVERIGHT ||
+				Buttons & BT_ATTACK || Buttons & BT_JUMP)
+			{
+				HPRate++;
+				EPRate++;
+			}
+			else if (Buttons & BT_CROUCH) // Crouch - 150% Regen Rate
+			{
+				HPRate += 3;
+				EPRate += 3;
+			}
+			else // Idle - 100% Regen Rate
+			{
+				HPRate += 2;
+				EPRate += 2;
+			};
+		}
+		else
+		{
+			HPRate += 2;
+			EPRate += 2;
+		};
+	};
+};
+
+// Keep stats capped at certain values
+function void CheckStatCaps()
+{
+	StatCap = SoftStatCap + CheckInventory("StatCapToken");
+
+	if (Strength < 0)				Strength = 0;
+	if (Strength > StatCap)		Strength = StatCap;
+	if (Defense < 0)				Defense = 0;
+	if (Defense > StatCap)			Defense = StatCap;
+	if (Vitality < 0)				Vitality = 0;
+	if (Vitality > StatCap)		Vitality = StatCap;
+	if (Energy < 0)				Energy = 0;
+	if (Energy > StatCap)			Energy = StatCap;
+	if (Regeneration < 0)			Regeneration = 0;
+	if (Regeneration > StatCap)	Regeneration = StatCap;
+	if (Agility < 0)				Agility = 0;
+	if (Agility > StatCap)			Agility = StatCap;
+	if (Capacity < 0)				Capacity = 0;
+	if (Capacity > StatCap)		Capacity = StatCap;
+	if (Luck < 0)					Luck = 0;
+	if (Luck > StatCap)			Luck = StatCap;
+};
+
+// Keep stats capped at the hard value
+function void CheckHardHardStatCaps()
+{
+	if (Strength < 0)					Strength = 0;
+	if (Strength > HardStatCap)		Strength = HardStatCap;
+	if (Defense < 0)					Defense = 0;
+	if (Defense > HardStatCap)			Defense = HardStatCap;
+	if (Vitality < 0)					Vitality = 0;
+	if (Vitality > HardStatCap)		Vitality = HardStatCap;
+	if (Energy < 0)					Energy = 0;
+	if (Energy > HardStatCap)			Energy = HardStatCap;
+	if (Regeneration < 0)				Regeneration = 0;
+	if (Regeneration > HardStatCap)	Regeneration = HardStatCap;
+	if (Agility < 0)					Agility = 0;
+	if (Agility > HardStatCap)			Agility = HardStatCap;
+	if (Capacity < 0)					Capacity = 0;
+	if (Capacity > HardStatCap)		Capacity = HardStatCap;
+	if (Luck < 0)						Luck = 0;
+	if (Luck > HardStatCap)			Luck = HardStatCap;
+};
+
+// TODO: Recalculate stats after something (Aug, aura) has modified them
+function void RecalculateStats()
+{
+	int HPRatio = (GetActorProperty(0, APROP_Health) * 100) / GetActorProperty(0, APROP_SpawnHealth);
+	int CurrentHP = (HPRatio * GetActorProperty(0, APROP_SpawnHealth)) / 100;
+	int EPRatio = (EP * 100) / EPMax;
+	int CurrentEP = (EPRatio * EPMax) / 100;
+	
+	// SetActorProperty(0, APROP_Health, CurrentHP);
+	// EP = CurrentEP;
+};
+
+function void CheckStatBounds()
+{
+	// Prevent Overflow of EP
+	if (EP > EPMax)
+		EP = EPMax;
+
+	// Cap the max regen timer amounts to 1 second
+	if (HPTime < 35)
+		HPTime = 35;
+	if (EPTime < 35)
+		EPTime = 35;
+	
+	// Prevent Underflow of DamageFactor
+	if (DamageFactor < 0.01)
+		DamageFactor = 0.01;
+	
+	// Prevent Shield Capacity from under/overflowing
+	if (Shield < 0)
+		Shield = 0;
+	if (Shield > ShieldCapacity)
+		Shield = ShieldCapacity;
+	
+	// Cap Weapon Speed
+	if (WeaponSpeed > 100)
+		WeaponSpeed = 100;
+	
+	// Cap chances at 100%
+	if (CreditChance > 100) 	CreditChance = 100;
+	if (HealthChance > 100) 	HealthChance = 100;
+	if (EPChance > 100) 		EPChance = 100;
+	if (ArmorChance > 100) 	ArmorChance = 100;
+	if (PowerupChance > 100) 	PowerupChance = 100;
+	if (RuneChance > 100) 		RuneChance = 100;
+	if (TokenChance > 100) 	TokenChance = 100;
+	if (AugChance > 100) 		AugChance = 100;
+	if (ShieldChance > 100) 	ShieldChance = 100;
+
+	// Speed capping CVAR
+	if (Speed > GetCVar("drpg_maxspeed"))
+		Speed = GetCVar("drpg_maxspeed");
+		
+	// Jump Height capping CVAR
+	if (JumpHeight > GetCVar("drpg_maxjump"))
+		JumpHeight = GetCVar("drpg_maxjump");
+};
+
+// Luck Chances
+function void CheckLuck()
+{
+	CreditChance = 10 + FixedMul(Luck, 0.9);
+	HealthChance = FixedMul(Luck, 0.05);
+	EPChance = FixedMul(Luck, 0.05);
+	ArmorChance = FixedMul(Luck, 0.05);
+	PowerupChance = FixedMul(Luck, 0.05);
+	RuneChance = FixedMul(Luck, 0.025);
+	TokenChance = FixedMul(Luck, 0.01);
+	AugChance = FixedMul(Luck, 0.01);
+	ShieldChance = FixedMul(Luck, 0.01);
+};
+
+function void CheckBurnout()
+{
+	// Energy Burnout Effect
+	if (EP < 0)
+	{
+		// Dynamic Intensity
+		fixed Intensity = Abs(EP / EPMax);
+		if (Intensity > 0.75) Intensity = 0.75;
+		
+		// Screen Effect
+		FadeRange(0, 128, 255, Intensity, 0, 128, 255, 0, 0.25);
+		
+		// Penalties
+		TotalDamage /= 2;
+		DamageFactor *= 2;
+		Mass /= 2;
+		HealthMax /= 2;
+		EPMax /= 2;
+		Speed /= 2;
+		JumpHeight /= 2;
+		SurvivalBonus /= 2;
+	};
+};

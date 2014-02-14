@@ -1,4 +1,12 @@
-lib("Augs");
+#ifndef _AUGS_DH_
+#define _AUGS_DH_
+
+#include "Defs.dh"
+#include "MapVars.dh"
+#include "Globals.dh"
+#include "Stats.dh"
+
+library("Augs");
 
 str[MAX_AUGS][AUG_LEVELS + 1] AugData =
 {
@@ -68,206 +76,9 @@ int[MAX_AUGS] AugLevelMax =
 
 int MaxAugSlots;
 
-function void EquipAug(int Aug)
-{
-	if (AugLevels[Aug] > 0)
-	{
-		if (Augs[Aug])
-		{
-			ActivatorSound("aug/equip", 127);
-			AugSlotsUsed--;
-			Augs[Aug] = false;
-		}
-		else
-		{
-			AugSlotsUsed++;
-			
-			if (AugSlotsUsed > MaxAugSlots)
-			{
-				ActivatorSound("menu/error", 127);
-				SetFont("BIGFONT");
-				Print("\cgYou don't have a free Augmentation slot!\n");
-				AugSlotsUsed--;
-			}
-			else
-			{
-				ActivatorSound("aug/equip", 127);
-				Augs[Aug] = true;
-			};
-		};
-	};
-};
+extern function void CheckAugSlots();
+extern function void CheckAugs();
+extern function void EquipAug(int);
+extern function void LevelUpAug(int);
 
-function void CheckAugSlots(void)
-{
-	MaxAugSlots = (6 - GameSkill()) + CheckInventory("AugSlotUpgrade");
-	
-	// Unequip Augs if you pass the limit (sell a slot upgrade, change difficulty, etc)
-	while (AugSlotsUsed > MaxAugSlots)
-		for (int i = 0; i < MAX_AUGS - 1; i++)
-			if (Augs[i])
-			{
-				EquipAug(i);
-				break;
-			};
-};
-
-function void CheckAugs(void)
-{
-	// Sanity check to prevent negative slots used
-	if (AugSlotsUsed < 0)
-		AugSlotsUsed = 0;
-
-	// Strength Aug
-	if (Augs[AUG_STRENGTH])
-	{
-		if (AugLevels[AUG_STRENGTH] == 1)
-			TotalDamage = FixedMul(TotalDamage, 1.25);
-		if (AugLevels[AUG_STRENGTH] == 2)
-			TotalDamage = FixedMul(TotalDamage, 1.5);
-		if (AugLevels[AUG_STRENGTH] == 3)
-			TotalDamage = FixedMul(TotalDamage, 2.0);
-		if (AugLevels[AUG_STRENGTH] >= 4)
-			TotalDamage = FixedMul(TotalDamage, 4.0);
-	};
-	
-	// Defense Aug
-	if (Augs[AUG_DEFENSE])
-	{
-		if (AugLevels[AUG_DEFENSE] == 1)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.1);
-		if (AugLevels[AUG_DEFENSE] == 2)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.2);
-		if (AugLevels[AUG_DEFENSE] == 3)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.3);
-		if (AugLevels[AUG_DEFENSE] == 4)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.4);
-		if (AugLevels[AUG_DEFENSE] >= 5)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.5);
-	};
-	
-	// Vitality Aug
-	if (Augs[AUG_VITALITY])
-	{
-		if (AugLevels[AUG_VITALITY] >= 1)
-			HealthMax *= 2;
-		if (AugLevels[AUG_VITALITY] >= 2)
-			HPRate += FixedMul(Vitality, 1.25) + FixedMul(Regeneration, 1.25);
-	};
-	
-	// Energy Aug
-	if (Augs[AUG_ENERGY])
-	{
-		if (AugLevels[AUG_ENERGY] >= 1)
-			EPMax *= 2;
-		if (AugLevels[AUG_ENERGY] >= 2)
-			EPRate += FixedMul(Energy, 1.25) + FixedMul(Regeneration, 1.25);
-		if (AugLevels[AUG_ENERGY] >= 3)
-			{AuraBonus = true;}
-		else
-			{AuraBonus = false;};
-	};
-	
-	// Regeneration Aug
-	if (Augs[AUG_REGENERATION])
-	{
-		if (AugLevels[AUG_REGENERATION] >= 1)
-		{
-			HPAmount *= 2;
-			EPAmount *= 2;
-		};
-		if (AugLevels[AUG_REGENERATION] >= 2)
-		{
-			HPTime /= 2;
-			EPTime /= 2;
-		};
-	};
-
-	// Agility Aug
-	if (Augs[AUG_AGILITY])
-	{
-		if (AugLevels[AUG_AGILITY] >= 1)
-			Speed *= 2;
-		if (AugLevels[AUG_AGILITY] >= 2)
-			JumpHeight *= 2;
-		if (AugLevels[AUG_AGILITY] >= 3)
-			WeaponSpeed += 100;
-		if (AugLevels[AUG_AGILITY] >= 4)
-			SurvivalBonus *= 2;
-	};
-	
-	// Capacity Aug
-	if (Augs[AUG_CAPACITY])
-	{
-		int AmmoMult;
-		
-		if (AugLevels[AUG_CAPACITY] == 1)
-			AmmoMult = 2;
-		if (AugLevels[AUG_CAPACITY] == 2)
-			AmmoMult = 4;
-		
-		SetAmmoCapacity("Clip", Capacity * 20 * AmmoMult);
-		SetAmmoCapacity("Shell", Capacity * 10 * AmmoMult);
-		SetAmmoCapacity("RocketAmmo", Capacity * 5 * AmmoMult);
-		SetAmmoCapacity("Cell", Capacity * 30 * AmmoMult);
-	};
-
-	// Luck Aug
-	if (Augs[AUG_LUCK])
-	{
-		int LuckMult;
-		
-		if (AugLevels[AUG_LUCK] == 1)
-			LuckMult = 1.25;
-		if (AugLevels[AUG_LUCK] == 2)
-			LuckMult = 1.5;
-		if (AugLevels[AUG_LUCK] == 3)
-			LuckMult = 2.0;
-		if (AugLevels[AUG_LUCK] == 4)
-			LuckMult = 3.0;
-		if (AugLevels[AUG_LUCK] == 5)
-			LuckMult = 4.0;
-		
-		HealthChance = FixedMul(HealthChance, LuckMult);
-		EPChance = FixedMul(EPChance, LuckMult);
-		ArmorChance = FixedMul(ArmorChance, LuckMult);
-		PowerupChance = FixedMul(PowerupChance, LuckMult);
-		RuneChance = FixedMul(RuneChance, LuckMult);
-		TokenChance = FixedMul(TokenChance, LuckMult);
-		AugChance = FixedMul(AugChance, LuckMult);
-		ShieldChance = FixedMul(ShieldChance, LuckMult);
-	};
-
-	// Keep adding more
-	// ...
-};
-
-function void LevelUpAug(int Aug)
-{
-	if (AugLevels[Aug] < AugLevelMax[Aug])
-	{
-		if (AugLevels[Aug] == 0)
-		{
-			if (CheckInventory("AugCanister"))
-			{
-				ActivatorSound("aug/levelup", 127);
-				TakeInventory("AugCanister", 1);
-				AugLevels[Aug]++;
-			}
-			else
-				{ActivatorSound("menu/error", 127);};
-		}
-		else
-		{
-			if (CheckInventory("AugUpgradeCanister"))
-			{
-				ActivatorSound("aug/levelup", 127);
-				TakeInventory("AugUpgradeCanister", 1);
-				AugLevels[Aug]++;
-			}
-			else
-				{ActivatorSound("menu/error", 127);};
-		};
-	};
-};
-
+#endif
