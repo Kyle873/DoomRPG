@@ -18,63 +18,6 @@ lib("RPG");
 /****************
 *** FUNCTIONS ***
 *****************/
-function void GiveArmor(void)
-{
-	TakeInventory("BasicArmor", 1000000);
-	TakeInventory("Shield", 1);
-	
-	if (ArmorType != "")
-	{
-		GiveInventory(ArmorType, 1);
-		UseInventory(ArmorType);
-		TakeInventory("BasicArmor", GetArmorType(ArmorType, 0) - 1);
-		GiveInventory("ArmorBonus", ArmorAmount - 1);
-	};
-};
-
-function void CheckShields(void)
-{
-	// Check to make sure the Shield has components
-	if (CheckInventory("Shield") && (ShieldBody == 0 || ShieldBattery == 0 || ShieldCapacitor == 0))
-	{
-		ACS_NamedExecuteAlways("ToggleShield", 0, true);
-		Shield = 0;
-		ShieldTimer = 35.0 * ShieldDelayRate;
-	};
-
-	// EP -> Shield Charging (WIP)
-	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
-	if ((!InMenu && !InShop) && Buttons & BT_SPEED && Buttons & BT_USE && Shield < ShieldCapacity && EP > 0)
-	{
-		FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
-		// ActivatorSound("regen/shield", 64);
-		EP--;
-		Shield++;
-	};
-	
-	// If a part is sold/dropped/nuked from orbit/etc, unequip it
-	if (!CheckInventory(ShieldData[0][ShieldBody - 1][0])) 		ShieldBody = 0;
-	if (!CheckInventory(ShieldData[1][ShieldBattery - 1][0])) 	ShieldBattery = 0;
-	if (!CheckInventory(ShieldData[2][ShieldCapacitor - 1][0]))	ShieldCapacitor = 0;
-	if (!CheckInventory(ShieldData[3][ShieldAccessory - 1][0]))	ShieldAccessory = 0;
-	
-	// Apply Components stats to Shield
-	ShieldCapacity = ShieldStats[0][ShieldBody - 1][0] + ShieldStats[1][ShieldBattery - 1][0] + ShieldStats[2][ShieldCapacitor - 1][0];
-	ShieldChargeRate = ShieldStats[0][ShieldBody - 1][1] + ShieldStats[1][ShieldBattery- 1][1] + ShieldStats[2][ShieldCapacitor- 1][1];
-	ShieldDelayRate = 5.0 + ShieldStats[0][ShieldBody - 1][2] + ShieldStats[1][ShieldBattery - 1][2] + ShieldStats[2][ShieldCapacitor - 1][2];
-	ShieldInterval = 35;
-	
-	// Aug Handling
-	if (Augs[AUG_REGENERATION])
-	{
-		if (AugLevels[AUG_REGENERATION] >= 3)
-			ShieldChargeRate *= 2;
-		if (AugLevels[AUG_REGENERATION] >= 4)
-			ShieldDelayRate = FixedDiv(ShieldDelayRate, 2.0);
-		if (AugLevels[AUG_REGENERATION] >= 5)
-			ShieldInterval /= 2;
-	};
-};
 
 function void DefaultLoadout(void)
 {
@@ -92,23 +35,6 @@ function void DefaultLoadout(void)
 	// DoomRL Compatibility
 	if (GetCVar("drpg_ext_doomrl"))
 		SetWeapon("RLPistol");
-};
-
-// Setup XP & Rank Tables
-function void SetupTables(void)
-{
-	// XP Table
-	for (int i = 0; i < MAX_LEVEL; i++)
-		XPTable[i] = 2000 + XPTable[i - 1] * 1.125;
-	
-	// Rank Table
-	for (int i = 0; i < MAX_RANK; i++)
-		if (GameSkill() == 5)
-			{RankTable[i] = 100000 + (100000 * i * i);}
-		else if (GameSkill() > 2)
-			{RankTable[i] = 50000 + (50000 * i * i);}
-		else
-			{RankTable[i] = 25000 + (25000 * i * i);};
 };
 
 function int GetSkillSlot(int Slot)
@@ -136,98 +62,6 @@ function int ScaleEPCost(int Cost)
 	
 	return Cost;
 };
-
-// Amp, Absorb, Adaptive, Booster, Roid, Spike, Nova, Turtle, Immunity
-function void CheckShieldAccessory(void)
-{
-	int X, Y, Z;
-	int Angle;
-	
-	if (CheckInventory("Shield") && ShieldAccessory == 1) // Amp
-		if (Shield >= ShieldCapacity)
-		{
-			int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
-			
-			if (Buttons & BT_ATTACK)
-			{
-				ActivatorSound("shield/amp", 127);
-				FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.5);
-				Shield /= 2;
-			};
-			
-			TotalDamage *= 2;
-		};
-	
-	if (CheckInventory("Shield") && ShieldAccessory == 2) // Booster
-		if (AfterArmor != BeforeArmor)
-			if (Random(1, 4) <= 1)
-			{
-				Angle = GetActorAngle(0);
-				X = GetActorX(0) + Cos(Angle) * 96;
-				Y = GetActorY(0) + Sin(Angle) * 96;
-				Z = GetActorZ(0) + 48.0;
-
-				Spawn("ShieldBooster", X, Y, Z, 0, Angle);
-			};
-	
-	if (CheckInventory("Shield") && ShieldAccessory == 3) // Roid
-		if (CheckWeapon("Fist") || CheckWeapon("Knuckle") || CheckWeapon("Melee_Attacks") || CheckWeapon("RLFistRedux"))
-			TotalDamage *= 2;
-	
-	if (ShieldAccessory == 4) // Turtle
-	{
-		ShieldCapacity *= 2;
-		HealthMax /= 2;
-	};
-	
-	if (ShieldAccessory == 5 && !Nova) // Nova
-		if (AfterHealth != BeforeHealth && Shield <= 0)
-		{
-			X = GetActorX(0);
-			Y = GetActorY(0);
-			Z = GetActorZ(0);
-			Angle = GetActorAngle(0);
-			
-			int Pitch = GetActorPitch(0);
-			int XSpeed = FixedMul(Cos(Angle), 16.0);
-			int YSpeed = FixedMul(Sin(Angle), 16.0);
-			int ZSpeed = -FixedMul(Sin(Pitch), 16.0);
-			int FireHeight = GetActorViewHeight(0) * 780 / 1000;
-			int Offset = 8.0;
-			int Projectiles = 64;
-			int AngleAdd;
-			
-			AngleAdd = 1.0 * Projectiles;
-
-			for (int i = 0; i < Projectiles; i++)
-			{
-				XSpeed = FixedMul(Cos(Angle), 16.0);
-				YSpeed = FixedMul(Sin(Angle), 16.0);
-				ZSpeed = -FixedMul(Sin(Pitch), 16.0);
-				
-				SpawnProjectile(0, "Fireball", 0, 0, 0, 0, 2001);
-				SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
-				SetActorAngle(2001, Angle);
-				SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
-				Thing_ChangeTID(2001, UniqueTID());
-				
-				Angle += AngleAdd;
-			};
-			
-			Nova = true;
-		};
-	
-	if (CheckInventory("Shield") && ShieldAccessory == 6) // Reflective
-		{GiveInventory("ShieldReflection", 1);}
-	else if (CheckInventory("Shield") && ShieldAccessory != 6)
-		{GiveInventory("ShieldReflectionOff", 1);};
-	
-	if (CheckInventory("Shield") && ShieldAccessory == 7) // Ghost
-		{GiveInventory("ShieldGhost", 1);}
-	else if (CheckInventory("Shield") && ShieldAccessory != 7)
-		{GiveInventory("ShieldGhostOff", 1);};
-};
-
 
 /**************
 *** SCRIPTS ***
