@@ -305,11 +305,455 @@ str[MAX_CATEGORIES][MAX_SKILLS][1 + MAX_LEVELS] SkillData =
 	};
 };
 
+// Heal
+function int Heal(int Type)
+{
+	// Refund - If your health is max or above
+	if (Type == 1 && GetActorProperty(0, APROP_Health) >= GetActorProperty(0, APROP_SpawnHealth))
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	// Refund - If you have no summoned monsters
+	if (Type == 2 && MaxSummons == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0, 1.0);
+	
+	if (Type == 1) // Player
+	{
+		HealThing(Energy * 10);
+		ActivatorSound("skills/heal", 127);
+	};
+	if (Type == 2) // Summons
+	{
+		for (int i = SummonID; i <= SummonID + MaxSummons; i++)
+			SetActorProperty(i, APROP_Health, GetActorProperty(i, APROP_SpawnHealth));
+		
+		ActivatorSound("skills/heal2", 127);
+	};
+	
+	return true;
+};
+
+// Repair Armor
+function int Repair(void)
+{
+	if (CheckInventory("Armor") < ArmorMax && CheckArmorType() != "")
+	{
+		FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
+		GiveInventory("ArmorBonus", Energy * 10);
+		
+		if (CheckInventory("Armor") > ArmorMax)
+		{
+			int ArmorOverflow = CheckInventory("BasicArmor") - ArmorMax;
+			TakeInventory("BasicArmor", ArmorOverflow);
+		};
+		
+		ActivatorSound("skills/repair", 127);
+		return true;
+	}
+	else
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	return false;
+};
+
+// Abuse PowerTimeFreezer to create a bullet-time effect
+function void BulletTime(int Mode)
+{
+	BulletTimeMode = Mode;
+	BulletTimeTimer = 350;
+	
+	// Remove duplicate TimeFreezerSounds
+	Thing_Remove(1999);
+	
+	if (Mode == 1) // Stutter Time
+	{
+		SpawnForced("TimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
+		SetActorState(1999, "Spawn");
+		TakeInventory("PowerTimeFreezer", 1);
+		GiveInventory("TimeFreezerQuick", 1);
+	};
+	if (Mode == 2) // Freeze Time
+	{
+		SpawnForced("TimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
+		SetActorState(1999, "Spawn");
+		GiveInventory("TimeFreezer", 1);
+	};
+};
+
+// Drops a random Rune in front of you
+function int DropRune(void)
+{
+	int Angle = GetActorAngle(0);
+	int X = GetActorX(0) + Cos(Angle) * 96;
+	int Y = GetActorY(0) + Sin(Angle) * 96;
+	int Z = GetActorZ(0) + 48.0;
+	str Rune;
+	
+	switch (Random(1, 9))
+	{
+		case 1: Rune = "StrengthRune";		break;
+		case 2: Rune = "DrainRune";		break;
+		case 3: Rune = "EndlessRune";		break;
+		case 4: Rune = "ResistanceRune";	break;
+		case 5: Rune = "RegenerationRune";	break;
+		case 6: Rune = "FrightRune";		break;
+		case 7: Rune = "GhostRune";		break;
+		case 8: Rune = "HighJumpRune";		break;
+		case 9: Rune = "HasteRune";		break;
+	};
+	
+	if (Spawn(Rune, X, Y, Z, 0, Angle))
+	{
+		ActivatorSound("skills/drop", 127);
+		Spawn("TeleportFog", X, Y, Z, 0, Angle);
+		return true;
+	}
+	else
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	return false;
+};
+
+// Drops a backpack in front of you
+function int DropAmmo(void)
+{
+	int Angle = GetActorAngle(0);
+	int X = GetActorX(0) + Cos(Angle) * 96;
+	int Y = GetActorY(0) + Sin(Angle) * 96;
+	int Z = GetActorZ(0) + 48.0;
+	
+	if (Spawn("BigBackPack", X, Y, Z, 0, Angle))
+	{
+		ActivatorSound("skills/drop", 127);
+		Spawn("TeleportFog", X, Y, Z, 0, Angle);
+		return true;
+	}
+	else
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+
+	return false;
+};
+
+// Summoning
+function int Summon(int Type)
+{
+	int Angle = GetActorAngle(0);
+	int X = GetActorX(0) + Cos(Angle) * 96;
+	int Y = GetActorY(0) + Sin(Angle) * 96;
+	int Z = GetActorZ(0);
+	int MarineLevel = CurrentSkillLevel[GetSkillID(4, 0)];
+	int NewID = SummonID + MaxSummons;
+	bool Success;
+	
+	switch (Type)
+	{
+		// Marines
+		case 1:
+			if (GetCVar("drpg_ext_brutal"))
+			{
+				switch (MarineLevel)
+				{
+					case 1: Success = Spawn("Marine", X, Y, Z, NewID, Angle);							break;
+					case 2: Success = Spawn("Marine_Shotgun", X, Y, Z, NewID, Angle);					break;
+					case 3: Success = Spawn("Marine_SSG", X, Y, Z, NewID, Angle);						break;
+					case 4: Success = Spawn("Marine_Minigun", X, Y, Z, NewID, Angle);					break;
+					case 5: Success = Spawn("Marine_Rocket", X, Y, Z, NewID, Angle);					break;
+					case 6: Success = Spawn("Marine_Plasma", X, Y, Z, NewID, Angle);					break;
+					case 7: Success = Spawn("Marine_Railgun", X, Y, Z, NewID, Angle);					break;
+					case 8: Success = Spawn("Marine_BFG", X, Y, Z, NewID, Angle);						break;
+				};
+			}
+			else if (GetCVar("drpg_ext_extras"))
+			{
+				switch (MarineLevel)
+				{
+					case 1: Success = Spawn("MarinePistol2", X, Y, Z, NewID, Angle);					break;
+					case 2: Success = Spawn("MarineShotgun2", X, Y, Z, NewID, Angle);					break;
+					case 3: Success = Spawn("MarineSSG2", X, Y, Z, NewID, Angle);						break;
+					case 4: Success = Spawn("MarineChaingun2", X, Y, Z, NewID, Angle);;				break;
+					case 5: Success = Spawn("MarineRocket2", X, Y, Z, NewID, Angle);					break;
+					case 6: Success = Spawn("MarinePlasma2", X, Y, Z, NewID, Angle);					break;
+					case 7: Success = Spawn("MarineRailgun2", X, Y, Z, NewID, Angle);					break;
+					case 8: Success = Spawn("MarineBFG2", X, Y, Z, NewID, Angle);						break;
+				};
+			}
+			else
+			{
+				switch (MarineLevel)
+				{
+					case 1: Success = Spawn("MarinePistol", X, Y, Z, NewID, Angle);					break;
+					case 2: Success = Spawn("MarineShotgun", X, Y, Z, NewID, Angle);					break;
+					case 3: Success = Spawn("MarineSSG", X, Y, Z, NewID, Angle);						break;
+					case 4: Success = Spawn("MarineChaingun", X, Y, Z, NewID, Angle);;				break;
+					case 5: Success = Spawn("MarineRocket", X, Y, Z, NewID, Angle);					break;
+					case 6: Success = Spawn("MarinePlasma", X, Y, Z, NewID, Angle);					break;
+					case 7: Success = Spawn("MarineRailgun", X, Y, Z, NewID, Angle);					break;
+					case 8: Success = Spawn("MarineBFG", X, Y, Z, NewID, Angle);						break;
+				};
+			};
+			break;
+		
+		// Monsters
+		case 2: 			Success = Spawn("FriendlyZombieman", X, Y, Z, NewID, Angle);				break;
+		case 3: 			Success = Spawn("FriendlyShotgunGuy", X, Y, Z, NewID, Angle);				break;
+		case 4: 			Success = Spawn("FriendlyChaingunGuy", X, Y, Z, NewID, Angle);				break;
+		case 5: 			Success = Spawn("FriendlyDoomImp", X, Y, Z, NewID, Angle);					break;
+		case 6: 			Success = Spawn("FriendlyDemon", X, Y, Z, NewID, Angle);					break;
+		case 7: 			Success = Spawn("FriendlyCacodemon", X, Y, Z, NewID, Angle);				break;
+		case 8: 			Success = Spawn("FriendlyHellKnight", X, Y, Z, NewID, Angle);				break;
+		case 9: 			Success = Spawn("FriendlyBaronOfHell", X, Y, Z, NewID, Angle);				break;
+		case 10: 			Success = Spawn("FriendlyLostSoul", X, Y, Z, NewID, Angle);				break;
+		case 11: 			Success = Spawn("FriendlyPainElemental", X, Y, Z, NewID, Angle);			break;
+		case 12: 			Success = Spawn("FriendlyRevenant", X, Y, Z, NewID, Angle);				break;
+		case 13: 			Success = Spawn("FriendlyFatso", X, Y, Z, NewID, Angle);					break;
+		case 14: 			Success = Spawn("FriendlyArachnotron", X, Y, Z, NewID, Angle);				break;
+		case 15: 			Success = Spawn("FriendlyArchvile", X, Y, Z, NewID, Angle);				break;
+		case 16: 			Success = Spawn("FriendlyCyberdemon", X, Y, Z, NewID, Angle);				break;
+		case 17: 			Success = Spawn("FriendlySpiderMastermind", X, Y, Z, NewID, Angle);		break;
+	};
+	
+	if (Success)
+	{
+		SpawnForced("TeleportFog", X, Y, Z, NewID, Angle);
+		SetActorAngle(NewID, Angle);
+		SetActorProperty(NewID, APROP_Friendly, 1);
+		MaxSummons++;
+	}
+	else
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	return true;
+};
+
+// Breaks down current Armor into Credits
+function int BreakdownArmor(void)
+{
+	int Armor = CheckInventory("BasicArmor");
+	
+	// Can't use Breakdown Armor while the Shield is active
+	if (CheckInventory("Shield"))
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	// Kind of hackish to prevent breaking down Armors that use high values for indestructibleness
+	if (Armor > 1000)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	if (Armor > 0)
+	{
+		TakeInventory("BasicArmor", Armor);
+		GiveInventory("Credits", Armor);
+		
+		// DoomRL Compatibility
+		if (GetCVar("drpg_ext_doomrl"))
+		{
+			TakeInventory("RL100ArmorWorn", 1);
+			TakeInventory("RL150ArmorWorn", 1);
+			TakeInventory("RL200ArmorWorn", 1);
+			TakeInventory("RL100RegenArmorWorn", 1);
+			TakeInventory("RLIndestructibleArmorWorn", 1);
+		};
+		
+		ActivatorSound("skills/breakdown", 127);
+		return true;
+	}
+	else
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	return false;
+};
+
+// Drops a Force Field in front of you
+function int ForceWall(void)
+{
+	int Angle = GetActorAngle(0);
+	int X = GetActorX(0) + Cos(Angle) * 96;
+	int Y = GetActorY(0) + Sin(Angle) * 96;
+	int Z = GetActorZ(0);
+	int WallLevel = CurrentSkillLevel[GetSkillID(5, 1)];
+	
+	switch (WallLevel)
+	{
+		case 1:
+			if (!Spawn("ForceField", X, Y, Z, 1998, Angle) == 0) {return true;}
+			else
+			{
+				ActivatorSound("menu/error", 127);
+				return false;
+			};
+			break;
+		case 2:
+			if (!Spawn("ForceField2", X, Y, Z, 1998, Angle) == 0) {return true;}
+			else
+			{
+				ActivatorSound("menu/error", 127);
+				return false;
+			};
+			break;
+	};
+
+	return false;
+};
+
+// Rallies (teleports) your summoned monster/marines around you
+function int Rally(void)
+{
+	int X = GetActorX(0);
+	int Y = GetActorY(0);
+	int Z = GetActorZ(0);
+	int Angle = GetActorAngle(0);
+	
+	// Fail if you have no summons active
+	if (MaxSummons == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
+
+	for (int i = SummonID; i <= SummonID + MaxSummons; i++)
+		SetActorPosition(i, X, Y, Z, 0);
+	
+	ActivatorSound("skills/rally", 127);
+	return true;
+};
+
+// Unsummon - Removes all actors under the player's control
+function int Unsummon(void)
+{
+	bool Kill = Overdrive;
+	int UnsummonLevel = CurrentSkillLevel[GetSkillID(5, 2)];
+	int EPAdd;
+	
+	// Fail if you have no summons active
+	if (MaxSummons == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	for (int i = SummonID; i <= SummonID + MaxSummons; i++)
+	{
+		if (!Kill && UnsummonLevel == 2 && GetActorProperty(i, APROP_Health) > 0)
+			EPAdd += 25;
+		
+		// Overdrive - Remove summons (teleport out) instead of killing them
+		if (Kill && GetActorProperty(i, APROP_Health) > 0)
+			{Thing_Destroy(i, 1, 0);}
+		else
+		{
+			SpawnForced("TeleportFog", GetActorX(i), GetActorY(i), GetActorZ(i), 0, 0);
+			Thing_Remove(i);
+		};
+	};
+	
+	if (Kill)
+		ActivatorSound("skills/unsummon", 127);
+	
+	if (UnsummonLevel == 2)
+		EP += EPAdd;
+
+	MaxSummons = 0;
+	FadeRange(192, 0, 0, 0.5, 192, 0, 0, 0.0, 1.0);
+	return true;
+};
+
+// Recall - Return to the beginning of the map
+function int Recall(void)
+{
+	// Fail if you're in the Arena
+	if (ArenaActive)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+		
+	SetInventory("ArtiTeleport", 1);
+	UseInventory("ArtiTeleport");
+	return true;
+};
+
+// Powerups
+function int Powerup(int Type)
+{
+	// Levels
+	int InvulnLevel = CurrentSkillLevel[MAX_SKILLS + 0];
+	int InvisLevel = CurrentSkillLevel[MAX_SKILLS + 1];
+	int TimeLevel = CurrentSkillLevel[MAX_SKILLS + 2];
+	
+	switch (Type)
+	{
+		case 1: // Invulnerability
+			ActivatorSound("powerups/protect", 127);
+			GiveInventory(StrParam("SkillInvulnerability%d\n", InvulnLevel), 1);
+			break;
+		case 2: // Invisibility
+			ActivatorSound("powerups/invis", 127);
+			GiveInventory(StrParam("SkillInvisibility%d\n", InvisLevel), 1);
+			break;
+		case 3: // Time Freeze
+			BulletTime(TimeLevel);
+			break;
+		case 4: // Iron Feet
+			ActivatorSound("powerups/suit", 127);
+			GiveInventory("PowerIronFeet", 1);
+			break;
+		case 5: // Night Vision
+			ActivatorSound("powerups/light", 127);
+			GiveInventory("PowerLightAmp", 1);
+			break;
+		case 6: // Berserk
+			ActivatorSound("powerups/berserk", 127);
+			GiveInventory("Berserk", 1);
+			break;
+		case 7: // Mind Mapping
+			ActivatorSound("powerups/map", 127);
+			GiveInventory("AllMap", 1);
+			break;
+		case 8: // Drop Rune
+			return DropRune();
+			break;
+		case 9: // Drop Ammo
+			return DropAmmo();
+			break;
+	};
+	
+	return true;
+};
+
 // Use Skill Script
 script UseSkill(int Index)
 {
 	// If you're dead, terminate
-	if (GetActorProperty(0, APROP_Health) <= 0) Suspend();
+	if (GetActorProperty(0, APROP_Health) <= 0) return;
 
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
@@ -321,7 +765,7 @@ script UseSkill(int Index)
 	if (Buttons & BT_SPEED && (!InMenu && !InShop))
 		Overdrive = true;
 
-	// Scale EP costs to skill level
+	// Scale EP Costs to skill level
 	EPCost = ScaleEPCost(EPCost);
 
 	// If you're in the Skills menu, assign the key to the selected skill
@@ -332,24 +776,24 @@ script UseSkill(int Index)
 			ActivatorSound("menu/move", 127);
 			SkillCatagory[Index] = -1;
 			SkillIndex[Index] = -1;
-			Suspend();
+			return;
 		};
 
 		for (int i = 0; i < 5; i++)
 			if (SkillCatagory[i] == SkillPage && SkillIndex[i] == MenuIndex)
 			{
 				ActivatorSound("menu/error", 127);
-				Suspend();
+				return;
 			};
 		
 		ActivatorSound("menu/move", 127);
 		SkillCatagory[Index] = SkillPage;
 		SkillIndex[Index] = MenuIndex;
-		Suspend();
+		return;
 	};
 	
 	// If the key is unassigned, terminate
-	if (SkillCatagory[Index] == -1 || SkillIndex[Index] == -1) Suspend();
+	if (SkillCatagory[Index] == -1 || SkillIndex[Index] == -1) return;
 
 	// Overdriving an unlearnt skill will learn it
 	if (Overdrive && CheckInventory("SkillToken") > 0 && SkillLevel[GetSkillSlot(Index)] == 0)
@@ -358,7 +802,7 @@ script UseSkill(int Index)
 		CurrentSkillLevel[GetSkillSlot(Index)]++;
 		TakeInventory("SkillToken", 1);
 		FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
-		Suspend();
+		return;
 	};
 	
 	// Check if the Skill has been learned yet
@@ -367,7 +811,7 @@ script UseSkill(int Index)
 		SetFont("BIGFONT");
 		Print("\cgYou don't know this skill yet\n");
 		ActivatorSound("skills/fail", 127);
-		Suspend();
+		return;
 	};
 
 	// Can't use skills while burned out
@@ -376,7 +820,7 @@ script UseSkill(int Index)
 		SetFont("BIGFONT");
 		Print("\chYou can't use skills while burned out\n");
 		ActivatorSound("skills/fail", 127);
-		Suspend();
+		return;
 	};
 	
 	// Normal skills
@@ -411,9 +855,9 @@ script UseSkill(int Index)
 			case 2: // Auras
 				ActivatorSound("skills/buff", 127);
 				if (SkillIndex[Index] == Aura - 1)
-					AuraTimer += (1050 + FixedMul(Energy, 5.25)) * (1 + AuraBonus);
+					{AuraTimer += (1050 + FixedMul(Energy, 5.25)) * (1 + AuraBonus);}
 				else
-					AuraTimer = (1050 + FixedMul(Energy, 5.25)) * (1 + AuraBonus);
+					{AuraTimer = (1050 + FixedMul(Energy, 5.25)) * (1 + AuraBonus);};
 				switch (SkillIndex[Index])
 				{
 					case 0:		Aura = 1;													break; // Red Aura
@@ -481,21 +925,21 @@ script UseSkill(int Index)
 	else // Not enough EP
 	{
 		SetFont("BIGFONT");
-		Print(s:"\cgNot enough EP to use this skill!");
+		Print("\cgNot enough EP to use this skill!\n");
 		ActivatorSound("skills/fail", 127);
 	};
 };
 
 // Skill HUD Script
-script DrawSkillHUD enter
+script DrawSkillHUD(void) enter
 {
-	while (1)
+	while(1)
 	{
 		// If you're dead, terminate
-		if (GetActorProperty(0, APROP_Health) <= 0) terminate;
+		if (GetActorProperty(0, APROP_Health) <= 0) return;
 	
-		int X = GetCVAR("drpg_skill_x");
-		int Y = GetCVAR("drpg_skill_y");
+		int X = GetCVar("drpg_skill_x");
+		int Y = GetCVar("drpg_skill_y");
 
 		for (int i = 4; i >= 0; i--)
 		{
@@ -512,19 +956,20 @@ script DrawSkillHUD enter
 			{
 				Color = CR_RED;
 				
-				HudMessage("%d. %s", i + 1, SkillData[SkillCatagory[i]][SkillIndex[i]][0],
+				HudMessage("%d. %s\n", i + 1, SkillData[SkillCatagory[i]][SkillIndex[i]][0],
 						   HUDMSG_PLAIN, 0, Color,
 						   X, Y, 0.05);
-			};
+			}
 			else
-				HudMessage("%d. %s (%d/%d) [\cn%d\c-]", i + 1,
+			{
+				HudMessage("%d. %s (%d/%d) [\cn%d\c-]\n", i + 1,
 						   SkillData[SkillCatagory[i]][SkillIndex[i]][0],
 						   CurrentSkillLevel[GetSkillSlot(i)],
 						   SkillLevel[GetSkillSlot(i)],
 						   SkillCost,
 						   HUDMSG_PLAIN, 0, Color,
 						   X, Y, 0.05);
-			
+			};
 			Y -= 0.025;
 		};
 		Delay(1);
@@ -560,186 +1005,17 @@ script Transport(void)
 	};
 };
 
-// Heal
-function int Heal(int Type)
-{
-	// Refund - If your health is max or above
-	if (Type == 1 && GetActorProperty(0, APROP_Health) >= GetActorProperty(0, APROP_SPAWNHEALTH))
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	// Refund - If you have no summoned monsters
-	if (Type == 2 && MaxSummons == 0)
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0, 1.0);
-	
-	if (Type == 1) // Player
-	{
-		HealThing(Energy * 10);
-		ActivatorSound("skills/heal", 127);
-	}
-	if (Type == 2) // Summons
-	{
-		for (int i = SummonID; i <= SummonID + MaxSummons; i++)
-			SetActorProperty(i, APROP_Health, GetActorProperty(i, APROP_SPAWNHEALTH));
-		
-		ActivatorSound("skills/heal2", 127);
-	}
-	
-	return true;
-}
-
-// Repair Armor
-function int Repair(void)
-{
-	if (CheckInventory("Armor") < ArmorMax && CheckArmorType() != "")
-	{
-		FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
-		GiveInventory("ArmorBonus", Energy * 10);
-		
-		if (CheckInventory("Armor") > ArmorMax)
-		{
-			int ArmorOverflow = CheckInventory("BasicArmor") - ArmorMax;
-			TakeInventory("BasicArmor", ArmorOverflow);
-		}
-		
-		ActivatorSound("skills/repair", 127);
-		return true;
-	}
-	else
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	return false;
-}
-
-// Powerups
-function int Powerup(int Type)
-{
-	// Levels
-	int InvulnLevel = CurrentSkillLevel[MAX_SKILLS + 0];
-	int InvisLevel = CurrentSkillLevel[MAX_SKILLS + 1];
-	int TimeLevel = CurrentSkillLevel[MAX_SKILLS + 2];
-	
-	switch (Type)
-	{
-		case 1: // Invulnerability
-			ActivatorSound("powerups/protect", 127);
-			GiveInventory(StrParam(s:"SkillInvulnerability", d:InvulnLevel), 1);
-			break;
-		case 2: // Invisibility
-			ActivatorSound("powerups/invis", 127);
-			GiveInventory(StrParam(s:"SkillInvisibility", d:InvisLevel), 1);
-			break;
-		case 3: // Time Freeze
-			BulletTime(TimeLevel);
-			break;
-		case 4: // Iron Feet
-			ActivatorSound("powerups/suit", 127);
-			GiveInventory("PowerIronFeet", 1);
-			break;
-		case 5: // Night Vision
-			ActivatorSound("powerups/light", 127);
-			GiveInventory("PowerLightAmp", 1);
-			break;
-		case 6: // Berserk
-			ActivatorSound("powerups/berserk", 127);
-			GiveInventory("Berserk", 1);
-			break;
-		case 7: // Mind Mapping
-			ActivatorSound("powerups/map", 127);
-			GiveInventory("AllMap", 1);
-			break;
-		case 8: // Drop Rune
-			return DropRune();
-			break;
-		case 9: // Drop Ammo
-			return DropAmmo();
-			break;
-	}
-	
-	return true;
-}
-
-// Drops a random Rune in front of you
-function int DropRune(void)
-{
-	int Angle = GetActorAngle(0);
-	int X = GetActorX(0) + cos(Angle) * 96;
-	int Y = GetActorY(0) + sin(Angle) * 96;
-	int Z = GetActorZ(0) + 48.0;
-	str Rune;
-	
-	switch (Random(1, 9))
-	{
-		case 1: Rune = "StrengthRune";		break;
-		case 2: Rune = "DrainRune";			break;
-		case 3: Rune = "EndlessRune";		break;
-		case 4: Rune = "ResistanceRune";	break;
-		case 5: Rune = "RegenerationRune";	break;
-		case 6: Rune = "FrightRune";		break;
-		case 7: Rune = "GhostRune";			break;
-		case 8: Rune = "HighJumpRune";		break;
-		case 9: Rune = "HasteRune";			break;
-	}
-	
-	if (Spawn(Rune, X, Y, Z, 0, Angle))
-	{
-		ActivatorSound("skills/drop", 127);
-		Spawn("TeleportFog", X, Y, Z, 0, Angle);
-		return true;
-	}
-	else
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	return false;
-}
-
-// Drops a backpack in front of you
-function int DropAmmo(void)
-{
-	int Angle = GetActorAngle(0);
-	int X = GetActorX(0) + cos(Angle) * 96;
-	int Y = GetActorY(0) + sin(Angle) * 96;
-	int Z = GetActorZ(0) + 48.0;
-	
-	if (Spawn("BigBackPack", X, Y, Z, 0, Angle))
-	{
-		ActivatorSound("skills/drop", 127);
-		Spawn("TeleportFog", X, Y, Z, 0, Angle);
-		return true;
-	}
-	else
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-
-	return false;
-}
-
 // Attack skills will use this
-script "AttackSkill" (int Element, int Type)
+script AttackSkill (int Element, int Type)
 {
 	int X = GetActorX(0);
 	int Y = GetActorY(0);
 	int Z = GetActorZ(0);
 	int Pitch = GetActorPitch(0);
 	int Angle = GetActorAngle(0);
-	int XSpeed = FixedMul(cos(Angle), 16.0);
-	int YSpeed = FixedMul(sin(Angle), 16.0);
-	int ZSpeed = -FixedMul(sin(Pitch), 16.0);
+	int XSpeed = FixedMul(Cos(Angle), 16.0);
+	int YSpeed = FixedMul(Sin(Angle), 16.0);
+	int ZSpeed = -FixedMul(Sin(Pitch), 16.0);
 	int FireHeight = FixedMul(GetActorViewHeight(0), 0.8);
 	int Offset = 8.0;
 	int AngleAdd;
@@ -749,19 +1025,19 @@ script "AttackSkill" (int Element, int Type)
 	int i;
 	
 	// Hack - Can't use projectile skills in the water)
-	if (Type == 1 && GetActorProperty(0, APROP_WATERLEVEL) > 0)
+	if (Type == 1 && GetActorProperty(0, APROP_Waterlevel) > 0)
 	{
 		AmbientSound("menu/error", 127);
 		SetResultValue(0);
-		terminate;
-	}
+		return;
+	};
 	
 	// Apply proper projectile type from the specified element
 	switch (Element)
 	{
 		case 1: AttackType = "Fireball";	break;
 		case 2: AttackType = "IceMissile";	break;
-	}
+	};
 	
 	if (Type == 1) // Projectile
 	{
@@ -771,18 +1047,19 @@ script "AttackSkill" (int Element, int Type)
 		SetActorAngle(2001, Angle);
 		SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
 		Thing_ChangeTID(2001, UniqueTID());
-	}
+	};
 	if (Type == 2) // Nova
 	{
 		AttackLevel = SkillLevel[GetSkillID(3, (Element * 2) - 1)];
 		Projectiles = AttackLevel * 8;
-		AngleAdd = FixedDiv(1.0, Projectiles) >> 16;
+		int tn = 1.0 / Projectiles;
+		AngleAdd = tn;
 		
 		for (i = 0; i < Projectiles; i++)
 		{
-			XSpeed = FixedMul(cos(Angle), 16.0);
-			YSpeed = FixedMul(sin(Angle), 16.0);
-			ZSpeed = -FixedMul(sin(Pitch), 16.0);
+			XSpeed = FixedMul(Cos(Angle), 16.0);
+			YSpeed = FixedMul(Sin(Angle), 16.0);
+			ZSpeed = -FixedMul(Sin(Pitch), 16.0);
 			
 			SpawnProjectile(0, AttackType, 0, 0, 0, 0, 2001);
 			SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
@@ -791,283 +1068,14 @@ script "AttackSkill" (int Element, int Type)
 			Thing_ChangeTID(2001, UniqueTID());
 			
 			Angle += AngleAdd;
-		}
-	}
+		};
+	};
 	if (Type == 3) // Hitscan?
 	{
 		SetResultValue(0);
-	}
+	};
 	// etc
-}
-
-// Summoning
-function int Summon(int Type)
-{
-	int Angle = GetActorAngle(0);
-	int X = GetActorX(0) + cos(Angle) * 96;
-	int Y = GetActorY(0) + sin(Angle) * 96;
-	int Z = GetActorZ(0);
-	int MarineLevel = CurrentSkillLevel[GetSkillID(4, 0)];
-	int NewID = SummonID + MaxSummons;
-	bool Success;
-	
-	switch (Type)
-	{
-		// Marines
-		case 1:
-			if (GetCVAR("drpg_ext_brutal"))
-				switch (MarineLevel)
-				{
-					case 1: Success = Spawn("Marine", X, Y, Z, NewID, Angle);							break;
-					case 2: Success = Spawn("Marine_Shotgun", X, Y, Z, NewID, Angle);					break;
-					case 3: Success = Spawn("Marine_SSG", X, Y, Z, NewID, Angle);						break;
-					case 4: Success = Spawn("Marine_Minigun", X, Y, Z, NewID, Angle);					break;
-					case 5: Success = Spawn("Marine_Rocket", X, Y, Z, NewID, Angle);					break;
-					case 6: Success = Spawn("Marine_Plasma", X, Y, Z, NewID, Angle);					break;
-					case 7: Success = Spawn("Marine_Railgun", X, Y, Z, NewID, Angle);					break;
-					case 8: Success = Spawn("Marine_BFG", X, Y, Z, NewID, Angle);						break;
-				}
-			else if (GetCVAR("drpg_ext_extras"))
-				switch (MarineLevel)
-				{
-					case 1: Success = Spawn("MarinePistol2", X, Y, Z, NewID, Angle);					break;
-					case 2: Success = Spawn("MarineShotgun2", X, Y, Z, NewID, Angle);					break;
-					case 3: Success = Spawn("MarineSSG2", X, Y, Z, NewID, Angle);						break;
-					case 4: Success = Spawn("MarineChaingun2", X, Y, Z, NewID, Angle);;					break;
-					case 5: Success = Spawn("MarineRocket2", X, Y, Z, NewID, Angle);					break;
-					case 6: Success = Spawn("MarinePlasma2", X, Y, Z, NewID, Angle);					break;
-					case 7: Success = Spawn("MarineRailgun2", X, Y, Z, NewID, Angle);					break;
-					case 8: Success = Spawn("MarineBFG2", X, Y, Z, NewID, Angle);						break;
-				}
-			else
-				switch (MarineLevel)
-				{
-					case 1: Success = Spawn("MarinePistol", X, Y, Z, NewID, Angle);						break;
-					case 2: Success = Spawn("MarineShotgun", X, Y, Z, NewID, Angle);					break;
-					case 3: Success = Spawn("MarineSSG", X, Y, Z, NewID, Angle);						break;
-					case 4: Success = Spawn("MarineChaingun", X, Y, Z, NewID, Angle);;					break;
-					case 5: Success = Spawn("MarineRocket", X, Y, Z, NewID, Angle);						break;
-					case 6: Success = Spawn("MarinePlasma", X, Y, Z, NewID, Angle);						break;
-					case 7: Success = Spawn("MarineRailgun", X, Y, Z, NewID, Angle);					break;
-					case 8: Success = Spawn("MarineBFG", X, Y, Z, NewID, Angle);						break;
-				}
-			break;
-		
-		// Monsters
-		case 2: 			Success = Spawn("FriendlyZombieman", X, Y, Z, NewID, Angle);				break;
-		case 3: 			Success = Spawn("FriendlyShotgunGuy", X, Y, Z, NewID, Angle);				break;
-		case 4: 			Success = Spawn("FriendlyChaingunGuy", X, Y, Z, NewID, Angle);				break;
-		case 5: 			Success = Spawn("FriendlyDoomImp", X, Y, Z, NewID, Angle);					break;
-		case 6: 			Success = Spawn("FriendlyDemon", X, Y, Z, NewID, Angle);					break;
-		case 7: 			Success = Spawn("FriendlyCacodemon", X, Y, Z, NewID, Angle);				break;
-		case 8: 			Success = Spawn("FriendlyHellKnight", X, Y, Z, NewID, Angle);				break;
-		case 9: 			Success = Spawn("FriendlyBaronOfHell", X, Y, Z, NewID, Angle);				break;
-		case 10: 			Success = Spawn("FriendlyLostSoul", X, Y, Z, NewID, Angle);					break;
-		case 11: 			Success = Spawn("FriendlyPainElemental", X, Y, Z, NewID, Angle);			break;
-		case 12: 			Success = Spawn("FriendlyRevenant", X, Y, Z, NewID, Angle);					break;
-		case 13: 			Success = Spawn("FriendlyFatso", X, Y, Z, NewID, Angle);					break;
-		case 14: 			Success = Spawn("FriendlyArachnotron", X, Y, Z, NewID, Angle);				break;
-		case 15: 			Success = Spawn("FriendlyArchvile", X, Y, Z, NewID, Angle);					break;
-		case 16: 			Success = Spawn("FriendlyCyberdemon", X, Y, Z, NewID, Angle);				break;
-		case 17: 			Success = Spawn("FriendlySpiderMastermind", X, Y, Z, NewID, Angle);			break;
-	}
-	
-	if (Success)
-	{
-		SpawnForced("TeleportFog", X, Y, Z, NewID, Angle);
-		SetActorAngle(NewID, Angle);
-		SetActorProperty(NewID, APROP_FRIENDLY, 1);
-		MaxSummons++;
-	}
-	else
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	return true;
-}
-
-// Breaks down current Armor into Credits
-function int BreakdownArmor(void)
-{
-	int Armor = CheckInventory("BasicArmor");
-	
-	// Can't use Breakdown Armor while the Shield is active
-	if (CheckInventory("Shield"))
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	// Kind of hackish to prevent breaking down Armors that use high values for indestructibleness
-	if (Armor > 1000)
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	if (Armor > 0)
-	{
-		TakeInventory("BasicArmor", Armor);
-		GiveInventory("Credits", Armor);
-		
-		// DoomRL Compatibility
-		if (GetCVAR("drpg_ext_doomrl"))
-		{
-			TakeInventory("RL100ArmorWorn", 1);
-			TakeInventory("RL150ArmorWorn", 1);
-			TakeInventory("RL200ArmorWorn", 1);
-			TakeInventory("RL100RegenArmorWorn", 1);
-			TakeInventory("RLIndestructibleArmorWorn", 1);
-		}
-		
-		ActivatorSound("skills/breakdown", 127);
-		return true;
-	}
-	else
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	return false;
-}
-
-// Drops a Force Field in front of you
-function int ForceWall(void)
-{
-	int Angle = GetActorAngle(0);
-	int X = GetActorX(0) + cos(Angle) * 96;
-	int Y = GetActorY(0) + sin(Angle) * 96;
-	int Z = GetActorZ(0);
-	int WallLevel = CurrentSkillLevel[GetSkillID(5, 1)];
-	
-	switch (WallLevel)
-	{
-		case 1:
-			if (!Spawn("ForceField", X, Y, Z, 1998, Angle) == 0) return true;
-			else
-			{
-				ActivatorSound("menu/error", 127);
-				return false;
-			}
-			break;
-		case 2:
-			if (!Spawn("ForceField2", X, Y, Z, 1998, Angle) == 0) return true;
-			else
-			{
-				ActivatorSound("menu/error", 127);
-				return false;
-			}
-			break;
-	}
-
-	return false;
-}
-
-// Rallies (teleports) your summoned monster/marines around you
-function int Rally(void)
-{
-	int X = GetActorX(0);
-	int Y = GetActorY(0);
-	int Z = GetActorZ(0);
-	int Angle = GetActorAngle(0);
-	
-	// Fail if you have no summons active
-	if (MaxSummons == 0)
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
-
-	for (int i = SummonID; i <= SummonID + MaxSummons; i++)
-		SetActorPosition(i, X, Y, Z, 0);
-	
-	ActivatorSound("skills/rally", 127);
-	return true;
-}
-
-// Unsummon - Removes all actors under the player's control
-function int Unsummon(void)
-{
-	bool Kill = Overdrive;
-	int UnsummonLevel = CurrentSkillLevel[GetSkillID(5, 2)];
-	int EPAdd;
-	
-	// Fail if you have no summons active
-	if (MaxSummons == 0)
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-	
-	for (int i = SummonID; i <= SummonID + MaxSummons; i++)
-	{
-		if (!Kill && UnsummonLevel == 2 && GetActorProperty(i, APROP_Health) > 0)
-			EPAdd += 25;
-		
-		// Overdrive - Remove summons (teleport out) instead of killing them
-		if (Kill && GetActorProperty(i, APROP_Health) > 0)
-			Thing_Destroy(i, 1, 0);
-		else
-		{
-			SpawnForced("TeleportFog", GetActorX(i), GetActorY(i), GetActorZ(i), 0, 0);
-			Thing_Remove(i);
-		}
-	}
-	
-	if (Kill)
-		ActivatorSound("skills/unsummon", 127);
-	
-	if (UnsummonLevel == 2)
-		EP += EPAdd;
-
-	MaxSummons = 0;
-	FadeRange(192, 0, 0, 0.5, 192, 0, 0, 0.0, 1.0);
-	return true;
-}
-
-// Recall - Return to the beginning of the map
-function int Recall(void)
-{
-	// Fail if you're in the Arena
-	if (ArenaActive)
-	{
-		ActivatorSound("menu/error", 127);
-		return false;
-	}
-		
-	SetInventory("ArtiTeleport", 1);
-	UseInventory("ArtiTeleport");
-	return true;
-}
-
-// Abuse PowerTimeFreezer to create a bullet-time effect
-function void BulletTime(int Mode)
-{
-	BulletTimeMode = Mode;
-	BulletTimeTimer = 350;
-	
-	// Remove duplicate TimeFreezerSounds
-	Thing_Remove(1999);
-	
-	if (Mode == 1) // Stutter Time
-	{
-		SpawnForced("TimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
-		SetActorState(1999, "Spawn");
-		TakeInventory("PowerTimeFreezer", 1);
-		GiveInventory("TimeFreezerQuick", 1);
-	}
-	if (Mode == 2) // Freeze Time
-	{
-		SpawnForced("TimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
-		SetActorState(1999, "Spawn");
-		GiveInventory("TimeFreezer", 1);
-	}
-}
+};
 
 function void CheckSkills(void)
 {
@@ -1092,12 +1100,12 @@ function void CheckSkills(void)
 	
 	// Give the player the Aura item while an Aura is active (for SBARINFO hax)
 	if (AuraTimer > 0)
-		GiveInventory("Aura", 1);
+		{GiveInventory("Aura", 1);}
 	else
-		TakeInventory("Aura", 1);
+		{TakeInventory("Aura", 1);};
 	
-	// DoomRL Compatibility - Increase the cost of Breakdown Armor
-	if (GetCVAR("drpg_ext_doomrl"))
+	// DoomRL Compatibility - Increase the Cost of Breakdown Armor
+	if (GetCVar("drpg_ext_doomrl"))
 		SkillCosts[5][0] = 500;
 	
 	// Aura Timer handling
@@ -1129,7 +1137,7 @@ function void CheckSkills(void)
 					{
 						DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.75);
 						GiveInventory("GreenAura1", 1);
-					}
+					};
 					break;
 				// White Aura
 				case 3:
@@ -1139,7 +1147,7 @@ function void CheckSkills(void)
 					{
 						if (Combo == 0) Combo++;
 						ComboTimer = 100;
-					}
+					};
 					if (WhiteAuraLevel >= 3)
 						if (Random(1, 350) < 35)
 							TotalGained++;
@@ -1171,24 +1179,24 @@ function void CheckSkills(void)
 					{
 						HPAmount *= 2;
 						EPAmount *= 2;
-					}
+					};
 					if (PurpleAuraLevel == 2)
 					{
 						HPAmount *= 3;
 						EPAmount *= 3;
-					}
+					};
 					if (PurpleAuraLevel == 3)
 					{
 						HPAmount *= 4;
 						EPAmount *= 4;
-					}
+					};
 					if (PurpleAuraLevel == 4)
 					{
 						HPAmount *= 4;
 						EPAmount *= 4;
 						HPTime /= 2;
 						EPTime /= 2;
-					}
+					};
 					break;
 				// Orange Aura
 				case 7:
@@ -1243,13 +1251,13 @@ function void CheckSkills(void)
 					AugChance = FixedMul(AugChance, LuckMult);
 					ShieldChance = FixedMul(ShieldChance, LuckMult);
 					break;
-			}
+			};
 		
 		// Decrease timer this tic and calculate HUD timer amount
 		if (!CheckInventory("MenuFreezer") && !CheckInventory("PowerTimeFreezer"))
 			AuraTimer--;
 		AuraTimerHUD = AuraTimer / 35 + 1;
-	}
+	};
 	
 	// Summoned Monsters Handling
 	for (int i = SummonID; i < SummonID + MaxSummons; i++)
@@ -1257,16 +1265,16 @@ function void CheckSkills(void)
 			MaxSummons--;
 	
 	// Force Wall Handling
-	if (GetActorProperty(1998, APROP_ALPHA) > 0)
+	if (GetActorProperty(1998, APROP_Alpha) > 0)
 	{
 		int WallAngle = GetActorAngle(0);
-		int WallX = GetActorX(0) + cos(WallAngle) * 48;
-		int WallY = GetActorY(0) + sin(WallAngle) * 48;
+		int WallX = GetActorX(0) + Cos(WallAngle) * 48;
+		int WallY = GetActorY(0) + Sin(WallAngle) * 48;
 		int WallZ = GetActorZ(0);
 		
 		SetActorPosition(1998, WallX, WallY, WallZ, false);
 		SetActorAngle(1998, WallAngle);
-	}
+	};
 	
 	// Bullet-Time timer handling
 	if (BulletTimeTimer >= 0)
@@ -1275,18 +1283,18 @@ function void CheckSkills(void)
 			GiveInventory("TimeFreezerQuick", 1);
 		
 		BulletTimeTimer--;
-	}
-}
+	};
+};
 
 // Used from DECORATE to get dynamic projectile damage rates
-script "SetProjectileDamage" (int Type)
+script SetProjectileDamage (int Type)
 {
 	switch (Type)
 	{
 		case 1: SetResultValue(Round(Energy * 0.25));	break;	// Fire
 		case 2: SetResultValue(Round(Energy * 0.3));	break;	// Ice
-	}
-}
+	};
+};
 
 // Updates Skills with dynamic descriptions (calculations, etc)
 function void CheckSkillDescriptions(void)
@@ -1295,25 +1303,25 @@ function void CheckSkillDescriptions(void)
 	
 	// Healing - Heal
 	for (i = 1; i <= SkillLevelMax[0][0]; i++)
-		SkillData[0][0][i] = StrParam(s:"Recover ", d:Energy * 10, s:" HP");
+		SkillData[0][0][i] = StrParam("Recover %d HP\n", Energy * 10);
 
 	// Healing - Repair Armor
 	for (i = 1; i <= SkillLevelMax[0][1]; i++)
-		SkillData[0][2][i] = StrParam(s:"Repair ", d:Energy * 10, s:" Armor");
+		SkillData[0][2][i] = StrParam("Repair %d Armor\n", Energy * 10);
 	
 	// Attacks - Fireball
 	for (i = 1; i <= SkillLevelMax[3][0]; i++)
-		SkillData[3][0][i] = StrParam(s:"Shoots a fireball\n\ca", d:Round(Energy * 0.25), s:" Fire Damage");
+		SkillData[3][0][i] = StrParam("Shoots a fireball\n\ca%d Fire Damage\n", Round(Energy * 0.25));
 
 	// Attacks - Fireball Nova
 	for (i = 1; i <= SkillLevelMax[3][1]; i++)
-		SkillData[3][1][i] = StrParam(s:"Shoots fireballs in a circular nova around you\n\ca", d:Round(Energy * 0.25), s:" Fire Damage");
+		SkillData[3][1][i] = StrParam("Shoots fireballs in a circular nova around you\n\ca%d Fire Damage\n", Round(Energy * 0.25));
 
 	// Attacks - Ice Missile
 	for (i = 1; i <= SkillLevelMax[3][2]; i++)
-		SkillData[3][2][i] = StrParam(s:"Shoots an Ice Missile\n\cn", d:Round(Energy * 0.3), s:" Ice Damage\n");
+		SkillData[3][2][i] = StrParam("Shoots an Ice Missile\n\cn%d Ice Damage\n", Round(Energy * 0.3));
 	
 	// Attacks - Ice Nova
 	for (i = 1; i <= SkillLevelMax[3][3]; i++)
-		SkillData[3][3][i] = StrParam(s:"Shoots ice missiles in a circular nova around you\n\cn", d:Round(Energy * 0.3), s:" Ice Damage\n");
-}
+		SkillData[3][3][i] = StrParam("Shoots ice missiles in a circular nova around you\n\cn%d Ice Damage\n", Round(Energy * 0.3));
+};
