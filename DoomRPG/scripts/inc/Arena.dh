@@ -1,48 +1,7 @@
-#library "Arena"
-
-#include "zcommon.acs"
-
-#import "Menu.acs"
-#import "Shop.acs"
-#import "Skills.acs"
-#import "Stats.acs"
-
-str ArenaMods[MAX_MODS] =
-{
-	"\cgNo Regeneration"
-};
-
-str ArenaEnvironments[MAX_ENVIRONMENTS] =
-{
-	"\cmBlackout",
-	"\cjFoggy",
-	"\ciThe Floor is Lava",
-	"\cuGrayscale",
-};
-
-str ArenaBonus[MAX_BONUS] =
-{
-    "\cgFull Health",
-    "\cvFull EP",
-    "\cfMoney Drop",
-    "\cuAmmo Drop",
-    "\cgHealth Drop",
-    "\cdArmor Drop",
-    "\cuWeapon Drop",
-	"\caPowerup Drop",
-	"\caRune Drop"
-};
-
-str Monsters[17] =
-{
-    "ZombieMan", "ShotgunGuy", "ChaingunGuy", "DoomImp", "Demon", "Spectre",
-    "HellKnight", "BaronOfHell", "Cacodemon", "LostSoul",
-    "PainElemental", "Revenant", "Fatso", "Arachnotron", "ArchVile",
-    "Cyberdemon", "SpIDerMastermind"
-};
+lib("Arena");
 
 // Arena Script
-script "ArenaLoop" (void)
+script ArenaLoop (void)
 {
 	SetMusic("Outpost", 3);
 	ArenaSetEnvironment(0);
@@ -51,11 +10,11 @@ script "ArenaLoop" (void)
     while (1)
     {
         // Stop the script if the Arena is stopped or you die
-        if (!ArenaActive || GetActorProperty(0, APROP_HEALTH) <= 0)
+        if (!ArenaActive || GetActorProperty(0, APROP_Health) <= 0)
 		{
 			ACS_NamedExecuteAlways("ArenaStop", 0);
-            terminate;
-		}
+            return;
+		};
         
         // Arena HUD
 		ArenaDrawHUD();
@@ -76,17 +35,16 @@ script "ArenaLoop" (void)
 			
 			SetFont("BIGFONT");
 			if (!InMenu && !InShop)
-				HudMessage(s:"Press ", s:"\cd", k:"+use", s:"\c-", s:" to start the next wave\n",
-						   s:"Press ", s:"\cd", k:"+speed", s:"\c-", s:" to exit the Arena";
+				HudMessage("Press \cd%k\c- to start the next wave\nPress \cd%k\c- to exit the Arena\n", "+use" , "+speed",
 						   HUDMSG_PLAIN, 0, CR_WHITE, 0.5, 0.75, 0.05);
-					   
+						
 			if (Buttons & BT_USE && (!InMenu && !InShop))
 				ArenaState = ARENA_READY;
 			if (Buttons & BT_SPEED && (!InMenu && !InShop))
 			{
 				ACS_NamedExecuteAlways("ArenaStop", 0);
-				terminate;
-			}
+				return;
+			};
 		}
 		else if (ArenaState == ARENA_READY)
 		{
@@ -110,19 +68,20 @@ script "ArenaLoop" (void)
 				ArenaState = ARENA_INTERMISSION;
 			if (ArenaTimerActive && ArenaTimer > 0)
 				ArenaTimer--;
-		}
+		};
 		
         Delay(1);
-    }
-}
+    };
+	return;
+};
 
 // Stop the Arena session
-script "ArenaStop" (void)
+script ArenaStop (void)
 {
 	if (ArenaWave > 1)
-		ArenaState = ARENA_WAITING;
+		{ArenaState = ARENA_WAITING;}
 	else
-		ArenaState = ARENA_READY;
+		{ArenaState = ARENA_READY;};
 	
 	ArenaActive = false;
 	
@@ -136,14 +95,15 @@ script "ArenaStop" (void)
 	Ceiling_RaiseByValue(ArenaSectorTag - 1, 64, 128);
 	Thing_Remove(1002);
 	
-	if (GetActorProperty(0, APROP_HEALTH) <= 0)
-		SetMusic("OutPost", 1);
+	if (GetActorProperty(0, APROP_Health) <= 0)
+		{SetMusic("OutPost", 1);}
 	else
-		SetMusic("Outpost", 0);
-}
+		{SetMusic("Outpost", 0);};
+	return;
+};
 
 // Arena Test Script
-script "SetArena" (int Wave, int Environment, int Bonus)
+script SetArena (int Wave, int Environment, int Bonus)
 {
     if (Wave > 0)
 		ArenaWave = Wave;
@@ -153,234 +113,6 @@ script "SetArena" (int Wave, int Environment, int Bonus)
 	
 	if (Bonus >= 0)
 		ArenaGetBonus(Bonus);
-}
+	return;
+};
 
-function void ArenaDrawHUD(void)
-{
-	int X = -0.0225;
-	int Y = 0.525;
-	
-	SetFont("SMALLFONT");
-	
-	// Wave
-	HudMessage(s:"Wave: ",
-			   d:ArenaWave;
-			   HUDMSG_PLAIN, 2, CR_GREEN, X, Y, 0.05);
-	y += 0.025;
-
-	// Monster Count
-	if (ArenaCount > 0)
-	{
-		HudMessage(s:"Monsters: ",
-				   d:ArenaCount;
-				   HUDMSG_PLAIN, 1, CR_GREEN, X, Y, 0.05);
-		y += 0.025;
-	}
-	
-	// Timer
-	if (ArenaTimerActive && ArenaTimer > 0)
-	{
-		HudMessage(s:"Time: ",
-				   d:ArenaTimer / 35 + 1;
-				   HUDMSG_PLAIN, 3, CR_WHITE, X, Y, 0.05);
-		y += 0.025;
-	}
-	
-	// Mod
-	if (ArenaMod >= 0)
-	{
-		HudMessage(s:ArenaMods[ArenaMod];
-				   HUDMSG_PLAIN, 4, CR_WHITE, X, Y, 0.05);
-		y += 0.025;
-	}
-
-	// Environment
-	if (ArenaEnvironment > 0)
-	{
-		HudMessage(s:ArenaEnvironments[ArenaEnvironment - 1];
-				   HUDMSG_PLAIN, 5, CR_WHITE, X, Y, 0.05);
-		y += 0.025;
-	}
-}
-
-function void ArenaCheckMod(void)
-{
-	switch (ArenaMod)
-	{
-		case 0: // No Regeneration
-			HPRate = 0;
-			EPRate = 0;
-			break;
-	}
-}
-
-function void ArenaGetBonus(int Bonus)
-{
-	str SpawnItem;
-	int i;
-	
-	switch (Bonus)
-	{
-		case 0: // Full Health
-			if (GetActorProperty(0, APROP_HEALTH) >= HealthMax)
-			{
-				ArenaGetBonus(Random(0, MAX_BONUS - 1));
-				return;
-			}
-			else
-				HealThing(1000000);
-			break;
-		case 1: // Full EP
-			if (EP >= EPMax)
-			{
-				ArenaGetBonus(Random(0, MAX_BONUS - 1));
-				return;
-			}
-			else
-				EP = EPMax;
-			break;
-		case 2: // Money Drop
-			SpawnSpot("TeleportFog", 1200, 0, 0);
-			for (i = 0; i < ArenaWave; i++)
-			{
-				SpawnSpot("MoneyDropper", 1200, 1201, 0);
-				SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
-				Thing_ChangeTID(1201, 0);
-			}
-			break;
-		case 3: // Ammo Drop
-			SpawnSpot("TeleportFog", 1200, 0, 0);
-			SpawnSpot("BackpackRandomizer", 1200, 1201, 0);
-			SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
-			Thing_ChangeTID(1201, 0);
-			break;
-		case 4: // Health Drop
-			SpawnSpot("TeleportFog", 1200, 0, 0);
-			SpawnSpot("HealthDropper", 1200, 1201, 0);
-			SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
-			Thing_ChangeTID(1201, 0);
-			break;
-		case 5: // Armor Drop
-			SpawnSpot("TeleportFog", 1200, 0, 0);
-			
-			if (Random(1, 2) == 1)
-				SpawnItem = "GreenArmorRandomizer";
-			else
-				SpawnItem = "BlueArmorRandomizer";
-			
-			SpawnSpot(SpawnItem, 1200, 1201, 0);
-			SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
-			Thing_ChangeTID(1201, 0);
-			break;
-		case 6: // Weapon Drop
-			SpawnSpot("TeleportFog", 1200, 0, 0);
-			SpawnSpot("WeaponDropper", 1200, 1201, 0);
-			SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
-			Thing_ChangeTID(1201, 0);
-			break;
-		case 7: // Powerup Drop
-			SpawnSpot("TeleportFog", 1200, 0, 0);
-			SpawnSpot("PowerupDropper", 1200, 1201, 0);
-			SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
-			Thing_ChangeTID(1201, 0);
-			break;
-		case 8: // Rune Drop
-			SpawnSpot("TeleportFog", 1200, 0, 0);
-			SpawnSpot("RuneDropper", 1200, 1201, 0);
-			SetActorVelocity(1201, Random(-8, 8) << 16, Random(-8, 8) << 16, Random(-8, 8) << 16, true, false);
-			Thing_ChangeTID(1201, 0);
-			break;
-	}
-	
-	// Bonus Message
-	if (Bonus >= 0)
-	{
-		SetFont("BIGFONT");
-		HudMessage(s:ArenaBonus[Bonus]; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
-		ActivatorSound("misc/secret", 127);
-	}
-}
-
-function void ArenaSpawnMobs(void)
-{
-	int MonsterID;
-	
-	for (int i = ArenaSpotSpawns; i < ArenaSpotSpawns + 30; i++)
-	{
-		// Get a random monster from the list
-		MonsterID = Random(-5 + (ArenaWave / 10), ArenaWave / 5);
-		
-		if (MonsterID > 16)
-			MonsterID = 16;
-		
-		// Skip this spawn spot if < 0 is hit by the randomizer
-		if (MonsterID < 0)
-			continue;
-			
-		// Spawn the monster
-		if (SpawnSpotFacingForced(Monsters[MonsterID], i, 1002))
-			SpawnSpotForced("TeleportFog", i, 0, 0);
-	}
-}
-
-function void ArenaSetEnvironment(int ID)
-{
-	if (ID == -1)
-	{
-		int EnvironmentRandomizer = Random(-10, MAX_ENVIRONMENTS);
-		if (EnvironmentRandomizer > 0)
-			ID = EnvironmentRandomizer;
-	}
-
-	switch (ID)
-	{
-		case 0: // Normal
-			Light_Fade(ArenaSectorTag, 192, 35);
-			Light_Fade(ArenaSectorTag + 1, 192, 35);
-			Light_Fade(ArenaSectorTag + 2, 192, 35);
-			Sector_SetFade(ArenaSectorTag, 0, 0, 0);
-			Sector_SetFade(ArenaSectorTag + 1, 0, 0, 0);
-			Sector_SetFade(ArenaSectorTag + 2, 0, 0, 0);
-			ChangeFloor(ArenaSectorTag, "CEIL5_1");
-			ChangeFloor(ArenaSectorTag + 1, "CEIL5_2");
-			ChangeFloor(ArenaSectorTag + 2, "FLAT3");
-			Sector_SetDamage(ArenaSectorTag, 0, 0);
-			Sector_SetDamage(ArenaSectorTag + 1, 0, 0);
-			Sector_SetDamage(ArenaSectorTag + 2, 0, 0);
-			Sector_SetColor(ArenaSectorTag, 255, 255, 255);
-			Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255);
-			Sector_SetColor(ArenaSectorTag + 2, 255, 255, 255);
-			break;
-		case 1: // Blackout
-			Light_Fade(ArenaSectorTag, 0, 35);
-			Light_Fade(ArenaSectorTag + 1, 0, 35);
-			Light_Fade(ArenaSectorTag + 2, 0, 35);
-			break;
-		case 2: // Foggy
-			int r = Random(0, 255);
-			int g = Random(0, 255);
-			int b = Random(0, 255);
-			Light_Fade(ArenaSectorTag, 128, 35);
-			Light_Fade(ArenaSectorTag + 1, 128, 35);
-			Light_Fade(ArenaSectorTag + 2, 128, 35);
-			Sector_SetFade(ArenaSectorTag, r, g, b);
-			Sector_SetFade(ArenaSectorTag + 1, r, g, b);
-			Sector_SetFade(ArenaSectorTag + 2, r, g, b);
-			break;
-		case 3: // The Floor is Lava
-			ChangeFloor(ArenaSectorTag, "LAVA1");
-			ChangeFloor(ArenaSectorTag + 1, "LAVA1");
-			ChangeFloor(ArenaSectorTag + 2, "LAVA1");
-			Sector_SetDamage(ArenaSectorTag, 1, 14);
-			Sector_SetDamage(ArenaSectorTag + 1, 1, 14);
-			Sector_SetDamage(ArenaSectorTag + 2, 1, 14);
-			break;
-		case 4: // Grayscale
-			Sector_SetColor(ArenaSectorTag, 255, 255, 255, 255);
-			Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255, 255);
-			Sector_SetColor(ArenaSectorTag + 2, 255, 255, 255, 255);
-			break;
-	}
-	
-	ArenaEnvironment = ID;
-}
