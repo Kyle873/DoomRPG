@@ -13,12 +13,12 @@ namespace DoomRPG
             Console.WriteLine("Opening RPG.ds...");
             
             for (int i = 0; i < contents.Length; i++)
-                if (contents[i].Contains("TimeStamp"))
+                if (contents[i].Contains("str[2] Version ="))
                 {
                     string date = DateTime.Now.ToLongDateString();
                     string time = DateTime.Now.ToLongTimeString();
-                    string line = "str TimeStamp = \"" + date + " at " + time + "\";";
-                    contents[i] = line;
+                    string line = "\t\"" + date + " at " + time + "\";";
+                    contents[i + 3] = line;
                     File.WriteAllLines(filename, contents);
                     Console.WriteLine("Updated Timestamp!");
                     Console.ResetColor();
