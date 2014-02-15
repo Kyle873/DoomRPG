@@ -20,6 +20,7 @@ rem Doom RPG Modules
 %ACC% %SRC%\Augs.ds -o %OBJ%\Augs.o
 %ACC% %SRC%\Menu.ds -o %OBJ%\Menu.o
 %ACC% %SRC%\Minigame.ds -o %OBJ%\Minigame.o
+%ACC% %SRC%\Outpost.ds -o %OBJ%\Outpost.o
 %ACC% %SRC%\RPG.ds -o %OBJ%\RPG.o
 %ACC% %SRC%\Shield.ds -o %OBJ%\Shield.o
 %ACC% %SRC%\Shop.ds -o %OBJ%\Shop.o
