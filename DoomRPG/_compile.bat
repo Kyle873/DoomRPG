@@ -1,3 +1,5 @@
+
+
 @echo off
 color F
 
@@ -8,6 +10,12 @@ set ACC=DH-acc --named-scripts --auto-stack-size=0 --debug-mapregister-list=MapV
 
 _timestamp
 
+rem Standard Libraries
+%ACC% -c %PATH%/lib/stdlib.ds -o %PATH%\lib\stdlib.o
+%ACC% -c %PATH%/lib/stdio.ds -o %PATH%\lib\stdio.o
+%ACC% %PATH%\lib\stdlib.o %PATH%\lib\stdio.o -o %OBJ%\libDS.o
+
+rem Doom RPG Modules
 %ACC% %SRC%\Arena.ds -o %OBJ%\Arena.o
 %ACC% %SRC%\Augs.ds -o %OBJ%\Augs.o
 %ACC% %SRC%\Menu.ds -o %OBJ%\Menu.o
