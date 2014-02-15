@@ -327,11 +327,11 @@ function int ScaleEPCost(int Cost)
 
 	switch (GameSkill())
 	{
-		case 1: Cost = FixedMul(Cost, 0.5); break;
-		case 2: Cost = FixedMul(Cost, 1.0); break;
-		case 3: Cost = FixedMul(Cost, 1.5); break;
-		case 4: Cost = FixedMul(Cost, 2.0); break;
-		case 5: Cost = FixedMul(Cost, 2.5); break;
+		case 1: Cost *= 0.5; break;
+		case 2: Cost *= 1.0; break;
+		case 3: Cost *= 1.5; break;
+		case 4: Cost *= 2.0; break;
+		case 5: Cost *= 2.5; break;
 	};
 	
 	return Cost;
@@ -345,7 +345,7 @@ script UseSkill(int Index)
 
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
-	int EPCost = FixedDiv(SkillCosts[SkillCatagory[Index]][SkillIndex[Index]] * CurrentSkillLevel[GetSkillSlot(Index)], SkillCostMult);
+	int EPCost = SkillCosts[SkillCatagory[Index]][SkillIndex[Index]] * CurrentSkillLevel[GetSkillSlot(Index)] * SkillCostMult;
 	bool Success;
 	
 	// Overdrive?
@@ -443,9 +443,9 @@ script UseSkill(int Index)
 			case 2: // Auras
 				ActivatorSound("skills/buff", 127);
 				if (SkillIndex[Index] == Aura - 1)
-					{AuraTimer += (1050 + FixedMul(Energy, 5.25)) * (1 + AuraBonus);}
+					AuraTimer += (1050 + Energy * 5.25) * (1 + AuraBonus)
 				else
-					{AuraTimer = (1050 + FixedMul(Energy, 5.25)) * (1 + AuraBonus);};
+					AuraTimer = (1050 + Energy * 5.25) * (1 + AuraBonus);
 				switch (SkillIndex[Index])
 				{
 					case 0:		Aura = 1;													break; // Red Aura
@@ -521,20 +521,20 @@ script UseSkill(int Index)
 // Skill HUD Script
 script DrawSkillHUD() enter
 {
-	while(1)
+	while (1)
 	{
 		// If you're dead, terminate
 		if (GetActorProperty(0, APROP_Health) <= 0) return;
 	
-		int X = GetCVar("drpg_skill_x");
-		int Y = GetCVar("drpg_skill_y");
+		fixed X = GetCVar("drpg_skill_x");
+		fixed Y = GetCVar("drpg_skill_y");
 
 		for (int i = 4; i >= 0; i--)
 		{
 			// If the skill key is blank, skip
 			if (SkillCatagory[i] == -1 || SkillIndex[i] == -1) continue;
 			
-			int SkillCost = FixedDiv(ScaleEPCost(SkillCosts[SkillCatagory[i]][SkillIndex[i]] * CurrentSkillLevel[GetSkillSlot(i)]), SkillCostMult);
+			int SkillCost = ScaleEPCost(SkillCosts[SkillCatagory[i]][SkillIndex[i]] * CurrentSkillLevel[GetSkillSlot(i)]) * SkillCostMult;
 			int Color = CR_GREEN;
 
 			if (EP < SkillCost)
@@ -558,6 +558,7 @@ script DrawSkillHUD() enter
 						   HUDMSG_PLAIN, 0, Color,
 						   X, Y, 0.05);
 			};
+			
 			Y -= 0.025;
 		};
 		
@@ -1036,8 +1037,8 @@ script Transport()
 		InBase = false;
 		Transported = 1;
 	};
-	return;
 };
+
 // Attack skills will use this
 script AttackSkill(int Element, int Type)
 {
@@ -1046,10 +1047,10 @@ script AttackSkill(int Element, int Type)
 	int Z = GetActorZ(0);
 	int Pitch = GetActorPitch(0);
 	int Angle = GetActorAngle(0);
-	int XSpeed = FixedMul(Cos(Angle), 16.0);
-	int YSpeed = FixedMul(Sin(Angle), 16.0);
-	int ZSpeed = -FixedMul(Sin(Pitch), 16.0);
-	int FireHeight = FixedMul(GetActorViewHeight(0), 0.8);
+	fixed XSpeed = Cos(Angle) * 16.0;
+	fixed YSpeed = Sin(Angle) * 16.0;
+	fixed ZSpeed = -Sin(Pitch) * 16.0;
+	fixed FireHeight = GetActorViewHeight(0) * 0.8;
 	int Offset = 8.0;
 	int AngleAdd;
 	str AttackType;
@@ -1090,9 +1091,9 @@ script AttackSkill(int Element, int Type)
 		
 		for (i = 0; i < Projectiles; i++)
 		{
-			XSpeed = FixedMul(Cos(Angle), 16.0);
-			YSpeed = FixedMul(Sin(Angle), 16.0);
-			ZSpeed = -FixedMul(Sin(Pitch), 16.0);
+			XSpeed = Cos(Angle) * 16.0;
+			YSpeed = Sin(Angle) * 16.0;
+			ZSpeed = -Sin(Pitch) * 16.0;
 			
 			SpawnProjectile(0, AttackType, 0, 0, 0, 0, 2001);
 			SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
@@ -1175,12 +1176,12 @@ function void CheckSkills()
 					SpawnForced("GreenAura", X, Y, Z + 32, 2300, 0);
 					FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0.0, 1.0);
 					if (GreenAuraLevel == 1)
-						DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.25);
+						DamageFactor = DamageFactor - DamageFactor * 0.25;
 					if (GreenAuraLevel == 2)
-						DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.5);
+						DamageFactor = DamageFactor - DamageFactor * 0.5;
 					if (GreenAuraLevel == 3)
 					{
-						DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.75);
+						DamageFactor = DamageFactor - DamageFactor * 0.75;
 						GiveInventory("GreenAura1", 1);
 					};
 					break;
@@ -1287,14 +1288,14 @@ function void CheckSkills()
 						LuckMult = 4.0;
 					if (YellowAuraLevel == 5)
 						LuckMult = 8.0;
-					HealthChance = FixedMul(HealthChance, LuckMult);
-					EPChance = FixedMul(EPChance, LuckMult);
-					ArmorChance = FixedMul(ArmorChance, LuckMult);
-					PowerupChance = FixedMul(PowerupChance, LuckMult);
-					RuneChance = FixedMul(RuneChance, LuckMult);
-					TokenChance = FixedMul(TokenChance, LuckMult);
-					AugChance = FixedMul(AugChance, LuckMult);
-					ShieldChance = FixedMul(ShieldChance, LuckMult);
+					HealthChance *= LuckMult;
+					EPChance *= LuckMult;
+					ArmorChance *= LuckMult;
+					PowerupChance *= LuckMult;
+					RuneChance *= LuckMult;
+					TokenChance *= LuckMult;
+					AugChance *= LuckMult;
+					ShieldChance *= LuckMult;
 					break;
 			};
 		

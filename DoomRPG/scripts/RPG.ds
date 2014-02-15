@@ -21,7 +21,7 @@ script Init() enter
 		Capacity = 10;
 		ComboTimer = -100;
 		
-		if(!GetCVar("drpg_hardstart"))
+		if (!GetCVar("drpg_hardstart"))
 		{
 			GiveInventory("StatToken", 5);
 			GiveInventory("SkillToken", 5);
@@ -46,7 +46,7 @@ script Init() enter
 		Log("\cnDoom RPG %s (%s) loaded!\n", Version[0], Version[1]);
 		
 		// Set the default skill indices
-		for(int i = 0; i < 5; i++)
+		for (int i = 0; i < 5; i++)
 		{
 			SkillCatagory[i] = -1;
 			SkillIndex[i] = -1;
@@ -65,13 +65,13 @@ script Init() enter
 	// Execute Game Loops
 	CallACS("Loop");
 	CallACS("Speed");
-	CallACS("StatRandomizer");
+	// CallACS("StatRandomizer");
 	CallACS("DamageNumbers");
 	CallACS("DamageNumbersHUD");
 	CallACS("HealthBars");
 	
 	// Remove Aura if the keep Aura CVAR is off
-	if(!GetCVar("drpg_skill_keepauras"))
+	if (!GetCVar("drpg_skill_keepauras"))
 	{
 		Aura = 0;
 		AuraTimer = 0;
@@ -79,7 +79,7 @@ script Init() enter
 	};
 	
 	// Transport from/to Outpost Screen Fading
-	if(Transported == 1) // Normal
+	if (Transported == 1) // Normal
 	{
 		FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
 		Transported = 0;
@@ -88,7 +88,7 @@ script Init() enter
 	{
 		int PenaltyPercent;
 		
-		switch(GameSkill())
+		switch (GameSkill())
 		{
 			case 1: PenaltyPercent = 1;		break;
 			case 2: PenaltyPercent = 5;		break;
@@ -203,7 +203,7 @@ script MonsterInit(int Flags)
 	SetInventory("MonsterAura", MonsterAura);
 	SetInventory("MonsterStrength", MonsterStrength);
 	SetInventory("MonsterDefense", MonsterDefense);
-	SetActorProperty(0, APROP_DamageFactor, 1.0 - FixedMul(0.9, FixedDiv(MonsterDefense, 100)));
+	SetActorProperty(0, APROP_DamageFactor, 1.0 - (0.9 * (MonsterDefense / 100)));
 	if (GetActorProperty(0, APROP_DamageFactor) <= 0) SetActorProperty(0, APROP_DamageFactor, 0.1);
 };
 
@@ -371,7 +371,7 @@ script MonsterLoop()
 			break;
 		case 7: // Purple Aura - Regeneration
 			SpawnForced("PurpleAura", X, Y, Z + 32, 0, 0);
-			RegenAmount = FixedMul(FixedMul(GameSkill(), 0.01), GetActorProperty(0, APROP_SpawnHealth));
+			RegenAmount = (GameSkill() * 0.01) * GetActorProperty(0, APROP_SpawnHealth);
 			if (RegenAmount == 0) RegenAmount = 1;
 			if (GetActorProperty(0, APROP_Health) < GetActorProperty(0, APROP_SpawnHealth) && (Timer() % 35) == 1 && !CheckInventory("PowerTimeFreezer"))
 				HealThing(RegenAmount);
@@ -385,7 +385,7 @@ script MonsterLoop()
 		case 10: // Black Aura - Miniboss
 			SpawnForced("BlackAura", X, Y, Z + 32, 0, 0);
 			SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy);
-			RegenAmount = FixedMul(FixedMul(GameSkill(), 0.01), GetActorProperty(0, APROP_SpawnHealth));
+			RegenAmount = (GameSkill() * 0.01) * GetActorProperty(0, APROP_SpawnHealth);
 			if (RegenAmount == 0) RegenAmount = 1;
 			if (GetActorProperty(0, APROP_Health) < GetActorProperty(0, APROP_SpawnHealth) && (Timer() % 35) == 1 && !CheckInventory("PowerTimeFreezer"))
 				HealThing(RegenAmount);
@@ -401,7 +401,7 @@ script MonsterLoop()
 	// Overhead Health Bars
 	if (GetCVar("drpg_healthbars_overhead"))
 	{
-		int BarHealth = FixedMul(FixedDiv(GetActorProperty(0, APROP_Health), GetActorProperty(0, APROP_SpawnHealth)), 32.0);
+		int BarHealth = GetActorProperty(0, APROP_Health) * GetActorProperty(0, APROP_SpawnHealth) / 32.0;
 		if (BarHealth > 63.0) BarHealth = 63.0;
 		Z = GetActorZ(0) + CheckInventory("MonsterHeightCheck") + 4.0;
 		SpawnForced(StrParam("HealthBar%d\n", Round(BarHealth)), X, Y, Z, 0, 0);
@@ -443,7 +443,7 @@ script Loop()
 	// Shop Menu
 	if (InShop)
 		ShopLoop();
-
+	
 	// Always Quick Heal if CVAR is set
 	if (GetCVar("drpg_auto_heal"))
 		CallACS("QuickHeal");
@@ -558,18 +558,18 @@ script StatusEffect(int Type, int Time, int Intensity)
 	{
 		if (Type == 1) // Confusion
 		{
-			SetActorAngle(0, GetActorAngle(0) + FixedMul(1024, Cos(Timer() * (Intensity * 0.01))));
-			SetActorPitch(0, FixedMul(1024 * 8, Cos(Timer() * (Intensity * 0.01))));
+			SetActorAngle(0, GetActorAngle(0) + 1024 * Cos(Timer() * (Intensity * 0.01)));
+			SetActorPitch(0, 1024 * 8, Cos(Timer() * (Intensity * 0.01)));
 		};
 		
 		if (Type == 2) // Blind
-			FadeRange(0, 0, 0, (0.75 + FixedDiv(Intensity, 400)) - (FixedMul(1024 * 8, Sin(Timer() * 0.01))), 0, 0, 0, 0.0, 0.5);
+			FadeRange(0, 0, 0, (0.75 + (Intensity / 400)) - ((1024 * 8) * Sin(Timer() * 0.01)), 0, 0, 0, 0.0, 0.5);
 		
 		if (Type == 3) // Poisoned
 			if ((Timer() % 35) == 1 && (GetActorProperty(0, APROP_Health) - Intensity) > 1)
 			{
 				DamageThing(Intensity);
-				FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + FixedDiv(Intensity, 100)));
+				FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + Intensity / 100));
 			};
 		
 		if (StatusTimer > 0)
@@ -652,7 +652,7 @@ script QuickAmmo()
 	};
 	
 	// Discount and Cost
-	int Discount = FixedMul(RankLevel, 2.1);
+	int Discount = RankLevel * 2.1;
 	int Cost = ShopCosts[1][AmmoType] - ShopCosts[1][AmmoType] * Discount / 100;
 
 	// Give ammo and take Credits
@@ -889,7 +889,7 @@ script DamageNumbersHUD()
 			SetFont("BIGFONT");
 		
 		if (Before > After)
-			HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + Random(0.0, 0.4), 0.6 + Random(0.0, 0.3), 0.5 + FixedDiv(HealthLoss, 100), 1.0);
+			HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + Random(0.0, 0.4), 0.6 + Random(0.0, 0.3), 0.5, 1.0);
 	};
 
 	goto Start;
@@ -1000,7 +1000,7 @@ script HealthBars()
 					HealthPercent = 100;
 				
 				if (GetCVar("screenblocks") == 10)
-					for (i = 0; i <= FixedMul(HealthPercent, 1.165); i++)
+					for (i = 0; i <= HealthPercent * 1.165; i++)
 						PrintSprite(FillType, 4100 + i, (X - 120.0) + (i * 2.0), Y, 0.05)
 				else
 					for (i = 0; i <= HealthPercent; i++)

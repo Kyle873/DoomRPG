@@ -1,6 +1,7 @@
 #include "Globals.dh"
 #include "Shield.dh"
 #include "Stats.dh"
+#include "Skills.dh"
 #include "Utils.dh"
 
 // Setup XP & Rank Tables
@@ -13,11 +14,11 @@ function void SetupTables()
 	// Rank Table
 	for (int i = 0; i < MAX_RANK; i++)
 		if (GameSkill() == 5)
-			{RankTable[i] = 100000 + (100000 * i * i);}
+			RankTable[i] = 100000 + (100000 * i * i)
 		else if (GameSkill() > 2)
-			{RankTable[i] = 50000 + (50000 * i * i);}
+			RankTable[i] = 50000 + (50000 * i * i)
 		else
-			{RankTable[i] = 25000 + (25000 * i * i);};
+			RankTable[i] = 25000 + (25000 * i * i);
 };
 
 function void AddXP(int Amount)
@@ -25,19 +26,18 @@ function void AddXP(int Amount)
 	// Scale XP/Rank Gains using the XP Scaling Option
 	switch (GetCVar("drpg_scalexp"))
 	{
-		case 2: Amount = FixedMul(Amount, 2.0);		break;
-		case 3: Amount = FixedMul(Amount, 4.0);		break;
-		case 4: Amount = FixedMul(Amount, 8.0);		break;
-		case 5: Amount = FixedMul(Amount, 0.75);	break;
-		case 6: Amount = FixedMul(Amount, 0.5);		break;
-		case 7: Amount = FixedMul(Amount, 0.25);	break;
+		case 2: Amount *= 2.0;	break;
+		case 3: Amount *= 4.0;	break;
+		case 4: Amount *= 8.0;	break;
+		case 5: Amount *= 0.75;	break;
+		case 6: Amount *= 0.5;	break;
+		case 7: Amount *= 0.25;	break;
 	};
 	
 	if (GetCVar("drpg_combo"))
 	{
 		TotalGained += Amount;
-		// FIX
-		// if (Aura == 3 && CurrentSkillLevel[GetSkillID(2, 2)] >= 3) TotalGained += Amount;
+		if (Aura == 3 && CurrentSkillLevel[GetSkillID(2, 2)] >= 3) TotalGained += Amount;
 		XPGained = 0;
 		RankGained = 0;
 		Combo++;
@@ -77,8 +77,8 @@ function void CheckCombo()
 		// Add up and randomize the XP and Rank gain
 		if (ComboTimer == 0)
 		{
-			XPGained += TotalGained + Random(0, FixedMul(FixedDiv(Combo, (1000 - (MapNumber * 10))), TotalGained));
-			RankGained += TotalGained + Random(0, FixedMul(FixedDiv(Combo, (1000 - (MapNumber * 10))), TotalGained));
+			XPGained += TotalGained + Random(0, Combo / (1000 - (MapNumber * 10)) * TotalGained);
+			RankGained += TotalGained + Random(0, Combo / (1000 - (MapNumber * 10)) * TotalGained);
 			
 			// You cannot gain Negative XP, but you can lose Rank
 			if (XPGained < 0) XPGained = 0;
@@ -164,7 +164,8 @@ function void CheckRank()
 		FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0, 2.0);
 		SetFont("BIGFONT");
 		SetHudSize(0, 0, false);
-		HudMessage("You have reached rank level %d: %s\n", RankLevel, LongRanks[RankLevel],
+		HudMessage("You have reached rank level %d: %s\n",
+				   RankLevel, LongRanks[RankLevel],
 				   HUDMSG_FADEOUT, 4999, CR_GOLD, 0.5, 0.5, 4.0, 2.0);
 	};
 	
@@ -280,8 +281,9 @@ function void CheckLevelInfo()
 		EP = GetEPMax();
 		HealThing(1000000);
 		
-		HudMessage("100%% Monsters killed!\n100%% Items Found!\n100%% Secrets Found!\n\n%d XP Bonus\n%d Rank Bonus\n Full HP/EP Restore\n"
-				   ,XPBonus, RankBonus, HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
+		HudMessage("100%% Monsters killed!\n100%% Items Found!\n100%% Secrets Found!\n\n%d XP Bonus\n%d Rank Bonus\n Full HP/EP Restore\n",
+				   XPBonus, RankBonus,
+				   HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
 		AllBonus = true;
 	};
 	
@@ -379,7 +381,7 @@ function void CheckArmorMax()
 			(GetArmorType("RLPlasmaShieldArmorRenegade", 0) > 0) ||
 			(GetArmorType("RLNecroArmorRenegade", 0) > 0) ||
 			(GetArmorType("RLAngelicArmorRenegade", 0) > 0))
-				{ArmorMax = 100;}
+				ArmorMax = 100
 		else // Armors which have differing Save Amounts
 		{
 			if (GetArmorType("RLTowerShieldArmor", 0) > 0)				ArmorMax = 150;
@@ -481,12 +483,12 @@ function void CheckStats()
 	LevelDamage = Level * (6 - GameSkill());
 	BonusDamage = Strength;
 	TotalDamage = LevelDamage + BonusDamage;
-	DamageFactor = 1.0 - FixedMul(0.25, FixedDiv(Defense, 100));
+	DamageFactor = 1.0 - 0.25 * (Defense / 100);
 	Mass = 100 + (Defense * 10);
 	HealthMax = Vitality * 10;
 	EPMax = Energy * 10;
-	Speed = 1.0 + FixedMul(0.25, FixedDiv(Agility, 100));
-	JumpHeight = 8.0 + FixedMul(8.0, FixedDiv(Agility, 100));
+	Speed = 1.0 + 0.25 * (Agility / 100);
+	JumpHeight = 8.0 + 8.0 * (Agility / 100);
 	WeaponSpeed = Agility;
 	SetAmmoCapacity("Clip", Capacity * 20);
 	SetAmmoCapacity("Shell", Capacity * 10);
@@ -506,9 +508,9 @@ function void CheckStats()
 	
 	// Survival Bonus
 	if (Random(1, 1000) <= SurvivalBonus)
-		{SetPlayerProperty(0, 1, PROP_BUDDHA);}
+		SetPlayerProperty(0, 1, PROP_BUDDHA)
 	else
-		{SetPlayerProperty(0, 0, PROP_BUDDHA);};
+		SetPlayerProperty(0, 0, PROP_BUDDHA);
 };
 
 function void CheckStatBonus()
@@ -536,8 +538,8 @@ function void CheckStatBonus()
 function void DoRegen()
 {	
 	// Determine the max timer amounts
-	HPTime = (700 - FixedMul(Regeneration, 3.325)) * 2;
-	EPTime = (700 - FixedMul(Regeneration, 3.325)) * 2;
+	HPTime = (700 - (Regeneration * 3.325)) * 2;
+	EPTime = (700 - (Regeneration * 3.325)) * 2;
 	
 	// Determine the max regen amounts
 	HPAmount = 1 + Vitality / 50;
@@ -649,18 +651,6 @@ function void CheckHardHardStatCaps()
 	if (Luck > HardStatCap)			Luck = HardStatCap;
 };
 
-// TODO: Recalculate stats after something (Aug, aura) has modified them
-function void RecalculateStats()
-{
-	int HPRatio = (GetActorProperty(0, APROP_Health) * 100) / GetActorProperty(0, APROP_SpawnHealth);
-	int CurrentHP = (HPRatio * GetActorProperty(0, APROP_SpawnHealth)) / 100;
-	int EPRatio = (EP * 100) / EPMax;
-	int CurrentEP = (EPRatio * EPMax) / 100;
-	
-	// SetActorProperty(0, APROP_Health, CurrentHP);
-	// EP = CurrentEP;
-};
-
 function void CheckStatBounds()
 {
 	// Prevent Overflow of EP
@@ -710,15 +700,15 @@ function void CheckStatBounds()
 // Luck Chances
 function void CheckLuck()
 {
-	CreditChance = 10 + FixedMul(Luck, 0.9);
-	HealthChance = FixedMul(Luck, 0.05);
-	EPChance = FixedMul(Luck, 0.05);
-	ArmorChance = FixedMul(Luck, 0.05);
-	PowerupChance = FixedMul(Luck, 0.05);
-	RuneChance = FixedMul(Luck, 0.025);
-	TokenChance = FixedMul(Luck, 0.01);
-	AugChance = FixedMul(Luck, 0.01);
-	ShieldChance = FixedMul(Luck, 0.01);
+	CreditChance = 10 + Luck * 0.9;
+	HealthChance = Luck * 0.05;
+	EPChance = Luck * 0.05;
+	ArmorChance = Luck * 0.05;
+	PowerupChance = Luck * 0.05;
+	RuneChance = Luck * 0.025;
+	TokenChance = Luck * 0.01;
+	AugChance = Luck * 0.01;
+	ShieldChance = Luck * 0.01;
 };
 
 function void CheckBurnout()
