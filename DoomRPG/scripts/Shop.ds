@@ -1,193 +1,9 @@
-#library "Shop"
-
-#include "zcommon.acs"
-
-#import "Stats.acs"
-#import "Skills.acs"
-#import "Augs.acs"
-#import "Shield.acs"
-#import "Menu.acs"
-#import "Utils.acs"
-#import "Minigame.acs"
-
-#libdefine SHOP_CATEGORIES			16
-#libdefine SHOP_ITEMS				100
-#libdefine SHOP_SCROLL				15
-
-#libdefine DIR_UP					1
-#libdefine DIR_DOWN					2
-#libdefine DIR_LEFT					3
-#libdefine DIR_RIGHT				4
-
-str ShopNames[SHOP_CATEGORIES] =
-{
-	"Weapons",
-	"Ammo",
-	"Health",
-	"Armor",
-	"Powerups",
-	"Tokens",
-	"Shield",
-	"Augmentations"
-};
-
-// Shop Array
-int Shop[SHOP_CATEGORIES][SHOP_ITEMS][2] =
-{
-    // Weapon
-	{
-		{ "Pistol", "Pistol" },
-		{ "Shotgun", "Shotgun" },
-		{ "SuperShotgun", "Super Shotgun" },
-		{ "ChainGun", "Chaingun" },
-		{ "RocketLauncher", "Rocket Launcher" },
-		{ "PlasmaRifle", "Plasma Rifle" },
-		{ "BFG9000", "BFG 9000" },
-		{ "Chainsaw", "Chainsaw" }
-//		{ "GrenadeFrag", "Frag Grenade" }
-	},
-    
-    // Ammo
-	{
-		{ "Clip", "Clip" },
-		{ "ClipBox", "Box of Bullets" },
-		{ "Shell", "Shells" },
-		{ "ShellBox", "Box of Shells" },
-		{ "RocketAmmo", "Rockets" },
-		{ "RocketBox", "Box of Rockets" },
-		{ "Cell", "Cell" },
-		{ "CellPack", "Cell Charge Pack" },
-		{ "SmallBackpack", "Small Backpack" },
-		{ "Backpack", "Backpack" },
-		{ "BigBackpack", "Big Backpack" }
-	},
-    
-    // Health
-	{
-		{ "HealthBonus", "Health Bonus" },
-		{ "Stimpack", "Stimpack" },
-		{ "SmallMedikit", "Small Medikit" },
-		{ "Medikit", "Medikit" },
-		{ "LargeMedikit", "Large Medikit" },
-		{ "XLMedikit", "Extra-Large Medikit" },
-		{ "MedPack", "Med Pack" },
-		{ "SurgeryKit", "Surgery Kit" },
-		{ "Soulsphere", "Soulsphere" },
-		{ "Continue", "Continue" },
-		{ "EPCapsule", "EP Capsule" },
-		{ "BigEPCapsule", "Big EP Capsule" }
-	},
-    
-    // Armor
-	{
-		{ "ArmorBonus", "Armor Bonus" },
-		{ "GreenArmor", "Green Armor" },
-		{ "UsedGreenArmor", "Green Armor (Used)" },
-		{ "BlueArmor", "Blue Armor" },
-		{ "UsedBlueArmor", "Blue Armor (Used)" },
-		{ "YellowArmor", "Yellow Armor" },
-		{ "UsedYellowArmor", "Yellow Armor (Used)" },
-		{ "RedArmor", "Red Armor" },
-		{ "UsedRedArmor", "Red Armor (Used)" },
-		{ "WhiteArmor", "White Armor" },
-		{ "UsedWhiteArmor", "White Armor (Used)" }
-	},
-	
-	// Powerups
-	{
-		{ "InvulnerabilitySphere", "Invulnerability Sphere" },
-		{ "InvulnerabilityCharge", "Invulnerability Charge" },
-		{ "BlurSphere", "Invisibility Sphere" },
-		{ "InvisibilityCharge", "Invisibility Charge" },
-		{ "TimeSphere", "Time Sphere" },
-		{ "RegenSphere", "Regeneration Sphere" },
-		{ "RadSuit", "Radiation Suit" },
-		{ "Infrared", "IR Goggles" },
-		{ "Berserk", "Berserk Pack" },
-		{ "AllMap", "Computer Area Map" },
-		{ "Megasphere", "Megasphere" },
-		{ "StrengthRune", "Strength Rune" },
-		{ "DrainRune", "Drain Rune" },
-		{ "EndlessRune", "Endless Rune" },
-		{ "ResistanceRune", "Resistance Rune" },
-		{ "RegenerationRune", "Regeneration Rune" },
-		{ "FrightRune", "Fright Rune" },
-		{ "GhostRune", "Ghost Rune" },
-		{ "HighJumpRune", "High Jump Rune" },
-		{ "HasteRune", "Haste Rune" },
-		{ "StimSmall", "Small Stim" },
-		{ "StimMedium", "Medium Stim" },
-		{ "StimLarge", "Large Stim" },
-		{ "Wings", "Wings" }
-	},
-	
-	// Tokens
-	{
-		{ "StatToken", "Stat Token" },
-		{ "BigStatToken", "Big Stat Token" },
-		{ "StatCapToken", "Stat Cap Token" },
-		{ "BigStatCapToken", "Big Stat Cap Token" },
-		{ "SkillToken", "Skill Token" },
-		{ "BigSkillToken", "Big Skill Token" },
-		{ "MegaToken", "Mega Token" },
-		{ "BigMegaToken", "Big Mega Token" }
-	},
-	
-	// Shield
-	{
-		// Built Dynamically
-	},
-	
-	// Augmentations
-	{
-		{ "AugCanister", "Augmentation Canister" },
-		{ "AugUpgradeCanister", "Augmentation Upgrade Canister" },
-		{ "AugSlotUpgrade", "Augmentation Slot Upgrade" }
-	}
-};
-
-int ShopCosts[SHOP_CATEGORIES][SHOP_ITEMS] = {
-    // Weapon
-	{
-		25, 100, 500, 750, 1000, 2500, 5000, 300
-	},
-    // Ammo
-	{
-		10, 50, 25, 125, 50, 250, 200, 1000, 285, 1425, 6325
-	},
-    // Health
-	{
-		5, 10, 50, 100, 250, 500, 750, 1000, 2000, 50000, 500, 1000
-	},
-    // Armor
-	{
-		5, 100, 50, 500, 250, 1000, 500, 5000, 2500, 10000, 5000
-	},
-	// Powerups
-	{
-		5000, 10000, 1000, 2000, 1000, 1000, 250, 500, 1000, 1000, 10000,	// Powerups
-		2500, 2500, 5000, 2500, 2500, 1000, 2500, 1000, 1000,				// Runes
-		200, 500, 1000,														// Stims
-		1000
-	},
-	// Tokens
-	{
-		25000, 100000, 25000, 100000, 25000, 100000, 250000, 500000
-	},
-	// Shields
-	{
-		// Built Dynamically
-	},
-	// Augmentations
-	{
-		1000000, 1000000, 2000000
-	}
-};
-
-int ShopMax[SHOP_CATEGORIES] =
-{
-	8, 11, 12, 11, 24, 8, 0, 3
-};
+#include "Globals.dh"
+#include "Menu.dh"
+#include "Minigame.dh"
+#include "Shield.dh"
+#include "Shop.dh"
+#include "Utils.dh"
 
 bool InShop;
 int ShopCategories = 8; // 8 vanilla ShopCategories, 8 reserved for compatibility
@@ -196,14 +12,187 @@ int ShopOffset;
 int ShopPage;
 int ShopSpotID = 1000;
 
-// Open the Shop
-script "OpenShop" (int FromBase)
+str[SHOP_CATEGORIES] ShopNames =
 {
-	// If you're dead, terminate
-	if (GetActorProperty(0, APROP_HEALTH) <= 0) terminate;
+	"Weapons";
+	"Ammo";
+	"Health";
+	"Armor";
+	"Powerups";
+	"Tokens";
+	"Shield";
+	"Augmentations";
+};
+
+// Shop Array
+str[SHOP_CATEGORIES][SHOP_ITEMS][2] Shop =
+{
+    // Weapon
+	{
+		{ "Pistol"; "Pistol"; };
+		{ "Shotgun"; "Shotgun"; };
+		{ "SuperShotgun"; "Super Shotgun"; };
+		{ "ChainGun"; "Chaingun"; };
+		{ "RocketLauncher"; "Rocket Launcher"; };
+		{ "PlasmaRifle"; "Plasma Rifle"; };
+		{ "BFG9000"; "BFG 9000"; };
+		{ "Chainsaw"; "Chainsaw"; };
+	};
+    
+    // Ammo
+	{
+		{ "Clip"; "Clip"; };
+		{ "ClipBox"; "Box of Bullets"; };
+		{ "Shell"; "Shells"; };
+		{ "ShellBox"; "Box of Shells"; };
+		{ "RocketAmmo"; "Rockets"; };
+		{ "RocketBox"; "Box of Rockets"; };
+		{ "Cell"; "Cell"; };
+		{ "CellPack"; "Cell Charge Pack"; };
+		{ "SmallBackpack"; "Small Backpack"; };
+		{ "Backpack"; "Backpack"; };
+		{ "BigBackpack"; "Big Backpack"; };
+	};
+    
+    // Health
+	{
+		{ "HealthBonus"; "Health Bonus"; };
+		{ "Stimpack"; "Stimpack"; };
+		{ "SmallMedikit"; "Small Medikit"; };
+		{ "Medikit"; "Medikit"; };
+		{ "LargeMedikit"; "Large Medikit"; };
+		{ "XLMedikit"; "Extra-Large Medikit"; };
+		{ "MedPack"; "Med Pack"; };
+		{ "SurgeryKit"; "Surgery Kit"; };
+		{ "Soulsphere"; "Soulsphere"; };
+		{ "Continue"; "Continue"; };
+		{ "EPCapsule"; "EP Capsule"; };
+		{ "BigEPCapsule"; "Big EP Capsule"; };
+	};
+    
+    // Armor
+	{
+		{ "ArmorBonus"; "Armor Bonus"; };
+		{ "GreenArmor"; "Green Armor"; };
+		{ "UsedGreenArmor"; "Green Armor (Used)"; };
+		{ "BlueArmor"; "Blue Armor"; };
+		{ "UsedBlueArmor"; "Blue Armor (Used)"; };
+		{ "YellowArmor"; "Yellow Armor"; };
+		{ "UsedYellowArmor"; "Yellow Armor (Used)"; };
+		{ "RedArmor"; "Red Armor"; };
+		{ "UsedRedArmor"; "Red Armor (Used)"; };
+		{ "WhiteArmor"; "White Armor"; };
+		{ "UsedWhiteArmor"; "White Armor (Used)"; };
+	};
 	
-	// If you're in any minigames, terminate
-	if (InMinigame) terminate;
+	// Powerups
+	{
+		{ "InvulnerabilitySphere"; "Invulnerability Sphere"; };
+		{ "InvulnerabilityCharge"; "Invulnerability Charge"; };
+		{ "BlurSphere"; "Invisibility Sphere"; };
+		{ "InvisibilityCharge"; "Invisibility Charge"; };
+		{ "TimeSphere"; "Time Sphere"; };
+		{ "RegenSphere"; "Regeneration Sphere"; };
+		{ "RadSuit"; "Radiation Suit"; };
+		{ "Infrared"; "IR Goggles"; };
+		{ "Berserk"; "Berserk Pack"; };
+		{ "AllMap"; "Computer Area Map"; };
+		{ "Megasphere"; "Megasphere"; };
+		{ "StrengthRune"; "Strength Rune"; };
+		{ "DrainRune"; "Drain Rune"; };
+		{ "EndlessRune"; "Endless Rune"; };
+		{ "ResistanceRune"; "Resistance Rune"; };
+		{ "RegenerationRune"; "Regeneration Rune"; };
+		{ "FrightRune"; "Fright Rune"; };
+		{ "GhostRune"; "Ghost Rune"; };
+		{ "HighJumpRune"; "High Jump Rune"; };
+		{ "HasteRune"; "Haste Rune"; };
+		{ "StimSmall"; "Small Stim"; };
+		{ "StimMedium"; "Medium Stim"; };
+		{ "StimLarge"; "Large Stim"; };
+		{ "Wings"; "Wings"; };
+	};
+	
+	// Tokens
+	{
+		{ "StatToken"; "Stat Token"; };
+		{ "BigStatToken"; "Big Stat Token"; };
+		{ "StatCapToken"; "Stat Cap Token"; };
+		{ "BigStatCapToken"; "Big Stat Cap Token"; };
+		{ "SkillToken"; "Skill Token"; };
+		{ "BigSkillToken"; "Big Skill Token"; };
+		{ "MegaToken"; "Mega Token"; };
+		{ "BigMegaToken"; "Big Mega Token"; };
+	};
+	
+	// Shield - Built Dynamically
+	{};
+	
+	// Augmentations
+	{
+		{ "AugCanister"; "Augmentation Canister"; };
+		{ "AugUpgradeCanister"; "Augmentation Upgrade Canister"; };
+		{ "AugSlotUpgrade"; "Augmentation Slot Upgrade"; };
+	};
+};
+
+int[SHOP_CATEGORIES][SHOP_ITEMS] ShopCosts =
+{
+    // Weapon
+	{
+		25; 100; 500; 750; 1000; 2500; 5000; 300;
+	};
+	
+    // Ammo
+	{
+		10; 50; 25; 125; 50; 250; 200; 1000; 285; 1425; 6325;
+	};
+	
+    // Health
+	{
+		5; 10; 50; 100; 250; 500; 750; 1000; 2000; 50000; 500; 1000;
+	};
+	
+    // Armor
+	{
+		5; 100; 50; 500; 250; 1000; 500; 5000; 2500; 10000; 5000;
+	};
+	
+	// Powerups
+	{
+		5000; 10000; 1000; 2000; 1000; 1000; 250; 500; 1000; 1000; 10000;	// Powerups
+		2500; 2500; 5000; 2500; 2500; 1000; 2500; 1000; 1000;				// Runes
+		200; 500; 1000;														// Stims
+		1000;
+	};
+	
+	// Tokens
+	{
+		25000; 100000; 25000; 100000; 25000; 100000; 250000; 500000;
+	};
+	
+	// Shields - Built Dynamically
+	{};
+	
+	// Augmentations
+	{
+		1000000; 1000000; 2000000;
+	};
+};
+
+int[SHOP_CATEGORIES] ShopMax =
+{
+	8; 11; 12; 11; 24; 8; 0; 3;
+};
+
+// Open the Shop
+script OpenShop(int FromBase)
+{
+	// If you're dead, return
+	if (GetActorProperty(0, APROP_Health) <= 0) return;
+	
+	// If you're in any minigames, return
+	if (InMinigame) return;
 	
 	// Close the main menu if it's open
 	InMenu = false;
@@ -211,7 +200,7 @@ script "OpenShop" (int FromBase)
 	if (InShop)
 	{
 		// Sanity Check to prevent the shop closing itself after buying an item in the Outpost Shop
-		if (!FromBase) terminate;
+		if (!FromBase) return;
 		
 		ActivatorSound("menu/leave", 127);
 		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
@@ -220,16 +209,16 @@ script "OpenShop" (int FromBase)
 	else
 	{
 		// Don't let you Shop Anywhere if it's disabled
-		if (!InBase && !GetCVAR("drpg_shoptype")) terminate;
+		if (!InBase && !GetCVar("drpg_shoptype")) return;
 		
 		ActivatorSound("menu/shop", 127);
 		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
 		InShop = true;
-	}
-}
+	};
+};
 
 // Sell items in bulk
-script "SellAll" (int SellShopPage, int Silent)
+script SellAll(int SellShopPage, int Silent)
 {
 	int Total;
 	
@@ -239,27 +228,28 @@ script "SellAll" (int SellShopPage, int Silent)
 	// Invalid ShopPages
 	if (SellShopPage < 0 || SellShopPage > SHOP_CATEGORIES)
 	{
-		print(s:"\cgInvalid Shop Page");
+		Print("\cgInvalid Shop Page\n");
 		ActivatorSound("menu/error", 127);
-		terminate;
-	}
+		return;
+	};
 	
 	// Sell Items
 	for (int i = 0; i < ShopMax[SellShopPage]; i++)
 		if (CheckInventory(Shop[SellShopPage][i][0]) > 0)
-			Total += SellItem(Shop[SellShopPage][i][0], true);
+			Total += SellItem(Shop[SellShopPage][i][0], true)
 		else continue;
 	
 	// Display Message
 	if (!Silent)
 	{
-		HudMessage(s:"Sold all ", s:ShopNames[SellShopPage], s:" items for ", d:Total, s:" Credits";
+		HudMessage("Sold all %s items for %d Credits\n",
+				   ShopNames[SellShopPage], Total,
 				   HUDMSG_FADEOUT, 0, CR_GOLD, 0.5, 0.5, 5.0, 5.0);
 		ActivatorSound("credits/payout", 127);
-	}
-}
+	};
+};
 
-function void ShopBuildPages(void)
+function void ShopBuildPages()
 {
 	int i, j, Index;
 	
@@ -279,20 +269,20 @@ function void ShopBuildPages(void)
 			case 1:	ShieldActorName = "ShieldBattery";		ShieldName = "Shield Battery - ";	break;
 			case 2:	ShieldActorName = "ShieldCapacitor";	ShieldName = "Shield Capacitor - ";	break;
 			case 3:	ShieldActorName = "ShieldAccessory";	ShieldName = "Shield Accessory - ";	break;
-		}
+		};
 		
 		for (j = 0; j < ShieldPartsMax[i]; j++)
 		{
 			// Name
-			Shop[6][Index][0] = StrParam(s:ShieldActorName, d:j + 1);
-			Shop[6][Index][1] = StrParam(s:ShieldName, s:ShieldData[i][j][1], s:"\c-");
+			Shop[6][Index][0] = StrParam("%s%d\n", ShieldActorName, j + 1);
+			Shop[6][Index][1] = StrParam("%s%s\c-\n", ShieldName, ShieldData[i][j][1]);
 			
 			// Price
 			if (i < 3) // Bodies, Batteries, Capacitors
 			{
 				ShieldCost += ShieldStats[i][j][0] * 100;
 				ShieldCost += ShieldStats[i][j][1] * 1000;
-				ShieldCost += Abs((FixedMul(ShieldStats[i][j][2], 20000.0))) >> 16;
+				ShieldCost += Abs((ShieldStats[i][j][2] * 20000.0));
 			}
 			else // Accessories
 			{
@@ -303,16 +293,16 @@ function void ShopBuildPages(void)
 				if (j == 4) ShieldCost = 50000;
 				if (j == 5) ShieldCost = 25000;
 				if (j == 6) ShieldCost = 10000;
-			}
+			};
 			
 			ShopCosts[6][Index] = ShieldCost;
 			
 			Index++;
-		}
-	}
+		};
+	};
 	
 	// Compatibility handling - Extras
-	if (GetCVAR("drpg_ext_extras"))
+	if (GetCVar("drpg_ext_extras"))
 	{
 		// Weapons
 		Shop[0][0][0] = "Pistol1";
@@ -323,10 +313,10 @@ function void ShopBuildPages(void)
 		Shop[0][5][0] = "Plasmagun";
 		Shop[0][6][0] = "BFG9001";
 		Shop[0][7][0] = "Chainsaw1";
-	}
+	};
 	
 	// Compatibility handling - Brutal Doom
-	if (GetCVAR("drpg_ext_brutal"))
+	if (GetCVar("drpg_ext_brutal"))
 	{
 		// Weapons
 		ShopMax[0] = 14;
@@ -377,10 +367,10 @@ function void ShopBuildPages(void)
 		ShopCosts[0][12] = 5000;
 		ShopCosts[0][13] = 1000;
 		ShopCosts[0][14] = 100;
-	}
+	};
 	
 	// Compatibility Handling - DoomRL
-	if (GetCVAR("drpg_ext_doomrl"))
+	if (GetCVar("drpg_ext_doomrl"))
 	{
 		// Categories
 		ShopCategories = 10;
@@ -780,14 +770,14 @@ function void ShopBuildPages(void)
 		ShopCosts[9][20] = 2500;
 		ShopCosts[9][21] = 1000;
 		ShopCosts[9][22] = 5000;
-	}
-}
+	};
+};
 
-function void ShopLoop(void)
+function void ShopLoop()
 {
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
-	int Discount = FixedMul(RankLevel, 2.1);
+	fixed Discount = RankLevel * 2.1;
 	int Cost = ShopCosts[ShopPage][ShopIndex] - ShopCosts[ShopPage][ShopIndex] * Discount / 100;
 	int SellPrice;
 	
@@ -796,37 +786,39 @@ function void ShopLoop(void)
 	
 	// Get the sell price
 	if (ShopPage == 1) // Ammo
-		SellPrice = GetSellPrice(GetAmmoAmount(Shop[ShopPage][ShopIndex][0]));
+		SellPrice = GetSellPrice(GetAmmoAmount(Shop[ShopPage][ShopIndex][0]))
 	else
 		SellPrice = GetSellPrice(1);
 	
 	if (InShop)
     {
 		// Freeze the game if the option is active
-		if (GetCVAR("drpg_menufreeze"))
+		if (GetCVar("drpg_menufreeze"))
 			GiveInventory("MenuFreezer", 1);
 		
 		// Set the HUD Size
-		SetHUDSize(GetCVAR("drpg_menu_width"), GetCVAR("drpg_menu_height"), true);
+		SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 
 		// Draw the background
-		if (GetCVAR("drpg_menudim"))
+		if (GetCVar("drpg_menudim"))
 			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
         
 		// Draw Shop
         SetFont("BIGFONT");
-        HudMessage(s:"Shop - ", s:ShopNames[ShopPage],
-				   s:" (", d:ShopPage + 1, s:"/", d:ShopCategories, s:")";
+        HudMessage("Shop - %s (%d/%d)\n",
+				   ShopNames[ShopPage], ShopPage + 1, ShopCategories,
                    HUDMSG_PLAIN, 3000, CR_GREEN,
                    24.1, 24.0, 0.05);
         
         // Draw Price
 		if (ShopPage == 5) // Tokens
-			HudMessage(s:"\cj", d:Cost, s:" C \ck(Discount: ", d:Discount, s:"%)";
+			HudMessage("\cj%d C \ck(Discount: %d)\n",
+					   Cost, Discount,
 					   HUDMSG_PLAIN, 3000 + SHOP_ITEMS, CR_GOLD,
-					   24.1, 38.0, 0.05);
+					   24.1, 38.0, 0.05)
 		else
-			HudMessage(s:"\cj", d:Cost, s:" C \ci(", d:SellPrice, s:" C) \ck(Discount: ", d:Discount, s:"%)";
+			HudMessage("\cj%d C \ci(%d C) \ck(Discount: %d)\n",
+					   Cost, SellPrice, Discount,
 					   HUDMSG_PLAIN, 3000 + SHOP_ITEMS, CR_GOLD,
 					   24.1, 38.0, 0.05);
         
@@ -838,7 +830,7 @@ function void ShopLoop(void)
 		
 		// Determine Offset
 		if (ShopIndex > SHOP_SCROLL)
-			ShopOffset = ShopIndex - SHOP_SCROLL;
+			ShopOffset = ShopIndex - SHOP_SCROLL
 		else
 			ShopOffset = 0;
 		
@@ -850,33 +842,39 @@ function void ShopLoop(void)
 			SetFont("SMALLFONT");
             if (i == ShopIndex)
 				if (CheckInventory(Shop[ShopPage][i][0]) > 0)
-					HudMessage(s:Shop[ShopPage][i][1], s:" [", d:CheckInventory(Shop[ShopPage][i][0]), s:"]";
+					HudMessage("%s [%d]\n",
+							   Shop[ShopPage][i][1], CheckInventory(Shop[ShopPage][i][0]),
 							   HUDMSG_PLAIN, 3001 + i, CR_GREEN,
-							   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
+							   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05)
 				else
-					HudMessage(s:Shop[ShopPage][i][1];
+					HudMessage("%s\n",
+							   Shop[ShopPage][i][1],
 							   HUDMSG_PLAIN, 3001 + i, CR_GREEN,
-							   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
+							   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05)
             else
                 if (CheckInventory("Credits") >= ShopCosts[ShopPage][i] - ShopCosts[ShopPage][i] * Discount / 100)
 					if (CheckInventory(Shop[ShopPage][i][0]) > 0)
-						HudMessage(s:Shop[ShopPage][i][1], s:" [", d:CheckInventory(Shop[ShopPage][i][0]), s:"]";
+						HudMessage("%s [%d]\n",
+								   Shop[ShopPage][i][1], CheckInventory(Shop[ShopPage][i][0]),
 								   HUDMSG_PLAIN, 3001 + i, CR_WHITE,
-								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
+								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05)
 					 else
-						HudMessage(s:Shop[ShopPage][i][1];
+						HudMessage("%s\n",
+								   Shop[ShopPage][i][1],
 								   HUDMSG_PLAIN, 3001 + i, CR_WHITE,
-								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
+								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05)
                 else
 					if (CheckInventory(Shop[ShopPage][i][0]) > 0)
-						HudMessage(s:Shop[ShopPage][i][1], s:" [", d:CheckInventory(Shop[ShopPage][i][0]), s:"]";
+						HudMessage("%s [%d]\n",
+								   Shop[ShopPage][i][1], CheckInventory(Shop[ShopPage][i][0]),
 								   HUDMSG_PLAIN, 3001 + i, CR_RED,
-								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
+								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05)
 					else
-						HudMessage(s:Shop[ShopPage][i][1];
+						HudMessage("%s\n",
+								   Shop[ShopPage][i][1],
 								   HUDMSG_PLAIN, 3001 + i, CR_RED,
 								   24.1, 50.0 + 8.0 * (i - ShopOffset), 0.05);
-        }
+        };
         
 		// Check cursor movement for repeating
         if (Buttons == BT_FORWARD)
@@ -884,13 +882,13 @@ function void ShopLoop(void)
 			DelayTimer++;
 			if (DelayTimer > 35)
 				MoveCursor(DIR_UP);
-		}
+		};
         if (Buttons == BT_BACK)
 		{
 			DelayTimer++;
 			if (DelayTimer > 35)
 				MoveCursor(DIR_DOWN);
-		}
+		};
 		
         // Check Input
         if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
@@ -906,13 +904,13 @@ function void ShopLoop(void)
         if (Buttons == BT_USE && OldButtons != BT_USE)
 		{
 			if (CheckInventory("Credits") >= Cost)
-				BuyItem(Shop[ShopPage][ShopIndex][0], Cost);
+				BuyItem(Shop[ShopPage][ShopIndex][0], Cost)
 			else
 				ActivatorSound("menu/error", 127);
-		}
+		};
 		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
 			if (CheckInventory(Shop[ShopPage][ShopIndex][0]) > 0)
-				SellItem(Shop[ShopPage][ShopIndex][0], false);
+				SellItem(Shop[ShopPage][ShopIndex][0], false)
 			else
 				ActivatorSound("menu/error", 127);
 		if (Buttons & BT_SPEED)
@@ -923,14 +921,14 @@ function void ShopLoop(void)
 			{
 				SellItem(Shop[ShopPage][ShopIndex][0], true);
 				DelayTimer = 0;
-			}
-		}
+			};
+		};
 		
 		// Reset the Delay Timer if no buttons are pressed
 		if (Buttons == 0 && OldButtons == 0)
 			DelayTimer = 0;
-    }
-}
+    };
+};
 
 function void MoveCursor(int Direction)
 {
@@ -939,30 +937,30 @@ function void MoveCursor(int Direction)
 		if (ShopIndex <= 0) ShopIndex = ShopMax[ShopPage];
 		ActivatorSound("menu/move", 127);
 		ShopIndex--;
-	}
+	};
 	if (Direction == DIR_DOWN)
 	{
 		if (ShopIndex >= ShopMax[ShopPage] - 1) ShopIndex = -1;
 		ActivatorSound("menu/move", 127);
 		ShopIndex++;
-	}
+	};
 	if (Direction == DIR_LEFT)
 	{
 		if (ShopPage <= 0) ShopPage = ShopCategories;
 		ActivatorSound("menu/move", 127);
 		ShopIndex = 0;
 		ShopPage--;
-	}
+	};
 	if (Direction == DIR_RIGHT)
 	{
 		if (ShopPage >= ShopCategories - 1) ShopPage = -1;
 		ActivatorSound("menu/move", 127);
 		ShopIndex = 0;
 		ShopPage++;
-	}
-}
+	};
+};
 
-function int GetAmmoAmount(Str Item)
+function int GetAmmoAmount(str Item)
 {
 	int Amount = 1;
 	
@@ -985,10 +983,10 @@ function int GetAmmoAmount(Str Item)
 	// Now apply difficulty-based multipliers to the amount if it's ammo
 	if (Item == "Clip" || Item == "Shell" || Item == "RocketAmmo" || Item == "Cell")
 		if (GameSkill() == 1 || GameSkill() == 5)
-			FixedMul(Amount, 2.0);
+			Amount *= 2;
 	
 	return Amount;
-}
+};
 
 function void BuyItem(str Item, int Cost)
 {
@@ -997,15 +995,15 @@ function void BuyItem(str Item, int Cost)
 	{
 		ActivatorSound("menu/error", 127);
 		return;
-	}
+	};
 	
 	// If it's a Token, use alternate handling due to bullshit
 	if (Item == "StatToken") 	Item = "SmallStatToken";
 	if (Item == "StatCapToken") Item = "SmallStatCapToken";
 	if (Item == "SkillToken")	Item = "SmallSkillToken";
 	
-	// Buy Type
-	if (GetCVAR("drpg_shopbuytype"))
+	/* Buy Type
+	if (GetCVar("drpg_shopbuytype"))
 	{
 		int Amount = 1;
 		
@@ -1022,24 +1020,25 @@ function void BuyItem(str Item, int Cost)
 		{
 			ActivatorSound("menu/error", 127);
 			return;
-		}
+		};
 	}
 	else
-	{
-		// DoomRL Compatibility
-		if (GetCVAR("drpg_ext_doomrl"))
-			if (ShopPage == 0) // Weapons
-				Item = StrParam(s:Item, s:"Pickup");
-		
-		if (InBase && !GetCVAR("drpg_shoptype"))
-			SpawnSpotForced(Item, ShopSpotID, 0, 0);
-		else
-			SpawnForced(Item, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
-	}
+	{};
+	*/
+	
+	// DoomRL Compatibility
+	if (GetCVar("drpg_ext_doomrl"))
+		if (ShopPage == 0) // Weapons
+			Item = StrParam("%sPickup\n", Item);
+	
+	if (InBase && !GetCVar("drpg_shoptype"))
+		SpawnSpotForced(Item, ShopSpotID, 0, 0)
+	else
+		SpawnForced(Item, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
 	
 	ActivatorSound("menu/buy", 127);
 	TakeInventory("Credits", Cost);
-}
+};
 
 function int GetSellPrice(int Amount)
 {
@@ -1059,7 +1058,7 @@ function int GetSellPrice(int Amount)
 	if (SellCost == 0) SellCost = 1;
 	
 	return SellCost;
-}
+};
 
 function int SellItem(str Item, bool SellAll)
 {
@@ -1067,17 +1066,17 @@ function int SellItem(str Item, bool SellAll)
 	if (RankLevel == 0)
 	{
 		SetFont("BIGFONT");
-		Print(s:"\cgYou cannot sell items until you reach the first rank");
+		Print("\cgYou cannot sell items until you reach the first rank\n");
 		ActivatorSound("menu/error", 127);
 		return 0;
-	}
+	};
 	
 	// Page blacklist
 	if (ShopPage == 5) // Tokens
 	{
 		ActivatorSound("menu/error", 127);
 		return 0;
-	}
+	};
 	
 	int Amount = 1;
 	
@@ -1090,7 +1089,7 @@ function int SellItem(str Item, bool SellAll)
 	int SellCost = GetSellPrice(Amount);
 
 	// DoomRL Compatibility
-	if (GetCVAR("drpg_ext_doomrl"))
+	if (GetCVar("drpg_ext_doomrl"))
 	{
 		if (ShopPage == 0) // Weapons
 			TakeInventory("RLWeaponLimit", 1);
@@ -1098,12 +1097,12 @@ function int SellItem(str Item, bool SellAll)
 			TakeInventory("RLArmorInInventory", 1);
 		if (ShopPage == 8) // Mod Packs
 			if (PlayerClass(0) == 2) // Special handling case for Technician
-				TakeInventory("RLScavengerModLimit", 1);
+				TakeInventory("RLScavengerModLimit", 1)
 			else
 				TakeInventory("RLModLimit", 1);
 		if (ShopPage == 9) // Boots
 			TakeInventory("RLBootsInInventory", 1);
-	}
+	};
 	
 	// Sell the Item
 	if (CheckInventory(Item) >= Amount)
@@ -1116,4 +1115,4 @@ function int SellItem(str Item, bool SellAll)
 		ActivatorSound("menu/error", 127);
 	
 	return SellCost;
-}
+};

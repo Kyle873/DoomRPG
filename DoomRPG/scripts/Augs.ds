@@ -1,97 +1,77 @@
-#library "Augs"
+#include "Augs.dh"
+#include "Globals.dh"
+#include "Stats.dh"
+#include "Skills.dh"
 
-#include "zcommon.acs"
+int MaxAugSlots;
 
-#import "Stats.acs"
-#import "Skills.acs"
-#import "Shield.acs"
-#import "Utils.acs"
-
-#libdefine AUG_STRENGTH		0
-#libdefine AUG_DEFENSE		1
-#libdefine AUG_VITALITY		2
-#libdefine AUG_ENERGY		3
-#libdefine AUG_REGENERATION	4
-#libdefine AUG_AGILITY		5
-#libdefine AUG_CAPACITY		6
-#libdefine AUG_LUCK			7
-
-#libdefine MAX_AUGS			8
-#libdefine AUG_LEVELS		5
-
-str AugData[MAX_AUGS][1 + AUG_LEVELS] =
+str[MAX_AUGS][AUG_LEVELS + 1] AugData =
 {
 	// Name, Icon, Description...
 	
 	// Augs
 	{
-		"Muscle Replacer",
-		"1.25x Damage",
-		"1.5x Damage",
-		"2x Damage",
-		"4x Damage"
-	},
+		"Muscle Replacer";
+		"1.25x Damage";
+		"1.5x Damage";
+		"2x Damage";
+		"4x Damage";
+	};
 	{
-		"Dermal Armor",
-		"-10x Damage Taken",
-		"-20x Damage Taken",
-		"-30x Damage Taken",
-		"-40x Damage Taken",
-		"-50x Damage Taken"
-	},
+		"Dermal Armor";
+		"-10x Damage Taken";
+		"-20x Damage Taken";
+		"-30x Damage Taken";
+		"-40x Damage Taken";
+		"-50x Damage Taken";
+	};
 	{
-		"Pain Inhibitor",
-		"2x Max Health",
-		"2x Health Regen"
-	},
+		"Pain Inhibitor";
+		"2x Max Health";
+		"2x Health Regen";
+	};
 	{
-		"Psi Projector",
-		"2x Max EP",
-		"2x EP Regen",
-		"2x Aura Timer"
-	},
+		"Psi Projector";
+		"2x Max EP";
+		"2x EP Regen";
+		"2x Aura Timer";
+	};
 	{
-		"Adrenaline Booster",
-		"2x HP/EP Regen Amounts",
-		"-2x HP/EP Regen Timers",
-		"2x Shield Charge Rate",
-		"-2x Shield Delay Rate",
-		"-2x Shield Charge Interval"
-	},
+		"Adrenaline Booster";
+		"2x HP/EP Regen Amounts";
+		"-2x HP/EP Regen Timers";
+		"2x Shield Charge Rate";
+		"-2x Shield Delay Rate";
+		"-2x Shield Charge Interval";
+	};
 	{
-		"Wired Reflexes",
-		"2x Movement Speed",
-		"2x Jump Height",
-		"Double Weapon Speed",
-		"2x Survival Chance"
-	},
+		"Wired Reflexes";
+		"2x Movement Speed";
+		"2x Jump Height";
+		"Double Weapon Speed";
+		"2x Survival Chance";
+	};
 	{
-		"Weight Distributor",
-		"2x Ammo Limits",
-		"4x Ammo Limits"
-	},
+		"Weight Distributor";
+		"2x Ammo Limits";
+		"4x Ammo Limits";
+	};
 	{
-		"Precognition Unit",
-		"1.25x Luck Drop Chances",
-		"1.5x Luck Drop Chances",
-		"2x Luck Drop Chances",
-		"3x Luck Drop Chances",
-		"4x Luck Drop Chances"
-	},
+		"Precognition Unit";
+		"1.25x Luck Drop Chances";
+		"1.5x Luck Drop Chances";
+		"2x Luck Drop Chances";
+		"3x Luck Drop Chances";
+		"4x Luck Drop Chances";
+	};
 };
 
-int AugLevelMax[MAX_AUGS] =
+int[MAX_AUGS] AugLevelMax =
 {
-	4, 5, 2, 3, 5, 4, 2, 5
+	4; 5; 2; 3; 5; 4; 2; 5;
 };
 
-global int 47 : Augs[];
-global int 48 : AugLevels[];
-global int 49 : AugSlotsUsed;
-
-int MaxAugSlots;
-
-function void CheckAugSlots(void)
+function void CheckAugSlots()
 {
 	MaxAugSlots = (6 - GameSkill()) + CheckInventory("AugSlotUpgrade");
 	
@@ -102,10 +82,10 @@ function void CheckAugSlots(void)
 			{
 				EquipAug(i);
 				break;
-			}
-}
+			};
+};
 
-function void CheckAugs(void)
+function void CheckAugs()
 {
 	// Sanity check to prevent negative slots used
 	if (AugSlotsUsed < 0)
@@ -115,29 +95,29 @@ function void CheckAugs(void)
 	if (Augs[AUG_STRENGTH])
 	{
 		if (AugLevels[AUG_STRENGTH] == 1)
-			TotalDamage = FixedMul(TotalDamage, 1.25);
+			TotalDamage *= 1.25;
 		if (AugLevels[AUG_STRENGTH] == 2)
-			TotalDamage = FixedMul(TotalDamage, 1.5);
+			TotalDamage *= 1.5;
 		if (AugLevels[AUG_STRENGTH] == 3)
-			TotalDamage = FixedMul(TotalDamage, 2.0);
+			TotalDamage *= 2.0;
 		if (AugLevels[AUG_STRENGTH] >= 4)
-			TotalDamage = FixedMul(TotalDamage, 4.0);
-	}
+			TotalDamage *= 4.0;
+	};
 	
 	// Defense Aug
 	if (Augs[AUG_DEFENSE])
 	{
 		if (AugLevels[AUG_DEFENSE] == 1)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.1);
+			DamageFactor -= 0.1;
 		if (AugLevels[AUG_DEFENSE] == 2)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.2);
+			DamageFactor -= 0.2;
 		if (AugLevels[AUG_DEFENSE] == 3)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.3);
+			DamageFactor -= 0.3;
 		if (AugLevels[AUG_DEFENSE] == 4)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.4);
+			DamageFactor -= 0.4;
 		if (AugLevels[AUG_DEFENSE] >= 5)
-			DamageFactor = DamageFactor - FixedMul(DamageFactor, 0.5);
-	}
+			DamageFactor -= 0.5;
+	};
 	
 	// Vitality Aug
 	if (Augs[AUG_VITALITY])
@@ -146,7 +126,7 @@ function void CheckAugs(void)
 			HealthMax *= 2;
 		if (AugLevels[AUG_VITALITY] >= 2)
 			HPAmount *= 2;
-	}
+	};
 	
 	// Energy Aug
 	if (Augs[AUG_ENERGY])
@@ -156,10 +136,10 @@ function void CheckAugs(void)
 		if (AugLevels[AUG_ENERGY] >= 2)
 			EPAmount *= 2;
 		if (AugLevels[AUG_ENERGY] >= 3)
-			AuraBonus = true;
+			{AuraBonus = true;}
 		else
-			AuraBonus = false;
-	}
+			{AuraBonus = false;};
+	};
 	
 	// Regeneration Aug
 	if (Augs[AUG_REGENERATION])
@@ -168,13 +148,13 @@ function void CheckAugs(void)
 		{
 			HPAmount *= 2;
 			EPAmount *= 2;
-		}
+		};
 		if (AugLevels[AUG_REGENERATION] >= 2)
 		{
 			HPTime /= 2;
 			EPTime /= 2;
-		}
-	}
+		};
+	};
 
 	// Agility Aug
 	if (Augs[AUG_AGILITY])
@@ -187,7 +167,7 @@ function void CheckAugs(void)
 			WeaponSpeed += 100;
 		if (AugLevels[AUG_AGILITY] >= 4)
 			SurvivalBonus *= 2;
-	}
+	};
 	
 	// Capacity Aug
 	if (Augs[AUG_CAPACITY])
@@ -203,7 +183,7 @@ function void CheckAugs(void)
 		SetAmmoCapacity("Shell", Capacity * 10 * AmmoMult);
 		SetAmmoCapacity("RocketAmmo", Capacity * 5 * AmmoMult);
 		SetAmmoCapacity("Cell", Capacity * 30 * AmmoMult);
-	}
+	};
 
 	// Luck Aug
 	if (Augs[AUG_LUCK])
@@ -221,19 +201,19 @@ function void CheckAugs(void)
 		if (AugLevels[AUG_LUCK] == 5)
 			LuckMult = 4.0;
 		
-		HealthChance = FixedMul(HealthChance, LuckMult);
-		EPChance = FixedMul(EPChance, LuckMult);
-		ArmorChance = FixedMul(ArmorChance, LuckMult);
-		PowerupChance = FixedMul(PowerupChance, LuckMult);
-		RuneChance = FixedMul(RuneChance, LuckMult);
-		TokenChance = FixedMul(TokenChance, LuckMult);
-		AugChance = FixedMul(AugChance, LuckMult);
-		ShieldChance = FixedMul(ShieldChance, LuckMult);
-	}
+		HealthChance *= LuckMult;
+		EPChance *= LuckMult;
+		ArmorChance *= LuckMult;
+		PowerupChance *= LuckMult;
+		RuneChance *= LuckMult;
+		TokenChance *= LuckMult;
+		AugChance *= LuckMult;
+		ShieldChance *= LuckMult;
+	};
 
 	// Keep adding more
 	// ...
-}
+};
 
 function void EquipAug(int Aug)
 {
@@ -253,17 +233,17 @@ function void EquipAug(int Aug)
 			{
 				ActivatorSound("menu/error", 127);
 				SetFont("BIGFONT");
-				Print(s:"\cgYou don't have a free Augmentation slot!");
+				Print("\cgYou don't have a free Augmentation slot!\n");
 				AugSlotsUsed--;
 			}
 			else
 			{
 				ActivatorSound("aug/equip", 127);
 				Augs[Aug] = true;
-			}
-		}
-	}
-}
+			};
+		};
+	};
+};
 
 function void LevelUpAug(int Aug)
 {
@@ -278,7 +258,7 @@ function void LevelUpAug(int Aug)
 				AugLevels[Aug]++;
 			}
 			else
-				ActivatorSound("menu/error", 127);
+				{ActivatorSound("menu/error", 127);};
 		}
 		else
 		{
@@ -289,7 +269,7 @@ function void LevelUpAug(int Aug)
 				AugLevels[Aug]++;
 			}
 			else
-				ActivatorSound("menu/error", 127);
-		}
-	}
-}
+				{ActivatorSound("menu/error", 127);};
+		};
+	};
+};

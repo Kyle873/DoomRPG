@@ -1,56 +1,45 @@
-#library "Stims"
-
-#include "zcommon.acs"
-
-#import "Stats.acs"
-#import "Utils.acs"
-
-#libdefine MAX_COMPONENTS	10
-
-str CompoundNames[MAX_COMPONENTS] =
-{
-	// Stats
-	"Strength", "Defense", "Vitality", "Energy", "Regeneration", "Agility", "Capacity", "Luck",
-	
-	// Powerups
-	// ...
-	
-	// Utilities
-	"Purifier", "Potency"
-};
-int CompoundColors[MAX_COMPONENTS] =
-{
-	// Stats
-	CR_RED, CR_GREEN, CR_BRICK, CR_LIGHTBLUE, CR_PURPLE, CR_ORANGE, CR_BLUE, CR_GOLD,
-	
-	// Powerups
-	// ...
-	
-	// Utilities
-	CR_DARKGRAY, CR_WHITE
-};
-
-global int 42 : StimTimerHUD;
-global int 43 : Vials[];
-global int 44 : Stim[];
-global int 45 : LastStim[];
-global int 46 : StimSize;
+#include "Globals.dh"
+#include "Stats.dh"
+#include "Stims.dh"
+#include "Utils.dh"
 
 bool StimActive;
 int StimAmount;
 int StimCapacity;
 int StimTimer;
 
-script "UseStim" (void)
+str[MAX_COMPONENTS] CompoundNames =
 {
-	int i;
+	// Stats
+	"Strength"; "Defense"; "Vitality"; "Energy"; "Regeneration"; "Agility"; "Capacity"; "Luck";
 	
+	// Powerups
+	// ...
+	
+	// Utilities
+	"Purifier"; "Potency";
+};
+
+int[MAX_COMPONENTS] CompoundColors =
+{
+	// Stats
+	CR_RED; CR_GREEN; CR_BRICK; CR_LIGHTBLUE; CR_PURPLE; CR_ORANGE; CR_BLUE; CR_GOLD;
+	
+	// Powerups
+	// ...
+	
+	// Utilities
+	CR_DARKGRAY; CR_WHITE;
+};
+
+script UseStim(void)
+{
 	// If you don't have a stim ready or components in it, terminate
 	if (StimActive || StimSize == 0 || StimAmount == 0)
 	{
 		ActivatorSound("menu/error", 127);
-		terminate;
-	}
+		return;
+	};
 	
 	// Set Timer
 	StimActive = true;
@@ -77,24 +66,24 @@ script "UseStim" (void)
 	LuckBonus = Stim[7];
 	
 	// Apply current Stim to last used Stim
-	for (i = 0; i < MAX_COMPONENTS; i++)
+	for (int i = 0; i < MAX_COMPONENTS; i++)
 		LastStim[i] = Stim[i];
 	
 	// Clear the Stim
 	StimSize = 0;
 	StimAmount = 0;
-	for (i = 0; i < MAX_COMPONENTS; i++)
+	for (int i = 0; i < MAX_COMPONENTS; i++)
 		Stim[i] = 0;
 	
 	// FX
 	ActivatorSound("misc/stim", 127);
 	FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
-}
+};
 
-script "AddCompound" (int Type, int Amount)
+script ScriptAddCompound(int Type, int Amount)
 {
 	AddCompound(Type, Amount);
-}
+};
 
 function void AddCompound(int Type, int Amount)
 {
@@ -102,9 +91,9 @@ function void AddCompound(int Type, int Amount)
 	
 	if (Vials[Type] > 100)
 		Vials[Type] = 100;
-}
+};
 
-function void CheckStim(void)
+function void CheckStim()
 {
 	// Stim maximum capacities
 	if (StimSize == 1)
@@ -140,8 +129,8 @@ function void CheckStim(void)
 		CapacityBonus = -LastStim[6];
 		LuckBonus = -LastStim[7];
 		StimActive = false;
-	}
-}
+	};
+};
 
 function void MixStim(int Type)
 {
@@ -150,13 +139,13 @@ function void MixStim(int Type)
 	{
 		ActivatorSound("menu/error", 127);
 		return;
-	}
+	};
 	
 	// Add from vial to stim
 	ActivatorSound("menu/move", 127);
 	Vials[Type] -= 5;
 	Stim[Type] += 5;
-}
+};
 
 function void SetStim(int Type)
 {
@@ -166,7 +155,7 @@ function void SetStim(int Type)
 	{
 		ActivatorSound("menu/error", 127);
 		return;
-	}
+	};
 	
 	StimSize = Type + 1;
 	ActivatorSound("menu/move", 127);
@@ -174,4 +163,4 @@ function void SetStim(int Type)
 	if (Type == 0) TakeInventory("StimSmall", 1);
 	if (Type == 1) TakeInventory("StimMedium", 1);
 	if (Type == 2) TakeInventory("StimLarge", 1);
-}
+};

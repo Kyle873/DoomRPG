@@ -1,55 +1,42 @@
-#library "Utils"
+#include "Augs.dh"
+#include "Globals.dh"
+#include "Shield.dh"
+#include "Skills.dh"
+#include "Stats.dh"
+#include "Utils.dh"
 
-#include "zcommon.acs"
-
-#import "RPG.acs"
-#import "Stats.acs"
-#import "Skills.acs"
-#import "Augs.acs"
-#import "Shop.acs"
-#import "Menu.acs"
-#import "Shield.acs"
-
-// Level and Flags
-global int 61 : LevelNum;				// Used to keep track of the level number for the transport system and monster difficulty scaling
-global int 62 : InBase;					// Whether you are at the UAC Outpost or not
-global int 63 : Transported;			// True if you are using the Transportation System
-
-// Used by menus to create delayed input
+int MapNumber;
 int DelayTimer;
 
 // Skill Level Names
-str SkillLevels[5] =
+str[5] SkillLevels =
 {
-	"Easy",
-	"Normal",
-	"Hard",
-	"Nightmare",
-	"Hell"
+	"Easy";
+	"Normal";
+	"Hard";
+	"Nightmare";
+	"Hell";
 };
 
-// Utility Scripts
-// --------------------------------------------------
-
 // Set Skill Level during the game
-script "SetSkill" (int NewSkill)
+script SetSkill(int NewSkill)
 {
 	SetFont("BIGFONT");
 	
 	if (NewSkill < 0 || NewSkill > 4)
 	{
-		Print(s:"\cgInvalid Skill Level");
-		terminate;
-	}
+		Print("\cgInvalid Skill Level\n");
+		return;
+	};
 	
 	FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0.0, 0.5);
 	ChangeSkill(NewSkill);
 	ActivatorSound("misc/secret", 127);
-	Print(s:"\cjSkill Level has been changed to\n\cg", d:NewSkill + 1, s:" - ", s:SkillLevels[NewSkill]);
-}
+	Print("\cjSkill Level has been changed to\n\cg%d - %s\n", NewSkill + 1, SkillLevels[NewSkill]);
+};
 
 // Respec - Respecialize your Player
-script "Respec" (int Stats, int Skills)
+script Respec(int Stats, int Skills)
 {
 	// Vars
 	int StatPoints;
@@ -83,14 +70,14 @@ script "Respec" (int Stats, int Skills)
 		GiveInventory("StatToken", StatPoints);
 
 		// Reset HP and EP
-		SetActorProperty(0, APROP_HEALTH, 100);
+		SetActorProperty(0, APROP_Health, 100);
 		EP = 100;
 		EPMax = 100;
 		
 		// Reset Shield
 		Shield = 0;
 		ShieldTimer = 375;
-	}
+	};
 	
 	// Respec Skills
 	if (Skills)
@@ -101,7 +88,7 @@ script "Respec" (int Stats, int Skills)
 			{
 				SkillPoints += SkillLevel[(i * MAX_SKILLS) + j];
 				SkillLevel[(i * MAX_SKILLS) + j] = 0;
-			}
+			};
 
 		// Give Respecced Skill Tokens back
 		GiveInventory("StatToken", SkillPoints);
@@ -109,7 +96,7 @@ script "Respec" (int Stats, int Skills)
 		// Remove Auras
 		Aura = 0;
 		AuraTimer = 0;
-	}
+	};
 	
 	// Take 1/2 Credits
 	GiveInventory("Credits", OldCredits);
@@ -117,14 +104,14 @@ script "Respec" (int Stats, int Skills)
 	
 	// FX
 	FadeRange(255, 255, 255, 0.75, 0, 0, 0, 0.0, 2.5);
-	HudMessage(s:"Respec Complete"; HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.5, 2.5);
+	HudMessage("Respec Complete\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.5, 2.5);
 	ActivatorSound("misc/secret", 127);
-}
+};
 
 // Add XP, Rank or Combo
-script "AddXP" (int TotalAdd, int XPAdd, int RankAdd, int ComboAdd)
+script AddXP(int TotalAdd, long int XPAdd, int RankAdd, int ComboAdd)
 {
-	if (GetCVAR("drpg_combo"))
+	if (GetCVar("drpg_combo"))
 	{
 		if (Combo == 0)
 			Combo = 1;
@@ -139,66 +126,65 @@ script "AddXP" (int TotalAdd, int XPAdd, int RankAdd, int ComboAdd)
 	{
 		XP += XPAdd;
 		Rank += RankAdd;
-	}
-}
+	};
+};
 
 // For items or other things to add EP
-script "AddEP" (int Amount)
+script AddEP(int Amount)
 {
 	FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 0.25);
 	
-	EP += amount;
+	EP += Amount;
 	
 	if (EP > EPMax)
 		EP = EPMax;
-}
+};
 
 // Returns your current EP (for DECORATE)
-script "GetEP" (void)
+script int GetEP()
 {
-	SetResultValue(EP);
-}
+	return EP;
+};
 
 // Returns your max EP (for DECORATE)
-script "GetEPMax" (void)
+script int GetEPMax()
 {
-	SetResultValue(EPMax);
-}
+	return EPMax;
+};
 
 // Returns the amount to heal given the percentage out of max HP (for DECORATE)
-script "GetHealPercent" (int Percent)
+script int GetHealPercent(int Percent)
 {
 	int Amount = HealthMax * Percent / 100;
-	SetResultValue(Amount);
-}
+	return Amount;
+};
 
 // Returns your max Health (for DECORATE)
-script "GetHealthMax" (void)
+script int GetHealthMax()
 {
-	SetResultValue(HealthMax);
-}
+	return HealthMax;
+};
 
 // Returns the Agility for A_SetTics calls in DECORATE
-script "GetSpeed" (int Tics)
+script int GetSpeed(int Tics)
 {
-	int TicSpeed = Tics - FixedMul(((Tics - 1) / 100), Agility);
-	SetResultValue(TicSpeed);
-}
+	return Tics - ((Tics - 1) / 100) * Agility;
+};
 
 // Used by DECORATE to check if both your Health and EP are at max
-script "HPEPMax" (void)
+script bool HPEPMax(void)
 {
-	SetResultValue((GetActorProperty(0, APROP_HEALTH) >= GetActorProperty(0, APROP_SPAWNHEALTH) && EP >= EPMax));
-}
+	return (GetActorProperty(0, APROP_Health) >= GetActorProperty(0, APROP_SpawnHealth) && EP >= EPMax);
+};
 
 // Used by the RegenSphere to temporarily increase regen rates
-script "RegenBoost" (void)
+script RegenBoost()
 {
 	RegenBoostTimer += Random(35 * 5, 35 * 10);
-}
+};
 
 // HAAAAAAAAAAAAAAAX
-script "Cheat" (int StatBoost)
+script Cheat(int StatBoost)
 {
 	int ItemMax = 1000;
 	
@@ -207,14 +193,14 @@ script "Cheat" (int StatBoost)
 	Rank = RankTable[MAX_RANK - 1];
 	
 	// Stats
-	Strength += statboost;
-	Defense += statboost;
-	Vitality += statboost;
-	Energy += statboost;
-	Regeneration += statboost;
-	Agility += statboost;
-	Capacity += statboost;
-	Luck += statboost;
+	Strength += StatBoost;
+	Defense += StatBoost;
+	Vitality += StatBoost;
+	Energy += StatBoost;
+	Regeneration += StatBoost;
+	Agility += StatBoost;
+	Capacity += StatBoost;
+	Luck += StatBoost;
 	
 	// Max out all Skills
 	for (int i = 0; i < MAX_CATEGORIES; i++)
@@ -222,13 +208,16 @@ script "Cheat" (int StatBoost)
 		{
 			SkillLevel[(i * MAX_SKILLS) + j] = SkillLevelMax[i][j];
 			CurrentSkillLevel[(i * MAX_SKILLS) + j] = SkillLevelMax[i][j];
-		}
+		};
 	
 	// Items - Tokens
 	GiveInventory("StatToken", 10000);
 	GiveInventory("StatCapToken", 100);
 	GiveInventory("SkillToken", 10000);
 	
+	// Checck Stat Caps
+	CheckStatCaps();
+
 	// Items - Health
 	GiveInventory("StimPack", ItemMax);
 	GiveInventory("Medikit", ItemMax);
@@ -239,7 +228,7 @@ script "Cheat" (int StatBoost)
 	GiveInventory("Continue", ItemMax);
 	
 	// Items - Armor
-	if (!GetCVAR("drpg_ext_doomrl"))
+	if (!GetCVar("drpg_ext_doomrl"))
 	{
 		TakeInventory("BasicArmor", 10000000);
 		GiveInventory("WhiteArmor", 1);
@@ -256,8 +245,8 @@ script "Cheat" (int StatBoost)
 			GiveInventory("RedArmor", ItemMax);
 			GiveInventory("UsedWhiteArmor", ItemMax);
 			GiveInventory("WhiteArmor", ItemMax);
-		}
-	}
+		};
+	};
 	
 	// Items - Powerups
 	GiveInventory("InvulnerabilitySphere", ItemMax);
@@ -276,10 +265,10 @@ script "Cheat" (int StatBoost)
 	GiveInventory("Cell", GetAmmoCapacity("Cell"));
 	
 	// Items - Misc
-	ACS_NamedExecute("AllRunes", 0);
-	ACS_NamedExecute("GiveAugs", 0, 100, 100, 100);
-	ACS_NamedExecute("GiveCredits", 0);
-	ACS_NamedExecute("FullShield", 0);
+	CallACS("AllRunes");
+	ACS_NamedExecuteAlways("GiveAugs", 0, 100, 100, 100);
+	CallACS("GiveCredits");
+	CallACS("FullShield");
 	GiveInventory("RedCard", 1);
 	GiveInventory("YellowCard", 1);
 	GiveInventory("BlueCard", 1);
@@ -296,43 +285,43 @@ script "Cheat" (int StatBoost)
 	EP = EPMax;
 	Shield = ShieldCapacity;
 	ShieldTimer = 0;
-}
+};
 
 // For testing different stats and their effects
-script "ModStat" (int stat, int value)
+script ModStat(int Stat, int Value)
 {
-	switch (stat)
+	switch (Stat)
 	{
-		case 1:	strength = value;		break;
-		case 2:	Defense = value;		break;
-		case 3:	Vitality = value;		break;
-		case 4:	Energy = value;			break;
-		case 5:	Regeneration = value;	break;
-		case 6:	Agility = value;		break;
-		case 7:	Capacity = value;		break;
-		case 8:	Luck = value;			break;
-	}
-}
+		case 1:	Strength = Value;		break;
+		case 2:	Defense = Value;		break;
+		case 3:	Vitality = Value;		break;
+		case 4:	Energy = Value;			break;
+		case 5:	Regeneration = Value;	break;
+		case 6:	Agility = Value;		break;
+		case 7:	Capacity = Value;		break;
+		case 8:	Luck = Value;			break;
+	};
+};
 
 // Give Credits
-script "GiveCredits" (int Amount)
+script GiveCredits(int Amount)
 {
 	if (Amount == 0) Amount = 1000000000;
 	GiveInventory("Credits", Amount);
 	ActivatorSound("credits/payout", 127);
-}
+};
 
 // Instant payout
-script "Payout" (int Time)
+script Payout(int Time)
 {
 	if (Time > 0)
-		PayTimer = Time;
+		PayTimer = Time
 	else
-		PayTimer = 35 * 60 * GetCVAR("drpg_pay_interval");
-}
+		PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
+};
 
 // Give all Runes
-script "AllRunes" (void)
+script AllRunes(void)
 {
 	ActivatorSound("misc/secret", 127);
 	GiveInventory("StrengthRune", 1);
@@ -344,24 +333,24 @@ script "AllRunes" (void)
 	GiveInventory("GhostRune", 1);
 	GiveInventory("HighJumpRune", 1);
 	GiveInventory("HasteRune", 1);
-}
+};
 
 // Give all Augs
-script "GiveAugs" (int Canisters, int Upgrades, int Slots)
+script GiveAugs(int Canisters, int Upgrades, int Slots)
 {
 	if (Canisters)
 	{
 		GiveInventory("AugCanister", Canisters);
 		GiveInventory("AugUpgradeCanister", Upgrades);
 		GiveInventory("AugSlotUpgrade", Slots);
-	}
+	};
 	
 	for (int i = 0; i < MAX_AUGS; i++)
 		AugLevels[i] = AugLevelMax[i];
-}
+};
 
 // Give all Shield Components
-script "FullShield" (void)
+script FullShield()
 {
 	// Bodies
 	GiveInventory("ShieldBody1", 1);
@@ -396,13 +385,64 @@ script "FullShield" (void)
 	GiveInventory("ShieldAccessory5", 1);
 	GiveInventory("ShieldAccessory6", 1);
 	GiveInventory("ShieldAccessory7", 1);
-}
+};
 
-// Utility Functions
-// --------------------------------------------------
+function void CreateTranslations()
+{
+	// Damage Numbers - Overkill
+	CreateTranslationStart(1);
+	CreateTranslationPalette(81, 111, 176, 176);
+	CreateTranslationEnd();
+	
+	// Damage Numbers - Healed
+	CreateTranslationStart(2);
+	CreateTranslationPalette(81, 111, 112, 112);
+	CreateTranslationEnd();
+
+	// Damage Numbers - Scratch
+	CreateTranslationStart(3);
+	CreateTranslationPalette(81, 111, 100, 100);
+	CreateTranslationEnd();
+};
+// PrintSprite Utility Function
+function void PrintSprite(str sprite, int id, fixed x, fixed y, fixed d)
+{
+    SetFont(sprite);
+    HudMessage("A\n", HUDMSG_PLAIN, id, CR_UNTRANSLATED, x, y, d);
+};
+
+function void PrintSpriteFade(str sprite, int id, fixed x, fixed y, fixed d, fixed h)
+{
+    SetFont(sprite);
+    HudMessage("A\n", HUDMSG_FADEOUT, id, CR_UNTRANSLATED, x, y, d, h);
+};
+
+function int SetInventory(str Item, int Count)
+{
+	int n = Count - CheckInventory(Item);
+	
+	if (n > 0)
+		GiveInventory(Item, n)
+	else if (n < 0)
+		TakeInventory(Item, -n);
+	
+	return n;
+};
+
+function int SetActorInventory(int tid, str item, int count)
+{
+	int n = count - CheckActorInventory (tid, item);
+	
+	if (n > 0)
+		GiveActorInventory(tid, item, n)
+	else if (n < 0)
+		TakeActorInventory(tid, item, -1 * n);
+	
+	return n;
+};
 
 // Gets Max EP after all bonuses are applied to it
-function int GetEPMax(void)
+function int GetEPMax()
 {
 	int MaxEP = EPMax;
 	
@@ -411,62 +451,13 @@ function int GetEPMax(void)
 		MaxEP *= 2;
 	
 	return MaxEP;
-}
-
-// PrintSprite Utility Function
-function void PrintSprite(str sprite, int id, int x, int y, int d)
-{
-    SetFont(sprite);
-    HudMessage(s:"A"; HUDMSG_PLAIN, id, CR_UNTRANSLATED, x, y, d);
-}
-
-function void PrintSpriteFade(str sprite, int id, int x, int y, int d, int h)
-{
-    SetFont(sprite);
-    HudMessage(s:"A"; HUDMSG_FADEOUT, id, CR_UNTRANSLATED, x, y, d, h);
-}
-
-function int SetInventory(str Item, int Count)
-{
-	int n = Count - CheckInventory(Item);
-	
-	if (n > 0)
-		GiveInventory(Item, n);
-	else if (n < 0)
-		TakeInventory(Item, -n);
-	
-	return n;
-}
-
-function int SetActorInventory (int tid, str item, int count)
-{
-	int n = count - CheckActorInventory (tid, item);
-	
-	if (n > 0)
-		GiveActorInventory(tid, item, n);
-	else if (n < 0)
-		TakeActorInventory(tid, item, -1 * n);
-	
-	return n;
-}
+};
 
 // For Damage Digits
 function int GetDigit(int Num, int Digit)
 {
 	return (Num / Pow(10, Digit)) % 10;
-}
-
-// Returns integer value
-function int Round(int fixedNumber)
-{
-	return (fixedNumber + 0.5) >> 16;
-}
-
-// Returns fixed point value
-function int Floor(int fixedNumber)
-{
-	return fixedNumber & 0xFFFF0000;
-}
+};
 
 // This function computes n-th power of x.
 function int Pow(int x, int n)
@@ -474,7 +465,7 @@ function int Pow(int x, int n)
 	int y = 1;
 	while (n-- > 0) y *= x;
 	return y;
-}
+};
 
 // This function can be used to return the absolute value of a negative integer. 
 function int Abs(int x)
@@ -483,15 +474,10 @@ function int Abs(int x)
         return -x;
 
     return x;
-}
+};
 
-// Gets the distance between two points
-function int Distance(int x, int y, int z, int x2, int y2, int z2)
+// Returns integer value
+function int Round(fixed fixedNumber)
 {
-	int x3, y3, z3, d;
-	x3 = x - x2 >> 16;
-	y3 = y - y2 >> 16;
-	z3 = z - z2 >> 16;
-	d = sqrt(x3 * x3 + y3 * y3 + z3 * z3);
-	return d;
-}
+	return (int)(fixedNumber += 0.5);
+};
