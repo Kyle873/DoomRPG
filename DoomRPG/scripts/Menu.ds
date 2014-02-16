@@ -10,13 +10,10 @@
 #include "Utils.dh"
 
 bool InMenu;
-int Menu;
-int MenuX;
-int MenuY;
-int MenuIndex;
 bool MenuBlock;
+int Menu;
+int MenuIndex;
 int StatAmount;
-bool AugSelected;
 int SkillPage;
 int SkillMax;
 int ShieldPage;
@@ -30,6 +27,11 @@ str[MAX_MENU] MainMenu =
 int[MAX_MENU] MainMenuColor =
 {
 	CR_RED; CR_GREEN; CR_LIGHTBLUE; CR_CYAN; CR_GRAY; CR_GOLD;
+};
+
+int[MAX_CATEGORIES] SkillCategoryMax =
+{
+	3; 9; 9; 4; 17; 6;
 };
 
 script OpenMenu()
@@ -75,7 +77,7 @@ script OpenMenu()
 	};
 };
 
-function void MenuLoop(void)
+function void MenuLoop()
 {
 	// Freeze the game if the option is active
 	if (GetCVar("drpg_menufreeze"))
@@ -83,10 +85,6 @@ function void MenuLoop(void)
 	
 	// Set the HUD Size
 	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
-	
-	// Get the Menu's Origin X/Y
-	MenuX = GetCVar("drpg_menu_x");
-	MenuY = GetCVar("drpg_menu_y");
 	
 	// Draw the background
 	if (GetCVar("drpg_menudim"))
@@ -104,7 +102,7 @@ function void MenuLoop(void)
 	MenuInput();
 };
 
-function void DrawMainMenu(void)
+function void DrawMainMenu()
 {
 	int Color = Random(1, 21);
 	int Y = 10.0;
@@ -170,7 +168,7 @@ function void DrawMainMenu(void)
 		HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound, 	HUDMSG_PLAIN, 0, CR_GOLD,  		140.1, 207.0, 0.05);
 };
 
-function void DrawStatsMenu(void)
+function void DrawStatsMenu()
 {
 	// Title
 	SetFont("BIGFONT");
@@ -260,7 +258,7 @@ function void DrawStatsMenu(void)
 	PrintSprite("Luck", 0, 202.1, 185.1, 0.05);
 };
 
-function void DrawAugsMenu(void)
+function void DrawAugsMenu()
 {
 	// Titles
 	SetFont("BIGFONT");
@@ -333,42 +331,56 @@ function void DrawAugsMenu(void)
 		};
 };
 
-function void DrawSkillMenu(void)
+function void DrawSkillMenu()
 {
+	// Skill Catagories
+	str[MAX_CATEGORIES] SkillCategories =
+	{
+		"Healing";
+		"Powerups";
+		"Auras";
+		"Attacks";
+		"Summoning";
+		"Utility";
+	};
+	
 	// Title
 	SetFont("BIGFONT");
 	HudMessage("Skills\n", HUDMSG_PLAIN, 5000, CR_GREEN, 0.1, 10.0, 0.05);
 	
+	// Current Skill
+	Skill CurrentSkill = Skills[SkillPage][MenuIndex];
+
 	// Skill Tokens
 	PrintSprite("TOKCE0", 0, 252.1, 56.1, 0.05);
 	SetFont("BIGFONT");
 	HudMessage("%d\n", CheckInventory("SkillToken"), HUDMSG_PLAIN, 0, CR_DARKGREEN, 278.1, 46.0, 0.05);
 	
 	// Skill Buy Cost
-	HudMessage("-%d\n", SkillLevel[GetSkillID(SkillPage, MenuIndex)] + 1,
+	HudMessage("-%d\n", CurrentSkill.Level + 1,
 			   HUDMSG_PLAIN, 5001, CR_RED, 278.1, 56.1, 0.05);
-	if (SkillLevel[GetSkillID(SkillPage, MenuIndex)] == SkillLevelMax[SkillPage][MenuIndex])
+	if (CurrentSkill.Level == CurrentSkill.MaxLevel)
 		HudMessage("\n", HUDMSG_PLAIN, 5001, CR_RED, 278.1, 56.1, 0.05);
 
 	// Skill Category
 	HudMessage("%s\n", SkillCategories[SkillPage],
 			   HUDMSG_PLAIN, 5002, CR_WHITE,
 			   0.1, 25.0, 0.05);
-
+	
 	// Scale EP Costs to Skill Level
-	int SkillCost = ScaleEPCost(SkillCosts[SkillPage][MenuIndex] * CurrentSkillLevel[GetSkillID(SkillPage, MenuIndex)]) / SkillCostMult;
-	int SkillCostNext = ScaleEPCost(SkillCosts[SkillPage][MenuIndex] * (SkillLevel[GetSkillID(SkillPage, MenuIndex)] + 1)) / SkillCostMult;
+	int SkillCost = ScaleEPCost(CurrentSkill.Cost * CurrentSkill.CurrentLevel * SkillCostMult);
+	int SkillCostNext = ScaleEPCost(CurrentSkill.Cost * (CurrentSkill.CurrentLevel + 1) * SkillCostMult);
 
 	// Skill Cost/Next Level Cost
 	HudMessage("EP: %d (%d)\n", SkillCost, SkillCostNext,
 			   HUDMSG_PLAIN, 5003, CR_LIGHTBLUE, 240.1, 25.0, 0.05);
-	if (SkillLevel[GetSkillID(SkillPage, MenuIndex)] == SkillLevelMax[SkillPage][MenuIndex])
+	if (CurrentSkill.Level == CurrentSkill.MaxLevel)
 		HudMessage("EP: %d\n", SkillCost,
 				   HUDMSG_PLAIN, 5003, CR_LIGHTBLUE, 240.1, 25.0, 0.05);
 
 	// Skill List
 	SetFont("SMALLFONT");
-	for (int i = 0; i < CategoryMax[SkillPage]; i++)
+	for (int i = 0; i < SkillCategoryMax[SkillPage]; i++)
 	{
 		int Color = CR_WHITE;
 				
@@ -377,25 +389,25 @@ function void DrawSkillMenu(void)
 		else if (SkillLevel[(SkillPage * MAX_SKILLS) + i] == 0)
 			Color = CR_RED;
 		
-		if (SkillLevel[(SkillPage * MAX_SKILLS) + i] > 0)
+		if (Skills[SkillPage][i].Level > 0)
 			HudMessage("%s (%d / %d) [%d]\n",
-					   SkillData[SkillPage][i][0],
-					   SkillLevel[GetSkillID(SkillPage, i)],
-					   SkillLevelMax[SkillPage][i],
-					   CurrentSkillLevel[GetSkillID(SkillPage, i)],
+					   Skills[SkillPage][i].Name,
+					   Skills[SkillPage][i].Level,
+					   Skills[SkillPage][i].MaxLevel,
+					   Skills[SkillPage][i].CurrentLevel,
 					   HUDMSG_PLAIN, 5006 + i, Color,
 				       20.1, 40.0 + (8.0 * i), 0.05)
 		else
 			HudMessage("%s (%d / %d)\n",
-					   SkillData[SkillPage][i][0],
-					   SkillLevel[GetSkillID(SkillPage, i)],
-					   SkillLevelMax[SkillPage][i],
+					   Skills[SkillPage][i].Name,
+					   Skills[SkillPage][i].Level,
+					   Skills[SkillPage][i].MaxLevel,
 					   HUDMSG_PLAIN, 5006 + i, Color,
 					   20.1, 40.0 + (8.0 * i), 0.05);
 
 		// If a skill key is assigned to this skill, draw an indicator
 		for (int j = 0; j < 5; j++)
-				if (GetSkillSlot(j) == GetSkillID(SkillPage, i))
+				if (SkillCatagory[j] == SkillPage && SkillIndex[j] == i)
 					HudMessage("%d->\n", j + 1,
 							   HUDMSG_PLAIN, 5050 + MAX_SKILLS + j, CR_CYAN,
 							   0.1, 40.0 + (8.0 * i), 0.05);
@@ -403,12 +415,12 @@ function void DrawSkillMenu(void)
 
 	// Skill Description
 	SetFont("SMALLFONT");
-	if (SkillLevel[GetSkillID(SkillPage, MenuIndex)] > 0)
-		HudMessage("%s\n", SkillData[SkillPage][MenuIndex][CurrentSkillLevel[GetSkillID(SkillPage, MenuIndex)]],
-			   HUDMSG_PLAIN, 5005, CR_YELLOW,
-			   20.1, 183.1, 0.05)
+	if (CurrentSkill.Level > 0)
+		HudMessage("%s\n", CurrentSkill.Description[1], // CurrentSkill.CurrentLevel -- expected constant, WTF? DAAAAAAAAVIIIIIIIIIIIID!!
+				   HUDMSG_PLAIN, 5005, CR_YELLOW,
+				   20.1, 183.1, 0.05)
 	else
-		HudMessage("%s\n", SkillData[SkillPage][MenuIndex][1],
+		HudMessage("%s\n", CurrentSkill.Description[0],
 				   HUDMSG_PLAIN, 5005, CR_YELLOW,
 				   20.1, 183.1, 0.05);
 	
@@ -420,7 +432,7 @@ function void DrawSkillMenu(void)
 	*/
 };
 
-function void DrawShieldMenu(void)
+function void DrawShieldMenu()
 {
 	str Description = "";
 	int Amount;
@@ -534,7 +546,7 @@ function void DrawShieldMenu(void)
 	if (ShieldAccessory > 0) 	PrintSprite(ShieldData[3][ShieldAccessory - 1][3], 	0, 18.1, 120.1, 0.05);
 };
 
-function void DrawStimsMenu(void)
+function void DrawStimsMenu()
 {
 	int i, j;
 	int X = 32.0;
@@ -589,12 +601,12 @@ function void DrawStimsMenu(void)
 			};
 };
 
-function void MenuInput(void)
+function void MenuInput()
 {
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
 	int i;
-	
+
 	MenuBlock = false;
 	
 	// Main Menu
@@ -627,6 +639,7 @@ function void MenuInput(void)
 			};
 		};
 	};
+	
 	// Status menu
 	if (Menu == 1 && StatTokens > 0 && !MenuBlock)
 	{
@@ -666,6 +679,7 @@ function void MenuInput(void)
 		else
 			DelayTimer = 0;
 	};
+	
 	// Accessories menu
 	if (Menu == 2 && !MenuBlock)
 	{
@@ -707,18 +721,19 @@ function void MenuInput(void)
 		if (Buttons & BT_USE && !(OldButtons & BT_USE) && Buttons & BT_SPEED)
 			LevelUpAug(MenuIndex);
 	};
+	
 	// Skills Menu
 	if (Menu == 3 && !MenuBlock)
 	{
 		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && MenuIndex >= 0)
 		{
-			if (MenuIndex <= 0) MenuIndex = CategoryMax[SkillPage];
+			if (MenuIndex <= 0) MenuIndex = SkillCategoryMax[SkillPage];
             ActivatorSound("menu/move", 127);
 			MenuIndex--;
 		};
-		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < CategoryMax[SkillPage])
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && MenuIndex < SkillCategoryMax[SkillPage])
 		{
-			if (MenuIndex >= CategoryMax[SkillPage] - 1) MenuIndex = -1;
+			if (MenuIndex >= SkillCategoryMax[SkillPage] - 1) MenuIndex = -1;
             ActivatorSound("menu/move", 127);
 			MenuIndex++;
 		};
@@ -761,6 +776,7 @@ function void MenuInput(void)
 			ACS_NamedExecuteAlways("UseSkill", 0, 5);
 		};
 	};
+	
 	// Shield Menu
 	if (Menu == 4 && !MenuBlock)
 	{
@@ -832,6 +848,7 @@ function void MenuInput(void)
 					};
 		};
 	};
+	
 	// Stims Menu
 	if (Menu == 5 && !MenuBlock)
 	{
@@ -969,22 +986,21 @@ function void IncreaseStat(int Stat)
 	TakeInventory("StatToken", StatAmount);
 };
 
-function void IncreaseSkill(void)
+function void IncreaseSkill()
 {
-	int Lvl = SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex];
-	int LvlMax = SkillLevelMax[SkillPage][MenuIndex];
+	Skill CurrentSkill = Skills[SkillPage][MenuIndex];
 	
 	if (SkillTokens > 0)
 	{
-		if (Lvl < LvlMax && SkillTokens > Lvl)
+		if (CurrentSkill.Level < CurrentSkill.MaxLevel && SkillTokens > CurrentSkill.Level)
 		{
 			// If you are upgrading an aura, and it's the same one as you've got active, kill it
 			if (Aura == MenuIndex + 1)
 				AuraTimer = 0;
 			
-			SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]++;
-			CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] = SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex];
-			TakeInventory("SkillToken", Lvl + 1);
+			CurrentSkill.Level++;
+			CurrentSkill.CurrentLevel++;
+			TakeInventory("SkillToken", CurrentSkill.Level + 1);
 			ActivatorSound("menu/move", 127);
 		};
 	}
@@ -992,7 +1008,7 @@ function void IncreaseSkill(void)
 		ActivatorSound("menu/error", 127);
 };
 
-function void PrintStatError(void)
+function void PrintStatError()
 {
 	if (DelayTimer > 0) return;
 	

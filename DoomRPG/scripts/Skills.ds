@@ -14,319 +14,375 @@ int SkillCostMult;
 int BulletTimeMode;
 int BulletTimeTimer;
 
-// Skill Catagories
-str[MAX_CATEGORIES] SkillCategories =
-{
-	"Healing";
-	"Powerups";
-	"Auras";
-	"Attacks";
-	"Summoning";
-	"Utility";
-};
-
-int[MAX_CATEGORIES] CategoryMax =
-{
-	3; 9; 9; 4; 17; 6;
-};
-
-// Skill Max Levels
-int[MAX_CATEGORIES][MAX_SKILLS] SkillLevelMax =
+/* This method if array initialization is definately preferred, but it seems to be bugged at compile time, consult David
+GlobalVar Skill[MAX_CATEGORIES][MAX_SKILLS] Skills =
 {
 	// Healing
-	{ 1; 1; 1; };
-	// Powerups
-	{ 2; 2; 2; 1; 1; 1; 1; 1; 1; };
-	// Auras
-	{ 3; 3; 5; 1; 3; 4; 3; 4; 5; };
-	// Attacks
-	{ 1; 10; 1; 10; };
-	// Summoning
-	{ 8; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; 1; };
-	// Utility
-	{ 1; 2; 1; 2; 1; 1; };
-};
+	{
+		{
+			"Heal"; 50; 1;
+			{
+				"Recover HP";
+			};
+		};
+		{
+			"Heal Summons", 100; 1;
+			{
+				"Summoned Monsters Recover all HP";
+			};
+		};
+		{
+			"Repair Armor"; 250; 1;
+			{
+				"Repair Armor";
+			};
+		};
+	};
+}; */
 
-int[MAX_CATEGORIES][MAX_SKILLS] SkillCosts =
+function void InitSkills()
 {
-	// Healing
-	{ 50; 100; 250; };
-	// Powerups
-	{ 250; 100; 250; 250; 250; 500; 500; 250; 250; };
-	// Auras
-	{ 100; 100; 100; 100; 100; 100; 100; 100; 100; 100; };
-	// Attacks
-	{ 5; 25; 10; 50; };
-	// Summoning
-	{ 100; 25; 50; 75; 75; 75; 100; 150; 200; 100; 500; 500; 500; 500; 750; 1000; 1000; };
-	// Utility
-	{ 250; 50; 50; 0; 25; 0; };
-};
+	int Index;
+	
+	// --------------------------------------------------
+	// HEALING
+	
+	Skills[0][Index].Name = "Heal";
+	Skills[0][Index].MaxLevel = 1;
+	Skills[0][Index].Cost = 50;
+	Skills[0][Index].Description[0] = "Recover HP";
+	Index++;
+	
+	Skills[0][Index].Name = "Heal Summons";
+	Skills[0][Index].MaxLevel = 1;
+	Skills[0][Index].Cost = 100;
+	Skills[0][Index].Description[0] = "Summons recover all their HP";
+	Index++;
+	
+	Skills[0][Index].Name = "Repair Armor";
+	Skills[0][Index].MaxLevel = 1;
+	Skills[0][Index].Cost = 250;
+	Skills[0][Index].Description[0] = "Repair Armor";
+	Index = 0;
+	
+	// --------------------------------------------------
+	// POWERUPS
+	
+	Skills[1][Index].Name = "Invulnerability";
+	Skills[1][Index].MaxLevel = 2;
+	Skills[1][Index].Cost = 250;
+	Skills[1][Index].Description[0] = "Invulnerability to all attacks\n\cd(30 Sec)";
+	Skills[1][Index].Description[1] = "Invulnerability to all attacks\nProjectiles are reflected back at enemies\n\cd(30 Sec)";
+	Index++;
 
-// Skill Data
-str[MAX_CATEGORIES][MAX_SKILLS][1 + MAX_LEVELS] SkillData =
-{
-	// Name, Description (Level 1), Description (Level 2), ...
-	
-	// Healing
-	{
-		{
-			"Heal";
-			"Recover HP";
-		};
-		{
-			"Heal Summons";
-			"Summoned Monsters Recover all HP";
-		};
-		{
-			"Repair Armor";
-			"Repair Armor";
-		};
-	};
-	
-	// Powerups
-	{
-		{
-			"Invulnerability";
-			"Invulnerability to all attacks\n\cd(30 Sec)";
-			"Invulnerability to all attacks\nProjectiles are reflected back at enemies\n\cd(30 Sec)";
-		};
-		{
-			"Invisibility";
-			"Makes you invisible to enemies\n\cd(30 sec)";
-			"Makes you invisible to enemies\nSome projectiles pass through you\n\cd(30 sec)";
-		};
-		{
-			"Freeze Time";
-			"Stutter Time";
-			"Freeze Time";
-		};
-		{
-			"Iron Feet";
-			"Protection from Damage Floors";
-		};
-		{
-			"Night Vision";
-			"Allows you to see in the dark";
-		};
-		{
-			"Berserk";
-			"Full Health\nIncreased Melee Damage";
-		};
-		{
-			"Mental Mapping";
-			"Full Map\nItem/Enemy Tracking";
-		};
-		{
-			"Rune Drop";
-			"Drops a random Rune at your locations";
-		};
-		{
-			"Ammo Drop";
-			"Drops a Backpack of ammo at your location";
-		};
-	};
-	
-	// Auras
-	{
-		{
-			"Red Aura";
-			"2x Damage";
-			"4x Damage";
-			"4x Damage\nInfinite Ammo";
-		};
-		{
-			"Green Aura";
-			"-25% Damage Taken";
-			"-50% Damage Taken";
-			"-75% Damage Taken\nDamage Floor Protection";
-		};
-		{
-			"White Aura";
-			"Double Combo";
-			"Double Combo\nConstant Combo";
-			"Double Combo\nConstant Combo\n2x XP per kill";
-			"Double Combo\nConstant Combo\n2x XP per kill\nSlow XP Gain";
-			"Double Combo\nConstant Combo\n2x XP per kill\nFast XP Gain";
-		};
-		{
-			"Pink Aura";
-			"Drain Enemy HP";
-		};
-		{
-			"Blue Aura";
-			"25% Skill Cost Reduction";
-			"50% Skill Cost Reduction";
-			"75% Skill Cost Reduction";
-		};
-		{
-			"Purple Aura";
-			"2x HP/EP Regen Amount";
-			"3x HP/EP Regen Amount";
-			"4x HP/EP Regen Amount";
-			"4x HP/EP Regen Amount\n-2x HP/EP Regen Timers";
-		};
-		{
-			"Orange Aura";
-			"Double Movement Speed";
-			"Double Movement Speed\nHigh Jump";
-			"Double Movement Speed\nHigh Jump\nDouble Firing Speed";
-		};
-		{
-			"Dark Blue Aura";
-			"Clip Regen";
-			"Clip Regen\nShell Regen";
-			"Clip Regen\nShell Regen\nRocket Regen";
-			"Clip Regen\nShell Regen\nRocket Regen\nCell Regen";
-		};
-		{
-			"Yellow Aura";
-			"Slow Money Gain\n1.25x Drop Chances";
-			"Medium Money Gain\n1.5x Drop Chances";
-			"Fast Money Gain\n2x Drop Chances";
-			"Very Fast Money Gain\n4x Drop Chances";
-			"Mega Money Gain\n8x Drop Chances";
-		};
-	};
-	
-	// Attacks
-	{
-		{
-			"FireBall";
-			"Shoots a fireball\n\caFire Damage";
-		};
-		{
-			"Fireball Nova";
-			"Shoots fireballs in a circular nova around you\n\caFire Damage";
-		};
-		{
-			"Ice Missile";
-			"Shoots an ice missile\n\cnIce Damage";
-		};
-		{
-			"Ice Nova";
-			"Shoots ice missles in a circular nova around you\n\cnIce Damage";
-		};
-	};
-	
-	// Summoning
-	{
-		{
-			"Summon Marine";
-			"Summons a Marine to fight with you\n\cjPistol";
-			"Summons a Marine to fight with you\n\cjShotgun";
-			"Summons a Marine to fight with you\n\cjSuper Shotgun";
-			"Summons a Marine to fight with you\n\cjChaingun";
-			"Summons a Marine to fight with you\n\cjRocket Launcher";
-			"Summons a Marine to fight with you\n\cjPlasma Rifle";
-			"Summons a Marine to fight with you\n\cjRailgun";
-			"Summons a Marine to fight with you\n\cjBFG 9000";
-		};
-		{
-			"Summon Zombieman";
-			"Summons a Zombieman to fight with you";
-		};
-		{
-			"Summon Shotgun Guy";
-			"Summons a Shotgun Guy to fight with you";
-		};
-		{
-			"Summon Chaingun Guy";
-			"Summons a Chaingun Guy to fight with you";
-		};
-		{
-			"Summon Imp";
-			"Summons an Imp to fight with you";
-		};
-		{
-			"Summon Demon";
-			"Summons a Demon to fight with you";
-		};
-		{
-			"Summon Cacodemon";
-			"Summons a Cacodemon to fight with you";
-		};
-		{
-			"Summon Hell Knight";
-			"Summons a Hell Knight to fight with you";
-		};
-		{
-			"Summon Baron of Hell";
-			"Summons a Baron of Hell to fight with you";
-		};
-		{
-			"Summon Lost Soul";
-			"Summons a Lost Soul to fight with you";
-		};
-		{
-			"Summon Pain Elemental";
-			"Summons a Pain Elemental to fight with you";
-		};
-		{
-			"Summon Revenant";
-			"Summons a Revenant to fight with you";
-		};
-		{
-			"Summon Fatso";
-			"Summons a Fatso to fight with you";
-		};
-		{
-			"Summon Arachnotron";
-			"Summons an Arachnotron to fight with you";
-		};
-		{
-			"Summon Arch-Vile";
-			"Summons an Arch-Vile to fight with you";
-		};
-		{
-			"Summon Cyberdemon";
-			"Summons a Cyberdemon to fight with you";
-		};
-		{
-			"Summon Spider Mastermind";
-			"Summons a Spider Mastermind to fight with you";
-		};
-	};
-	
-	// Utility
-	{
-		{
-			"Breakdown Armor";
-			"Breaks down your current Armor into Credits";
-		};
-		{
-			"Force Wall";
-			"Creates a small force wall in front of you to reflect projectiles";
-			"Creates a large force wall in front of you to reflect projectiles";
-		};
-		{
-			"Rally";
-			"Teleports your summoned monsters to you";
-		};
-		{
-			"Unsummon";
-			"Banishes all of the friendly creatures under your control";
-			"Banishes all of the friendly creatures under your control\nEach creature banished restores\n25 EP";
-		};
-		{
-			"Recall";
-			"Brings you to the beginning of the level";
-		};
-		{
-			"Transport";
-			"Brings you to the UAC Outpost\nUse in Outpost to return to current level";
-		};
-	};
-};
+	Skills[1][Index].Name = "Invisibility";
+	Skills[1][Index].MaxLevel = 2;
+	Skills[1][Index].Cost = 100;
+	Skills[1][Index].Description[0] = "Makes you invisible to enemies\n\cd(30 sec)";
+	Skills[1][Index].Description[1] = "Makes you invisible to enemies\nSome projectiles pass through you\n\cd(30 sec)";
+	Index++;
 
-function int GetSkillSlot(int Slot)
-{
-	return (SkillCatagory[Slot] * MAX_SKILLS) + SkillIndex[Slot];
-};
+	Skills[1][Index].Name = "Time Freeze";
+	Skills[1][Index].MaxLevel = 2;
+	Skills[1][Index].Cost = 250;
+	Skills[1][Index].Description[0] = "Stutter Time";
+	Skills[1][Index].Description[1] = "Freeze Time";
+	Index++;
 
-function int GetSkillID(int Catagory, int ID)
-{
-	return (Catagory * MAX_SKILLS) + ID;
+	Skills[1][Index].Name = "Iron Feet";
+	Skills[1][Index].MaxLevel = 1;
+	Skills[1][Index].Cost = 250;
+	Skills[1][Index].Description[0] = "Protection from Damage Floors";
+	Index++;
+
+	Skills[1][Index].Name = "Night Vision";
+	Skills[1][Index].MaxLevel = 1;
+	Skills[1][Index].Cost = 250;
+	Skills[1][Index].Description[0] = "Allows you to see in the dark";
+	Index++;
+
+	Skills[1][Index].Name = "Berserk";
+	Skills[1][Index].MaxLevel = 1;
+	Skills[1][Index].Cost = 250;
+	Skills[1][Index].Description[0] = "Full Health\nIncreased Melee Damage";
+	Index++;
+
+	Skills[1][Index].Name = "Mental Mapping";
+	Skills[1][Index].MaxLevel = 1;
+	Skills[1][Index].Cost = 250;
+	Skills[1][Index].Description[0] = "Full Map\nItem/Enemy Tracking";
+	Index++;
+
+	Skills[1][Index].Name = "Rune Drop";
+	Skills[1][Index].MaxLevel = 1;
+	Skills[1][Index].Cost = 250;
+	Skills[1][Index].Description[0] = "Drops a random Rune at your location";
+	Index++;
+
+	Skills[1][Index].Name = "Ammo Drop";
+	Skills[1][Index].MaxLevel = 1;
+	Skills[1][Index].Cost = 250;
+	Skills[1][Index].Description[0] = "Drops a Backpack full of ammo at your location";
+	Index = 0;
+
+	// --------------------------------------------------
+	// AURAS
+	
+	Skills[2][Index].Name = "Red Aura";
+	Skills[2][Index].MaxLevel = 3;
+	Skills[2][Index].Cost = 100;
+	Skills[2][Index].Description[0] = "2x Damage";
+	Skills[2][Index].Description[1] = "4x Damage";
+	Skills[2][Index].Description[2] = "4x Damage\nInfinite Ammo";
+	Index++;
+
+	Skills[2][Index].Name = "Green Aura";
+	Skills[2][Index].MaxLevel = 3;
+	Skills[2][Index].Cost = 100;
+	Skills[2][Index].Description[0] = "-25% Damage Taken";
+	Skills[2][Index].Description[1] = "-50% Damage Taken";
+	Skills[2][Index].Description[2] = "-75% Damage Taken\nDamage Floor Protection";
+	Index++;
+
+	Skills[2][Index].Name = "White Aura";
+	Skills[2][Index].MaxLevel = 5;
+	Skills[2][Index].Cost = 100;
+	Skills[2][Index].Description[0] = "Double Combo";
+	Skills[2][Index].Description[1] = "Double Combo\nConstant Combo";
+	Skills[2][Index].Description[2] = "Double Combo\nConstant Combo\n2x XP Per Kill";
+	Skills[2][Index].Description[3] = "Double Combo\nConstant Combo\n2x XP Per Kill\nSlow XP Gain";
+	Skills[2][Index].Description[4] = "Double Combo\nConstant Combo\n2x XP Per Kill\nFast XP Gain";
+	Index++;
+
+	Skills[2][Index].Name = "Pink Aura";
+	Skills[2][Index].MaxLevel = 1;
+	Skills[2][Index].Cost = 100;
+	Skills[2][Index].Description[0] = "Drain Enemy HP";
+	Index++;
+
+	Skills[2][Index].Name = "Blue Aura";
+	Skills[2][Index].MaxLevel = 3;
+	Skills[2][Index].Cost = 100;
+	Skills[2][Index].Description[0] = "25% Skill Cost Reduction";
+	Skills[2][Index].Description[1] = "50% Skill Cost Reduction";
+	Skills[2][Index].Description[2] = "75% Skill Cost Reduction";
+	Index++;
+
+	Skills[2][Index].Name = "Purple Aura";
+	Skills[2][Index].MaxLevel = 4;
+	Skills[2][Index].Cost = 100;
+	Skills[2][Index].Description[0] = "2x HP/EP Regen Amount";
+	Skills[2][Index].Description[1] = "3x HP/EP Regen Amount";
+	Skills[2][Index].Description[2] = "4x HP/EP Regen Amount";
+	Skills[2][Index].Description[3] = "4x HP/EP Regen Amount\n-2x HP/EP Regen Timers";
+	Index++;
+
+	Skills[2][Index].Name = "Orange Aura";
+	Skills[2][Index].MaxLevel = 3;
+	Skills[2][Index].Cost = 100;
+	Skills[2][Index].Description[0] = "Double Movement Speed";
+	Skills[2][Index].Description[1] = "Double Movement Speed\nDouble Jump Height";
+	Skills[2][Index].Description[2] = "Double Movement Speed\nDouble Jump Height\nDouble Firing Speed";
+	Index++;
+
+	Skills[2][Index].Name = "Orange Aura";
+	Skills[2][Index].MaxLevel = 4;
+	Skills[2][Index].Cost = 100;
+	Skills[2][Index].Description[0] = "Clip Regen";
+	Skills[2][Index].Description[1] = "Clip Regen\nShell Regen";
+	Skills[2][Index].Description[2] = "Clip Regen\nShell Regen\nRocket Regen";
+	Skills[2][Index].Description[3] = "Clip Regen\nShell Regen\nRocket Regen\nCell Regen";
+	Index++;
+
+	Skills[2][Index].Name = "Yellow Aura";
+	Skills[2][Index].MaxLevel = 5;
+	Skills[2][Index].Cost = 100;
+	Skills[2][Index].Description[0] = "Slow Money Gain\n1.25 Drop Chances";
+	Skills[2][Index].Description[1] = "Medium Money Gain\n1.5x Drop Chances";
+	Skills[2][Index].Description[2] = "Fast Money Gain\n2x Drop Chances";
+	Skills[2][Index].Description[3] = "Very Fast Money Gain\n4x Drop Chances";
+	Skills[2][Index].Description[4] = "Mega Money Gain\n8x Drop Chances";
+	Index = 0;
+
+	// --------------------------------------------------
+	// ATTACK
+	
+	Skills[3][Index].Name = "Fireball";
+	Skills[3][Index].MaxLevel = 1;
+	Skills[3][Index].Cost = 5;
+	Skills[3][Index].Description[0] = "Shoots a fireball\n\caFire Damage";
+	Index++;
+
+	Skills[3][Index].Name = "Fireball Nova";
+	Skills[3][Index].MaxLevel = 10;
+	Skills[3][Index].Cost = 25;
+	Skills[3][Index].Description[0] = "Shoots fireballs in a circular nova around you\n\caFire Damage";
+	Index++;
+
+	Skills[3][Index].Name = "Ice Missile";
+	Skills[3][Index].MaxLevel = 1;
+	Skills[3][Index].Cost = 10;
+	Skills[3][Index].Description[0] = "Shoots an ice missile\n\cnIce Damage";
+	Index++;
+
+	Skills[3][Index].Name = "Ice Nova";
+	Skills[3][Index].MaxLevel = 10;
+	Skills[3][Index].Cost = 50;
+	Skills[3][Index].Description[0] = "Shoots ice missles in a circular nova around you\n\cnIce Damage";
+	Index = 0;
+
+	// --------------------------------------------------
+	// SUMMONING
+	
+	Skills[4][Index].Name = "Summon Marine";
+	Skills[4][Index].MaxLevel = 8;
+	Skills[4][Index].Cost = 100;
+	Skills[4][Index].Description[0] = "Summons a Marine to fight with you\n\cjPistol";
+	Skills[4][Index].Description[1] = "Summons a Marine to fight with you\n\cjShotgun";
+	Skills[4][Index].Description[2] = "Summons a Marine to fight with you\n\cjSuper Shotgun";
+	Skills[4][Index].Description[3] = "Summons a Marine to fight with you\n\cjChaingun";
+	Skills[4][Index].Description[4] = "Summons a Marine to fight with you\n\cjRocket Launcher";
+	Skills[4][Index].Description[5] = "Summons a Marine to fight with you\n\cjPlasma Rifle";
+	Skills[4][Index].Description[6] = "Summons a Marine to fight with you\n\cjRailgun";
+	Skills[4][Index].Description[7] = "Summons a Marine to fight with you\n\cjBFG 9000";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Zombieman";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 25;
+	Skills[4][Index].Description[0] = "Summons a Zombieman to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Shotgun Guy";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 50;
+	Skills[4][Index].Description[0] = "Summons a Shotgun Guy to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Chaingun Guy";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 75;
+	Skills[4][Index].Description[0] = "Summons a Chaingun Guy to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Imp";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 75;
+	Skills[4][Index].Description[0] = "Summons an Imp to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Demon";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 75;
+	Skills[4][Index].Description[0] = "Summons a Demon to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Cacodemon";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 100;
+	Skills[4][Index].Description[0] = "Summons a Cacodemon to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Hell Knight";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 150;
+	Skills[4][Index].Description[0] = "Summons a Hell Knight to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Baron of Hell";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 200;
+	Skills[4][Index].Description[0] = "Summons a Baron of Hell to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Lost Soul";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 100;
+	Skills[4][Index].Description[0] = "Summons a Lost Soul to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Pain Elemental";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 500;
+	Skills[4][Index].Description[0] = "Summons a Pain Elemental to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Revenant";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 500;
+	Skills[4][Index].Description[0] = "Summons a Revenant to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Mancubus";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 500;
+	Skills[4][Index].Description[0] = "Summons a Mancubus to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Arachnotron";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 500;
+	Skills[4][Index].Description[0] = "Summons an Arachnotron to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Arch-Vile";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 750;
+	Skills[4][Index].Description[0] = "Summons an Arch-Vile to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Cyberdemon";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 1000;
+	Skills[4][Index].Description[0] = "Summons a Cyberdemon to fight with you";
+	Index++;
+	
+	Skills[4][Index].Name = "Summon Spider Mastermind";
+	Skills[4][Index].MaxLevel = 1;
+	Skills[4][Index].Cost = 1000;
+	Skills[4][Index].Description[0] = "Summons a Spider Mastermind to fight with you";
+	Index = 0;
+
+	// --------------------------------------------------
+	// UTILITY
+
+	Skills[5][Index].Name = "Breakdown Armor";
+	Skills[5][Index].MaxLevel = 1;
+	Skills[5][Index].Cost = 250;
+	Skills[5][Index].Description[0] = "Breaks down your current Armor into Credits";
+	Index++;
+
+	Skills[5][Index].Name = "Force Wall";
+	Skills[5][Index].MaxLevel = 2;
+	Skills[5][Index].Cost = 100;
+	Skills[5][Index].Description[0] = "Creates a small force wall in front of you to reflect projectiles";
+	Skills[5][Index].Description[1] = "Creates a large force wall in front of you to reflect projectiles";
+	Index++;
+
+	Skills[5][Index].Name = "Rally";
+	Skills[5][Index].MaxLevel = 1;
+	Skills[5][Index].Cost = 50;
+	Skills[5][Index].Description[0] = "Teleports your summoned monsters to you";
+	Index++;
+
+	Skills[5][Index].Name = "Unsummon";
+	Skills[5][Index].MaxLevel = 2;
+	Skills[5][Index].Cost = 0;
+	Skills[5][Index].Description[0] = "Banishes all of the friendly creatures under your control";
+	Skills[5][Index].Description[0] = "Banishes all of the friendly creatures under your control\nEach creature banished restores\n25 EP";
+	Index++;
+
+	Skills[5][Index].Name = "Recall";
+	Skills[5][Index].MaxLevel = 1;
+	Skills[5][Index].Cost = 25;
+	Skills[5][Index].Description[0] = "Brings you to the beginning of the level";
+	Index++;
+
+	Skills[5][Index].Name = "Transport";
+	Skills[5][Index].MaxLevel = 1;
+	Skills[5][Index].Cost = 0;
+	Skills[5][Index].Description[0] = "Brings you to the UAC Outpost\nUse in Outpost to return to current level";
+	Index++;
 };
 
 function int ScaleEPCost(int Cost)
@@ -350,19 +406,19 @@ script UseSkill(int Index)
 {
 	// If you're dead, terminate
 	if (GetActorProperty(0, APROP_Health) <= 0) return;
-
+	
+	// Current Skill
+	Skill CurrentSkill = Skills[SkillCatagory[Index]][SkillIndex[Index]];
+	
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
-	int EPCost = SkillCosts[SkillCatagory[Index]][SkillIndex[Index]] * CurrentSkillLevel[GetSkillSlot(Index)] * SkillCostMult;
+	int EPCost = ScaleEPCost(CurrentSkill.Cost * CurrentSkill.Level * SkillCostMult);
 	bool Success;
 	
 	// Overdrive?
 	Overdrive = false;
 	if (Buttons & BT_SPEED && (!InMenu && !InShop))
 		Overdrive = true;
-
-	// Scale EP Costs to skill level
-	EPCost = ScaleEPCost(EPCost);
 
 	// If you're in the Skills menu, assign the key to the selected skill
 	if (InMenu && Menu == 3 && Index != 5)
@@ -395,14 +451,14 @@ script UseSkill(int Index)
 	if (Overdrive && CheckInventory("SkillToken") > 0 && SkillLevel[GetSkillSlot(Index)] == 0)
 	{
 		SkillLevel[GetSkillSlot(Index)]++;
-		CurrentSkillLevel[GetSkillSlot(Index)]++;
+		CurrentSkill.Level++;
 		TakeInventory("SkillToken", 1);
 		FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
 		return;
 	};
 	
 	// Check if the Skill has been learned yet
-	if (SkillLevel[GetSkillSlot(Index)] == 0)
+	if (CurrentSkill.Level == 0)
 	{
 		SetFont("BIGFONT");
 		Print("\cgYou don't know this skill yet\n");
@@ -542,7 +598,10 @@ script DrawSkillHUD() enter
 			// If the skill key is blank, skip
 			if (SkillCatagory[i] == -1 || SkillIndex[i] == -1) continue;
 			
-			int SkillCost = ScaleEPCost(SkillCosts[SkillCatagory[i]][SkillIndex[i]] * CurrentSkillLevel[GetSkillSlot(i)]) * SkillCostMult;
+			// Current Skill
+			Skill CurrentSkill = Skills[SkillCatagory[i]][SkillIndex[i]];
+			
+			int SkillCost = ScaleEPCost(CurrentSkill.Cost * CurrentSkill.Level * SkillCostMult);
 			int Color = CR_GREEN;
 
 			if (EP < SkillCost)
@@ -552,16 +611,16 @@ script DrawSkillHUD() enter
 			{
 				Color = CR_RED;
 				
-				HudMessage("%d. %s\n", i + 1, SkillData[SkillCatagory[i]][SkillIndex[i]][0],
+				HudMessage("%d. %s\n", i + 1, CurrentSkill.Name,
 						   HUDMSG_PLAIN, 0, Color,
 						   X, Y, 0.05);
 			}
 			else
 			{
 				HudMessage("%d. %s (%d/%d) [\cn%d\c-]\n", i + 1,
-						   SkillData[SkillCatagory[i]][SkillIndex[i]][0],
-						   CurrentSkillLevel[GetSkillSlot(i)],
-						   SkillLevel[GetSkillSlot(i)],
+						   CurrentSkill.Name,
+						   CurrentSkill.CurrentLevel,
+						   CurrentSkill.Level,
 						   SkillCost,
 						   HUDMSG_PLAIN, 0, Color,
 						   X, Y, 0.05);
@@ -639,9 +698,9 @@ function bool Repair()
 function bool Powerup(int Type)
 {
 	// Levels
-	int InvulnLevel = CurrentSkillLevel[MAX_SKILLS + 0];
-	int InvisLevel = CurrentSkillLevel[MAX_SKILLS + 1];
-	int TimeLevel = CurrentSkillLevel[MAX_SKILLS + 2];
+	int InvulnLevel = Skills[1][0].CurrentLevel;
+	int InvisLevel = Skills[1][1].CurrentLevel;
+	int TimeLevel = Skills[1][2].CurrentLevel;
 	
 	switch (Type)
 	{
@@ -770,11 +829,11 @@ function bool DropAmmo()
 // Summoning
 function bool Summon(int Type)
 {
-	int Angle = GetActorAngle(0);
-	int X = GetActorX(0) + Cos(Angle) * 96;
-	int Y = GetActorY(0) + Sin(Angle) * 96;
-	int Z = GetActorZ(0);
-	int MarineLevel = CurrentSkillLevel[GetSkillID(4, 0)];
+	fixed Angle = GetActorAngle(0);
+	fixed X = GetActorX(0) + Cos(Angle) * 96.0;
+	fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+	fixed Z = GetActorZ(0);
+	int MarineLevel = Skills[3][0].CurrentLevel;
 	int NewID = SummonID + MaxSummons;
 	bool Success;
 	
@@ -910,11 +969,11 @@ function bool BreakdownArmor()
 // Drops a Force Field in front of you
 function bool ForceWall()
 {
-	int Angle = GetActorAngle(0);
-	int X = GetActorX(0) + Cos(Angle) * 96;
-	int Y = GetActorY(0) + Sin(Angle) * 96;
-	int Z = GetActorZ(0);
-	int WallLevel = CurrentSkillLevel[GetSkillID(5, 1)];
+	fixed Angle = GetActorAngle(0);
+	fixed X = GetActorX(0) + Cos(Angle) * 96.0;
+	fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+	fixed Z = GetActorZ(0);
+	int WallLevel = Skills[5][1].CurrentLevel;
 	
 	switch (WallLevel)
 	{
@@ -942,10 +1001,10 @@ function bool ForceWall()
 // Rallies (teleports) your summoned monster/marines around you
 function bool Rally()
 {
-	int X = GetActorX(0);
-	int Y = GetActorY(0);
-	int Z = GetActorZ(0);
-	int Angle = GetActorAngle(0);
+	fixed X = GetActorX(0);
+	fixed Y = GetActorY(0);
+	fixed Z = GetActorZ(0);
+	fixed Angle = GetActorAngle(0);
 	
 	// Fail if you have no summons active
 	if (MaxSummons == 0)
@@ -967,7 +1026,7 @@ function bool Rally()
 function bool Unsummon()
 {
 	bool Kill = Overdrive;
-	int UnsummonLevel = CurrentSkillLevel[GetSkillID(5, 2)];
+	int UnsummonLevel = Skills[5][3].CurrentLevel;
 	int EPAdd;
 	
 	// Fail if you have no summons active
@@ -1083,7 +1142,7 @@ script AttackSkill(int Element, int Type)
 	
 	if (Type == 1) // Projectile
 	{
-		AttackLevel = SkillLevel[GetSkillID(3, Element * 2)];
+		AttackLevel = Skills[3][Element * 2].CurrentLevel;
 		SpawnProjectile(0, AttackType, 0, 0, 0, 0, 2001);
 		SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
 		SetActorAngle(2001, Angle);
@@ -1092,7 +1151,7 @@ script AttackSkill(int Element, int Type)
 	};
 	if (Type == 2) // Nova
 	{
-		AttackLevel = SkillLevel[GetSkillID(3, (Element * 2) - 1)];
+		AttackLevel = Skills[3][Element * 2 - 1].CurrentLevel;
 		Projectiles = AttackLevel * 8;
 		AngleAdd = 1.0 / Projectiles;
 		
@@ -1113,7 +1172,7 @@ script AttackSkill(int Element, int Type)
 	};
 	if (Type == 3) // Hitscan?
 	{
-		SetResultValue(0);
+		return;
 	};
 	// etc
 };
@@ -1133,19 +1192,19 @@ script SetProjectileDamage(int Type)
 function void CheckSkills()
 {
 	// Aura-related vars to save typing :P
-	int X = GetActorX(0);
-	int Y = GetActorY(0);
-	int Z = GetActorZ(0);
-	int RedAuraLevel = CurrentSkillLevel[GetSkillID(2, 0)];
-	int GreenAuraLevel = CurrentSkillLevel[GetSkillID(2, 1)];
-	int WhiteAuraLevel = CurrentSkillLevel[GetSkillID(2, 2)];
-	int PinkAuraLevel = CurrentSkillLevel[GetSkillID(2, 3)];
-	int BlueAuraLevel = CurrentSkillLevel[GetSkillID(2, 4)];
-	int PurpleAuraLevel = CurrentSkillLevel[GetSkillID(2, 5)];
-	int OrangeAuraLevel = CurrentSkillLevel[GetSkillID(2, 6)];
-	int DarkBlueAuraLevel = CurrentSkillLevel[GetSkillID(2, 7)];
-	int YellowAuraLevel = CurrentSkillLevel[GetSkillID(2, 8)];
+	int RedAuraLevel = Skills[2][0].CurrentLevel;
+	int GreenAuraLevel = Skills[2][1].CurrentLevel;
+	int WhiteAuraLevel = Skills[2][2].CurrentLevel;
+	int PinkAuraLevel = Skills[2][3].CurrentLevel;
+	int BlueAuraLevel = Skills[2][4].CurrentLevel;
+	int PurpleAuraLevel = Skills[2][5].CurrentLevel;
+	int OrangeAuraLevel = Skills[2][6].CurrentLevel;
+	int DarkBlueAuraLevel = Skills[2][7].CurrentLevel;
+	int YellowAuraLevel = Skills[2][8].CurrentLevel;
 	int LuckMult = 1;
+	fixed X = GetActorX(0);
+	fixed Y = GetActorY(0);
+	fixed Z = GetActorZ(0);
 	
 	// Reset the Skill multiplier from the Blue Aura
 	if (Aura != 5)
@@ -1153,13 +1212,13 @@ function void CheckSkills()
 	
 	// Give the player the Aura item while an Aura is active (for SBARINFO hax)
 	if (AuraTimer > 0)
-		{GiveInventory("Aura", 1);}
+		GiveInventory("Aura", 1)
 	else
-		{TakeInventory("Aura", 1);};
+		TakeInventory("Aura", 1);
 	
 	// DoomRL Compatibility - Increase the Cost of Breakdown Armor
 	if (GetCVar("drpg_ext_doomrl"))
-		SkillCosts[5][0] = 500;
+		Skills[5][0].Cost = 500;
 	
 	// Aura Timer handling
 	if (AuraTimer > 0)
@@ -1320,10 +1379,10 @@ function void CheckSkills()
 	// Force Wall Handling
 	if (GetActorProperty(1998, APROP_Alpha) > 0)
 	{
-		int WallAngle = GetActorAngle(0);
-		int WallX = GetActorX(0) + Cos(WallAngle) * 48;
-		int WallY = GetActorY(0) + Sin(WallAngle) * 48;
-		int WallZ = GetActorZ(0);
+		fixed WallAngle = GetActorAngle(0);
+		fixed WallX = GetActorX(0) + Cos(WallAngle) * 48;
+		fixed WallY = GetActorY(0) + Sin(WallAngle) * 48;
+		fixed WallZ = GetActorZ(0);
 		
 		SetActorPosition(1998, WallX, WallY, WallZ, false);
 		SetActorAngle(1998, WallAngle);
@@ -1345,26 +1404,24 @@ function void CheckSkillDescriptions()
 	int i;
 	
 	// Healing - Heal
-	for (i = 1; i <= SkillLevelMax[0][0]; i++)
-		SkillData[0][0][i] = StrParam("Recover %d HP\n", Energy * 10);
+	Skills[0][0].Description[0] = StrParam("Recover %d HP\n", Energy * 10);
 
 	// Healing - Repair Armor
-	for (i = 1; i <= SkillLevelMax[0][1]; i++)
-		SkillData[0][2][i] = StrParam("Repair %d Armor\n", Energy * 10);
+	Skills[0][0].Description[0] = StrParam("Repair %d Armor\n", Energy * 10);
 	
 	// Attacks - Fireball
-	for (i = 1; i <= SkillLevelMax[3][0]; i++)
-		SkillData[3][0][i] = StrParam("Shoots a fireball\n\ca%d Fire Damage\n", Round(Energy * 0.25));
+	for (i = 1; i <= Skills[3][0].MaxLevel; i++)
+		Skills[3][0].Description[i] = StrParam("Shoots a fireball\n\ca%d Fire Damage\n", Round(Energy * 0.25));
 
 	// Attacks - Fireball Nova
-	for (i = 1; i <= SkillLevelMax[3][1]; i++)
-		SkillData[3][1][i] = StrParam("Shoots fireballs in a circular nova around you\n\ca%d Fire Damage\n", Round(Energy * 0.25));
+	for (i = 1; i <= Skills[3][1].MaxLevel; i++)
+		Skills[3][1].Description[i] = StrParam("Shoots fireballs in a circular nova around you\n\ca%d Fire Damage\n", Round(Energy * 0.25));
 
 	// Attacks - Ice Missile
-	for (i = 1; i <= SkillLevelMax[3][2]; i++)
-		SkillData[3][2][i] = StrParam("Shoots an Ice Missile\n\cn%d Ice Damage\n", Round(Energy * 0.3));
+	for (i = 1; i <= Skills[3][2].MaxLevel; i++)
+		Skills[3][2].Description[i] = StrParam("Shoots an Ice Missile\n\cn%d Ice Damage\n", Round(Energy * 0.3));
 	
 	// Attacks - Ice Nova
-	for (i = 1; i <= SkillLevelMax[3][3]; i++)
-		SkillData[3][3][i] = StrParam("Shoots ice missiles in a circular nova around you\n\cn%d Ice Damage\n", Round(Energy * 0.3));
+	for (i = 1; i <= Skills[3][0].MaxLevel; i++)
+		Skills[3][3].Description[i] = StrParam("Shoots ice missiles in a circular nova around you\n\cn%d Ice Damage\n", Round(Energy * 0.3));
 };
