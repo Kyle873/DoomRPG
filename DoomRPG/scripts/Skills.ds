@@ -408,11 +408,11 @@ script UseSkill(int Index)
 	if (GetActorProperty(0, APROP_Health) <= 0) return;
 	
 	// Current Skill
-	Skill CurrentSkill = Skills[SkillCatagory[Index]][SkillIndex[Index]];
+	Skill *CurrentSkill = &Skills[SkillCatagory[Index]][SkillIndex[Index]];
 	
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
-	int EPCost = ScaleEPCost(CurrentSkill.Cost * CurrentSkill.Level * SkillCostMult);
+	int EPCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->Level * SkillCostMult);
 	bool Success;
 	
 	// Overdrive?
@@ -448,17 +448,17 @@ script UseSkill(int Index)
 	if (SkillCatagory[Index] == -1 || SkillIndex[Index] == -1) return;
 
 	// Overdriving an unlearnt skill will learn it
-	if (Overdrive && CheckInventory("SkillToken") > 0 && SkillLevel[GetSkillSlot(Index)] == 0)
+	if (Overdrive && CheckInventory("SkillToken") > 0 && CurrentSkill->Level == 0)
 	{
-		SkillLevel[GetSkillSlot(Index)]++;
-		CurrentSkill.Level++;
+		CurrentSkill->Level++;
+		CurrentSkill->CurrentLevel++;
 		TakeInventory("SkillToken", 1);
 		FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
 		return;
 	};
 	
 	// Check if the Skill has been learned yet
-	if (CurrentSkill.Level == 0)
+	if (CurrentSkill->Level == 0)
 	{
 		SetFont("BIGFONT");
 		Print("\cgYou don't know this skill yet\n");
@@ -599,28 +599,28 @@ script DrawSkillHUD() enter
 			if (SkillCatagory[i] == -1 || SkillIndex[i] == -1) continue;
 			
 			// Current Skill
-			Skill CurrentSkill = Skills[SkillCatagory[i]][SkillIndex[i]];
+			Skill *CurrentSkill = &Skills[SkillCatagory[i]][SkillIndex[i]];
 			
-			int SkillCost = ScaleEPCost(CurrentSkill.Cost * CurrentSkill.Level * SkillCostMult);
+			int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->Level * SkillCostMult);
 			int Color = CR_GREEN;
 
 			if (EP < SkillCost)
 				Color = CR_RED;
 			
-			if (CurrentSkillLevel[GetSkillSlot(i)] == 0)
+			if (CurrentSkill->Level == 0)
 			{
 				Color = CR_RED;
 				
-				HudMessage("%d. %s\n", i + 1, CurrentSkill.Name,
+				HudMessage("%d. %s\n", i + 1, CurrentSkill->Name,
 						   HUDMSG_PLAIN, 0, Color,
 						   X, Y, 0.05);
 			}
 			else
 			{
 				HudMessage("%d. %s (%d/%d) [\cn%d\c-]\n", i + 1,
-						   CurrentSkill.Name,
-						   CurrentSkill.CurrentLevel,
-						   CurrentSkill.Level,
+						   CurrentSkill->Name,
+						   CurrentSkill->CurrentLevel,
+						   CurrentSkill->Level,
 						   SkillCost,
 						   HUDMSG_PLAIN, 0, Color,
 						   X, Y, 0.05);
@@ -1407,7 +1407,7 @@ function void CheckSkillDescriptions()
 	Skills[0][0].Description[0] = StrParam("Recover %d HP\n", Energy * 10);
 
 	// Healing - Repair Armor
-	Skills[0][0].Description[0] = StrParam("Repair %d Armor\n", Energy * 10);
+	Skills[0][2].Description[0] = StrParam("Repair %d Armor\n", Energy * 10);
 	
 	// Attacks - Fireball
 	for (i = 1; i <= Skills[3][0].MaxLevel; i++)

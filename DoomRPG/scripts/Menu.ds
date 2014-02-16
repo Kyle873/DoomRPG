@@ -349,7 +349,7 @@ function void DrawSkillMenu()
 	HudMessage("Skills\n", HUDMSG_PLAIN, 5000, CR_GREEN, 0.1, 10.0, 0.05);
 	
 	// Current Skill
-	Skill CurrentSkill = Skills[SkillPage][MenuIndex];
+	Skill *CurrentSkill = &Skills[SkillPage][MenuIndex];
 
 	// Skill Tokens
 	PrintSprite("TOKCE0", 0, 252.1, 56.1, 0.05);
@@ -357,9 +357,9 @@ function void DrawSkillMenu()
 	HudMessage("%d\n", CheckInventory("SkillToken"), HUDMSG_PLAIN, 0, CR_DARKGREEN, 278.1, 46.0, 0.05);
 	
 	// Skill Buy Cost
-	HudMessage("-%d\n", CurrentSkill.Level + 1,
+	HudMessage("-%d\n", CurrentSkill->Level + 1,
 			   HUDMSG_PLAIN, 5001, CR_RED, 278.1, 56.1, 0.05);
-	if (CurrentSkill.Level == CurrentSkill.MaxLevel)
+	if (CurrentSkill->Level == CurrentSkill->MaxLevel)
 		HudMessage("\n", HUDMSG_PLAIN, 5001, CR_RED, 278.1, 56.1, 0.05);
 
 	// Skill Category
@@ -368,13 +368,13 @@ function void DrawSkillMenu()
 			   0.1, 25.0, 0.05);
 	
 	// Scale EP Costs to Skill Level
-	int SkillCost = ScaleEPCost(CurrentSkill.Cost * CurrentSkill.CurrentLevel * SkillCostMult);
-	int SkillCostNext = ScaleEPCost(CurrentSkill.Cost * (CurrentSkill.CurrentLevel + 1) * SkillCostMult);
+	int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * SkillCostMult);
+	int SkillCostNext = ScaleEPCost(CurrentSkill->Cost * (CurrentSkill->CurrentLevel + 1) * SkillCostMult);
 
 	// Skill Cost/Next Level Cost
 	HudMessage("EP: %d (%d)\n", SkillCost, SkillCostNext,
 			   HUDMSG_PLAIN, 5003, CR_LIGHTBLUE, 240.1, 25.0, 0.05);
-	if (CurrentSkill.Level == CurrentSkill.MaxLevel)
+	if (CurrentSkill->Level == CurrentSkill->MaxLevel)
 		HudMessage("EP: %d\n", SkillCost,
 				   HUDMSG_PLAIN, 5003, CR_LIGHTBLUE, 240.1, 25.0, 0.05);
 
@@ -386,7 +386,7 @@ function void DrawSkillMenu()
 				
 		if (i == MenuIndex)
 			Color = CR_GREEN
-		else if (SkillLevel[(SkillPage * MAX_SKILLS) + i] == 0)
+		else if (Skills[SkillPage][i].Level == 0)
 			Color = CR_RED;
 		
 		if (Skills[SkillPage][i].Level > 0)
@@ -415,12 +415,12 @@ function void DrawSkillMenu()
 
 	// Skill Description
 	SetFont("SMALLFONT");
-	if (CurrentSkill.Level > 0)
-		HudMessage("%s\n", CurrentSkill.Description[1], // CurrentSkill.CurrentLevel -- expected constant, WTF? DAAAAAAAAVIIIIIIIIIIIID!!
+	if (CurrentSkill->Level > 0)
+		HudMessage("%s\n", CurrentSkill->Description[CurrentSkill->CurrentLevel - 1],
 				   HUDMSG_PLAIN, 5005, CR_YELLOW,
 				   20.1, 183.1, 0.05)
 	else
-		HudMessage("%s\n", CurrentSkill.Description[0],
+		HudMessage("%s\n", CurrentSkill->Description[0],
 				   HUDMSG_PLAIN, 5005, CR_YELLOW,
 				   20.1, 183.1, 0.05);
 	
@@ -747,9 +747,9 @@ function void MenuInput()
 		};
         if ((Buttons & BT_LEFT && !(OldButtons & BT_LEFT) && Buttons & BT_SPEED && SkillPage >= 0) ||
 			(Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && Buttons & BT_SPEED && SkillPage >= 0))
-			if (CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] > 1)
+			if (Skills[SkillPage][MenuIndex].CurrentLevel > 1)
 			{
-				CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]--;
+				Skills[SkillPage][MenuIndex].CurrentLevel--;
 				ActivatorSound("menu/move", 127);
 			};
         if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && SkillPage < MAX_CATEGORIES) ||
@@ -762,9 +762,9 @@ function void MenuInput()
 		};
         if ((Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT) && Buttons & BT_SPEED && SkillPage < MAX_CATEGORIES) ||
 			(Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT) && Buttons & BT_SPEED && SkillPage < MAX_CATEGORIES))
-			if (CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex] < SkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex])
+			if (Skills[SkillPage][MenuIndex].CurrentLevel < Skills[SkillPage][MenuIndex].Level)
 			{
-				CurrentSkillLevel[(SkillPage * MAX_SKILLS) + MenuIndex]++;
+				Skills[SkillPage][MenuIndex].CurrentLevel++;
 				ActivatorSound("menu/move", 127);
 			};
 		if (Buttons == BT_USE && OldButtons != BT_USE)
@@ -988,19 +988,19 @@ function void IncreaseStat(int Stat)
 
 function void IncreaseSkill()
 {
-	Skill CurrentSkill = Skills[SkillPage][MenuIndex];
+	Skill *CurrentSkill = &Skills[SkillPage][MenuIndex];
 	
 	if (SkillTokens > 0)
 	{
-		if (CurrentSkill.Level < CurrentSkill.MaxLevel && SkillTokens > CurrentSkill.Level)
+		if (CurrentSkill->Level < CurrentSkill->MaxLevel && SkillTokens > CurrentSkill->Level)
 		{
 			// If you are upgrading an aura, and it's the same one as you've got active, kill it
 			if (Aura == MenuIndex + 1)
 				AuraTimer = 0;
 			
-			CurrentSkill.Level++;
-			CurrentSkill.CurrentLevel++;
-			TakeInventory("SkillToken", CurrentSkill.Level + 1);
+			CurrentSkill->Level++;
+			CurrentSkill->CurrentLevel++;
+			TakeInventory("SkillToken", CurrentSkill->Level + 1);
 			ActivatorSound("menu/move", 127);
 		};
 	}
