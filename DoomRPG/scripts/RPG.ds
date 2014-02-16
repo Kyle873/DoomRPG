@@ -13,7 +13,7 @@
 str[2] Version =
 {
 	"v0.96 Beta - DamnScript Edition";
-	"Sunday, February 16, 2014 at 4:56:21 PM";
+	"Sunday, February 16, 2014 at 6:09:05 PM";
 };
 
 int PlayerTID = 31337;
@@ -125,6 +125,12 @@ script Init() enter
 	MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
 	if (MapNumber > 36) MapNumber = 36;
 	
+	// Reset map flags
+	Player.KillBonus = false;
+	Player.ItemsBonus = false;
+	Player.SecretsBonus = false;
+	Player.AllBonus = false;
+	
 	// IF you have the Nova Shield Accessory and move to a new level, make sure to check the Nova flag
 	if (CheckInventory("Shield") && Player.Shield.Accessory == 5)
 		Player.Shield.Nova = false;
@@ -136,15 +142,6 @@ script Init() enter
 	// Reset the menus if they were open in the last level
 	Player.InMenu = false;
 	Player.InShop = false;
-};
-
-// Script for debugging the Skills array
-script PrintShield()
-{
-	for (int i = 0; i < 4; i++)
-		for (int j = 0; j < MAX_PARTS; j++)
-			for (int k = 0; k < 4; k++)
-				Log("ShieldData[%d][%d][%d]: %s\n", i, j, k, ShieldData[i][j][k]);
 };
 
 // Monster Init Script
@@ -362,7 +359,7 @@ script MonsterLoop()
 		// Add a kill to the pay kills
 		if (!(MonsterFlags & MF_NOPAYKILL))
 			Player.PayKills++;
-			
+		
 		// SHOTGUNS!
 		if (GetCVar("drpg_shotguns"))
 			DropItem(0, "ShotSpawn", Random(1, 4), 255);
