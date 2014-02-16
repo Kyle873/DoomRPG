@@ -4,66 +4,9 @@
 #include "Skills.dh"
 #include "Utils.dh"
 
-// Stat Bonuses
-int StrengthBonus;
-int DefenseBonus;
-int VitalityBonus;
-int EnergyBonus;
-int RegenerationBonus;
-int AgilityBonus;
-int CapacityBonus;
-int LuckBonus;
-
-// Secondary Stats
-int LevelDamage;				// Damage dependent on the player's level
-int BonusDamage;				// Damage bonus given by the Strength stat
-int TotalDamage;				// Combined LevelDamage and BonusDamage
-fixed DamageFactor;				// General damage the player will defend against
-int Mass;						// Player mass, for preventing knockback
-fixed Speed;					// Movement Speed
-fixed JumpHeight;				// Jump Height
-int WeaponSpeed;				// Weapon Speed Increase bsed on Agility
-int SurvivalBonus;				// Chance that you will survive a fatal hit
-
-// Misc stat/token stuff
-int StatTokens;					// Current Stat Tokens
-int SkillTokens;				// Current Skill Tokens
-int StatCap;					// Current Stat Cap
-int SoftStatCap = 100;			// Soft Stat Cap, this cannot be passed with tokens
-int HardStatCap = 400;			// Hard Stat Cap, this cap cannot be passed period
-
-// 100% Bonuses
-int Kills;
-bool KillBonus;
-int Items;
-bool ItemsBonus;
-int SecretsFound;
-bool SecretsBonus;
-bool AllBonus;
-
-// HP/EP Regen Timers
-int HPRate;
-int HPTime;
-int HPAmount;
-int EPRate;
-int EPTime;
-int EPAmount;
-int LowHealthTimer;
-int RegenBoostTimer;
-
-// Luck Chance Percentages
-fixed CreditChance;
-fixed HealthChance;
-fixed ArmorChance;
-fixed PowerupChance;
-fixed RuneChance;
-fixed TokenChance;
-fixed AugChance;
-fixed ShieldChance;
-fixed EPChance;
-
-// Randomizer
-int LevelTokens;
+// Stat Caps
+int SoftStatCap = 100;
+int HardStatCap = 400;
 
 // XP & Rank Tables
 long int[MAX_LEVEL + 1] XPTable;
@@ -136,21 +79,22 @@ function void AddXP(long int Amount)
 	
 	if (GetCVar("drpg_combo"))
 	{
-		TotalGained += Amount;
-		if (Aura == 3 && Skills[2][2].CurrentLevel >= 3) TotalGained += Amount;
-		XPGained = 0;
-		RankGained = 0;
-		Combo++;
-		if (Aura == 3 && AuraTimer > 0) Combo++;
-		ComboTimer = 100;
+		Player.ComboTimer = 100;
+		Player.Combo++;
+		Player.TotalGained += Amount;
+		Player.XPGained = 0;
+		Player.RankGained = 0;
+		
+		if (Player.Aura == 3 && Skills[2][2].CurrentLevel >= 3) Player.TotalGained += Amount;
+		if (Player.Aura == 3 && Player.AuraTimer > 0) Player.Combo++;
 	}
 	else
 	{
-		Rank += Amount;
+		Player.Rank += Amount;
 		
 		// You cannot gain Negative XP, but you can lose Rank
 		if (Amount < 0) Amount = 0;
-			XP += Amount;
+			Player.XP += Amount;
 	};
 };
 
@@ -158,86 +102,86 @@ function void CheckCombo()
 {
 	if (GetCVar("drpg_combo"))
 	{
-		// Subtract the combo timer each tick
-		if ((Combo > 0 || ComboTimer < 100) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
-			ComboTimer--;
+		// Subtract the combo timer each tic
+		if ((Player.Combo > 0 || Player.ComboTimer < 100) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
+			Player.ComboTimer--;
 		
 		// Set your Inventory Combo Item to the current ComboTimer aunt
-		if (ComboTimer < 100)
+		if (Player.ComboTimer < 100)
 		{
-			SetInventory("Combo", ComboTimer);
+			SetInventory("Combo", Player.ComboTimer);
 			SetInventory("Combo2", 0);
 		};
-		if (ComboTimer < 0)
+		if (Player.ComboTimer < 0)
 		{
 			SetInventory("Combo", 0);
-			SetInventory("Combo2", ComboTimer + 100);
+			SetInventory("Combo2", Player.ComboTimer + 100);
 		};
 		
 		// Add up and randomize the XP and Rank gain
-		if (ComboTimer == 0)
+		if (Player.ComboTimer == 0)
 		{
-			XPGained += TotalGained + Random(0, Combo / (1000 - (MapNumber * 10)) * TotalGained);
-			RankGained += TotalGained + Random(0, Combo / (1000 - (MapNumber * 10)) * TotalGained);
+			Player.XPGained += Player.TotalGained + Random(0, Player.Combo / (1000 - (MapNumber * 10)) * Player.TotalGained);
+			Player.RankGained += Player.TotalGained + Random(0, Player.Combo / (1000 - (MapNumber * 10)) * Player.TotalGained);
 			
 			// You cannot gain Negative XP, but you can lose Rank
-			if (XPGained < 0) XPGained = 0;
+			if (Player.XPGained < 0) Player.XPGained = 0;
 
-			XP += XPGained;
-			Rank += RankGained;
+			Player.XP += XPGained;
+			Player.Rank += RankGained;
 			
-			TotalGained = 0;
-			Combo = 0;
+			Player.TotalGained = 0;
+			Player.Combo = 0;
 		};
 		
-		if (ComboTimer < -100)
+		if (Player.ComboTimer < -100)
 		{
-			TotalGained = 0;
-			XPGained = 0;
-			RankGained = 0;
-			ComboTimer = 100;
+			Player.TotalGained = 0;
+			Player.XPGained = 0;
+			Player.RankGained = 0;
+			Player.ComboTimer = 100;
 		};
 	}
 	else
-		{ComboTimer = -100;};
+		Player.ComboTimer = -100;
 };
 
 // Keeps current level and XP updated
 function void CheckLevel()
 {
-	if (Level < MAX_LEVEL)
-		XPNext = XPTable[Level];
+	if (Player.Level < MAX_LEVEL)
+		Player.XPNext = XPTable[Player.Level];
 	
-	if (Level >= MAX_LEVEL)
+	if (Player.Level >= MAX_LEVEL)
 	{
-		XP = XPTable[MAX_LEVEL - 1];
-		XPNext = XPTable[MAX_LEVEL - 1];
+		Player.XP = XPTable[MAX_LEVEL - 1];
+		Player.XPNext = XPTable[MAX_LEVEL - 1];
 	};
 	
 	// Now check for a level up
-	if (XP >= XPTable[Level] && Level < MAX_LEVEL)
+	if (Player.XP >= XPTable[Player.Level] && Player.Level < MAX_LEVEL)
 	{
 		if (GetCVar("drpg_autospend"))
-			LevelTokens += 5;
+			Player.LevelTokens += 5;
 		
 		// Level Up
 		ActivatorSound("misc/levelup", 127);
 		
-		Level++;
+		Player.Level++;
 		
-		GiveInventory("StatToken", 5 + (Level / 10));
+		GiveInventory("StatToken", 5 + (Player.Level / 10));
 		GiveInventory("SkillToken", 1);
 		
 		if (GetCVar("drpg_levelup_heal"))
 		{
-			if (EP <= 0) {EP = 0;} else {EP = GetEPMax();};
+			if (Player.EP <= 0) Player.EP = 0 else Player.EP = Player.EPMax;
 			HealThing(1000000);
 		};
 
 		FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0, 2.0);
 		SetFont("BIGFONT");
 		SetHudSize(0, 0, false);
-		HudMessage("You have reached level %d\n", Level,
+		HudMessage("You have reached level %d\n", Player.Level,
 					HUDMSG_FADEOUT, 4999, CR_WHITE, 0.5, 0.5, 2.0, 2.0);
 	};
 };
@@ -245,37 +189,37 @@ function void CheckLevel()
 // Keeps current Rank updated
 function void CheckRank()
 {
-	RankString = Ranks[RankLevel];
+	Player.RankString = Ranks[Player.RankLevel];
 	
-	if (RankLevel < MAX_RANK)
-		RankNext = RankTable[RankLevel];
+	if (Player.RankLevel < MAX_RANK)
+		Player.RankNext = RankTable[Player.RankLevel];
 	
-	if (RankLevel >= MAX_RANK)
+	if (Player.RankLevel >= MAX_RANK)
 	{
-		Rank = RankTable[MAX_RANK - 1];
-		RankNext = RankTable[MAX_RANK - 1];
+		Player.Rank = RankTable[MAX_RANK - 1];
+		Player.RankNext = RankTable[MAX_RANK - 1];
 	};
 	
 	// Rank up
-	if (Rank >= RankTable[RankLevel] && RankLevel < MAX_RANK)
+	if (Player.Rank >= RankTable[Player.RankLevel] && Player.RankLevel < MAX_RANK)
 	{
 		ActivatorSound("misc/rankup", 127);
-		RankLevel++;
+		Player.RankLevel++;
 		FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0, 2.0);
 		SetFont("BIGFONT");
 		SetHudSize(0, 0, false);
 		HudMessage("You have reached rank level %d: %s\n",
-				   RankLevel, LongRanks[RankLevel],
+				   Player.RankLevel, LongRanks[Player.RankLevel],
 				   HUDMSG_FADEOUT, 4999, CR_GOLD, 0.5, 0.5, 4.0, 2.0);
 	};
 	
 	// Payment
-	PayTimer++;
-	if (PayTimer >= 35 * 60 * GetCVar("drpg_pay_interval"))
+	Player.PayTimer++;
+	if (Player.PayTimer >= 35 * 60 * GetCVar("drpg_pay_interval"))
 	{
-		if (RankLevel > 0)
+		if (Player.RankLevel > 0)
 		{
-			int Pay = ((RankLevel + 1) * 10) + (PayKills * (RankLevel + 1)) * (1 + (MapNumber / 6));
+			int Pay = ((Player.RankLevel + 1) * 10) + (Player.PayKills * (Player.RankLevel + 1)) * (1 + (MapNumber / 6));
 			
 			GiveInventory("Credits", Pay);
 			
@@ -288,8 +232,8 @@ function void CheckRank()
 			Log("\cfYou have been paid %d Credits by the UAC\n", Pay);
 		};
 		
-		PayTimer = 0;
-		PayKills = 0;
+		Player.PayTimer = 0;
+		Player.PayKills = 0;
 	};
 };
 
@@ -309,123 +253,126 @@ function void CheckLevelInfo()
 	
 	// Check to see if any total stats are 0, if they are, silently flag them as received already
 	if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
-		KillBonus = true;
+		Player.KillBonus = true;
 	if (GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0)
-		ItemsBonus = true;
+		Player.ItemsBonus = true;
 	if (GetLevelInfo(LEVELINFO_TOTAL_SECRETS) == 0)
-		SecretsBonus = true;
+		Player.SecretsBonus = true;
 	
 	// If all the total stats are 0, no bonuses at all
 	if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0 && GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0 && GetLevelInfo(LEVELINFO_TOTAL_SECRETS) == 0)
-		AllBonus = true;
+		Player.AllBonus = true;
 	
 	// 100% Kills
-	if (CurrentKills >= GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) && !KillBonus)
+	if (CurrentKills >= GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) && !Player.KillBonus)
 	{
 		FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
 		
-		XPBonus = Random(Level * 10, Level * 100);
-		XP += XPBonus;
+		XPBonus = Random(Player.Level * 10, Player.Level * 100);
+		Player.XP += XPBonus;
 		
 		HudMessage("100%% Monsters Killed!\n%d XP Bonus\n", XPBonus,
 				   HUDMSG_TYPEON, 0, CR_BRICK, 1.5, 0.4, 3.0, 0.1, 3.0);
-		KillBonus = true;
+		
+		Player.KillBonus = true;
 	};
 	
 	// 100% Items
-	if (CurrentItems >= GetLevelInfo(LEVELINFO_TOTAL_ITEMS) && !ItemsBonus)
+	if (CurrentItems >= GetLevelInfo(LEVELINFO_TOTAL_ITEMS) && !Player.ItemsBonus)
 	{
 		FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
 		
-		EP = GetEPMax();
+		Player.EP = Player.EPMax;
 		HealThing(1000000);
 		
 		HudMessage("100%% Items Found!\nFull HP/EP Restore\n",
 				   HUDMSG_TYPEON, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 0.1, 3.0);
-		ItemsBonus = true;
+		
+		Player.ItemsBonus = true;
 	};
 
 	// Secrets
-	if (CurrentSecretsFound == SecretsFound + 1 && RankLevel < 25)
+	if (CurrentSecretsFound == Player.SecretsFound + 1)
 	{
 		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
 		
-		RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
-		Rank += RankBonus;
+		RankBonus = Random(Player.RankLevel * 1000, Player.RankLevel * 1000 + Random(0, 1000));
+		Player.Rank += RankBonus;
 		
 		// 100% Secrets
-		if (CurrentSecretsFound >= GetLevelInfo(LEVELINFO_TOTAL_SECRETS) && !SecretsBonus)
+		if (CurrentSecretsFound >= GetLevelInfo(LEVELINFO_TOTAL_SECRETS) && !Player.SecretsBonus)
 		{
 			FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
 			
-			RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
-			Rank += RankBonus;
+			RankBonus = Random(Player.RankLevel * 1000, Player.RankLevel * 1000 + Random(0, 1000));
+			Player.Rank += RankBonus;
 
 			HudMessage("100%% Secrets Found!\n%d Rank Bonus\n", RankBonus,
 					   HUDMSG_TYPEON, 0, CR_YELLOW, 1.5, 0.8, 3.0, 0.1, 3.0);
-			SecretsBonus = true;
+			
+			Player.SecretsBonus = true;
 		};
 	};
 	
 	// All Kills/Items/Secrets 100%
-	if ((KillBonus && ItemsBonus && SecretsBonus) && !AllBonus)
+	if ((Player.KillBonus && Player.ItemsBonus && Player.SecretsBonus) && !Player.AllBonus)
 	{
 		FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
 		
-		XPBonus = Random(Level * 100, Level * 1000);
-		RankBonus = Random(RankLevel * 1000, RankLevel * 1000 + Random(0, 1000));
+		XPBonus = Random(Player.Level * 100, Player.Level * 1000);
+		RankBonus = Random(Player.RankLevel * 1000, Player.RankLevel * 1000 + Random(0, 1000));
 		
-		XP += XPBonus;
-		Rank += RankBonus;
+		Player.XP += XPBonus;
+		Player.Rank += RankBonus;
 		
-		EP = GetEPMax();
+		Player.EP = Player.EPMax;
 		HealThing(1000000);
 		
 		HudMessage("100%% Monsters killed!\n100%% Items Found!\n100%% Secrets Found!\n\n%d XP Bonus\n%d Rank Bonus\n Full HP/EP Restore\n",
 				   XPBonus, RankBonus,
 				   HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
-		AllBonus = true;
+		
+		Player.AllBonus = true;
 	};
 	
-	
-	CurrentKills = Kills;
-	CurrentItems = Items;
-	SecretsFound = CurrentSecretsFound;
+	Player.Kills = CurrentKills;
+	Player.Items = CurrentItems;
+	Player.SecretsFound = CurrentSecretsFound;
 };
 
 function void CheckHealth()
 {
-	if (LowHealthTimer >= 100 && CheckInventory("Health") > 0)
+	if (Player.LowHealthTimer >= 100 && CheckInventory("Health") > 0)
 	{
 		ActivatorSound("health/low", 64);
-		LowHealthTimer = 0;
+		Player.LowHealthTimer = 0;
 	};
 	
 	if (CheckInventory("Health") <= GetActorProperty(0, APROP_SpawnHealth) / 10 && CheckInventory("Health") > 0)
 	{
-		FadeRange(LowHealthTimer + 155, 0, 0, 0.25, LowHealthTimer + 155, 0, 0, 0.0, 1.0);
-		LowHealthTimer++;
+		FadeRange(Player.LowHealthTimer + 155, 0, 0, 0.25, Player.LowHealthTimer + 155, 0, 0, 0.0, 1.0);
+		Player.LowHealthTimer++;
 		
 		// Halve Movement Speed and Jump Height
-		Speed /= 2;
-		JumpHeight /= 2;
+		Player.Speed /= 2;
+		Player.JumpHeight /= 2;
 	};
 };
 
 function void CheckArmorMax()
 {
-	if (!GetArmorType("none", 0)) 					ArmorMax = 0;
-	if (GetArmorType("ArmorBonus", 0) > 0) 			ArmorMax = 100;
-	if (GetArmorType("UsedGreenArmor", 0) > 0) 		ArmorMax = 50;
-	if (GetArmorType("GreenArmor", 0) > 0) 			ArmorMax = 100;
-	if (GetArmorType("UsedBlueArmor", 0) > 0) 		ArmorMax = 125;
-	if (GetArmorType("BlueArmor", 0) > 0) 			ArmorMax = 250;
-	if (GetArmorType("UsedYellowArmor", 0) > 0) 	ArmorMax = 250;
-	if (GetArmorType("YellowArmor", 0) > 0) 		ArmorMax = 500;
-	if (GetArmorType("UsedRedArmor", 0) > 0) 		ArmorMax = 375;
-	if (GetArmorType("RedArmor", 0) > 0) 			ArmorMax = 750;
-	if (GetArmorType("UsedWhiteArmor", 0) > 0) 		ArmorMax = 500;
-	if (GetArmorType("WhiteArmor", 0) > 0) 			ArmorMax = 1000;
+	if (!GetArmorType("none", 0)) 					Player.ArmorMax = 0;
+	if (GetArmorType("ArmorBonus", 0) > 0) 			Player.ArmorMax = 100;
+	if (GetArmorType("UsedGreenArmor", 0) > 0) 		Player.ArmorMax = 50;
+	if (GetArmorType("GreenArmor", 0) > 0) 			Player.ArmorMax = 100;
+	if (GetArmorType("UsedBlueArmor", 0) > 0) 		Player.ArmorMax = 125;
+	if (GetArmorType("BlueArmor", 0) > 0) 			Player.ArmorMax = 250;
+	if (GetArmorType("UsedYellowArmor", 0) > 0) 	Player.ArmorMax = 250;
+	if (GetArmorType("YellowArmor", 0) > 0) 		Player.ArmorMax = 500;
+	if (GetArmorType("UsedRedArmor", 0) > 0) 		Player.ArmorMax = 375;
+	if (GetArmorType("RedArmor", 0) > 0) 			Player.ArmorMax = 750;
+	if (GetArmorType("UsedWhiteArmor", 0) > 0) 		Player.ArmorMax = 500;
+	if (GetArmorType("WhiteArmor", 0) > 0) 			Player.ArmorMax = 1000;
 	
 	// DoomRL Compatibility
 	if (GetCVar("drpg_ext_doomrl"))
@@ -481,15 +428,15 @@ function void CheckArmorMax()
 			(GetArmorType("RLPlasmaShieldArmorRenegade", 0) > 0) ||
 			(GetArmorType("RLNecroArmorRenegade", 0) > 0) ||
 			(GetArmorType("RLAngelicArmorRenegade", 0) > 0))
-				ArmorMax = 100
+				Player.ArmorMax = 100
 		else // Armors which have differing Save Amounts
 		{
-			if (GetArmorType("RLTowerShieldArmor", 0) > 0)				ArmorMax = 150;
-			if (GetArmorType("RLFireShieldArmor", 0) > 0)				ArmorMax = 200;
-			if (GetArmorType("RLGothicArmor", 0) > 0) 					ArmorMax = 200;
-			if (GetArmorType("RLTowerShieldArmorRenegade", 0) > 0)		ArmorMax = 150;
-			if (GetArmorType("RLFireShieldArmorRenegade", 0) > 0)		ArmorMax = 200;
-			if (GetArmorType("RLGothicArmorRenegade", 0) > 0) 			ArmorMax = 200;
+			if (GetArmorType("RLTowerShieldArmor", 0) > 0)				Player.ArmorMax = 150;
+			if (GetArmorType("RLFireShieldArmor", 0) > 0)				Player.ArmorMax = 200;
+			if (GetArmorType("RLGothicArmor", 0) > 0) 					Player.ArmorMax = 200;
+			if (GetArmorType("RLTowerShieldArmorRenegade", 0) > 0)		Player.ArmorMax = 150;
+			if (GetArmorType("RLFireShieldArmorRenegade", 0) > 0)		Player.ArmorMax = 200;
+			if (GetArmorType("RLGothicArmorRenegade", 0) > 0) 			Player.ArmorMax = 200;
 		};
 	};
 };
@@ -580,34 +527,28 @@ function void CheckStats()
 {
 	// VERY IMPORTANT CODE RIGHT HERE
 	// If you're reading this and you'd like to modify stat curves, this is where you'd do it
-	LevelDamage = Level * (6 - GameSkill());
-	BonusDamage = Strength;
-	TotalDamage = LevelDamage + BonusDamage;
-	DamageFactor = 1.0 - 0.25 * (Defense / 100);
-	Mass = 100 + (Defense * 10);
-	HealthMax = Vitality * 10;
-	EPMax = Energy * 10;
-	Speed = 1.0 + 0.25 * (Agility / 100);
-	JumpHeight = 8.0 + (8.0 * (Agility / 100));
-	WeaponSpeed = Agility;
-	SetAmmoCapacity("Clip", Capacity * 20);
-	SetAmmoCapacity("Shell", Capacity * 10);
-	SetAmmoCapacity("RocketAmmo", Capacity * 5);
-	SetAmmoCapacity("Cell", Capacity * 30);
-	SurvivalBonus = Agility;
-
-	// Keep misc counts handy for the SBARINFO HUD and such
-	Credits = CheckInventory("Credits");
-	Continues = CheckInventory("Continue");
-	StatTokens = CheckInventory("StatToken");
-	SkillTokens = CheckInventory("SkillToken");
+	Player.LevelDamage = Player.Level * (6 - GameSkill());
+	Player.BonusDamage = Player.Strength;
+	Player.TotalDamage = Player.LevelDamage + Player.BonusDamage;
+	Player.DamageFactor = 1.0 - 0.25 * (Player.Defense / 100);
+	Player.Mass = 100 + (Player.Defense * 10);
+	Player.HealthMax = Player.Vitality * 10;
+	Player.EPMax = Player.Energy * 10;
+	Player.Speed = 1.0 + 0.25 * (Player.Agility / 100);
+	Player.JumpHeight = 8.0 + (8.0 * (Player.Agility / 100));
+	Player.WeaponSpeed = Player.Agility;
+	SetAmmoCapacity("Clip", Player.Capacity * 20);
+	SetAmmoCapacity("Shell", Player.Capacity * 10);
+	SetAmmoCapacity("RocketAmmo", Player.Capacity * 5);
+	SetAmmoCapacity("Cell", Player.Capacity * 30);
+	Player.SurvivalBonus = Player.Agility;
 	
 	// Set mass stupid high when Invulnerable to prevent knockback
 	if (CheckInventory("PowerInvulnerable"))
-		Mass *= 128;
+		Player.Mass *= 128;
 	
 	// Survival Bonus
-	if (Random(1, 1000) <= SurvivalBonus)
+	if (Random(1, 1000) <= Player.SurvivalBonus)
 		SetPlayerProperty(0, 1, PROP_BUDDHA)
 	else
 		SetPlayerProperty(0, 0, PROP_BUDDHA);
@@ -615,56 +556,56 @@ function void CheckStats()
 
 function void CheckStatBonus()
 {
-	Strength += StrengthBonus;
-	Defense += DefenseBonus;
-	Vitality += VitalityBonus;
-	Energy += EnergyBonus;
-	Regeneration += RegenerationBonus;
-	Agility += AgilityBonus;
-	Capacity += CapacityBonus;
-	Luck += LuckBonus;
+	Player.Strength += Player.StrengthBonus;
+	Player.Defense += Player.DefenseBonus;
+	Player.Vitality += Player.VitalityBonus;
+	Player.Energy += Player.EnergyBonus;
+	Player.Regeneration += Player.RegenerationBonus;
+	Player.Agility += Player.AgilityBonus;
+	Player.Capacity += Player.CapacityBonus;
+	Player.Luck += Player.LuckBonus;
 	
-	StrengthBonus = 0;
-	DefenseBonus = 0;
-	VitalityBonus = 0;
-	EnergyBonus = 0;
-	RegenerationBonus = 0;
-	AgilityBonus = 0;
-	CapacityBonus = 0;
-	LuckBonus = 0;
+	Player.StrengthBonus = 0;
+	Player.DefenseBonus = 0;
+	Player.VitalityBonus = 0;
+	Player.EnergyBonus = 0;
+	Player.RegenerationBonus = 0;
+	Player.AgilityBonus = 0;
+	Player.CapacityBonus = 0;
+	Player.LuckBonus = 0;
 };
 
 function void CheckRegen()
 {
 	// Determine the max timer amounts
-	HPTime = (700 - (Regeneration * 3.325)) * 2;
-	EPTime = (700 - (Regeneration * 3.325)) * 2;
+	Player.HPTime = (700 - (Player.Regeneration * 3.325)) * 2;
+	Player.EPTime = (700 - (Player.Regeneration * 3.325)) * 2;
 	
 	// Determine the max regen amounts
-	HPAmount = 1 + Vitality / 50;
-	EPAmount = 1 + Energy / 50;
+	Player.HPAmount = 1 + Player.Vitality / 50;
+	Player.EPAmount = 1 + Player.Energy / 50;
 };
 
 // Regeneration
 function void DoRegen()
 {	
 	// HP Regen
-	if (HPRate >= HPTime && GetActorProperty(0, APROP_Health) >= 0)
+	if (Player.HPRate >= Player.HPTime && GetActorProperty(0, APROP_Health) >= 0)
 	{
-		HealThing(HPAmount);
-		HPRate = 0;
+		HealThing(Player.HPAmount);
+		Player.HPRate = 0;
 	};
 
 	// EP Regen
-	if (EPRate >= EPTime && EP <= EPMax)
+	if (Player.EPRate >= Player.EPTime && Player.EP <= Player.EPMax)
 	{
-		EP += EPAmount;
-		EPRate = 0;
+		Player.EP += Player.EPAmount;
+		Player.EPRate = 0;
 	};
 	
 	// If damaged, reset the Healing timer
-	if (HealthLoss != 0)
-		HPRate = 0;
+	if (Player.HealthLoss != 0)
+		Player.HPRate = 0;
 	
 	// Now increment the timers
 	if (!CheckInventory("MenuFreezer"))
@@ -672,11 +613,11 @@ function void DoRegen()
 		int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 		
 		// Regen Boost
-		if (RegenBoostTimer > 0)
+		if (Player.RegenBoostTimer > 0)
 		{
-			HPRate += RegenBoostTimer;
-			EPRate += RegenBoostTimer;
-			RegenBoostTimer--;
+			Player.HPRate += Player.RegenBoostTimer;
+			Player.EPRate += Player.RegenBoostTimer;
+			Player.RegenBoostTimer--;
 			FadeRange(255, 0, 128, 0.1, 255, 0, 128, 0.0, 1.0);
 		};
 
@@ -688,24 +629,24 @@ function void DoRegen()
 				Buttons & BT_RIGHT || Buttons & BT_MOVERIGHT ||
 				Buttons & BT_ATTACK || Buttons & BT_JUMP)
 			{
-				HPRate++;
-				EPRate++;
+				Player.HPRate++;
+				Player.EPRate++;
 			}
 			else if (Buttons & BT_CROUCH) // Crouch - 150% Regen Rate
 			{
-				HPRate += 3;
-				EPRate += 3;
+				Player.HPRate += 3;
+				Player.EPRate += 3;
 			}
 			else // Idle - 100% Regen Rate
 			{
-				HPRate += 2;
-				EPRate += 2;
+				Player.HPRate += 2;
+				Player.EPRate += 2;
 			};
 		}
 		else
 		{
-			HPRate += 2;
-			EPRate += 2;
+			Player.HPRate += 2;
+			Player.EPRate += 2;
 		};
 	};
 };
@@ -713,127 +654,127 @@ function void DoRegen()
 // Keep stats capped at certain values
 function void CheckStatCaps()
 {
-	StatCap = SoftStatCap + CheckInventory("StatCapToken");
+	Player.StatCap = SoftStatCap + CheckInventory("StatCapToken");
 
-	if (Strength < 0)			Strength = 0;
-	if (Strength > StatCap)		Strength = StatCap;
-	if (Defense < 0)			Defense = 0;
-	if (Defense > StatCap)		Defense = StatCap;
-	if (Vitality < 0)			Vitality = 0;
-	if (Vitality > StatCap)		Vitality = StatCap;
-	if (Energy < 0)				Energy = 0;
-	if (Energy > StatCap)		Energy = StatCap;
-	if (Regeneration < 0)		Regeneration = 0;
-	if (Regeneration > StatCap)	Regeneration = StatCap;
-	if (Agility < 0)			Agility = 0;
-	if (Agility > StatCap)		Agility = StatCap;
-	if (Capacity < 0)			Capacity = 0;
-	if (Capacity > StatCap)		Capacity = StatCap;
-	if (Luck < 0)				Luck = 0;
-	if (Luck > StatCap)			Luck = StatCap;
+	if (Player.Strength < 0)					Player.Strength = 0;
+	if (Player.Strength > Player.StatCap)		Player.Strength = Player.StatCap;
+	if (Player.Defense < 0)						Player.Defense = 0;
+	if (Player.Defense > Player.StatCap)		Player.Defense = Player.StatCap;
+	if (Player.Vitality < 0)					Player.Vitality = 0;
+	if (Player.Vitality > Player.StatCap)		Player.Vitality = Player.StatCap;
+	if (Player.Energy < 0)						Player.Energy = 0;
+	if (Player.Energy > Player.StatCap)			Player.Energy = Player.StatCap;
+	if (Player.Regeneration < 0)				Player.Regeneration = 0;
+	if (Player.Regeneration > Player.StatCap)	Player.Regeneration = Player.StatCap;
+	if (Player.Agility < 0)						Player.Agility = 0;
+	if (Player.Agility > Player.StatCap)		Player.Agility = Player.StatCap;
+	if (Player.Capacity < 0)					Player.Capacity = 0;
+	if (Player.Capacity > Player.StatCap)		Player.Capacity = Player.StatCap;
+	if (Player.Luck < 0)						Player.Luck = 0;
+	if (Player.Luck > Player.StatCap)			Player.Luck = Player.StatCap;
 };
 
 // Keep stats capped at the hard value
 function void CheckHardStatCaps()
 {
-	if (Strength < 0)				Strength = 0;
-	if (Strength > HardStatCap)		Strength = HardStatCap;
-	if (Defense < 0)				Defense = 0;
-	if (Defense > HardStatCap)		Defense = HardStatCap;
-	if (Vitality < 0)				Vitality = 0;
-	if (Vitality > HardStatCap)		Vitality = HardStatCap;
-	if (Energy < 0)					Energy = 0;
-	if (Energy > HardStatCap)		Energy = HardStatCap;
-	if (Regeneration < 0)			Regeneration = 0;
-	if (Regeneration > HardStatCap)	Regeneration = HardStatCap;
-	if (Agility < 0)				Agility = 0;
-	if (Agility > HardStatCap)		Agility = HardStatCap;
-	if (Capacity < 0)				Capacity = 0;
-	if (Capacity > HardStatCap)		Capacity = HardStatCap;
-	if (Luck < 0)					Luck = 0;
-	if (Luck > HardStatCap)			Luck = HardStatCap;
+	if (Player.Strength < 0)				Player.Strength = 0;
+	if (Player.Strength > HardStatCap)		Player.Strength = HardStatCap;
+	if (Player.Defense < 0)					Player.Defense = 0;
+	if (Player.Defense > HardStatCap)		Player.Defense = HardStatCap;
+	if (Player.Vitality < 0)				Player.Vitality = 0;
+	if (Player.Vitality > HardStatCap)		Player.Vitality = HardStatCap;
+	if (Player.Energy < 0)					Player.Energy = 0;
+	if (Player.Energy > HardStatCap)		Player.Energy = HardStatCap;
+	if (Player.Regeneration < 0)			Player.Regeneration = 0;
+	if (Player.Regeneration > HardStatCap)	Player.Regeneration = HardStatCap;
+	if (Player.Agility < 0)					Player.Agility = 0;
+	if (Player.Agility > HardStatCap)		Player.Agility = HardStatCap;
+	if (Player.Capacity < 0)				Player.Capacity = 0;
+	if (Player.Capacity > HardStatCap)		Player.Capacity = HardStatCap;
+	if (Player.Luck < 0)					Player.Luck = 0;
+	if (Player.Luck > HardStatCap)			Player.Luck = HardStatCap;
 };
 
 function void CheckStatBounds()
 {
 	// Prevent Overflow of EP
-	if (EP > EPMax)
-		EP = EPMax;
+	if (Player.EP > Player.EPMax)
+		Player.EP = Player.EPMax;
 
 	// Cap the max regen timer amounts to 1 second
-	if (HPTime < 35)
-		HPTime = 35;
-	if (EPTime < 35)
-		EPTime = 35;
+	if (Player.HPTime < 35)
+		Player.HPTime = 35;
+	if (Player.EPTime < 35)
+		Player.EPTime = 35;
 	
 	// Prevent Underflow of DamageFactor
-	if (DamageFactor < 0.01)
-		DamageFactor = 0.01;
+	if (Player.DamageFactor < 0.01)
+		Player.DamageFactor = 0.01;
 	
 	// Prevent Shield Capacity from under/overflowing
-	if (Shield < 0)
-		Shield = 0;
-	if (Shield > ShieldCapacity)
-		Shield = ShieldCapacity;
+	if (Player.Shield.Charge < 0)
+		Player.Shield.Charge = 0;
+	if (Player.Shield.Charge > Player.Shield.Capacity)
+		Player.Shield.Charge = Player.Shield.Capacity;
 	
 	// Cap Weapon Speed
-	if (WeaponSpeed > 100)
-		WeaponSpeed = 100;
+	if (Player.WeaponSpeed > 100)
+		Player.WeaponSpeed = 100;
 	
 	// Cap chances at 100%
-	if (CreditChance > 100) 	CreditChance = 100;
-	if (HealthChance > 100) 	HealthChance = 100;
-	if (EPChance > 100) 		EPChance = 100;
-	if (ArmorChance > 100) 		ArmorChance = 100;
-	if (PowerupChance > 100) 	PowerupChance = 100;
-	if (RuneChance > 100) 		RuneChance = 100;
-	if (TokenChance > 100) 		TokenChance = 100;
-	if (AugChance > 100) 		AugChance = 100;
-	if (ShieldChance > 100) 	ShieldChance = 100;
+	if (Player.CreditChance > 100) 	Player.CreditChance = 100;
+	if (Player.HealthChance > 100) 	Player.HealthChance = 100;
+	if (Player.EPChance > 100) 		Player.EPChance = 100;
+	if (Player.ArmorChance > 100) 	Player.ArmorChance = 100;
+	if (Player.PowerupChance > 100) Player.PowerupChance = 100;
+	if (Player.RuneChance > 100) 	Player.RuneChance = 100;
+	if (Player.TokenChance > 100) 	Player.TokenChance = 100;
+	if (Player.AugChance > 100) 	Player.AugChance = 100;
+	if (Player.ShieldChance > 100) 	Player.ShieldChance = 100;
 
 	// Speed capping CVAR
-	if (Speed > GetCVarFixed("drpg_maxspeed"))
-		Speed = GetCVarFixed("drpg_maxspeed");
+	if (Player.Speed > GetCVarFixed("drpg_maxspeed"))
+		Player.Speed = GetCVarFixed("drpg_maxspeed");
 		
 	// Jump Height capping CVAR
-	if (JumpHeight > GetCVarFixed("drpg_maxjump"))
-		JumpHeight = GetCVarFixed("drpg_maxjump");
+	if (Player.JumpHeight > GetCVarFixed("drpg_maxjump"))
+		Player.JumpHeight = GetCVarFixed("drpg_maxjump");
 };
 
 // Luck Chances
 function void CheckLuck()
 {
-	CreditChance = 10 + Luck * 0.9;
-	HealthChance = Luck * 0.05;
-	EPChance = Luck * 0.05;
-	ArmorChance = Luck * 0.05;
-	PowerupChance = Luck * 0.05;
-	RuneChance = Luck * 0.025;
-	TokenChance = Luck * 0.01;
-	AugChance = Luck * 0.01;
-	ShieldChance = Luck * 0.01;
+	Player.CreditChance = 10 + Player.Luck * 0.9;
+	Player.HealthChance = Player.Luck * 0.05;
+	Player.EPChance = Player.Luck * 0.05;
+	Player.ArmorChance = Player.Luck * 0.05;
+	Player.PowerupChance = Player.Luck * 0.05;
+	Player.RuneChance = Player.Luck * 0.025;
+	Player.TokenChance = Player.Luck * 0.01;
+	Player.AugChance = Player.Luck * 0.01;
+	Player.ShieldChance = Player.Luck * 0.01;
 };
 
 function void CheckBurnout()
 {
 	// Energy Burnout Effect
-	if (EP < 0)
+	if (Player.EP < 0)
 	{
 		// Dynamic Intensity
-		fixed Intensity = -((fixed)EP / (fixed)EPMax);
+		fixed Intensity = -((fixed)Player.EP / (fixed)Player.EPMax);
 		if (Intensity > 0.75) Intensity = 0.75;
 		
 		// Screen Effect
 		FadeRange(0, 128, 255, Intensity, 0, 128, 255, 0, 0.25);
 		
 		// Penalties
-		TotalDamage /= 2;
-		DamageFactor *= 2;
-		Mass /= 2;
-		HealthMax /= 2;
-		EPMax /= 2;
-		Speed /= 2;
-		JumpHeight /= 2;
-		SurvivalBonus /= 2;
+		Player.TotalDamage /= 2;
+		Player.DamageFactor *= 2;
+		Player.Mass /= 2;
+		Player.HealthMax /= 2;
+		Player.EPMax /= 2;
+		Player.Speed /= 2;
+		Player.JumpHeight /= 2;
+		Player.SurvivalBonus /= 2;
 	};
 };

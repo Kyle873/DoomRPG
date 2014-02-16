@@ -3,11 +3,6 @@
 #include "Stims.dh"
 #include "Utils.dh"
 
-bool StimActive;
-int StimAmount;
-int StimCapacity;
-int StimTimer;
-
 str[MAX_COMPONENTS] CompoundNames =
 {
 	// Stats
@@ -35,45 +30,45 @@ int[MAX_COMPONENTS] CompoundColors =
 script UseStim(void)
 {
 	// If you don't have a stim ready or components in it, terminate
-	if (StimActive || StimSize == 0 || StimAmount == 0)
+	if (Player.Stim.Active || Player.Stim.Size == 0 || Player.Stim.Amount == 0)
 	{
 		ActivatorSound("menu/error", 127);
 		return;
 	};
 	
 	// Set Timer
-	StimActive = true;
-	StimTimer = 35 * (30 + Stim[8]);
+	Player.Stim.Active = true;
+	Player.Stim.Timer = 35 * (30 + Player.Stim.Current[8]);
 	
 	// Apply Potency
-	if (Stim[0] > 0) Stim[0] += Stim[9];
-	if (Stim[1] > 0) Stim[1] += Stim[9];
-	if (Stim[2] > 0) Stim[2] += Stim[9];
-	if (Stim[3] > 0) Stim[3] += Stim[9];
-	if (Stim[4] > 0) Stim[4] += Stim[9];
-	if (Stim[5] > 0) Stim[5] += Stim[9];
-	if (Stim[6] > 0) Stim[6] += Stim[9];
-	if (Stim[7] > 0) Stim[7] += Stim[9];
+	if (Player.Stim.Current[0] > 0) Player.Stim.Current[0] += Player.Stim.Current[9];
+	if (Player.Stim.Current[1] > 0) Player.Stim.Current[1] += Player.Stim.Current[9];
+	if (Player.Stim.Current[2] > 0) Player.Stim.Current[2] += Player.Stim.Current[9];
+	if (Player.Stim.Current[3] > 0) Player.Stim.Current[3] += Player.Stim.Current[9];
+	if (Player.Stim.Current[4] > 0) Player.Stim.Current[4] += Player.Stim.Current[9];
+	if (Player.Stim.Current[5] > 0) Player.Stim.Current[5] += Player.Stim.Current[9];
+	if (Player.Stim.Current[6] > 0) Player.Stim.Current[6] += Player.Stim.Current[9];
+	if (Player.Stim.Current[7] > 0) Player.Stim.Current[7] += Player.Stim.Current[9];
 	
 	// Apply Stat Bonuses
-	StrengthBonus = Stim[0];
-	DefenseBonus = Stim[1];
-	VitalityBonus = Stim[2];
-	EnergyBonus = Stim[3];
-	RegenerationBonus = Stim[4];
-	AgilityBonus = Stim[5];
-	CapacityBonus = Stim[6];
-	LuckBonus = Stim[7];
+	Player.StrengthBonus = Player.Stim.Current[0];
+	Player.DefenseBonus = Player.Stim.Current[1];
+	Player.VitalityBonus = Player.Stim.Current[2];
+	Player.EnergyBonus = Player.Stim.Current[3];
+	Player.RegenerationBonus = Player.Stim.Current[4];
+	Player.AgilityBonus = Player.Stim.Current[5];
+	Player.CapacityBonus = Player.Stim.Current[6];
+	Player.LuckBonus = Player.Stim.Current[7];
 	
 	// Apply current Stim to last used Stim
 	for (int i = 0; i < MAX_COMPONENTS; i++)
-		LastStim[i] = Stim[i];
+		Player.Stim.Last[i] = Player.Stim.Current[i];
 	
 	// Clear the Stim
-	StimSize = 0;
-	StimAmount = 0;
+	Player.Stim.Size = 0;
+	Player.Stim.Amount = 0;
 	for (int i = 0; i < MAX_COMPONENTS; i++)
-		Stim[i] = 0;
+		Player.Stim.Current[i] = 0;
 	
 	// FX
 	ActivatorSound("misc/stim", 127);
@@ -87,55 +82,55 @@ script ScriptAddCompound(int Type, int Amount)
 
 function void AddCompound(int Type, int Amount)
 {
-	Vials[Type] += Amount;
+	Player.Stim.Vials[Type] += Amount;
 	
-	if (Vials[Type] > 100)
-		Vials[Type] = 100;
+	if (Player.Stim.Vials[Type] > 100)
+		Player.Stim.Vials[Type] = 100;
 };
 
 function void CheckStim()
 {
 	// Stim maximum capacities
-	if (StimSize == 1)
-		StimCapacity = 20;
-	if (StimSize == 2)
-		StimCapacity = 50;
-	if (StimSize == 3)
-		StimCapacity = 100;
+	if (Player.Stim.Size == 1)
+		Player.Stim.Capacity = 20;
+	if (Player.Stim.Size == 2)
+		Player.Stim.Capacity = 50;
+	if (Player.Stim.Size == 3)
+		Player.Stim.Capacity = 100;
 	
 	// Calculate the current Stim amount
-	StimAmount = 0;
+	Player.Stim.Amount = 0;
 	for (int i = 0; i < MAX_COMPONENTS; i++)
-		StimAmount += Stim[i];
+		Player.Stim.Amount += Player.Stim.Current[i];
 	
 	// Calculate timer for HUD
-	StimTimerHUD = StimTimer / 35 + 1;
+	StimTimerHUD = Player.Stim.Timer / 35 + 1;
 	
 	// Set StimActive dummy item for the HUD
-	SetInventory("StimActive", StimActive);
+	SetInventory("StimActive", Player.Stim.Active);
 	
 	// Decrease Stim Timer
-	if (StimTimer > 0); StimTimer--;
+	if (Player.Stim.Timer > 0); Player.Stim.Timer--;
 	
 	// Remove bonuses when Stim has expired
-	if (StimTimer <= 0 && StimActive)
+	if (Player.Stim.Timer <= 0 && Player.Stim.Active)
 	{
-		StrengthBonus = -LastStim[0];
-		DefenseBonus = -LastStim[1];
-		VitalityBonus = -LastStim[2];
-		EnergyBonus = -LastStim[3];
-		RegenerationBonus = -LastStim[4];
-		AgilityBonus = -LastStim[5];
-		CapacityBonus = -LastStim[6];
-		LuckBonus = -LastStim[7];
-		StimActive = false;
+		Player.StrengthBonus = -Player.Stim.Last[0];
+		Player.DefenseBonus = -Player.Stim.Last[1];
+		Player.VitalityBonus = -Player.Stim.Last[2];
+		Player.EnergyBonus = -Player.Stim.Last[3];
+		Player.RegenerationBonus = -Player.Stim.Last[4];
+		Player.AgilityBonus = -Player.Stim.Last[5];
+		Player.CapacityBonus = -Player.Stim.Last[6];
+		Player.LuckBonus = -Player.Stim.Last[7];
+		Player.Stim.Active = false;
 	};
 };
 
 function void MixStim(int Type)
 {
 	// You need at least 5% for mixing and the stim can't be full
-	if (Vials[Type] < 5 || StimAmount > StimCapacity - 5)
+	if (Player.Stim.Vials[Type] < 5 || Player.Stim.Amount > Player.Stim.Capacity - 5)
 	{
 		ActivatorSound("menu/error", 127);
 		return;
@@ -143,8 +138,8 @@ function void MixStim(int Type)
 	
 	// Add from vial to stim
 	ActivatorSound("menu/move", 127);
-	Vials[Type] -= 5;
-	Stim[Type] += 5;
+	Player.Stim.Vials[Type] -= 5;
+	Player.Stim.Current[Type] += 5;
 };
 
 function void SetStim(int Type)
@@ -157,7 +152,7 @@ function void SetStim(int Type)
 		return;
 	};
 	
-	StimSize = Type + 1;
+	Player.Stim.Size = Type + 1;
 	ActivatorSound("menu/move", 127);
 	
 	if (Type == 0) TakeInventory("StimSmall", 1);

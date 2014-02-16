@@ -7,7 +7,6 @@
 #include "Utils.dh"
 
 int MapNumber;
-int DelayTimer;
 
 // Skill Level Names
 str[5] SkillLevels =
@@ -48,36 +47,36 @@ script Respec(bool DoStats, bool DoSkills)
 	if (DoStats)
 	{
 		// Add stats into a pool of tokens to give back to the player
-		StatPoints += Strength;
-		StatPoints += Defense;
-		StatPoints += Vitality - 10;
-		StatPoints += Energy - 10;
-		StatPoints += Regeneration;
-		StatPoints += Agility;
-		StatPoints += Capacity - 10;
-		StatPoints += Luck;
+		StatPoints += Player.Strength;
+		StatPoints += Player.Defense;
+		StatPoints += Player.Vitality - 10;
+		StatPoints += Player.Energy - 10;
+		StatPoints += Player.Regeneration;
+		StatPoints += Player.Agility;
+		StatPoints += Player.Capacity - 10;
+		StatPoints += Player.Luck;
 		
 		// Reset Stats
-		Strength = 0;
-		Defense = 0;
-		Vitality = 10;
-		Energy = 10;
-		Regeneration = 0;
-		Agility = 0;
-		Capacity = 10;
-		Luck = 0;
+		Player.Strength = 0;
+		Player.Defense = 0;
+		Player.Vitality = 10;
+		Player.Energy = 10;
+		Player.Regeneration = 0;
+		Player.Agility = 0;
+		Player.Capacity = 10;
+		Player.Luck = 0;
 
 		// Give Respecced Stat Tokens back
 		GiveInventory("StatToken", StatPoints);
 
 		// Reset HP and EP
 		SetActorProperty(0, APROP_Health, 100);
-		EP = 100;
-		EPMax = 100;
+		Player.EPMax = 100;
+		Player.EP = Player.EPMax;
 		
 		// Reset Shield
-		Shield = 0;
-		ShieldTimer = 375;
+		Player.Shield.Charge = 0;
+		Player.Shield.Timer = 375;
 	};
 	
 	// Respec Skills
@@ -87,17 +86,16 @@ script Respec(bool DoStats, bool DoSkills)
 		for (int i = 0; i < MAX_CATEGORIES; i++)
 			for (int j = 0; j < MAX_SKILLS; j++)
 			{
-				TODO;
-				// SkillPoints += Skills[i][j].Level;
-				// Skills[i][j].Level = 0;
+				SkillPoints += Skills[i][j].Level;
+				Skills[i][j].Level = 0;
 			};
 
 		// Give Respecced Skill Tokens back
 		GiveInventory("StatToken", SkillPoints);
 
 		// Remove Auras
-		Aura = 0;
-		AuraTimer = 0;
+		Player.Aura = 0;
+		Player.AuraTimer = 0;
 	};
 	
 	// Take 1/2 Credits
@@ -111,23 +109,23 @@ script Respec(bool DoStats, bool DoSkills)
 };
 
 // Add XP, Rank or Combo
-script AddXP(int TotalAdd, long int XPAdd, int RankAdd, int ComboAdd)
+script AddXPScript(long int TotalAdd, long int XPAdd, long int RankAdd, int ComboAdd)
 {
 	if (GetCVar("drpg_combo"))
 	{
-		if (Combo == 0)
-			Combo = 1;
+		if (Player.Combo == 0)
+			Player.Combo = 1;
 		
-		ComboTimer = 100;
-		TotalGained += TotalAdd;
-		XPGained += XPAdd;
-		RankGained += RankAdd;
-		Combo += ComboAdd;
+		Player.ComboTimer = 100;
+		Player.TotalGained += TotalAdd;
+		Player.XPGained += XPAdd;
+		Player.RankGained += RankAdd;
+		Player.Combo += ComboAdd;
 	}
 	else
 	{
-		XP += XPAdd;
-		Rank += RankAdd;
+		Player.XP += XPAdd;
+		Player.Rank += RankAdd;
 	};
 };
 
@@ -136,22 +134,22 @@ script AddEP(int Amount)
 {
 	FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 0.25);
 	
-	EP += Amount;
+	Player.EP += Amount;
 	
-	if (EP > EPMax)
-		EP = EPMax;
+	if (Player.EP > Player.EPMax)
+		Player.EP = Player.EPMax;
 };
 
 // Returns your current EP (for DECORATE)
 script int GetEP()
 {
-	return EP;
+	return Player.EP;
 };
 
 // Returns your max EP (for DECORATE)
 script int GetEPMax()
 {
-	return EPMax;
+	return Player.EPMax;
 };
 
 // Returns the amount to heal given the percentage out of max HP (for DECORATE)
@@ -164,25 +162,25 @@ script int GetHealPercent(int Percent)
 // Returns your max Health (for DECORATE)
 script int GetHealthMax()
 {
-	return HealthMax;
+	return Player.HealthMax;
 };
 
 // Returns the Agility for A_SetTics calls in DECORATE
 script int GetSpeed(int Tics)
 {
-	return Tics - ((Tics - 1) / 100) * Agility;
+	return Tics - ((Tics - 1) / 100) * Player.Agility;
 };
 
 // Used by DECORATE to check if both your Health and EP are at max
 script bool HPEPMax()
 {
-	return (GetActorProperty(0, APROP_Health) >= GetActorProperty(0, APROP_SpawnHealth) && EP >= EPMax);
+	return (GetActorProperty(0, APROP_Health) >= GetActorProperty(0, APROP_SpawnHealth) && Player.EP >= Player.EPMax);
 };
 
 // Used by the RegenSphere to temporarily increase regen rates
 script RegenBoost()
 {
-	RegenBoostTimer += Random(35 * 5, 35 * 10);
+	Player.RegenBoostTimer += Random(35 * 5, 35 * 10);
 };
 
 // HAAAAAAAAAAAAAAAX
@@ -191,18 +189,18 @@ script Cheat(int StatBoost)
 	int ItemMax = 1000;
 	
 	// Max Level/Rank
-	XP = XPTable[MAX_LEVEL - 1];
-	Rank = RankTable[MAX_RANK - 1];
+	Player.XP = XPTable[MAX_LEVEL - 1];
+	Player.Rank = RankTable[MAX_RANK - 1];
 	
 	// Stats
-	Strength += StatBoost;
-	Defense += StatBoost;
-	Vitality += StatBoost;
-	Energy += StatBoost;
-	Regeneration += StatBoost;
-	Agility += StatBoost;
-	Capacity += StatBoost;
-	Luck += StatBoost;
+	Player.Strength += StatBoost;
+	Player.Defense += StatBoost;
+	Player.Vitality += StatBoost;
+	Player.Energy += StatBoost;
+	Player.Regeneration += StatBoost;
+	Player.Agility += StatBoost;
+	Player.Capacity += StatBoost;
+	Player.Luck += StatBoost;
 	
 	// Max out all Skills
 	for (int i = 0; i < MAX_CATEGORIES; i++)
@@ -287,13 +285,13 @@ script Cheat(int StatBoost)
 	GiveInventory("StimMedium", ItemMax);
 	GiveInventory("StimLarge", ItemMax);
 	for (int i = 0; i < MAX_COMPONENTS; i++)
-		Vials[i] = 100;
+		Player.Stim.Vials[i] = 100;
 	
 	// Restore HP/EP/Shields
 	HealThing(1000000);
-	EP = EPMax;
-	Shield = ShieldCapacity;
-	ShieldTimer = 0;
+	Player.EP = Player.EPMax;
+	Player.Shield.Charge = Player.Shield.Capacity;
+	Player.Shield.Timer = 0;
 };
 
 // For testing different stats and their effects
@@ -301,14 +299,14 @@ script ModStat(int Stat, int Value)
 {
 	switch (Stat)
 	{
-		case 1:	Strength = Value;		break;
-		case 2:	Defense = Value;		break;
-		case 3:	Vitality = Value;		break;
-		case 4:	Energy = Value;			break;
-		case 5:	Regeneration = Value;	break;
-		case 6:	Agility = Value;		break;
-		case 7:	Capacity = Value;		break;
-		case 8:	Luck = Value;			break;
+		case 1:	Player.Strength = Value;		break;
+		case 2:	Player.Defense = Value;			break;
+		case 3:	Player.Vitality = Value;		break;
+		case 4:	Player.Energy = Value;			break;
+		case 5:	Player.Regeneration = Value;	break;
+		case 6:	Player.Agility = Value;			break;
+		case 7:	Player.Capacity = Value;		break;
+		case 8:	Player.Luck = Value;			break;
 	};
 };
 
@@ -324,9 +322,9 @@ script GiveCredits(int Amount)
 script Payout(int Time)
 {
 	if (Time > 0)
-		PayTimer = Time
+		Player.PayTimer = Time
 	else
-		PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
+		Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
 };
 
 // Give all Runes
@@ -355,7 +353,7 @@ script GiveAugs(int Canisters, int Upgrades, int Slots)
 	};
 	
 	for (int i = 0; i < MAX_AUGS; i++)
-		AugLevels[i] = AugLevelMax[i];
+		Player.Augs.Level[i] = AugLevelMax[i];
 };
 
 // Give all Shield Components
@@ -413,6 +411,7 @@ function void CreateTranslations()
 	CreateTranslationPalette(81, 111, 100, 100);
 	CreateTranslationEnd();
 };
+
 // PrintSprite Utility Function
 function void PrintSprite(str sprite, int id, fixed x, fixed y, fixed d)
 {
@@ -453,10 +452,10 @@ function int SetActorInventory(int tid, str item, int count)
 // Gets Max EP after all bonuses are applied to it
 function int GetEPMax()
 {
-	int MaxEP = EPMax;
+	int MaxEP = Player.EPMax;
 	
 	// Max EP Checks for Augs
-	if (Augs[AUG_ENERGY])
+	if (Player.Augs.Active[AUG_ENERGY])
 		MaxEP *= 2;
 	
 	return MaxEP;

@@ -7,10 +7,8 @@
 #include "Utils.dh"
 
 bool Overdrive;
-bool AuraBonus;
 int SummonID = 2100;
 int MaxSummons;
-int SkillCostMult;
 int BulletTimeMode;
 int BulletTimeTimer;
 
@@ -408,44 +406,44 @@ script UseSkill(int Index)
 	if (GetActorProperty(0, APROP_Health) <= 0) return;
 	
 	// Current Skill
-	Skill *CurrentSkill = &Skills[SkillCatagory[Index]][SkillIndex[Index]];
+	Skill *CurrentSkill = &Skills[Player.SkillCatagory[Index]][Player.SkillIndex[Index]];
 	
 	int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(0, INPUT_OLDBUTTONS);
-	int EPCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->Level * SkillCostMult);
+	int EPCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->Level * Player.SkillCostMult);
 	bool Success;
 	
 	// Overdrive?
 	Overdrive = false;
-	if (Buttons & BT_SPEED && (!InMenu && !InShop))
+	if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop))
 		Overdrive = true;
 
 	// If you're in the Skills menu, assign the key to the selected skill
-	if (InMenu && Menu == 3 && Index != 5)
+	if (Player.InMenu && Player.Menu == 3 && Index != 5)
 	{
 		if (Buttons & BT_SPEED)
 		{
 			ActivatorSound("menu/move", 127);
-			SkillCatagory[Index] = -1;
-			SkillIndex[Index] = -1;
+			Player.SkillCatagory[Index] = -1;
+			Player.SkillIndex[Index] = -1;
 			return;
 		};
 
 		for (int i = 0; i < 5; i++)
-			if (SkillCatagory[i] == SkillPage && SkillIndex[i] == MenuIndex)
+			if (Player.SkillCatagory[i] == Player.SkillPage && Player.SkillIndex[i] == Player.MenuIndex)
 			{
 				ActivatorSound("menu/error", 127);
 				return;
 			};
 		
 		ActivatorSound("menu/move", 127);
-		SkillCatagory[Index] = SkillPage;
-		SkillIndex[Index] = MenuIndex;
+		Player.SkillCatagory[Index] = Player.SkillPage;
+		Player.SkillIndex[Index] = Player.MenuIndex;
 		return;
 	};
 	
 	// If the key is unassigned, terminate
-	if (SkillCatagory[Index] == -1 || SkillIndex[Index] == -1) return;
+	if (Player.SkillCatagory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
 
 	// Overdriving an unlearnt skill will learn it
 	if (Overdrive && CheckInventory("SkillToken") > 0 && CurrentSkill->Level == 0)
@@ -467,7 +465,7 @@ script UseSkill(int Index)
 	};
 
 	// Can't use skills while burned out
-	if (EP < 0)
+	if (Player.EP < 0)
 	{
 		SetFont("BIGFONT");
 		Print("\chYou can't use skills while burned out\n");
@@ -476,12 +474,12 @@ script UseSkill(int Index)
 	};
 	
 	// Normal skills
-	if (EP >= EPCost || Overdrive)
+	if (Player.EP >= EPCost || Overdrive)
 	{
-		switch (SkillCatagory[Index])
+		switch (Player.SkillCatagory[Index])
 		{
 			case 0: // Healing
-				switch (SkillIndex[Index])
+				switch (Player.SkillIndex[Index])
 				{
 					case 0:		Success = Heal(1);											break; // Heal
 					case 1:		Success = Heal(2);											break; // Heal Summons
@@ -490,7 +488,7 @@ script UseSkill(int Index)
 				break;
 			
 			case 1: // Powerups
-				switch (SkillIndex[Index])
+				switch (Player.SkillIndex[Index])
 				{
 					case 0:		Success = Powerup(1);										break; // Invulnerability
 					case 1:		Success = Powerup(2);										break; // Invisibility
@@ -506,27 +504,27 @@ script UseSkill(int Index)
 			
 			case 2: // Auras
 				ActivatorSound("skills/buff", 127);
-				if (SkillIndex[Index] == Aura - 1)
-					AuraTimer += (1050 + Energy * 5.25) * (1 + AuraBonus)
+				if (Player.SkillIndex[Index] == Player.Aura - 1)
+					Player.AuraTimer += (1050 + Player.Energy * 5.25) * (1 + Player.AuraBonus)
 				else
-					AuraTimer = (1050 + Energy * 5.25) * (1 + AuraBonus);
-				switch (SkillIndex[Index])
+					Player.AuraTimer = (1050 + Player.Energy * 5.25) * (1 + Player.AuraBonus);
+				switch (Player.SkillIndex[Index])
 				{
-					case 0:		Aura = 1;													break; // Red Aura
-					case 1:		Aura = 2;													break; // Green Aura
-					case 2:		Aura = 3;													break; // White Aura
-					case 3:		Aura = 4;													break; // Pink Aura
-					case 4:		Aura = 5;													break; // Blue Aura
-					case 5:		Aura = 6;													break; // Purple Aura
-					case 6:		Aura = 7;													break; // Orange Aura
-					case 7:		Aura = 8;													break; // Dark Blue Aura
-					case 8:		Aura = 9;													break; // Yellow Aura
+					case 0:		Player.Aura = 1;											break; // Red Aura
+					case 1:		Player.Aura = 2;											break; // Green Aura
+					case 2:		Player.Aura = 3;											break; // White Aura
+					case 3:		Player.Aura = 4;											break; // Pink Aura
+					case 4:		Player.Aura = 5;											break; // Blue Aura
+					case 5:		Player.Aura = 6;											break; // Purple Aura
+					case 6:		Player.Aura = 7;											break; // Orange Aura
+					case 7:		Player.Aura = 8;											break; // Dark Blue Aura
+					case 8:		Player.Aura = 9;											break; // Yellow Aura
 				};
 				Success = true;
 				break;
 			
 			case 3: // Attacks
-				switch (SkillIndex[Index])
+				switch (Player.SkillIndex[Index])
 				{
 					case 0:		Success = ACS_NamedExecuteWithResult("AttackSkill", 1, 1);	break; // Fireball
 					case 1:		Success = ACS_NamedExecuteWithResult("AttackSkill", 1, 2);	break; // Fireball Nova
@@ -536,7 +534,7 @@ script UseSkill(int Index)
 				break;
 			
 			case 4: // Summoning
-				switch (SkillIndex[Index])
+				switch (Player.SkillIndex[Index])
 				{
 					case 0:		Success = Summon(1);										break; // Summon Marine
 					case 1:		Success = Summon(2);										break; // Summon Zombieman
@@ -559,7 +557,7 @@ script UseSkill(int Index)
 				break;
 				
 			case 5: // Utility
-				switch (SkillIndex[Index])
+				switch (Player.SkillIndex[Index])
 				{
 					case 0:		Success = BreakdownArmor();									break; // Breakdown Armor
 					case 1:		Success = ForceWall();										break; // Force Wall
@@ -572,7 +570,7 @@ script UseSkill(int Index)
 		};
 		
 		if (Success)
-			EP -= EPCost;
+			Player.EP -= EPCost;
 	}
 	else // Not enough EP
 	{
@@ -596,15 +594,15 @@ script DrawSkillHUD() enter
 		for (int i = 4; i >= 0; i--)
 		{
 			// If the skill key is blank, skip
-			if (SkillCatagory[i] == -1 || SkillIndex[i] == -1) continue;
+			if (Player.SkillCatagory[i] == -1 || Player.SkillIndex[i] == -1) continue;
 			
 			// Current Skill
-			Skill *CurrentSkill = &Skills[SkillCatagory[i]][SkillIndex[i]];
+			Skill *CurrentSkill = &Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]];
 			
-			int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->Level * SkillCostMult);
+			int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->Level * Player.SkillCostMult);
 			int Color = CR_GREEN;
 
-			if (EP < SkillCost)
+			if (Player.EP < SkillCost)
 				Color = CR_RED;
 			
 			if (CurrentSkill->Level == 0)
@@ -654,7 +652,7 @@ function bool Heal(int Type)
 	
 	if (Type == 1) // Player
 	{
-		HealThing(Energy * 10);
+		HealThing(Player.Energy * 10);
 		ActivatorSound("skills/heal", 127);
 	};
 	if (Type == 2) // Summons
@@ -674,7 +672,7 @@ function bool Repair()
 	if (CheckInventory("Armor") < ArmorMax && CheckArmorType() != "")
 	{
 		FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
-		GiveInventory("ArmorBonus", Energy * 10);
+		GiveInventory("ArmorBonus", Player.Energy * 10);
 		
 		if (CheckInventory("Armor") > ArmorMax)
 		{
@@ -1182,8 +1180,8 @@ script SetProjectileDamage(int Type)
 {
 	switch (Type)
 	{
-		case 1: return Round(Energy * 0.25);	break;	// Fire
-		case 2: return Round(Energy * 0.3);		break;	// Ice
+		case 1: return Round(Player.Energy * 0.25);	break;	// Fire
+		case 2: return Round(Player.Energy * 0.3);	break;	// Ice
 	};
 	
 	return;
@@ -1207,11 +1205,11 @@ function void CheckSkills()
 	fixed Z = GetActorZ(0);
 	
 	// Reset the Skill multiplier from the Blue Aura
-	if (Aura != 5)
-		SkillCostMult = 1.0;
+	if (Player.Aura != 5)
+		Player.SkillCostMult = 1.0;
 	
 	// Give the player the Aura item while an Aura is active (for SBARINFO hax)
-	if (AuraTimer > 0)
+	if (Player.AuraTimer > 0)
 		GiveInventory("Aura", 1)
 	else
 		TakeInventory("Aura", 1);
@@ -1221,10 +1219,10 @@ function void CheckSkills()
 		Skills[5][0].Cost = 500;
 	
 	// Aura Timer handling
-	if (AuraTimer > 0)
+	if (Player.AuraTimer > 0)
 	{
 		if (!CheckInventory("MenuFreezer")) // lolhax
-			switch (Aura)
+			switch (Player.Aura)
 			{
 				// Red Aura
 				case 1:
@@ -1242,12 +1240,12 @@ function void CheckSkills()
 					SpawnForced("GreenAura", X, Y, Z + 32, 2300, 0);
 					FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0.0, 1.0);
 					if (GreenAuraLevel == 1)
-						DamageFactor = DamageFactor - DamageFactor * 0.25;
+						Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
 					if (GreenAuraLevel == 2)
-						DamageFactor = DamageFactor - DamageFactor * 0.5;
+						Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.5;
 					if (GreenAuraLevel == 3)
 					{
-						DamageFactor = DamageFactor - DamageFactor * 0.75;
+						Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
 						GiveInventory("GreenAura1", 1);
 					};
 					break;
@@ -1257,15 +1255,15 @@ function void CheckSkills()
 					FadeRange(255, 255, 255, 0.1, 255, 255, 255, 0.0, 1.0);
 					if (WhiteAuraLevel >= 2)
 					{
-						if (Combo == 0) Combo++;
-						ComboTimer = 100;
+						if (Player.Combo == 0) Player.Combo++;
+						Player.ComboTimer = 100;
 					};
 					if (WhiteAuraLevel >= 3)
 						if (Random(1, 350) < 35)
-							TotalGained++;
+							Player.TotalGained++;
 					if (WhiteAuraLevel >= 4)
 						if (Random(1, 350) < 35)
-							TotalGained++;
+							Player.TotalGained++;
 					break;
 				// Pink Aura
 				case 4:
@@ -1277,11 +1275,11 @@ function void CheckSkills()
 					SpawnForced("CyanAura", X, Y, Z + 32, 2300, 0);
 					FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 1.0);
 					if (BlueAuraLevel == 1)
-						SkillCostMult = 1.33;
+						Player.SkillCostMult = 1.33;
 					if (BlueAuraLevel == 2)
-						SkillCostMult = 2.0;
+						Player.SkillCostMult = 2.0;
 					if (BlueAuraLevel == 3)
-						SkillCostMult = 4.0;
+						Player.SkillCostMult = 4.0;
 					break;
 				// Purple Aura
 				case 6:
@@ -1289,25 +1287,25 @@ function void CheckSkills()
 					FadeRange(255, 0, 128, 0.1, 255, 0, 128, 0.0, 1.0);
 					if (PurpleAuraLevel == 1)
 					{
-						HPAmount *= 2;
-						EPAmount *= 2;
+						Player.HPAmount *= 2;
+						Player.EPAmount *= 2;
 					};
 					if (PurpleAuraLevel == 2)
 					{
-						HPAmount *= 3;
-						EPAmount *= 3;
+						Player.HPAmount *= 3;
+						Player.EPAmount *= 3;
 					};
 					if (PurpleAuraLevel == 3)
 					{
-						HPAmount *= 4;
-						EPAmount *= 4;
+						Player.HPAmount *= 4;
+						Player.EPAmount *= 4;
 					};
 					if (PurpleAuraLevel == 4)
 					{
-						HPAmount *= 4;
-						EPAmount *= 4;
-						HPTime /= 2;
-						EPTime /= 2;
+						Player.HPAmount *= 4;
+						Player.EPAmount *= 4;
+						Player.HPTime /= 2;
+						Player.EPTime /= 2;
 					};
 					break;
 				// Orange Aura
@@ -1343,7 +1341,7 @@ function void CheckSkills()
 					SpawnForced("YellowAura", X, Y, Z + 32, 2300, 0);
 					FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 1.0);
 					if ((Timer() % 35) == 1)
-						GiveInventory("Credits", (RankLevel + 1) * (2 * YellowAuraLevel));
+						GiveInventory("Credits", (Player.RankLevel + 1) * (2 * YellowAuraLevel));
 					if (YellowAuraLevel == 1)
 						LuckMult = 1.25;
 					if (YellowAuraLevel == 2)
@@ -1354,21 +1352,20 @@ function void CheckSkills()
 						LuckMult = 4.0;
 					if (YellowAuraLevel == 5)
 						LuckMult = 8.0;
-					HealthChance *= LuckMult;
-					EPChance *= LuckMult;
-					ArmorChance *= LuckMult;
-					PowerupChance *= LuckMult;
-					RuneChance *= LuckMult;
-					TokenChance *= LuckMult;
-					AugChance *= LuckMult;
-					ShieldChance *= LuckMult;
+					Player.HealthChance *= LuckMult;
+					Player.EPChance *= LuckMult;
+					Player.ArmorChance *= LuckMult;
+					Player.PowerupChance *= LuckMult;
+					Player.RuneChance *= LuckMult;
+					Player.TokenChance *= LuckMult;
+					Player.AugChance *= LuckMult;
+					Player.ShieldChance *= LuckMult;
 					break;
 			};
 		
 		// Decrease timer this tic and calculate HUD timer amount
 		if (!CheckInventory("MenuFreezer") && !CheckInventory("PowerTimeFreezer"))
-			AuraTimer--;
-		AuraTimerHUD = AuraTimer / 35 + 1;
+			Player.AuraTimer--;
 	};
 	
 	// Summoned Monsters Handling
@@ -1404,24 +1401,24 @@ function void CheckSkillDescriptions()
 	int i;
 	
 	// Healing - Heal
-	Skills[0][0].Description[0] = StrParam("Recover %d HP\n", Energy * 10);
+	Skills[0][0].Description[0] = StrParam("Recover %d HP\n", Player.Energy * 10);
 
 	// Healing - Repair Armor
-	Skills[0][2].Description[0] = StrParam("Repair %d Armor\n", Energy * 10);
+	Skills[0][2].Description[0] = StrParam("Repair %d Armor\n", Player.Energy * 10);
 	
 	// Attacks - Fireball
 	for (i = 1; i <= Skills[3][0].MaxLevel; i++)
-		Skills[3][0].Description[i] = StrParam("Shoots a fireball\n\ca%d Fire Damage\n", Round(Energy * 0.25));
+		Skills[3][0].Description[i] = StrParam("Shoots a fireball\n\ca%d Fire Damage\n", Round(Player.Energy * 0.25));
 
 	// Attacks - Fireball Nova
 	for (i = 1; i <= Skills[3][1].MaxLevel; i++)
-		Skills[3][1].Description[i] = StrParam("Shoots fireballs in a circular nova around you\n\ca%d Fire Damage\n", Round(Energy * 0.25));
+		Skills[3][1].Description[i] = StrParam("Shoots fireballs in a circular nova around you\n\ca%d Fire Damage\n", Round(Player.Energy * 0.25));
 
 	// Attacks - Ice Missile
 	for (i = 1; i <= Skills[3][2].MaxLevel; i++)
-		Skills[3][2].Description[i] = StrParam("Shoots an Ice Missile\n\cn%d Ice Damage\n", Round(Energy * 0.3));
+		Skills[3][2].Description[i] = StrParam("Shoots an Ice Missile\n\cn%d Ice Damage\n", Round(Player.Energy * 0.3));
 	
 	// Attacks - Ice Nova
 	for (i = 1; i <= Skills[3][0].MaxLevel; i++)
-		Skills[3][3].Description[i] = StrParam("Shoots ice missiles in a circular nova around you\n\cn%d Ice Damage\n", Round(Energy * 0.3));
+		Skills[3][3].Description[i] = StrParam("Shoots ice missiles in a circular nova around you\n\cn%d Ice Damage\n", Round(Player.Energy * 0.3));
 };

@@ -3,8 +3,6 @@
 #include "Stats.dh"
 #include "Skills.dh"
 
-int MaxAugSlots;
-
 str[MAX_AUGS][AUG_LEVELS + 1] AugData =
 {
 	// Name, Icon, Description...
@@ -73,15 +71,15 @@ int[MAX_AUGS] AugLevelMax =
 
 function void CheckAugSlots()
 {
-	MaxAugSlots = (6 - GameSkill()) + CheckInventory("AugSlotUpgrade");
+	Player.Augs.Slots = (6 - GameSkill()) + CheckInventory("AugSlotUpgrade");
 	
 	// Cap max Aug slots at 8
-	if (MaxAugSlots > 8) MaxAugSlots = 8;
+	if (Player.Augs.Slots > 8) Player.Augs.Slots = 8;
 	
 	// Unequip Augs if you pass the limit (sell a slot upgrade, change difficulty, etc)
-	while (AugSlotsUsed > MaxAugSlots)
+	while (Player.Augs.SlotsUsed > Player.Augs.Slots)
 		for (int i = 0; i < MAX_AUGS - 1; i++)
-			if (Augs[i])
+			if (Player.Augs.Active[i])
 			{
 				EquipAug(i);
 				break;
@@ -91,127 +89,127 @@ function void CheckAugSlots()
 function void CheckAugs()
 {
 	// Sanity check to prevent negative slots used
-	if (AugSlotsUsed < 0)
-		AugSlotsUsed = 0;
+	if (Player.Augs.SlotsUsed < 0)
+		Player.Augs.SlotsUsed = 0;
 
 	// Strength Aug
-	if (Augs[AUG_STRENGTH])
+	if (Player.Augs.Active[AUG_STRENGTH])
 	{
-		if (AugLevels[AUG_STRENGTH] == 1)
-			TotalDamage *= 1.25;
-		if (AugLevels[AUG_STRENGTH] == 2)
-			TotalDamage *= 1.5;
-		if (AugLevels[AUG_STRENGTH] == 3)
-			TotalDamage *= 2.0;
-		if (AugLevels[AUG_STRENGTH] >= 4)
-			TotalDamage *= 4.0;
+		if (Player.Augs.Level[AUG_STRENGTH] == 1)
+			Player.TotalDamage *= 1.25;
+		if (Player.Augs.Level[AUG_STRENGTH] == 2)
+			Player.TotalDamage *= 1.5;
+		if (Player.Augs.Level[AUG_STRENGTH] == 3)
+			Player.TotalDamage *= 2.0;
+		if (Player.Augs.Level[AUG_STRENGTH] >= 4)
+			Player.TotalDamage *= 4.0;
 	};
 	
 	// Defense Aug
-	if (Augs[AUG_DEFENSE])
+	if (Player.Augs.Active[AUG_DEFENSE])
 	{
-		if (AugLevels[AUG_DEFENSE] == 1)
-			DamageFactor -= 0.1;
-		if (AugLevels[AUG_DEFENSE] == 2)
-			DamageFactor -= 0.2;
-		if (AugLevels[AUG_DEFENSE] == 3)
-			DamageFactor -= 0.3;
-		if (AugLevels[AUG_DEFENSE] == 4)
-			DamageFactor -= 0.4;
-		if (AugLevels[AUG_DEFENSE] >= 5)
-			DamageFactor -= 0.5;
+		if (Player.Augs.Level[AUG_DEFENSE] == 1)
+			Player.DamageFactor -= 0.1;
+		if (Player.Augs.Level[AUG_DEFENSE] == 2)
+			Player.DamageFactor -= 0.2;
+		if (Player.Augs.Level[AUG_DEFENSE] == 3)
+			Player.DamageFactor -= 0.3;
+		if (Player.Augs.Level[AUG_DEFENSE] == 4)
+			Player.DamageFactor -= 0.4;
+		if (Player.Augs.Level[AUG_DEFENSE] >= 5)
+			Player.DamageFactor -= 0.5;
 	};
 	
 	// Vitality Aug
-	if (Augs[AUG_VITALITY])
+	if (Player.Augs.Active[AUG_VITALITY])
 	{
-		if (AugLevels[AUG_VITALITY] >= 1)
-			HealthMax *= 2;
-		if (AugLevels[AUG_VITALITY] >= 2)
-			HPAmount *= 2;
+		if (Player.Augs.Level[AUG_VITALITY] >= 1)
+			Player.HealthMax *= 2;
+		if (Player.Augs.Level[AUG_VITALITY] >= 2)
+			Player.HPAmount *= 2;
 	};
 	
 	// Energy Aug
-	if (Augs[AUG_ENERGY])
+	if (Player.Augs.Active[AUG_ENERGY])
 	{
-		if (AugLevels[AUG_ENERGY] >= 1)
-			EPMax *= 2;
-		if (AugLevels[AUG_ENERGY] >= 2)
-			EPAmount *= 2;
-		if (AugLevels[AUG_ENERGY] >= 3)
-			{AuraBonus = true;}
+		if (Player.Augs.Level[AUG_ENERGY] >= 1)
+			Player.EPMax *= 2;
+		if (Player.Augs.Level[AUG_ENERGY] >= 2)
+			Player.EPAmount *= 2;
+		if (Player.Augs.Level[AUG_ENERGY] >= 3)
+			Player.AuraBonus = true
 		else
-			{AuraBonus = false;};
+			Player.AuraBonus = false;
 	};
 	
 	// Regeneration Aug
-	if (Augs[AUG_REGENERATION])
+	if (Player.Augs.Active[AUG_REGENERATION])
 	{
-		if (AugLevels[AUG_REGENERATION] >= 1)
+		if (Player.Augs.Level[AUG_REGENERATION] >= 1)
 		{
-			HPAmount *= 2;
-			EPAmount *= 2;
+			Player.HPAmount *= 2;
+			Player.EPAmount *= 2;
 		};
-		if (AugLevels[AUG_REGENERATION] >= 2)
+		if (Player.Augs.Level[AUG_REGENERATION] >= 2)
 		{
-			HPTime /= 2;
-			EPTime /= 2;
+			Player.HPTime /= 2;
+			Player.EPTime /= 2;
 		};
 	};
 
 	// Agility Aug
-	if (Augs[AUG_AGILITY])
+	if (Player.Augs.Active[AUG_AGILITY])
 	{
-		if (AugLevels[AUG_AGILITY] >= 1)
-			Speed *= 2;
-		if (AugLevels[AUG_AGILITY] >= 2)
-			JumpHeight *= 2;
-		if (AugLevels[AUG_AGILITY] >= 3)
-			WeaponSpeed += 100;
-		if (AugLevels[AUG_AGILITY] >= 4)
-			SurvivalBonus *= 2;
+		if (Player.Augs.Level[AUG_AGILITY] >= 1)
+			Player.Speed *= 2;
+		if (Player.Augs.Level[AUG_AGILITY] >= 2)
+			Player.JumpHeight *= 2;
+		if (Player.Augs.Level[AUG_AGILITY] >= 3)
+			Player.WeaponSpeed += 100;
+		if (Player.Augs.Level[AUG_AGILITY] >= 4)
+			Player.SurvivalBonus *= 2;
 	};
 	
 	// Capacity Aug
-	if (Augs[AUG_CAPACITY])
+	if (Player.Augs.Active[AUG_CAPACITY])
 	{
 		int AmmoMult;
 		
-		if (AugLevels[AUG_CAPACITY] == 1)
+		if (Player.Augs.Level[AUG_CAPACITY] == 1)
 			AmmoMult = 2;
-		if (AugLevels[AUG_CAPACITY] == 2)
+		if (Player.Augs.Level[AUG_CAPACITY] == 2)
 			AmmoMult = 4;
 		
-		SetAmmoCapacity("Clip", Capacity * 20 * AmmoMult);
-		SetAmmoCapacity("Shell", Capacity * 10 * AmmoMult);
-		SetAmmoCapacity("RocketAmmo", Capacity * 5 * AmmoMult);
-		SetAmmoCapacity("Cell", Capacity * 30 * AmmoMult);
+		SetAmmoCapacity("Clip", Player.Capacity * 20 * AmmoMult);
+		SetAmmoCapacity("Shell", Player.Capacity * 10 * AmmoMult);
+		SetAmmoCapacity("RocketAmmo", Player.Capacity * 5 * AmmoMult);
+		SetAmmoCapacity("Cell", Player.Capacity * 30 * AmmoMult);
 	};
 
 	// Luck Aug
-	if (Augs[AUG_LUCK])
+	if (Player.Augs.Active[AUG_LUCK])
 	{
 		int LuckMult;
 		
-		if (AugLevels[AUG_LUCK] == 1)
+		if (Player.Augs.Level[AUG_LUCK] == 1)
 			LuckMult = 1.25;
-		if (AugLevels[AUG_LUCK] == 2)
+		if (Player.Augs.Level[AUG_LUCK] == 2)
 			LuckMult = 1.5;
-		if (AugLevels[AUG_LUCK] == 3)
+		if (Player.Augs.Level[AUG_LUCK] == 3)
 			LuckMult = 2.0;
-		if (AugLevels[AUG_LUCK] == 4)
+		if (Player.Augs.Level[AUG_LUCK] == 4)
 			LuckMult = 3.0;
-		if (AugLevels[AUG_LUCK] == 5)
+		if (Player.Augs.Level[AUG_LUCK] == 5)
 			LuckMult = 4.0;
 		
-		HealthChance *= LuckMult;
-		EPChance *= LuckMult;
-		ArmorChance *= LuckMult;
-		PowerupChance *= LuckMult;
-		RuneChance *= LuckMult;
-		TokenChance *= LuckMult;
-		AugChance *= LuckMult;
-		ShieldChance *= LuckMult;
+		Player.HealthChance *= LuckMult;
+		Player.EPChance *= LuckMult;
+		Player.ArmorChance *= LuckMult;
+		Player.PowerupChance *= LuckMult;
+		Player.RuneChance *= LuckMult;
+		Player.TokenChance *= LuckMult;
+		Player.AugChance *= LuckMult;
+		Player.ShieldChance *= LuckMult;
 	};
 
 	// Keep adding more
@@ -220,29 +218,29 @@ function void CheckAugs()
 
 function void EquipAug(int Aug)
 {
-	if (AugLevels[Aug] > 0)
+	if (Player.Augs.Level[Aug] > 0)
 	{
-		if (Augs[Aug])
+		if (Player.Augs.Active[Aug])
 		{
 			ActivatorSound("aug/equip", 127);
-			AugSlotsUsed--;
-			Augs[Aug] = false;
+			Player.Augs.SlotsUsed--;
+			Player.Augs.Active[Aug] = false;
 		}
 		else
 		{
-			AugSlotsUsed++;
+			Player.Augs.SlotsUsed++;
 			
-			if (AugSlotsUsed > MaxAugSlots)
+			if (Player.Augs.SlotsUsed > Player.Augs.Slots)
 			{
 				ActivatorSound("menu/error", 127);
 				SetFont("BIGFONT");
 				Print("\cgYou don't have a free Augmentation slot!\n");
-				AugSlotsUsed--;
+				Player.Augs.SlotsUsed--;
 			}
 			else
 			{
 				ActivatorSound("aug/equip", 127);
-				Augs[Aug] = true;
+				Player.Augs.Active[Aug] = true;
 			};
 		};
 	};
@@ -250,18 +248,18 @@ function void EquipAug(int Aug)
 
 function void LevelUpAug(int Aug)
 {
-	if (AugLevels[Aug] < AugLevelMax[Aug])
+	if (Player.Augs.Level[Aug] < AugLevelMax[Aug])
 	{
-		if (AugLevels[Aug] == 0)
+		if (Player.Augs.Level[Aug] == 0)
 		{
 			if (CheckInventory("AugCanister"))
 			{
 				ActivatorSound("aug/levelup", 127);
 				TakeInventory("AugCanister", 1);
-				AugLevels[Aug]++;
+				Player.Augs.Level[Aug]++;
 			}
 			else
-				{ActivatorSound("menu/error", 127);};
+				ActivatorSound("menu/error", 127);
 		}
 		else
 		{
@@ -269,10 +267,10 @@ function void LevelUpAug(int Aug)
 			{
 				ActivatorSound("aug/levelup", 127);
 				TakeInventory("AugUpgradeCanister", 1);
-				AugLevels[Aug]++;
+				Player.Augs.Level[Aug]++;
 			}
 			else
-				{ActivatorSound("menu/error", 127);};
+				ActivatorSound("menu/error", 127);
 		};
 	};
 };
