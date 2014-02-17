@@ -80,18 +80,18 @@ function void AddXP(int Amount)
 	
 	if (GetCVar("drpg_combo"))
 	{
-		ComboTimer = 100;
-		Combo++;
-		TotalGained += Amount;
-		XPGained = 0;
-		RankGained = 0;
+		Player.ComboTimer = 100;
+		Player.Combo++;
+		Player.TotalGained += Amount;
+		Player.XPGained = 0;
+		Player.RankGained = 0;
 		
 		if (Player.Aura == 3)
 		{
 			if (Player.AuraTimer > 0)
-				Combo++;
+				Player.Combo++;
 			if (Skills[2][2].CurrentLevel >= 3)
-				TotalGained += Amount;
+				Player.TotalGained += Amount;
 		};
 	}
 	else
@@ -109,38 +109,42 @@ function void CheckCombo()
 	if (GetCVar("drpg_combo"))
 	{
 		// Subtract the combo timer each tic
-		if ((Combo > 0 || ComboTimer < 100) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
-			ComboTimer--;
+		if ((Player.Combo > 0 || Player.ComboTimer < 100) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
+			Player.ComboTimer--;
 		
 		// Add up and randomize the XP and Rank gain
-		if (ComboTimer == 0)
+		if (Player.ComboTimer == 0)
 		{
 			// This is broken for some unknown reason, temporary solution in XPGained/RankGained
-			int ComboBonus = (Combo / (460 - (MapNumber * 10))) * TotalGained;
+			fixed ComboBonus = (((fixed)Player.Combo / (fixed)GameSkill()) / (37.0 - (fixed)MapNumber)) * (fixed)Player.TotalGained;
 			
-			XPGained += TotalGained + Random(0, Combo * Player.Level * MapNumber);
-			RankGained += TotalGained + Random(0, Combo * Player.Level * MapNumber);
+#if DEBUG
+			Log("\cdDEBUG: ComboBonus: %k\n", ComboBonus);
+#endif
+			
+			Player.XPGained += TotalGained + Random(0, (int)ComboBonus);
+			Player.RankGained += TotalGained + Random(0, (int)ComboBonus);
 			
 			// You cannot gain Negative XP, but you can lose Rank
-			if (XPGained < 0) XPGained = 0;
+			if (Player.XPGained < 0) Player.XPGained = 0;
 
-			Player.XP += XPGained;
-			Player.Rank += RankGained;
+			Player.XP += Player.XPGained;
+			Player.Rank += Player.RankGained;
 			
-			TotalGained = 0;
-			Combo = 0;
+			Player.TotalGained = 0;
+			Player.Combo = 0;
 		};
 		
-		if (ComboTimer < -100)
+		if (Player.ComboTimer < -100)
 		{
-			TotalGained = 0;
-			XPGained = 0;
-			RankGained = 0;
-			ComboTimer = 100;
+			Player.TotalGained = 0;
+			Player.XPGained = 0;
+			Player.RankGained = 0;
+			Player.ComboTimer = 100;
 		};
 	}
 	else
-		ComboTimer = -100;
+		Player.ComboTimer = -100;
 };
 
 // Keeps current level and XP updated
