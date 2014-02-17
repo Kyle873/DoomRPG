@@ -12,18 +12,29 @@
 // Version and Timestamp
 str[2] Version =
 {
-	"v0.96 Beta - DamnScript Edition";
-	"Sunday, February 16, 2014 at 10:52:22 PM";
+	"v0.97 Beta - DamnScript Edition";
+	"Monday, February 17, 2014 at 12:24:57 AM";
 };
 
-int PlayerTID = 31337 + PlayerNumber();
+int PlayerIndex;
+int PlayerTID;
 bool ParBonus;
 
 // Init Script
 script Init() enter
 {
+	// Player Index & TID
+	PlayerIndex = PlayerNumber();
+	PlayerTID = PLAYER_TID + PlayerNumber();
+	Thing_ChangeTID(0, PlayerTID);
+
+#if DEBUG
+	Log("\cdDEBUG: Player %d, TID %d\n", PlayerIndex, ActivatorTID());
+#endif
+
 	if (!Player.FirstRun)
 	{
+		// Setup initial vars
 		Player.EP = 100;
 		Player.RankString = Ranks[0];
 		Player.Vitality = 10;
@@ -55,7 +66,7 @@ script Init() enter
 		DefaultLoadout();
 
 		// Version Info
-		Log("\cnDoom RPG %s (%s) loaded!\n", Version[0], Version[1]);
+		if (Arbitrator) Log("\cnDoom RPG %s (%s) loaded!\n", Version[0], Version[1]);
 		
 		// Set the default skill indices
 		for (int i = 0; i < 5; i++)
@@ -114,7 +125,7 @@ script Init() enter
 			case 5: PenaltyPercent = 25;	break;
 		};
 		
-		SetActorProperty(0, APROP_Health, HealthMax / 10 + 1);
+		SetActorProperty(PlayerTID, APROP_Health, HealthMax / 10 + 1);
 		GiveInventory("Credits", Credits);
 		Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
 		FadeRange(255, 0, 0, 1.0, 255, 0, 0, 0.0, 1.0);
@@ -446,7 +457,6 @@ script Loop()
 	CheckLuck();
 	CheckHealth();
 	CheckArmorMax();
-	CheckCombo();
 	CheckLevel();
 	CheckRank();
 	CheckLevelInfo();
@@ -461,10 +471,13 @@ script Loop()
 	CheckStim();
 	CheckHUD();
 	
+	// CheckCombo() should only be called by the Arbitrator
+	if (Arbitrator) CheckCombo();
+	
 	// Main Menu
 	if (Player.InMenu)
 		MenuLoop();
-
+	
 	// Shop Menu
 	if (Player.InShop)
 		ShopLoop();
@@ -474,12 +487,12 @@ script Loop()
 		CallACS("QuickHeal");
 
 	// Shield Handling
-	Player.BeforeHealth = GetActorProperty(0, APROP_Health);
+	Player.BeforeHealth = GetActorProperty(PlayerTID, APROP_Health);
 	if (CheckInventory("Shield"))
 		CallACS("ShieldScript");
 	
 	// Regeneration
-	if (GetActorProperty(0, APROP_Health) > 0)
+	if (GetActorProperty(PlayerTID, APROP_Health) > 0)
 		DoRegen();
 	
 	// Give the Strength boosting item
@@ -487,14 +500,11 @@ script Loop()
 		GiveInventory(StrParam("Strength%d\n", Player.TotalDamage), 1);
 
 	// Apply Stats
-	SetActorProperty(0, APROP_SpawnHealth, Player.HealthMax);
-	SetActorPropertyFixed(0, APROP_DamageFactor, Player.DamageFactor);
-	SetActorProperty(0, APROP_Mass, Player.Mass);
-	SetActorPropertyFixed(0, APROP_Speed, Player.Speed);
-	SetActorPropertyFixed(0, APROP_JumpZ, Player.JumpHeight);
-
-	// For EP Bar on HUD
-	SetInventory("EP", Player.EP * 100 / Player.EPMax);
+	SetActorProperty(PlayerTID, APROP_SpawnHealth, Player.HealthMax);
+	SetActorPropertyFixed(PlayerTID, APROP_DamageFactor, Player.DamageFactor);
+	SetActorProperty(PlayerTID, APROP_Mass, Player.Mass);
+	SetActorPropertyFixed(PlayerTID, APROP_Speed, Player.Speed);
+	SetActorPropertyFixed(PlayerTID, APROP_JumpZ, Player.JumpHeight);
 	
 	// Clear your Status Effect if the timer is empty
 	if (Player.StatusTimer <= 0)
@@ -502,13 +512,13 @@ script Loop()
 	
 	// Make you invincible while in the Menus and if menu freezing is enabled
 	if ((Player.InMenu || Player.InShop) && GetCVar("drpg_menufreeze"))
-		SetActorProperty(0, APROP_DamageFactor, 0);
+		SetActorProperty(PlayerTID, APROP_DamageFactor, 0);
 	
 	// Loop
 	Delay(1);
 	
 	// These need to be done in a separate tic
-	Player.AfterHealth = GetActorProperty(0, APROP_Health);
+	Player.AfterHealth = GetActorProperty(PlayerTID, APROP_Health);
 	Player.AfterArmor = CheckInventory("BasicArmor");
 	
 	goto Start;
@@ -585,7 +595,7 @@ script StatusEffect(int Type, int Time, int Intensity)
 			FadeRange(0, 0, 0, (0.75 + (Intensity / 400)) - ((1024 * 8) * Sin(Timer() * 0.01)), 0, 0, 0, 0.0, 0.5);
 		
 		if (Type == 3) // Poisoned
-			if ((Timer() % 35) == 1 && (GetActorProperty(0, APROP_Health) - Intensity) > 1)
+			if ((Timer() % 35) == 1 && (GetActorProperty(PlayerTID, APROP_Health) - Intensity) > 1)
 			{
 				DamageThing(Intensity);
 				FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + Intensity / 100));
@@ -608,9 +618,9 @@ script EPDrain()
 script QuickHeal(int Quick)
 {
 	// If you're dead, return
-	if (GetActorProperty(0, APROP_Health) <= 0) return;
+	if (GetActorProperty(PlayerTID, APROP_Health) <= 0) return;
 	
-	int Health = GetActorProperty(0, APROP_Health);
+	int Health = GetActorProperty(PlayerTID, APROP_Health);
 	int Percent = GetCVar("drpg_auto_heal_percent");
 	
 	if ((Health < HealthMax / Percent) || Quick)
@@ -697,7 +707,7 @@ script Dead() death
 	
 	while (1)
 	{
-		if (GetPlayerInput(0, INPUT_BUTTONS) & BT_SPEED && GetPlayerInput(0, INPUT_BUTTONS) & BT_ATTACK)
+		if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED && GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_ATTACK)
 		{
 			FadeRange(255, 0, 0, 0.0, 255, 0, 0, 1.0, 1.0);
 			Delay(35);
@@ -712,6 +722,12 @@ script Dead() death
 		
 		Delay(1);
 	};
+};
+
+// Respawn - XP Penalty in MP
+script Respawn() respawn
+{
+	// TODO
 };
 
 // Handles Damage Numbers
@@ -888,13 +904,13 @@ script DamageNumbers()
 script DamageNumbersHUD()
 {
 	Start:
-	int Before = GetActorProperty(0, APROP_Health);
+	int Before = GetActorProperty(PlayerTID, APROP_Health);
 	Delay(1);
-
+	
 	if (GetCVar("drpg_damagenumbers_hud"))
 	{
 		int Color = GetCVar("drpg_damagenumbers_hud_color");
-		int After = GetActorProperty(0, APROP_Health);
+		int After = GetActorProperty(PlayerTID, APROP_Health);
 		int Loss = Before - After;
 		
 		if (Loss == 1)
@@ -905,7 +921,7 @@ script DamageNumbersHUD()
 		if (Before > After)
 			HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + Random(0.0, 0.4), 0.6 + Random(0.0, 0.3), 0.5, 1.0);
 	};
-
+	
 	goto Start;
 };
 
@@ -915,14 +931,14 @@ script HealthBars()
 	Start:
 	while (GetCVar("drpg_healthbars"))
 	{
-		Thing_ChangeTID(0, PlayerTID);
+		Thing_ChangeTID(PlayerNumber(), PlayerTID);
 		int Activator = ActivatorTID();
 		SetActivatorToTarget(PlayerTID);
 		
 		Delay(1);
 		
-		int X = GetCVarFixed("drpg_healthbars_x");
-		int Y = GetCVarFixed("drpg_healthbars_y");
+		fixed X = GetCVarFixed("drpg_healthbars_x");
+		fixed Y = GetCVarFixed("drpg_healthbars_y");
 		str Name = "";
 		bool HasHealthBar = (CheckInventory("HealthBar") > 0);
 		int CurrentLevel = CheckInventory("MonsterLevel");
@@ -1070,6 +1086,9 @@ function CheckHUD()
 	EP = Player.EP;
 	EPMax = Player.EPMax;
 	
+	// For EP Bar on HUD
+	SetInventory("EP", Player.EP * 100 / Player.EPMax);
+
 	/* Combo System
 	Combo = Player.Combo;
 	TotalGained = Player.TotalGained;
@@ -1079,6 +1098,18 @@ function CheckHUD()
 	
 	// Aura Timer
 	AuraTimerHUD = Player.AuraTimer / 35 + 1;
+	
+	// For Combo Bar on HUD
+	if (ComboTimer < 100)
+	{
+		SetInventory("Combo", ComboTimer);
+		SetInventory("Combo2", 0);
+	};
+	if (ComboTimer < 0)
+	{
+		SetInventory("Combo", 0);
+		SetInventory("Combo2", ComboTimer + 100);
+	};
 	
 	// Stim Timer
 	if (Player.Stim.Timer > 0)

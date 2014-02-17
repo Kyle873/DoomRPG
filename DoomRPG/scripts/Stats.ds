@@ -1,4 +1,5 @@
 #include "Globals.dh"
+#include "RPG.dh"
 #include "Shield.dh"
 #include "Stats.dh"
 #include "Skills.dh"
@@ -110,18 +111,6 @@ function void CheckCombo()
 		// Subtract the combo timer each tic
 		if ((Combo > 0 || ComboTimer < 100) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
 			ComboTimer--;
-		
-		// Set your Inventory Combo Item to the current ComboTimer amount
-		if (ComboTimer < 100)
-		{
-			SetInventory("Combo", ComboTimer);
-			SetInventory("Combo2", 0);
-		};
-		if (ComboTimer < 0)
-		{
-			SetInventory("Combo", 0);
-			SetInventory("Combo2", ComboTimer + 100);
-		};
 		
 		// Add up and randomize the XP and Rank gain
 		if (ComboTimer == 0)
@@ -353,7 +342,7 @@ function void CheckHealth()
 		Player.LowHealthTimer = 0;
 	};
 	
-	if (CheckInventory("Health") <= GetActorProperty(0, APROP_SpawnHealth) / 10 && CheckInventory("Health") > 0)
+	if (CheckInventory("Health") <= GetActorProperty(PlayerTID, APROP_SpawnHealth) / 10 && CheckInventory("Health") > 0)
 	{
 		FadeRange(Player.LowHealthTimer + 155, 0, 0, 0.25, Player.LowHealthTimer + 155, 0, 0, 0.0, 1.0);
 		Player.LowHealthTimer++;
@@ -595,7 +584,7 @@ function void CheckRegen()
 function void DoRegen()
 {	
 	// HP Regen
-	if (Player.HPRate >= Player.HPTime && GetActorProperty(0, APROP_Health) >= 0)
+	if (Player.HPRate >= Player.HPTime && GetActorProperty(PlayerTID, APROP_Health) >= 0)
 	{
 		HealThing(Player.HPAmount);
 		Player.HPRate = 0;
@@ -615,7 +604,7 @@ function void DoRegen()
 	// Now increment the timers
 	if (!CheckInventory("MenuFreezer"))
 	{
-		int Buttons = GetPlayerInput(0, INPUT_BUTTONS);
+		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
 		
 		// Regen Boost
 		if (Player.RegenBoostTimer > 0)
