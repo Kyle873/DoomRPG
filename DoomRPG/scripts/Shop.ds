@@ -215,7 +215,7 @@ script OpenShop(int FromBase) net
 };
 
 // Sell items in bulk
-script SellAll(int SellPage, bool Silent)
+script SellAllPage(int SellPage, bool Silent)
 {
 	int Total;
 	
@@ -1049,6 +1049,8 @@ function int GetSellPrice(int Amount)
 		SellAmount = GetAmmoAmount(Shop[Player.ShopPage][Player.ShopIndex][0]);
 		SellCost /= Amount;
 	}
+	else if (Player.ShopPage == 7) // Augmentations
+		SellCost /= 10
 	else
 		SellCost /= 4;
 	
@@ -1088,19 +1090,20 @@ function int SellItem(str Item, bool SellAll)
 
 	// DoomRL Compatibility
 	if (GetCVar("drpg_ext_doomrl"))
-	{
-		if (Player.ShopPage == 0) // Weapons
-			TakeInventory("RLWeaponLimit", 1);
-		if (Player.ShopPage == 3) // Armor
-			TakeInventory("RLArmorInInventory", 1);
-		if (Player.ShopPage == 8) // Mod Packs
-			if (PlayerClass(0) == 2) // Special handling case for Technician
-				TakeInventory("RLScavengerModLimit", 1)
-			else
-				TakeInventory("RLModLimit", 1);
-		if (Player.ShopPage == 9) // Boots
-			TakeInventory("RLBootsInInventory", 1);
-	};
+		for (int i = 1; i <= Amount; i++)
+		{
+			if (Player.ShopPage == 0) // Weapons
+				TakeInventory("RLWeaponLimit", 1);
+			if (Player.ShopPage == 3) // Armor
+				TakeInventory("RLArmorInInventory", 1);
+			if (Player.ShopPage == 8) // Mod Packs
+				if (PlayerClass(0) == 2) // Special handling case for Technician
+					TakeInventory("RLScavengerModLimit", 1)
+				else
+					TakeInventory("RLModLimit", 1);
+			if (Player.ShopPage == 9) // Boots
+				TakeInventory("RLBootsInInventory", 1);
+		};
 	
 	// Sell the Item
 	if (CheckInventory(Item) >= Amount)
