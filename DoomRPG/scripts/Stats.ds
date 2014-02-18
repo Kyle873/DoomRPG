@@ -83,11 +83,16 @@ script AddXP(int Amount, bool Reduced)
 	{
 		Player.ComboTimer = COMBO_MAX;
 		Player.Combo++;
+		
 		if (Reduced)
-			Player.XPGained += Amount / 3
+		{
+			if (Amount > 0)
+				Player.XPGained += Amount / 3;
+		}
 		else
 		{
-			Player.XPGained += Amount;
+			if (Amount > 0)
+				Player.XPGained += Amount;
 			Player.RankGained += Amount;
 		};
 		
@@ -95,23 +100,24 @@ script AddXP(int Amount, bool Reduced)
 		{
 			if (Player.AuraTimer > 0)
 				Player.Combo++;
-			if (Skills[2][2].CurrentLevel >= 3)
+			if (Skills[2][2].CurrentLevel >= 3 && Amount > 0)
 				Player.BonusGained += Amount;
 		};
 	}
 	else
 	{
 		if (Reduced)
-			Player.Rank += Amount / 3
+		{
+			if (Amount > 0)
+				Player.XP += Amount / 3;
+			Player.Rank += Amount / 3;
+		}
 		else
-			Player.Rank += Amount;
-		
-		// You cannot gain Negative XP, but you can lose Rank
-		if (Amount < 0) Amount = 0;
-			if (Reduced)
-				Player.XP += Amount / 3
-			else
+		{
+			if (Amount > 0)
 				Player.XP += Amount;
+			Player.Rank += Amount;
+		};
 	};
 };
 
@@ -142,7 +148,7 @@ function void CheckCombo()
 			Log("\cdDEBUG: ComboBonus: %k\n", ComboBonus);
 #endif
 			
-			if (Player.Combo > 1)
+			if (Player.Combo > 1 && Player.XPGained > 0)
 				Player.BonusGained += (int)ComboBonus;
 			
 			Player.XPGained += (int)ComboBonus;
