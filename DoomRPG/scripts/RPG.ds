@@ -13,10 +13,9 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, February 17, 2014 at 5:45:01 PM";
+	"Monday, February 17, 2014 at 8:24:35 PM";
 };
 
-int PlayerIndex;
 int PlayerTID;
 
 bool ParBonus;
@@ -24,13 +23,12 @@ bool ParBonus;
 // Init Script
 script Init() enter
 {
-	// Player Index & TID
-	PlayerIndex = PlayerNumber();
+	// Player TID
 	PlayerTID = PLAYER_TID + PlayerNumber();
 	Thing_ChangeTID(0, PlayerTID);
 	
 #if DEBUG
-	Log("\cdDEBUG: Player Index: %d, Player TID: %d\n", PlayerIndex, PlayerTID);
+	Log("\cdDEBUG: Player Index: %d, Player TID: %d\n", PlayerNumber(), PlayerTID);
 #endif
 	
 	if (!Player.FirstRun)
@@ -364,9 +362,21 @@ script MonsterLoop()
 		
 		// Add XP
 		if ((MonsterFlags & MF_NEGATIVEXP))
-			AddXP(-XPAmount)
+		{
+			SetActivatorToTarget(0);
+			AddXP(-XPAmount, false);
+		}
 		else if (!(MonsterFlags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
-			AddXP(XPAmount);
+		{
+			SetActivatorToTarget(0);
+			
+			if (ActivatorTID() != PlayerTID)
+				AddXP(XPAmount, true)
+			else
+				for (int i = PLAYER_TID; i < PLAYER_TID + MAX_PLAYERS; i++)
+					if (ActivatorTID() == i)
+						AddXP(XPAmount, false);
+		};
 		
 		// Add a kill to the pay kills
 		if (!(MonsterFlags & MF_NOPAYKILL))
@@ -437,7 +447,7 @@ script MonsterLoop()
 	if (GetCVar("drpg_healthbars_overhead"))
 	{
 		fixed BarHealth = (fixed)GetActorProperty(0, APROP_Health) / (fixed)GetActorProperty(0, APROP_SpawnHealth) * 32.0;
-		if (BarHealth > 63.0) BarHealth = 63.0;
+		if (BarHealth > 64.0) BarHealth = 64.0;
 		Z = GetActorZ(0) + CheckInventory("MonsterHeightCheck") + 4.0;
 		SpawnForced(StrParam("HealthBar%d\n", Round(BarHealth)), X, Y, Z, 0, 0);
 	};
@@ -607,12 +617,6 @@ script StatusEffect(int Type, int Time, int Intensity)
 		
 		Delay(1);
 	};
-};
-
-// Handles EP Draining from the EP Drain Orb
-script EPDrain()
-{
-	// TODO
 };
 
 // Quick Heal
@@ -1092,7 +1096,7 @@ function CheckHUD()
 
 	// Combo System
 	Combo = Player.Combo;
-	TotalGained = Player.TotalGained;
+	BonusGained = Player.BonusGained;
 	XPGained = Player.XPGained;
 	RankGained = Player.RankGained;
 	
