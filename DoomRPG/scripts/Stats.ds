@@ -81,7 +81,7 @@ script AddXP(int Amount, bool Reduced)
 	
 	if (GetCVar("drpg_combo"))
 	{
-		Player.ComboTimer = 100;
+		Player.ComboTimer = COMBO_MAX;
 		Player.Combo++;
 		if (Reduced)
 			Player.XPGained += Amount / 3
@@ -120,11 +120,11 @@ function void CheckCombo()
 	if (GetCVar("drpg_combo"))
 	{
 		// Subtract the combo timer each tic
-		if ((Player.Combo > 0 || Player.ComboTimer < 100) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
+		if ((Player.Combo > 0 || Player.ComboTimer < COMBO_MAX) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
 			Player.ComboTimer--;
 		
 		// Reset values if you start the combo again while it was cooling down
-		if (Player.ComboTimer == 100)
+		if (Player.ComboTimer == COMBO_MAX)
 		{
 			Player.BonusGained = 0;
 			Player.XPGained = 0;
@@ -132,7 +132,7 @@ function void CheckCombo()
 		};
 		
 		// Add up and randomize the XP and Rank gain
-		if (Player.ComboTimer == 0)
+		if (Player.ComboTimer == COMBO_STOP)
 		{
 			// This is broken for some unknown reason, temporary solution in XPGained/RankGained
 			fixed ComboBonus = (((fixed)Player.Combo / (fixed)GameSkill()) / (37.0 - (fixed)MapNumber)) * (Player.XPGained + Player.RankGained);
@@ -155,16 +155,16 @@ function void CheckCombo()
 			Player.Combo = 0;
 		};
 		
-		if (Player.ComboTimer < -100)
+		if (Player.ComboTimer < 0)
 		{
 			Player.BonusGained = 0;
 			Player.XPGained = 0;
 			Player.RankGained = 0;
-			Player.ComboTimer = 100;
+			Player.ComboTimer = COMBO_MAX;
 		};
 	}
 	else
-		Player.ComboTimer = -100;
+		Player.ComboTimer = 0;
 };
 
 // Keeps current level and XP updated

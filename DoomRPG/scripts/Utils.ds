@@ -109,10 +109,32 @@ script Respec(bool DoStats, bool DoSkills)
 	ActivatorSound("misc/secret", 127);
 };
 
+script AddEP(int Amount)
+{
+	FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 0.25);
+
+	Player.EP += Amount;
+
+	if (Player.EP > Player.EPMax)
+		Player.EP = Player.EPMax;
+};
+
 // Returns your current EP (for DECORATE)
 script int GetEP()
 {
 	return Player.EP;
+};
+
+// Gets Max EP after all bonuses are applied to it
+script int GetEPMax()
+{
+	int MaxEP = Player.EPMax;
+	
+	// Max EP Checks for Augs
+	if (Player.Augs.Active[AUG_ENERGY])
+		MaxEP *= 2;
+	
+	return MaxEP;
 };
 
 // Returns the amount to heal given the percentage out of max HP (for DECORATE)
@@ -410,18 +432,6 @@ function int SetActorInventory(int tid, str item, int count)
 		TakeActorInventory(tid, item, -1 * n);
 	
 	return n;
-};
-
-// Gets Max EP after all bonuses are applied to it
-function int GetEPMax()
-{
-	int MaxEP = Player.EPMax;
-	
-	// Max EP Checks for Augs
-	if (Player.Augs.Active[AUG_ENERGY])
-		MaxEP *= 2;
-	
-	return MaxEP;
 };
 
 // For Damage Digits
