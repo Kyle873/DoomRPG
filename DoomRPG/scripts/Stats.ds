@@ -135,23 +135,27 @@ function void CheckCombo()
 		if (Player.ComboTimer == COMBO_STOP)
 		{
 			// This is broken for some unknown reason, temporary solution in XPGained/RankGained
-			fixed ComboBonus = (((fixed)Player.Combo / (fixed)GameSkill()) / (37.0 - (fixed)MapNumber)) * (Player.XPGained + Player.RankGained);
+			fixed ComboBonus = ((((fixed)Player.Combo / (fixed)GameSkill()) * (Player.XPGained + Player.RankGained)) / 10.0);
 			if (ComboBonus < 0) ComboBonus = 0;
 			
 #if DEBUG
 			Log("\cdDEBUG: ComboBonus: %k\n", ComboBonus);
 #endif
 			
-			Player.BonusGained += (int)ComboBonus;
-			Player.XPGained += Random(0, (int)ComboBonus);
-			Player.RankGained += Random(0, (int)ComboBonus);
+			if (Player.Combo > 1)
+				Player.BonusGained += (int)ComboBonus;
+			
+			Player.XPGained += (int)ComboBonus;
+			Player.RankGained += (int)ComboBonus;
 			
 			// You cannot gain Negative XP, but you can lose Rank
 			if (Player.XPGained < 0) Player.XPGained = 0;
-
+			
 			Player.XP += Player.XPGained;
 			Player.Rank += Player.RankGained;
 			
+			Player.XPGained = 0;
+			Player.RankGained = 0;
 			Player.Combo = 0;
 		};
 		
