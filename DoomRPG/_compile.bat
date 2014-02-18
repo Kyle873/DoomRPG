@@ -1,5 +1,3 @@
-
-
 @echo off
 color F
 
