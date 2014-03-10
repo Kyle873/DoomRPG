@@ -1,3 +1,4 @@
+#include "Arena.dh"
 #include "Augs.dh"
 #include "Globals.dh"
 #include "Menu.dh"
@@ -13,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, March 10, 2014 at 7:12:23 PM";
+	"Monday, March 10, 2014 at 7:29:39 PM";
 };
 
 bool ParBonus;
@@ -181,10 +182,16 @@ script MonsterInit(int Flags)
 		int LevelType = GetCVar("drpg_monster_levels");
 		fixed LevelMult = GetCVarFixed("drpg_monster_level_mult");
 		int MonsterCurve = GetCVar("drpg_monster_curve");
+		int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+		if (LevelNum == 999) // UAC Outpost
+			if (ArenaActive) // If the Arena is active, base the Monster Level's Map Number portion on the current wave
+				LevelNum = ArenaWave
+			else // If not in the Arena, base it off the level the player teleported from
+				LevelNum = LevelNum;
 		if (LevelType == 1 || LevelType == 3) // Player Level
 			MonsterLevel = Player.Level + Random(0, GameSkill() * 2) + Random(0, MonsterCurve);
 		if (LevelType == 2 || LevelType == 3) // Map Number
-			MonsterLevel += Round(GetLevelInfo(LEVELINFO_LEVELNUM) * RandomFixed(1.0, LevelMult));
+			MonsterLevel += Round((fixed)LevelNum * RandomFixed(1.0, LevelMult));
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		
 		// Strength
