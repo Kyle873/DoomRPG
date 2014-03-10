@@ -13,7 +13,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, March 10, 2014 at 5:47:44 AM";
+	"Monday, March 10, 2014 at 6:14:50 AM";
 };
 
 bool ParBonus;
@@ -168,7 +168,6 @@ script MonsterInit(int Flags)
 	SetInventory("MonsterFlags", Flags);
 	
 	int MonsterLevel;
-	int MonsterCurve;
 	int MonsterAura;
 	int MonsterStrength;
 	int MonsterDefense;
@@ -179,7 +178,7 @@ script MonsterInit(int Flags)
 	if(GetCVar("drpg_monster_levels") && (!(Flags & MF_NOSTATS)))
 	{
 		// level
-		MonsterCurve = GetCVar("drpg_monster_curve");
+		int MonsterCurve = GetCVar("drpg_monster_curve");
 		MonsterLevel = Player.Level + Random(-(GameSkill() * 2), GameSkill() * 2) + Random(0, MonsterCurve);
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		
@@ -193,7 +192,11 @@ script MonsterInit(int Flags)
 	// Apply Aura
 	if (!GetActorProperty(0, APROP_Friendly) && !(Flags & MF_NOAURA))
 	{
-		AuraRandomizer = Random(-100 + ((GameSkill() * (GameSkill() * 2))), 10);
+		int AuraCurve = GetCVar("drpg_aura_curve");
+		int AuraMin = -100 + ((GameSkill() * (GameSkill() * 2))) + AuraCurve;
+		if (AuraMin > 0) AuraMin = 0;
+		int AuraMax = 10;
+		AuraRandomizer = Random(AuraMin, AuraMax);
 		if (AuraRandomizer > 0)
 			MonsterAura = AuraRandomizer;
 	};
