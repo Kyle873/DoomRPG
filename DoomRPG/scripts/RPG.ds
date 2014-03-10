@@ -13,7 +13,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, March 10, 2014 at 7:05:25 PM";
+	"Monday, March 10, 2014 at 7:12:23 PM";
 };
 
 bool ParBonus;
@@ -351,10 +351,9 @@ script MonsterDeath()
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
 	int AuraType = CheckInventory("MonsterAura");
-	int XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth), GetActorProperty(0, APROP_SpawnHealth) * 2);
+	fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth), GetActorProperty(0, APROP_SpawnHealth) * 2) * (1.0 + ((fixed)MonsterLevel / 100.0));
 	int SkillDropMod = (GameSkill() - 1) * 32;
 	int LuckDrops = 1;
-	XPAmount *= 1 + (MonsterLevel / 100);
 	
 	// Drops
 	if (!(MonsterFlags & MF_NODROPS))
@@ -462,13 +461,13 @@ script MonsterDeath()
 		SetActivatorToTarget(0);
 		
 		if (MonsterFlags & MF_NEGATIVEXP)
-			AddXP(-XPAmount, false)
+			AddXP(-(int)XPAmount, false)
 		else if (ActivatorTID() != PlayerTID)
-			AddXP(XPAmount, true)
+			AddXP((int)XPAmount, true)
 		else
 			for (int i = PLAYER_TID; i < PLAYER_TID + MAX_PLAYERS; i++)
 				if (ActivatorTID() == i)
-					AddXP(XPAmount, false);
+					AddXP((int)XPAmount, false);
 	};
 	
 	// Add a kill to the pay kills
