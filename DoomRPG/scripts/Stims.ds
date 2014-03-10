@@ -61,6 +61,10 @@ script UseStim() net
 	Player.CapacityBonus = Player.Stim.Current[6];
 	Player.LuckBonus = Player.Stim.Current[7];
 	
+	// Apply Active Flags
+	for (int i = 0; i < MAX_COMPONENTS; i++)
+		if (Player.Stim.Current[i] > 0) Player.Stim.ActiveBonus[i] = true;
+	
 	// Apply current Stim to last used Stim
 	for (int i = 0; i < MAX_COMPONENTS; i++)
 		Player.Stim.Last[i] = Player.Stim.Current[i];
@@ -113,7 +117,7 @@ function void CheckStim()
 	// Decrease Stim Timer
 	if (Player.Stim.Timer > 0); Player.Stim.Timer--;
 	
-	// Remove bonuses when Stim has expired
+	// Remove bonuses and active flags when Stim has expired
 	if (Player.Stim.Timer <= 0 && Player.Stim.Active)
 	{
 		Player.StrengthBonus = -Player.Stim.Last[0];
@@ -125,6 +129,26 @@ function void CheckStim()
 		Player.CapacityBonus = -Player.Stim.Last[6];
 		Player.LuckBonus = -Player.Stim.Last[7];
 		Player.Stim.Active = false;
+		
+		for (int i = 0; i < MAX_COMPONENTS; i++)
+			Player.Stim.ActiveBonus[i] = false;
+	};
+
+	// Stim FX
+	fixed X = GetActorX(0);
+	fixed Y = GetActorY(0);
+	fixed Z = GetActorZ(0);
+	int Angle = GetActorAngle(0) * 256;
+	if (GetCVar("drpg_stim_effect"))
+	{
+		if (Player.Stim.ActiveBonus[0]) SpawnForced("StimStrengthEffect", X, Y, Z + 32.0, 0, Angle);
+		if (Player.Stim.ActiveBonus[1]) SpawnForced("StimDefenseEffect", X, Y, Z + 32.0, 0, Angle);
+		if (Player.Stim.ActiveBonus[2]) SpawnForced("StimVitalityEffect", X, Y, Z + 32.0, 0, Angle);
+		if (Player.Stim.ActiveBonus[3]) SpawnForced("StimEnergyEffect", X, Y, Z + 32.0, 0, Angle);
+		if (Player.Stim.ActiveBonus[4]) SpawnForced("StimRegenerationEffect", X, Y, Z + 32.0, 0, Angle);
+		if (Player.Stim.ActiveBonus[5]) SpawnForced("StimAgilityEffect", X, Y, Z + 32.0, 0, Angle);
+		if (Player.Stim.ActiveBonus[6]) SpawnForced("StimCapacityEffect", X, Y, Z + 32.0, 0, Angle);
+		if (Player.Stim.ActiveBonus[7]) SpawnForced("StimLuckEffect", X, Y, Z + 32.0, 0, Angle);
 	};
 };
 
