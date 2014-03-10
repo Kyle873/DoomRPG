@@ -13,7 +13,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, March 10, 2014 at 6:22:07 AM";
+	"Monday, March 10, 2014 at 6:51:42 AM";
 };
 
 bool ParBonus;
@@ -175,11 +175,16 @@ script MonsterInit(int Flags)
 	int AuraRandomizer;
 	
 	// Monster Level System
-	if(GetCVar("drpg_monster_levels") && (!(Flags & MF_NOSTATS)))
+	if (GetCVar("drpg_monster_levels") > 0 && (!(Flags & MF_NOSTATS)))
 	{
 		// level
+		int LevelType = GetCVar("drpg_monster_levels");
+		fixed LevelMult = GetCVarFixed("drpg_monster_level_mult");
 		int MonsterCurve = GetCVar("drpg_monster_curve");
-		MonsterLevel = Player.Level + Random(-(GameSkill() * 2), GameSkill() * 2) + Random(0, MonsterCurve);
+		if (LevelType == 1 || LevelType == 3) // Player Level
+			MonsterLevel = Player.Level + Random(-(GameSkill() * 2), GameSkill() * 2) + Random(0, MonsterCurve);
+		if (LevelType == 2 || LevelType == 3) // Map Number
+			MonsterLevel += Round(GetLevelInfo(LEVELINFO_LEVELNUM) * RandomFixed(1.0, LevelMult));
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		
 		// Strength
@@ -1015,7 +1020,7 @@ script HealthBars()
 				HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 4001, CR_GREEN, X, Y, 0.05);
 				
 				// Stats
-				if (GetCVar("drpg_monster_levels") && CurrentLevel > 0)
+				if (GetCVar("drpg_monster_levels") > 0 && CurrentLevel > 0)
 				{
 					SetFont("BIGFONT");
 					
