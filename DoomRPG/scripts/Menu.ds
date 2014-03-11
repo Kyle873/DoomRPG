@@ -25,6 +25,13 @@ int[MAX_CATEGORIES] SkillCategoryMax =
 	3; 9; 9; 4; 17; 6;
 };
 
+int[6] CursorColors =
+{
+	CR_BLUE; CR_LIGHTBLUE; CR_CYAN; CR_WHITE; CR_CYAN; CR_LIGHTBLUE;
+};
+
+int MenuCursorColor;
+
 script OpenMenu() net
 {
 	// If you're dead, terminate
@@ -75,6 +82,9 @@ function void MenuLoop()
 	if (GetCVar("drpg_menufreeze"))
 		GiveInventory("MenuFreezer", 1);
 	
+	// Handle the cursor color
+	MenuCursorColor = CursorColors[(Timer() / 3) % 6];
+	
 	// Set the HUD Size
 	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 	
@@ -96,7 +106,6 @@ function void MenuLoop()
 
 function void DrawMainMenu()
 {
-	int Color = Random(1, 21);
 	int Y = 10.0;
 	int CurrentKills = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
 	int CurrentItems = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
@@ -118,7 +127,7 @@ function void DrawMainMenu()
 		
 		// Highlighted Item
 		if (i == Player.MenuIndex)
-			HudMessage("%s\n", MainMenu[i], HUDMSG_PLAIN, 5000 + i, Color, 				0.1, Y, 0.05);
+			HudMessage("%s\n", MainMenu[i], HUDMSG_PLAIN, 5000 + i, MenuCursorColor, 	0.1, Y, 0.05);
 		
 		Y += 15.0;
 	};
@@ -128,11 +137,11 @@ function void DrawMainMenu()
 
 	// XP/Rank Display
 	SetFont("BIGFONT");
-	HudMessage("Level: %d\n", Player.Level, 											HUDMSG_PLAIN, 0, CR_WHITE,  	40.1, 100.0, 0.05);
-	HudMessage("XP: %d / %d\n", Player.XP, Player.XPNext, 								HUDMSG_PLAIN, 0, CR_WHITE,  	40.1, 112.0, 0.05);
-	HudMessage("Title: %s (%d/%d)\n", Ranks[Player.RankLevel], Player.RankLevel, 24,	HUDMSG_PLAIN, 0, CR_YELLOW, 	40.1, 124.0, 0.05);
-	HudMessage("Rank: %d / %d\n", Player.Rank, Player.RankNext, 						HUDMSG_PLAIN, 0, CR_YELLOW, 	40.1, 136.0, 0.05);
-	HudMessage("%s\n", LongRanks[Player.RankLevel], 									HUDMSG_PLAIN, 0, CR_YELLOW, 	40.1, 142.1, 0.05);
+	HudMessage("Level: %d\n", Player.Level, 											HUDMSG_PLAIN, 0, CR_WHITE,  		40.1, 100.0, 0.05);
+	HudMessage("XP: %d / %d\n", Player.XP, Player.XPNext, 								HUDMSG_PLAIN, 0, CR_WHITE,  		40.1, 112.0, 0.05);
+	HudMessage("Title: %s (%d/%d)\n", Ranks[Player.RankLevel], Player.RankLevel, 24,	HUDMSG_PLAIN, 0, CR_YELLOW, 		40.1, 124.0, 0.05);
+	HudMessage("Rank: %d / %d\n", Player.Rank, Player.RankNext, 						HUDMSG_PLAIN, 0, CR_YELLOW, 		40.1, 136.0, 0.05);
+	HudMessage("%s\n", LongRanks[Player.RankLevel], 									HUDMSG_PLAIN, 0, CR_YELLOW, 		40.1, 142.1, 0.05);
 	
 	// Tokens and Augmentation Slots
 	PrintSprite("TOKAD0", 0, 16.1, 188.1, 0.05);
@@ -140,24 +149,24 @@ function void DrawMainMenu()
 	PrintSprite("TOKCD0", 0, 16.1, 228.1, 0.05);
 	PrintSprite("AUGUB0", 0, 16.1, 248.1, 0.05);
 	SetFont("BIGFONT");
-	HudMessage("%d\n", CheckInventory("StatToken"), 									HUDMSG_PLAIN, 0, CR_RED,  		40.1, 178.0, 0.05);
-	HudMessage("%d / %d\n", CheckInventory("StatCapToken"), 100, 						HUDMSG_PLAIN, 0, CR_YELLOW,  	40.1, 198.0, 0.05);
-	HudMessage("%d\n", CheckInventory("SkillToken"), 									HUDMSG_PLAIN, 0, CR_DARKGREEN,  40.1, 218.0, 0.05);
-	HudMessage("%d / %d\n", Player.Augs.SlotsUsed, Player.Augs.Slots, 					HUDMSG_PLAIN, 0, CR_GREEN,  	40.1, 238.0, 0.05);
+	HudMessage("%d\n", CheckInventory("StatToken"), 									HUDMSG_PLAIN, 0, CR_RED,  			40.1, 178.0, 0.05);
+	HudMessage("%d / %d\n", CheckInventory("StatCapToken"), 100, 						HUDMSG_PLAIN, 0, CR_YELLOW,  		40.1, 198.0, 0.05);
+	HudMessage("%d\n", CheckInventory("SkillToken"), 									HUDMSG_PLAIN, 0, CR_DARKGREEN,		40.1, 218.0, 0.05);
+	HudMessage("%d / %d\n", Player.Augs.SlotsUsed, Player.Augs.Slots, 					HUDMSG_PLAIN, 0, CR_GREEN,  		40.1, 238.0, 0.05);
 	
 	// Level Stats
 	if (Player.KillBonus)
-		HudMessage("Monsters: %d / %d\n", CurrentKills, TotalKills, 					HUDMSG_PLAIN, 0, Color,  		140.1, 178.0, 0.05)
+		HudMessage("Monsters: %d / %d\n", CurrentKills, TotalKills, 					HUDMSG_PLAIN, 0, MenuCursorColor,	140.1, 178.0, 0.05)
 	else
-		HudMessage("Monsters: %d / %d\n", CurrentKills, TotalKills, 					HUDMSG_PLAIN, 0, CR_BRICK,  	140.1, 178.0, 0.05);
+		HudMessage("Monsters: %d / %d\n", CurrentKills, TotalKills, 					HUDMSG_PLAIN, 0, CR_BRICK,  		140.1, 178.0, 0.05);
 	if (Player.ItemsBonus)
-		HudMessage("Items: %d / %d\n", CurrentItems, TotalItems, 						HUDMSG_PLAIN, 0, Color,  		140.1, 193.0, 0.05)
+		HudMessage("Items: %d / %d\n", CurrentItems, TotalItems, 						HUDMSG_PLAIN, 0, MenuCursorColor,  	140.1, 193.0, 0.05)
 	else
-		HudMessage("Items: %d / %d\n", CurrentItems, TotalItems, 						HUDMSG_PLAIN, 0, CR_LIGHTBLUE,  140.1, 193.0, 0.05);
+		HudMessage("Items: %d / %d\n", CurrentItems, TotalItems, 						HUDMSG_PLAIN, 0, CR_LIGHTBLUE,  	140.1, 193.0, 0.05);
 	if (Player.SecretsBonus)
-		HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound, 		HUDMSG_PLAIN, 0, Color,  		140.1, 207.0, 0.05)
+		HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound, 		HUDMSG_PLAIN, 0, MenuCursorColor,  	140.1, 207.0, 0.05)
 	else
-		HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound, 		HUDMSG_PLAIN, 0, CR_GOLD,  		140.1, 207.0, 0.05);
+		HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound, 		HUDMSG_PLAIN, 0, CR_GOLD,  			140.1, 207.0, 0.05);
 };
 
 function void DrawStatsMenu()
@@ -192,53 +201,51 @@ function void DrawStatsMenu()
 	
 	// Secondary Stats
 	SetFont("SMALLFONT");
-	HudMessage("+%d%% Base Damage\n", Player.LevelDamage, 												HUDMSG_PLAIN, 0, CR_RED, 		30.1, 	36.0, 	0.05);
-	HudMessage("+%d%% Bonus Damage\n", Player.BonusDamage, 												HUDMSG_PLAIN, 0, CR_RED, 		30.1, 	44.0, 	0.05);
-	HudMessage("+%d%% Total Damage\n", Player.TotalDamage, 												HUDMSG_PLAIN, 0, CR_RED, 		30.1, 	52.0, 	0.05);
-	HudMessage("%k%% Damage Taken\n", Player.DamageFactor * 100.0,		 								HUDMSG_PLAIN, 0, CR_GREEN,		230.1, 	36.0, 	0.05);
-	HudMessage("%d Mass\n", Player.Mass, 																HUDMSG_PLAIN, 0, CR_GREEN,		230.1, 	44.0, 	0.05);
-	HudMessage("%d Max HP\n", Player.HealthMax,															HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	86.0, 	0.05);
-	HudMessage("%d HP Regen\n", Player.HPAmount,														HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	94.0, 	0.05);
-	HudMessage("%d Max EP\n", Player.EPMax,																HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	86.0, 	0.05);
-	HudMessage("%d EP Regen\n", Player.EPAmount,														HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	94.0, 	0.05);
-	HudMessage("%d Sec Aura Time\n", ((1050 + (Player.Energy * 5.25)) * (Player.AuraBonus + 1)) / 35,	HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	230.1, 	102.0, 	0.05);
-	HudMessage("HP Timer: %d Seconds\n", Player.HPTime / (35 * 2),										HUDMSG_PLAIN, 0, CR_BRICK,		30.1, 	136.0, 	0.05);
-	HudMessage("EP Timer: %d Seconds\n", Player.EPTime / (35 * 2),										HUDMSG_PLAIN, 0, CR_LIGHTBLUE,	30.1, 	144.0, 	0.05);
-	HudMessage("Regen Bonus: %d\n", Player.RegenBoostTimer / 35,										HUDMSG_PLAIN, 0, CR_PURPLE,		30.1, 	152.0, 	0.05);
-	HudMessage("Speed: %k\n", Player.Speed,			 													HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	136.0, 	0.05);
-	HudMessage("Jump Height: %k\n", Player.JumpHeight, 													HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	144.0, 	0.05);
-	HudMessage("%d%% Weapon Speed\n", Player.WeaponSpeed, 												HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	152.0, 	0.05);
-	HudMessage("%k%% Survival Bonus\n", Player.SurvivalBonus, 											HUDMSG_PLAIN, 0, CR_ORANGE, 	230.1, 	160.0, 	0.05);
-	HudMessage("Bullets: %d/%d\n", CheckInventory("Clip"), GetAmmoCapacity("Clip"), 					HUDMSG_PLAIN, 0, CR_BRICK, 	 	30.1, 	186.0, 	0.05);
-	HudMessage("Shells: %d/%d\n", CheckInventory("Shell"), GetAmmoCapacity("Shell"), 					HUDMSG_PLAIN, 0, CR_ORANGE,  	30.1, 	194.0, 	0.05);
-	HudMessage("Rockets: %d/%d\n", CheckInventory("RocketAmmo"), GetAmmoCapacity("RocketAmmo"),			HUDMSG_PLAIN, 0, CR_GREY, 	 	30.1, 	202.0, 	0.05);
-	HudMessage("Cells: %d/%d\n", CheckInventory("Cell"), GetAmmoCapacity("Cell"), 						HUDMSG_PLAIN, 0, CR_GREEN, 	 	30.1, 	210.0, 	0.05);
-	HudMessage("Stim Vial Max: %d\n", Player.Stim.VialMax, 												HUDMSG_PLAIN, 0, CR_CYAN, 	 	30.1, 	218.0, 	0.05);
-	HudMessage("%k%% Credit Drop Chance\n", Player.CreditChance, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	186.0, 	0.05);
-	HudMessage("%k%% Health Drop Chance\n", Player.HealthChance, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	194.0, 	0.05);
-	HudMessage("%k%% EP Capsule Drop Chance\n", Player.EPChance, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	202.0, 	0.05);
-	HudMessage("%k%% Armor Drop Chance\n", Player.ArmorChance,											HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	210.0, 	0.05);
-	HudMessage("%k%% Powerup Drop Chance\n", Player.PowerupChance, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	218.0, 	0.05);
-	HudMessage("%k%% Rune Drop Chance\n", Player.RuneChance,											HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	226.0, 	0.05);
-	HudMessage("%k%% Token Drop Chance\n", Player.TokenChance, 											HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	234.0, 	0.05);
-	HudMessage("%k%% Aug Drop Chance\n", Player.AugChance,												HUDMSG_PLAIN, 0, CR_GOLD, 		230.1, 	242.0, 	0.05);
-	HudMessage("%k%% Shield Part Drop Chance\n", Player.ShieldChance, 									HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	250.0, 	0.05);
-	HudMessage("%k%% Stim Drop Chance\n", Player.StimChance, 											HUDMSG_PLAIN, 0, CR_GOLD, 	 	230.1, 	258.0, 	0.05);
+	HudMessage("+%d%% Base Damage\n", Player.LevelDamage, 												HUDMSG_PLAIN, 0, CR_RED, 				30.1, 	36.0, 	0.05);
+	HudMessage("+%d%% Bonus Damage\n", Player.BonusDamage, 												HUDMSG_PLAIN, 0, CR_RED, 				30.1, 	44.0, 	0.05);
+	HudMessage("+%d%% Total Damage\n", Player.TotalDamage, 												HUDMSG_PLAIN, 0, CR_RED, 				30.1, 	52.0, 	0.05);
+	HudMessage("%k%% Damage Taken\n", Player.DamageFactor * 100.0,		 								HUDMSG_PLAIN, 0, CR_GREEN,				230.1, 	36.0, 	0.05);
+	HudMessage("%d Mass\n", Player.Mass, 																HUDMSG_PLAIN, 0, CR_GREEN,				230.1, 	44.0, 	0.05);
+	HudMessage("%d Max HP\n", Player.HealthMax,															HUDMSG_PLAIN, 0, CR_BRICK,				30.1, 	86.0, 	0.05);
+	HudMessage("%d HP Regen\n", Player.HPAmount,														HUDMSG_PLAIN, 0, CR_BRICK,				30.1, 	94.0, 	0.05);
+	HudMessage("%d Max EP\n", Player.EPMax,																HUDMSG_PLAIN, 0, CR_LIGHTBLUE,			230.1, 	86.0, 	0.05);
+	HudMessage("%d EP Regen\n", Player.EPAmount,														HUDMSG_PLAIN, 0, CR_LIGHTBLUE,			230.1, 	94.0, 	0.05);
+	HudMessage("%d Sec Aura Time\n", ((1050 + (Player.Energy * 5.25)) * (Player.AuraBonus + 1)) / 35,	HUDMSG_PLAIN, 0, CR_LIGHTBLUE,			230.1, 	102.0, 	0.05);
+	HudMessage("HP Timer: %d Seconds\n", Player.HPTime / (35 * 2),										HUDMSG_PLAIN, 0, CR_BRICK,				30.1, 	136.0, 	0.05);
+	HudMessage("EP Timer: %d Seconds\n", Player.EPTime / (35 * 2),										HUDMSG_PLAIN, 0, CR_LIGHTBLUE,			30.1, 	144.0, 	0.05);
+	HudMessage("Regen Bonus: %d\n", Player.RegenBoostTimer / 35,										HUDMSG_PLAIN, 0, CR_PURPLE,				30.1, 	152.0, 	0.05);
+	HudMessage("Speed: %k\n", Player.Speed,			 													HUDMSG_PLAIN, 0, CR_ORANGE, 			230.1, 	136.0, 	0.05);
+	HudMessage("Jump Height: %k\n", Player.JumpHeight, 													HUDMSG_PLAIN, 0, CR_ORANGE, 			230.1, 	144.0, 	0.05);
+	HudMessage("%d%% Weapon Speed\n", Player.WeaponSpeed, 												HUDMSG_PLAIN, 0, CR_ORANGE, 			230.1, 	152.0, 	0.05);
+	HudMessage("%k%% Survival Bonus\n", Player.SurvivalBonus, 											HUDMSG_PLAIN, 0, CR_ORANGE, 			230.1, 	160.0, 	0.05);
+	HudMessage("Bullets: %d/%d\n", CheckInventory("Clip"), GetAmmoCapacity("Clip"), 					HUDMSG_PLAIN, 0, CR_BRICK, 	 			30.1, 	186.0, 	0.05);
+	HudMessage("Shells: %d/%d\n", CheckInventory("Shell"), GetAmmoCapacity("Shell"), 					HUDMSG_PLAIN, 0, CR_ORANGE,  			30.1, 	194.0, 	0.05);
+	HudMessage("Rockets: %d/%d\n", CheckInventory("RocketAmmo"), GetAmmoCapacity("RocketAmmo"),			HUDMSG_PLAIN, 0, CR_GREY, 	 			30.1, 	202.0, 	0.05);
+	HudMessage("Cells: %d/%d\n", CheckInventory("Cell"), GetAmmoCapacity("Cell"), 						HUDMSG_PLAIN, 0, CR_GREEN, 	 			30.1, 	210.0, 	0.05);
+	HudMessage("Stim Vial Max: %d\n", Player.Stim.VialMax, 												HUDMSG_PLAIN, 0, CR_CYAN, 	 			30.1, 	218.0, 	0.05);
+	HudMessage("%k%% Credit Drop Chance\n", Player.CreditChance, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 			230.1, 	186.0, 	0.05);
+	HudMessage("%k%% Health Drop Chance\n", Player.HealthChance, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 			230.1, 	194.0, 	0.05);
+	HudMessage("%k%% EP Capsule Drop Chance\n", Player.EPChance, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 			230.1, 	202.0, 	0.05);
+	HudMessage("%k%% Armor Drop Chance\n", Player.ArmorChance,											HUDMSG_PLAIN, 0, CR_GOLD, 	 			230.1, 	210.0, 	0.05);
+	HudMessage("%k%% Powerup Drop Chance\n", Player.PowerupChance, 										HUDMSG_PLAIN, 0, CR_GOLD, 	 			230.1, 	218.0, 	0.05);
+	HudMessage("%k%% Rune Drop Chance\n", Player.RuneChance,											HUDMSG_PLAIN, 0, CR_GOLD, 	 			230.1, 	226.0, 	0.05);
+	HudMessage("%k%% Token Drop Chance\n", Player.TokenChance, 											HUDMSG_PLAIN, 0, CR_GOLD, 	 			230.1, 	234.0, 	0.05);
+	HudMessage("%k%% Aug Drop Chance\n", Player.AugChance,												HUDMSG_PLAIN, 0, CR_GOLD, 				230.1, 	242.0, 	0.05);
+	HudMessage("%k%% Shield Part Drop Chance\n", Player.ShieldChance, 									HUDMSG_PLAIN, 0, CR_GOLD, 	 			230.1, 	250.0, 	0.05);
+	HudMessage("%k%% Stim Drop Chance\n", Player.StimChance, 											HUDMSG_PLAIN, 0, CR_GOLD, 	 			230.1, 	258.0, 	0.05);
 	
 	// Stat Upgrade Cursor
 	if (CheckInventory("StatToken") > 0)
 	{
-		int Color = Random(1, 21);
-		
 		SetFont("BIGFONT");
-		if (Player.MenuIndex == 0)	HudMessage("Strength: %d\n", Player.Strength, 								HUDMSG_PLAIN, 5001, Color, 			0.1, 	25.0, 	0.05);
-		if (Player.MenuIndex == 1)	HudMessage("Defense: %d\n", Player.Defense,									HUDMSG_PLAIN, 5002, Color, 			200.1, 	25.0, 	0.05);
-		if (Player.MenuIndex == 2)	HudMessage("Vitality: %d\n", Player.Vitality, 								HUDMSG_PLAIN, 5005, Color, 			0.1, 	75.0, 	0.05);
-		if (Player.MenuIndex == 3)	HudMessage("Energy: %d\n", Player.Energy,									HUDMSG_PLAIN, 5006, Color, 			200.1, 	75.0, 	0.05);
-		if (Player.MenuIndex == 4)	HudMessage("Regen: %d\n", Player.Regeneration, 								HUDMSG_PLAIN, 5007, Color, 			0.1, 	125.0, 	0.05);
-		if (Player.MenuIndex == 5)	HudMessage("Agility: %d\n", Player.Agility,									HUDMSG_PLAIN, 5004, Color, 			200.1, 	125.0, 	0.05);
-		if (Player.MenuIndex == 6)	HudMessage("Capacity: %d\n", Player.Capacity,								HUDMSG_PLAIN, 5008, Color, 			0.1, 	175.0, 	0.05);
-		if (Player.MenuIndex == 7)	HudMessage("Luck: %d\n", Player.Luck,										HUDMSG_PLAIN, 5009, Color, 			200.1, 	175.0, 	0.05);
+		if (Player.MenuIndex == 0)	HudMessage("Strength: %d\n", Player.Strength, 						HUDMSG_PLAIN, 5001, MenuCursorColor, 	0.1, 	25.0, 	0.05);
+		if (Player.MenuIndex == 1)	HudMessage("Defense: %d\n", Player.Defense,							HUDMSG_PLAIN, 5002, MenuCursorColor, 	200.1, 	25.0, 	0.05);
+		if (Player.MenuIndex == 2)	HudMessage("Vitality: %d\n", Player.Vitality, 						HUDMSG_PLAIN, 5005, MenuCursorColor, 	0.1, 	75.0, 	0.05);
+		if (Player.MenuIndex == 3)	HudMessage("Energy: %d\n", Player.Energy,							HUDMSG_PLAIN, 5006, MenuCursorColor, 	200.1, 	75.0, 	0.05);
+		if (Player.MenuIndex == 4)	HudMessage("Regen: %d\n", Player.Regeneration, 						HUDMSG_PLAIN, 5007, MenuCursorColor, 	0.1, 	125.0, 	0.05);
+		if (Player.MenuIndex == 5)	HudMessage("Agility: %d\n", Player.Agility,							HUDMSG_PLAIN, 5004, MenuCursorColor, 	200.1, 	125.0, 	0.05);
+		if (Player.MenuIndex == 6)	HudMessage("Capacity: %d\n", Player.Capacity,						HUDMSG_PLAIN, 5008, MenuCursorColor, 	0.1, 	175.0, 	0.05);
+		if (Player.MenuIndex == 7)	HudMessage("Luck: %d\n", Player.Luck,								HUDMSG_PLAIN, 5009, MenuCursorColor, 	200.1, 	175.0, 	0.05);
 	};
 
 	// Icons
