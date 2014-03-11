@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, March 10, 2014 at 9:50:26 PM";
+	"Monday, March 10, 2014 at 10:34:17 PM";
 };
 
 bool ParBonus;
@@ -277,7 +277,7 @@ script MonsterLoop()
 	int MonsterStrength = CheckInventory("MonsterStrength");
 	int AuraType = CheckInventory("MonsterAura");
 	int Radius = GetActorProperty(0, APROP_Radius);
-	int Height = GetActorProperty(0, APROP_Height);
+	fixed Height = GetActorPropertyFixed(0, APROP_Height);
 	int Angle = GetActorAngle(0) * 256;
 	int RegenAmount;
 	
@@ -290,7 +290,10 @@ script MonsterLoop()
 	
 	// Friendly Monster Aura
 	if (GetActorProperty(0, APROP_Friendly))
-		SpawnForced("FriendlyAura", X, Y, Z + 32.0, 0, Angle);
+	{
+		SpawnForced("FriendlyAura", X, Y, Z + 32.0, Angle);
+		SpawnForced("FriendlyIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+	};
 	
 	// Aura Loop Effects
 	switch (AuraType)
@@ -338,16 +341,16 @@ script MonsterLoop()
 	
 	// Strength
 	if (MonsterStrength >= 32000)
-		{SetInventory("Strength32000", 1);}
+		SetInventory("Strength32000", 1)
 	else if (MonsterStrength > 0)
-		{SetInventory(StrParam("Strength%d\n", MonsterStrength * (GameSkill() * 2)), 1);};
+		SetInventory(StrParam("Strength%d\n", MonsterStrength * (GameSkill() * 2)), 1);
 	
 	// Overhead Health Bars
 	if (GetCVar("drpg_healthbars_overhead"))
 	{
 		fixed BarHealth = (fixed)GetActorProperty(0, APROP_Health) / (fixed)GetActorProperty(0, APROP_SpawnHealth) * 32.0;
 		if (BarHealth > 64.0) BarHealth = 64.0;
-		Z = GetActorZ(0) + CheckInventory("MonsterHeightCheck") + 4.0;
+		Z = GetActorZ(0) + Height + 4.0;
 		SpawnForced(StrParam("HealthBar%d\n", Round(BarHealth)), X, Y, Z, 0, 0);
 	};
 	
