@@ -106,7 +106,8 @@ function void MenuLoop()
 
 function void DrawMainMenu()
 {
-	int Y = 10.0;
+	fixed X = 0.0;
+	fixed Y = 10.0;
 	int CurrentKills = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
 	int CurrentItems = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
 	int CurrentSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
@@ -143,16 +144,30 @@ function void DrawMainMenu()
 	HudMessage("Rank: %d / %d\n", Player.Rank, Player.RankNext, 						HUDMSG_PLAIN, 0, CR_YELLOW, 		40.1, 136.0, 0.05);
 	HudMessage("%s\n", LongRanks[Player.RankLevel], 									HUDMSG_PLAIN, 0, CR_YELLOW, 		40.1, 142.1, 0.05);
 	
-	// Tokens and Augmentation Slots
+	// Quick Reference
+	int StatTokens = CheckInventory("StatToken");
+	int StatCapTokens = CheckInventory("StatCapToken");
+	int SkillTokens = CheckInventory("SkillToken");
+	int AugCanisters = CheckInventory("AugCanister");
+	int AugUpgradeCanisters = CheckInventory("AugUpgradeCanister");
+	int SmallStims = CheckInventory("StimSmall");
+	int MediumStims = CheckInventory("StimMedium");
+	int LargeStims = CheckInventory("StimLarge");
 	PrintSprite("TOKAD0", 0, 16.1, 188.1, 0.05);
 	PrintSprite("TOKBD0", 0, 16.1, 208.1, 0.05);
 	PrintSprite("TOKCD0", 0, 16.1, 228.1, 0.05);
-	PrintSprite("AUGUB0", 0, 16.1, 248.1, 0.05);
+	PrintSprite("AUGCA0", 0, 16.1, 252.1, 0.05);
+	PrintSprite("AUGUA0", 0, 16.1, 264.1, 0.05);
+	PrintSprite("AUGUB0", 0, 16.1, 284.1, 0.05);
+	PrintSprite("STIMB0", 0, 16.1, 320.1, 0.05);
 	SetFont("BIGFONT");
-	HudMessage("%d\n", CheckInventory("StatToken"), 									HUDMSG_PLAIN, 0, CR_RED,  			40.1, 178.0, 0.05);
-	HudMessage("%d / %d\n", CheckInventory("StatCapToken"), 100, 						HUDMSG_PLAIN, 0, CR_YELLOW,  		40.1, 198.0, 0.05);
-	HudMessage("%d\n", CheckInventory("SkillToken"), 									HUDMSG_PLAIN, 0, CR_DARKGREEN,		40.1, 218.0, 0.05);
-	HudMessage("%d / %d\n", Player.Augs.SlotsUsed, Player.Augs.Slots, 					HUDMSG_PLAIN, 0, CR_GREEN,  		40.1, 238.0, 0.05);
+	HudMessage("%d\n", StatTokens, 														HUDMSG_PLAIN, 0, CR_RED,  			40.1, 178.0, 0.05);
+	HudMessage("%d / %d\n", StatCapTokens, 100, 										HUDMSG_PLAIN, 0, CR_YELLOW,  		40.1, 198.0, 0.05);
+	HudMessage("%d\n", SkillTokens, 													HUDMSG_PLAIN, 0, CR_DARKGREEN,		40.1, 218.0, 0.05);
+	HudMessage("%d\n", AugCanisters, 													HUDMSG_PLAIN, 0, CR_GREEN,  		40.1, 240.0, 0.05);
+	HudMessage("%d\n", AugUpgradeCanisters, 											HUDMSG_PLAIN, 0, CR_GREEN,  		40.1, 257.0, 0.05);
+	HudMessage("%d / %d\n", Player.Augs.SlotsUsed, Player.Augs.Slots, 					HUDMSG_PLAIN, 0, CR_GREEN,  		40.1, 274.0, 0.05);
+	HudMessage("Small: %d\nMedium: %d\nLarge: %d\n", SmallStims, MediumStims, LargeStims,					HUDMSG_PLAIN, 0, CR_WHITE,  		40.1, 304.0, 0.05);
 	
 	// Level Stats
 	if (Player.KillBonus)
@@ -167,6 +182,55 @@ function void DrawMainMenu()
 		HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound, 		HUDMSG_PLAIN, 0, MenuCursorColor,  	140.1, 207.0, 0.05)
 	else
 		HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound, 		HUDMSG_PLAIN, 0, CR_GOLD,  			140.1, 207.0, 0.05);
+	
+	// Shield
+	if (Player.Shield.Body != 0 || Player.Shield.Battery != 0 || Player.Shield.Capacitor != 0)
+	{
+		SetFont("SMALLFONT");
+		
+		// Epic Shield Name
+		str ShieldName = "";
+		if (Player.Shield.Capacitor > 0) 	ShieldName = StrParam("%s %s\n", ShieldName, ShieldData[2][Player.Shield.Capacitor - 1][1]);
+		if (Player.Shield.Battery > 0) 		ShieldName = StrParam("%s \c-%s\n", ShieldName, ShieldData[1][Player.Shield.Battery - 1][1]);
+		if (Player.Shield.Body > 0) 		ShieldName = StrParam("%s \c-%s\n", ShieldName, ShieldData[0][Player.Shield.Body - 1][1]);
+		if (Player.Shield.Accessory > 0) 	ShieldName = StrParam("%s \c-%s\n", ShieldName, ShieldData[3][Player.Shield.Accessory - 1][1]);
+		ShieldName = StrParam("%s\c- Shield\n", ShieldName);
+		HudMessage("%s\n", ShieldName, HUDMSG_PLAIN, 0, CR_WHITE, 173.1, 226.1, 0.05);
+
+		// Shield Stats
+		HudMessage("\cvCapacity: %d / %d\n", Player.Shield.Charge, Player.Shield.Capacity, 	HUDMSG_PLAIN, 0, CR_WHITE, 			176.1, 238.0, 0.05);
+		HudMessage("\cdCharge: %d\n", Player.Shield.ChargeRate, 							HUDMSG_PLAIN, 0, CR_WHITE, 			176.1, 246.0, 0.05);
+		HudMessage("\caDelay: %k\n", Player.Shield.DelayRate,			 					HUDMSG_PLAIN, 0, CR_WHITE, 			176.1, 254.0, 0.05);
+		
+		// Build Shield Model
+		if (Player.Shield.Capacitor > 0) 	PrintSprite(ShieldData[2][Player.Shield.Capacitor - 1][3], 	0, 158.1, 258.1, 0.05);
+		if (Player.Shield.Battery > 0) 		PrintSprite(ShieldData[1][Player.Shield.Battery - 1][3],	0, 158.1, 258.1, 0.05);
+		if (Player.Shield.Body > 0) 		PrintSprite(ShieldData[0][Player.Shield.Body - 1][3],		0, 158.1, 258.1, 0.05);
+		if (Player.Shield.Accessory > 0) 	PrintSprite(ShieldData[3][Player.Shield.Accessory - 1][3], 	0, 158.1, 258.1, 0.05);
+	};
+	
+	// Current Stim
+	if (Player.Stim.Size > 0)
+	{
+		SetFont("BIGFONT");
+		
+		// Draw Stim selection
+		if (Player.Stim.Size == 1)
+			HudMessage("Small Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05)
+		else if (Player.Stim.Size == 2)
+			HudMessage("Medium Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05)
+		else if (Player.Stim.Size == 3)
+			HudMessage("Large Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05);
+
+		// Stim Compound Bar
+		if (Player.Stim.Size > 0)
+			for (int i = 0; i < MAX_COMPONENTS; i++)
+				for (int j = 0; j < Player.Stim.Current[i]; j++)
+				{
+					PrintSprite(StrParam("Stim%d\n", i + 1), 0, 178.0 + X, 304.0, 0.05);
+					X += 1.0;
+				};
+	};
 };
 
 function void DrawStatsMenu()
@@ -593,13 +657,13 @@ function void DrawStimsMenu()
 	// Stim selected
 	if (Player.MenuIndex == 10)
 		HudMessage("-->\n", HUDMSG_PLAIN, 0, MenuCursorColor, 8.1, 200.0, 0.05);
-
+	
 	// Stim Compound Bar
 	if (Player.Stim.Size > 0)
 		for (int i = 0; i < MAX_COMPONENTS; i++)
 			for (int j = 0; j < Player.Stim.Current[i]; j++)
 			{
-				PrintSprite(StrParam("Stim%d\n", i + 1), 0, 4.0 + X, 215.0, 0.05);
+				PrintSprite(StrParam("Stim%d\n", i + 1), 0, 2.0 + X, 213.0, 0.05);
 				X += 1.0;
 			};
 };
