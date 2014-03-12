@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Wednesday, March 12, 2014 at 5:42:06 AM";
+	"Wednesday, March 12, 2014 at 6:55:39 AM";
 };
 
 bool ParBonus;
@@ -113,20 +113,7 @@ script Init() enter
 	};
 	if (Transported == 2) // Death
 	{
-		int PenaltyPercent;
-		
-		switch (GameSkill())
-		{
-			case 1: PenaltyPercent = 1;		break;
-			case 2: PenaltyPercent = 5;		break;
-			case 3: PenaltyPercent = 10;	break;
-			case 4: PenaltyPercent = 20;	break;
-			case 5: PenaltyPercent = 25;	break;
-		};
-		
 		SetActorProperty(PlayerTID, APROP_Health, HealthMax / 10 + 1);
-		GiveInventory("Credits", Credits);
-		Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
 		FadeRange(255, 0, 0, 1.0, 255, 0, 0, 0.0, 1.0);
 		Transported = 0;
 	};
@@ -759,9 +746,13 @@ script QuickEP()
 	
 	int Amount = GetEPMax() - Player.EP;
 	
-	if (EP < GetEPMax() && CheckInventory("Credits") >= Amount)
+	if (CheckInventory("Credits") > 0 && EP < GetEPMax())
 	{
 		ActivatorSound("health/epcapsule", 127);
+		
+		if (CheckInventory("Credits") < Amount)
+			Amount = CheckInventory("Credits");
+		
 		TakeInventory("Credits", Amount);
 		AddEP(Amount);
 	}
