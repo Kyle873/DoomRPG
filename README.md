@@ -47,6 +47,7 @@ Testers
 Contributors
 ------------
 - Kate, for contributing totally badass special effects to make things look sexy
+- marrub, for contributing various sprites of assorted things
 
 Resources
 ---------
