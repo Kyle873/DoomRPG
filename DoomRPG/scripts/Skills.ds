@@ -162,9 +162,10 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "Pink Aura";
-	Skills[2][Index].MaxLevel = 1;
+	Skills[2][Index].MaxLevel = 2;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "Drain Enemy HP";
+	Skills[2][Index].Description[1] = "Drain Enemy HP\n2x Max Health";
 	Index++;
 
 	Skills[2][Index].Name = "Blue Aura";
@@ -193,12 +194,14 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "Dark Blue Aura";
-	Skills[2][Index].MaxLevel = 4;
+	Skills[2][Index].MaxLevel = 6;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "Clip Regen";
 	Skills[2][Index].Description[1] = "Clip Regen\nShell Regen";
 	Skills[2][Index].Description[2] = "Clip Regen\nShell Regen\nRocket Regen";
 	Skills[2][Index].Description[3] = "Clip Regen\nShell Regen\nRocket Regen\nCell Regen";
+	Skills[2][Index].Description[4] = "Clip Regen\nShell Regen\nRocket Regen\nCell Regen\n2x Regen Speed";
+	Skills[2][Index].Description[5] = "Clip Regen\nShell Regen\nRocket Regen\nCell Regen\n4x Regen Speed";
 	Index++;
 
 	Skills[2][Index].Name = "Yellow Aura";
@@ -1210,6 +1213,7 @@ function void CheckSkills()
 	fixed Y = GetActorY(0);
 	fixed Z = GetActorZ(0);
 	int Angle = GetActorAngle(0) * 256;
+	int AmmoRegenMult = 1;
 	
 	// Reset the Skill multiplier from the Blue Aura
 	if (Player.Aura != 5)
@@ -1276,7 +1280,10 @@ function void CheckSkills()
 				case 4:
 					SpawnForced("PinkAura", X, Y, Z + 32.0, 2300, Angle);
 					FadeRange(255, 0, 255, 0.05, 255, 0, 255, 0.0, 1.0);
-					GiveInventory("PinkAura1", 1);
+					if (PinkAuraLevel >= 1)
+						GiveInventory("PinkAura1", 1);
+					if (PinkAuraLevel >= 2)
+						Player.HealthMax *= 2;
 					break;
 				// Blue Aura
 				case 5:
@@ -1331,18 +1338,22 @@ function void CheckSkills()
 				case 8:
 					SpawnForced("BlueAura", X, Y, Z + 32.0, 2300, Angle);
 					FadeRange(0, 0, 128, 0.05, 0, 0, 128, 0.0, 1.0);
+					if (DarkBlueAuraLevel == 5)
+						AmmoRegenMult = 2;
+					if (DarkBlueAuraLevel == 6)
+						AmmoRegenMult = 4;
 					if (DarkBlueAuraLevel >= 1)
 						if ((Timer() % (35 / 2)) == 1)
-							GiveInventory("Clip", 1);
+							GiveInventory("Clip", AmmoRegenMult);
 					if (DarkBlueAuraLevel >= 2)
 						if ((Timer() % 35) == 1)
-							GiveInventory("Shell", 1);
+							GiveInventory("Shell", AmmoRegenMult);
 					if (DarkBlueAuraLevel >= 3)
 						if ((Timer() % (35 * 2)) == 1)
-							GiveInventory("RocketAmmo", 1);
+							GiveInventory("RocketAmmo", AmmoRegenMult);
 					if (DarkBlueAuraLevel >= 4)
 						if ((Timer() % (35 / 2)) == 1)
-							GiveInventory("Cell", 1);
+							GiveInventory("Cell", AmmoRegenMult);
 					break;
 				// Yellow Aura
 				case 9:
