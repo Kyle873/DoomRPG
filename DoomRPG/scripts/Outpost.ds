@@ -380,3 +380,159 @@ script PissOffMarines()
         Delay(1);
     };
 };
+
+script TokenConverter()
+{
+	int StatWorth = 1;
+	int StatCapWorth = 10;
+	int SkillWorth = 5;
+	int InAmount = 1;
+	int Amount1;
+	int Amount2;
+	int MaxAmount;
+	int Type;
+	str Text;
+	
+	// Rank Check
+	if (Player.RankLevel == 0)
+	{
+		SetFont("BIGFONT");
+		Print("\cgYou must be at least Rank 1 to use the Token Converter\n");
+		ActivatorSound("menu/error", 127);
+		return;
+	};
+	
+	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+	ActivatorSound("menu/move", 127);
+
+	while (1)
+	{
+		int StatTokens = CheckInventory("StatToken");
+		int StatCapTokens = CheckInventory("StatCapToken");
+		int SkillTokens = CheckInventory("SkillToken");
+		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		
+		switch (Type)
+		{
+			case 0: // Stat -> Skill
+				Amount1 = InAmount * SkillWorth;
+				Amount2 = InAmount;
+				MaxAmount = StatTokens / SkillWorth;
+				Text = StrParam("Convert \cg%d Stat Tokens \cj-> \cd%d Skill Tokens\n", Amount1, Amount2);
+				break;
+			case 1: // Stat -> Stat Cap
+				Amount1 = InAmount * StatCapWorth;
+				Amount2 = InAmount;
+				MaxAmount = StatTokens / StatCapWorth;
+				Text = StrParam("Convert \cg%d Stat Tokens \cj-> \ck%d Stat Cap Tokens\n", Amount1, Amount2);
+				break;
+			case 2: // Skill -> Stat
+				Amount1 = InAmount * StatWorth;
+				Amount2 = InAmount * SkillWorth;
+				MaxAmount = SkillTokens;
+				Text = StrParam("Convert \cd%d Skill Tokens \cj-> \cg%d Stat Tokens\n", Amount1, Amount2);
+				break;
+			case 3: // Skill -> Stat Cap
+				Amount1 = InAmount * (StatCapWorth / SkillWorth);
+				Amount2 = InAmount;
+				MaxAmount = SkillTokens / 2;
+				Text = StrParam("Convert \cd%d Skill Tokens \cj-> \ck%d Stat Cap Tokens\n", Amount1, Amount2);
+				break;
+			case 4: // Stat Cap -> Stat
+				Amount1 = InAmount;
+				Amount2 = InAmount * StatCapWorth;
+				MaxAmount = StatCapTokens;
+				Text = StrParam("Convert \ck%d Stat Cap Tokens \cj-> \cg%d Stat Tokens\n", Amount1, Amount2);
+				break;
+			case 5: // Stat Cap -> Skill
+				Amount1 = InAmount;
+				Amount2 = InAmount * (StatCapWorth / SkillWorth);
+				MaxAmount = StatCapTokens;
+				Text = StrParam("Convert \ck%d Stat Cap Tokens \cj-> \cd%d Skill Tokens\n", Amount1, Amount2);
+				break;
+		};
+
+		// Input
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && Type > 0)
+		{
+			ActivatorSound("menu/move", 127);
+			Type--;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && Type < 5)
+		{
+			ActivatorSound("menu/move", 127);
+			Type++;
+		};
+		if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
+			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT)
+			&& InAmount > 1)
+		{
+			ActivatorSound("menu/move", 127);
+			InAmount--;
+		};
+		if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT)
+			&& InAmount <= MaxAmount - 1)
+		{
+			ActivatorSound("menu/move", 127);
+			InAmount++;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			str InItem;
+			str OutItem;
+			
+			switch (Type)
+			{
+				case 0: InItem = "StatToken"; 		OutItem = "SkillToken";		break;
+				case 1: InItem = "StatToken"; 		OutItem = "StatCapToken";	break;
+				case 2: InItem = "SkillToken"; 		OutItem = "StatToken";		break;
+				case 3: InItem = "SkillToken"; 		OutItem = "StatCapToken";	break;
+				case 4: InItem = "StatCapToken"; 	OutItem = "StatToken";		break;
+				case 5: InItem = "StatCapToken"; 	OutItem = "SkillToken";		break;
+			};
+			
+			if ((Type == 0 || Type == 1) && StatTokens >= Amount1)
+			{
+				GiveInventory(OutItem, Amount2);
+				TakeInventory(InItem, Amount1);
+				ActivatorSound("misc/tokenconvert", 127);
+			}
+			else if ((Type == 2 || Type == 3) && SkillTokens >= Amount1)
+			{
+				GiveInventory(OutItem, Amount2);
+				TakeInventory(InItem, Amount1);
+				ActivatorSound("misc/tokenconvert", 127);
+			}
+			else if ((Type == 4 || Type == 5) && StatCapTokens >= Amount1)
+			{
+				GiveInventory(OutItem, Amount2);
+				TakeInventory(InItem, Amount1);
+				ActivatorSound("misc/tokenconvert", 127);
+			}
+			else
+				ActivatorSound("menu/error", 127);
+		};
+		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+		{
+			ActivatorSound("menu/move", 127);
+			SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+			return;
+		};
+		
+		// Drawing
+		SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+		PrintSprite("TOKAD0", 0, 16.1, 188.1, 0.05);
+		PrintSprite("TOKBD0", 0, 16.1, 208.1, 0.05);
+		PrintSprite("TOKCD0", 0, 16.1, 228.1, 0.05);
+		SetFont("BIGFONT");
+		HudMessage("%d\n", StatTokens, 		HUDMSG_PLAIN, 0, CR_RED,  			40.1, 178.0, 0.05);
+		HudMessage("%d\n", StatCapTokens, 	HUDMSG_PLAIN, 0, CR_YELLOW,  		40.1, 198.0, 0.05);
+		HudMessage("%d\n", SkillTokens, 	HUDMSG_PLAIN, 0, CR_DARKGREEN,		40.1, 218.0, 0.05);
+		SetFont("SMALLFONT");
+		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, CR_WHITE, 140.1, 178.0, 0.05);
+
+		Delay(1);
+	};
+};
