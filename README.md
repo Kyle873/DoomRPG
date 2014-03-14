@@ -14,10 +14,7 @@ TIPS
 - Overdriving an unlearnt skill will automatically use an available Skill Token to learn it.
 - You can Respec (reset your stats and skills) from the Doom RPG Options menu. Respecs will cost you half of your total Credits.
 - You can change the current skill level by using the computer across from the regeneration chambers at the UAC Outpost.
-
-PLEASE NOTE
------------
-This README contains information which will eventually be moved to the wiki. It is currently here as a quick reference point for those who need it.
+- You can convert between Stat, Stat Cap and Skill Tokens using the computer to the right of the Skill Computer
 
 Ideas
 =====
@@ -46,8 +43,11 @@ Testers
 
 Contributors
 ------------
+- Ryan Cordell, for all kinds of sprites
+- Lord Misfit, for small snippets of scary code that I made not scary anymore
 - Kate, for contributing totally badass special effects to make things look sexy
 - marrub, for contributing various sprites of assorted things
+- Seryder, for the stim vial sprites
 
 Resources
 ---------
