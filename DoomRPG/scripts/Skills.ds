@@ -127,9 +127,11 @@ function void InitSkills()
 	Index++;
 
 	Skills[1][Index].Name = "Ammo Drop";
-	Skills[1][Index].MaxLevel = 1;
-	Skills[1][Index].Cost = 250;
-	Skills[1][Index].Description[0] = "Drops a Backpack full of ammo at your location";
+	Skills[1][Index].MaxLevel = 3;
+	Skills[1][Index].Cost = 50;
+	Skills[1][Index].Description[0] = "Drops a Small Backpack full of ammo at your location";
+	Skills[1][Index].Description[1] = "Drops a Backpack full of ammo at your location";
+	Skills[1][Index].Description[2] = "Drops a Large Backpack full of ammo at your location";
 	Index = 0;
 
 	// --------------------------------------------------
@@ -776,10 +778,10 @@ function void BulletTime(int Mode)
 // Drops a random Rune in front of you
 function bool DropRune()
 {
-	int Angle = GetActorAngle(0);
-	int X = GetActorX(0) + Cos(Angle) * 96;
-	int Y = GetActorY(0) + Sin(Angle) * 96;
-	int Z = GetActorZ(0) + 48.0;
+	fixed Angle = GetActorAngle(0);
+	fixed X = GetActorX(0) + Cos(Angle) * 96.0;
+	fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+	fixed Z = GetActorZ(0) + 48.0;
 	str Rune;
 	
 	switch (Random(1, 9))
@@ -813,13 +815,25 @@ function bool DropRune()
 // Drops a backpack in front of you
 function bool DropAmmo()
 {
-	int Angle = GetActorAngle(0);
-	int X = GetActorX(0) + Cos(Angle) * 96;
-	int Y = GetActorY(0) + Sin(Angle) * 96;
-	int Z = GetActorZ(0) + 48.0;
+	int AmmoDropLevel = Skills[1][8].CurrentLevel;
+	fixed Angle = GetActorAngle(0);
+	fixed X = GetActorX(0) + Cos(Angle) * 96.0;
+	fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+	fixed Z = GetActorZ(0) + 48.0;
+	str Ammo;
 	
-	if (Spawn("BackpackDropper", X, Y, Z, 0, Angle))
+	switch (AmmoDropLevel)
 	{
+		case 1: 		Ammo = "SmallBackpack"; break;
+		case 2: 		Ammo = "Backpack";		break;
+		case 3: case 4: Ammo = "BigBackpack";	break;
+	};
+	
+	if (Spawn(Ammo, X, Y, Z, 0, Angle))
+	{
+		if (AmmoDropLevel == 4 && GetCVar("drpg_ext_doomrl"))
+			Spawn("RLSupplyCrate", X, Y, Z, 0, Angle);
+		
 		ActivatorSound("skills/drop", 127);
 		Spawn("TeleportFog", X, Y, Z, 0, Angle);
 		return true;
@@ -1227,9 +1241,13 @@ function void CheckSkills()
 	else
 		TakeInventory("Aura", 1);
 	
-	// DoomRL Compatibility - Increase the Cost of Breakdown Armor
+	// DoomRL Compatibility
 	if (GetCVar("drpg_ext_doomrl"))
-		Skills[5][0].Cost = 500;
+	{
+		// Add an extra level to the Ammo Drop to drop Supply Crates
+		Skills[1][8].MaxLevel = 4;
+		Skills[1][8].Description[3] = "Drops a Large Backpack full of ammo at your location\nDrops a Supply Crate at your location";
+	};
 	
 	// Aura Timer handling
 	if (Player.AuraTimer > 0)
