@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Friday, March 14, 2014 at 12:27:36 AM";
+	"Friday, March 14, 2014 at 8:39:35 AM";
 };
 
 bool ParBonus;
@@ -40,7 +40,6 @@ script Init() enter
 		Player.Energy = 10;
 		Player.Capacity = 10;
 		Player.Shield.Timer = 175;
-		Player.Shield.Nova = true;
 
 		if (!GetCVar("drpg_hardstart"))
 		{
@@ -91,6 +90,7 @@ script Init() enter
 	
 	// Execute Game Loops
 	Loop();
+	ShieldScript();
 	Speed();
 	StatRandomizer();
 	AutosaveHandler();
@@ -127,10 +127,6 @@ script Init() enter
 	Player.ItemsBonus = false;
 	Player.SecretsBonus = false;
 	Player.AllBonus = false;
-	
-	// IF you have the Nova Shield Accessory and move to a new level, make sure to check the Nova flag
-	if (CheckInventory("Shield") && Player.Shield.Accessory == 5)
-		Player.Shield.Nova = false;
 	
 	// Flag this level as visited for the transporter
 	if (!Player.MapsVisited[GetLevelInfo(LEVELINFO_LEVELNUM)])
@@ -177,9 +173,9 @@ script MonsterInit(int Flags)
 			else // If not in the Arena, base it off the level the player teleported from
 				LevelNum = LevelNum;
 		if (LevelType == 1 || LevelType == 3) // Player Level
-			MonsterLevel = Player.Level + Random(0, GameSkill() * 2) + Random(0, MonsterCurve);
+			MonsterLevel = Round((fixed)Player.Level + RandomFixed(0.0, (fixed)GameSkill() * 2.0) + RandomFixed(0.0, (fixed)MonsterCurve) * RandomFixed(1.0, LevelMult));
 		if (LevelType == 2 || LevelType == 3) // Map Number
-			MonsterLevel += Round((fixed)LevelNum * RandomFixed(1.0, LevelMult));
+			MonsterLevel += Round((fixed)LevelNum * RandomFixed(1.0, (fixed)LevelMult));
 		if (GetActorProperty(0, APROP_Friendly)) // If the monster is friendly, it has the same level as you
 			MonsterLevel = Player.Level;
 		if (MonsterLevel <= 0) MonsterLevel = 1;
@@ -524,10 +520,8 @@ script Loop()
 	if (GetCVar("drpg_auto_heal"))
 		CallACS("QuickHeal");
 
-	// Shield Handling
+	// Check health for this tic
 	Player.BeforeHealth = GetActorProperty(PlayerTID, APROP_Health);
-	if (CheckInventory("Shield"))
-		CallACS("ShieldScript");
 	
 	// Regeneration
 	if (GetActorProperty(PlayerTID, APROP_Health) > 0)
@@ -555,9 +549,9 @@ script Loop()
 	// Loop
 	Delay(1);
 	
-	// These need to be done in a separate tic
+	// this needs to be done in a separate tic
 	Player.AfterHealth = GetActorProperty(PlayerTID, APROP_Health);
-	Player.AfterArmor = CheckInventory("BasicArmor");
+	Player.HealthLoss = Player.BeforeHealth - Player.AfterHealth;
 	
 	goto Start;
 };
@@ -832,9 +826,8 @@ script DamageNumbers()
 					int Digit6 = GetDigit(Abs(NewHealth), 5);
 					int Digit7 = GetDigit(Abs(NewHealth), 6);
 					
-					fixed Angle = GetActorAngle(0);
-					fixed X = GetActorX(0) + Cos(Angle);
-					fixed Y = GetActorY(0) + Sin(Angle);
+					fixed X = GetActorX(0);
+					fixed Y = GetActorY(0);
 					fixed Z;
 					int ActorHeight = CheckInventory("MonsterHeightCheck");
 					
@@ -962,7 +955,7 @@ script DamageNumbers()
 					if (NewHealth == 1)
 						Thing_SetTranslation(DigitID, 3);
 					
-					SetActorVelocity(DigitID, 0, Random(-1.0, 1.0), 0.5, 0, 0);
+					SetActorVelocity(DigitID, Random(-1.0, 1.0), Random(-1.0, 1.0), 0.5, 0, 0);
 					SetInventory("MonsterHasTicked", 1);
 				};
 			};
@@ -1189,6 +1182,9 @@ function void CheckHUD()
 	// Shield
 	Shield = Player.Shield.Charge;
 	ShieldCapacity = Player.Shield.Capacity;
+	TakeInventory("ShieldCapacity", 100);
+	GiveInventory("ShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
+	SetInventory("Shield", Player.Shield.Active);
 	
 	// Status Timer
 	if (Player.StatusTimer > 0)
