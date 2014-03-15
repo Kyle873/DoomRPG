@@ -255,19 +255,22 @@ script ShieldScript()
 			if (Player.HealthLoss > 0)
 			{
 				if (Player.Shield.Charge == 0)
-					ToggleShield()
+				{
+					Player.Shield.Health -= Player.HealthLoss;
+					ToggleShield(false);
+				}
 				else if (Player.HealthLoss > Player.Shield.Charge)
 				{
-					SetActorProperty(PlayerTID, APROP_Health, GetActorProperty(PlayerTID, APROP_Health) + Player.HealthLoss - (Player.HealthLoss - Player.Shield.Charge));
+					SetActorProperty(PlayerTID, APROP_Health, Player.Shield.Health - (Player.HealthLoss - Player.Shield.Charge));
 					Player.Shield.Charge = 0;
 					if (Player.Shield.Accessory == 5) // Nova
 						ShieldNova();
-					ToggleShield();
+					ToggleShield(true);
 				}
 				else
 				{
-					SetActorProperty(PlayerTID, APROP_Health, GetActorProperty(PlayerTID, APROP_Health) + Player.HealthLoss);
 					Player.Shield.Charge -= Player.HealthLoss;
+					SetActorProperty(PlayerTID, APROP_Health, SHIELD_HEALTH);
 				};
 				
 				Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
@@ -290,7 +293,7 @@ script ShieldScript()
 	};
 };
 
-script ToggleShield()
+script ToggleShield(bool Destroyed)
 {
 	// If you're dead, terminate
 	if (GetActorProperty(PlayerTID, APROP_Health) <= 0) return;
@@ -307,12 +310,15 @@ script ToggleShield()
 	if (!Player.Shield.Active)
 	{
 		ActivatorSound("shield/on", 127);
+		Player.Shield.Health = GetActorProperty(PlayerTID, APROP_Health);
+		SetActorProperty(PlayerTID, APROP_Health, SHIELD_HEALTH);
 		Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
 		Player.Shield.Active = true;
 	}
 	else
 	{
 		ActivatorSound("shield/off", 127);
+		if (!Destroyed) SetActorProperty(PlayerTID, APROP_Health, Player.Shield.Health);
 		Player.Shield.Active = false;
 		if (GetCVar("drpg_shield_reset"))
 			Shield = 0;
@@ -332,7 +338,7 @@ function void CheckShields()
 	// Check to make sure the Shield has components
 	if (Player.Shield.Active && (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0))
 	{
-		ToggleShield();
+		ToggleShield(false);
 		Player.Shield.Charge = 0;
 		Player.Shield.Timer = 35 * Player.Shield.DelayRate;
 	};

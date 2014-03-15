@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Friday, March 14, 2014 at 9:12:12 PM";
+	"Saturday, March 15, 2014 at 2:22:53 AM";
 };
 
 bool ParBonus;
@@ -95,7 +95,6 @@ script Init() enter
 	StatRandomizer();
 	AutosaveHandler();
 	DamageNumbers();
-	DamageNumbersHUD();
 	HealthBars();
 	
 	// Remove Aura if the keep Aura CVAR is off
@@ -530,6 +529,10 @@ script Loop()
 	// Always Quick Heal if CVAR is set
 	if (GetCVar("drpg_auto_heal"))
 		CallACS("QuickHeal");
+	
+	// Handle damage numbers on the HUD
+	if (GetCVar("drpg_damagenumbers_hud") && !Player.Shield.Active)
+		DamageNumbersHUD();
 
 	// Check health for this tic
 	Player.BeforeHealth = GetActorProperty(PlayerTID, APROP_Health);
@@ -827,8 +830,13 @@ script DamageNumbers()
 			{
 				int NewHealth = CheckInventory("MonsterCurrentHealth") - GetActorProperty(0, APROP_Health);
 				
+				// Prevent digit overflow
 				if (NewHealth > 9999999)
 					NewHealth = 9999999;
+				
+				// Don't show damage numbers when the shield is active
+				if (CheckInventory("Shield") || GetActorProperty(0, APROP_Health) == SHIELD_HEALTH)
+					NewHealth = 0;
 				
 				if (NewHealth != 0)
 				{
@@ -981,26 +989,20 @@ script DamageNumbers()
 // Psuedo Damage Numbers on the HUD
 script DamageNumbersHUD()
 {
-	Start:
 	int Before = GetActorProperty(PlayerTID, APROP_Health);
 	Delay(1);
 	
-	if (GetCVar("drpg_damagenumbers_hud"))
-	{
-		int Color = GetCVar("drpg_damagenumbers_hud_color");
-		int After = GetActorProperty(PlayerTID, APROP_Health);
-		int Loss = Before - After;
-		
-		if (Loss == 1)
-			SetFont("SMALLFONT")
-		else
-			SetFont("BIGFONT");
-		
-		if (Before > After)
-			HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0);
-	};
+	int Color = GetCVar("drpg_damagenumbers_hud_color");
+	int After = GetActorProperty(PlayerTID, APROP_Health);
+	int Loss = Before - After;
 	
-	goto Start;
+	if (Loss == 1)
+		SetFont("SMALLFONT")
+	else
+		SetFont("BIGFONT");
+	
+	if (Before > After)
+		HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0);
 };
 
 // Handles HUD Health Bars
