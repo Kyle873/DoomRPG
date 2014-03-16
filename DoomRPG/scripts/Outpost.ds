@@ -237,12 +237,15 @@ script LevelTransport()
 script SkillComputer()
 {
     AmbientSound("misc/edgar", 127);
-    Delay(1);
+	
+	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     
     while (1)
     {
-        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-        
+		// Prevent the menus from being opened
+		Player.InMenu = false;
+		Player.InShop = false;
+
         // Text
         SetFont("BIGFONT");
         HudMessage("Skill Level: \cg%d (%s)\n", SkillChoice + 1, SkillLevels[SkillChoice],
@@ -313,7 +316,11 @@ script SelectArenaWave()
     {
         SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
         
-        // Text
+		// Prevent the menus from being opened
+		Player.InMenu = false;
+		Player.InShop = false;
+        
+		// Text
         SetFont("BIGFONT");
         HudMessage("Wave: \cd%d/%d\n", WaveChoice, ArenaMaxWave,
                    HUDMSG_FADEOUT, 1, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
@@ -414,6 +421,10 @@ script TokenConverter()
 		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
 		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 		
+		// Prevent the menus from being opened
+		Player.InMenu = false;
+		Player.InShop = false;
+		
 		switch (Type)
 		{
 			case 0: // Stat -> Skill
@@ -464,11 +475,13 @@ script TokenConverter()
 		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && Type > 0)
 		{
 			ActivatorSound("menu/move", 127);
+			InAmount = 1;
 			Type--;
 		};
 		if (Buttons == BT_BACK && OldButtons != BT_BACK && Type < 5)
 		{
 			ActivatorSound("menu/move", 127);
+			InAmount = 1;
 			Type++;
 		};
 		if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
