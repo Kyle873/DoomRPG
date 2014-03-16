@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Sunday, March 16, 2014 at 7:50:48 AM";
+	"Sunday, March 16, 2014 at 10:33:18 AM";
 };
 
 bool ParBonus;
@@ -1023,7 +1023,6 @@ script HealthBars()
 		
 		fixed X = GetCVarFixed("drpg_healthbars_x");
 		fixed Y = GetCVarFixed("drpg_healthbars_y");
-		str Name = "";
 		bool HasHealthBar = (CheckInventory("HealthBar") > 0);
 		int CurrentLevel = CheckInventory("MonsterLevel");
 		int CurrentAura = CheckInventory("MonsterAura");
@@ -1033,6 +1032,7 @@ script HealthBars()
 		int CurrentHealth = GetActorProperty(0, APROP_Health);
 		int MaxHealth = GetActorProperty(0, APROP_SpawnHealth);
 		bool Friendly = GetActorProperty(0, APROP_Friendly);
+		str Name = GetActorPropertyString(0, APROP_Nametag);
 		int HealthPercent;
 		str FillType;
 		str AuraType;
@@ -1073,14 +1073,39 @@ script HealthBars()
 					else
 						PrintSprite("HPBar", 4000, X, Y, 0.05);
 				
+				// Name
+				if (GetCVar("drpg_healthbars_names"))
+				{
+					int Color = CR_GRAY;
+					
+					switch (CurrentAura)
+					{
+						case 1: 	Color = CR_RED;		break;
+						case 2: 	Color = CR_GREEN;	break;
+						case 3: 	Color = CR_WHITE;	break;
+						case 4: 	Color = CR_ORANGE;	break;
+						case 5: 	Color = CR_BRICK;	break;
+						case 6: 	Color = CR_CYAN;	break;
+						case 7: 	Color = CR_PURPLE;	break;
+						case 8: 	Color = CR_BLUE;	break;
+						case 9: 	Color = CR_YELLOW;	break;
+						case 10: 	Color = CR_BLACK;	break;
+					};
+					
+					SetFont("BIGFONT");
+					HudMessage("%s\n", Name, HUDMSG_PLAIN, 4001, Color, X, Y - 24.0, 0.05);
+				};
+				
+				// HP/Max HP
 				SetFont("SMALLFONT");
-				HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 4001, CR_GREEN, X, Y, 0.05);
+				HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 4002, CR_GREEN, X, Y, 0.05);
 				
 				// Stats
 				if (GetCVar("drpg_monster_levels") > 0 && CurrentLevel > 0)
 				{
 					SetFont("BIGFONT");
 					
+					// Stat Amounts
 					HudMessage("%d\n", CurrentLevel, HUDMSG_PLAIN, 4003, CR_WHITE, X - 96.1, Y + 21.0, 0.05);
 					HudMessage("%d\n", CurrentStrength, HUDMSG_PLAIN, 4004, CR_RED, X - 2.1, Y + 21.0, 0.05);
 					HudMessage("%d\n", CurrentDefense, HUDMSG_PLAIN, 4005, CR_GREEN, X + 54.1, Y + 21.0, 0.05);
@@ -1091,7 +1116,7 @@ script HealthBars()
 					PrintSprite("MonDEF", 0, X + 42.0, Y + 21.0, 0.05);
 				};
 				
-				// Aura
+				// Aura Icon
 				switch (CurrentAura)
 				{
 					case 1: 	AuraType = "AuraRed";	break;
@@ -1112,6 +1137,7 @@ script HealthBars()
 				if (HealthPercent > 100)
 					HealthPercent = 100;
 				
+				// Bar fill
 				if (GetCVar("screenblocks") == 10)
 					for (int i = 0; i <= HealthPercent * 1.165; i++)
 						PrintSprite(FillType, 4100 + i, (X - 120.0) + (i * 2.0), Y, 0.05)
