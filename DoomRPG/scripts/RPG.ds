@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Saturday, March 15, 2014 at 10:01:30 PM";
+	"Sunday, March 16, 2014 at 2:12:48 AM";
 };
 
 bool ParBonus;
@@ -357,7 +357,7 @@ script MonsterDeath()
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
 	int AuraType = CheckInventory("MonsterAura");
-	fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2, GetActorProperty(0, APROP_SpawnHealth)) * (1.0 + ((fixed)MonsterLevel / 100.0));
+	fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2, GetActorProperty(0, APROP_SpawnHealth));
 	int SkillDropMod = (GameSkill() - 1) * 32;
 	int LuckDrops = 1;
 	
@@ -466,6 +466,10 @@ script MonsterDeath()
 	if (!(MonsterFlags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
 	{
 		SetActivatorToTarget(0);
+		
+		// XP modifications based on level and skill
+		if (GetCVar("drpg_xp_monsterlevel")) XPAmount *= 1.0 + ((fixed)MonsterLevel / 100.0);
+		if (GetCVar("drpg_xp_skilllevel")) XPAmount *= 1.0 - (0.15 * (fixed)GameSkill());
 		
 		if (MonsterFlags & MF_NEGATIVEXP)
 			AddXP(-(int)XPAmount, false)
