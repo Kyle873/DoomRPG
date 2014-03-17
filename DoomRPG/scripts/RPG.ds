@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, March 17, 2014 at 8:34:10 AM";
+	"Monday, March 17, 2014 at 9:07:32 AM";
 };
 
 bool ParBonus;
@@ -111,7 +111,7 @@ script Init() enter
 	};
 	if (Transported == 2) // Death
 	{
-		SetActorProperty(Player.TID, APROP_Health, HealthMax / 10 + 1);
+		SetActorProperty(Player.TID, APROP_Health, Player.HealthMax / 10 + 1);
 		FadeRange(255, 0, 0, 1.0, 255, 0, 0, 0.0, 1.0);
 		Transported = 0;
 	};
@@ -680,7 +680,7 @@ script QuickHeal(int Quick)
 	int Health = GetActorProperty(Player.TID, APROP_Health);
 	int Percent = GetCVar("drpg_auto_heal_percent");
 	
-	if ((Health < HealthMax / Percent) || Quick)
+	if ((Health < Player.HealthMax / Percent) || Quick)
 			 if (CheckInventory("StimPack")) {			UseInventory("StimPack"); }
 		else if (CheckInventory("SmallMedikit")) {		UseInventory("SmallMedikit"); }
 		else if (CheckInventory("Medikit")) {			UseInventory("Medikit"); }
@@ -1185,25 +1185,28 @@ script Exit(bool Secret) @ 30000
 // Apply values to global vars visible to the HUD
 function void CheckHUD()
 {
+	int PlayerNum = PlayerNumber();
+	
 	// Max Health/Armor
-	HealthMax = Player.HealthMax;
-	ArmorMax = Player.ArmorMax;
+	HealthMax[PlayerNum] = Player.HealthMax;
+	ArmorMax[PlayerNum] = Player.ArmorMax;
 	
 	// EP
-	EP = Player.EP;
-	EPMax = Player.EPMax;
+	EP[PlayerNum] = Player.EP;
+	EPMax[PlayerNum] = Player.EPMax;
+	Print("%d/%d\n", EP[PlayerNum], EPMax[PlayerNum]);
 	
 	// For EP Bar on HUD
 	SetInventory("EP", Player.EP * 100 / Player.EPMax);
 
 	// Combo System
-	Combo = Player.Combo;
-	BonusGained = Player.BonusGained;
-	XPGained = Player.XPGained;
-	RankGained = Player.RankGained;
+	Combo[PlayerNum] = Player.Combo;
+	BonusGained[PlayerNum] = Player.BonusGained;
+	XPGained[PlayerNum] = Player.XPGained;
+	RankGained[PlayerNum] = Player.RankGained;
 	
 	// Aura Timer
-	AuraTimerHUD = Player.AuraTimer / 35 + 1;
+	AuraTimerHUD[PlayerNum] = Player.AuraTimer / 35 + 1;
 	
 	// For Combo Bar on HUD
 	if (Player.ComboTimer < 35 * 4 && Player.ComboTimer > 35 * 2)
@@ -1219,26 +1222,26 @@ function void CheckHUD()
 	
 	// Stim Timer
 	if (Player.Stim.Timer > 0)
-		StimTimerHUD = Player.Stim.Timer / 35 + 1
+		StimTimerHUD[PlayerNum] = Player.Stim.Timer / 35 + 1
 	else
-		StimTimerHUD = 0;
+		StimTimerHUD[PlayerNum] = 0;
 	
 	// Shield
-	Shield = Player.Shield.Charge;
-	ShieldCapacity = Player.Shield.Capacity;
+	Shield[PlayerNum] = Player.Shield.Charge;
+	ShieldCapacity[PlayerNum] = Player.Shield.Capacity;
 	TakeInventory("ShieldCapacity", 100);
 	GiveInventory("ShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
 	SetInventory("Shield", Player.Shield.Active);
 	
 	// Status Timer
 	if (Player.StatusTimer > 0)
-		StatusTimerHUD = Player.StatusTimer / 35 + 1
+		StatusTimerHUD[PlayerNum] = Player.StatusTimer / 35 + 1
 	else
-		StatusTimerHUD = 0;
+		StatusTimerHUD[PlayerNum] = 0;
 	
 	// Items
-	Credits = CheckInventory("Credits");
-	Continues = CheckInventory("Continue");
+	Credits[PlayerNum] = CheckInventory("Credits");
+	Continues[PlayerNum] = CheckInventory("Continue");
 };
 
 function void DefaultLoadout()
