@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, March 17, 2014 at 2:46:52 AM";
+	"Monday, March 17, 2014 at 8:34:10 AM";
 };
 
 bool ParBonus;
@@ -25,12 +25,11 @@ script Init() enter
 	if (!Player.FirstRun)
 	{
 		// Player Index & TID
-		PlayerIndex = PlayerNumber();
-		PlayerTID = PLAYER_TID + PlayerNumber();
-		Thing_ChangeTID(0, PlayerTID);
+		Player.TID = PLAYER_TID + PlayerNumber();
+		Thing_ChangeTID(0, Player.TID);
 		
 #if DEBUG
-		Log("\cdDEBUG: Player Index: %d, Player TID: %d\n", PlayerIndex, PlayerTID);
+		Log("\cdDEBUG: Player Index: %d, Player TID: %d\n", PlayerNumber(), Player.TID);
 #endif
 
 		// Setup initial vars
@@ -112,7 +111,7 @@ script Init() enter
 	};
 	if (Transported == 2) // Death
 	{
-		SetActorProperty(PlayerTID, APROP_Health, HealthMax / 10 + 1);
+		SetActorProperty(Player.TID, APROP_Health, HealthMax / 10 + 1);
 		FadeRange(255, 0, 0, 1.0, 255, 0, 0, 0.0, 1.0);
 		Transported = 0;
 	};
@@ -473,7 +472,7 @@ script MonsterDeath()
 		
 		if (MonsterFlags & MF_NEGATIVEXP)
 			AddXP(-(int)XPAmount, false)
-		else if (ActivatorTID() != PlayerTID)
+		else if (ActivatorTID() != Player.TID)
 			AddXP((int)XPAmount, true)
 		else
 			for (int i = PLAYER_TID; i < PLAYER_TID + MAX_PLAYERS; i++)
@@ -539,10 +538,10 @@ script Loop()
 		DamageNumbersHUD();
 
 	// Check health for this tic
-	Player.BeforeHealth = GetActorProperty(PlayerTID, APROP_Health);
+	Player.BeforeHealth = GetActorProperty(Player.TID, APROP_Health);
 	
 	// Regeneration
-	if (GetActorProperty(PlayerTID, APROP_Health) > 0)
+	if (GetActorProperty(Player.TID, APROP_Health) > 0)
 		DoRegen();
 	
 	// Give the Strength boosting item
@@ -550,11 +549,11 @@ script Loop()
 		GiveInventory(StrParam("Strength%d\n", Player.TotalDamage), 1);
 
 	// Apply Stats
-	SetActorProperty(PlayerTID, APROP_SpawnHealth, Player.HealthMax);
-	SetActorPropertyFixed(PlayerTID, APROP_DamageFactor, Player.DamageFactor);
-	SetActorProperty(PlayerTID, APROP_Mass, Player.Mass);
-	SetActorPropertyFixed(PlayerTID, APROP_Speed, Player.Speed);
-	SetActorPropertyFixed(PlayerTID, APROP_JumpZ, Player.JumpHeight);
+	SetActorProperty(Player.TID, APROP_SpawnHealth, Player.HealthMax);
+	SetActorPropertyFixed(Player.TID, APROP_DamageFactor, Player.DamageFactor);
+	SetActorProperty(Player.TID, APROP_Mass, Player.Mass);
+	SetActorPropertyFixed(Player.TID, APROP_Speed, Player.Speed);
+	SetActorPropertyFixed(Player.TID, APROP_JumpZ, Player.JumpHeight);
 	
 	// Clear your Status Effect if the timer is empty
 	if (Player.StatusTimer <= 0)
@@ -562,13 +561,13 @@ script Loop()
 	
 	// Make you invincible while in the Menus and if menu freezing is enabled
 	if ((Player.InMenu || Player.InShop) && GetCVar("drpg_menufreeze"))
-		SetActorProperty(PlayerTID, APROP_DamageFactor, 0);
+		SetActorProperty(Player.TID, APROP_DamageFactor, 0);
 	
 	// Loop
 	Delay(1);
 	
 	// this needs to be done in a separate tic
-	Player.AfterHealth = GetActorProperty(PlayerTID, APROP_Health);
+	Player.AfterHealth = GetActorProperty(Player.TID, APROP_Health);
 	Player.HealthLoss = Player.BeforeHealth - Player.AfterHealth;
 	
 	goto Start;
@@ -659,7 +658,7 @@ script StatusEffect(int Type, int Time, int Intensity)
 			FadeRange(0, 0, 0, (0.75 + (Intensity / 400)) - ((1024 * 8) * Sin(Timer() * 0.01)), 0, 0, 0, 0.0, 0.5);
 		
 		if (Type == 3) // Poisoned
-			if ((Timer() % 35) == 1 && (GetActorProperty(PlayerTID, APROP_Health) - Intensity) > 1)
+			if ((Timer() % 35) == 1 && (GetActorProperty(Player.TID, APROP_Health) - Intensity) > 1)
 			{
 				DamageThing(Intensity);
 				FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + Intensity / 100));
@@ -676,9 +675,9 @@ script StatusEffect(int Type, int Time, int Intensity)
 script QuickHeal(int Quick)
 {
 	// If you're dead, return
-	if (GetActorProperty(PlayerTID, APROP_Health) <= 0) return;
+	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
 	
-	int Health = GetActorProperty(PlayerTID, APROP_Health);
+	int Health = GetActorProperty(Player.TID, APROP_Health);
 	int Percent = GetCVar("drpg_auto_heal_percent");
 	
 	if ((Health < HealthMax / Percent) || Quick)
@@ -993,11 +992,11 @@ script DamageNumbers()
 // Psuedo Damage Numbers on the HUD
 script DamageNumbersHUD()
 {
-	int Before = GetActorProperty(PlayerTID, APROP_Health);
+	int Before = GetActorProperty(Player.TID, APROP_Health);
 	Delay(1);
 	
 	int Color = GetCVar("drpg_damagenumbers_hud_color");
-	int After = GetActorProperty(PlayerTID, APROP_Health);
+	int After = GetActorProperty(Player.TID, APROP_Health);
 	int Loss = Before - After;
 	
 	if (Loss == 1)
@@ -1015,9 +1014,9 @@ script HealthBars()
 	Start:
 	while (GetCVar("drpg_healthbars"))
 	{
-		Thing_ChangeTID(PlayerNumber(), PlayerTID);
+		Thing_ChangeTID(PlayerNumber(), Player.TID);
 		int Activator = ActivatorTID();
-		SetActivatorToTarget(PlayerTID);
+		SetActivatorToTarget(Player.TID);
 		
 		Delay(1);
 		
@@ -1037,10 +1036,10 @@ script HealthBars()
 		str FillType;
 		str AuraType;
 		
-		if (ActivatorTID() != Activator && GetActorProperty(PlayerTID, APROP_Health) > 0)
+		if (ActivatorTID() != Activator && GetActorProperty(Player.TID, APROP_Health) > 0)
 		{
 			SetActivator(Activator);
-			SetActivatorToTarget(PlayerTID);
+			SetActivatorToTarget(Player.TID);
 			SetActivator(Activator);
 			
 			if (HasHealthBar && CurrentHealth > 0 && (!Player.InMenu && !Player.InShop))
