@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, March 17, 2014 at 9:07:32 AM";
+	"Monday, March 17, 2014 at 10:20:45 AM";
 };
 
 bool ParBonus;
@@ -1185,6 +1185,7 @@ script Exit(bool Secret) @ 30000
 // Apply values to global vars visible to the HUD
 function void CheckHUD()
 {
+	/* New Multiplayer HUD Checking - when shit works(TM)
 	int PlayerNum = PlayerNumber();
 	
 	// Max Health/Armor
@@ -1242,6 +1243,63 @@ function void CheckHUD()
 	// Items
 	Credits[PlayerNum] = CheckInventory("Credits");
 	Continues[PlayerNum] = CheckInventory("Continue");
+	*/
+
+	// Max Health/Armor
+	HealthMax = Player.HealthMax;
+	ArmorMax = Player.ArmorMax;
+	
+	// EP
+	EP = Player.EP;
+	EPMax = Player.EPMax;
+	Print("%d/%d\n", EP, EPMax);
+	
+	// For EP Bar on HUD
+	SetInventory("EP", Player.EP * 100 / Player.EPMax);
+
+	// Combo System
+	Combo = Player.Combo;
+	BonusGained = Player.BonusGained;
+	XPGained = Player.XPGained;
+	RankGained = Player.RankGained;
+	
+	// Aura Timer
+	AuraTimerHUD = Player.AuraTimer / 35 + 1;
+	
+	// For Combo Bar on HUD
+	if (Player.ComboTimer < 35 * 4 && Player.ComboTimer > 35 * 2)
+	{
+		SetInventory("Combo", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+		SetInventory("Combo2", 0);
+	}
+	else if (Player.ComboTimer <= 35 * 2)
+	{
+		SetInventory("Combo", 0);
+		SetInventory("Combo2", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+	};
+	
+	// Stim Timer
+	if (Player.Stim.Timer > 0)
+		StimTimerHUD = Player.Stim.Timer / 35 + 1
+	else
+		StimTimerHUD = 0;
+	
+	// Shield
+	Shield = Player.Shield.Charge;
+	ShieldCapacity = Player.Shield.Capacity;
+	TakeInventory("ShieldCapacity", 100);
+	GiveInventory("ShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
+	SetInventory("Shield", Player.Shield.Active);
+	
+	// Status Timer
+	if (Player.StatusTimer > 0)
+		StatusTimerHUD = Player.StatusTimer / 35 + 1
+	else
+		StatusTimerHUD = 0;
+	
+	// Items
+	Credits = CheckInventory("Credits");
+	Continues = CheckInventory("Continue");
 };
 
 function void DefaultLoadout()
