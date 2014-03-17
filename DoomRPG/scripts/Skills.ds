@@ -1231,10 +1231,16 @@ function void CheckSkills()
 	int Angle = GetActorAngle(0) * 256;
 	int AmmoRegenMult = 1;
 	
-	// Reset the Skill multiplier from the Blue Aura
-	if (Player.Aura != 5)
-		Player.SkillCostMult = 1.0;
+	// Reset the Skill multiplier from the Blue Aura and Energy Augmentation
+	Player.SkillCostMult = 1.0;
 	
+	// Level 4 and 5 of the Energy Augmentation reduce skill costs by 25% and 50%
+	if (Player.Augs.Active[AUG_ENERGY])
+		if (Player.Augs.Level[AUG_ENERGY] == 4)
+			Player.SkillCostMult = 0.75
+		else if (Player.Augs.Level[AUG_ENERGY] >= 5)
+			Player.SkillCostMult = 0.5;
+			
 	// Give the player the Aura item while an Aura is active (for SBARINFO hax)
 	if (Player.AuraTimer > 0)
 		GiveInventory("Aura", 1)
@@ -1310,11 +1316,11 @@ function void CheckSkills()
 					SpawnForced("CyanAura", X, Y, Z + 32.0, AuraTID, Angle);
 					FadeRange(0, 255, 255, 0.05, 0, 255, 255, 0.0, 1.0);
 					if (BlueAuraLevel == 1)
-						Player.SkillCostMult = 0.75;
+						Player.SkillCostMult /= 1.33;
 					if (BlueAuraLevel == 2)
-						Player.SkillCostMult = 0.5;
+						Player.SkillCostMult /= 2;
 					if (BlueAuraLevel == 3)
-						Player.SkillCostMult = 0.25;
+						Player.SkillCostMult /= 4;
 					break;
 				// Purple Aura
 				case 6:
