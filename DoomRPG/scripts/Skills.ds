@@ -69,6 +69,16 @@ function void InitSkills()
 	Skills[0][Index].Description[0] = "Summons recover all their HP";
 	Index++;
 	
+	Skills[0][Index].Name = "Life Leech";
+	Skills[0][Index].MaxLevel = 5;
+	Skills[0][Index].Cost = 100;
+	Skills[0][Index].Description[0] = "Steal 10% of the target's current HP";
+	Skills[0][Index].Description[1] = "Steal 20% of the target's current HP";
+	Skills[0][Index].Description[2] = "Steal 30% of the target's current HP";
+	Skills[0][Index].Description[3] = "Steal 40% of the target's current HP";
+	Skills[0][Index].Description[4] = "Steal 50% of the target's current HP";
+	Index++;
+
 	Skills[0][Index].Name = "Repair Armor";
 	Skills[0][Index].MaxLevel = 4;
 	Skills[0][Index].Cost = 100;
@@ -503,7 +513,8 @@ script UseSkill(int Index)
 				{
 					case 0:		Success = Heal(1);											break; // Heal
 					case 1:		Success = Heal(2);											break; // Heal Summons
-					case 2:		Success = Repair();											break; // Repair Armor
+					case 2:		Success = LifeLeech();										break; // Life Leech
+					case 3:		Success = Repair();											break; // Repair Armor
 				};
 				break;
 			
@@ -695,10 +706,42 @@ function bool Heal(int Type)
 	return true;
 };
 
+// Life Leech
+script bool LifeLeech()
+{
+	int LeechLevel = Skills[0][2].CurrentLevel;
+	
+	SetActivatorToTarget(Player.TID);
+	
+	// Refund - If the Player has no target
+	if (ActivatorTID() == Player.TID)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	int LeechAmount = Round((fixed)GetActorProperty(0, APROP_Health) * ((fixed)LeechLevel / 10.0));
+	
+	// Refund -- If you leech 0 HP
+	if (LeechAmount == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	DamageThing(LeechAmount);
+	SetActivator(Player.TID);
+	HealThing(LeechAmount);
+	
+	FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
+	ActivatorSound("skills/lifeleech", 127);
+	return true;
+};
+
 // Repair Armor
 function bool Repair()
 {
-	int RepairLevel = Skills[0][2].CurrentLevel;
+	int RepairLevel = Skills[0][3].CurrentLevel;
 	int RepairAmount;
 	
 	// Calculate repair amount based on level
