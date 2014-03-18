@@ -257,6 +257,13 @@ function void InitSkills()
 	Skills[3][Index].MaxLevel = 10;
 	Skills[3][Index].Cost = 50;
 	Skills[3][Index].Description[0] = "Shoots ice missles in a circular nova around you\n\cnIce Damage";
+	Index++;
+
+	Skills[3][Index].Name = "Weaken";
+	Skills[3][Index].MaxLevel = 2;
+	Skills[3][Index].Cost = 200;
+	Skills[3][Index].Description[0] = "Weakens an enemy, halving their stats";
+	Skills[3][Index].Description[1] = "Weakens an enemy, halving their stats and destroying their Aura";
 	Index = 0;
 
 	// --------------------------------------------------
@@ -561,6 +568,7 @@ script UseSkill(int Index)
 					case 1:		Success = AttackSkill(1, 2);								break; // Fireball Nova
 					case 2:		Success = AttackSkill(2, 1);								break; // Ice Missile
 					case 3:		Success = AttackSkill(2, 2);								break; // Ice Nova
+					case 4:		Success = Weaken();											break; // Weaken
 				};
 				break;
 			
@@ -988,6 +996,56 @@ script AttackSkill(int Element, int Type)
 		return;
 	};
 	// etc
+};
+
+// Weaken
+script bool Weaken()
+{
+	int WeakenLevel = Skills[3][4].CurrentLevel;
+	int MonsterLevel;
+	int MonsterAura;
+	int MonsterStrength;
+	int MonsterDefense;
+	
+	SetActivatorToTarget(Player.TID);
+	
+	// Refund - If the Player has no target
+	if (ActivatorTID() == Player.TID)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	MonsterLevel = CheckInventory("MonsterLevel") / 2;
+	MonsterStrength = CheckInventory("MonsterStrength") / 2;
+	MonsterDefense = CheckInventory("MonsterDefense") / 2;
+	MonsterAura = CheckInventory("MonsterAura");
+	
+	// Destroy Aura
+	if (WeakenLevel == 2) 
+	{
+		if (GetActorProperty(0, APROP_Health) > GetActorProperty(0, APROP_SpawnHealth))
+			SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth));
+		
+		MonsterAura = 0;
+	};
+	
+	if (MonsterLevel <= 0) MonsterLevel = 1;
+	if (MonsterStrength <= 0) MonsterStrength = 1;
+	if (MonsterDefense <= 0) MonsterDefense = 1;
+	
+	// Apply the stats to the monster
+	SetInventory("MonsterLevel", MonsterLevel);
+	SetInventory("MonsterAura", MonsterAura);
+	SetInventory("MonsterStrength", MonsterStrength);
+	SetInventory("MonsterDefense", MonsterDefense);
+	SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.9 * (MonsterDefense / 100)));
+
+	SetActivator(Player.TID);
+	
+	FadeRange(0, 0, 0, 0.25, 0, 0, 0, 0.0, 1.0);
+	ActivatorSound("skills/weaken", 127);
+	return true;
 };
 
 // Summoning
