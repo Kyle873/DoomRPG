@@ -55,9 +55,12 @@ function void InitSkills()
 	// HEALING
 	
 	Skills[0][Index].Name = "Heal";
-	Skills[0][Index].MaxLevel = 1;
-	Skills[0][Index].Cost = 50;
-	Skills[0][Index].Description[0] = "Recover HP";
+	Skills[0][Index].MaxLevel = 4;
+	Skills[0][Index].Cost = 25;
+	Skills[0][Index].Description[0] = "Recover 25% HP";
+	Skills[0][Index].Description[1] = "Recover 50% HP";
+	Skills[0][Index].Description[2] = "Recover 75% HP";
+	Skills[0][Index].Description[3] = "Recover All HP";
 	Index++;
 	
 	Skills[0][Index].Name = "Heal Summons";
@@ -67,9 +70,12 @@ function void InitSkills()
 	Index++;
 	
 	Skills[0][Index].Name = "Repair Armor";
-	Skills[0][Index].MaxLevel = 1;
-	Skills[0][Index].Cost = 250;
-	Skills[0][Index].Description[0] = "Repair Armor";
+	Skills[0][Index].MaxLevel = 4;
+	Skills[0][Index].Cost = 100;
+	Skills[0][Index].Description[0] = "Repair 25% Armor";
+	Skills[0][Index].Description[1] = "Repair 50% Armor";
+	Skills[0][Index].Description[2] = "Repair 75% Armor";
+	Skills[0][Index].Description[3] = "Repair All Armor";
 	Index = 0;
 	
 	// --------------------------------------------------
@@ -645,6 +651,18 @@ script DrawSkillHUD() enter
 // Heal
 function bool Heal(int Type)
 {
+	int HealLevel = Skills[0][0].CurrentLevel;
+	int HealAmount;
+	
+	// Calculate healing amount based on level
+	switch (HealLevel)
+	{
+		case 1: HealAmount = Player.HealthMax / 4;		break; // 25%
+		case 2: HealAmount = Player.HealthMax / 2;		break; // 50%
+		case 3: HealAmount = Player.HealthMax / 1.33;	break; // 75%
+		case 4: HealAmount = Player.HealthMax; 			break; // 100%
+	};
+	
 	// Refund - If your health is max or above
 	if (Type == 1 && GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
 	{
@@ -663,7 +681,7 @@ function bool Heal(int Type)
 	
 	if (Type == 1) // Player
 	{
-		HealThing(Player.Energy * 10);
+		HealThing(HealAmount);
 		ActivatorSound("skills/heal", 127);
 	};
 	if (Type == 2) // Summons
@@ -680,10 +698,22 @@ function bool Heal(int Type)
 // Repair Armor
 function bool Repair()
 {
+	int RepairLevel = Skills[0][2].CurrentLevel;
+	int RepairAmount;
+	
+	// Calculate repair amount based on level
+	switch (RepairLevel)
+	{
+		case 1: RepairAmount = Player.ArmorMax / 4;		break; // 25%
+		case 2: RepairAmount = Player.ArmorMax / 2;		break; // 50%
+		case 3: RepairAmount = Player.ArmorMax / 1.33;	break; // 75%
+		case 4: RepairAmount = Player.ArmorMax; 		break; // 100%
+	};
+
 	if (CheckInventory("Armor") < Player.ArmorMax && CheckArmorType() != "")
 	{
 		FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
-		GiveInventory("ArmorBonus", Player.Energy * 10);
+		GiveInventory("ArmorBonus", RepairAmount);
 		
 		if (CheckInventory("Armor") > Player.ArmorMax)
 		{
@@ -1454,12 +1484,6 @@ function void CheckSkills()
 // Updates Skills with dynamic descriptions (calculations, etc)
 function void CheckSkillDescriptions()
 {
-	// Healing - Heal
-	Skills[0][0].Description[0] = StrParam("Recover %d HP\n", Player.Energy * 10);
-
-	// Healing - Repair Armor
-	Skills[0][2].Description[0] = StrParam("Repair %d Armor\n", Player.Energy * 10);
-	
 	// Attacks - Fireball
 	Skills[3][0].Description[0] = StrParam("Shoots a fireball\n\ca%d Fire Damage\n", Round(Player.Energy * 0.25));
 
