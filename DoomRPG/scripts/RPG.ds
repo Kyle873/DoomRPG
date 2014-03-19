@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Wednesday, March 19, 2014 at 1:11:51 PM";
+	"Wednesday, March 19, 2014 at 16:58:34";
 };
 
 bool ParBonus;
@@ -24,13 +24,12 @@ script Init() enter
 {
 	if (!Player.FirstRun)
 	{
-		// Player Index & TID
-		PlayerIndex = PlayerNumber();
+		// Player TID
 		Player.TID = PLAYER_TID + PlayerNumber();
 		Thing_ChangeTID(0, Player.TID);
 		
 #if DEBUG
-		Log("\cdDEBUG: Player Index: %d, Player TID: %d\n", PlayerIndex, Player.TID);
+		Log("\cdDEBUG: Player TID: %d\n", Player.TID);
 #endif
 
 		// Setup initial vars
@@ -131,7 +130,7 @@ script Init() enter
 };
 
 // Monster Init Script
-script MonsterInit(int Flags)
+acscript MonsterInit(int Flags)
 {
 	// If initialization has already occurred on this monster, terminate
 	if (CheckInventory("MonsterInit")) return;
@@ -156,7 +155,7 @@ script MonsterInit(int Flags)
 };
 
 // Special handling for DRLA Monsters
-script MonsterInitDRLA(int Flags)
+acscript MonsterInitDRLA(int Flags)
 {
 	// Tons of insane calculations here to dynamically make cool things happen
 	
@@ -352,7 +351,7 @@ script MonsterLoop()
 	goto Start;
 };
 
-script MonsterDeath()
+acscript MonsterDeath()
 {
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
@@ -673,7 +672,7 @@ script StatusEffect(int Type, int Time, int Intensity)
 };
 
 // Quick Heal
-script QuickHeal(int Quick)
+acscript QuickHeal(int Quick)
 {
 	// If you're dead, return
 	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
@@ -705,7 +704,7 @@ script QuickHeal(int Quick)
 };
 
 // Quick Armor
-script QuickArmor()
+acscript QuickArmor()
 {
 		 if (CheckInventory("WhiteArmor")) {			UseInventory("WhiteArmor"); }
 	else if (CheckInventory("WhiteArmorUsed")) {		UseInventory("WhiteArmorUsed"); }
@@ -720,7 +719,7 @@ script QuickArmor()
 };
 
 // Buy Ammo for selected Weapon
-script QuickAmmo()
+acscript QuickAmmo()
 {
 	// Weapon, Ammo Type and Amount
 	int Weapon;
@@ -766,7 +765,7 @@ script QuickAmmo()
 };
 
 // Quickly buy EP
-script QuickEP()
+acscript QuickEP()
 {
 	if (!GetCVar("drpg_shoptype") && !InBase)
 	{
@@ -1148,7 +1147,7 @@ script HealthBars()
 
 // Level exit script
 // Can't use NamedExecute in xlat, lame
-script Exit(bool Secret) @ 30000
+acscript Exit(bool Secret) @ 30000
 {
 	int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
 	
@@ -1180,7 +1179,7 @@ script Exit(bool Secret) @ 30000
 // Apply values to global vars visible to the HUD
 function void CheckHUD()
 {
-	/* New Multiplayer HUD Checking - when shit works(TM)
+	// New Multiplayer HUD Checking
 	int PlayerNum = PlayerNumber();
 	
 	// Max Health/Armor
@@ -1190,7 +1189,6 @@ function void CheckHUD()
 	// EP
 	EP[PlayerNum] = Player.EP;
 	EPMax[PlayerNum] = Player.EPMax;
-	Print("%d/%d\n", EP[PlayerNum], EPMax[PlayerNum]);
 	
 	// For EP Bar on HUD
 	SetInventory("EP", Player.EP * 100 / Player.EPMax);
@@ -1238,62 +1236,6 @@ function void CheckHUD()
 	// Items
 	Credits[PlayerNum] = CheckInventory("Credits");
 	Continues[PlayerNum] = CheckInventory("Continue");
-	*/
-
-	// Max Health/Armor
-	HealthMax = Player.HealthMax;
-	ArmorMax = Player.ArmorMax;
-	
-	// EP
-	EP = Player.EP;
-	EPMax = Player.EPMax;
-	
-	// For EP Bar on HUD
-	SetInventory("EP", Player.EP * 100 / Player.EPMax);
-
-	// Combo System
-	Combo = Player.Combo;
-	BonusGained = Player.BonusGained;
-	XPGained = Player.XPGained;
-	RankGained = Player.RankGained;
-	
-	// Aura Timer
-	AuraTimerHUD = Player.AuraTimer / 35 + 1;
-	
-	// For Combo Bar on HUD
-	if (Player.ComboTimer < 35 * 4 && Player.ComboTimer > 35 * 2)
-	{
-		SetInventory("Combo", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
-		SetInventory("Combo2", 0);
-	}
-	else if (Player.ComboTimer <= 35 * 2)
-	{
-		SetInventory("Combo", 0);
-		SetInventory("Combo2", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
-	};
-	
-	// Stim Timer
-	if (Player.Stim.Timer > 0)
-		StimTimerHUD = Player.Stim.Timer / 35 + 1
-	else
-		StimTimerHUD = 0;
-	
-	// Shield
-	Shield = Player.Shield.Charge;
-	ShieldCapacity = Player.Shield.Capacity;
-	TakeInventory("ShieldCapacity", 100);
-	GiveInventory("ShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
-	SetInventory("Shield", Player.Shield.Active);
-	
-	// Status Timer
-	if (Player.StatusTimer > 0)
-		StatusTimerHUD = Player.StatusTimer / 35 + 1
-	else
-		StatusTimerHUD = 0;
-	
-	// Items
-	Credits = CheckInventory("Credits");
-	Continues = CheckInventory("Continue");
 };
 
 function void DefaultLoadout()
