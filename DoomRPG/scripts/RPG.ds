@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Wednesday, March 19, 2014 at 16:58:34";
+	"Wednesday, March 19, 2014 at 17:28:30";
 };
 
 bool ParBonus;
@@ -646,7 +646,7 @@ script StatusEffect(int Type, int Time, int Intensity)
 	if (Intensity == 0)
 		Intensity = 1;
 	
-	while (Player.StatusTimer > 0)
+	while (ThisPlayer.StatusTimer > 0)
 	{
 		if (Type == 1) // Confusion
 		{
@@ -664,8 +664,8 @@ script StatusEffect(int Type, int Time, int Intensity)
 				FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + Intensity / 100));
 			};
 		
-		if (Player.StatusTimer > 0)
-			Player.StatusTimer--;
+		if (ThisPlayer.StatusTimer > 0)
+			ThisPlayer.StatusTimer--;
 		
 		Delay(1);
 	};
@@ -675,12 +675,12 @@ script StatusEffect(int Type, int Time, int Intensity)
 acscript QuickHeal(int Quick)
 {
 	// If you're dead, return
-	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
+	if (GetActorProperty(ThisPlayer.TID, APROP_Health) <= 0) return;
 	
 	int Health = GetActorProperty(Player.TID, APROP_Health);
 	int Percent = GetCVar("drpg_auto_heal_percent");
 	
-	if ((Health < Player.HealthMax / Percent) || Quick)
+	if ((Health < ThisPlayer.HealthMax / Percent) || Quick)
 	{
 		if (GetCVar("drpg_auto_heal_order") == 1) // Smallest to Largest
 		{
@@ -773,9 +773,9 @@ acscript QuickEP()
 		return;
 	};
 	
-	int Amount = Player.EPMax - Player.EP;
+	int Amount = ThisPlayer.EPMax - ThisPlayer.EP;
 	
-	if (CheckInventory("Credits") > 0 && Player.EP < Player.EPMax)
+	if (CheckInventory("Credits") > 0 && ThisPlayer.EP < ThisPlayer.EPMax)
 	{
 		ActivatorSound("health/epcapsule", 127);
 		
@@ -799,8 +799,8 @@ script Dead() death
 	ActivatorSound("Taunt", 127);
 	
 	// Reset menu vars
-	Player.InMenu = false;
-	Player.InShop = false;
+	ThisPlayer.InMenu = false;
+	ThisPlayer.InShop = false;
 };
 
 // Respawn - XP Penalty in MP
@@ -986,11 +986,11 @@ script DamageNumbers()
 // Psuedo Damage Numbers on the HUD
 script DamageNumbersHUD()
 {
-	int Before = GetActorProperty(Player.TID, APROP_Health);
+	int Before = GetActorProperty(ThisPlayer.TID, APROP_Health);
 	Delay(1);
 	
 	int Color = GetCVar("drpg_damagenumbers_hud_color");
-	int After = GetActorProperty(Player.TID, APROP_Health);
+	int After = GetActorProperty(ThisPlayer.TID, APROP_Health);
 	int Loss = Before - After;
 	
 	if (Loss == 1)
@@ -1005,13 +1005,12 @@ script DamageNumbersHUD()
 // Handles HUD Health Bars
 script HealthBars()
 {
+	int PlayerNum = PlayerNumber ();
 	Start:
 	
 	while (GetCVar("drpg_healthbars"))
 	{
-		Thing_ChangeTID(0, Player.TID);
-		int Activator = ActivatorTID();
-		SetActivatorToTarget(Player.TID);
+		SetActivatorToTarget(Players(PlayerNum).TID);
 		
 		Delay(1);
 		
@@ -1031,12 +1030,11 @@ script HealthBars()
 		str FillType;
 		str AuraType;
 		
-		if (ActivatorTID() != Activator && GetActorProperty(Player.TID, APROP_Health) > 0)
+		if (ActivatorTID() != Players(PlayerNum).TID && GetActorProperty(Players(PlayerNum).TID, APROP_Health) > 0)
 		{
-			SetActivatorToTarget(Player.TID);
-			SetActivator(Activator);
+			SetActivator(Players(PlayerNum).TID);
 			
-			if (HasHealthBar && CurrentHealth > 0 && (!Player.InMenu && !Player.InShop))
+			if (HasHealthBar && CurrentHealth > 0 && (!ThisPlayer.InMenu && !ThisPlayer.InShop))
 			{
 				// Divide-by-zero check
 				if (MaxHealth > 0)
@@ -1154,12 +1152,12 @@ acscript Exit(bool Secret) @ 30000
 	// Check par time and give bonus if you beat it
 	if ((Timer() / 35) <= ParTime && !(ParTime <= 0 || ParBonus))
 	{
-		int RankBonus = RankTable[Player.RankLevel] / 20;
+		int RankBonus = RankTable[ThisPlayer.RankLevel] / 20;
 		
 		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
 		ActivatorSound("misc/secret", 127);
 		
-		Player.Rank += RankBonus;
+		ThisPlayer.Rank += RankBonus;
 		
 		HudMessage("Par Time Beaten!\n%d Rank Bonus\n",
 				   RankBonus,
@@ -1183,53 +1181,53 @@ function void CheckHUD()
 	int PlayerNum = PlayerNumber();
 	
 	// Max Health/Armor
-	HealthMax[PlayerNum] = Player.HealthMax;
-	ArmorMax[PlayerNum] = Player.ArmorMax;
+	HealthMax[PlayerNum] = ThisPlayer.HealthMax;
+	ArmorMax[PlayerNum] = ThisPlayer.ArmorMax;
 	
 	// EP
-	EP[PlayerNum] = Player.EP;
-	EPMax[PlayerNum] = Player.EPMax;
+	EP[PlayerNum] = ThisPlayer.EP;
+	EPMax[PlayerNum] = ThisPlayer.EPMax;
 	
 	// For EP Bar on HUD
-	SetInventory("EP", Player.EP * 100 / Player.EPMax);
+	SetInventory("EP", ThisPlayer.EP * 100 / ThisPlayer.EPMax);
 
 	// Combo System
-	Combo[PlayerNum] = Player.Combo;
-	BonusGained[PlayerNum] = Player.BonusGained;
-	XPGained[PlayerNum] = Player.XPGained;
-	RankGained[PlayerNum] = Player.RankGained;
+	Combo[PlayerNum] = ThisPlayer.Combo;
+	BonusGained[PlayerNum] = ThisPlayer.BonusGained;
+	XPGained[PlayerNum] = ThisPlayer.XPGained;
+	RankGained[PlayerNum] = ThisPlayer.RankGained;
 	
 	// Aura Timer
-	AuraTimerHUD[PlayerNum] = Player.AuraTimer / 35 + 1;
+	AuraTimerHUD[PlayerNum] = ThisPlayer.AuraTimer / 35 + 1;
 	
 	// For Combo Bar on HUD
-	if (Player.ComboTimer < 35 * 4 && Player.ComboTimer > 35 * 2)
+	if (ThisPlayer.ComboTimer < 35 * 4 && ThisPlayer.ComboTimer > 35 * 2)
 	{
-		SetInventory("Combo", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+		SetInventory("Combo", (int)((fixed)ThisPlayer.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
 		SetInventory("Combo2", 0);
 	}
-	else if (Player.ComboTimer <= 35 * 2)
+	else if (ThisPlayer.ComboTimer <= 35 * 2)
 	{
 		SetInventory("Combo", 0);
-		SetInventory("Combo2", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+		SetInventory("Combo2", (int)((fixed)ThisPlayer.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
 	};
 	
 	// Stim Timer
 	if (Player.Stim.Timer > 0)
-		StimTimerHUD[PlayerNum] = Player.Stim.Timer / 35 + 1
+		StimTimerHUD[PlayerNum] = ThisPlayer.Stim.Timer / 35 + 1
 	else
 		StimTimerHUD[PlayerNum] = 0;
 	
 	// Shield
-	Shield[PlayerNum] = Player.Shield.Charge;
-	ShieldCapacity[PlayerNum] = Player.Shield.Capacity;
+	Shield[PlayerNum] = ThisPlayer.Shield.Charge;
+	ShieldCapacity[PlayerNum] = ThisPlayer.Shield.Capacity;
 	TakeInventory("ShieldCapacity", 100);
-	GiveInventory("ShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
-	SetInventory("Shield", Player.Shield.Active);
+	GiveInventory("ShieldCapacity", (int)(((fixed)ThisPlayer.Shield.Charge / (fixed)ThisPlayer.Shield.Capacity) * 100.0));
+	SetInventory("Shield", ThisPlayer.Shield.Active);
 	
 	// Status Timer
 	if (Player.StatusTimer > 0)
-		StatusTimerHUD[PlayerNum] = Player.StatusTimer / 35 + 1
+		StatusTimerHUD[PlayerNum] = ThisPlayer.StatusTimer / 35 + 1
 	else
 		StatusTimerHUD[PlayerNum] = 0;
 	
