@@ -25,15 +25,18 @@ int WaveChoice = 1;
 // Invasion
 bool Invasion = false;
 
-script EnterOutpost()
+acscript EnterOutpost()
 {
     InBase = true;
     
     Sector_SetPlaneReflection(6, 128, 0);
 };
 
-script RegenArea(int ID, int Paid)
+acscript RegenArea(int ID, int Paid)
 {
+	// If you're dead, terminate
+	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
+	
 	Start:
     // Input
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -45,7 +48,7 @@ script RegenArea(int ID, int Paid)
     // XP
     if (ID == 1)
     {
-        if (Paid && Credits < Player.Level * 100)
+        if (Paid && CheckInventory("Credits") < Player.Level * 100)
             return;
         if (Player.Level == 0)
             Player.XP += 100
@@ -65,7 +68,7 @@ script RegenArea(int ID, int Paid)
     // Rank
     if (ID == 2)
     {
-        if (Paid && Credits < Player.RankLevel * 1001)
+        if (Paid && CheckInventory("Credits") < Player.RankLevel * 1001)
             return
         if (Player.RankLevel == 0)
             Player.Rank += 1000
@@ -85,9 +88,9 @@ script RegenArea(int ID, int Paid)
     // Health
     if (ID == 3)
     {
-        if (Paid && Credits < 5)
+        if (Paid && CheckInventory("Credits") < 5)
             return;
-        if (GetActorProperty(PlayerTID, APROP_Health) >= GetActorProperty(PlayerTID, APROP_SpawnHealth))
+        if (GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
             return;
         
         HealThing(5);
@@ -106,9 +109,9 @@ script RegenArea(int ID, int Paid)
     // Armor
     if (ID == 4)
     {
-        if (Paid && Credits < 5)
+        if (Paid && CheckInventory("Credits") < 5)
             return;
-        if (CheckInventory("Armor") >= ArmorMax)
+        if (CheckInventory("Armor") >= Player.ArmorMax)
             return;
         
         GiveInventory("ArmorBonus", 5);
@@ -126,7 +129,7 @@ script RegenArea(int ID, int Paid)
     // EP
     if (ID == 5)
     {
-        if (Paid && Credits < 5)
+        if (Paid && CheckInventory("Credits") < 5)
             return;
         if (Player.EP < Player.EPMax)
             Player.EP += 5
@@ -159,7 +162,7 @@ script RegenArea(int ID, int Paid)
     };
 };
 
-script LevelTransport()
+acscript LevelTransport()
 {
     while (1)
     {
@@ -234,7 +237,7 @@ script LevelTransport()
     };
 };
 
-script SkillComputer()
+acscript SkillComputer()
 {
     AmbientSound("misc/edgar", 127);
 	
@@ -281,7 +284,7 @@ script SkillComputer()
     };
 };
 
-script ToggleArena()
+acscript ToggleArena()
 {
     ArenaActive = !ArenaActive;
     ActivatorSound("misc/secret", 127);
@@ -294,7 +297,7 @@ script ToggleArena()
         HudMessage("Arena Inactive\n", HUDMSG_FADEOUT, 1, CR_RED, 0.5, 0.5, 2.0, 1.0);
 };
 
-script PassArenaLine()
+acscript PassArenaLine()
 {
     if (ArenaActive)
     {
@@ -303,7 +306,7 @@ script PassArenaLine()
     };
 };
 
-script SelectArenaWave()
+acscript SelectArenaWave()
 {
     ActivatorSound("menu/move", 127);
 
@@ -360,7 +363,7 @@ script SelectArenaWave()
     };
 };
 
-script PissOffMarines()
+acscript PissOffMarines()
 {
     SetMusic("Outpost2", 3);
     Thing_Activate(1);
@@ -371,7 +374,7 @@ script PissOffMarines()
     while (1)
     {
         // You are dead, NO BIG SURPRISE
-        if (GetActorProperty(PlayerTID, APROP_Health) <= 0)
+        if (GetActorProperty(Player.TID, APROP_Health) <= 0)
         {
             SetMusic("Outpost2", 1);
             return;
@@ -388,7 +391,7 @@ script PissOffMarines()
     };
 };
 
-script TokenConverter()
+acscript TokenConverter()
 {
 	int StatWorth = 1;
 	int StatCapWorth = 10;
@@ -554,9 +557,9 @@ script TokenConverter()
 		
 		// Drawing
 		SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
-		PrintSprite("TOKAD0", 0, 16.1, 188.1, 0.05);
-		PrintSprite("TOKBD0", 0, 16.1, 208.1, 0.05);
-		PrintSprite("TOKCD0", 0, 16.1, 228.1, 0.05);
+		PrintSprite("TOKAA0", 0, 16.1, 188.1, 0.05);
+		PrintSprite("TOKBA0", 0, 16.1, 208.1, 0.05);
+		PrintSprite("TOKCA0", 0, 16.1, 228.1, 0.05);
 		SetFont("BIGFONT");
 		HudMessage("%d\n", StatTokens, 		HUDMSG_PLAIN, 0, CR_RED,  			40.1, 178.0, 0.05);
 		HudMessage("%d\n", StatCapTokens, 	HUDMSG_PLAIN, 0, CR_YELLOW,  		40.1, 198.0, 0.05);
@@ -565,5 +568,125 @@ script TokenConverter()
 		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, CR_WHITE, 140.1, 178.0, 0.05);
 
 		Delay(1);
+	};
+};
+
+// Credit Room Script
+acscript CreditRoom(int ID)
+{
+	if (ID == 1) // Enter
+		SetMusic("Credits");
+	if (ID == 2) // Exit
+		SetMusic("Outpost");
+	
+	if (ID == 3) // Kyle873 - That's me!
+	{
+		SetFont("BIGFONT");
+		HudMessage("Kyle873\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+		Delay(35);
+		SetFont("SMALLFONT");
+		HudMessage("What do you mean I can't nerf XP Gain to 1 per monster?!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+		
+		int RealCredits = CheckInventory("Credits");
+		
+		Delay(35 * 3);
+		ActivatorSound("credits/payout", 127);
+		Log("\ckYou have been paid -2147483648 by the UAC!\n");
+		TakeInventory("Credits", RealCredits);
+		Delay(35 * 10);
+		GiveInventory("Credits", RealCredits);
+	};
+	
+	if (ID == 4) // Lord Misfit
+	{
+		SetFont("BIGFONT");
+		HudMessage("Lord Misfit\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+		Delay(35);
+		SetFont("SMALLFONT");
+		HudMessage("I swear it's a real bug this time!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+		
+		str VarString = "SetVar";
+		
+		Delay(35 * 3);
+		for (int i = 0; i < 100; i++)
+		{
+			if (Random(1, 3) == 1) VarString = StrParam("%s%s\n", VarString, "Var");
+			HudMessage("%s\n", VarString, HUDMSG_FADEOUT, 0, Random(1, 21), RandomFixed(0.0, 1.0), RandomFixed(0.0, 1.0), 3.0, 2.0);
+			Delay(1);
+		};
+	};
+	
+	if (ID == 5) // Ryan Cordell
+	{
+		SetFont("BIGFONT");
+		HudMessage("Ryan Cordell\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 7.0, 2.0);
+		Delay(35);
+		
+		for (int i = 0; i < 10; i++)
+		{
+			ActivatorSound("weapons/rocklx", 127);
+			Delay(Random(5, 10));
+		};
+		
+		Delay(35 * 2);
+		SetFont("SMALLFONT");
+		HudMessage("Did I do that?\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+	};
+	
+	if (ID == 6) // marrub
+	{
+		SetFont("BIGFONT");
+		HudMessage("marrub\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+		Delay(35);
+		HudMessage("I HOPE YOU LIKE SHOTGUNS!\n", HUDMSG_FADEOUT, 0, CR_BRICK, 0.5, 0.55, 3.0, 2.0);
+		Delay(35 * 2);
+		
+		for (int i = 0; i < 50; i++)
+		{
+			DropItem(0, "DumbShotgun", 1, 255);
+			Delay(1);
+		};
+	};
+
+	if (ID == 7) // Kate
+	{
+		SetFont("BIGFONT");
+		HudMessage("Kate\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+		Delay(35);
+		HudMessage("\cgR\ciA\ckI\cdN\chB\ctO\caW\cjS\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+		Delay(35);
+		
+		FadeTo(255, 0, 0, 0.5, 0.5);
+		Delay(17);
+		FadeTo(255, 128, 0, 0.5, 0.5);
+		Delay(17);
+		FadeTo(255, 255, 0, 0.5, 0.5);
+		Delay(17);
+		FadeTo(0, 255, 0, 0.5, 0.5);
+		Delay(17);
+		FadeTo(0, 0, 255, 0.5, 0.5);
+		Delay(17);
+		FadeTo(128, 0, 255, 0.5, 0.5);
+		Delay(17);
+		FadeTo(255, 0, 255, 0.5, 0.5);
+		Delay(17);
+		FadeTo(255, 255, 255, 0.5, 0.5);
+		Delay(17);
+		FadeTo(0, 0, 0, 0.0, 0.5);
+	};
+	
+	if (ID == 8) // Yholl
+	{
+		SetFont("BIGFONT");
+		HudMessage("Yholl\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+		Delay(35);
+		HudMessage("\caYour suffering pleases me\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+		Delay(35);
+		
+		for (int i = 0; i < 50; i++)
+		{
+			DropItem(0, "DumbPistol", 1, 255);
+			Delay(1);
+		};
 	};
 };

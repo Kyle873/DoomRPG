@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Monday, March 17, 2014 at 7:50:28 AM";
+	"Thursday, March 20, 2014 at 1:50:26 PM";
 };
 
 bool ParBonus;
@@ -22,24 +22,23 @@ bool ParBonus;
 // Init Script
 script Init() enter
 {
-	if (!Player.FirstRun)
+	if (!ThisPlayer.FirstRun)
 	{
-		// Player Index & TID
-		PlayerIndex = PlayerNumber();
-		PlayerTID = PLAYER_TID + PlayerNumber();
-		Thing_ChangeTID(0, PlayerTID);
+		// Player TID
+		ThisPlayer.TID = PLAYER_TID + PlayerNumber();
+		Thing_ChangeTID(0, ThisPlayer.TID);
 		
 #if DEBUG
-		Log("\cdDEBUG: Player Index: %d, Player TID: %d\n", PlayerIndex, PlayerTID);
+		Log("\cdDEBUG: Player TID: %d\n", ThisPlayer.TID);
 #endif
 
 		// Setup initial vars
-		Player.EP = 100;
-		Player.RankString = Ranks[0];
-		Player.Vitality = 10;
-		Player.Energy = 10;
-		Player.Capacity = 10;
-		Player.Shield.Timer = 175;
+		ThisPlayer.EP = 100;
+		ThisPlayer.RankString = Ranks[0];
+		ThisPlayer.Vitality = 10;
+		ThisPlayer.Energy = 10;
+		ThisPlayer.Capacity = 10;
+		ThisPlayer.Shield.Timer = 175;
 
 		if (!GetCVar("drpg_hardstart"))
 		{
@@ -68,8 +67,8 @@ script Init() enter
 		// Set the default skill indices
 		for (int i = 0; i < 5; i++)
 		{
-			Player.SkillCatagory[i] = -1;
-			Player.SkillIndex[i] = -1;
+			ThisPlayer.SkillCatagory[i] = -1;
+			ThisPlayer.SkillIndex[i] = -1;
 		};
 		
 		// Initialize global Skills array
@@ -77,10 +76,10 @@ script Init() enter
 		output Shop;
 		
 		// The first map should always be accessible
-		Player.MapsVisited[1] = true;
+		ThisPlayer.MapsVisited[1] = true;
 		
 		// Done first run
-		Player.FirstRun = true;
+		ThisPlayer.FirstRun = true;
 	};
 	
 	// Create Translations
@@ -101,21 +100,15 @@ script Init() enter
 	// Remove Aura if the keep Aura CVAR is off
 	if (!GetCVar("drpg_skill_keepauras"))
 	{
-		Player.Aura = 0;
-		Player.AuraTimer = 0;
+		ThisPlayer.Aura = 0;
+		ThisPlayer.AuraTimer = 0;
 	};
 	
 	// Transport from/to Outpost Screen Fading
-	if (Transported == 1) // Normal
+	if (Transported)
 	{
 		FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
-		Transported = 0;
-	};
-	if (Transported == 2) // Death
-	{
-		SetActorProperty(PlayerTID, APROP_Health, HealthMax / 10 + 1);
-		FadeRange(255, 0, 0, 1.0, 255, 0, 0, 0.0, 1.0);
-		Transported = 0;
+		Transported = false;
 	};
 	
 	// Store the current map number
@@ -123,22 +116,22 @@ script Init() enter
 	if (MapNumber > 36) MapNumber = 36;
 	
 	// Reset map flags
-	Player.KillBonus = false;
-	Player.ItemsBonus = false;
-	Player.SecretsBonus = false;
-	Player.AllBonus = false;
+	ThisPlayer.KillBonus = false;
+	ThisPlayer.ItemsBonus = false;
+	ThisPlayer.SecretsBonus = false;
+	ThisPlayer.AllBonus = false;
 	
 	// Flag this level as visited for the transporter
-	if (!Player.MapsVisited[GetLevelInfo(LEVELINFO_LEVELNUM)])
-		Player.MapsVisited[GetLevelInfo(LEVELINFO_LEVELNUM)] = true;
+	if (!ThisPlayer.MapsVisited[GetLevelInfo(LEVELINFO_LEVELNUM)])
+		ThisPlayer.MapsVisited[GetLevelInfo(LEVELINFO_LEVELNUM)] = true;
 	
 	// Reset the menus if they were open in the last level
-	Player.InMenu = false;
-	Player.InShop = false;
+	ThisPlayer.InMenu = false;
+	ThisPlayer.InShop = false;
 };
 
 // Monster Init Script
-script MonsterInit(int Flags)
+acscript MonsterInit(int Flags)
 {
 	// If initialization has already occurred on this monster, terminate
 	if (CheckInventory("MonsterInit")) return;
@@ -158,12 +151,37 @@ script MonsterInit(int Flags)
 	// Apply Monster Flags
 	SetInventory("MonsterFlags", Flags);
 	
+	// Apply Stats
+	MonsterStats(Flags);
+};
+
+// Special handling for DRLA Monsters
+acscript MonsterInitDRLA(int Flags)
+{
+	// Tons of insane calculations here to dynamically make cool things happen
+	
+	MonsterInit(Flags);
+};
+
+// Apply stats to monsters
+script MonsterStats(int Flags)
+{
+	int NumPlayers;
+	int PlayerAvgLevel;
 	int MonsterLevel;
 	int MonsterAura;
 	int MonsterStrength;
 	int MonsterDefense;
-	int MonsterRegen;
 	int AuraRandomizer;
+	
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (!PlayerInGame (i)) continue;
+		NumPlayers++;
+		PlayerAvgLevel += Players(i).Level;
+	};
+	
+	PlayerAvgLevel /= NumPlayers;
 	
 	// Monster Level System
 	if (GetCVar("drpg_monster_levels") > 0 && (!(Flags & MF_NOSTATS)))
@@ -179,11 +197,14 @@ script MonsterInit(int Flags)
 			else // If not in the Arena, base it off the level the player teleported from
 				LevelNum = LevelNum;
 		if (LevelType == 1 || LevelType == 3) // Player Level
-			MonsterLevel = Round((fixed)Player.Level + RandomFixed(0.0, (fixed)GameSkill() * 2.0) + RandomFixed(0.0, (fixed)MonsterCurve) * RandomFixed(1.0, LevelMult));
+			MonsterLevel = Round((fixed)PlayerAvgLevel + RandomFixed(0.0, (fixed)GameSkill() * 2.0) + RandomFixed(0.0, (fixed)MonsterCurve) * RandomFixed(1.0, LevelMult));
 		if (LevelType == 2 || LevelType == 3) // Map Number
 			MonsterLevel += Round((fixed)LevelNum * RandomFixed(1.0, (fixed)LevelMult));
+		// [KS] Bad place to do that! We don't know who the owner is.
+		/*
 		if (GetActorProperty(0, APROP_Friendly)) // If the monster is friendly, it has the same level as you
 			MonsterLevel = Player.Level;
+		*/
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		
 		// Strength
@@ -245,14 +266,6 @@ script MonsterInit(int Flags)
 	SetInventory("MonsterDefense", MonsterDefense);
 	SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.9 * (MonsterDefense / 100)));
 	if (GetActorPropertyFixed(0, APROP_DamageFactor) <= 0) SetActorPropertyFixed(0, APROP_DamageFactor, 0.1);
-};
-
-// Special handling for DRLA Monsters
-script MonsterInitDRLA(int Flags)
-{
-	// Tons of insane calculations here to dynamically make cool things happen
-	
-	MonsterInit(Flags);
 };
 
 // Monster Loop
@@ -353,8 +366,16 @@ script MonsterLoop()
 	goto Start;
 };
 
-script MonsterDeath()
+script int WhoKilledMe()
 {
+	SetActivatorToTarget (0);
+	return PlayerNumber ();
+};
+
+acscript MonsterDeath()
+{
+	int Killer = WhoKilledMe();
+	
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
 	int AuraType = CheckInventory("MonsterAura");
@@ -363,7 +384,7 @@ script MonsterDeath()
 	int LuckDrops = 1;
 	
 	// Drops
-	if (!(MonsterFlags & MF_NODROPS))
+	if (!(MonsterFlags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly))
 	{
 		// Aura Drops
 		switch (AuraType)
@@ -436,18 +457,21 @@ script MonsterDeath()
 		};
 		
 		// Luck-based Drops
-		for (int i = 0; i < LuckDrops; i++)
+		if (Killer > -1)
 		{
-			if (RandomFixed(0.0, 100.0) < Player.CreditChance)	DropItem(0, "MoneyDropper", 1, 255);
-			if (RandomFixed(0.0, 100.0) < Player.HealthChance)	DropItem(0, "HealthDropper", 1, 255);
-			if (RandomFixed(0.0, 100.0) < Player.EPChance)		DropItem(0, "EPCapsule", 1, 255);
-			if (RandomFixed(0.0, 100.0) < Player.ArmorChance)	DropItem(0, "ArmorDropper", 1, 255);
-			if (RandomFixed(0.0, 100.0) < Player.PowerupChance)	DropItem(0, "PowerupDropper", 1, 255);
-			if (RandomFixed(0.0, 100.0) < Player.RuneChance)	DropItem(0, "RuneDropper", 1, 255);
-			if (RandomFixed(0.0, 100.0) < Player.TokenChance)	DropItem(0, "SmallTokenDropper", 1, 255);
-			if (RandomFixed(0.0, 100.0) < Player.AugChance)		DropItem(0, "AugDropper", 1, 255);
-			if (RandomFixed(0.0, 100.0) < Player.ShieldChance)	DropItem(0, "ShieldDropper", 1, 255);
-			if (RandomFixed(0.0, 100.0) < Player.StimChance)	DropItem(0, "StimDropper", 1, 255);
+			for (int i = 0; i < LuckDrops; i++)
+			{
+				if (RandomFixed(0.0, 100.0) < Players(Killer).CreditChance)	DropItem(0, "MoneyDropper", 1, 255);
+				if (RandomFixed(0.0, 100.0) < Players(Killer).HealthChance)	DropItem(0, "HealthDropper", 1, 255);
+				if (RandomFixed(0.0, 100.0) < Players(Killer).EPChance)		DropItem(0, "EPCapsule", 1, 255);
+				if (RandomFixed(0.0, 100.0) < Players(Killer).ArmorChance)	DropItem(0, "ArmorDropper", 1, 255);
+				if (RandomFixed(0.0, 100.0) < Players(Killer).PowerupChance)	DropItem(0, "PowerupDropper", 1, 255);
+				if (RandomFixed(0.0, 100.0) < Players(Killer).RuneChance)	DropItem(0, "RuneDropper", 1, 255);
+				if (RandomFixed(0.0, 100.0) < Players(Killer).TokenChance)	DropItem(0, "SmallTokenDropper", 1, 255);
+				if (RandomFixed(0.0, 100.0) < Players(Killer).AugChance)		DropItem(0, "AugDropper", 1, 255);
+				if (RandomFixed(0.0, 100.0) < Players(Killer).ShieldChance)	DropItem(0, "ShieldDropper", 1, 255);
+				if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)	DropItem(0, "StimDropper", 1, 255);
+			};
 		};
 		
 		// Boss Drops
@@ -466,25 +490,27 @@ script MonsterDeath()
 	// Add XP
 	if (!(MonsterFlags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
 	{
-		SetActivatorToTarget(0);
-		
 		// XP modifications based on level and skill
 		if (GetCVar("drpg_xp_monsterlevel")) XPAmount *= 1.0 + ((fixed)MonsterLevel / 100.0);
 		if (GetCVar("drpg_xp_skilllevel")) XPAmount *= 1.0 - (0.15 * (fixed)GameSkill());
 		
-		if (MonsterFlags & MF_NEGATIVEXP)
-			AddXP(-(int)XPAmount, false)
-		else if (ActivatorTID() != PlayerTID)
-			AddXP((int)XPAmount, true)
-		else
-			for (int i = PLAYER_TID; i < PLAYER_TID + MAX_PLAYERS; i++)
-				if (ActivatorTID() == i)
-					AddXP((int)XPAmount, false);
+		for (int i = 0; i < MAX_PLAYERS; ++i)
+		{
+			if (MonsterFlags & MF_NEGATIVEXP)
+				AddXP(i, -(int)XPAmount, false)
+			else
+			{
+				if (Killer == i)
+					AddXP(i, (int)XPAmount, false)
+				else
+					AddXP(i, (int)XPAmount, true);
+			};
+		};
 	};
 	
 	// Add a kill to the pay kills
-	if (!(MonsterFlags & MF_NOPAYKILL))
-		Player.PayKills++;
+	if (!(MonsterFlags & MF_NOPAYKILL) && Killer > -1)
+		Players(Killer).PayKills++;
 	
 	// SHOTGUNS!
 	if (GetCVar("drpg_shotguns"))
@@ -524,11 +550,11 @@ script Loop()
 	MenuCursorColor = CursorColors[(Timer() / 3) % 6];
 
 	// Main Menu
-	if (Player.InMenu)
+	if (ThisPlayer.InMenu)
 		MenuLoop();
 	
 	// Shop Menu
-	if (Player.InShop)
+	if (ThisPlayer.InShop)
 		ShopLoop();
 	
 	// Always Quick Heal if CVAR is set
@@ -536,41 +562,41 @@ script Loop()
 		CallACS("QuickHeal");
 	
 	// Handle damage numbers on the HUD
-	if (GetCVar("drpg_damagenumbers_hud") && !Player.Shield.Active)
+	if (GetCVar("drpg_damagenumbers_hud") && !ThisPlayer.Shield.Active)
 		DamageNumbersHUD();
 
 	// Check health for this tic
-	Player.BeforeHealth = GetActorProperty(PlayerTID, APROP_Health);
+	ThisPlayer.BeforeHealth = GetActorProperty(ThisPlayer.TID, APROP_Health);
 	
 	// Regeneration
-	if (GetActorProperty(PlayerTID, APROP_Health) > 0)
+	if (GetActorProperty(ThisPlayer.TID, APROP_Health) > 0)
 		DoRegen();
 	
 	// Give the Strength boosting item
-	if (Player.TotalDamage > 0 && Player.TotalDamage <= 32000)
-		GiveInventory(StrParam("Strength%d\n", Player.TotalDamage), 1);
+	if (ThisPlayer.TotalDamage > 0 && ThisPlayer.TotalDamage <= 32000)
+		GiveInventory(StrParam("Strength%d\n", ThisPlayer.TotalDamage), 1);
 
 	// Apply Stats
-	SetActorProperty(PlayerTID, APROP_SpawnHealth, Player.HealthMax);
-	SetActorPropertyFixed(PlayerTID, APROP_DamageFactor, Player.DamageFactor);
-	SetActorProperty(PlayerTID, APROP_Mass, Player.Mass);
-	SetActorPropertyFixed(PlayerTID, APROP_Speed, Player.Speed);
-	SetActorPropertyFixed(PlayerTID, APROP_JumpZ, Player.JumpHeight);
+	SetActorProperty(ThisPlayer.TID, APROP_SpawnHealth, ThisPlayer.HealthMax);
+	SetActorPropertyFixed(ThisPlayer.TID, APROP_DamageFactor, ThisPlayer.DamageFactor);
+	SetActorProperty(ThisPlayer.TID, APROP_Mass, ThisPlayer.Mass);
+	SetActorPropertyFixed(ThisPlayer.TID, APROP_Speed, ThisPlayer.Speed);
+	SetActorPropertyFixed(ThisPlayer.TID, APROP_JumpZ, ThisPlayer.JumpHeight);
 	
 	// Clear your Status Effect if the timer is empty
-	if (Player.StatusTimer <= 0)
-		Player.StatusType = 0;
+	if (ThisPlayer.StatusTimer <= 0)
+		ThisPlayer.StatusType = 0;
 	
 	// Make you invincible while in the Menus and if menu freezing is enabled
-	if ((Player.InMenu || Player.InShop) && GetCVar("drpg_menufreeze"))
-		SetActorProperty(PlayerTID, APROP_DamageFactor, 0);
+	if ((ThisPlayer.InMenu || ThisPlayer.InShop) && GetCVar("drpg_menufreeze"))
+		SetActorProperty(ThisPlayer.TID, APROP_DamageFactor, 0);
 	
 	// Loop
 	Delay(1);
 	
 	// this needs to be done in a separate tic
-	Player.AfterHealth = GetActorProperty(PlayerTID, APROP_Health);
-	Player.HealthLoss = Player.BeforeHealth - Player.AfterHealth;
+	ThisPlayer.AfterHealth = GetActorProperty(ThisPlayer.TID, APROP_Health);
+	ThisPlayer.HealthLoss = ThisPlayer.BeforeHealth - ThisPlayer.AfterHealth;
 	
 	goto Start;
 };
@@ -581,8 +607,8 @@ script Speed()
 	Start:
 	int Time;
 	
-	if (Player.Agility <= 100)
-		Time = Abs(Round(Player.WeaponSpeed * 0.35 - 35.0))
+	if (ThisPlayer.Agility <= 100)
+		Time = Abs(Round(ThisPlayer.WeaponSpeed * 0.35 - 35.0))
 	else
 		Time = 0;
 	
@@ -616,7 +642,7 @@ script StatRandomizer()
 
 	// Spend Tokens only on level up
 	if (GetCVar("drpg_autospend"))
-		while (Player.LevelTokens > 0)
+		while (ThisPlayer.LevelTokens > 0)
 		{
 			IncreaseStat(Random(1, 8));
 			Delay(1);
@@ -642,13 +668,13 @@ script AutosaveHandler()
 // Handles Status Effects
 script StatusEffect(int Type, int Time, int Intensity)
 {
-	Player.StatusType = Type;
-	Player.StatusTimer = Time * 35;
+	ThisPlayer.StatusType = Type;
+	ThisPlayer.StatusTimer = Time * 35;
 	
 	if (Intensity == 0)
 		Intensity = 1;
 	
-	while (Player.StatusTimer > 0)
+	while (ThisPlayer.StatusTimer > 0)
 	{
 		if (Type == 1) // Confusion
 		{
@@ -660,41 +686,53 @@ script StatusEffect(int Type, int Time, int Intensity)
 			FadeRange(0, 0, 0, (0.75 + (Intensity / 400)) - ((1024 * 8) * Sin(Timer() * 0.01)), 0, 0, 0, 0.0, 0.5);
 		
 		if (Type == 3) // Poisoned
-			if ((Timer() % 35) == 1 && (GetActorProperty(PlayerTID, APROP_Health) - Intensity) > 1)
+			if ((Timer() % 35) == 1 && (GetActorProperty(ThisPlayer.TID, APROP_Health) - Intensity) > 1)
 			{
 				DamageThing(Intensity);
 				FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + Intensity / 100));
 			};
 		
-		if (Player.StatusTimer > 0)
-			Player.StatusTimer--;
+		if (ThisPlayer.StatusTimer > 0)
+			ThisPlayer.StatusTimer--;
 		
 		Delay(1);
 	};
 };
 
 // Quick Heal
-script QuickHeal(int Quick)
+acscript QuickHeal(int Quick)
 {
 	// If you're dead, return
-	if (GetActorProperty(PlayerTID, APROP_Health) <= 0) return;
+	if (GetActorProperty(ThisPlayer.TID, APROP_Health) <= 0) return;
 	
-	int Health = GetActorProperty(PlayerTID, APROP_Health);
+	int Health = GetActorProperty(ThisPlayer.TID, APROP_Health);
 	int Percent = GetCVar("drpg_auto_heal_percent");
 	
-	if ((Health < HealthMax / Percent) || Quick)
-			 if (CheckInventory("StimPack")) {			UseInventory("StimPack"); }
-		else if (CheckInventory("SmallMedikit")) {		UseInventory("SmallMedikit"); }
-		else if (CheckInventory("Medikit")) {			UseInventory("Medikit"); }
-		else if (CheckInventory("LargeMedikit")) {		UseInventory("LargeMedikit"); }
-		else if (CheckInventory("XLMedikit")) {			UseInventory("XLMedikit"); }
-		else if (CheckInventory("MedPack")) {			UseInventory("MedPack"); }
-		else if (CheckInventory("SuperMedPack")) {		UseInventory("SuperMedPack"); }
-		else if (CheckInventory("SurgeryKit")) {		UseInventory("SurgeryKit"); };
+	if ((Health < ThisPlayer.HealthMax / Percent) || Quick)
+	{
+		if (GetCVar("drpg_auto_heal_order") == 1) // Smallest to Largest
+		{
+				 if (CheckInventory("StimPack"))			UseInventory("StimPack")
+			else if (CheckInventory("Medikit"))				UseInventory("Medikit")
+			else if (CheckInventory("LargeMedikit"))		UseInventory("LargeMedikit")
+			else if (CheckInventory("XLMedikit"))			UseInventory("XLMedikit")
+			else if (CheckInventory("MedPack"))				UseInventory("MedPack")
+			else if (CheckInventory("SurgeryKit"))			UseInventory("SurgeryKit");
+		}
+		else if (GetCVar("drpg_auto_heal_order") == 2) // Largest to Smallest
+		{
+				 if (CheckInventory("SurgeryKit"))			UseInventory("SurgeryKit")
+			else if (CheckInventory("MedPack"))				UseInventory("MedPack")
+			else if (CheckInventory("XLMedikit"))			UseInventory("XLMedikit")
+			else if (CheckInventory("LargeMedikit"))		UseInventory("LargeMedikit")
+			else if (CheckInventory("Medikit"))				UseInventory("Medikit")
+			else if (CheckInventory("StimPack"))			UseInventory("StimPack");
+		};
+	};
 };
 
 // Quick Armor
-script QuickArmor()
+acscript QuickArmor()
 {
 		 if (CheckInventory("WhiteArmor")) {			UseInventory("WhiteArmor"); }
 	else if (CheckInventory("WhiteArmorUsed")) {		UseInventory("WhiteArmorUsed"); }
@@ -709,7 +747,7 @@ script QuickArmor()
 };
 
 // Buy Ammo for selected Weapon
-script QuickAmmo()
+acscript QuickAmmo()
 {
 	// Weapon, Ammo Type and Amount
 	int Weapon;
@@ -740,7 +778,7 @@ script QuickAmmo()
 	};
 	
 	// Discount and Cost
-	int Discount = (int)(Player.RankLevel * 2.1);
+	int Discount = (int)(ThisPlayer.RankLevel * 2.1);
 	int Cost = ShopCosts[1][AmmoType] - ShopCosts[1][AmmoType] * Discount / 100;
 	
 	/* Give ammo and take Credits
@@ -755,7 +793,7 @@ script QuickAmmo()
 };
 
 // Quickly buy EP
-script QuickEP()
+acscript QuickEP()
 {
 	if (!GetCVar("drpg_shoptype") && !InBase)
 	{
@@ -763,9 +801,9 @@ script QuickEP()
 		return;
 	};
 	
-	int Amount = Player.EPMax - Player.EP;
+	int Amount = ThisPlayer.EPMax - ThisPlayer.EP;
 	
-	if (CheckInventory("Credits") > 0 && Player.EP < Player.EPMax)
+	if (CheckInventory("Credits") > 0 && ThisPlayer.EP < ThisPlayer.EPMax)
 	{
 		ActivatorSound("health/epcapsule", 127);
 		
@@ -789,26 +827,8 @@ script Dead() death
 	ActivatorSound("Taunt", 127);
 	
 	// Reset menu vars
-	Player.InMenu = false;
-	Player.InShop = false;
-	
-	while (1)
-	{
-		if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED && GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_ATTACK)
-		{
-			FadeRange(255, 0, 0, 0.0, 255, 0, 0, 1.0, 1.0);
-			Delay(35);
-			
-			if (GetLevelInfo(LEVELINFO_LEVELNUM) != 999)
-				LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
-			
-			Transported = 2;
-			InBase = true;
-			Teleport_NewMap(999, 1);
-		};
-		
-		Delay(1);
-	};
+	ThisPlayer.InMenu = false;
+	ThisPlayer.InShop = false;
 };
 
 // Respawn - XP Penalty in MP
@@ -994,11 +1014,11 @@ script DamageNumbers()
 // Psuedo Damage Numbers on the HUD
 script DamageNumbersHUD()
 {
-	int Before = GetActorProperty(PlayerTID, APROP_Health);
+	int Before = GetActorProperty(ThisPlayer.TID, APROP_Health);
 	Delay(1);
 	
 	int Color = GetCVar("drpg_damagenumbers_hud_color");
-	int After = GetActorProperty(PlayerTID, APROP_Health);
+	int After = GetActorProperty(ThisPlayer.TID, APROP_Health);
 	int Loss = Before - After;
 	
 	if (Loss == 1)
@@ -1013,17 +1033,15 @@ script DamageNumbersHUD()
 // Handles HUD Health Bars
 script HealthBars()
 {
+	int PlayerNum = PlayerNumber ();
 	Start:
-	while (GetCVar("drpg_healthbars"))
+	
+	while (GetUserCVar(PlayerNumber(), "drpg_healthbars"))
 	{
-		Thing_ChangeTID(PlayerNumber(), PlayerTID);
-		int Activator = ActivatorTID();
-		SetActivatorToTarget(PlayerTID);
+		SetActivatorToTarget(Players(PlayerNum).TID);
 		
 		Delay(1);
 		
-		fixed X = GetCVarFixed("drpg_healthbars_x");
-		fixed Y = GetCVarFixed("drpg_healthbars_y");
 		bool HasHealthBar = (CheckInventory("HealthBar") > 0);
 		int CurrentLevel = CheckInventory("MonsterLevel");
 		int CurrentAura = CheckInventory("MonsterAura");
@@ -1038,13 +1056,15 @@ script HealthBars()
 		str FillType;
 		str AuraType;
 		
-		if (ActivatorTID() != Activator && GetActorProperty(PlayerTID, APROP_Health) > 0)
+		if (ActivatorTID() != Players(PlayerNum).TID && GetActorProperty(Players(PlayerNum).TID, APROP_Health) > 0)
 		{
-			SetActivator(Activator);
-			SetActivatorToTarget(PlayerTID);
-			SetActivator(Activator);
+			SetActivator(Players(PlayerNum).TID);
+			NEEDVALIDPLAYER; // Verify that SetActivator is doing its' thing.
 			
-			if (HasHealthBar && CurrentHealth > 0 && (!Player.InMenu && !Player.InShop))
+			int X = GetUserCVar(PlayerNum, "drpg_healthbars_x");
+			int Y = GetUserCVar(PlayerNum, "drpg_healthbars_y");
+			
+			if (HasHealthBar && CurrentHealth > 0 && (!ThisPlayer.InMenu && !ThisPlayer.InShop))
 			{
 				// Divide-by-zero check
 				if (MaxHealth > 0)
@@ -1077,7 +1097,7 @@ script HealthBars()
 				// Name
 				if (GetCVar("drpg_healthbars_names"))
 				{
-					int Color = CR_DARKGRAY;
+					int Color = CR_GRAY;
 					
 					switch (CurrentAura)
 					{
@@ -1155,19 +1175,22 @@ script HealthBars()
 
 // Level exit script
 // Can't use NamedExecute in xlat, lame
-script Exit(bool Secret) @ 30000
+acscript Exit(bool Secret) @ 30000
 {
+	// TODO: Icon of Sin exits.
+	NEEDVALIDPLAYER;
+	
 	int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
 	
 	// Check par time and give bonus if you beat it
 	if ((Timer() / 35) <= ParTime && !(ParTime <= 0 || ParBonus))
 	{
-		int RankBonus = RankTable[Player.RankLevel] / 20;
+		int RankBonus = RankTable[ThisPlayer.RankLevel] / 20;
 		
 		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
 		ActivatorSound("misc/secret", 127);
 		
-		Player.Rank += RankBonus;
+		ThisPlayer.Rank += RankBonus;
 		
 		HudMessage("Par Time Beaten!\n%d Rank Bonus\n",
 				   RankBonus,
@@ -1187,60 +1210,63 @@ script Exit(bool Secret) @ 30000
 // Apply values to global vars visible to the HUD
 function void CheckHUD()
 {
+	// New Multiplayer HUD Checking
+	int PlayerNum = PlayerNumber();
+	
 	// Max Health/Armor
-	HealthMax = Player.HealthMax;
-	ArmorMax = Player.ArmorMax;
+	HealthMax[PlayerNum] = ThisPlayer.HealthMax;
+	ArmorMax[PlayerNum] = ThisPlayer.ArmorMax;
 	
 	// EP
-	EP = Player.EP;
-	EPMax = Player.EPMax;
+	EP[PlayerNum] = ThisPlayer.EP;
+	EPMax[PlayerNum] = ThisPlayer.EPMax;
 	
 	// For EP Bar on HUD
-	SetInventory("EP", Player.EP * 100 / Player.EPMax);
+	SetInventory("EP", ThisPlayer.EP * 100 / ThisPlayer.EPMax);
 
 	// Combo System
-	Combo = Player.Combo;
-	BonusGained = Player.BonusGained;
-	XPGained = Player.XPGained;
-	RankGained = Player.RankGained;
+	Combo[PlayerNum] = ThisPlayer.Combo;
+	BonusGained[PlayerNum] = ThisPlayer.BonusGained;
+	XPGained[PlayerNum] = ThisPlayer.XPGained;
+	RankGained[PlayerNum] = ThisPlayer.RankGained;
 	
 	// Aura Timer
-	AuraTimerHUD = Player.AuraTimer / 35 + 1;
+	AuraTimerHUD[PlayerNum] = ThisPlayer.AuraTimer / 35 + 1;
 	
 	// For Combo Bar on HUD
-	if (Player.ComboTimer < 35 * 4 && Player.ComboTimer > 35 * 2)
+	if (ThisPlayer.ComboTimer < 35 * 4 && ThisPlayer.ComboTimer > 35 * 2)
 	{
-		SetInventory("Combo", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+		SetInventory("Combo", (int)((fixed)ThisPlayer.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
 		SetInventory("Combo2", 0);
 	}
-	else if (Player.ComboTimer <= 35 * 2)
+	else if (ThisPlayer.ComboTimer <= 35 * 2)
 	{
 		SetInventory("Combo", 0);
-		SetInventory("Combo2", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+		SetInventory("Combo2", (int)((fixed)ThisPlayer.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
 	};
 	
 	// Stim Timer
-	if (Player.Stim.Timer > 0)
-		StimTimerHUD = Player.Stim.Timer / 35 + 1
+	if (ThisPlayer.Stim.Timer > 0)
+		StimTimerHUD[PlayerNum] = ThisPlayer.Stim.Timer / 35 + 1
 	else
-		StimTimerHUD = 0;
+		StimTimerHUD[PlayerNum] = 0;
 	
 	// Shield
-	Shield = Player.Shield.Charge;
-	ShieldCapacity = Player.Shield.Capacity;
+	Shield[PlayerNum] = ThisPlayer.Shield.Charge;
+	ShieldCapacity[PlayerNum] = ThisPlayer.Shield.Capacity;
 	TakeInventory("ShieldCapacity", 100);
-	GiveInventory("ShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
-	SetInventory("Shield", Player.Shield.Active);
+	GiveInventory("ShieldCapacity", (int)(((fixed)ThisPlayer.Shield.Charge / (fixed)ThisPlayer.Shield.Capacity) * 100.0));
+	SetInventory("Shield", ThisPlayer.Shield.Active);
 	
 	// Status Timer
-	if (Player.StatusTimer > 0)
-		StatusTimerHUD = Player.StatusTimer / 35 + 1
+	if (ThisPlayer.StatusTimer > 0)
+		StatusTimerHUD[PlayerNum] = ThisPlayer.StatusTimer / 35 + 1
 	else
-		StatusTimerHUD = 0;
+		StatusTimerHUD[PlayerNum] = 0;
 	
 	// Items
-	Credits = CheckInventory("Credits");
-	Continues = CheckInventory("Continue");
+	Credits[PlayerNum] = CheckInventory("Credits");
+	Continues[PlayerNum] = CheckInventory("Continue");
 };
 
 function void DefaultLoadout()

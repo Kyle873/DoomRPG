@@ -55,9 +55,12 @@ function void InitSkills()
 	// HEALING
 	
 	Skills[0][Index].Name = "Heal";
-	Skills[0][Index].MaxLevel = 1;
-	Skills[0][Index].Cost = 50;
-	Skills[0][Index].Description[0] = "Recover HP";
+	Skills[0][Index].MaxLevel = 4;
+	Skills[0][Index].Cost = 25;
+	Skills[0][Index].Description[0] = "Recover 25% HP";
+	Skills[0][Index].Description[1] = "Recover 50% HP";
+	Skills[0][Index].Description[2] = "Recover 75% HP";
+	Skills[0][Index].Description[3] = "Recover All HP";
 	Index++;
 	
 	Skills[0][Index].Name = "Heal Summons";
@@ -66,10 +69,23 @@ function void InitSkills()
 	Skills[0][Index].Description[0] = "Summons recover all their HP";
 	Index++;
 	
+	Skills[0][Index].Name = "Life Leech";
+	Skills[0][Index].MaxLevel = 5;
+	Skills[0][Index].Cost = 100;
+	Skills[0][Index].Description[0] = "Steal 10% of the target's current HP";
+	Skills[0][Index].Description[1] = "Steal 20% of the target's current HP";
+	Skills[0][Index].Description[2] = "Steal 30% of the target's current HP";
+	Skills[0][Index].Description[3] = "Steal 40% of the target's current HP";
+	Skills[0][Index].Description[4] = "Steal 50% of the target's current HP";
+	Index++;
+
 	Skills[0][Index].Name = "Repair Armor";
-	Skills[0][Index].MaxLevel = 1;
-	Skills[0][Index].Cost = 250;
-	Skills[0][Index].Description[0] = "Repair Armor";
+	Skills[0][Index].MaxLevel = 4;
+	Skills[0][Index].Cost = 100;
+	Skills[0][Index].Description[0] = "Repair 25% Armor";
+	Skills[0][Index].Description[1] = "Repair 50% Armor";
+	Skills[0][Index].Description[2] = "Repair 75% Armor";
+	Skills[0][Index].Description[3] = "Repair All Armor";
 	Index = 0;
 	
 	// --------------------------------------------------
@@ -241,6 +257,13 @@ function void InitSkills()
 	Skills[3][Index].MaxLevel = 10;
 	Skills[3][Index].Cost = 50;
 	Skills[3][Index].Description[0] = "Shoots ice missles in a circular nova around you\n\cnIce Damage";
+	Index++;
+
+	Skills[3][Index].Name = "Weaken";
+	Skills[3][Index].MaxLevel = 2;
+	Skills[3][Index].Cost = 200;
+	Skills[3][Index].Description[0] = "Weakens an enemy, halving their stats";
+	Skills[3][Index].Description[1] = "Weakens an enemy, halving their stats and destroying their Aura";
 	Index = 0;
 
 	// --------------------------------------------------
@@ -414,10 +437,10 @@ function int ScaleEPCost(int Cost)
 };
 
 // Use Skill Script
-script UseSkill(int Index)
+acscript UseSkill(int Index)
 {
 	// If you're dead, terminate
-	if (GetActorProperty(PlayerTID, APROP_Health) <= 0) return;
+	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
 	
 	// Current Skill
 	Skill *CurrentSkill = &Skills[Player.SkillCatagory[Index]][Player.SkillIndex[Index]];
@@ -497,7 +520,8 @@ script UseSkill(int Index)
 				{
 					case 0:		Success = Heal(1);											break; // Heal
 					case 1:		Success = Heal(2);											break; // Heal Summons
-					case 2:		Success = Repair();											break; // Repair Armor
+					case 2:		Success = LifeLeech();										break; // Life Leech
+					case 3:		Success = Repair();											break; // Repair Armor
 				};
 				break;
 			
@@ -544,6 +568,7 @@ script UseSkill(int Index)
 					case 1:		Success = AttackSkill(1, 2);								break; // Fireball Nova
 					case 2:		Success = AttackSkill(2, 1);								break; // Ice Missile
 					case 3:		Success = AttackSkill(2, 2);								break; // Ice Nova
+					case 4:		Success = Weaken();											break; // Weaken
 				};
 				break;
 			
@@ -645,8 +670,20 @@ script DrawSkillHUD() enter
 // Heal
 function bool Heal(int Type)
 {
+	int HealLevel = Skills[0][0].CurrentLevel;
+	int HealAmount;
+	
+	// Calculate healing amount based on level
+	switch (HealLevel)
+	{
+		case 1: HealAmount = Player.HealthMax / 4;		break; // 25%
+		case 2: HealAmount = Player.HealthMax / 2;		break; // 50%
+		case 3: HealAmount = Player.HealthMax / 1.33;	break; // 75%
+		case 4: HealAmount = Player.HealthMax; 			break; // 100%
+	};
+	
 	// Refund - If your health is max or above
-	if (Type == 1 && GetActorProperty(PlayerTID, APROP_Health) >= GetActorProperty(PlayerTID, APROP_SpawnHealth))
+	if (Type == 1 && GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
 	{
 		ActivatorSound("menu/error", 127);
 		return false;
@@ -663,7 +700,7 @@ function bool Heal(int Type)
 	
 	if (Type == 1) // Player
 	{
-		HealThing(Player.Energy * 10);
+		HealThing(HealAmount);
 		ActivatorSound("skills/heal", 127);
 	};
 	if (Type == 2) // Summons
@@ -677,17 +714,68 @@ function bool Heal(int Type)
 	return true;
 };
 
+// Life Leech
+acscript bool LifeLeech()
+{
+	int LeechLevel = Skills[0][2].CurrentLevel;
+	
+	SetActivatorToTarget(Player.TID);
+	
+	// Refund - If the Player has no target
+	if (ActivatorTID() == Player.TID)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	// Refund - If the target isn't actually a valid monster
+	if (!CheckInventory("MonsterInit"))
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	int LeechAmount = Round((fixed)GetActorProperty(0, APROP_Health) * ((fixed)LeechLevel / 10.0));
+	
+	// Refund -- If you leech 0 HP
+	if (LeechAmount == 0)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	DamageThing(LeechAmount);
+	SetActivator(Player.TID);
+	HealThing(LeechAmount);
+	
+	FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
+	ActivatorSound("skills/lifeleech", 127);
+	return true;
+};
+
 // Repair Armor
 function bool Repair()
 {
-	if (CheckInventory("Armor") < ArmorMax && CheckArmorType() != "")
+	int RepairLevel = Skills[0][3].CurrentLevel;
+	int RepairAmount;
+	
+	// Calculate repair amount based on level
+	switch (RepairLevel)
+	{
+		case 1: RepairAmount = Player.ArmorMax / 4;		break; // 25%
+		case 2: RepairAmount = Player.ArmorMax / 2;		break; // 50%
+		case 3: RepairAmount = Player.ArmorMax / 1.33;	break; // 75%
+		case 4: RepairAmount = Player.ArmorMax; 		break; // 100%
+	};
+
+	if (CheckInventory("Armor") < Player.ArmorMax && CheckArmorType() != "")
 	{
 		FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
-		GiveInventory("ArmorBonus", Player.Energy * 10);
+		GiveInventory("ArmorBonus", RepairAmount);
 		
-		if (CheckInventory("Armor") > ArmorMax)
+		if (CheckInventory("Armor") > Player.ArmorMax)
 		{
-			int ArmorOverflow = CheckInventory("BasicArmor") - ArmorMax;
+			int ArmorOverflow = CheckInventory("BasicArmor") - Player.ArmorMax;
 			TakeInventory("BasicArmor", ArmorOverflow);
 		};
 		
@@ -848,7 +936,7 @@ function bool DropAmmo()
 };
 
 // Attack skills will use this
-script AttackSkill(int Element, int Type)
+acscript AttackSkill(int Element, int Type)
 {
 	fixed X = GetActorX(0);
 	fixed Y = GetActorY(0);
@@ -866,7 +954,7 @@ script AttackSkill(int Element, int Type)
 	int Projectiles;
 	
 	// Hack - Can't use projectile skills in the water)
-	if (Type == 1 && GetActorProperty(PlayerTID, APROP_Waterlevel) > 0)
+	if (Type == 1 && GetActorProperty(Player.TID, APROP_Waterlevel) > 0)
 	{
 		AmbientSound("menu/error", 127);
 		SetResultValue(0);
@@ -915,6 +1003,63 @@ script AttackSkill(int Element, int Type)
 		return;
 	};
 	// etc
+};
+
+// Weaken
+acscript bool Weaken()
+{
+	int WeakenLevel = Skills[3][4].CurrentLevel;
+	int MonsterLevel;
+	int MonsterAura;
+	int MonsterStrength;
+	int MonsterDefense;
+	
+	SetActivatorToTarget(Player.TID);
+	
+	// Refund - If the Player has no target
+	if (ActivatorTID() == Player.TID)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	// Refund - If the target isn't actually a valid monster
+	if (!CheckInventory("MonsterInit"))
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+
+	MonsterLevel = CheckInventory("MonsterLevel") / 2;
+	MonsterStrength = CheckInventory("MonsterStrength") / 2;
+	MonsterDefense = CheckInventory("MonsterDefense") / 2;
+	MonsterAura = CheckInventory("MonsterAura");
+	
+	// Destroy Aura
+	if (WeakenLevel == 2) 
+	{
+		if (GetActorProperty(0, APROP_Health) > GetActorProperty(0, APROP_SpawnHealth))
+			SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth));
+		
+		MonsterAura = 0;
+	};
+	
+	if (MonsterLevel <= 0) MonsterLevel = 1;
+	if (MonsterStrength <= 0) MonsterStrength = 1;
+	if (MonsterDefense <= 0) MonsterDefense = 1;
+	
+	// Apply the stats to the monster
+	SetInventory("MonsterLevel", MonsterLevel);
+	SetInventory("MonsterAura", MonsterAura);
+	SetInventory("MonsterStrength", MonsterStrength);
+	SetInventory("MonsterDefense", MonsterDefense);
+	SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.9 * (MonsterDefense / 100)));
+
+	SetActivator(Player.TID);
+	
+	FadeRange(0, 0, 0, 0.25, 0, 0, 0, 0.0, 1.0);
+	ActivatorSound("skills/weaken", 127);
+	return true;
 };
 
 // Summoning
@@ -1149,7 +1294,7 @@ function bool Unsummon()
 		ActivatorSound("skills/unsummon", 127);
 	
 	if (UnsummonLevel == 2)
-		EP += EPAdd;
+		Player.EP += EPAdd;
 
 	MaxSummons = 0;
 	FadeRange(192, 0, 0, 0.5, 192, 0, 0, 0.0, 1.0);
@@ -1172,7 +1317,7 @@ function bool Recall()
 };
 
 // Used from DECORATE to get dynamic projectile damage rates
-script SetProjectileDamage(int Type)
+acscript SetProjectileDamage(int Type)
 {
 	switch (Type)
 	{
@@ -1184,17 +1329,22 @@ script SetProjectileDamage(int Type)
 };
 
 // Handles the Transportation system
-script Transport()
+acscript Transport()
 {
+	// If you're dead, terminate
+	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
+	
 	// Fade Screen
 	FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 1.0);
 	
 	// Freeze Player
+	SetActorProperty(0, APROP_Invulnerable, true);
 	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
 	
 	// Delay and unfreeze Player
 	Delay(35);
 	SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+	SetActorProperty(0, APROP_Invulnerable, false);
 	
 	// Transport
 	if (!InBase)
@@ -1202,13 +1352,13 @@ script Transport()
 		LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
 		Teleport_NewMap(999, 0, 0);
 		InBase = true;
-		Transported = 1;
+		Transported = true;
 	}
 	else
 	{
 		Teleport_NewMap(LevelNum, 0, 0);
 		InBase = false;
-		Transported = 1;
+		Transported = true;
 	};
 };
 
@@ -1231,10 +1381,16 @@ function void CheckSkills()
 	int Angle = GetActorAngle(0) * 256;
 	int AmmoRegenMult = 1;
 	
-	// Reset the Skill multiplier from the Blue Aura
-	if (Player.Aura != 5)
-		Player.SkillCostMult = 1.0;
+	// Reset the Skill multiplier from the Blue Aura and Energy Augmentation
+	Player.SkillCostMult = 1.0;
 	
+	// Level 4 and 5 of the Energy Augmentation reduce skill costs by 25% and 50%
+	if (Player.Augs.Active[AUG_ENERGY])
+		if (Player.Augs.Level[AUG_ENERGY] == 4)
+			Player.SkillCostMult = 0.75
+		else if (Player.Augs.Level[AUG_ENERGY] >= 5)
+			Player.SkillCostMult = 0.5;
+			
 	// Give the player the Aura item while an Aura is active (for SBARINFO hax)
 	if (Player.AuraTimer > 0)
 		GiveInventory("Aura", 1)
@@ -1310,11 +1466,11 @@ function void CheckSkills()
 					SpawnForced("CyanAura", X, Y, Z + 32.0, AuraTID, Angle);
 					FadeRange(0, 255, 255, 0.05, 0, 255, 255, 0.0, 1.0);
 					if (BlueAuraLevel == 1)
-						Player.SkillCostMult = 0.75;
+						Player.SkillCostMult /= 1.33;
 					if (BlueAuraLevel == 2)
-						Player.SkillCostMult = 0.5;
+						Player.SkillCostMult /= 2;
 					if (BlueAuraLevel == 3)
-						Player.SkillCostMult = 0.25;
+						Player.SkillCostMult /= 4;
 					break;
 				// Purple Aura
 				case 6:
@@ -1404,8 +1560,8 @@ function void CheckSkills()
 			};
 		
 		// Pass Radius and Height to the Auras for DECORATE usage
-		SetUserVariable(AuraTID, "user_radius", (int)GetActorPropertyFixed(PlayerTID, APROP_Radius));
-		SetUserVariable(AuraTID, "user_height", (int)GetActorPropertyFixed(PlayerTID, APROP_Height));
+		SetUserVariable(AuraTID, "user_radius", (int)GetActorPropertyFixed(Player.TID, APROP_Radius));
+		SetUserVariable(AuraTID, "user_height", (int)GetActorPropertyFixed(Player.TID, APROP_Height));
 		Thing_ChangeTID(AuraTID, 0);
 
 		// Decrease timer this tic and calculate HUD timer amount
@@ -1443,12 +1599,6 @@ function void CheckSkills()
 // Updates Skills with dynamic descriptions (calculations, etc)
 function void CheckSkillDescriptions()
 {
-	// Healing - Heal
-	Skills[0][0].Description[0] = StrParam("Recover %d HP\n", Player.Energy * 10);
-
-	// Healing - Repair Armor
-	Skills[0][2].Description[0] = StrParam("Repair %d Armor\n", Player.Energy * 10);
-	
 	// Attacks - Fireball
 	Skills[3][0].Description[0] = StrParam("Shoots a fireball\n\ca%d Fire Damage\n", Round(Player.Energy * 0.25));
 
