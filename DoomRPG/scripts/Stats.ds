@@ -1,6 +1,7 @@
 #include "Globals.dh"
 #include "RPG.dh"
 #include "Shield.dh"
+#include "Shop.dh"
 #include "Stats.dh"
 #include "Skills.dh"
 #include "Utils.dh"
@@ -241,14 +242,30 @@ function void CheckRank()
 	// Rank up
 	if (Player.Rank >= RankTable[Player.RankLevel] && Player.RankLevel < MAX_RANK)
 	{
-		ActivatorSound("misc/rankup", 127);
+		int NewItems;
+		
 		Player.RankLevel++;
+
+		ActivatorSound("misc/rankup", 127);
 		FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0, 2.0);
+		
+		// Determine how many new items you've unlocked in the shop
+		ShopBuildPages();
+		for (int i = 0; i < ShopCategories; i++)
+			for (int j = 0; j < ShopMax[i]; j++)
+				if (Shop[i][j].Rank == Player.RankLevel)
+					NewItems++;
+		
 		SetFont("BIGFONT");
 		SetHudSize(0, 0, false);
-		HudMessage("You have reached rank level %d: %s\n",
-				   Player.RankLevel, LongRanks[Player.RankLevel],
-				   HUDMSG_FADEOUT, 4999, CR_GOLD, 0.5, 0.5, 4.0, 2.0);
+		if (NewItems > 0)
+			HudMessage("You have reached rank level %d: %s\nYou have unlocked %d new items in the shop\n",
+					   Player.RankLevel, LongRanks[Player.RankLevel], NewItems,
+					   HUDMSG_FADEOUT, 4999, CR_GOLD, 0.5, 0.5, 4.0, 2.0)
+		else
+			HudMessage("You have reached rank level %d: %s\n",
+					   Player.RankLevel, LongRanks[Player.RankLevel],
+					   HUDMSG_FADEOUT, 4999, CR_GOLD, 0.5, 0.5, 4.0, 2.0);
 	};
 	
 	// Payment
