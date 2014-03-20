@@ -357,9 +357,9 @@ function void ShopBuildPages()
 			{ "RLParticleBeamCannon"; 					"Particle Beam Cannon \cd[Unique]\c-"; 		25000; 	0; 	};
 			
 			// Legendary Weapons
-			{ "RLJudgeOfTheDead"; 						"Judge Of The Dead \cf[Legendary]\c-"; 		50000; 	0; 	};
-			{ "RLHurricaneCannon"; 						"Hurricane Cannon \cf[Legendary]\c-"; 		50000; 	0; 	};
-			{ "RLNeuralStunner"; 						"Neural Stunner \cf[Legendary]\c-"; 		50000; 	0; 	};
+			{ "RLJudgeOfTheDead"; 						"Judge Of The Dead \cf[Legendary]\c-"; 		50000; 	24;	};
+			{ "RLHurricaneCannon"; 						"Hurricane Cannon \cf[Legendary]\c-"; 		50000; 	24;	};
+			{ "RLNeuralStunner"; 						"Neural Stunner \cf[Legendary]\c-"; 		50000; 	24;	};
 		};
 		
 		// Armors
@@ -561,7 +561,7 @@ function void ShopLoop()
 		// Move down Y
 		Y += 8.0;
 	};
-	
+		
 	// Check cursor movement for repeating
 	if (Buttons == BT_FORWARD)
 	{
@@ -625,21 +625,31 @@ function void MoveCursor(int Direction)
 		if (Player.ShopIndex <= 0) Player.ShopIndex = ShopMax[Player.ShopPage];
 		ActivatorSound("menu/move", 127);
 		Player.ShopIndex--;
-	};
-	if (Direction == DIR_DOWN)
+		while (Shop[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel)
+			if (Player.ShopIndex <= 0)
+				Player.ShopIndex = ShopMax[Player.ShopPage]
+			else
+				Player.ShopIndex--;
+	}
+	else if (Direction == DIR_DOWN)
 	{
 		if (Player.ShopIndex >= ShopMax[Player.ShopPage] - 1) Player.ShopIndex = -1;
 		ActivatorSound("menu/move", 127);
 		Player.ShopIndex++;
-	};
-	if (Direction == DIR_LEFT)
+		while (Shop[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel)
+			if (Player.ShopIndex >= ShopMax[Player.ShopPage] - 1)
+				Player.ShopIndex = 0
+			else
+				Player.ShopIndex++;
+	}
+	else if (Direction == DIR_LEFT)
 	{
 		if (Player.ShopPage <= 0) Player.ShopPage = ShopCategories;
 		ActivatorSound("menu/move", 127);
 		Player.ShopIndex = 0;
 		Player.ShopPage--;
-	};
-	if (Direction == DIR_RIGHT)
+	}
+	else if (Direction == DIR_RIGHT)
 	{
 		if (Player.ShopPage >= ShopCategories - 1) Player.ShopPage = -1;
 		ActivatorSound("menu/move", 127);
@@ -679,6 +689,9 @@ function int GetAmmoAmount(str Item)
 function void BuyItem(str Item)
 {
 	int Cost = Shop[Player.ShopPage][Player.ShopIndex].Price;
+	
+	// If you aren't the required rank, fail
+	if (Shop[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel) return;
 	
 	// If it has no price, fail
 	if (Cost == 0)
