@@ -464,11 +464,16 @@ function void ShopLoop()
 {
 	int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+	fixed X = 24.1;
+	fixed Y = 50.0;
 	int Discount = (int)(Player.RankLevel * 2.1);
 	int Cost = Shop[Player.ShopPage][Player.ShopIndex].Price - Shop[Player.ShopPage][Player.ShopIndex].Price * Discount / 100;
 	int SellPrice;
+	int Color;
 	str Name;
+	str Item;
 	int Held;
+	int Rank;
 	
 	// Certain pages are built dynamically or require modifications depending on extension CVARs
 	ShopBuildPages();
@@ -523,42 +528,38 @@ function void ShopLoop()
 	// Draw Item List
 	for (int i = Player.ShopOffset; i < Player.ShopOffset + (SHOP_SCROLL * 2) + 1; i++)
 	{
-		if (i > ShopMax[Player.ShopPage] - 1) continue;
-		
 		Name = Shop[Player.ShopPage][i].Name;
 		Cost = Shop[Player.ShopPage][i].Price;
 		Held = Shop[Player.ShopPage][i].Held;
+		Rank = Shop[Player.ShopPage][i].Rank;
+		
+		// Stop if we're at the end of the list
+		if (i > ShopMax[Player.ShopPage] - 1) continue;
+		
+		// Continue past this item if we don't have the rank to buy/sell it
+		if (Rank > 0 && Player.RankLevel < Rank) continue;
 		
 		SetFont("SMALLFONT");
 		
+		// Set the Color
 		if (i == Player.ShopIndex)
-			if (Held > 0)
-				HudMessage("%s \cd[%d]\n", Name, Held,
-						   HUDMSG_PLAIN, 3001 + i, MenuCursorColor,
-						   24.1, 50.0 + 8.0 * (i - Player.ShopOffset), 0.05)
-			else
-				HudMessage("%s\n", Name,
-						   HUDMSG_PLAIN, 3001 + i, MenuCursorColor,
-						   24.1, 50.0 + 8.0 * (i - Player.ShopOffset), 0.05)
+			Color = MenuCursorColor
+		else if (CheckInventory("Credits") >= Cost - Cost * Discount / 100)
+			Color = CR_WHITE
 		else
-			if (CheckInventory("Credits") >= Cost - Cost * Discount / 100)
-				if (Held > 0)
-					HudMessage("%s \cd[%d]\n", Name, Held,
-							   HUDMSG_PLAIN, 3001 + i, CR_WHITE,
-							   24.1, 50.0 + 8.0 * (i - Player.ShopOffset), 0.05)
-				 else
-					HudMessage("%s\n", Name,
-							   HUDMSG_PLAIN, 3001 + i, CR_WHITE,
-							   24.1, 50.0 + 8.0 * (i - Player.ShopOffset), 0.05)
-			else
-				if (Held > 0)
-					HudMessage("%s \cd[%d]\n", Name, Held,
-							   HUDMSG_PLAIN, 3001 + i, CR_RED,
-							   24.1, 50.0 + 8.0 * (i - Player.ShopOffset), 0.05)
-				else
-					HudMessage("%s\n", Name,
-							   HUDMSG_PLAIN, 3001 + i, CR_RED,
-							   24.1, 50.0 + 8.0 * (i - Player.ShopOffset), 0.05);
+			Color = CR_RED;
+		
+		// Set the Item String
+		if (Held > 0)
+			Item = StrParam("%s \cd[%d]\n", Name, Held)
+		else
+			Item = StrParam("%s\n", Name);
+		
+		// Display the item string
+		HudMessage("%s\n", Item, HUDMSG_PLAIN, 3001 + i, Color, X, Y, 0.05);
+		
+		// Move down Y
+		Y += 8.0;
 	};
 	
 	// Check cursor movement for repeating
