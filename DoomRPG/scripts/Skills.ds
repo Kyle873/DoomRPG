@@ -8,8 +8,6 @@
 #include "Utils.dh"
 
 bool Overdrive;
-int SummonID = 2100;
-int MaxSummons;
 int BulletTimeMode;
 int BulletTimeTimer;
 
@@ -690,7 +688,7 @@ function bool Heal(int Type)
 	};
 	
 	// Refund - If you have no summoned monsters
-	if (Type == 2 && MaxSummons == 0)
+	if (Type == 2 && Player.Summons == 0)
 	{
 		ActivatorSound("menu/error", 127);
 		return false;
@@ -705,8 +703,9 @@ function bool Heal(int Type)
 	};
 	if (Type == 2) // Summons
 	{
-		for (int i = SummonID; i <= SummonID + MaxSummons; i++)
-			SetActorProperty(i, APROP_Health, GetActorProperty(i, APROP_SpawnHealth));
+		for (int i = 0; i < MAX_SUMMONS; i++)
+			if (Player.SummonTID[i] > 0)
+				SetActorProperty(Player.SummonTID[i], APROP_Health, GetActorProperty(Player.SummonTID[i], APROP_SpawnHealth));
 		
 		ActivatorSound("skills/heal2", 127);
 	};
@@ -1072,8 +1071,17 @@ function bool Summon(int Type)
 	fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
 	fixed Z = GetActorZ(0);
 	int MarineLevel = Skills[4][0].CurrentLevel;
-	int NewID = SummonID + MaxSummons;
+	int NewID = UniqueTID();
 	bool Success;
+
+	// Stop if you already have the maximum amount of summons
+	if (Player.Summons >= MAX_SUMMONS)
+	{
+		SetFont("BIGFONT");
+		Print("\cgYou cannot summon any more friendlies\n");
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
 	
 	switch (Type)
 	{
@@ -1148,15 +1156,22 @@ function bool Summon(int Type)
 		SetActorAngle(NewID, Angle);
 		SetActorProperty(NewID, APROP_Friendly, 1);
 		GiveActorInventory(NewID, "FriendlyBooster", 1);
-		MaxSummons++;
+		
+		// Add summon to your summon array
+		for (int i = 0; i < MAX_SUMMONS; i++)
+			if (Player.SummonTID[i] == 0)
+			{
+				Player.SummonTID[i] = NewID;
+				Player.Summons++;
+				Log("\cd%d\n", Player.Summons);
+				return true;
+			};
 	}
 	else
 	{
 		ActivatorSound("menu/error", 127);
 		return false;
 	};
-	
-	return true;
 };
 
 // Breaks down current Armor into Credits
@@ -1248,16 +1263,17 @@ function bool Rally()
 	fixed Angle = GetActorAngle(0);
 	
 	// Fail if you have no summons active
-	if (MaxSummons == 0)
+	if (Player.Summons == 0)
 	{
 		ActivatorSound("menu/error", 127);
 		return false;
 	};
 	
 	SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
-
-	for (int i = SummonID; i <= SummonID + MaxSummons; i++)
-		SetActorPosition(i, X, Y, Z, 0);
+	
+	for (int i = 0; i < MAX_SUMMONS; i++)
+		if (Player.SummonTID[i] > 0)
+			SetActorPosition(Player.SummonTID[i], X, Y, Z, 0);
 	
 	ActivatorSound("skills/rally", 127);
 	return true;
@@ -1266,40 +1282,43 @@ function bool Rally()
 // Unsummon - Removes all actors under the player's control
 function bool Unsummon()
 {
-	bool Kill = Overdrive;
 	int UnsummonLevel = Skills[5][3].CurrentLevel;
 	int EPAdd;
 	
 	// Fail if you have no summons active
-	if (MaxSummons == 0)
+	if (Player.Summons == 0)
 	{
 		ActivatorSound("menu/error", 127);
 		return false;
 	};
 	
-	for (int i = SummonID; i <= SummonID + MaxSummons; i++)
+	for (int i = 0; i < MAX_SUMMONS; i++)
 	{
-		if (!Kill && UnsummonLevel == 2 && GetActorProperty(i, APROP_Health) > 0)
+		// Continue if there's no summon in this slot
+		if (Player.SummonTID[i] == 0) continue;
+		
+		if (UnsummonLevel == 2 && GetActorProperty(i, APROP_Health) > 0)
 			EPAdd += 25;
 		
 		// Overdrive - Remove summons (teleport out) instead of killing them
-		if (Kill && GetActorProperty(i, APROP_Health) > 0)
-			{Thing_Destroy(i, 1, 0);}
-		else
+		if (GetActorProperty(Player.SummonTID[i], APROP_Health) > 0)
 		{
-			SpawnForced("TeleportFog", GetActorX(i), GetActorY(i), GetActorZ(i), 0, 0);
-			Thing_Remove(i);
+			SpawnForced("TeleportFog", GetActorX(Player.SummonTID[i]), GetActorY(Player.SummonTID[i]), GetActorZ(Player.SummonTID[i]), 0, 0);
+			Thing_Remove(Player.SummonTID[i]);
 		};
+		
+		// Remove the summon from the array
+		Player.SummonTID[i] = 0;
 	};
 	
-	if (Kill)
-		ActivatorSound("skills/unsummon", 127);
 	
 	if (UnsummonLevel == 2)
 		Player.EP += EPAdd;
 
-	MaxSummons = 0;
+	Player.Summons = 0;
+	
 	FadeRange(192, 0, 0, 0.5, 192, 0, 0, 0.0, 1.0);
+	ActivatorSound("skills/unsummon", 127);
 	return true;
 };
 
@@ -1572,9 +1591,9 @@ function void CheckSkills()
 	};
 	
 	// Summoned Monsters Handling
-	for (int i = SummonID; i < SummonID + MaxSummons; i++)
-		if (GetActorProperty(i, APROP_Health) <= 0)
-			MaxSummons--;
+	for (int i = 0; i < MAX_SUMMONS; i++)
+		if (GetActorProperty(Player.SummonTID[i], APROP_Health) <= 0)
+			Player.Summons--;
 	
 	// Force Wall Handling
 	if (GetActorProperty(1998, APROP_Alpha) > 0)
