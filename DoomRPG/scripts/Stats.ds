@@ -11,8 +11,27 @@ int SoftStatCap = 100;
 int HardStatCap = 400;
 
 // XP & Rank Tables
-long int[MAX_LEVEL + 1] XPTable;
-int[MAX_RANK + 1] RankTable;
+int[MAX_LEVEL + 1] XPTable =
+{
+	100; 		250;		500; 		750; 		1000; 		1500; 		2000; 		2500; 		5000; 		7500;
+	10000;		12500;		15000;		17500;		20000;		25000;		30000;		40000;		50000;		75000;
+	100000;		125000;		150000;		175000;		200000;		250000;		300000;		400000;		500000;		750000;
+	1000000;	1250000;	1500000;	1750000;	2000000;	2250000;	2500000;	3000000;	3250000;	3500000;
+	4000000;	4500000;	5000000;	5500000;	6000000;	6500000;	7000000;	7500000;	8000000;	9000000;
+	10000000;	11000000;	12000000;	13000000;	14000000;	15000000;	16000000;	17000000;	18000000;	19000000;
+	20000000;	22500000;	25000000;	27500000;	30000000;	32500000;	35000000;	37500000;	40000000;	50000000;
+	55000000;	60000000;	65000000;	70000000;	75000000;	80000000;	85000000;	90000000;	95000000;	100000000;
+	125000000;	150000000;	175000000;	200000000;	225000000;	250000000;	275000000;	300000000;	400000000;	500000000;
+	550000000;	600000000;	650000000;	700000000;	750000000;	800000000;	850000000;	900000000;	950000000;	1000000000;
+};
+int[MAX_RANK + 1] RankTable =
+{
+	10000;		25000; 		50000; 		75000; 		100000;
+	125000; 	150000; 	175000; 	200000; 	250000;
+	500000; 	1000000; 	1250000; 	1500000; 	1750000;
+	2000000; 	2500000; 	5000000; 	10000000;
+	25000000; 	50000000; 	100000000; 	1000000000;
+};
 
 // Rank strings
 str[25] Ranks =
@@ -47,24 +66,6 @@ str[25] LongRanks =
 	"Master Gunnery Sergeant"; "Master Gunnery Sergeant +";
 	"Sergeant Major"; "Sergeant Major +";
 	"Sergeant Major of the Marine Corps"; "Master Sergeant Major of the Marine Corps";
-};
-
-// Setup XP & Rank Tables
-function void SetupTables()
-{
-	// XP Table
-	for (int i = 0; i < MAX_LEVEL; i++)
-		XPTable[i] = 2000 + XPTable[i - 1] * 9 / 8;
-	
-	// Rank Table
-	RankTable =
-	{
-		10000; 25000; 50000; 75000; 100000;
-		125000; 150000; 175000; 200000; 250000;
-		500000; 1000000; 1250000; 1500000; 1750000;
-		2000000; 2500000; 5000000; 10000000;
-		25000000; 50000000; 100000000; 1000000000;
-	};
 };
 
 // Add XP
@@ -200,19 +201,22 @@ function void CheckLevel()
 	// Now check for a level up
 	if (Player.XP >= XPTable[Player.Level] && Player.Level < MAX_LEVEL)
 	{
+		int StatTokens = (6 - GameSkill()) + (Player.Level / 10);
+		int SkillTokens = (Player.Level % GameSkill()) == 1;
+		
+		// If you're on easy, just give one Skill Token per level
+		if (GameSkill() == 1) SkillTokens = 1;
+		
 		if (GetCVar("drpg_autospend"))
-			Player.LevelTokens += 5;
+			Player.LevelTokens += StatTokens;
 		
 		// Level Up
 		ActivatorSound("misc/levelup", 127);
 		
 		Player.Level++;
 		
-		if (GetCVar("drpg_hardleveling"))
-			GiveInventory("StatToken", (6 - GameSkill()) + (Player.Level / 10))
-		else
-			GiveInventory("StatToken", 5 + (Player.Level / 10));
-		GiveInventory("SkillToken", 1);
+		GiveInventory("StatToken", StatTokens);
+		GiveInventory("SkillToken", SkillTokens);
 		
 		if (GetCVar("drpg_levelup_heal"))
 		{
