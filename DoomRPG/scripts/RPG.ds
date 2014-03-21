@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Friday, March 21, 2014 at 1:33:11 PM";
+	"Friday, March 21, 2014 at 3:44:38 PM";
 };
 
 bool ParBonus;
@@ -523,7 +523,7 @@ script Loop()
 	CheckHUD();
 	
 	// Give the Player a Health Bar for Multiplayer
-	if (GameType() == GAME_NET_COOPERATIVE) SetInventory("HealthBar", 1);
+	if (InMultiplayer) SetInventory("HealthBar", 1);
 	
 	// Handle the menu cursor color
 	MenuCursorColor = CursorColors[(Timer() / 3) % 6];
@@ -1188,6 +1188,20 @@ acscript Exit(bool Secret) @ 30000
 	NEEDVALIDPLAYER;
 	
 	int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
+	bool Waiting = true;
+	
+	// Prevent level exit until everyone is outside the menu
+	if (InMultiplayer)
+		while (Waiting)
+		{
+			Waiting = false;
+			
+			for (int i = 0; i < MAX_PLAYERS; i++)
+				if (Players(i).InMenu || Players(i).InShop)
+					Waiting = true;
+			
+			Delay(35 * 3);
+		};
 	
 	// Check par time and give bonus if you beat it
 	if ((Timer() / 35) <= ParTime && !(ParTime <= 0 || ParBonus))
