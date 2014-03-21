@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Friday, March 21, 2014 at 10:56:11 AM";
+	"Friday, March 21, 2014 at 1:33:11 PM";
 };
 
 bool ParBonus;
@@ -522,6 +522,9 @@ script Loop()
 	CheckLevelInfo();
 	CheckHUD();
 	
+	// Give the Player a Health Bar for Multiplayer
+	if (GameType() == GAME_NET_COOPERATIVE) SetInventory("HealthBar", 1);
+	
 	// Handle the menu cursor color
 	MenuCursorColor = CursorColors[(Timer() / 3) % 6];
 
@@ -807,6 +810,7 @@ script Dead() death
 	Player.InShop = false;
 	
 	// Terminate Scripts
+	ACS_NamedTerminate("DamageNumbers", 0);
 	ACS_NamedTerminate("HealthBars", 0);
 	
 	// Remove TID
@@ -833,6 +837,7 @@ script Respawn() respawn
 	HudMessage("\cjXP -%d\n\ckRank -%d\n", XPPenalty, RankPenalty, HUDMSG_FADEOUT, 0, CR_WHITE, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 2.0, 2.0);
 	
 	// Run Scripts
+	DamageNumbers();
 	HealthBars();
 };
 
@@ -1054,6 +1059,9 @@ script HealthBars()
 		int HealthPercent;
 		str FillType;
 		str AuraType;
+		
+		// Blank out the name if it is the same as the actor itself
+		if (Name == GetActorClass(0)) Name = "";
 		
 		if (ActivatorTID() != Players(PlayerNum).TID && GetActorProperty(Players(PlayerNum).TID, APROP_Health) > 0)
 		{
