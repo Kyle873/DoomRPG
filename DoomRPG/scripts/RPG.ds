@@ -14,7 +14,7 @@
 str[2] Version =
 {
 	"v0.97 Beta - DamnScript Edition";
-	"Friday, March 21, 2014 at 3:51:41 PM";
+	"Friday, March 21, 2014 at 4:16:02 PM";
 };
 
 bool ParBonus;
@@ -1055,6 +1055,7 @@ script HealthBars()
 		int CurrentHealth = GetActorProperty(0, APROP_Health);
 		int MaxHealth = GetActorProperty(0, APROP_SpawnHealth);
 		bool Friendly = GetActorProperty(0, APROP_Friendly);
+		bool Shield = CheckInventory("Shield");
 		str Name = GetActorPropertyString(0, APROP_Nametag);
 		int HealthPercent;
 		str FillType;
@@ -1062,6 +1063,13 @@ script HealthBars()
 		
 		// Blank out the name if it is the same as the actor itself
 		if (Name == GetActorClass(0)) Name = "";
+		
+		// If the Player has a Shield active, change the health to Shield amounts instead
+		if (Shield)
+		{
+			CurrentHealth = CheckInventory("ShieldCharge");
+			MaxHealth = CheckInventory("ShieldChargeMax");
+		};
 		
 		if (ActivatorTID() != Players(PlayerNum).TID && GetActorProperty(Players(PlayerNum).TID, APROP_Health) > 0)
 		{
@@ -1071,7 +1079,7 @@ script HealthBars()
 			int X = GetUserCVar(PlayerNum, "drpg_healthbars_x");
 			int Y = GetUserCVar(PlayerNum, "drpg_healthbars_y");
 			
-			if (HasHealthBar && CurrentHealth > 0 && (!Player.InMenu && !Player.InShop))
+			if (HasHealthBar && (Shield || CurrentHealth > 0) && (!Player.InMenu && !Player.InShop))
 			{
 				// Divide-by-zero check
 				if (MaxHealth > 0)
@@ -1087,6 +1095,8 @@ script HealthBars()
 					FillType = "Fill3";
 				if (HealthPercent <= 24)
 					FillType = "Fill4";
+				if (Shield)
+					FillType = "Fill6";
 				
 				SetHudSize(800, 600, false);
 				
@@ -1126,7 +1136,10 @@ script HealthBars()
 				
 				// HP/Max HP
 				SetFont("SMALLFONT");
-				HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 4002, CR_GREEN, X, Y, 0.05);
+				if (Shield)
+					HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 4002, CR_CYAN, X, Y, 0.05)
+				else
+					HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 4002, CR_GREEN, X, Y, 0.05);
 				
 				// Stats
 				if (GetCVar("drpg_monster_levels") > 0 && CurrentLevel > 0)
