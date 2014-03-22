@@ -5,19 +5,12 @@
 #include "Stats.dh"
 #include "Utils.dh"
 
-/* --------------------------------------------------
+// Spawn Spots and TIDs
+int ShopSpecialTID = 1001;
+int MarineSpotTID = 1002;
+int MarineTID = 1201;
 
-SPOT ID'S
-1000 - Shop Drop
-1001 - Marine Spawn Spot
-1002 - Arena Monsters
-1003 - Arena Start Spot
-1100-1130 - Arena Spawn Points
-1200 - Arena Item Spawner
-1201 - Hostile Marines
-
-// -------------------------------------------------- */
-
+// Choices
 int LevelChoice = 1;
 int SkillChoice = 0;
 int WaveChoice = 1;
@@ -25,11 +18,34 @@ int WaveChoice = 1;
 // Invasion
 bool Invasion = false;
 
+function void CheckShopSpecial()
+{
+	// Reset the item
+	if (ShopSpecialTimer <= 0)
+	{
+		// TODO
+	};
+	
+	// Spawn the new item
+	if (InBase)
+	{
+		Thing_Remove(ShopSpecialTID);
+		SpawnSpot("TeleportFog", ShopSpecialTID, 0, 0);
+		SpawnSpot(ShopSpecialItem, ShopSpecialTID, 0, 0);
+	};
+	
+	// Decrease the timer
+	ShopSpecialTimer--;
+};
+
 acscript EnterOutpost()
 {
     InBase = true;
     
     Sector_SetPlaneReflection(6, 128, 0);
+
+	// Spawn the current Shop Specialitem at the spot
+	SpawnSpot(ShopSpecialItem, ShopSpecialTID, 0, 0);
 };
 
 acscript RegenArea(int ID, int Paid)
@@ -45,48 +61,8 @@ acscript RegenArea(int ID, int Paid)
     
 	if (Buttons & BT_SPEED) Interval = 2 else Interval = 10;
     
-    // XP
-    if (ID == 1)
-    {
-        if (Paid && CheckInventory("Credits") < Player.Level * 100)
-            return;
-        if (Player.Level == 0)
-            Player.XP += 100
-        else
-            Player.XP += Player.Level * 100;
-        
-        FadeRange(255, 255, 255, 0.1, 255, 255, 255, 0.0, 0.1);
-        AmbientSound("regen/xp", 127);
-        
-        if (Paid)
-            TakeInventory("Credits", Player.Level * 100);
-        
-        Delay(Interval);
-        goto Start;
-    };
-	
-    // Rank
-    if (ID == 2)
-    {
-        if (Paid && CheckInventory("Credits") < Player.RankLevel * 1001)
-            return
-        if (Player.RankLevel == 0)
-            Player.Rank += 1000
-        else
-            Player.Rank += Player.RankLevel * 1000;
-        
-        FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.1);
-        AmbientSound("regen/rank", 127);
-        
-        if (Paid)
-            TakeInventory("Credits", Player.RankLevel * 1000);
-        
-        Delay(Interval);
-        goto Start;
-    };
-	
     // Health
-    if (ID == 3)
+    if (ID == 1)
     {
         if (Paid && CheckInventory("Credits") < 5)
             return;
@@ -107,7 +83,7 @@ acscript RegenArea(int ID, int Paid)
     };
 	
     // Armor
-    if (ID == 4)
+    if (ID == 2)
     {
         if (Paid && CheckInventory("Credits") < 5)
             return;
@@ -127,7 +103,7 @@ acscript RegenArea(int ID, int Paid)
     };
 	
     // EP
-    if (ID == 5)
+    if (ID == 3)
     {
         if (Paid && CheckInventory("Credits") < 5)
             return;
@@ -142,20 +118,6 @@ acscript RegenArea(int ID, int Paid)
         
         if (Paid)
             TakeInventory("Credits", 5);
-        
-        Delay(Interval);
-        goto Start;
-    };
-	
-    // Credits
-    if (ID == 6)
-    {
-        if (Paid) return;
-        
-        GiveInventory("Credits", 100);
-        
-        FadeRange(128, 128, 0, 0.1, 128, 128, 0, 0.0, 0.1);
-        AmbientSound("regen/credits", 127);
         
         Delay(Interval);
         goto Start;
@@ -386,8 +348,8 @@ acscript PissOffMarines()
         // Teleport in new Marines
         if ((Timer() % (35 * 10)) == 1)
         {
-            SpawnSpot("TeleportFog", 1001, 0, 0);
-            SpawnSpotFacing("MarineRandomizer", 1001, 1201);
+            SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
+            SpawnSpotFacing("MarineRandomizer", MarineSpotTID, MarineTID);
         };
 
         Delay(1);
@@ -692,4 +654,9 @@ acscript CreditRoom(int ID)
 			Delay(1);
 		};
 	};
+};
+
+acscript ShopSpecial()
+{
+	// TODO
 };
