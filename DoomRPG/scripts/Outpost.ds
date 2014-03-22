@@ -24,14 +24,53 @@ function void CheckShopSpecial()
 	// Reset the item
 	if (ShopSpecialTimer <= 0)
 	{
+		int Category;
+		int Index;
+		bool ValidItem;
+
 #if DEBUG
 		if (Arbitrator) Log("\cdDEBUG: Shop Special expired! Switching...\n");
 #endif
 		
-		// Pick an item
-		ShopBuildPages();
-		int Category = Random(0, ShopCategories - 1);
-		int Index = Random(0, ShopMax[Category] - 1);
+		// Item Blacklist
+		int[12][2] ItemBlacklist =
+		{
+			// Category, Index
+			
+			// Ammo
+			{ 1;	0; 	};	// Clip
+			{ 1;	1; 	};	// Box of Bullets
+			{ 1;	2; 	};	// Shells
+			{ 1;	3; 	};	// Box of Shells
+			{ 1;	4; 	};	// Rockets
+			{ 1;	5; 	};	// Box of Rockets
+			{ 1;	6; 	};	// Cell
+			{ 1;	7; 	};	// Cell Pack
+			{ 1;	8; 	};	// Small Backpack
+			{ 1;	9; 	};	// Backpack
+			
+			// Health
+			{ 2;	0;	};	// Health Bonus
+			
+			// Armor
+			{ 3;	0;	};	// Armor Bonus
+		};
+		
+		while (!ValidItem)
+		{
+			// Pick an item
+			ShopBuildPages();
+			Category = Random(0, ShopCategories - 1);
+			Index = Random(0, ShopMax[Category] - 1);
+			
+			// Check the item against the blacklist
+			for (int i = 0; i <= 12; i++)
+				if (i == 12) ValidItem = true
+				else if (Category == ItemBlacklist[i][0] && Index == ItemBlacklist[i][1])
+					ValidItem = false;
+		};
+		
+		// Assign the item to the Shop Special item
 		ShopSpecialItem = Shop[Category][Index];
 		
 		// DoomRL Compatibility

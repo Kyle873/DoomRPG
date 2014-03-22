@@ -463,6 +463,29 @@ function int GetDigit(int Num, int Digit)
 	return (Num / Pow(10, Digit)) % 10;
 };
 
+// Returns whether a monster is in some form of stealth or not
+function bool IsStealth(int tid)
+{
+	return (
+		// Fuzzy
+		GetActorProperty(tid, APROP_RenderStyle) == STYLE_Fuzzy ||
+		GetActorProperty(tid, APROP_RenderStyle) == STYLE_OptFuzzy ||
+		// Translucent
+		(GetActorProperty(tid, APROP_RenderStyle) == STYLE_Translucent &&
+			GetActorPropertyFixed(tid, APROP_Alpha) < 0.5) ||
+		(GetActorProperty(tid, APROP_RenderStyle) == STYLE_TranslucentStencil &&
+			GetActorPropertyFixed(tid, APROP_Alpha) < 0.5) ||
+		(GetActorProperty(tid, APROP_RenderStyle) == STYLE_Add &&
+			GetActorPropertyFixed(tid, APROP_Alpha) < 0.5) ||
+		// Totally invisible
+		GetActorProperty(tid, APROP_RenderStyle) == STYLE_None ||
+		// Actor flags
+		CheckFlag(tid, "STEALTH") ||
+		CheckFlag(tid, "SHADOW") ||
+		CheckFlag(tid, "INVISIBLE")
+	);
+};
+
 // This function computes n-th power of x.
 function int Pow(int x, int n)
 {
