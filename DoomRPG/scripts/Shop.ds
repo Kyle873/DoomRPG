@@ -343,26 +343,26 @@ function void ShopBuildPages()
 			{ "RLCombatTranslocator"; 					"Combat Translocator \ct[Exotic]\c-"; 		10000; 	4; 	};
 			
 			// Unique Weapons
-			{ "RLJackhammer"; 							"Jackhammer \cd[Unique]\c-"; 				10000;	8; 	};
-			{ "RLRailgun"; 								"Railgun \cd[Unique]\c-"; 					20000; 	8; 	};
-			{ "RLMysteriousMagnum"; 					"Mysterious Magnum \cd[Unique]\c-"; 		25000; 	8; 	};
-			{ "RLBFG10k"; 								"BFG10k \cd[Unique]\c-"; 					50000; 	8; 	};
-			{ "RLUnknownHerald"; 						"Unknown Herald \cd[Unique]\c-"; 			25000; 	8; 	};
-			{ "RLFragShotgun"; 							"Frag Shotgun \cd[Unique]\c-"; 				10000; 	8; 	};
-			{ "RLQuadShotgun"; 							"Quad Shotgun \cd[Unique]\c-"; 				25000; 	8; 	};
-			{ "RLLightweaver"; 							"Lightweaver \cd[Unique]\c-"; 				25000; 	8; 	};
-			{ "RLTrigun"; 								"Trigun \cd[Unique]\c-"; 					10000; 	8; 	};
-			{ "RLGrammatonClericBeretta"; 				"Grammaton Cleric Beretta \cd[Unique]\c-";	10000; 	8; 	};
-			{ "RLAntiFreakJackel"; 						"Anti-Freak Jackel \cd[Unique]\c-"; 		25000; 	8; 	};
-			{ "RLTantrumCannon"; 						"Quantum Tantrum Cannon \cd[Unique]\c-"; 	25000; 	8; 	};
-			{ "RLRevenantsLauncher"; 					"Revenant's Launcher \cd[Unique]\c-"; 		10000; 	8; 	};
-			{ "RLNullPointer"; 							"Charch's Null Pointer \cd[Unique]\c-"; 	10000; 	8; 	};
-			{ "RLParticleBeamCannon"; 					"Particle Beam Cannon \cd[Unique]\c-"; 		25000; 	8; 	};
+			{ "RLJackhammer"; 							"Jackhammer \cd[Unique]\c-"; 				10000;	-1; };
+			{ "RLRailgun"; 								"Railgun \cd[Unique]\c-"; 					20000; 	-1; };
+			{ "RLMysteriousMagnum"; 					"Mysterious Magnum \cd[Unique]\c-"; 		25000; 	-1; };
+			{ "RLBFG10k"; 								"BFG10k \cd[Unique]\c-"; 					50000; 	-1; };
+			{ "RLUnknownHerald"; 						"Unknown Herald \cd[Unique]\c-"; 			25000; 	-1; };
+			{ "RLFragShotgun"; 							"Frag Shotgun \cd[Unique]\c-"; 				10000; 	-1; };
+			{ "RLQuadShotgun"; 							"Quad Shotgun \cd[Unique]\c-"; 				25000; 	-1; };
+			{ "RLLightweaver"; 							"Lightweaver \cd[Unique]\c-"; 				25000; 	-1; };
+			{ "RLTrigun"; 								"Trigun \cd[Unique]\c-"; 					10000; 	-1; };
+			{ "RLGrammatonClericBeretta"; 				"Grammaton Cleric Beretta \cd[Unique]\c-";	10000; 	-1; };
+			{ "RLAntiFreakJackel"; 						"Anti-Freak Jackel \cd[Unique]\c-"; 		25000; 	-1; };
+			{ "RLTantrumCannon"; 						"Quantum Tantrum Cannon \cd[Unique]\c-"; 	25000; 	-1; };
+			{ "RLRevenantsLauncher"; 					"Revenant's Launcher \cd[Unique]\c-"; 		10000; 	-1; };
+			{ "RLNullPointer"; 							"Charch's Null Pointer \cd[Unique]\c-"; 	10000; 	-1; };
+			{ "RLParticleBeamCannon"; 					"Particle Beam Cannon \cd[Unique]\c-"; 		25000; 	-1; };
 			
 			// Legendary Weapons
-			{ "RLJudgeOfTheDead"; 						"Judge Of The Dead \cf[Legendary]\c-"; 		50000; 	24;	};
-			{ "RLHurricaneCannon"; 						"Hurricane Cannon \cf[Legendary]\c-"; 		50000; 	24;	};
-			{ "RLNeuralStunner"; 						"Neural Stunner \cf[Legendary]\c-"; 		50000; 	24;	};
+			{ "RLJudgeOfTheDead"; 						"Judge Of The Dead \cf[Legendary]\c-"; 		50000; 	-1; };
+			{ "RLHurricaneCannon"; 						"Hurricane Cannon \cf[Legendary]\c-"; 		50000; 	-1; };
+			{ "RLNeuralStunner"; 						"Neural Stunner \cf[Legendary]\c-"; 		50000; 	-1; };
 		};
 		
 		// Armors
@@ -481,6 +481,13 @@ function void ShopLoop()
 	
 	// Certain pages are built dynamically or require modifications depending on extension CVARs
 	ShopBuildPages();
+
+#if DEBUG
+	// Remove rank limitations in Debug Mode
+	for (int i = 0; i < ShopCategories; i++)
+		for (int j = 0; j < ShopMax[i]; j++)
+			Shop[i][j].Rank = 0;
+#endif
 	
 	// Calculate the held amounts for the shop items
 	for (int i = 0; i < ShopCategories; i++)
@@ -545,7 +552,7 @@ function void ShopLoop()
 		if (i > ShopMax[Player.ShopPage] - 1) continue;
 		
 		// Continue past this item if we don't have the rank to buy/sell it
-		if (Rank > 0 && Player.RankLevel < Rank) continue;
+		if ((Rank > 0 && Player.RankLevel < Rank) || Rank == -1) continue;
 		
 		SetFont("SMALLFONT");
 		
@@ -633,7 +640,7 @@ function void MoveCursor(int Direction)
 		if (Player.ShopIndex <= 0) Player.ShopIndex = ShopMax[Player.ShopPage];
 		ActivatorSound("menu/move", 127);
 		Player.ShopIndex--;
-		while (Shop[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel)
+		while (Shop[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel || Shop[Player.ShopPage][Player.ShopIndex].Rank == -1)
 			if (Player.ShopIndex <= 0)
 				Player.ShopIndex = ShopMax[Player.ShopPage]
 			else
@@ -644,7 +651,7 @@ function void MoveCursor(int Direction)
 		if (Player.ShopIndex >= ShopMax[Player.ShopPage] - 1) Player.ShopIndex = -1;
 		ActivatorSound("menu/move", 127);
 		Player.ShopIndex++;
-		while (Shop[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel)
+		while (Shop[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel || Shop[Player.ShopPage][Player.ShopIndex].Rank == -1)
 			if (Player.ShopIndex >= ShopMax[Player.ShopPage] - 1)
 				Player.ShopIndex = 0
 			else
