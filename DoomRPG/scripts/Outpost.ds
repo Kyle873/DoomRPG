@@ -8,8 +8,8 @@
 
 // Spawn Spots and TIDs
 int ShopSpecialTID = 1001;
-int MarineSpotTID = 1002;
-int MarineTID = 1201;
+int MarineSpotTID = 1300;
+int MarineTID = 1301;
 
 // Choices
 int LevelChoice = 1;
@@ -59,9 +59,9 @@ function void SpawnShopSpecialItem()
 {
 	if (InBase)
 	{
-		Thing_Remove(ShopSpecialTID+1);
+		Thing_Remove(ShopSpecialTID + 1);
 		SpawnSpotForced("TeleportFog", ShopSpecialTID, 0, 0);
-		SpawnSpotForced(ShopSpecialItem.Actor, ShopSpecialTID, ShopSpecialTID+1, 0);
+		SpawnSpotForced(ShopSpecialItem.Actor, ShopSpecialTID, ShopSpecialTID + 1, 0);
 	};
 };
 
@@ -699,6 +699,15 @@ acscript ShopSpecial()
 		str Name = ShopSpecialItem.Name;
 		int Discount = (30 - (GameSkill() * 5));
 		int Cost = ShopSpecialItem.Price - ShopSpecialItem.Price * Discount / 100;
+		int Minutes = ShopSpecialTimer / 35 / 60;
+		int Seconds = ShopSpecialTimer / 35 % 60;
+		str TimerDisplay;
+		
+		// Setup the timer display
+		if (Seconds < 10)
+			TimerDisplay = StrParam("%d:0%d\n", Minutes, Seconds)
+		else
+			TimerDisplay = StrParam("%d:%d\n", Minutes, Seconds);
 		
 		// The cost should always be at least 1 Credit
 		if (Cost <= 0) Cost = 1;
@@ -734,8 +743,8 @@ acscript ShopSpecial()
 		
 		// Drawing
 		SetFont("BIGFONT");
-		HudMessage("%s\n\ck%d C (Discount: %d%%)\n\cdTime Left: %d\n\n\cd%K\cj to buy\n\cd%K\cj to exit\n", 
-				   Name, Cost, Discount, ShopSpecialTimer / 35, "+use", "+speed",
+		HudMessage("%s\n\ck%d C (Discount: %d%%)\n\cdTime Left: %s\n\n\cd%K\cj to buy\n\cd%K\cj to exit\n", 
+				   Name, Cost, Discount, TimerDisplay, "+use", "+speed",
 				   HUDMSG_FADEOUT, 5000, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
 		
 		Delay(1);
