@@ -2,6 +2,7 @@
 #include "Globals.dh"
 #include "Outpost.dh"
 #include "RPG.dh"
+#include "Shop.dh"
 #include "Stats.dh"
 #include "Utils.dh"
 
@@ -23,29 +24,56 @@ function void CheckShopSpecial()
 	// Reset the item
 	if (ShopSpecialTimer <= 0)
 	{
-		// TODO
+#if DEBUG
+		if (Arbitrator) Log("\cdDEBUG: Shop Special expired! Switching...\n");
+#endif
+		
+		// Pick an item
+		ShopBuildPages();
+		int Category = Random(0, ShopCategories - 1);
+		int Index = Random(0, ShopMax[Category] - 1);
+		ShopSpecialItem = Shop[Category][Index];
+		
+		// DoomRL Compatibility
+		if (GetCVar("drpg_ext_doomrl"))
+			if (Category == 0) // Weapons
+				ShopSpecialItem.Actor = StrParam("%sPickup\n", ShopSpecialItem.Actor);
+		
+		// Spawn the item if you're in the Outpost
+		SpawnShopSpecialItem();
+		
+		// Reset the timer and bought status
+		ShopSpecialTimer = SHOP_SPECIAL_TIMER;
+		ShopSpecialBought = false;
 	};
 	
-	// Spawn the new item
-	if (InBase)
-	{
+	// Remove the item if it was bought
+	if (InBase && ShopSpecialBought)
 		Thing_Remove(ShopSpecialTID);
-		SpawnSpot("TeleportFog", ShopSpecialTID, 0, 0);
-		SpawnSpot(ShopSpecialItem, ShopSpecialTID, 0, 0);
-	};
 	
 	// Decrease the timer
 	ShopSpecialTimer--;
+};
+
+function void SpawnShopSpecialItem()
+{
+	if (InBase)
+	{
+		Thing_Remove(ShopSpecialTID);
+		SpawnSpotForced("TeleportFog", ShopSpecialTID, 0, 0);
+		SpawnSpotForced(ShopSpecialItem.Actor, ShopSpecialTID, 0, 0);
+	};
 };
 
 acscript EnterOutpost()
 {
     InBase = true;
     
+	// Add the reflections to the hallway floors
     Sector_SetPlaneReflection(6, 128, 0);
-
-	// Spawn the current Shop Specialitem at the spot
-	SpawnSpot(ShopSpecialItem, ShopSpecialTID, 0, 0);
+	
+	// Spawn the Shop Special item
+	SpawnShopSpecialItem();
 };
 
 acscript RegenArea(int ID, int Paid)
@@ -128,7 +156,7 @@ acscript LevelTransport()
 {
     while (1)
     {
-        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
         
         // Stop Underflow
         if (LevelChoice < 1)
@@ -173,7 +201,7 @@ acscript LevelTransport()
             {
                 FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 2.0);
                 Delay(105);
-                SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+                SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
                 InBase = false;
                 Transported = true;
                 Teleport_NewMap(LevelChoice, 0);
@@ -184,14 +212,14 @@ acscript LevelTransport()
                 HudMessage("You haven't reached this level yet\n", HUDMSG_FADEOUT, 1, CR_RED, 0.5, 0.5, 3.0, 1.0);
                 ActivatorSound("menu/error", 127);
                 FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 2.0);
-                SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+                SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
                 InBase = true;
                 return;
             };
         };
         if (Buttons == BT_SPEED)
         {
-            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
             return;
         };
         
@@ -206,7 +234,7 @@ acscript SkillComputer()
     
 	ActivatorSound("misc/edgar", 127);
 	
-	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+	SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
     
     while (1)
     {
@@ -217,7 +245,7 @@ acscript SkillComputer()
         // Text
         SetFont("BIGFONT");
         HudMessage("Skill Level: \cg%d (%s)\n", SkillChoice + 1, SkillLevels[SkillChoice],
-                   HUDMSG_PLAIN, 1, CR_GOLD, 0.5, 0.2, 0.05);
+                   HUDMSG_PLAIN, 1, CR_GOLD, 0.5, 0.5, 0.05);
         
         // Input
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -236,12 +264,12 @@ acscript SkillComputer()
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
             SetSkill(SkillChoice);
-            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
             return;
         };
         if (Buttons == BT_SPEED)
         {
-            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
             return;
         };
         
@@ -282,7 +310,7 @@ acscript SelectArenaWave()
 
     while (1)
     {
-        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
         
 		// Prevent the menus from being opened
 		Player.InMenu = false;
@@ -315,12 +343,12 @@ acscript SelectArenaWave()
                 ArenaWave = 1;
             
             ActivatorSound("menu/move", 127);
-            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
             return;
         };
         if (Buttons == BT_SPEED)
         {
-            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
             return;
         };
         
@@ -378,7 +406,7 @@ acscript TokenConverter()
 		return;
 	};
 	
-	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+	SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
 	ActivatorSound("menu/move", 127);
 
 	while (1)
@@ -516,7 +544,7 @@ acscript TokenConverter()
 		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
 		{
 			ActivatorSound("menu/move", 127);
-			SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+			SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
 			return;
 		};
 		
@@ -540,9 +568,9 @@ acscript TokenConverter()
 acscript CreditRoom(int ID)
 {
 	if (ID == 1) // Enter
-		SetMusic("Credits");
+		LocalSetMusic("Credits");
 	if (ID == 2) // Exit
-		SetMusic("Outpost");
+		LocalSetMusic("Outpost");
 	
 	if (ID == 3) // Kyle873 - That's me!
 	{
@@ -658,5 +686,58 @@ acscript CreditRoom(int ID)
 
 acscript ShopSpecial()
 {
-	// TODO
+	// If the item's already been bought, terminate
+	if (ShopSpecialBought) return;
+	
+	ActivatorSound("menu/move", 127);
+	SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
+	
+	while (1)
+	{
+		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		str Name = ShopSpecialItem.Name;
+		int Discount = (30 - (GameSkill() * 5));
+		int Cost = ShopSpecialItem.Price - ShopSpecialItem.Price * Discount / 100;
+		
+		// The cost should always be at least 1 Credit
+		if (Cost <= 0) Cost = 1;
+		
+		// Prevent the menus from being opened
+		Player.InMenu = false;
+		Player.InShop = false;
+
+		// Input
+        if (Buttons == BT_USE && OldButtons != BT_USE)
+        {
+			// Buy Item
+			if (CheckInventory("Credits") >= Cost)
+			{
+				TakeInventory("Credits", Cost);
+				SpawnForced(ShopSpecialItem.Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+				SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
+				ShopSpecialBought = true;
+				
+				ActivatorSound("credits/payout", 127);
+				SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+				return;
+			}
+			else
+				ActivatorSound("menu/error", 127);
+        };
+        if (Buttons == BT_SPEED)
+        {
+			ActivatorSound("menu/move", 127);
+			SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+            return;
+        };
+		
+		// Drawing
+		SetFont("BIGFONT");
+		HudMessage("%s\n\ck%d C (Discount: %d%%)\n\cdTime Left: %d\n\n\cd%K\cj to buy\n\cd%K\cj to exit\n", 
+				   Name, Cost, Discount, ShopSpecialTimer / 35, "+use", "+speed",
+				   HUDMSG_FADEOUT, 5000, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
+		
+		Delay(1);
+	};
 };
