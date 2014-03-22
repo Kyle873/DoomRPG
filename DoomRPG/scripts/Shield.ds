@@ -186,7 +186,7 @@ str[4][MAX_PARTS][4] ShieldData =
 		{
 			"ShieldAccessory7";
 			"\cuGH0ST";
-			"Invisible to enemies";
+			"1/8th chance to become a ghost when hit";
 			"SHACG0";
 		};
 	};
@@ -430,7 +430,29 @@ function void CheckShieldAccessory()
 		GiveInventory("ShieldReflection", 1);
 	
 	if (Player.Shield.Active && Player.Shield.Accessory == 7) // Ghost
-		GiveInventory("ShieldGhost", 1);
+	{
+		// 1/8 chance of activating
+		if (Player.HealthLoss > 0)
+		{
+			Log("Ghost check\n");
+			if (Random(1, 8) == 1)
+			{
+				GiveInventory("ShieldGhost", 1);
+				Player.Shield.Ghost = true;
+				Player.Shield.GhostTimer = 35 * 5;
+			};
+		};
+		
+		// Remove when time is up
+		if (Player.Shield.GhostTimer <= 0)
+		{
+			GiveInventory("ShieldGhostOff", 1);
+			Player.Shield.Ghost = false;
+		};
+		
+		// Decrease the ghost timer
+		if (Player.Shield.Ghost) Player.Shield.GhostTimer--;
+	};
 };
 
 function void ShieldNova()
