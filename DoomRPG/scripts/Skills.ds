@@ -67,6 +67,15 @@ function void InitSkills()
 	Skills[0][Index].Description[0] = "Summons recover all their HP";
 	Index++;
 	
+	Skills[0][Index].Name = "Heal Team";
+	Skills[0][Index].MaxLevel = 4;
+	Skills[0][Index].Cost = 50;
+	Skills[0][Index].Description[0] = "Heals you and your teammates for 25% HP";
+	Skills[0][Index].Description[1] = "Heals you and your teammates for 50% HP";
+	Skills[0][Index].Description[2] = "Heals you and your teammates for 75% HP";
+	Skills[0][Index].Description[3] = "Heals you and your teammates for all HP";
+	Index++;
+
 	Skills[0][Index].Name = "Life Leech";
 	Skills[0][Index].MaxLevel = 5;
 	Skills[0][Index].Cost = 100;
@@ -520,8 +529,9 @@ acscript UseSkill(int Index)
 				{
 					case 0:		Success = Heal(1);											break; // Heal
 					case 1:		Success = Heal(2);											break; // Heal Summons
-					case 2:		Success = LifeLeech();										break; // Life Leech
-					case 3:		Success = Repair();											break; // Repair Armor
+					case 2:		Success = Heal(3);											break; // Heal Team
+					case 3:		Success = LifeLeech();										break; // Life Leech
+					case 4:		Success = Repair();											break; // Repair Armor
 				};
 				break;
 			
@@ -671,6 +681,7 @@ script DrawSkillHUD() enter
 function bool Heal(int Type)
 {
 	int HealLevel = Skills[0][0].CurrentLevel;
+	int HealTeamLevel = Skills[0][2].CurrentLevel;
 	int HealAmount;
 	
 	// Calculate healing amount based on level
@@ -710,6 +721,29 @@ function bool Heal(int Type)
 				SetActorProperty(Player.SummonTID[i], APROP_Health, GetActorProperty(Player.SummonTID[i], APROP_SpawnHealth));
 		
 		ActivatorSound("skills/heal2", 127);
+	};
+	if (Type == 3) // Team
+	{
+		int PlayerTID = Player.TID;
+		
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
+			// Calculate this player's max HP
+			switch (HealTeamLevel)
+			{
+				case 1: HealAmount = Players(i).HealthMax / 4;		break; // 25%
+				case 2: HealAmount = Players(i).HealthMax / 2;		break; // 50%
+				case 3: HealAmount = Players(i).HealthMax / 1.33;	break; // 75%
+				case 4: HealAmount = Players(i).HealthMax; 			break; // 100%
+			};
+			
+			SetActivator(Players(i).TID);
+			FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
+			GiveInventory("Health", HealAmount);
+			ActivatorSound("skills/heal", 127);
+		};
+		
+		SetActivator(PlayerTID);
 	};
 	
 	return true;
