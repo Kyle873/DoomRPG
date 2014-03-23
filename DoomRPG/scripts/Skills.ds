@@ -1348,17 +1348,102 @@ acscript Transport()
 	// If you're dead, terminate
 	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
 	
-	// Fade Screen
-	FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 1.0);
-	
-	// Freeze Player
-	SetActorProperty(0, APROP_Invulnerable, true);
-	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-	
-	// Delay and unfreeze Player
-	Delay(35);
-	SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-	SetActorProperty(0, APROP_Invulnerable, false);
+	if (InMultiplayer)
+	{
+		int Players = PlayerCount();
+		bool Ready;
+		bool[MAX_PLAYERS] Voted;
+		int PlayersApprove;
+		int PlayersDeny;
+		
+		for (int i = 0; i < MAX_PLAYERS; i++)
+			Voted[i] = false;
+		
+		while (!Ready)
+		{
+			// Freeze all players
+			SetPlayerProperty(true, 1, PROP_TOTALLYFROZEN);
+			
+			// Input
+			for (int i = 0; i < Players; i++)
+			{
+				// Skip input checks if you've already voted
+				if (Voted[i]) continue;
+				
+				int Buttons = GetPlayerInput(i, INPUT_BUTTONS);
+				int OldButtons = GetPlayerInput(i, INPUT_OLDBUTTONS);
+				
+				if (Buttons == BT_USE && OldButtons != BT_USE)
+				{
+					ActivatorSound("menu/move", 127);
+					PlayersApprove++;
+					Voted[i] = true;
+				};
+				if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+				{
+					ActivatorSound("menu/move", 127);
+					PlayersDeny++;
+					Voted[i] = true;
+				};
+			};
+			
+			// Check that everyone has voted
+			Ready = true;
+			for (int i = 0; i < Players; i++)
+				if (!Voted[i]) Ready = false;
+			
+			// Drawing
+			SetFont("BIGFONT");
+			HudMessageBold("\cdA Player has requested Transport\n\c-Players: %d (\cd%d\c-/\cg%d\c-)\n\n\cd%K\c- to Approve\n\cd%K\c- to Deny\n",
+						   Players, PlayersApprove, PlayersDeny, "+use", "+speed",
+						   HUDMSG_FADEOUT, 20000, CR_WHITE, 0.5, 0.75, 1.0, 4.0);
+
+			Delay(1);
+		};
+		
+		// Ready - tally votes and confirm/deny Transport
+		if (Ready)
+		{
+			SetPlayerProperty(true, 0, PROP_TOTALLYFROZEN);
+			
+			// Approved
+			if (PlayersApprove > PlayersDeny)
+			{
+				HudMessageBold("\cdTransport Approved!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 4.0);
+				Delay(35 * 2);
+				FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 3.0);
+				Delay(35 * 3);
+			};
+			
+			// Denied
+			if (PlayersDeny > PlayersApprove)
+			{
+				HudMessageBold("\cgTransport Denied!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
+				return;
+			};
+			
+			// Draw
+			if (PlayersApprove == PlayersDeny)
+			{
+				HudMessageBold("\cjDraw!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
+				return;
+			};
+		};
+	}
+	else
+	{
+		// Fade Screen
+		FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 1.0);
+		
+		// Freeze Player
+		SetActorProperty(0, APROP_Invulnerable, true);
+		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+		
+		// Delay and unfreeze Player
+		Delay(35);
+		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+		SetActorProperty(0, APROP_Invulnerable, false);
+	};
 	
 	// Transport
 	if (!InBase)
