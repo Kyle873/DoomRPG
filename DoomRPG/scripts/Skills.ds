@@ -93,6 +93,12 @@ function void InitSkills()
 	Skills[0][Index].Description[1] = "Repair 50% Armor";
 	Skills[0][Index].Description[2] = "Repair 75% Armor";
 	Skills[0][Index].Description[3] = "Repair All Armor";
+	Index++;
+	
+	Skills[0][Index].Name = "Player Teleport";
+	Skills[0][Index].MaxLevel = 1;
+	Skills[0][Index].Cost = 50;
+	Skills[0][Index].Description[0] = "Teleport to the closest player";
 	Index = 0;
 	
 	// --------------------------------------------------
@@ -532,6 +538,7 @@ acscript UseSkill(int Index)
 					case 2:		Success = Heal(3);											break; // Heal Team
 					case 3:		Success = LifeLeech();										break; // Life Leech
 					case 4:		Success = Repair();											break; // Repair Armor
+					case 5:		Success = PlayerTeleport();									break; // Player Teleport
 				};
 				break;
 			
@@ -825,6 +832,50 @@ function bool Repair()
 	};
 	
 	return false;
+};
+
+// Teleport to closest Player
+acscript bool PlayerTeleport()
+{
+	fixed[MAX_PLAYERS] Distances;
+	fixed Closest = 32767;
+	int ClosestPlayer = Player.TID;
+	int ClosestPlayerNumber;
+	
+	// Calculate distances for all Players
+	for (int i = 0; i < MAX_PLAYERS; i++)
+		Distances[i] = Distance(Player.TID, Players(i).TID);
+	
+	// Determine the closest Player
+	for (int i = 0; i < MAX_PLAYERS; i++)
+		if (Distances[i] < Closest && PlayerInGame(i) && i != PlayerNumber())
+		{
+			Closest = Distances[i];
+			ClosestPlayer = Players(i).TID;
+			ClosestPlayerNumber = i;
+		};
+	
+	// Refund - If you end up being your own target somehow
+	if (ClosestPlayer == Player.TID)
+	{
+		ActivatorSound("menu/error", 127);
+		return false;
+	};
+	
+	// Teleport to Player
+	GiveInventory("PlayerTeleportGhost", 1);
+	SetActorPosition(Player.TID, GetActorX(ClosestPlayer), GetActorY(ClosestPlayer), GetActorZ(ClosestPlayer), true);
+	SetActorAngle(Player.TID, GetActorAngle(ClosestPlayer));
+	Delay(35 * 5);
+	
+	// Make sure you're not inside the other player before we solidify
+	while (Distance(Player.TID, Players(ClosestPlayerNumber).TID) <= GetActorPropertyFixed(ClosestPlayer, APROP_Radius))
+		Delay(35);
+	
+	// Solidify
+	GiveInventory("PlayerTeleportNormal", 1);
+	
+	return true;
 };
 
 // Powerups
@@ -1366,18 +1417,6 @@ function bool Recall()
 	return true;
 };
 
-// Used from DECORATE to get dynamic projectile damage rates
-acscript SetProjectileDamage(int Type)
-{
-	switch (Type)
-	{
-		case 1: return Round(Player.Energy * 0.25);	break;	// Fire
-		case 2: return Round(Player.Energy * 0.3);	break;	// Ice
-	};
-	
-	return;
-};
-
 // Handles the Transportation system
 acscript Transport()
 {
@@ -1495,6 +1534,18 @@ acscript Transport()
 		InBase = false;
 		Transported = true;
 	};
+};
+
+// Used from DECORATE to get dynamic projectile damage rates
+acscript SetProjectileDamage(int Type)
+{
+	switch (Type)
+	{
+		case 1: return Round(Player.Energy * 0.25);	break;	// Fire
+		case 2: return Round(Player.Energy * 0.3);	break;	// Ice
+	};
+	
+	return;
 };
 
 function void CheckSkills()
