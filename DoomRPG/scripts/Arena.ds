@@ -232,22 +232,34 @@ acfunc void ArenaGetBonus(int Bonus)
 	switch (Bonus)
 	{
 		case 0: // Full Health
-			if (GetActorProperty(0, APROP_Health) >= Player.HealthMax)
-			{
-				ArenaGetBonus(Random(0, MAX_BONUS - 1));
-				return;
-			}
+			if (InMultiplayer)
+				for (int i = 0; i < MAX_PLAYERS; i++)
+					SetActorProperty(Players(i).TID, APROP_Health, GetActorProperty(Players(i).TID, APROP_SpawnHealth))
 			else
-				HealThing(1000000);
+			{
+				if (GetActorProperty(0, APROP_Health) >= Player.HealthMax)
+				{
+					ArenaGetBonus(Random(0, MAX_BONUS - 1));
+					return;
+				}
+				else
+					HealThing(1000000);
+			};
 			break;
 		case 1: // Full EP
-			if (Player.EP >= Player.EPMax)
-			{
-				ArenaGetBonus(Random(0, MAX_BONUS - 1));
-				return;
-			}
+			if (InMultiplayer)
+				for (int i = 0; i < MAX_PLAYERS; i++)
+					Players(i).EP = Players(i).EPMax
 			else
-				Player.EP = Player.EPMax;
+			{
+				if (Player.EP >= Player.EPMax)
+				{
+					ArenaGetBonus(Random(0, MAX_BONUS - 1));
+					return;
+				}
+				else
+					Player.EP = Player.EPMax;
+			};
 			break;
 		case 2: // Money Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
