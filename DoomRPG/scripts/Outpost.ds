@@ -217,7 +217,7 @@ acscript LevelTransport()
 {
     while (1)
     {
-        SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
+        SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
         
         // Stop Underflow
         if (LevelChoice < 1)
@@ -262,7 +262,7 @@ acscript LevelTransport()
             {
                 FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 2.0);
                 Delay(105);
-                SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
                 InBase = false;
                 Transported = true;
                 Teleport_NewMap(LevelChoice, 0);
@@ -273,14 +273,14 @@ acscript LevelTransport()
                 HudMessage("You haven't reached this level yet\n", HUDMSG_FADEOUT, 1, CR_RED, 0.5, 0.5, 3.0, 1.0);
                 ActivatorSound("menu/error", 127);
                 FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 2.0);
-                SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
                 InBase = true;
                 return;
             };
         };
         if (Buttons == BT_SPEED)
         {
-            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
             return;
         };
         
@@ -299,7 +299,7 @@ acscript SkillComputer()
 	
 	ActivatorSound("misc/edgar", 127);
 	
-	SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
+	SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
     
     while (1)
     {
@@ -329,12 +329,12 @@ acscript SkillComputer()
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
             SetSkill(SkillChoice);
-            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
             return;
         };
         if (Buttons == BT_SPEED)
         {
-            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
             return;
         };
         
@@ -375,7 +375,7 @@ acscript SelectArenaWave()
 
     while (1)
     {
-        SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
+        SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
         
 		// Prevent the menus from being opened
 		Player.InMenu = false;
@@ -408,12 +408,12 @@ acscript SelectArenaWave()
                 ArenaWave = 1;
             
             ActivatorSound("menu/move", 127);
-            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
             return;
         };
         if (Buttons == BT_SPEED)
         {
-            SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
             return;
         };
         
@@ -474,7 +474,7 @@ acscript TokenConverter()
 		return;
 	};
 	
-	SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
+	SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
 	ActivatorSound("menu/move", 127);
 	Player.InOutpostMenu = true;
 
@@ -616,7 +616,7 @@ acscript TokenConverter()
 		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
 		{
 			ActivatorSound("menu/move", 127);
-			SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
 			Player.InOutpostMenu = false;
 			return;
 		};
@@ -758,26 +758,46 @@ acscript CreditRoom(int ID)
 
 acscript ShopSpecial()
 {
+	int Minutes = ShopSpecialTimer / 35 / 60;
+	int Seconds = ShopSpecialTimer / 35 % 60;
+	str TimerDisplay;
+	
 	// if you're already in a menu, terminate
 	if (Player.InOutpostMenu) return;
 	
+	if (ShopSpecialBought)
+	{
+		if (Seconds < 10)
+			TimerDisplay = StrParam("%d:0%d\n", Minutes, Seconds)
+		else
+			TimerDisplay = StrParam("%d:%d\n", Minutes, Seconds);
+
+		SetFont("BIGFONT");
+		HudMessage("Shop Special is currently out of stock.\n\nNext restock will be in %s.\n", 
+				   TimerDisplay,
+				   HUDMSG_FADEOUT, 5000, CR_RED, 0.5, 0.5, 2.0, 1.0);
+		ActivatorSound("menu/error", 127);
+		return;
+	};
+	
 	ActivatorSound("menu/move", 127);
-	SetPlayerProperty(PlayerNumber(), 1, PROP_TOTALLYFROZEN);
+	SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
 	Player.InOutpostMenu = true;
 	
-	while (1)
+	while (!ShopSpecialBought)
 	{
 		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
 		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 		str Name = ShopSpecialItem.Name;
 		int Discount = (30 - (GameSkill() * 5));
 		int Cost = ShopSpecialItem.Price - ShopSpecialItem.Price * Discount / 100;
-		int Minutes = ShopSpecialTimer / 35 / 60;
-		int Seconds = ShopSpecialTimer / 35 % 60;
-		str TimerDisplay;
 		
 		// If the item's already been bought, terminate
-		if (ShopSpecialBought) return;
+		if (ShopSpecialBought)
+		{
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			return;
+		};
 		
 		// Setup the timer display
 		if (Seconds < 10)
@@ -804,7 +824,8 @@ acscript ShopSpecial()
 				ShopSpecialBought = true;
 				
 				ActivatorSound("credits/payout", 127);
-				SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+				Delay (1);
+				SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
 				Player.InOutpostMenu = false;
 				return;
 			}
@@ -814,7 +835,7 @@ acscript ShopSpecial()
         if (Buttons == BT_SPEED)
         {
 			ActivatorSound("menu/move", 127);
-			SetPlayerProperty(PlayerNumber(), 0, PROP_TOTALLYFROZEN);
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
 			Player.InOutpostMenu = false;
             return;
         };
