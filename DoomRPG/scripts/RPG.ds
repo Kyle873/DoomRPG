@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Sunday, March 23, 2014 at 6:44:46 PM";
+	"Sunday, March 23, 2014 at 6:51:02 PM";
 };
 
 bool ParBonus;
@@ -837,6 +837,10 @@ script Dead() death
 	Player.InMenu = false;
 	Player.InShop = false;
 	
+	// Remove Aura
+	Player.Aura = 0;
+	Player.AuraTimer = 0;
+	
 	// Terminate Scripts
 	ACS_NamedTerminate("DamageNumbers", 0);
 	ACS_NamedTerminate("HealthBars", 0);
@@ -863,6 +867,19 @@ script Respawn() respawn
 	Player.Rank -= RankPenalty;
 	SetFont("BIGFONT");
 	HudMessage("\cjXP -%d\n\ckRank -%d\n", XPPenalty, RankPenalty, HUDMSG_FADEOUT, 0, CR_WHITE, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 2.0, 2.0);
+	
+	// Restore EP if CVAR is set
+	if (GetCVar("drpg_multi_restoreep"))
+		Player.EP = Player.EPMax;
+	
+	// Give a box of ammo if a specific ammo type is empty if the CVAR is set
+	if (GetCVar("drpg_multi_restoreammo"))
+	{
+		if (CheckInventory("Clip") == 0) GiveInventory("ClipBox", 1);
+		if (CheckInventory("Shell") == 0) GiveInventory("ShellBox", 1);
+		if (CheckInventory("RocketAmmo") == 0) GiveInventory("RocketBox", 1);
+		if (CheckInventory("Cell") == 0) GiveInventory("CellPack", 1);
+	};
 	
 	// Run Scripts
 	DamageNumbers();
