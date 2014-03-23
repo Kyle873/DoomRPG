@@ -9,6 +9,7 @@
 bool ArenaActive = false;
 bool ArenaTimerActive = false;
 int ArenaState = ARENA_READY;
+int ArenaPlayerNumber = -1;
 int ArenaMonstersTID = 1099;
 int ArenaItemSpotTID = 1200;
 int ArenaItemTID = 1201;
@@ -63,10 +64,10 @@ acscript ArenaLoop()
 	// Arena Loop
     while (1)
     {
-        // Stop the script if the Arena is stopped or you die
-        if (!ArenaActive || GetActorProperty(0, APROP_Health) <= 0)
+        // Stop the script if the Arena is stopped or the Arena activator dies
+        if (!ArenaActive || GetActorProperty(Players(ArenaPlayerNumber).TID, APROP_Health) <= 0)
 		{
-			CallACS("ArenaStop");
+			ArenaStop();
             return;
 		};
         
@@ -85,20 +86,24 @@ acscript ArenaLoop()
 		}
 		else if (ArenaState == ARENA_WAITING)
 		{
-			int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+			int Buttons = GetPlayerInput(ArenaPlayerNumber, INPUT_BUTTONS);
 			
 			SetHudSize(0, 0, false);
 			SetFont("BIGFONT");
-			if (!Player.InMenu && !Player.InShop)
-				HudMessage("Press \cd%K\c- to start the next wave\nPress \cd%K\c- to exit the Arena\n", "+use" , "+speed",
-						   HUDMSG_PLAIN, 0, CR_WHITE, 0.5, 0.75, 0.05);
-						
-			if (Buttons & BT_USE && (!Player.InMenu && !Player.InShop))
-				ArenaState = ARENA_READY;
-			if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop))
+			
+			if (ArenaPlayerNumber == PlayerNumber())
 			{
-				CallACS("ArenaStop");
-				return;
+				if (!Player.InMenu && !Player.InShop)
+					HudMessage("Press \cd%K\c- to start the next wave\nPress \cd%K\c- to exit the Arena\n", "+use" , "+speed",
+							   HUDMSG_PLAIN, 0, CR_WHITE, 0.5, 0.75, 0.05);
+						
+				if (Buttons & BT_USE && (!Player.InMenu && !Player.InShop))
+					ArenaState = ARENA_READY;
+				if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop))
+				{
+					ArenaStop();
+					return;
+				};
 			};
 		}
 		else if (ArenaState == ARENA_READY)
@@ -142,6 +147,7 @@ acscript ArenaStop()
 	if (ArenaWave >= ArenaMaxWave)
 		ArenaMaxWave = ArenaWave;
 	
+	ArenaPlayerNumber = -1;
 	ArenaCount = 0;
     ArenaMod = -1;
 	ArenaSetEnvironment(0);

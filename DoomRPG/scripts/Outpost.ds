@@ -344,20 +344,30 @@ acscript SkillComputer()
 
 acscript ToggleArena()
 {
+	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
+	
     ArenaActive = !ArenaActive;
     ActivatorSound("misc/secret", 127);
     
     SetFont("BIGFONT");
     
     if (ArenaActive)
-        HudMessage("Arena Active\n", HUDMSG_FADEOUT, 1, CR_GREEN, 0.5, 0.5, 2.0, 1.0)
+	{
+        HudMessage("Arena Active\n", HUDMSG_FADEOUT, 1, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+		ArenaPlayerNumber = PlayerNumber();
+	}
     else
+	{
         HudMessage("Arena Inactive\n", HUDMSG_FADEOUT, 1, CR_RED, 0.5, 0.5, 2.0, 1.0);
+		ArenaPlayerNumber = -1;
+	};
 };
 
 acscript PassArenaLine()
 {
-    if (ArenaActive)
+	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
+    
+	if (ArenaActive)
     {
         Ceiling_LowerToFloor(99, 64);
         ArenaLoop();
@@ -366,6 +376,8 @@ acscript PassArenaLine()
 
 acscript SelectArenaWave()
 {
+	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
+
     ActivatorSound("menu/move", 127);
 
     if (ArenaMaxWave == 0) ArenaMaxWave = 1;
