@@ -1,5 +1,6 @@
 #include "Arena.dh"
 #include "Globals.dh"
+#include "Menu.dh"
 #include "Outpost.dh"
 #include "RPG.dh"
 #include "Shop.dh"
@@ -292,12 +293,16 @@ acscript SkillComputer()
 	// Terminate if you aren't the Arbitrator
 	if (InMultiplayer && !Arbitrator) return;
     
+	// if you're already in a menu, terminate
+	if (Player.OutpostMenu == OMENU_SKILLCOMPUTER) return;
+	
 	// DoomRL Compatibility
 	if (GetCVar("drpg_ext_doomrl"))
 		SkillLevels[5] = "Armegeddon";
 	
 	ActivatorSound("misc/edgar", 127);
 	
+	Player.OutpostMenu = OMENU_SKILLCOMPUTER;
 	SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
     
     while (1)
@@ -329,11 +334,13 @@ acscript SkillComputer()
         {
             SetSkill(SkillChoice);
             SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			Player.OutpostMenu = 0;
             return;
         };
         if (Buttons == BT_SPEED)
         {
             SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			Player.OutpostMenu = 0;
             return;
         };
         
@@ -463,7 +470,7 @@ acscript PissOffMarines()
 acscript TokenConverter()
 {
 	// if you're already in a menu, terminate
-	if (Player.InOutpostMenu) return;
+	if (Player.OutpostMenu == OMENU_TOKENCONVERTER) return;
 	
 	int StatWorth = 1;
 	int StatCapWorth = 10;
@@ -487,7 +494,7 @@ acscript TokenConverter()
 	
 	SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
 	ActivatorSound("menu/move", 127);
-	Player.InOutpostMenu = true;
+	Player.OutpostMenu = OMENU_TOKENCONVERTER;
 
 	while (1)
 	{
@@ -598,7 +605,7 @@ acscript TokenConverter()
 					TakeInventory(InItem, Amount1);
 					TakeInventory("Credits", Cost);
 					ActivatorSound("misc/tokenconvert", 127);
-					Player.InOutpostMenu = false;
+					Player.OutpostMenu = 0;
 				}
 				else if ((Type == 2 || Type == 3) && SkillTokens >= Amount1)
 				{
@@ -607,7 +614,7 @@ acscript TokenConverter()
 					TakeInventory(InItem, Amount1);
 					TakeInventory("Credits", Cost);
 					ActivatorSound("misc/tokenconvert", 127);
-					Player.InOutpostMenu = false;
+					Player.OutpostMenu = 0;
 				}
 				else if ((Type == 4 || Type == 5) && StatCapTokens >= Amount1)
 				{
@@ -616,7 +623,7 @@ acscript TokenConverter()
 					TakeInventory(InItem, Amount1);
 					TakeInventory("Credits", Cost);
 					ActivatorSound("misc/tokenconvert", 127);
-					Player.InOutpostMenu = false;
+					Player.OutpostMenu = 0;
 				}
 				else
 					ActivatorSound("menu/error", 127);
@@ -628,7 +635,7 @@ acscript TokenConverter()
 		{
 			ActivatorSound("menu/move", 127);
 			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-			Player.InOutpostMenu = false;
+			Player.OutpostMenu = 0;
 			return;
 		};
 		
@@ -767,6 +774,7 @@ acscript CreditRoom(int ID)
 	};
 };
 
+// Shop Special UI
 acscript ShopSpecial()
 {
 	int Minutes = ShopSpecialTimer / 35 / 60;
@@ -774,7 +782,7 @@ acscript ShopSpecial()
 	str TimerDisplay;
 	
 	// if you're already in a menu, terminate
-	if (Player.InOutpostMenu) return;
+	if (Player.OutpostMenu == OMENU_SHOPSPECIAL) return;
 	
 	if (ShopSpecialBought)
 	{
@@ -794,7 +802,7 @@ acscript ShopSpecial()
 	
 	ActivatorSound("menu/move", 127);
 	SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
-	Player.InOutpostMenu = true;
+	Player.OutpostMenu = OMENU_SHOPSPECIAL;
 	
 	while (1)
 	{
@@ -840,7 +848,7 @@ acscript ShopSpecial()
 				ActivatorSound("credits/payout", 127);
 				Delay(1);
 				SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-				Player.InOutpostMenu = false;
+				Player.OutpostMenu = 0;
 				return;
 			}
 			else
@@ -850,7 +858,7 @@ acscript ShopSpecial()
         {
 			ActivatorSound("menu/move", 127);
 			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-			Player.InOutpostMenu = false;
+			Player.OutpostMenu = 0;
             return;
         };
 		
@@ -859,6 +867,375 @@ acscript ShopSpecial()
 		HudMessage("%s\n\ck%d C (Discount: %d%%)\n\cdTime Left: %s\n\n\cd%K\cj to buy\n\cd%K\cj to exit\n", 
 				   Name, Cost, Discount, TimerDisplay, "+use", "+speed",
 				   HUDMSG_FADEOUT, 5000, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
+		
+		Delay(1);
+	};
+};
+
+// Player Locker
+acscript Locker()
+{
+	// Init Locker
+	LockerItem[][] LockerItems =
+	{
+		// Weapons
+		{
+			// Common Weapons
+			{ "RLChainsaw"; 							"Chainsaw"; 											};
+			{ "RLPistol"; 								"Pistol"; 												};
+			{ "RLShotgun"; 								"Shotgun"; 												};
+			{ "RLCombatShotgun"; 						"Combat Shotgun"; 										};
+			{ "RLDoubleShotgun"; 						"Double Shotgun"; 										};
+			{ "RLChaingun"; 							"Chaingun"; 											};
+			{ "RLRocketLauncher"; 						"Rocket Launcher"; 										};
+			{ "RLPlasmaRifle"; 							"Plasma Rifle"; 										};
+			{ "RLBFG9000"; 								"BFG9000"; 												};
+			
+			// Assembled Weapons
+			// Help...
+			
+			// Exotic Weapons
+			{ "RLBlaster"; 								"Blaster \ct[Exotic]\c-"; 								};
+			{ "RLCombatPistol"; 						"Combat Pistol \ct[Exotic]\c-"; 						};
+			{ "RLDesertEagle"; 							"Handcannon \ct[Exotic]\c-"; 							};
+			{ "RLSuperShotgun"; 						"Super Shotgun \ct[Exotic]\c-"; 						};
+			{ "RLAssaultShotgun"; 						"Assault Shotgun \ct[Exotic]\c-"; 						};
+			{ "RLUzi"; 									"Uzi \ct[Exotic]\c-"; 									};
+			{ "RLBattleRifle"; 							"Battle Rifle \ct[Exotic]\c-"; 							};
+			{ "RLMinigun"; 								"Minigun \ct[Exotic]\c-"; 								};
+			{ "RLMissileLauncher"; 						"Missile Launcher \ct[Exotic]\c-"; 						};
+			{ "RLNapalmLauncher"; 						"Napalm Launcher \ct[Exotic]\c-"; 						};
+			{ "RLLaserRifle"; 							"Laser Rifle \ct[Exotic]\c-"; 							};
+			{ "RLPlasmaShotgun"; 						"Plasma Shotgun \ct[Exotic]\c-"; 						};
+			{ "RLTristarBlaster"; 						"Tristar Blaster \ct[Exotic]\c-"; 						};
+			{ "RLNuclearPlasmaRifle"; 					"Nuclear Plasma Rifle \ct[Exotic]\c-";					};
+			{ "RLNuclearBFG9000"; 						"Nuclear BFG9000 \ct[Exotic]\c-"; 						};
+			{ "RLCombatTranslocator"; 					"Combat Translocator \ct[Exotic]\c-"; 					};
+			
+			// Unique Weapons
+			{ "RLJackhammer"; 							"Jackhammer \cd[Unique]\c-"; 							};
+			{ "RLRailgun"; 								"Railgun \cd[Unique]\c-"; 								};
+			{ "RLMysteriousMagnum"; 					"Mysterious Magnum \cd[Unique]\c-"; 					};
+			{ "RLBFG10k"; 								"BFG10k \cd[Unique]\c-"; 								};
+			{ "RLUnknownHerald"; 						"Unknown Herald \cd[Unique]\c-"; 						};
+			{ "RLFragShotgun"; 							"Frag Shotgun \cd[Unique]\c-"; 							};
+			{ "RLQuadShotgun"; 							"Quad Shotgun \cd[Unique]\c-"; 							};
+			{ "RLLightweaver"; 							"Lightweaver \cd[Unique]\c-"; 							};
+			{ "RLTrigun"; 								"Trigun \cd[Unique]\c-"; 								};
+			{ "RLGrammatonClericBeretta"; 				"Grammaton Cleric Beretta \cd[Unique]\c-";				};
+			{ "RLAntiFreakJackal"; 						"Anti-Freak Jackal \cd[Unique]\c-"; 					};
+			{ "RLTantrumCannon"; 						"Quantum Tantrum Cannon \cd[Unique]\c-"; 				};
+			{ "RLRevenantsLauncher"; 					"Revenant's Launcher \cd[Unique]\c-"; 					};
+			{ "RLNullPointer"; 							"Charch's Null Pointer \cd[Unique]\c-"; 				};
+			{ "RLParticleBeamCannon"; 					"Particle Beam Cannon \cd[Unique]\c-"; 					};
+			
+			// Legendary Weapons
+			{ "RLJudgeOfTheDead"; 						"Judge Of The Dead \cf[Legendary]\c-"; 					};
+			{ "RLHurricaneCannon"; 						"Hurricane Cannon \cf[Legendary]\c-"; 					};
+			{ "RLNeuralStunner"; 						"Neural Stunner \cf[Legendary]\c-"; 					};
+			
+			// Sentinel (Indicates end of list)
+			{ ""; ""; };
+		};
+		
+		// Armor
+		{
+			// Common Armors
+			{ "RLGreenArmorPickup"; 					"Security Armor"; 										};
+			{ "RLBlueArmorPickup";						"Combat Armor"; 										};
+			{ "RLRedArmorPickup"; 						"Commando Armor"; 										};
+			
+			// Assembled Armors
+			{ "RLBallisticGreenArmorPickup"; 			"Ballistic Security Armor \cv[Assembled]\c-"; 			};
+			{ "RLBallisticBlueArmorPickup"; 			"Ballistic Combat Armor \cv[Assembled]\c-"; 			};
+			{ "RLBallisticRedArmorPickup"; 				"Ballistic Commando Armor \cv[Assembled]\c-"; 			};
+			{ "RLCyberNanoGreenArmorPickup"; 			"CyberNano Security Armor \cv[Assembled]\c-"; 			};
+			{ "RLCyberNanoBlueArmorPickup"; 			"CyberNano Combat Armor \cv[Assembled]\c-"; 			};
+			{ "RLCyberNanoRedArmorPickup"; 				"CyberNano Commando Armor \cv[Assembled]\c-"; 			};
+			{ "RLFireproofGreenArmorPickup"; 			"Fireproof Security Armor \cv[Assembled]\c-"; 			};
+			{ "RLFireproofBlueArmorPickup"; 			"Fireproof Combat Armor \cv[Assembled]\c-"; 			};
+			{ "RLFireproofRedArmorPickup"; 				"Fireproof Commando Armor \cv[Assembled]\c-"; 			};
+			{ "RLNanofiberGreenArmorPickup"; 			"Nanofiber Security Armor \cv[Assembled]\c-"; 			};
+			{ "RLNanofiberBlueArmorPickup"; 			"Nanofiber Combat Armor \cv[Assembled]\c-"; 			};
+			{ "RLNanofiberRedArmorPickup"; 				"Nanofiber Commando Armor \cv[Assembled]\c-"; 			};
+			{ "RLNanofiberSkinGreenArmorPickup"; 		"Nanofiber Skin Security Armor \cv[Assembled]\c-"; 		};
+			{ "RLNanofiberSkinBlueArmorPickup"; 		"Nanofiber Skin Combat Armor \cv[Assembled]\c-"; 		};
+			{ "RLNanofiberSkinRedArmorPickup"; 			"Nanofiber Skin Commando Armor \cv[Assembled]\c-"; 		};
+			{ "RLPowerGreenArmorPickup"; 				"Powered Security Armor \cv[Assembled]\c-"; 			};
+			{ "RLPowerBlueArmorPickup"; 				"Powered Combat Armor \cv[Assembled]\c-"; 				};
+			{ "RLPowerRedArmorPickup"; 					"Powered Commando Armor \cv[Assembled]\c-"; 			};
+			{ "RLCerberusArmorPickup"; 					"Cerberus Armor \cv[Assembled]\c-"; 					};
+			{ "RLFireShieldArmorPickup"; 				"Fire Shield \cv[Assembled]\c-"; 						};
+			{ "RLTacticalArmorPickup"; 					"Tactical Armor \cv[Assembled]\c-"; 					};
+			
+			// Exotic Armors
+			{ "RLBallisticShieldArmorPickup"; 			"Ballistic Shield \ct[Exotic]\c-"; 						};
+			{ "RLBallisticVestArmorPickup"; 			"Ballistic Vest \ct[Exotic]\c-"; 						};
+			{ "RLBulletproofVestArmorPickup"; 			"Bulletproof Vest \ct[Exotic]\c-"; 						};
+			{ "RLDuelistArmorPickup"; 					"Duelist Armor \ct[Exotic]\c-"; 						};
+			{ "RLEnergyShieldedVestArmorPickup"; 		"Energy-Shielded Vest \ct[Exotic]\c-"; 					};
+			{ "RLEnergyShieldArmorPickup"; 				"Energy Shield \ct[Exotic]\c-"; 						};
+			{ "RLGothicArmorPickup"; 					"Gothic Armor \ct[Exotic]\c-"; 							};
+			{ "RLMedicalArmorPickup"; 					"Medical Armor \ct[Exotic]\c-"; 						};
+			{ "RLPhaseshiftArmorPickup"; 				"Phaseshift Armor \ct[Exotic]\c-"; 						};
+			{ "RLPlasmaShieldArmorPickup"; 				"Plasma Shield \ct[Exotic]\c-"; 						};
+			{ "RLOnyxArmorPickup"; 						"Onyx Armor \ct[Exotic]\c-"; 							};
+			
+			// Unique Armors
+			{ "RLCyberneticArmorPickup"; 				"Cybernetic Armor \cd[Unique]\c-"; 						};
+			{ "RLLavaArmorPickup"; 						"Lava Armor \cd[Unique]\c-"; 							};
+			{ "RLMaleksArmorPickup"; 					"Malek's Armor \cd[Unique]\c-"; 						};
+			{ "RLMedicalPowerArmorPickup"; 				"Medical Power Armor \cd[Unique]\c-"; 					};
+			{ "RLNecroArmorPickup"; 					"Necro Armor \cd[Unique]\c-"; 							};
+			{ "RLShieldedArmorPickup"; 					"Shielded Armor \cd[Unique]\c-"; 						};
+			
+			// Sentinel (Indicates end of list)
+			{ ""; ""; };
+		};
+		
+		// Mod Packs
+		{
+			// Normal Modpacks
+			{ "RLPowerModItem"; 						"Power Modpack"; 										};
+			{ "RLBulkModItem"; 							"Bulk Modpack"; 										};
+			{ "RLAgilityModItem"; 						"Agility Modpack"; 										};
+			{ "RLTechnicalModItem"; 					"Technical Modpack"; 									};
+			
+			// Exotic Modpacks
+			{ "RLSniperModItem"; 						"Sniper Modpack"; 										};
+			{ "RLFirestormModItem"; 					"Firestorm Modpack"; 									};
+			{ "RLNanoModItem"; 							"Nano Modpack"; 										};
+			{ "RLOnyxModItem"; 							"Onyx Modpack"; 										};
+			{ "RLArmorModItem"; 						"Armor Modpack"; 										};
+			
+			// Sentinel (Indicates end of list)
+			{ ""; ""; };
+		};
+		
+		// Boots
+		{
+			// Common Boots
+			{ "RLSteelBootsPickup"; 					"Steel Boots";											};
+			{ "RLProtectiveBootsPickup"; 				"Protective Boots"; 									};
+			{ "RLPlasteelBootsPickup"; 					"Plasteel Boots"; 										};
+			
+			// Assembled Boots
+			{ "RLAntigravSteelBootsPickup"; 			"Anti-Grav Steel Boots \cv[Assembled]\c-"; 				};
+			{ "RLAntigravProtectiveBootsPickup"; 		"Anti-Grav Protective Boots \cv[Assembled]\c-"; 		};
+			{ "RLAntigravPlasteelBootsPickup"; 			"Anti-Grav Plasteel Boots \cv[Assembled]\c-"; 			};
+			{ "RLEnviromentalSteelBootsPickup"; 		"Environmental Steel Boots \cv[Assembled]\c-"; 			};
+			{ "RLEnviromentalProtectiveBootsPickup";	"Environmental Protective Boots \cv[Assembled]\c-"; 	};
+			{ "RLEnviromentalPlasteelBootsPickup"; 		"Environmental Plasteel Boots \cv[Assembled]\c-"; 		};
+			{ "RLFireproofSteelBootsPickup"; 			"Fireproof Steel Boots \cv[Assembled]\c-"; 				};
+			{ "RLFireproofProtectiveBootsPickup"; 		"Fireproof Protective Boots \cv[Assembled]\c-"; 		};
+			{ "RLFireproofPlasteelBootsPickup"; 		"Fireproof Plasteel Boots \cv[Assembled]\c-"; 			};
+			{ "RLGrapplingSteelBootsPickup"; 			"Grappling Steel Boots \cv[Assembled]\c-"; 				};
+			{ "RLGrapplingProtectiveBootsPickup"; 		"Grappling Protective Boots \cv[Assembled]\c-"; 		};
+			{ "RLGrapplingPlasteelBootsPickup"; 		"Grappling Plasteel Boots \cv[Assembled]\c-"; 			};
+			{ "RLCerberusBootsPickup"; 					"Cerberus Boots \cv[Assembled]\c-"; 					};
+			{ "RLTacticalBootsPickup"; 					"Tactical Boots \cv[Assembled]\c-"; 					};
+			
+			// Exotic Boots
+			{ "RLAcidProofBootsPickup"; 				"Acid-Proof Boots \ct[Exotic]\c-"; 						};
+			{ "RLGothicBootsPickup"; 					"Gothic Boots \ct[Exotic]\c-"; 							};
+			{ "RLPhaseshiftBootsPickup"; 				"Phaseshift Boots \ct[Exotic]\c-"; 						};
+			
+			// Unique Boots
+			{ "RLLavaBootsPickup"; 						"Lava Boots \cd[Unique]\c-"; 							};
+			{ "RLEnviroBootsPickup"; 					"Enviro Boots \cd[Unique]\c-"; 							};
+			{ "RLNyarlaptotepsBootsPickup"; 			"Nyarlaptotep's Boots \cd[Unique]\c-"; 					};
+			
+			// Sentinel (Indicates end of list)
+			{ ""; ""; };
+		};
+	};
+	
+	// Pages
+	str[] LockerPages =
+	{
+		"Weapons";
+		"Armor";
+		"Mod Packs";
+		"Boots";
+	};
+	
+	int Page;
+	int Index;
+	int Offset;
+	int Color;
+	bool Selecting;
+	int LockerSize;
+	int Total;
+	
+	// if you're already in a menu, terminate
+	if (Player.OutpostMenu == OMENU_LOCKER) return;
+
+	// This is purely a DRLA feature
+	if (!GetCVar("drpg_ext_doomrl")) return;
+
+	// Freeze the Player
+	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+
+	// Set the HUD Size
+	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+	
+	Player.OutpostMenu = OMENU_LOCKER;
+	
+	ActivatorSound("menu/move", 127);
+	
+	while (Player.OutpostMenu == OMENU_LOCKER)
+	{
+		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		fixed X = 24.1;
+		fixed Y = 50.0;
+		
+		// Prevent the menus from being opened
+		Player.InMenu = false;
+		Player.InShop = false;
+		
+		// Calculate Locker Size
+		for (int i = 0; LockerItems[Page][i].Actor != ""; ++i)
+			LockerSize = i;
+		
+		// Calculate total items
+		Total = 0;
+		for (int i = 0; LockerItems[Page][i].Actor != ""; ++i)
+			if (Player.Locker[Page][i] > 0)
+				Total += Player.Locker[Page][i];
+		
+		// Title and Page
+		SetFont("BIGFONT");
+		HudMessage("Personal Locker - %s (%d/%d)\n",
+				   LockerPages[Page], Page + 1, LOCKER_CATEGORIES,
+				   HUDMSG_PLAIN, 3000, CR_GREEN, 24.1, 24.0, 0.05);
+		
+		// Total amount of items in the Locker
+		HudMessage("Items: %d\n", Total, HUDMSG_PLAIN, 3000 + SHOP_ITEMS, CR_GOLD, 24.1, 38.0, 0.05);
+		
+		// Determine Offset
+		if (Index > SHOP_SCROLL)
+			Offset = Index - SHOP_SCROLL
+		else
+			Offset = 0;
+		
+		for (int i = Offset; i < Offset + (SHOP_SCROLL * 2) + 1; i++)
+		{
+			// Stop if we're at the end of the list
+			if (i > LockerSize) break;
+			
+			// Set the Color
+			if (i == Index)
+				Color = MenuCursorColor
+			else
+				Color = CR_WHITE;
+			
+			// Display the item string
+			SetFont("SMALLFONT");
+			if (Player.Locker[Page][i] > 0)
+				HudMessage("%s \cd[%d]\n", LockerItems[Page][i].Name, Player.Locker[Page][i], HUDMSG_PLAIN, 3001 + i, Color, X, Y, 0.05)
+			else
+				HudMessage("%s\n", LockerItems[Page][i].Name, HUDMSG_PLAIN, 3001 + i, Color, X, Y, 0.05);
+			
+			// Move down Y
+			Y += 8.0;
+		};
+		
+		// Check cursor movement for repeating
+		if (Buttons == BT_FORWARD)
+			Player.DelayTimer++;
+		if (Buttons == BT_BACK)
+			Player.DelayTimer++;
+
+		// Check Input
+		if (Buttons == BT_FORWARD && (OldButtons != BT_FORWARD || Player.DelayTimer > 35))
+		{
+			if (Index <= 0) Index = LockerSize + 1;
+			ActivatorSound("menu/move", 127);
+			Index--;
+		};
+		if (Buttons == BT_BACK && (OldButtons != BT_BACK || Player.DelayTimer > 35))
+		{
+			if (Index >= LockerSize) Index = -1;
+			ActivatorSound("menu/move", 127);
+			Index++;
+		};
+		if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
+			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
+		{
+			if (Page <= 0) Page = LOCKER_CATEGORIES;
+			ActivatorSound("menu/move", 127);
+			Index = 0;
+			Page--;
+		};
+		if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
+			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
+		{
+			if (Page >= LOCKER_CATEGORIES - 1) Page = -1;
+			ActivatorSound("menu/move", 127);
+			Index = 0;
+			Page++;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			// Deposit
+			if (CheckInventory(LockerItems[Page][Index].Actor) > 0)
+			{
+				TakeInventory(LockerItems[Page][Index].Actor, 1);
+				Player.Locker[Page][Index]++;
+				
+				if (Page == 0) // Weapons
+					TakeInventory("RLWeaponLimit", 1);
+				if (Page == 1) // Armor
+					TakeInventory("RLArmorInInventory", 1);
+				if (Page == 2) // Mod Packs
+					if (Index == 8) // Special handling case for Armor Modpack
+						TakeInventory("RLArmorModItemInInventory", 1)
+					else
+						if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
+							TakeInventory("RLScavengerModLimit", 1)
+						else
+							TakeInventory("RLModLimit", 1);
+				
+				ActivatorSound("menu/move", 127);
+			}
+			else
+				ActivatorSound("menu/error", 127);
+		};
+		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+		{
+			// Withdraw
+			if (Player.Locker[Page][Index] > 0)
+			{
+				// Checking
+				if (Page == 0 && CheckInventory("RLWeaponLimit") >= 6) // Weapons
+					ActivatorSound("menu/error", 127)
+				else if (Page == 1 && CheckInventory("RLArmorInInventory") >= 1) // Armor
+					ActivatorSound("menu/error", 127)
+				else if (Page == 2 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
+					ActivatorSound("menu/error", 127)
+				else if (Page == 2 && (PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4) // Mod Packs
+					ActivatorSound("menu/error", 127)
+				else if (Page == 0) // Weapons
+				{
+					GiveInventory(StrParam("%sPickup\n", LockerItems[Page][Index].Actor), 1);
+					Player.Locker[Page][Index]--;
+					ActivatorSound("menu/move", 127);
+				}
+				else
+				{
+					GiveInventory(LockerItems[Page][Index].Actor, 1);
+					Player.Locker[Page][Index]--;
+					ActivatorSound("menu/move", 127);
+				};
+			}
+			else
+				ActivatorSound("menu/error", 127);
+		};
+		
+		// Reset the Delay Timer if no buttons are pressed
+		if (Buttons == 0 && OldButtons == 0)
+			Player.DelayTimer = 0;
 		
 		Delay(1);
 	};
