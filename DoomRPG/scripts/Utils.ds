@@ -426,6 +426,83 @@ function void CreateTranslations()
 	CreateTranslationEnd();
 };
 
+// Drop your entire inventory on the ground
+function void DropInventory()
+{
+	DroppedItem[] ItemList =
+	{
+		// Health
+		{ "Stimpack"; };
+		{ "Medikit"; };
+		{ "LargeMedikit"; };
+		{ "XLMedikit"; };
+		{ "MedPack"; };
+		{ "SurgeryKit"; };
+		{ "Continue"; };
+		
+		// Armor
+		{ "GreenArmor"; };
+		{ "UsedGreenArmor"; };
+		{ "BlueArmor"; };
+		{ "UsedBlueArmor"; };
+		{ "YellowArmor"; };
+		{ "UsedYellowArmor"; };
+		{ "RedArmor"; };
+		{ "UsedRedArmor"; };
+		{ "WhiteArmor"; };
+		{ "UsedWhiteArmor"; };
+		
+		// Powerups
+		{ "InvulnerabilitySphere"; };
+		{ "InvulnerabilityCharge"; };
+		{ "BlurSphere"; };
+		{ "InvisibilityCharge"; };
+		{ "RegenSphere"; };
+		{ "RadSuit"; };
+		{ "Infrared"; };
+		{ "AllMap"; };
+		{ "Berserk"; };
+		{ "Wings"; };
+		{ "StimSmall"; };
+		{ "StimMedium"; };
+		{ "StimLarge"; };
+		
+		// DoomRL - Powerups
+		{ "InvulnerabilitySphere2"; };
+		{ "RadSuit2"; };
+		{ "Infrared2"; };
+		{ "Berserk2"; };
+
+		// DoomRL - Modpacks
+		{ "RLPowerModItem"; };
+		{ "RLBulkModItem"; };
+		{ "RLAgilityModItem"; };
+		{ "RLTechnicalModItem"; };
+		{ "RLSniperModItem"; };
+		{ "RLFirestormModItem"; };
+		{ "RLNanoModItem"; };
+		{ "RLArmorModItem"; };
+		{ "RLModLimit"; true; true; 4; };
+		{ "RLScavengerModLimit"; true; true; 8; };
+		{ "RLArmorModItemInInventory"; true; };
+		
+		// Sentinel (Indicates end of list)
+		{ ""; };
+	};
+	
+	for (int i = 0; ItemList[i].Actor != ""; ++i)
+		for (int j = 0; j < CheckInventory(ItemList[i].Actor); j++)
+		{
+			if (ItemList[i].TakeAll)
+				TakeInventory(ItemList[i].Actor, ItemList[i].Max)
+			else
+				TakeInventory(ItemList[i].Actor, 1);
+			
+			if (!ItemList[i].NoDrop)
+				DropItem(0, ItemList[i].Actor, 1, 255);
+		};
+};
+
 // PrintSprite Utility Function
 function void PrintSprite(str sprite, int id, fixed x, fixed y, fixed d)
 {
@@ -490,6 +567,35 @@ function bool IsStealth(int tid)
 		CheckFlag(tid, "SHADOW") ||
 		CheckFlag(tid, "INVISIBLE")
 	);
+};
+
+// Return the amount of ammo corresponding to an ammo pickup
+function int GetAmmoAmount(str Item)
+{
+	int Amount = 1;
+	
+	// If it's ammo, we need to get the real amounts to give if you're using the Give buy mode
+	if (Item == "Clip")			Amount = 10;
+	if (Item == "ClipBox")		Amount = 50;
+	if (Item == "Shell")		Amount = 4;
+	if (Item == "ShellBox")		Amount = 20;
+	if (Item == "RocketAmmo")	Amount = 1;
+	if (Item == "RocketBox")	Amount = 5;
+	if (Item == "Cell")			Amount = 20;
+	if (Item == "CellPack")		Amount = 100;
+	
+	// If it's ammo and it's the large version, just change it down to the base type
+	if (Item == "ClipBox")		Item = "Clip";
+	if (Item == "ShellBox")		Item = "Shell";
+	if (Item == "RocketBox")	Item = "RocketAmmo";
+	if (Item == "CellPack")		Item = "Cell";
+	
+	// Now apply difficulty-based multipliers to the amount if it's ammo
+	if (Item == "Clip" || Item == "Shell" || Item == "RocketAmmo" || Item == "Cell")
+		if (GameSkill() == 1 || GameSkill() >= 5)
+			Amount *= 2;
+	
+	return Amount;
 };
 
 // This function computes n-th power of x.

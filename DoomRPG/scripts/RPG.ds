@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Sunday, March 23, 2014 at 8:36:01 PM";
+	"Monday, March 24, 2014 at 4:43:40 AM";
 };
 
 bool ParBonus;
@@ -282,7 +282,7 @@ script MonsterLoop()
 	// Friendly Monster Aura
 	if (GetActorProperty(0, APROP_Friendly))
 	{
-		SpawnForced("FriendlyAura", X, Y, Z + 32.0, Angle);
+		SpawnForced("FriendlyAura", X, Y, Z + 32.0, 0, Angle);
 		SpawnForced("FriendlyIndicator", X, Y, Z + Height + 8.0, 0, Angle);
 	};
 	
@@ -846,6 +846,28 @@ script Dead() death
 	Player.Aura = 0;
 	Player.AuraTimer = 0;
 	
+	/* Drop Credits
+	// Currently broken because I have no fucking idea, ZDoom(TM)
+	if (GetCVar("drpg_multi_dropcredits") && CheckInventory("Credits") > 0)
+	{
+		int DropAmount = CheckInventory("Credits") / 10;
+		int CreditTID = UniqueTID();
+		fixed X = GetActorX(0);
+		fixed Y = GetActorY(0);
+		fixed Z = GetActorZ(0);
+		fixed Height = GetActorProperty(0, APROP_Height);
+		
+		if (DropAmount <= 0) DropAmount = 1;
+		
+		SpawnForced("CreditsDropped", X, Y, Z + Height / 2.0, CreditTID, 0);
+		SetUserVariable(CreditTID, "user_amount", DropAmount);
+		TakeInventory("Credits", DropAmount);
+	}; */
+	
+	// Drop Inventory
+	if (GetCVar("drpg_multi_dropinv"))
+		DropInventory();
+	
 	// Terminate Scripts
 	ACS_NamedTerminate("DamageNumbers", 0);
 	ACS_NamedTerminate("HealthBars", 0);
@@ -866,12 +888,15 @@ script Respawn() respawn
 #endif
 	
 	// XP/Rank Penalty
-	int XPPenalty = Abs(Round((fixed)XPTable[Player.Level] / ((fixed)GameSkill() * 5.0)));
-	int RankPenalty = Abs(Round((fixed)RankTable[Player.RankLevel] / ((fixed)GameSkill() * 5.0)));
-	Player.XP -= XPPenalty;
-	Player.Rank -= RankPenalty;
-	SetFont("BIGFONT");
-	HudMessage("\cjXP -%d\n\ckRank -%d\n", XPPenalty, RankPenalty, HUDMSG_FADEOUT, 0, CR_WHITE, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 2.0, 2.0);
+	if (GetCVar("drpg_multi_takexp"))
+	{
+		int XPPenalty = Abs(Round((fixed)XPTable[Player.Level] / ((fixed)GameSkill() * 5.0)));
+		int RankPenalty = Abs(Round((fixed)RankTable[Player.RankLevel] / ((fixed)GameSkill() * 5.0)));
+		Player.XP -= XPPenalty;
+		Player.Rank -= RankPenalty;
+		SetFont("BIGFONT");
+		HudMessage("\cjXP -%d\n\ckRank -%d\n", XPPenalty, RankPenalty, HUDMSG_FADEOUT, 0, CR_WHITE, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 2.0, 2.0);
+	};
 	
 	// Restore EP if CVAR is set
 	if (GetCVar("drpg_multi_restoreep"))
@@ -880,10 +905,14 @@ script Respawn() respawn
 	// Give a box of ammo if a specific ammo type is empty if the CVAR is set
 	if (GetCVar("drpg_multi_restoreammo"))
 	{
-		if (CheckInventory("Clip") == 0) GiveInventory("ClipBox", 1);
-		if (CheckInventory("Shell") == 0) GiveInventory("ShellBox", 1);
-		if (CheckInventory("RocketAmmo") == 0) GiveInventory("RocketBox", 1);
-		if (CheckInventory("Cell") == 0) GiveInventory("CellPack", 1);
+		if (CheckInventory("Clip") < GetAmmoAmount("Clip") * (Player.Capacity / 10))
+			SetInventory("Clip", GetAmmoAmount("Clip") * (Player.Capacity / 10));
+		if (CheckInventory("Shell") < GetAmmoAmount("Shell") * (Player.Capacity / 10))
+			SetInventory("Shell", GetAmmoAmount("Shell") * (Player.Capacity / 10));
+		if (CheckInventory("RocketAmmo") < GetAmmoAmount("RocketAmmo") * (Player.Capacity / 10))
+			SetInventory("RocketAmmo", GetAmmoAmount("RocketAmmo") * (Player.Capacity / 10));
+		if (CheckInventory("Cell") < GetAmmoAmount("Cell") * (Player.Capacity / 10))
+			SetInventory("Cell", GetAmmoAmount("Cell") * (Player.Capacity / 10));
 	};
 	
 	// Run Scripts
