@@ -306,14 +306,14 @@ function void ShopBuildPages()
 		ShopMax[0] = 43; // Weapons
 		ShopMax[3] = 42; // Armor
 		ShopMax[4] = 26; // Powerups
-		ShopMax[8] = 8;	 // Mod Packs
+		ShopMax[8] = 9;	 // Mod Packs
 		ShopMax[9] = 23; // Boots
 		
 		// Weapons
 		Shop[0] =
 		{
 			// Common Weapons
-			{ "RLChainsaw"; 							"Chainsaw"; 								100;	0; 	};
+			{ "RLChainsaw"; 							"Chainsaw"; 								300;	0; 	};
 			{ "RLPistol"; 								"Pistol"; 									25;		0; 	};
 			{ "RLShotgun"; 								"Shotgun"; 									100; 	0; 	};
 			{ "RLCombatShotgun"; 						"Combat Shotgun"; 							250; 	0; 	};
@@ -429,6 +429,7 @@ function void ShopBuildPages()
 			{ "RLSniperModItem"; 						"Sniper Modpack"; 							10000; 	2; 	};
 			{ "RLFirestormModItem"; 					"Firestorm Modpack"; 						10000; 	2; 	};
 			{ "RLNanoModItem"; 							"Nano Modpack"; 							10000; 	2; 	};
+			{ "RLOnyxModItem"; 							"Onyx Modpack"; 							10000; 	2; 	};
 			{ "RLArmorModItem"; 						"Armor Modpack"; 							5000;	2; 	};
 		};
 		
@@ -468,8 +469,7 @@ function void ShopLoop()
 	int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 	fixed X = 24.1;
 	fixed Y = 50.0;
-	int Discount = (int)(Player.RankLevel * 2.1);
-	int Cost = Shop[Player.ShopPage][Player.ShopIndex].Price - Shop[Player.ShopPage][Player.ShopIndex].Price * Discount / 100;
+	int Cost = Shop[Player.ShopPage][Player.ShopIndex].Price - Shop[Player.ShopPage][Player.ShopIndex].Price * Player.ShopDiscount / 100;
 	int SellPrice;
 	int Color;
 	int Available;
@@ -527,12 +527,12 @@ function void ShopLoop()
 	// Draw Price
 	if (Player.ShopPage == 5) // Tokens
 		HudMessage("\cj%d C \ck(Discount: %d%%)\n",
-				   Cost, Discount,
+				   Cost, Player.ShopDiscount,
 				   HUDMSG_PLAIN, 3000 + SHOP_ITEMS, CR_GOLD,
 				   24.1, 38.0, 0.05)
 	else
 		HudMessage("\cj%d C \ci(%d C) \ck(Discount: %d%%)\n",
-				   Cost, SellPrice, Discount,
+				   Cost, SellPrice, Player.ShopDiscount,
 				   HUDMSG_PLAIN, 3000 + SHOP_ITEMS, CR_GOLD,
 				   24.1, 38.0, 0.05);
 	
@@ -561,7 +561,7 @@ function void ShopLoop()
 		// Set the Color
 		if (i == Player.ShopIndex)
 			Color = MenuCursorColor
-		else if (CheckInventory("Credits") >= Cost - Cost * Discount / 100)
+		else if (CheckInventory("Credits") >= Cost - Cost * Player.ShopDiscount / 100)
 			Color = CR_WHITE
 		else
 			Color = CR_RED;
@@ -606,7 +606,7 @@ function void ShopLoop()
 		MoveCursor(DIR_RIGHT);
 	if (Buttons == BT_USE && OldButtons != BT_USE && !Player.MenuBlock)
 	{
-		if (CheckInventory("Credits") >= Shop[Player.ShopPage][Player.ShopIndex].Price - Shop[Player.ShopPage][Player.ShopIndex].Price * Discount / 100)
+		if (CheckInventory("Credits") >= Shop[Player.ShopPage][Player.ShopIndex].Price - Shop[Player.ShopPage][Player.ShopIndex].Price * Player.ShopDiscount / 100)
 			BuyItem(Shop[Player.ShopPage][Player.ShopIndex].Actor)
 		else
 			ActivatorSound("menu/error", 127);
@@ -677,8 +677,7 @@ function void MoveCursor(int Direction)
 
 function void BuyItem(str Item)
 {
-	int Discount = (int)(Player.RankLevel * 2.1);
-	int Cost = Shop[Player.ShopPage][Player.ShopIndex].Price - Shop[Player.ShopPage][Player.ShopIndex].Price * Discount / 100;
+	int Cost = Shop[Player.ShopPage][Player.ShopIndex].Price - Shop[Player.ShopPage][Player.ShopIndex].Price * Player.ShopDiscount / 100;
 	
 	// If you aren't the required rank, fail
 	if (Shop[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel) return;
