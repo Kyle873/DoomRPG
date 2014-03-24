@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Monday, March 24, 2014 at 10:42:41 AM";
+	"Monday, March 24, 2014 at 12:05:11 PM";
 };
 
 bool ParBonus;
@@ -849,23 +849,47 @@ script Dead() death
 	Player.Aura = 0;
 	Player.AuraTimer = 0;
 	
-	/* Drop Credits
-	// Currently broken because I have no fucking idea, ZDoom(TM)
+	// Drop Credits
 	if (GetCVar("drpg_multi_dropcredits") && CheckInventory("Credits") > 0)
 	{
 		int DropAmount = CheckInventory("Credits") / 10;
-		int CreditTID = UniqueTID();
-		fixed X = GetActorX(0);
-		fixed Y = GetActorY(0);
-		fixed Z = GetActorZ(0);
-		fixed Height = GetActorProperty(0, APROP_Height);
 		
-		if (DropAmount <= 0) DropAmount = 1;
+		// Cap out at a million so if you have stupid amounts of Credits you don't freeze/nuke the game
+		if (DropAmount > 1000000) DropAmount = 1000000;
 		
-		SpawnForced("CreditsDropped", X, Y, Z + Height / 2.0, CreditTID, 0);
-		SetUserVariable(CreditTID, "user_amount", DropAmount);
 		TakeInventory("Credits", DropAmount);
-	}; */
+		
+		// Credit Fountain
+		int Total = DropAmount;
+		int Drops;
+		
+		Drops = Total / 1000;
+		while (Drops--) DropItem(0, "Credits1000", 1, 256);
+		Total -= (Total / 1000) * 1000;
+
+		Drops = Total / 100;
+		while (Drops--) DropItem(0, "Credits100", 1, 256);
+		Total -= (Total / 100) * 100;
+
+		Drops = Total / 50;
+		while (Drops--) DropItem(0, "Credits50", 1, 256);
+		Total -= (Total / 50) * 50;
+
+		Drops = Total / 20;
+		while (Drops--) DropItem(0, "Credits20", 1, 256);
+		Total -= (Total / 20) * 20;
+
+		Drops = Total / 10;
+		while (Drops--) DropItem(0, "Credits10", 1, 256);
+		Total -= (Total / 10) * 10;
+
+		Drops = Total / 5;
+		while (Drops--) DropItem(0, "Credits5", 1, 256);
+		Total -= (Total / 5) * 5;
+		
+		Drops = Total;
+		while (Total--) DropItem(0, "Credits1", 1, 256);
+	};
 	
 	// Drop Inventory
 	if (GetCVar("drpg_multi_dropinv"))
