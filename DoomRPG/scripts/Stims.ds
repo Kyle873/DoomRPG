@@ -9,23 +9,23 @@ str[MAX_COMPOUNDS] CompoundNames =
 	// Stats
 	"Strength"; "Defense"; "Vitality"; "Energy"; "Regeneration"; "Agility"; "Capacity"; "Luck";
 	
-	// Powerups
-	// ...
-	
 	// Boosters
 	"Purifier"; "Potency";
+	
+	// Powerups
+	"Invulnerability"; "Invisibility";
 };
 
 int[MAX_COMPOUNDS] CompoundColors =
 {
 	// Stats
 	CR_RED; CR_GREEN; CR_BRICK; CR_LIGHTBLUE; CR_PURPLE; CR_ORANGE; CR_BLUE; CR_GOLD;
-	
-	// Powerups
-	// ...
-	
+		
 	// Boosters
 	CR_DARKGRAY; CR_WHITE;
+	
+	// Powerups
+	CR_DARKGREEN; CR_DARKRED;
 };
 
 acscript UseStim() net
@@ -61,6 +61,10 @@ acscript UseStim() net
 	Player.CapacityBonus = Player.Stim.Current[STIM_CAPACITY];
 	Player.LuckBonus = Player.Stim.Current[STIM_LUCK];
 	
+	// Apply Powerups
+	for (int i = 0; i < Player.Stim.Current[STIM_INVULNERABILITY]; i++) GiveInventory("PowerStimInvulnerable", 1);
+	for (int i = 0; i < Player.Stim.Current[STIM_INVISIBILITY]; i++) GiveInventory("PowerStimShadow", 1);
+	
 	// Apply Active Flags
 	for (int i = 0; i < MAX_COMPOUNDS; i++)
 		if (Player.Stim.Current[i] > 0) Player.Stim.ActiveBonus[i] = true;
@@ -80,7 +84,7 @@ acscript UseStim() net
 	FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
 };
 
-acscript AddComponent(int Type, int Amount)
+acscript AddCompound(int Type, int Amount)
 {
 	Player.Stim.Vials[Type] += Amount;
 	
