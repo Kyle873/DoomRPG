@@ -135,6 +135,12 @@ acscript EnterOutpost()
 	// Add the reflections to the hallway floors
     Sector_SetPlaneReflection(6, 128, 0);
 	
+	// Assign the current level to the level choice
+	if (LevelNum != 999) LevelChoice = LevelNum;
+	
+	// Assign the current skill level to the skill choice
+	SkillChoice = GameSkill() - 1;
+	
 	// Set the current wave to the max wave
 	ArenaWave = ArenaMaxWave;
 	
@@ -215,22 +221,32 @@ acscript RegenArea(int ID)
 
 acscript LevelTransport()
 {
-    while (1)
+	// if you're already in a menu, terminate
+	if (Player.OutpostMenu == OMENU_LEVELTRANSPORT) return;
+    
+	SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+	Player.OutpostMenu = OMENU_LEVELTRANSPORT;
+	
+	while (1)
     {
-        SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
-        
-        // Stop Underflow
+		// Draw the background
+		if (GetCVar("drpg_menudim"))
+			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
+
+		// Prevent the menus from being opened
+		Player.InMenu = false;
+		Player.InShop = false;
+		
+		// Stop Underflow
         if (LevelChoice < 1)
             LevelChoice = 1;
         
         // Text
         SetFont("BIGFONT");
-        HudMessage("Choose Level\n", HUDMSG_PLAIN, 1, CR_GOLD, 0.5, 0.2, 0.05);
-        
         if (Player.MapsVisited[LevelChoice])
-            HudMessage("%d\n", LevelChoice, HUDMSG_PLAIN, 2, CR_GREEN, 0.5, 0.3, 0.05)
+			HudMessage("Choose Level: \cd%d\n", LevelChoice, HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 0.05, 0.5)
         else
-            HudMessage("%d\n", LevelChoice, HUDMSG_PLAIN, 2, CR_RED, 0.5, 0.3, 0.05);
+			HudMessage("Choose Level: \cg%d\n", LevelChoice, HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 0.05, 0.5);
         
         // Input
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -265,22 +281,25 @@ acscript LevelTransport()
                 SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
                 InBase = false;
                 Transported = true;
+				Player.OutpostMenu = 0;
                 Teleport_NewMap(LevelChoice, 0);
                 break;
             }
             else
             {
-                HudMessage("You haven't reached this level yet\n", HUDMSG_FADEOUT, 1, CR_RED, 0.5, 0.5, 3.0, 1.0);
+                HudMessage("You haven't reached this level yet\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 3.0, 1.0);
                 ActivatorSound("menu/error", 127);
                 FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 2.0);
                 SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
                 InBase = true;
+				Player.OutpostMenu = 0;
                 return;
             };
         };
         if (Buttons == BT_SPEED)
         {
             SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			Player.OutpostMenu = 0;
             return;
         };
         
@@ -307,6 +326,10 @@ acscript SkillComputer()
     
     while (1)
     {
+		// Draw the background
+		if (GetCVar("drpg_menudim"))
+			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
+		
 		// Prevent the menus from being opened
 		Player.InMenu = false;
 		Player.InShop = false;
@@ -314,7 +337,7 @@ acscript SkillComputer()
         // Text
         SetFont("BIGFONT");
         HudMessage("Skill Level: \cg%d (%s)\n", SkillChoice + 1, SkillLevels[SkillChoice],
-                   HUDMSG_PLAIN, 1, CR_GOLD, 0.5, 0.5, 0.05);
+                   HUDMSG_FADEOUT, MENU_ID, CR_GOLD, 0.5, 0.5, 0.05, 0.5);
         
         // Input
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -359,12 +382,12 @@ acscript ToggleArena()
     
     if (ArenaActive)
 	{
-        HudMessage("Arena Active\n", HUDMSG_FADEOUT, 1, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+        HudMessage("Arena Active\n", HUDMSG_FADEOUT, MENU_ID, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
 		ArenaPlayerNumber = PlayerNumber();
 	}
     else
 	{
-        HudMessage("Arena Inactive\n", HUDMSG_FADEOUT, 1, CR_RED, 0.5, 0.5, 2.0, 1.0);
+        HudMessage("Arena Inactive\n", HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 1.0);
 		ArenaPlayerNumber = -1;
 	};
 };
@@ -382,9 +405,13 @@ acscript PassArenaLine()
 
 acscript SelectArenaWave()
 {
+	// if you're already in a menu, terminate
+	if (Player.OutpostMenu == OMENU_TOKENCONVERTER) return;
+	
 	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
 
     ActivatorSound("menu/move", 127);
+	Player.OutpostMenu = OMENU_WAVESELECTOR;
 
     if (ArenaMaxWave == 0) ArenaMaxWave = 1;
     WaveChoice = ArenaMaxWave;
@@ -395,14 +422,18 @@ acscript SelectArenaWave()
     {
         SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
         
+		// Draw the background
+		if (GetCVar("drpg_menudim"))
+			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
+		
 		// Prevent the menus from being opened
 		Player.InMenu = false;
 		Player.InShop = false;
         
 		// Text
         SetFont("BIGFONT");
-        HudMessage("Wave: \cd%d/%d\n", WaveChoice, ArenaMaxWave,
-                   HUDMSG_FADEOUT, 1, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
+        HudMessage("Wave: \cd%d\c-/\cd%d\n", WaveChoice, ArenaMaxWave,
+                   HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
         
         // Input
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -427,11 +458,13 @@ acscript SelectArenaWave()
             
             ActivatorSound("menu/move", 127);
             SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			Player.OutpostMenu = 0;
             return;
         };
         if (Buttons == BT_SPEED)
         {
             SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			Player.OutpostMenu = 0;
             return;
         };
         
@@ -487,7 +520,7 @@ acscript TokenConverter()
 	if (Player.RankLevel == 0)
 	{
 		SetFont("BIGFONT");
-		Print("\cgYou must be at least Rank 1 to use the Token Converter\n");
+		HudMessage("\cgYou must be at least Rank 1 to use the Token Converter\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
 		ActivatorSound("menu/error", 127);
 		return;
 	};
@@ -503,6 +536,10 @@ acscript TokenConverter()
 		int SkillTokens = CheckInventory("SkillToken");
 		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
 		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		
+		// Draw the background
+		if (GetCVar("drpg_menudim"))
+			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
 		
 		// Prevent the menus from being opened
 		Player.InMenu = false;
@@ -641,15 +678,15 @@ acscript TokenConverter()
 		
 		// Drawing
 		SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
-		PrintSprite("TOKAA0", 0, 16.1, 188.1, 0.05);
-		PrintSprite("TOKBA0", 0, 16.1, 208.1, 0.05);
-		PrintSprite("TOKCA0", 0, 16.1, 228.1, 0.05);
+		PrintSpriteFade("TOKAA0", 0, 16.1, 188.1, 0.05, 0.5);
+		PrintSpriteFade("TOKBA0", 0, 16.1, 208.1, 0.05, 0.5);
+		PrintSpriteFade("TOKCA0", 0, 16.1, 228.1, 0.05, 0.5);
 		SetFont("BIGFONT");
-		HudMessage("%d\n", StatTokens, 		HUDMSG_PLAIN, 0, CR_RED,  			40.1, 178.0, 0.05);
-		HudMessage("%d\n", StatCapTokens, 	HUDMSG_PLAIN, 0, CR_YELLOW,  		40.1, 198.0, 0.05);
-		HudMessage("%d\n", SkillTokens, 	HUDMSG_PLAIN, 0, CR_DARKGREEN,		40.1, 218.0, 0.05);
+		HudMessage("%d\n", StatTokens, 		HUDMSG_FADEOUT, 0, CR_RED,  		40.1, 178.0, 0.05, 0.5);
+		HudMessage("%d\n", StatCapTokens, 	HUDMSG_FADEOUT, 0, CR_YELLOW,  		40.1, 198.0, 0.05, 0.5);
+		HudMessage("%d\n", SkillTokens, 	HUDMSG_FADEOUT, 0, CR_DARKGREEN,	40.1, 218.0, 0.05, 0.5);
 		SetFont("SMALLFONT");
-		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, CR_WHITE, 140.1, 178.0, 0.05);
+		HudMessage("%s\n", Text, 			HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 	140.1, 178.0, 0.05, 0.5);
 
 		Delay(1);
 	};
@@ -793,9 +830,8 @@ acscript ShopSpecial()
 			TimerDisplay = StrParam("%d:%d\n", Minutes, Seconds);
 
 		SetFont("BIGFONT");
-		HudMessage("Shop Special is currently out of stock.\n\nNext restock will be in %s.\n", 
-				   TimerDisplay,
-				   HUDMSG_FADEOUT, 5000, CR_RED, 0.5, 0.5, 2.0, 1.0);
+		HudMessage("Shop Special is currently out of stock.\n\nNext restock will be in %s.\n", TimerDisplay,
+				   HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 1.0);
 		ActivatorSound("menu/error", 127);
 		return;
 	};
@@ -829,6 +865,10 @@ acscript ShopSpecial()
 		
 		// The cost should always be at least 1 Credit
 		if (Cost <= 0) Cost = 1;
+		
+		// Draw the background
+		if (GetCVar("drpg_menudim"))
+			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
 		
 		// Prevent the menus from being opened
 		Player.InMenu = false;
@@ -864,9 +904,9 @@ acscript ShopSpecial()
 		
 		// Drawing
 		SetFont("BIGFONT");
-		HudMessage("%s\n\ck%d C (Discount: %d%%)\n\cdTime Left: %s\n\n\cd%K\cj to buy\n\cd%K\cj to exit\n", 
-				   Name, Cost, Discount, TimerDisplay, "+use", "+speed",
-				   HUDMSG_FADEOUT, 5000, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
+		HudMessage("%s\n\ck%d C (Discount: %d%%)\n\cdTime Left: %s\n",
+				   Name, Cost, Discount, TimerDisplay,
+				   HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 1.5, 0.5, 0.05, 1.0);
 		
 		Delay(1);
 	};
@@ -1196,6 +1236,10 @@ acscript Locker()
 		fixed X = 24.1;
 		fixed Y = 50.0;
 		
+		// Draw the background
+		if (GetCVar("drpg_menudim"))
+			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
+		
 		// Prevent the menus from being opened
 		Player.InMenu = false;
 		Player.InShop = false;
@@ -1239,7 +1283,7 @@ acscript Locker()
 			// Display the item string
 			SetFont("SMALLFONT");
 			if (Player.Locker[Page][i] > 0)
-				HudMessage("%s \cd[%d]\n", LockerItems[Page][i].Name, Player.Locker[Page][i], HUDMSG_PLAIN, 3001 + i, Color, X, Y, 0.05)
+				HudMessage("%s \cd[%d]\n", LockerItems[Page][i].Name, Player.Locker[Page][i], HUDMSG_PLAIN, 0, Color, X, Y, 0.05)
 			else
 				HudMessage("%s\n", LockerItems[Page][i].Name, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
 			
