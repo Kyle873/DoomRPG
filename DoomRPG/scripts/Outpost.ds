@@ -1205,11 +1205,8 @@ acscript Locker()
 		"Boots";
 	};
 	
-	int Page;
-	int Index;
 	int Offset;
 	int Color;
-	bool Selecting;
 	int LockerSize;
 	int Total;
 	
@@ -1245,27 +1242,27 @@ acscript Locker()
 		Player.InShop = false;
 		
 		// Calculate Locker Size
-		for (int i = 0; LockerItems[Page][i].Actor != ""; ++i)
+		for (int i = 0; LockerItems[Player.LockerPage][i].Actor != ""; ++i)
 			LockerSize = i;
 		
 		// Calculate total items
 		Total = 0;
-		for (int i = 0; LockerItems[Page][i].Actor != ""; ++i)
-			if (Player.Locker[Page][i] > 0)
-				Total += Player.Locker[Page][i];
+		for (int i = 0; LockerItems[Player.LockerPage][i].Actor != ""; ++i)
+			if (Player.Locker[Player.LockerPage][i] > 0)
+				Total += Player.Locker[Player.LockerPage][i];
 		
-		// Title and Page
+		// Title and Player.LockerPage
 		SetFont("BIGFONT");
 		HudMessage("Personal Locker - %s (%d/%d)\n",
-				   LockerPages[Page], Page + 1, LOCKER_CATEGORIES,
+				   LockerPages[Player.LockerPage], Player.LockerPage + 1, LOCKER_CATEGORIES,
 				   HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
 		
 		// Total amount of items in the Locker
 		HudMessage("Items: %d\n", Total, HUDMSG_PLAIN, 0, CR_GOLD, 24.1, 38.0, 0.05);
 		
 		// Determine Offset
-		if (Index > SHOP_SCROLL)
-			Offset = Index - SHOP_SCROLL
+		if (Player.LockerIndex > SHOP_SCROLL)
+			Offset = Player.LockerIndex - SHOP_SCROLL
 		else
 			Offset = 0;
 		
@@ -1275,17 +1272,17 @@ acscript Locker()
 			if (i > LockerSize) break;
 			
 			// Set the Color
-			if (i == Index)
+			if (i == Player.LockerIndex)
 				Color = MenuCursorColor
 			else
 				Color = CR_WHITE;
 			
 			// Display the item string
 			SetFont("SMALLFONT");
-			if (Player.Locker[Page][i] > 0)
-				HudMessage("%s \cd[%d]\n", LockerItems[Page][i].Name, Player.Locker[Page][i], HUDMSG_PLAIN, 0, Color, X, Y, 0.05)
+			if (Player.Locker[Player.LockerPage][i] > 0)
+				HudMessage("%s \cd[%d]\n", LockerItems[Player.LockerPage][i].Name, Player.Locker[Player.LockerPage][i], HUDMSG_PLAIN, 0, Color, X, Y, 0.05)
 			else
-				HudMessage("%s\n", LockerItems[Page][i].Name, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
+				HudMessage("%s\n", LockerItems[Player.LockerPage][i].Name, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
 			
 			// Move down Y
 			Y += 8.0;
@@ -1300,52 +1297,54 @@ acscript Locker()
 		// Check Input
 		if (Buttons == BT_FORWARD && (OldButtons != BT_FORWARD || Player.DelayTimer > 35))
 		{
-			if (Index <= 0) Index = LockerSize + 1;
+			if (Player.LockerIndex <= 0) Player.LockerIndex = LockerSize + 1;
 			ActivatorSound("menu/move", 127);
-			Index--;
+			Player.LockerIndex--;
 		};
 		if (Buttons == BT_BACK && (OldButtons != BT_BACK || Player.DelayTimer > 35))
 		{
-			if (Index >= LockerSize) Index = -1;
+			if (Player.LockerIndex >= LockerSize) Player.LockerIndex = -1;
 			ActivatorSound("menu/move", 127);
-			Index++;
+			Player.LockerIndex++;
 		};
 		if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
 			(Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
 		{
-			if (Page <= 0) Page = LOCKER_CATEGORIES;
+			if (Player.LockerPage <= 0) Player.LockerPage = LOCKER_CATEGORIES;
 			ActivatorSound("menu/move", 127);
-			Index = 0;
-			Page--;
+			Player.LockerIndex = 0;
+			Player.LockerPage--;
 		};
 		if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
 			(Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
 		{
-			if (Page >= LOCKER_CATEGORIES - 1) Page = -1;
+			if (Player.LockerPage >= LOCKER_CATEGORIES - 1) Player.LockerPage = -1;
 			ActivatorSound("menu/move", 127);
-			Index = 0;
-			Page++;
+			Player.LockerIndex = 0;
+			Player.LockerPage++;
 		};
 		if (Buttons == BT_USE && OldButtons != BT_USE)
 		{
 			// Deposit
-			if (CheckInventory(LockerItems[Page][Index].Actor) > 0)
+			if (CheckInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor) > 0)
 			{
-				TakeInventory(LockerItems[Page][Index].Actor, 1);
-				Player.Locker[Page][Index]++;
+				TakeInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor, 1);
+				Player.Locker[Player.LockerPage][Player.LockerIndex]++;
 				
-				if (Page == 0) // Weapons
-					TakeInventory("RLWeaponLimit", 1);
-				if (Page == 1) // Armor
-					TakeInventory("RLArmorInInventory", 1);
-				if (Page == 2) // Mod Packs
-					if (Index == 8) // Special handling case for Armor Modpack
+				if (Player.LockerPage == 0) // Weapons
+					TakeInventory("RLWeaponLimit", 1)
+				else if (Player.LockerPage == 1) // Armor
+					TakeInventory("RLArmorInInventory", 1)
+				else if (Player.LockerPage == 2) // Mod Packs
+					if (Player.LockerIndex == 8) // Special handling case for Armor Modpack
 						TakeInventory("RLArmorModItemInInventory", 1)
 					else
 						if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
 							TakeInventory("RLScavengerModLimit", 1)
 						else
-							TakeInventory("RLModLimit", 1);
+							TakeInventory("RLModLimit", 1)
+				else if (Player.LockerPage == 3) // Boots
+					TakeInventory("RLBootsInInventory", 1);
 				
 				ActivatorSound("menu/move", 127);
 			}
@@ -1355,27 +1354,29 @@ acscript Locker()
 		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
 		{
 			// Withdraw
-			if (Player.Locker[Page][Index] > 0)
+			if (Player.Locker[Player.LockerPage][Player.LockerIndex] > 0)
 			{
 				// Checking
-				if (Page == 0 && CheckInventory("RLWeaponLimit") >= 6) // Weapons
+				if (Player.LockerPage == 0 && CheckInventory("RLWeaponLimit") >= 6) // Weapons
 					ActivatorSound("menu/error", 127)
-				else if (Page == 1 && CheckInventory("RLArmorInInventory") >= 1) // Armor
+				else if (Player.LockerPage == 1 && CheckInventory("RLArmorInInventory") >= 1) // Armor
 					ActivatorSound("menu/error", 127)
-				else if (Page == 2 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
+				else if (Player.LockerPage == 2 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
 					ActivatorSound("menu/error", 127)
-				else if (Page == 2 && (PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4) // Mod Packs
+				else if (Player.LockerPage == 2 && (PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4) // Mod Packs
 					ActivatorSound("menu/error", 127)
-				else if (Page == 0) // Weapons
+				else if (Player.LockerPage == 3 && CheckInventory("RLBootsInInventory") >= 1) // Boots
+					ActivatorSound("menu/error", 127)
+				else if (Player.LockerPage == 0) // Weapons
 				{
-					GiveInventory(StrParam("%sPickup\n", LockerItems[Page][Index].Actor), 1);
-					Player.Locker[Page][Index]--;
+					GiveInventory(StrParam("%sPickup\n", LockerItems[Player.LockerPage][Player.LockerIndex].Actor), 1);
+					Player.Locker[Player.LockerPage][Player.LockerIndex]--;
 					ActivatorSound("menu/move", 127);
 				}
 				else
 				{
-					GiveInventory(LockerItems[Page][Index].Actor, 1);
-					Player.Locker[Page][Index]--;
+					GiveInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor, 1);
+					Player.Locker[Player.LockerPage][Player.LockerIndex]--;
 					ActivatorSound("menu/move", 127);
 				};
 			}
