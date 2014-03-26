@@ -1,0 +1,127 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+
+namespace DoomRPG
+{
+    public class Config
+    {
+        // Basic
+        public string portPath = string.Empty;
+        public string DRPGPath = string.Empty;
+        public string modsPath = string.Empty;
+        public Difficulty difficulty = Difficulty.Normal;
+        public int mapNumber = 1;
+        public bool[] patches = new bool[6];
+
+        // Multiplayer
+        public bool multiplayer = false;
+        public MultiplayerMode multiplayerMode = MultiplayerMode.Hosting;
+        public ServerType serverType = ServerType.PeerToPeer;
+        public int players = 2;
+        public string hostname = string.Empty;
+        public bool extraTics = false;
+        public int duplex = 0;
+
+        public void Save()
+        {
+            string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\" + Assembly.GetEntryAssembly().GetName().Name + ".cfg";
+
+            List<string> data = new List<string>();
+
+            try
+            {
+                FieldInfo[] fields = this.GetType().GetFields();
+
+                foreach (FieldInfo field in fields)
+                {
+                    // Array Types
+                    if (field.GetValue(this).GetType() == typeof(bool[]))
+                    {
+                        bool[] bools = (bool[])field.GetValue(this);
+                        string boolString = field.Name + "=";
+                        for (int i = 0; i < bools.Length; i++)
+                            boolString += bools[i] + ",";
+                        data.Add(boolString.Substring(0, boolString.Length - 1));
+                    }
+                    else // Basic Type
+                        data.Add(field.Name + "=" + field.GetValue(this));
+                }
+
+                File.WriteAllLines(path, data);
+            }
+            catch (Exception e)
+            {
+                Utils.ShowError(e);
+            }
+        }
+
+        public void Load()
+        {
+            string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\" + Assembly.GetEntryAssembly().GetName().Name + ".cfg";
+
+            try
+            {
+                if (File.Exists(path))
+                {
+                    FieldInfo[] fields = this.GetType().GetFields();
+                    string[] lines = File.ReadAllLines(path);
+
+                    foreach (string option in lines)
+                    {
+                        string[] s = option.Split('=');
+
+                        if (s.Length != 2)
+                            continue;
+
+                        FieldInfo field = fields.FirstOrDefault(o => o.Name == s[0]);
+                        
+                        if (field != null)
+                        {
+                            // Basic Types
+                            if (field.GetValue(this).GetType() == typeof(bool))
+                                field.SetValue(this, bool.Parse(s[1]));
+                            if (field.GetValue(this).GetType() == typeof(int))
+                                field.SetValue(this, int.Parse(s[1]));
+                            if (field.GetValue(this).GetType() == typeof(float))
+                                field.SetValue(this, float.Parse(s[1]));
+                            if (field.GetValue(this).GetType() == typeof(string))
+                                field.SetValue(this, s[1]);
+
+                            // Patches Array
+                            if (field.Name == "patches")
+                            {
+                                bool[] bools = new bool[6];
+                                for (int i = 0; i < 6; i++)
+                                    bools[i] = bool.Parse(s[1].Split(',')[i]);
+                                field.SetValue(this, bools);
+                            }
+
+                            // Enums
+                            if (field.GetValue(this).GetType() == typeof(Difficulty))
+                                for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
+                                    if (Enum.GetNames(typeof(Difficulty))[i].Contains(s[1]))
+                                        field.SetValue(this, Enum.ToObject(typeof(Difficulty), i));
+                            if (field.GetValue(this).GetType() == typeof(MultiplayerMode))
+                                for (int i = 0; i < Enum.GetNames(typeof(MultiplayerMode)).Length; i++)
+                                    if (Enum.GetNames(typeof(MultiplayerMode))[i].Contains(s[1]))
+                                        field.SetValue(this, Enum.ToObject(typeof(MultiplayerMode), i));
+                            if (field.GetValue(this).GetType() == typeof(ServerType))
+                                for (int i = 0; i < Enum.GetNames(typeof(ServerType)).Length; i++)
+                                    if (Enum.GetNames(typeof(ServerType))[i].Contains(s[1]))
+                                        field.SetValue(this, Enum.ToObject(typeof(ServerType), i));
+                        }
+                    }
+                }
+                else
+                    Save();
+            }
+            catch (Exception e)
+            {
+                Utils.ShowError(e);
+            }
+        }
+    }
+}
