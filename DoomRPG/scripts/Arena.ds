@@ -239,6 +239,7 @@ acfunc void ArenaCheckMod()
 acfunc void ArenaGetBonus(int Bonus)
 {
 	str SpawnItem;
+	
 	switch (Bonus)
 	{
 		case 0: // Full Health
@@ -273,7 +274,7 @@ acfunc void ArenaGetBonus(int Bonus)
 			break;
 		case 2: // Money Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
-			for (int i = 0; i < ArenaWave; i++)
+			for (int i = 0; i < ArenaWave * PlayerCount(); i++)
 			{
 				SpawnSpot("MoneyDropper", ArenaItemSpotTID, ArenaItemTID, 0);
 				SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
@@ -282,38 +283,75 @@ acfunc void ArenaGetBonus(int Bonus)
 			break;
 		case 3: // Ammo Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
-			SpawnSpot("BackpackRandomizer", ArenaItemSpotTID, ArenaItemTID, 0);
+			for (int i = 0; i < PlayerCount(); i++)
+			{
+				SpawnSpot("BackpackRandomizer", ArenaItemSpotTID, ArenaItemTID, 0);
+				SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+				Thing_ChangeTID(ArenaItemTID, 0);
+			};
 			break;
 		case 4: // Health Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
-			SpawnSpot("HealthDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+			for (int i = 0; i < PlayerCount(); i++)
+			{
+				SpawnSpot("HealthDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+				SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+				Thing_ChangeTID(ArenaItemTID, 0);
+			};
 			break;
 		case 5: // Armor Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
-			if (Random(1, 2) == 1)
-				SpawnItem = "GreenArmorRandomizer"
-			else
-				SpawnItem = "BlueArmorRandomizer";
-			SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
+			for (int i = 0; i < PlayerCount(); i++)
+			{
+				if (Random(1, 2) == 1)
+					SpawnItem = "GreenArmorRandomizer"
+				else
+					SpawnItem = "BlueArmorRandomizer";
+				SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
+				SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+				Thing_ChangeTID(ArenaItemTID, 0);
+			};
 			break;
 		case 6: // Weapon Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
-			SpawnSpot("WeaponDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+			for (int i = 0; i < PlayerCount(); i++)
+			{
+				SpawnSpot("WeaponDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+				SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+				Thing_ChangeTID(ArenaItemTID, 0);
+			};
 			break;
 		case 7: // Powerup Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
-			SpawnSpot("PowerupDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+			for (int i = 0; i < PlayerCount(); i++)
+			{
+				SpawnSpot("PowerupDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+				SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+				Thing_ChangeTID(ArenaItemTID, 0);
+			};
 			break;
 		case 8: // Rune Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
-			SpawnSpot("RuneDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+			for (int i = 0; i < PlayerCount(); i++)
+			{
+				SpawnSpot("RuneDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+				SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+				Thing_ChangeTID(ArenaItemTID, 0);
+			};
 			break;
 		case 9: // Stim Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			if (Random(1, 10) == 1)
-				SpawnSpot("StimDropper", ArenaItemSpotTID, ArenaItemTID, 0)
+			{
+				for (int i = 0; i < PlayerCount(); i++)
+				{
+					SpawnSpot("StimDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+					SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+					Thing_ChangeTID(ArenaItemTID, 0);
+				};
+			}
 			else
-				for (int i = 0; i < ArenaWave / 10 + 1; i++)
+				for (int i = 0; i < (ArenaWave / 10 + 1) * PlayerCount(); i++)
 				{
 					SpawnSpot("VialDropper", ArenaItemSpotTID, ArenaItemTID, 0);
 					SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
@@ -328,14 +366,20 @@ acfunc void ArenaGetBonus(int Bonus)
 			if (ArenaKey == 3) SpawnItem = "RedSkull";
 			if (ArenaKey == 4) SpawnItem = "YellowSkull";
 			if (ArenaKey == 5) SpawnItem = "BlueSkull";
-			if (ArenaKey == 6) ArenaGetBonus(Random(0, MAX_BONUS - 1));
+			if (ArenaKey == 6)
+			{ 
+				ArenaGetBonus(Random(0, MAX_BONUS - 1));
+				return;
+			};
+			for (int i = 0; i < PlayerCount(); i++)
+			{
+				SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
+				SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+				Thing_ChangeTID(ArenaItemTID, 0);
+			};
 			if (ArenaKey < 6) ArenaKey++;
-			SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
 			break;
 	};
-	
-	SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-	Thing_ChangeTID(ArenaItemTID, 0);
 	
 	// Bonus Message
 	if (Bonus >= 0)
