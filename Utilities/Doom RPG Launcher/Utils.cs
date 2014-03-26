@@ -9,5 +9,10 @@ namespace DoomRPG
         {
             MessageBox.Show(e.Message + "\n" + e.StackTrace + "\n" + e.InnerException, "An error has occured!", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+
+        public static void ShowError(string text, string caption = "Error")
+        {
+            MessageBox.Show(text, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }

@@ -9,7 +9,6 @@ namespace DoomRPG
     public partial class FormMain : Form
     {
         Config config = new Config();
-        CommandLine cmdline = new CommandLine();
 
         public FormMain()
         {
@@ -73,111 +72,135 @@ namespace DoomRPG
         
         private void buttonLaunch_Click(object sender, EventArgs e)
         {
-            string cmdline;
-            
-            // Save config
-            config.portPath = textBoxPortPath.Text;
-            config.DRPGPath = textBoxDRPGPath.Text;
-            config.modsPath = textBoxModsPath.Text;
-            config.difficulty = (Difficulty)comboBoxDifficulty.SelectedIndex;
-            config.mapNumber = (int)numericUpDownMapNumber.Value;
-            for (int i = 0; i < config.patches.Length; i++)
-                if (checkedListBoxPatches.GetItemChecked(i))
-                    config.patches[i] = true;
-                else
-                    config.patches[i] = false;
-            config.multiplayer = checkBoxMultiplayer.Checked;
-            if (radioButtonHosting.Checked)
-                config.multiplayerMode = MultiplayerMode.Hosting;
-            if (radioButtonJoining.Checked)
-                config.multiplayerMode = MultiplayerMode.Joining;
-            if (radioButtonPeerToPeer.Checked)
-                config.serverType = ServerType.PeerToPeer;
-            if (radioButtonPacketServer.Checked)
-                config.serverType = ServerType.PacketServer;
-            config.players = (int)numericUpDownPlayers.Value;
-            config.hostname = textBoxHostname.Text;
-            config.extraTics = checkBoxExtraTics.Checked;
-            config.duplex = (int)numericUpDownDuplex.Value;
-            config.Save();
-            
-            // Build the command line
-            cmdline = "\"" + config.portPath + "\"";
-            
-            // Skill
-            cmdline += " -skill " + ((int)config.difficulty + 1);
-
-            // Map Number
-            cmdline += " -warp " + config.mapNumber;
-
-            // Multiplayer
-            if (config.multiplayer)
+            try
             {
-                // Hosting/Joining
-                if (config.multiplayerMode == MultiplayerMode.Hosting)
-                    cmdline += " -host " + config.players;
-                if (config.multiplayerMode == MultiplayerMode.Joining)
-                    cmdline += " -join " + config.hostname;
+                string cmdline;
 
-                // Server-side stuff
-                if (config.multiplayerMode == MultiplayerMode.Hosting)
+                // Save config
+                config.portPath = textBoxPortPath.Text;
+                config.DRPGPath = textBoxDRPGPath.Text;
+                config.modsPath = textBoxModsPath.Text;
+                config.difficulty = (Difficulty)comboBoxDifficulty.SelectedIndex;
+                config.mapNumber = (int)numericUpDownMapNumber.Value;
+                for (int i = 0; i < config.patches.Length; i++)
+                    if (checkedListBoxPatches.GetItemChecked(i))
+                        config.patches[i] = true;
+                    else
+                        config.patches[i] = false;
+                config.multiplayer = checkBoxMultiplayer.Checked;
+                if (radioButtonHosting.Checked)
+                    config.multiplayerMode = MultiplayerMode.Hosting;
+                if (radioButtonJoining.Checked)
+                    config.multiplayerMode = MultiplayerMode.Joining;
+                if (radioButtonPeerToPeer.Checked)
+                    config.serverType = ServerType.PeerToPeer;
+                if (radioButtonPacketServer.Checked)
+                    config.serverType = ServerType.PacketServer;
+                config.players = (int)numericUpDownPlayers.Value;
+                config.hostname = textBoxHostname.Text;
+                config.extraTics = checkBoxExtraTics.Checked;
+                config.duplex = (int)numericUpDownDuplex.Value;
+                config.Save();
+
+                // Error Handling
+                if (config.portPath == string.Empty)
                 {
-                    // Server Type
-                    if (config.serverType == ServerType.PeerToPeer)
-                        cmdline += " -netmode 0";
-                    if (config.serverType == ServerType.PacketServer)
-                        cmdline += " -netmode 1";
-
-                    // Server Options
-                    if (config.extraTics)
-                        cmdline += " -extratic";
-                    if (config.duplex > 0)
-                        cmdline += " -dup " + config.duplex;
+                    Utils.ShowError("You must specify a source port path!");
+                    return;
                 }
-            }
+                if (config.DRPGPath == string.Empty)
+                {
+                    Utils.ShowError("You must specify Doom RPG's path!");
+                    return;
+                }
+                if (config.modsPath == string.Empty && (config.patches[3] == true || config.patches[4] == true || config.patches[5] == true))
+                {
+                    Utils.ShowError("You must specify a WAD/PK3 path for the selected patches!");
+                    return;
+                }
 
-            // Mods & Patches
-            cmdline += " -file";
-            cmdline += " \"" + config.DRPGPath + "\\DoomRPG\"";
-            
-            // Doom 1
-            if (checkedListBoxPatches.GetItemChecked(0))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Doom1\"";
-            // Brightmaps
-            if (checkedListBoxPatches.GetItemChecked(1))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Brightmaps\"";
-            // Extras
-            if (checkedListBoxPatches.GetItemChecked(2))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Extras\"";
-            // Brutal Doom
-            if (checkedListBoxPatches.GetItemChecked(3))
-            {
-                cmdline += " \"" + config.modsPath + "\\brutalv19.pk3\"";
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Brutal\"";
-            }
-            // DoomRL Arsenal
-            if (checkedListBoxPatches.GetItemChecked(4))
-            {
-                cmdline += " \"" + config.modsPath + "\\DoomRL Arsenal Beta 6 HF13.wad\"";
-                cmdline += " \"" + config.modsPath + "\\DoomRL HUD.wad\"";
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLArsenal\"";
-            }
-            // Brutal Doom
-            if (checkedListBoxPatches.GetItemChecked(5))
-            {
-                cmdline += " \"" + config.modsPath + "\\DoomRL Monsters Beta 3.5.wad\"";
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLMonsters\"";
-            }
-            // TUTNT
-            if (checkedListBoxPatches.GetItemChecked(6))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-TUTNT\"";
+                // Build the command line
+                cmdline = "\"" + config.portPath + "\"";
+
+                // Skill
+                cmdline += " -skill " + ((int)config.difficulty + 1);
+
+                // Map Number
+                cmdline += " -warp " + config.mapNumber;
+
+                // Multiplayer
+                if (config.multiplayer)
+                {
+                    // Hosting/Joining
+                    if (config.multiplayerMode == MultiplayerMode.Hosting)
+                        cmdline += " -host " + config.players;
+                    if (config.multiplayerMode == MultiplayerMode.Joining)
+                        cmdline += " -join " + config.hostname;
+
+                    // Server-side stuff
+                    if (config.multiplayerMode == MultiplayerMode.Hosting)
+                    {
+                        // Server Type
+                        if (config.serverType == ServerType.PeerToPeer)
+                            cmdline += " -netmode 0";
+                        if (config.serverType == ServerType.PacketServer)
+                            cmdline += " -netmode 1";
+
+                        // Server Options
+                        if (config.extraTics)
+                            cmdline += " -extratic";
+                        if (config.duplex > 0)
+                            cmdline += " -dup " + config.duplex;
+                    }
+                }
+
+                // Mods & Patches
+                cmdline += " -file";
+                cmdline += " \"" + config.DRPGPath + "\\DoomRPG\"";
+
+                // Doom 1
+                if (checkedListBoxPatches.GetItemChecked(0))
+                    cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Doom1\"";
+                // Brightmaps
+                if (checkedListBoxPatches.GetItemChecked(1))
+                    cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Brightmaps\"";
+                // Extras
+                if (checkedListBoxPatches.GetItemChecked(2))
+                    cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Extras\"";
+                // Brutal Doom
+                if (checkedListBoxPatches.GetItemChecked(3))
+                {
+                    cmdline += " \"" + config.modsPath + "\\brutalv19.pk3\"";
+                    cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Brutal\"";
+                }
+                // DoomRL Arsenal
+                if (checkedListBoxPatches.GetItemChecked(4))
+                {
+                    cmdline += " \"" + config.modsPath + "\\DoomRL Arsenal Beta 6 HF13.wad\"";
+                    cmdline += " \"" + config.modsPath + "\\DoomRL HUD.wad\"";
+                    cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLArsenal\"";
+                }
+                // Brutal Doom
+                if (checkedListBoxPatches.GetItemChecked(5))
+                {
+                    cmdline += " \"" + config.modsPath + "\\DoomRL Monsters Beta 3.5.wad\"";
+                    cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLMonsters\"";
+                }
+                // TUTNT
+                if (checkedListBoxPatches.GetItemChecked(6))
+                    cmdline += " \"" + config.DRPGPath + "\\DoomRPG-TUTNT\"";
 
 #if DEBUG
-            MessageBox.Show(cmdline);
+                MessageBox.Show(cmdline);
 #endif
 
-            // Launch
-            Process.Start(config.portPath, cmdline);
+                // Launch
+                Process.Start(config.portPath, cmdline);
+            }
+            catch (Exception ex)
+            {
+                Utils.ShowError(ex);
+            }
         }
 
         private void checkBoxMultiplayer_CheckedChanged(object sender, EventArgs e)
