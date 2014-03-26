@@ -35,6 +35,7 @@ namespace DoomRPG
             textBoxHostname.Text = config.hostname;
             checkBoxExtraTics.Checked = config.extraTics;
             numericUpDownDuplex.Value = config.duplex;
+            textBoxCustomCommands.Text = config.customCommands;
 
             // Populate comboboxes
             for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
@@ -100,6 +101,7 @@ namespace DoomRPG
                 config.hostname = textBoxHostname.Text;
                 config.extraTics = checkBoxExtraTics.Checked;
                 config.duplex = (int)numericUpDownDuplex.Value;
+                config.customCommands = textBoxCustomCommands.Text;
                 config.Save();
 
                 // Error Handling
@@ -189,6 +191,10 @@ namespace DoomRPG
                 // TUTNT
                 if (checkedListBoxPatches.GetItemChecked(6))
                     cmdline += " \"" + config.DRPGPath + "\\DoomRPG-TUTNT\"";
+
+                // Custom Commands
+                if (config.customCommands != string.Empty)
+                    cmdline += " " + config.customCommands;
 
 #if DEBUG
                 MessageBox.Show(cmdline);

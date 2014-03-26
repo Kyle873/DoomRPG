@@ -15,6 +15,7 @@ namespace DoomRPG
         public Difficulty difficulty = Difficulty.Normal;
         public int mapNumber = 1;
         public bool[] patches = new bool[6];
+        public string customCommands = string.Empty;
 
         // Multiplayer
         public bool multiplayer = false;

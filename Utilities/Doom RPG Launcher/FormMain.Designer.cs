@@ -30,6 +30,9 @@
         {
             this.tabControlMain = new System.Windows.Forms.TabControl();
             this.tabPageBasic = new System.Windows.Forms.TabPage();
+            this.buttonBrowseModsPath = new System.Windows.Forms.Button();
+            this.textBoxModsPath = new System.Windows.Forms.TextBox();
+            this.labelModsLocation = new System.Windows.Forms.Label();
             this.checkedListBoxPatches = new System.Windows.Forms.CheckedListBox();
             this.labelDoomRPGPatches = new System.Windows.Forms.Label();
             this.numericUpDownMapNumber = new System.Windows.Forms.NumericUpDown();
@@ -51,16 +54,15 @@
             this.radioButtonPacketServer = new System.Windows.Forms.RadioButton();
             this.radioButtonPeerToPeer = new System.Windows.Forms.RadioButton();
             this.groupBoxMode = new System.Windows.Forms.GroupBox();
+            this.numericUpDownPlayers = new System.Windows.Forms.NumericUpDown();
+            this.labelPlayers = new System.Windows.Forms.Label();
             this.textBoxHostname = new System.Windows.Forms.TextBox();
             this.radioButtonHosting = new System.Windows.Forms.RadioButton();
             this.radioButtonJoining = new System.Windows.Forms.RadioButton();
             this.checkBoxMultiplayer = new System.Windows.Forms.CheckBox();
             this.buttonLaunch = new System.Windows.Forms.Button();
-            this.labelPlayers = new System.Windows.Forms.Label();
-            this.numericUpDownPlayers = new System.Windows.Forms.NumericUpDown();
-            this.buttonBrowseModsPath = new System.Windows.Forms.Button();
-            this.textBoxModsPath = new System.Windows.Forms.TextBox();
-            this.labelModsLocation = new System.Windows.Forms.Label();
+            this.labelCustomCommands = new System.Windows.Forms.Label();
+            this.textBoxCustomCommands = new System.Windows.Forms.TextBox();
             this.tabControlMain.SuspendLayout();
             this.tabPageBasic.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMapNumber)).BeginInit();
@@ -107,6 +109,34 @@
             this.tabPageBasic.TabIndex = 0;
             this.tabPageBasic.Text = "Basic";
             this.tabPageBasic.UseVisualStyleBackColor = true;
+            // 
+            // buttonBrowseModsPath
+            // 
+            this.buttonBrowseModsPath.Location = new System.Drawing.Point(347, 97);
+            this.buttonBrowseModsPath.Name = "buttonBrowseModsPath";
+            this.buttonBrowseModsPath.Size = new System.Drawing.Size(66, 20);
+            this.buttonBrowseModsPath.TabIndex = 14;
+            this.buttonBrowseModsPath.Text = "Browse...";
+            this.buttonBrowseModsPath.UseVisualStyleBackColor = true;
+            this.buttonBrowseModsPath.Click += new System.EventHandler(this.buttonBrowseModsPath_Click);
+            // 
+            // textBoxModsPath
+            // 
+            this.textBoxModsPath.Location = new System.Drawing.Point(12, 97);
+            this.textBoxModsPath.Name = "textBoxModsPath";
+            this.textBoxModsPath.ReadOnly = true;
+            this.textBoxModsPath.Size = new System.Drawing.Size(329, 20);
+            this.textBoxModsPath.TabIndex = 13;
+            // 
+            // labelModsLocation
+            // 
+            this.labelModsLocation.AutoSize = true;
+            this.labelModsLocation.Location = new System.Drawing.Point(9, 81);
+            this.labelModsLocation.Name = "labelModsLocation";
+            this.labelModsLocation.Size = new System.Drawing.Size(139, 13);
+            this.labelModsLocation.TabIndex = 12;
+            this.labelModsLocation.Text = "WAD/PK3s Folder Location";
+            this.labelModsLocation.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // checkedListBoxPatches
             // 
@@ -326,6 +356,37 @@
             this.groupBoxMode.TabStop = false;
             this.groupBoxMode.Text = "Mode";
             // 
+            // numericUpDownPlayers
+            // 
+            this.numericUpDownPlayers.Location = new System.Drawing.Point(85, 41);
+            this.numericUpDownPlayers.Maximum = new decimal(new int[] {
+            8,
+            0,
+            0,
+            0});
+            this.numericUpDownPlayers.Minimum = new decimal(new int[] {
+            2,
+            0,
+            0,
+            0});
+            this.numericUpDownPlayers.Name = "numericUpDownPlayers";
+            this.numericUpDownPlayers.Size = new System.Drawing.Size(70, 20);
+            this.numericUpDownPlayers.TabIndex = 8;
+            this.numericUpDownPlayers.Value = new decimal(new int[] {
+            2,
+            0,
+            0,
+            0});
+            // 
+            // labelPlayers
+            // 
+            this.labelPlayers.Location = new System.Drawing.Point(6, 41);
+            this.labelPlayers.Name = "labelPlayers";
+            this.labelPlayers.Size = new System.Drawing.Size(73, 20);
+            this.labelPlayers.TabIndex = 7;
+            this.labelPlayers.Text = "Players";
+            this.labelPlayers.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // textBoxHostname
             // 
             this.textBoxHostname.Location = new System.Drawing.Point(7, 94);
@@ -370,7 +431,7 @@
             // 
             this.buttonLaunch.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.buttonLaunch.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonLaunch.Location = new System.Drawing.Point(0, 326);
+            this.buttonLaunch.Location = new System.Drawing.Point(0, 370);
             this.buttonLaunch.Name = "buttonLaunch";
             this.buttonLaunch.Size = new System.Drawing.Size(428, 35);
             this.buttonLaunch.TabIndex = 6;
@@ -378,70 +439,29 @@
             this.buttonLaunch.UseVisualStyleBackColor = true;
             this.buttonLaunch.Click += new System.EventHandler(this.buttonLaunch_Click);
             // 
-            // labelPlayers
+            // labelCustomCommands
             // 
-            this.labelPlayers.Location = new System.Drawing.Point(6, 41);
-            this.labelPlayers.Name = "labelPlayers";
-            this.labelPlayers.Size = new System.Drawing.Size(73, 20);
-            this.labelPlayers.TabIndex = 7;
-            this.labelPlayers.Text = "Players";
-            this.labelPlayers.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.labelCustomCommands.Location = new System.Drawing.Point(5, 327);
+            this.labelCustomCommands.Name = "labelCustomCommands";
+            this.labelCustomCommands.Size = new System.Drawing.Size(419, 14);
+            this.labelCustomCommands.TabIndex = 7;
+            this.labelCustomCommands.Text = "Custom Commands";
+            this.labelCustomCommands.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // numericUpDownPlayers
+            // textBoxCustomCommands
             // 
-            this.numericUpDownPlayers.Location = new System.Drawing.Point(85, 41);
-            this.numericUpDownPlayers.Maximum = new decimal(new int[] {
-            8,
-            0,
-            0,
-            0});
-            this.numericUpDownPlayers.Minimum = new decimal(new int[] {
-            2,
-            0,
-            0,
-            0});
-            this.numericUpDownPlayers.Name = "numericUpDownPlayers";
-            this.numericUpDownPlayers.Size = new System.Drawing.Size(70, 20);
-            this.numericUpDownPlayers.TabIndex = 8;
-            this.numericUpDownPlayers.Value = new decimal(new int[] {
-            2,
-            0,
-            0,
-            0});
-            // 
-            // buttonBrowseModsPath
-            // 
-            this.buttonBrowseModsPath.Location = new System.Drawing.Point(347, 97);
-            this.buttonBrowseModsPath.Name = "buttonBrowseModsPath";
-            this.buttonBrowseModsPath.Size = new System.Drawing.Size(66, 20);
-            this.buttonBrowseModsPath.TabIndex = 14;
-            this.buttonBrowseModsPath.Text = "Browse...";
-            this.buttonBrowseModsPath.UseVisualStyleBackColor = true;
-            this.buttonBrowseModsPath.Click += new System.EventHandler(this.buttonBrowseModsPath_Click);
-            // 
-            // textBoxModsPath
-            // 
-            this.textBoxModsPath.Location = new System.Drawing.Point(12, 97);
-            this.textBoxModsPath.Name = "textBoxModsPath";
-            this.textBoxModsPath.ReadOnly = true;
-            this.textBoxModsPath.Size = new System.Drawing.Size(329, 20);
-            this.textBoxModsPath.TabIndex = 13;
-            // 
-            // labelModsLocation
-            // 
-            this.labelModsLocation.AutoSize = true;
-            this.labelModsLocation.Location = new System.Drawing.Point(9, 81);
-            this.labelModsLocation.Name = "labelModsLocation";
-            this.labelModsLocation.Size = new System.Drawing.Size(139, 13);
-            this.labelModsLocation.TabIndex = 12;
-            this.labelModsLocation.Text = "WAD/PK3s Folder Location";
-            this.labelModsLocation.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.textBoxCustomCommands.Location = new System.Drawing.Point(4, 344);
+            this.textBoxCustomCommands.Name = "textBoxCustomCommands";
+            this.textBoxCustomCommands.Size = new System.Drawing.Size(420, 20);
+            this.textBoxCustomCommands.TabIndex = 8;
             // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(428, 361);
+            this.ClientSize = new System.Drawing.Size(428, 405);
+            this.Controls.Add(this.textBoxCustomCommands);
+            this.Controls.Add(this.labelCustomCommands);
             this.Controls.Add(this.buttonLaunch);
             this.Controls.Add(this.tabControlMain);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -465,6 +485,7 @@
             this.groupBoxMode.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownPlayers)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -503,6 +524,8 @@
         private System.Windows.Forms.Button buttonBrowseModsPath;
         private System.Windows.Forms.TextBox textBoxModsPath;
         private System.Windows.Forms.Label labelModsLocation;
+        private System.Windows.Forms.Label labelCustomCommands;
+        private System.Windows.Forms.TextBox textBoxCustomCommands;
     }
 }
 
