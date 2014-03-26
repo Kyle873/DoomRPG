@@ -20,6 +20,7 @@ int ArenaTimer;
 int ArenaCount;
 int ArenaMod;
 int ArenaEnvironment;
+int ArenaKey;
 
 str[MAX_MODS] ArenaMods =
 {
@@ -45,6 +46,8 @@ str[MAX_BONUS] ArenaBonus =
     "\cuWeapon Drop";
 	"\caPowerup Drop";
 	"\caRune Drop";
+	"\cuStim Drop";
+	"\cqKey Drop";
 };
 
 str[] Monsters =
@@ -236,7 +239,6 @@ acfunc void ArenaCheckMod()
 acfunc void ArenaGetBonus(int Bonus)
 {
 	str SpawnItem;
-	
 	switch (Bonus)
 	{
 		case 0: // Full Health
@@ -281,53 +283,66 @@ acfunc void ArenaGetBonus(int Bonus)
 		case 3: // Ammo Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			SpawnSpot("BackpackRandomizer", ArenaItemSpotTID, ArenaItemTID, 0);
-			SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-			Thing_ChangeTID(ArenaItemTID, 0);
 			break;
 		case 4: // Health Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			SpawnSpot("HealthDropper", ArenaItemSpotTID, ArenaItemTID, 0);
-			SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-			Thing_ChangeTID(ArenaItemTID, 0);
 			break;
 		case 5: // Armor Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
-			
 			if (Random(1, 2) == 1)
-				{SpawnItem = "GreenArmorRandomizer";}
+				SpawnItem = "GreenArmorRandomizer"
 			else
-				{SpawnItem = "BlueArmorRandomizer";};
-			
+				SpawnItem = "BlueArmorRandomizer";
 			SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
-			SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-			Thing_ChangeTID(ArenaItemTID, 0);
 			break;
 		case 6: // Weapon Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			SpawnSpot("WeaponDropper", ArenaItemSpotTID, ArenaItemTID, 0);
-			SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-			Thing_ChangeTID(ArenaItemTID, 0);
 			break;
 		case 7: // Powerup Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			SpawnSpot("PowerupDropper", ArenaItemSpotTID, ArenaItemTID, 0);
-			SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-			Thing_ChangeTID(ArenaItemTID, 0);
 			break;
 		case 8: // Rune Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			SpawnSpot("RuneDropper", ArenaItemSpotTID, ArenaItemTID, 0);
-			SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-			Thing_ChangeTID(ArenaItemTID, 0);
+			break;
+		case 9: // Stim Drop
+			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+			if (Random(1, 10) == 1)
+				SpawnSpot("StimDropper", ArenaItemSpotTID, ArenaItemTID, 0)
+			else
+				for (int i = 0; i < ArenaWave / 10 + 1; i++)
+				{
+					SpawnSpot("VialDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+					SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+					Thing_ChangeTID(ArenaItemTID, 0);
+				};
+			break;
+		case 10: // Key Drop
+			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+			if (ArenaKey == 0) SpawnItem = "RedCard";
+			if (ArenaKey == 1) SpawnItem = "YellowCard";
+			if (ArenaKey == 2) SpawnItem = "BlueCard";
+			if (ArenaKey == 3) SpawnItem = "RedSkull";
+			if (ArenaKey == 4) SpawnItem = "YellowSkull";
+			if (ArenaKey == 5) SpawnItem = "BlueSkull";
+			if (ArenaKey == 6) ArenaGetBonus(Random(0, MAX_BONUS - 1));
+			if (ArenaKey < 6) ArenaKey++;
+			SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
 			break;
 	};
+	
+	SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+	Thing_ChangeTID(ArenaItemTID, 0);
 	
 	// Bonus Message
 	if (Bonus >= 0)
 	{
 		SetHudSize(0, 0, false);
 		SetFont("BIGFONT");
-		HudMessageBold("%s\n", ArenaBonus[Bonus], HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
+		HudMessageBold("%s\n", ArenaBonus[Bonus], HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
 		ActivatorSound("misc/secret", 127);
 	};
 };
