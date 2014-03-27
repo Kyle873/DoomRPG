@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabControlMain = new System.Windows.Forms.TabControl();
             this.tabPageBasic = new System.Windows.Forms.TabPage();
             this.buttonBrowseModsPath = new System.Windows.Forms.Button();
@@ -60,9 +61,15 @@
             this.radioButtonHosting = new System.Windows.Forms.RadioButton();
             this.radioButtonJoining = new System.Windows.Forms.RadioButton();
             this.checkBoxMultiplayer = new System.Windows.Forms.CheckBox();
+            this.tabPageCredits = new System.Windows.Forms.TabPage();
+            this.richTextBoxCredits = new System.Windows.Forms.RichTextBox();
             this.buttonLaunch = new System.Windows.Forms.Button();
             this.labelCustomCommands = new System.Windows.Forms.Label();
             this.textBoxCustomCommands = new System.Windows.Forms.TextBox();
+            this.statusStrip = new System.Windows.Forms.StatusStrip();
+            this.buttonCheckUpdates = new System.Windows.Forms.Button();
+            this.toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.tabControlMain.SuspendLayout();
             this.tabPageBasic.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMapNumber)).BeginInit();
@@ -72,12 +79,15 @@
             this.groupBoxServerMode.SuspendLayout();
             this.groupBoxMode.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownPlayers)).BeginInit();
+            this.tabPageCredits.SuspendLayout();
+            this.statusStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControlMain
             // 
             this.tabControlMain.Controls.Add(this.tabPageBasic);
             this.tabControlMain.Controls.Add(this.tabPageMultiplayer);
+            this.tabControlMain.Controls.Add(this.tabPageCredits);
             this.tabControlMain.Dock = System.Windows.Forms.DockStyle.Top;
             this.tabControlMain.Location = new System.Drawing.Point(0, 0);
             this.tabControlMain.Name = "tabControlMain";
@@ -427,17 +437,40 @@
             this.checkBoxMultiplayer.UseVisualStyleBackColor = true;
             this.checkBoxMultiplayer.CheckedChanged += new System.EventHandler(this.checkBoxMultiplayer_CheckedChanged);
             // 
+            // tabPageCredits
+            // 
+            this.tabPageCredits.Controls.Add(this.richTextBoxCredits);
+            this.tabPageCredits.Location = new System.Drawing.Point(4, 22);
+            this.tabPageCredits.Name = "tabPageCredits";
+            this.tabPageCredits.Size = new System.Drawing.Size(420, 298);
+            this.tabPageCredits.TabIndex = 2;
+            this.tabPageCredits.Text = "Credits";
+            this.tabPageCredits.UseVisualStyleBackColor = true;
+            // 
+            // richTextBoxCredits
+            // 
+            this.richTextBoxCredits.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.richTextBoxCredits.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.richTextBoxCredits.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.richTextBoxCredits.Location = new System.Drawing.Point(0, 0);
+            this.richTextBoxCredits.Name = "richTextBoxCredits";
+            this.richTextBoxCredits.ReadOnly = true;
+            this.richTextBoxCredits.Size = new System.Drawing.Size(420, 298);
+            this.richTextBoxCredits.TabIndex = 0;
+            this.richTextBoxCredits.Text = resources.GetString("richTextBoxCredits.Text");
+            this.richTextBoxCredits.TextChanged += new System.EventHandler(this.richTextBoxCredits_TextChanged);
+            // 
             // buttonLaunch
             // 
-            this.buttonLaunch.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.buttonLaunch.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonLaunch.Location = new System.Drawing.Point(0, 370);
+            this.buttonLaunch.Location = new System.Drawing.Point(206, 370);
             this.buttonLaunch.Name = "buttonLaunch";
-            this.buttonLaunch.Size = new System.Drawing.Size(428, 35);
+            this.buttonLaunch.Size = new System.Drawing.Size(222, 35);
             this.buttonLaunch.TabIndex = 6;
             this.buttonLaunch.Text = "Launch Doom RPG";
             this.buttonLaunch.UseVisualStyleBackColor = true;
             this.buttonLaunch.Click += new System.EventHandler(this.buttonLaunch_Click);
+            this.buttonLaunch.MouseDown += new System.Windows.Forms.MouseEventHandler(this.buttonLaunch_MouseDown);
             // 
             // labelCustomCommands
             // 
@@ -455,11 +488,48 @@
             this.textBoxCustomCommands.Size = new System.Drawing.Size(420, 20);
             this.textBoxCustomCommands.TabIndex = 8;
             // 
+            // statusStrip
+            // 
+            this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel,
+            this.toolStripProgressBar});
+            this.statusStrip.Location = new System.Drawing.Point(0, 411);
+            this.statusStrip.Name = "statusStrip";
+            this.statusStrip.Size = new System.Drawing.Size(428, 22);
+            this.statusStrip.TabIndex = 9;
+            // 
+            // buttonCheckUpdates
+            // 
+            this.buttonCheckUpdates.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonCheckUpdates.Location = new System.Drawing.Point(4, 370);
+            this.buttonCheckUpdates.Name = "buttonCheckUpdates";
+            this.buttonCheckUpdates.Size = new System.Drawing.Size(196, 35);
+            this.buttonCheckUpdates.TabIndex = 10;
+            this.buttonCheckUpdates.Text = "Check for Updates";
+            this.buttonCheckUpdates.UseVisualStyleBackColor = true;
+            // 
+            // toolStripStatusLabel
+            // 
+            this.toolStripStatusLabel.AutoSize = false;
+            this.toolStripStatusLabel.Name = "toolStripStatusLabel";
+            this.toolStripStatusLabel.Size = new System.Drawing.Size(280, 17);
+            this.toolStripStatusLabel.Spring = true;
+            this.toolStripStatusLabel.Text = "Ready";
+            this.toolStripStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // toolStripProgressBar
+            // 
+            this.toolStripProgressBar.Name = "toolStripProgressBar";
+            this.toolStripProgressBar.Size = new System.Drawing.Size(100, 16);
+            this.toolStripProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(428, 405);
+            this.ClientSize = new System.Drawing.Size(428, 433);
+            this.Controls.Add(this.buttonCheckUpdates);
+            this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.textBoxCustomCommands);
             this.Controls.Add(this.labelCustomCommands);
             this.Controls.Add(this.buttonLaunch);
@@ -484,6 +554,9 @@
             this.groupBoxMode.ResumeLayout(false);
             this.groupBoxMode.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownPlayers)).EndInit();
+            this.tabPageCredits.ResumeLayout(false);
+            this.statusStrip.ResumeLayout(false);
+            this.statusStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -526,6 +599,12 @@
         private System.Windows.Forms.Label labelModsLocation;
         private System.Windows.Forms.Label labelCustomCommands;
         private System.Windows.Forms.TextBox textBoxCustomCommands;
+        private System.Windows.Forms.StatusStrip statusStrip;
+        private System.Windows.Forms.TabPage tabPageCredits;
+        private System.Windows.Forms.RichTextBox richTextBoxCredits;
+        private System.Windows.Forms.Button buttonCheckUpdates;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel;
+        private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar;
     }
 }
 

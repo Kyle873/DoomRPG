@@ -8,6 +8,8 @@ namespace DoomRPG
 {
     public class Config
     {
+        private string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\" + Assembly.GetEntryAssembly().GetName().Name + ".cfg";
+        
         // Basic
         public string portPath = string.Empty;
         public string DRPGPath = string.Empty;
@@ -28,8 +30,6 @@ namespace DoomRPG
 
         public void Save()
         {
-            string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\" + Assembly.GetEntryAssembly().GetName().Name + ".cfg";
-
             List<string> data = new List<string>();
 
             try
@@ -61,8 +61,6 @@ namespace DoomRPG
 
         public void Load()
         {
-            string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\" + Assembly.GetEntryAssembly().GetName().Name + ".cfg";
-
             try
             {
                 if (File.Exists(path))
