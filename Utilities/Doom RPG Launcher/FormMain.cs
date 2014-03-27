@@ -120,6 +120,8 @@ namespace DoomRPG
                 {
                     toolStripStatusLabel.Text = "This version of Doom RPG is managed by git";
                     toolStripProgressBar.Style = ProgressBarStyle.Continuous;
+                    buttonCheckUpdates.Enabled = true;
+                    buttonLaunch.Enabled = true;
                     return;
                 }
                 else if (!Directory.Exists(config.DRPGPath)) // Directory wasn't found
