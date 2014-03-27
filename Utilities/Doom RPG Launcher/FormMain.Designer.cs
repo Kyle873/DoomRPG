@@ -31,11 +31,13 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabControlMain = new System.Windows.Forms.TabControl();
             this.tabPageBasic = new System.Windows.Forms.TabPage();
+            this.checkedListBoxMods = new System.Windows.Forms.CheckedListBox();
+            this.labelMods = new System.Windows.Forms.Label();
             this.buttonBrowseModsPath = new System.Windows.Forms.Button();
             this.textBoxModsPath = new System.Windows.Forms.TextBox();
             this.labelModsLocation = new System.Windows.Forms.Label();
             this.checkedListBoxPatches = new System.Windows.Forms.CheckedListBox();
-            this.labelDoomRPGPatches = new System.Windows.Forms.Label();
+            this.labelPatches = new System.Windows.Forms.Label();
             this.numericUpDownMapNumber = new System.Windows.Forms.NumericUpDown();
             this.labelMapNumber = new System.Windows.Forms.Label();
             this.comboBoxDifficulty = new System.Windows.Forms.ComboBox();
@@ -97,11 +99,13 @@
             // 
             // tabPageBasic
             // 
+            this.tabPageBasic.Controls.Add(this.checkedListBoxMods);
+            this.tabPageBasic.Controls.Add(this.labelMods);
             this.tabPageBasic.Controls.Add(this.buttonBrowseModsPath);
             this.tabPageBasic.Controls.Add(this.textBoxModsPath);
             this.tabPageBasic.Controls.Add(this.labelModsLocation);
             this.tabPageBasic.Controls.Add(this.checkedListBoxPatches);
-            this.tabPageBasic.Controls.Add(this.labelDoomRPGPatches);
+            this.tabPageBasic.Controls.Add(this.labelPatches);
             this.tabPageBasic.Controls.Add(this.numericUpDownMapNumber);
             this.tabPageBasic.Controls.Add(this.labelMapNumber);
             this.tabPageBasic.Controls.Add(this.comboBoxDifficulty);
@@ -119,6 +123,23 @@
             this.tabPageBasic.TabIndex = 0;
             this.tabPageBasic.Text = "Basic";
             this.tabPageBasic.UseVisualStyleBackColor = true;
+            // 
+            // checkedListBoxMods
+            // 
+            this.checkedListBoxMods.FormattingEnabled = true;
+            this.checkedListBoxMods.Location = new System.Drawing.Point(202, 176);
+            this.checkedListBoxMods.Name = "checkedListBoxMods";
+            this.checkedListBoxMods.Size = new System.Drawing.Size(210, 109);
+            this.checkedListBoxMods.TabIndex = 16;
+            // 
+            // labelMods
+            // 
+            this.labelMods.AutoSize = true;
+            this.labelMods.Location = new System.Drawing.Point(199, 160);
+            this.labelMods.Name = "labelMods";
+            this.labelMods.Size = new System.Drawing.Size(82, 13);
+            this.labelMods.TabIndex = 15;
+            this.labelMods.Text = "WAD/PK3 Files";
             // 
             // buttonBrowseModsPath
             // 
@@ -161,17 +182,18 @@
             "TUTNT"});
             this.checkedListBoxPatches.Location = new System.Drawing.Point(11, 176);
             this.checkedListBoxPatches.Name = "checkedListBoxPatches";
-            this.checkedListBoxPatches.Size = new System.Drawing.Size(401, 109);
+            this.checkedListBoxPatches.Size = new System.Drawing.Size(185, 109);
             this.checkedListBoxPatches.TabIndex = 11;
+            this.checkedListBoxPatches.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.checkedListBoxMods_ItemCheck);
             // 
-            // labelDoomRPGPatches
+            // labelPatches
             // 
-            this.labelDoomRPGPatches.AutoSize = true;
-            this.labelDoomRPGPatches.Location = new System.Drawing.Point(9, 160);
-            this.labelDoomRPGPatches.Name = "labelDoomRPGPatches";
-            this.labelDoomRPGPatches.Size = new System.Drawing.Size(103, 13);
-            this.labelDoomRPGPatches.TabIndex = 10;
-            this.labelDoomRPGPatches.Text = "Doom RPG Patches";
+            this.labelPatches.AutoSize = true;
+            this.labelPatches.Location = new System.Drawing.Point(9, 160);
+            this.labelPatches.Name = "labelPatches";
+            this.labelPatches.Size = new System.Drawing.Size(103, 13);
+            this.labelPatches.TabIndex = 10;
+            this.labelPatches.Text = "Doom RPG Patches";
             // 
             // numericUpDownMapNumber
             // 
@@ -580,7 +602,7 @@
         private System.Windows.Forms.NumericUpDown numericUpDownMapNumber;
         private System.Windows.Forms.Label labelMapNumber;
         private System.Windows.Forms.CheckedListBox checkedListBoxPatches;
-        private System.Windows.Forms.Label labelDoomRPGPatches;
+        private System.Windows.Forms.Label labelPatches;
         private System.Windows.Forms.CheckBox checkBoxMultiplayer;
         private System.Windows.Forms.RadioButton radioButtonJoining;
         private System.Windows.Forms.RadioButton radioButtonHosting;
@@ -606,6 +628,8 @@
         private System.Windows.Forms.Button buttonCheckUpdates;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar;
+        private System.Windows.Forms.CheckedListBox checkedListBoxMods;
+        private System.Windows.Forms.Label labelMods;
     }
 }
 

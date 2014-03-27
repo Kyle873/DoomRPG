@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 5, 1);
+        Version version = new Version(0, 6);
         Config config = new Config();
 
         public FormMain()
@@ -29,16 +29,61 @@ namespace DoomRPG
 
             // Load config
             config.Load();
-            LoadControls();
 
-            // Populate comboboxes
+            // Populate dynamic controls
+            // Difficulty
             for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
                 comboBoxDifficulty.Items.Add(Enum.GetName(typeof(Difficulty), i));
             comboBoxDifficulty.SelectedIndex = (int)config.difficulty;
+            
+            // Mods
+            PopulateMods();
+
+            // Load Controls
+            LoadControls();
 
             // send initial events to specific controls to refresh their states
             checkBoxMultiplayer_CheckedChanged(null, null);
             richTextBoxCredits_TextChanged(null, null);
+        }
+
+        private void PopulateMods()
+        {
+            config.modsPath = textBoxModsPath.Text;
+
+            if (config.modsPath != string.Empty)
+            {
+                IEnumerable<string> mods = Directory.EnumerateFiles(config.modsPath);
+                foreach (string mod in mods)
+                    if (mod.Contains(".wad") || mod.Contains("pk3") || mod.Contains("pk7"))
+                        checkedListBoxMods.Items.Add(Path.GetFileName(mod));
+            }
+        }
+
+        private bool CheckForErrors()
+        {
+            if (config.portPath == string.Empty)
+            {
+                Utils.ShowError("You must specify a source port path!");
+                return false;
+            }
+            if (config.DRPGPath == string.Empty)
+            {
+                Utils.ShowError("You must specify Doom RPG's path!");
+                return false;
+            }
+            if (config.modsPath == string.Empty && (config.patches[3] == true || config.patches[4] == true || config.patches[5] == true))
+            {
+                Utils.ShowError("You must specify a WAD/PK3 path for the selected patches!");
+                return false;
+            }
+            if (Path.GetDirectoryName(config.portPath) == config.DRPGPath)
+            {
+                Utils.ShowError("The Port Path and Doom RPG path cannot be the same!");
+                return false;
+            }
+
+            return true;
         }
 
         private void LoadControls()
@@ -50,6 +95,9 @@ namespace DoomRPG
             for (int i = 0; i < config.patches.Length; i++)
                 checkedListBoxPatches.SetItemChecked(i, config.patches[i]);
             checkBoxMultiplayer.Checked = config.multiplayer;
+            for (int i = 0; i < config.mods.Count; i++)
+                if (checkedListBoxMods.FindString(config.mods[i]) >= 0)
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString(config.mods[i]), true);
             if (config.multiplayerMode == MultiplayerMode.Hosting)
                 radioButtonHosting.Checked = true;
             if (config.multiplayerMode == MultiplayerMode.Joining)
@@ -77,6 +125,9 @@ namespace DoomRPG
                     config.patches[i] = true;
                 else
                     config.patches[i] = false;
+            for (int i = 0; i < checkedListBoxMods.Items.Count; i++)
+                if (checkedListBoxMods.GetItemChecked(i))
+                    config.mods.Add(checkedListBoxMods.Items[i].ToString());
             config.multiplayer = checkBoxMultiplayer.Checked;
             if (radioButtonHosting.Checked)
                 config.multiplayerMode = MultiplayerMode.Hosting;
@@ -296,8 +347,14 @@ namespace DoomRPG
 
             // Mods & Patches
             cmdline += " -file";
-            cmdline += " \"" + config.DRPGPath + "\\DoomRPG\"";
 
+            // Mods selected from the mods list
+            for (int i = 0; i < checkedListBoxMods.Items.Count; i++)
+                if (checkedListBoxMods.GetItemChecked(i))
+                    cmdline += " \"" + config.modsPath + "\\" + checkedListBoxMods.Items[i].ToString() + "\"";
+            
+            // Doom RPG
+            cmdline += " \"" + config.DRPGPath + "\\DoomRPG\"";
             // Doom 1
             if (checkedListBoxPatches.GetItemChecked(0))
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Doom1\"";
@@ -309,23 +366,13 @@ namespace DoomRPG
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Extras\"";
             // Brutal Doom
             if (checkedListBoxPatches.GetItemChecked(3))
-            {
-                cmdline += " \"" + config.modsPath + "\\brutalv19.pk3\"";
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Brutal\"";
-            }
             // DoomRL Arsenal
             if (checkedListBoxPatches.GetItemChecked(4))
-            {
-                cmdline += " \"" + config.modsPath + "\\DoomRL Arsenal Beta 6 HF13.wad\"";
-                cmdline += " \"" + config.modsPath + "\\DoomRL HUD.wad\"";
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLArsenal\"";
-            }
             // Brutal Doom
             if (checkedListBoxPatches.GetItemChecked(5))
-            {
-                cmdline += " \"" + config.modsPath + "\\DoomRL Monsters Beta 3.5.wad\"";
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLMonsters\"";
-            }
             // TUTNT
             if (checkedListBoxPatches.GetItemChecked(6))
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-TUTNT\"";
@@ -360,6 +407,9 @@ namespace DoomRPG
             dialog.ShowDialog();
 
             textBoxModsPath.Text = dialog.SelectedPath;
+            
+            // Re-populate the mods list
+            PopulateMods();
         }
 
         private void buttonLaunch_Click(object sender, EventArgs e)
@@ -371,21 +421,8 @@ namespace DoomRPG
                 config.Save();
 
                 // Error Handling
-                if (config.portPath == string.Empty)
-                {
-                    Utils.ShowError("You must specify a source port path!");
+                if (!CheckForErrors())
                     return;
-                }
-                if (config.DRPGPath == string.Empty)
-                {
-                    Utils.ShowError("You must specify Doom RPG's path!");
-                    return;
-                }
-                if (config.modsPath == string.Empty && (config.patches[3] == true || config.patches[4] == true || config.patches[5] == true))
-                {
-                    Utils.ShowError("You must specify a WAD/PK3 path for the selected patches!");
-                    return;
-                }
 
                 // Launch
                 Process.Start(config.portPath, BuildCommandLine());
@@ -400,6 +437,17 @@ namespace DoomRPG
         {
             if (e.Button == MouseButtons.Right)
                 MessageBox.Show(BuildCommandLine(), "Command Line", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async void buttonCheckUpdates_Click(object sender, EventArgs e)
+        {
+            // Error Handling
+            if (!CheckForErrors())
+                return;
+
+            buttonCheckUpdates.Enabled = false;
+            buttonLaunch.Enabled = false;
+            await CheckForUpdates();
         }
 
         private void checkBoxMultiplayer_CheckedChanged(object sender, EventArgs e)
@@ -435,13 +483,6 @@ namespace DoomRPG
             richTextBoxCredits.SelectionColor = Color.Blue;
         }
 
-        private async void buttonCheckUpdates_Click(object sender, EventArgs e)
-        {
-            buttonCheckUpdates.Enabled = false;
-            buttonLaunch.Enabled = false;
-            await CheckForUpdates();
-        }
-
         private void client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
             toolStripStatusLabel.ForeColor = Color.FromKnownColor(KnownColor.ControlText);
@@ -458,6 +499,28 @@ namespace DoomRPG
             catch (Exception ex)
             {
                 Utils.ShowError(ex);
+            }
+        }
+
+        private void checkedListBoxMods_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            try
+            {
+                // Brutal Doom
+                if (e.Index == 3 && e.CurrentValue == CheckState.Unchecked)
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("brutalv19"), true);
+                // DoomRL Arsenal
+                if (e.Index == 4 && e.CurrentValue == CheckState.Unchecked)
+                {
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta 6"), true);
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL HUD"), true);
+                }
+                // DoomRL monster Pack
+                if (e.Index == 5 && e.CurrentValue == CheckState.Unchecked)
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Monsters"), true);
+            }
+            catch
+            {
             }
         }
     }

@@ -17,6 +17,7 @@ namespace DoomRPG
         public Difficulty difficulty = Difficulty.Normal;
         public int mapNumber = 1;
         public bool[] patches = new bool[7];
+        public List<string> mods = new List<string>();
         public string customCommands = string.Empty;
 
         // Multiplayer
@@ -46,6 +47,17 @@ namespace DoomRPG
                         for (int i = 0; i < bools.Length; i++)
                             boolString += bools[i] + ",";
                         data.Add(boolString.Substring(0, boolString.Length - 1));
+                    }
+                    // List types
+                    else if (field.GetValue(this).GetType() == typeof(List<string>))
+                    {
+                        List<string> strings = (List<String>)field.GetValue(this);
+                        string listString = field.Name + "=";
+                        foreach (string s in strings)
+                            listString += "{" + s + "};";
+                        if (listString[listString.Length - 1] == ';')
+                            listString = listString.Remove(listString.Length - 1);
+                        data.Add(listString);
                     }
                     else // Basic Type
                         data.Add(field.Name + "=" + field.GetValue(this));
@@ -96,6 +108,17 @@ namespace DoomRPG
                                 for (int i = 0; i < patches.Length; i++)
                                     bools[i] = bool.Parse(s[1].Split(',')[i]);
                                 field.SetValue(this, bools);
+                            }
+
+                            // String List
+                            if (field.GetValue(this).GetType() == typeof(List<string>))
+                            {
+                                List<string> listStrings = new List<string>();
+                                string[] entries = s[1].Split(';');
+                                if (entries.Length > 0 && entries[0] != string.Empty)
+                                    foreach (string entry in entries)
+                                        listStrings.Add(entry.Trim(new char[] { '{', '}' }));
+                                field.SetValue(this, listStrings);
                             }
 
                             // Enums
