@@ -67,9 +67,9 @@
             this.labelCustomCommands = new System.Windows.Forms.Label();
             this.textBoxCustomCommands = new System.Windows.Forms.TextBox();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
-            this.buttonCheckUpdates = new System.Windows.Forms.Button();
             this.toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar = new System.Windows.Forms.ToolStripProgressBar();
+            this.buttonCheckUpdates = new System.Windows.Forms.Button();
             this.tabControlMain.SuspendLayout();
             this.tabPageBasic.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMapNumber)).BeginInit();
@@ -498,21 +498,11 @@
             this.statusStrip.Size = new System.Drawing.Size(428, 22);
             this.statusStrip.TabIndex = 9;
             // 
-            // buttonCheckUpdates
-            // 
-            this.buttonCheckUpdates.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonCheckUpdates.Location = new System.Drawing.Point(4, 370);
-            this.buttonCheckUpdates.Name = "buttonCheckUpdates";
-            this.buttonCheckUpdates.Size = new System.Drawing.Size(196, 35);
-            this.buttonCheckUpdates.TabIndex = 10;
-            this.buttonCheckUpdates.Text = "Check for Updates";
-            this.buttonCheckUpdates.UseVisualStyleBackColor = true;
-            // 
             // toolStripStatusLabel
             // 
             this.toolStripStatusLabel.AutoSize = false;
             this.toolStripStatusLabel.Name = "toolStripStatusLabel";
-            this.toolStripStatusLabel.Size = new System.Drawing.Size(280, 17);
+            this.toolStripStatusLabel.Size = new System.Drawing.Size(311, 17);
             this.toolStripStatusLabel.Spring = true;
             this.toolStripStatusLabel.Text = "Ready";
             this.toolStripStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -522,6 +512,17 @@
             this.toolStripProgressBar.Name = "toolStripProgressBar";
             this.toolStripProgressBar.Size = new System.Drawing.Size(100, 16);
             this.toolStripProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            // 
+            // buttonCheckUpdates
+            // 
+            this.buttonCheckUpdates.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonCheckUpdates.Location = new System.Drawing.Point(4, 370);
+            this.buttonCheckUpdates.Name = "buttonCheckUpdates";
+            this.buttonCheckUpdates.Size = new System.Drawing.Size(196, 35);
+            this.buttonCheckUpdates.TabIndex = 10;
+            this.buttonCheckUpdates.Text = "Check for Updates";
+            this.buttonCheckUpdates.UseVisualStyleBackColor = true;
+            this.buttonCheckUpdates.Click += new System.EventHandler(this.buttonCheckUpdates_Click);
             // 
             // FormMain
             // 

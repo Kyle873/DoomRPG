@@ -3,17 +3,29 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Net;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+
+using Octokit;
+using ICSharpCode.SharpZipLib;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace DoomRPG
 {
     public partial class FormMain : Form
     {
+        Version version = new Version(0, 5);
         Config config = new Config();
 
         public FormMain()
         {
             InitializeComponent();
+
+            // Title
+            Text = "Doom RPG Launcher v" + version;
 
             // Load config
             config.Load();
@@ -79,6 +91,152 @@ namespace DoomRPG
             config.extraTics = checkBoxExtraTics.Checked;
             config.duplex = (int)numericUpDownDuplex.Value;
             config.customCommands = textBoxCustomCommands.Text;
+        }
+
+        private async Task<string> GetMasterSHA()
+        {
+            GitHubClient client = new GitHubClient(new ProductHeaderValue("DoomRPG"));
+            Branch master = await client.Repository.GetBranch("Kyle873", "DoomRPG", "master");
+            return master.Commit.Sha;
+        }
+
+        private async Task CheckForUpdates()
+        {
+            // Save the config
+            SaveControls();
+            config.Save();
+
+            toolStripStatusLabel.ForeColor = Color.FromKnownColor(KnownColor.ControlText);
+            toolStripStatusLabel.Text = "Checking for updates...";
+            toolStripProgressBar.Style = ProgressBarStyle.Marquee;
+
+            try
+            {
+                string masterSHA = await GetMasterSHA();
+                string SHAPath = config.DRPGPath + "\\SHA-1";
+                
+                // Does the SHA-1 of the current version match the remote branch?
+                if (!Directory.Exists(config.DRPGPath))
+                {
+                    toolStripStatusLabel.ForeColor = Color.Red;
+                    toolStripStatusLabel.Text = "Could not find Doom RPG directory, downloading latest version...";
+                }
+                else if (File.Exists(SHAPath))
+                {
+                    string localSHA = File.ReadAllLines(SHAPath)[0];
+
+                    // Not a match, need to grab the latest version
+                    if (masterSHA != localSHA || !File.Exists(SHAPath))
+                    {
+                        toolStripStatusLabel.ForeColor = Color.Red;
+                        toolStripStatusLabel.Text = "Out-of-date, downloading latest version...";
+                    }
+                    else // Up-to-date
+                    {
+                        toolStripStatusLabel.ForeColor = Color.Green;
+                        toolStripStatusLabel.Text = "Already up-to-date!";
+                        toolStripProgressBar.Style = ProgressBarStyle.Continuous;
+                        buttonCheckUpdates.Enabled = true;
+                        buttonLaunch.Enabled = true;
+                        return;
+                    }
+                }
+                else // Could not find SHA-1, download a new copy
+                {
+                    toolStripStatusLabel.ForeColor = Color.Red;
+                    toolStripStatusLabel.Text = "Could not find SHA-1, downloading latest version...";
+                }
+
+                // Delete the old folder
+                if (Directory.Exists(config.DRPGPath))
+                    Directory.Delete(config.DRPGPath, true);
+                
+                await Task.Delay(1000 * 3);
+                toolStripProgressBar.Style = ProgressBarStyle.Continuous;
+                
+                DownloadDRPG();
+            }
+            catch (Exception e)
+            {
+                Utils.ShowError(e);
+            }
+        }
+
+        private void DownloadDRPG()
+        {
+            Uri uri = new Uri("https://github.com/Kyle873/DoomRPG/archive/master.zip");
+            string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string zipName = "\\DoomRPG.zip";
+
+            using (WebClient client = new WebClient())
+            {
+                client.DownloadFileAsync(uri, path + zipName);
+                client.DownloadProgressChanged += client_DownloadProgressChanged;
+                client.DownloadFileCompleted += client_DownloadFileCompleted;
+            }
+        }
+
+        private async void ExtractDRPG()
+        {
+            // Setup for extraction
+            string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string zipPath = path + "\\DoomRPG.zip";
+            ZipInputStream zipStream = new ZipInputStream(File.OpenRead(zipPath));
+            ZipEntry entry;
+
+            // Iterate zip and extract files
+            try
+            {
+                while ((entry = zipStream.GetNextEntry()) != null)
+                {
+                    string directory = Path.GetDirectoryName(entry.Name);
+                    string filename = Path.GetFileName(entry.Name);
+                    string target = path + "\\" + directory;
+
+                    // Create the directory if it doesn't exist
+                    if (directory.Length > 0 && !Directory.Exists(target))
+                        Directory.CreateDirectory(target);
+
+                    // Extract file
+                    if (filename != string.Empty)
+                    {
+                        FileStream fileStream = File.Create(path + "\\" + entry.Name);
+                        byte[] data = new byte[4096];
+
+                        while (true)
+                        {
+                            int size = fileStream.Read(data, 0, data.Length);
+
+                            if (size > 0)
+                                fileStream.Write(data, 0, size);
+                            else
+                                break;
+                        }
+
+                        fileStream.Close();
+                    }
+                }
+
+                // Move the files to the root folder
+                Directory.Move(path + "\\DoomRPG-master", config.DRPGPath);
+
+                // Add the SHA-1 file
+                File.WriteAllText(config.DRPGPath + "\\SHA-1", await GetMasterSHA());
+
+                // Delete the zip
+                File.Delete(zipPath);
+            }
+            catch (Exception e)
+            {
+                Utils.ShowError(e);
+            }
+            finally
+            {
+                toolStripStatusLabel.ForeColor = Color.FromKnownColor(KnownColor.ControlText);
+                toolStripStatusLabel.Text = "Ready";
+                buttonCheckUpdates.Enabled = true;
+                buttonLaunch.Enabled = true;
+            }
         }
 
         private string BuildCommandLine()
@@ -259,6 +417,32 @@ namespace DoomRPG
             richTextBoxCredits.Find("Libraries");
             richTextBoxCredits.SelectionFont = new Font(FontFamily.GenericSansSerif, 12, FontStyle.Bold);
             richTextBoxCredits.SelectionColor = Color.Blue;
+        }
+
+        private async void buttonCheckUpdates_Click(object sender, EventArgs e)
+        {
+            buttonCheckUpdates.Enabled = false;
+            buttonLaunch.Enabled = false;
+            await CheckForUpdates();
+        }
+
+        private void client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        {
+            toolStripStatusLabel.ForeColor = Color.FromKnownColor(KnownColor.ControlText);
+            toolStripStatusLabel.Text = "Downloading... " + (e.BytesReceived / 1024) + "KB / " + (e.TotalBytesToReceive / 1024) + "KB (" + e.ProgressPercentage + "%)";
+            toolStripProgressBar.Value = e.ProgressPercentage;
+        }
+
+        private void client_DownloadFileCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
+        {
+            try
+            {
+                ExtractDRPG();
+            }
+            catch (Exception ex)
+            {
+                Utils.ShowError(ex);
+            }
         }
     }
 }
