@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 5);
+        Version version = new Version(0, 5, 1);
         Config config = new Config();
 
         public FormMain()
@@ -114,9 +114,15 @@ namespace DoomRPG
             {
                 string masterSHA = await GetMasterSHA();
                 string SHAPath = config.DRPGPath + "\\SHA-1";
-                
+
                 // Does the SHA-1 of the current version match the remote branch?
-                if (!Directory.Exists(config.DRPGPath))
+                if (Directory.Exists(config.DRPGPath + "\\.git")) // Version is pulled from git, why bother updating with the launcher?
+                {
+                    toolStripStatusLabel.Text = "This version of Doom RPG is managed by git";
+                    toolStripProgressBar.Style = ProgressBarStyle.Continuous;
+                    return;
+                }
+                else if (!Directory.Exists(config.DRPGPath)) // Directory wasn't found
                 {
                     toolStripStatusLabel.ForeColor = Color.Red;
                     toolStripStatusLabel.Text = "Could not find Doom RPG directory, downloading latest version...";
@@ -150,10 +156,10 @@ namespace DoomRPG
                 // Delete the old folder
                 if (Directory.Exists(config.DRPGPath))
                     Directory.Delete(config.DRPGPath, true);
-                
+
                 await Task.Delay(1000 * 3);
                 toolStripProgressBar.Style = ProgressBarStyle.Continuous;
-                
+
                 DownloadDRPG();
             }
             catch (Exception e)
@@ -192,6 +198,14 @@ namespace DoomRPG
                     string directory = Path.GetDirectoryName(entry.Name);
                     string filename = Path.GetFileName(entry.Name);
                     string target = path + "\\" + directory;
+
+                    // Skip Utilities folder, most end-users don't want/need this anyway
+                    if (directory.Contains("Utilities"))
+                        continue;
+
+                    // Skip .git stuff
+                    if (filename.Contains(".git"))
+                        continue;
 
                     // Create the directory if it doesn't exist
                     if (directory.Length > 0 && !Directory.Exists(target))
@@ -342,10 +356,10 @@ namespace DoomRPG
         {
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             dialog.ShowDialog();
-            
+
             textBoxModsPath.Text = dialog.SelectedPath;
         }
-        
+
         private void buttonLaunch_Click(object sender, EventArgs e)
         {
             try
