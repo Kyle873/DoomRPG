@@ -14,7 +14,7 @@ namespace DoomRPG
         public string modsPath = string.Empty;
         public Difficulty difficulty = Difficulty.Normal;
         public int mapNumber = 1;
-        public bool[] patches = new bool[6];
+        public bool[] patches = new bool[7];
         public string customCommands = string.Empty;
 
         // Multiplayer
@@ -94,8 +94,8 @@ namespace DoomRPG
                             // Patches Array
                             if (field.Name == "patches")
                             {
-                                bool[] bools = new bool[6];
-                                for (int i = 0; i < 6; i++)
+                                bool[] bools = new bool[patches.Length];
+                                for (int i = 0; i < patches.Length; i++)
                                     bools[i] = bool.Parse(s[1].Split(',')[i]);
                                 field.SetValue(this, bools);
                             }
