@@ -155,7 +155,6 @@
             // 
             this.textBoxModsPath.Location = new System.Drawing.Point(12, 97);
             this.textBoxModsPath.Name = "textBoxModsPath";
-            this.textBoxModsPath.ReadOnly = true;
             this.textBoxModsPath.Size = new System.Drawing.Size(329, 20);
             this.textBoxModsPath.TabIndex = 13;
             // 
@@ -242,7 +241,6 @@
             // 
             this.textBoxDRPGPath.Location = new System.Drawing.Point(11, 58);
             this.textBoxDRPGPath.Name = "textBoxDRPGPath";
-            this.textBoxDRPGPath.ReadOnly = true;
             this.textBoxDRPGPath.Size = new System.Drawing.Size(329, 20);
             this.textBoxDRPGPath.TabIndex = 4;
             // 
@@ -270,7 +268,6 @@
             // 
             this.textBoxPortPath.Location = new System.Drawing.Point(11, 19);
             this.textBoxPortPath.Name = "textBoxPortPath";
-            this.textBoxPortPath.ReadOnly = true;
             this.textBoxPortPath.Size = new System.Drawing.Size(329, 20);
             this.textBoxPortPath.TabIndex = 1;
             // 

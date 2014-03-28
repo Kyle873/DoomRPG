@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 6);
+        Version version = new Version(0, 6, 1);
         Config config = new Config();
 
         public FormMain()
@@ -47,9 +47,12 @@ namespace DoomRPG
             richTextBoxCredits_TextChanged(null, null);
         }
 
-        private void PopulateMods()
+        private void PopulateMods(bool savePath = false)
         {
-            config.modsPath = textBoxModsPath.Text;
+            if (savePath)
+                config.modsPath = textBoxModsPath.Text;
+
+            checkedListBoxMods.Items.Clear();
 
             if (config.modsPath != string.Empty)
             {
@@ -409,7 +412,7 @@ namespace DoomRPG
             textBoxModsPath.Text = dialog.SelectedPath;
             
             // Re-populate the mods list
-            PopulateMods();
+            PopulateMods(true);
         }
 
         private void buttonLaunch_Click(object sender, EventArgs e)
