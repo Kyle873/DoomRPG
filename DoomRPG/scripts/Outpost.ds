@@ -1211,6 +1211,32 @@ acscript Locker()
 		"Boots";
 	};
 	
+	// Set Weapons - Weapons which are part of Set Bonuses
+	str[2][] SetWeapons =
+	{
+		// Plasma Rifles
+		{
+			"RLNuclearPlasmaRifle";
+			"RLHighPowerNuclearPlasmaRifle";
+			"RLAssaultRifleNuclearPlasmaRifle";
+			"RLBurstCannonNuclearPlasmaRifle";
+			
+			// Sentinel (Indicates end of list)
+			{ ""; ""; };
+		};
+		
+		// BFGs
+		{
+			"RLNuclearBFG9000";
+			"RLHighPowerNuclearBFG9000";
+			"RLNuclearVBFG9000";
+			"RLNuclearBiggestFuckingGun";
+			
+			// Sentinel (Indicates end of list)
+			{ ""; ""; };
+		};
+	};
+	
 	int Offset;
 	int Color;
 	int LockerSize;
@@ -1342,7 +1368,31 @@ acscript Locker()
 				Player.Locker[Player.LockerPage][Player.LockerIndex]++;
 				
 				if (Player.LockerPage == 0) // Weapons
-					TakeInventory("RLWeaponLimit", 1)
+				{
+					TakeInventory("RLWeaponLimit", 1);
+					
+					// Plasma Rifles portion of Nuclear Set Bonus Checking
+					for (int i = 0; SetWeapons[0][i] != ""; ++i)
+						if (LockerItems[Player.LockerPage][Player.LockerIndex].Actor == SetWeapons[0][i])
+						{
+							Log("Plasma weapon removed\n");
+							TakeInventory("RLNuclearWeaponSetBonusPlasmaRifle", 1);
+							TakeInventory("RLNuclearWeaponSetBonusActive", 1);
+						};
+					
+					// BFGs portion of Nuclear Set Bonus Checking
+					for (int i = 0; SetWeapons[1][i] != ""; ++i)
+						if (LockerItems[Player.LockerPage][Player.LockerIndex].Actor == SetWeapons[1][i])
+						{
+							Log("BFG weapon removed\n");
+							TakeInventory("RLNuclearWeaponSetBonusBFG", 1);
+							TakeInventory("RLNuclearWeaponSetBonusActive", 1);
+						};
+						
+					// Tristar blaster Set Bonus Checking
+					if (CheckInventory("RLTristarBlaster") == 0 && CheckInventory("RLHighPowerTristarBlaster") == 0 && CheckInventory("RLNanomanufactureAmmoTristarBlaster") == 0)
+						TakeInventory("RLCerberusSetBonusTristarBlaster", 1);
+				}
 				else if (Player.LockerPage == 1) // Armor
 					TakeInventory("RLArmorInInventory", 1)
 				else if (Player.LockerPage == 2) // Mod Packs
