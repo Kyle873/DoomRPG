@@ -820,23 +820,13 @@ acscript CreditRoom(int ID)
 // Shop Special UI
 acscript ShopSpecial()
 {
-	int Minutes = ShopSpecialTimer / 35 / 60;
-	int Seconds = ShopSpecialTimer / 35 % 60;
-	str TimerDisplay;
-	
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_SHOPSPECIAL) return;
 	
 	if (ShopSpecialBought)
 	{
-		// Setup the timer display
-		if (Seconds < 10)
-			TimerDisplay = StrParam("%d:0%d\n", Minutes, Seconds)
-		else
-			TimerDisplay = StrParam("%d:%d\n", Minutes, Seconds);
-
 		SetFont("BIGFONT");
-		HudMessage("Shop Special is currently out of stock.\n\nNext restock will be in %s.\n", TimerDisplay,
+		HudMessage("Shop Special is currently out of stock.\n\nNext restock will be in %s.\n", FormatTime(ShopSpecialTimer),
 				   HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 1.0);
 		ActivatorSound("menu/error", 127);
 		return;
@@ -860,14 +850,6 @@ acscript ShopSpecial()
 			SetPlayerProperty(true, 0, PROP_TOTALLYFROZEN);
 			return;
 		};
-		
-		// Setup the timer display
-		Minutes = ShopSpecialTimer / 35 / 60;
-		Seconds = ShopSpecialTimer / 35 % 60;
-		if (Seconds < 10)
-			TimerDisplay = StrParam("%d:0%d\n", Minutes, Seconds)
-		else
-			TimerDisplay = StrParam("%d:%d\n", Minutes, Seconds);
 		
 		// The cost should always be at least 1 Credit
 		if (Cost <= 0) Cost = 1;
@@ -911,7 +893,7 @@ acscript ShopSpecial()
 		// Drawing
 		SetFont("BIGFONT");
 		HudMessage("%s\n\ck%d C (Discount: %d%%)\n\cdTime Left: %s\n",
-				   Name, Cost, Discount, TimerDisplay,
+				   Name, Cost, Discount, FormatTime(ShopSpecialTimer),
 				   HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 1.5, 0.5, 0.05, 1.0);
 		
 		Delay(1);
