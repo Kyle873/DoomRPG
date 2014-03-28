@@ -65,22 +65,22 @@ namespace DoomRPG
 
         private bool CheckForErrors()
         {
-            if (config.portPath == string.Empty)
+            if (textBoxPortPath.Text == string.Empty)
             {
                 Utils.ShowError("You must specify a source port path!");
                 return false;
             }
-            if (config.DRPGPath == string.Empty)
+            if (textBoxDRPGPath.Text == string.Empty)
             {
                 Utils.ShowError("You must specify Doom RPG's path!");
                 return false;
             }
-            if (config.modsPath == string.Empty && (config.patches[3] == true || config.patches[4] == true || config.patches[5] == true))
+            if (textBoxModsPath.Text == string.Empty && (config.patches[3] == true || config.patches[4] == true || config.patches[5] == true))
             {
                 Utils.ShowError("You must specify a WAD/PK3 path for the selected patches!");
                 return false;
             }
-            if (Path.GetDirectoryName(config.portPath) == config.DRPGPath)
+            if (Path.GetDirectoryName(textBoxPortPath.Text) == textBoxDRPGPath.Text)
             {
                 Utils.ShowError("The Port Path and Doom RPG path cannot be the same!");
                 return false;
