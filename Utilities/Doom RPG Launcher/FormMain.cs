@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 7, 0, 2);
+        Version version = new Version(0, 7, 0, 3);
         Config config = new Config();
 
         public FormMain()
@@ -302,7 +302,10 @@ namespace DoomRPG
             cmdline = "\"" + config.portPath + "\"";
 
             // IWAD
-            cmdline += " -iwad " + config.iwad.ToString();
+            if (config.iwad == IWAD.Doom1)
+                cmdline += " -iwad Doom";
+            else
+                cmdline += " -iwad " + config.iwad.ToString();
 
             if (config.mapNumber > 0)
             {
