@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 7);
+        Version version = new Version(0, 7, 0, 1);
         Config config = new Config();
 
         public FormMain()
@@ -451,7 +451,11 @@ namespace DoomRPG
         private void buttonLaunch_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
+            {
+                SaveControls();
+                config.Save();
                 MessageBox.Show(BuildCommandLine(), "Command Line", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private void checkBoxMultiplayer_CheckedChanged(object sender, EventArgs e)
