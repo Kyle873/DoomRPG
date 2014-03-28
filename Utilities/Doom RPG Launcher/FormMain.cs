@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 7, 0, 1);
+        Version version = new Version(0, 7, 0, 2);
         Config config = new Config();
 
         public FormMain()
@@ -44,12 +44,12 @@ namespace DoomRPG
                 comboBoxClass.Items.Add(Enum.GetName(typeof(DRLAClass), i));
             comboBoxClass.SelectedIndex = (int)config.rlClass;
 
-            // Mods
-            PopulateMods();
-
             // Load Controls
             LoadControls();
 
+            // Mods
+            PopulateMods();
+            
             // send initial events to specific controls to refresh their states
             checkBoxMultiplayer_CheckedChanged(null, null);
             richTextBoxCredits_TextChanged(null, null);
@@ -59,7 +59,7 @@ namespace DoomRPG
         {
             checkedListBoxMods.Items.Clear();
 
-            if (config.modsPath != string.Empty)
+            if (textBoxModsPath.Text != string.Empty)
                 if (Directory.Exists(textBoxModsPath.Text))
                 {
                     IEnumerable<string> mods = Directory.EnumerateFiles(textBoxModsPath.Text);
@@ -68,25 +68,25 @@ namespace DoomRPG
                             checkedListBoxMods.Items.Add(Path.GetFileName(mod));
                 }
         }
-
+        
         private bool CheckForErrors()
         {
-            if (textBoxPortPath.Text == string.Empty)
+            if (config.portPath == string.Empty)
             {
                 Utils.ShowError("You must specify a source port path!");
                 return false;
             }
-            if (textBoxDRPGPath.Text == string.Empty)
+            if (config.DRPGPath == string.Empty)
             {
                 Utils.ShowError("You must specify Doom RPG's path!");
                 return false;
             }
-            if (textBoxModsPath.Text == string.Empty && (config.patches[3] == true || config.patches[4] == true || config.patches[5] == true))
+            if (config.modsPath == string.Empty && (config.patches[3] == true || config.patches[4] == true || config.patches[5] == true))
             {
                 Utils.ShowError("You must specify a WAD/PK3 path for the selected patches!");
                 return false;
             }
-            if (Path.GetDirectoryName(textBoxPortPath.Text) == textBoxDRPGPath.Text)
+            if (Path.GetDirectoryName(config.portPath) == config.DRPGPath)
             {
                 Utils.ShowError("The Port Path and Doom RPG path cannot be the same!");
                 return false;
@@ -418,6 +418,10 @@ namespace DoomRPG
 
         private async void buttonCheckUpdates_Click(object sender, EventArgs e)
         {
+            // Save config
+            SaveControls();
+            config.Save();
+            
             // Error Handling
             if (!CheckForErrors())
                 return;
@@ -512,18 +516,24 @@ namespace DoomRPG
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            // Brutal Doom
-            if (checkedListBoxPatches.GetItemChecked(3))
-                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("brutalv19"), true);
-            // DoomRL Arsenal
-            if (checkedListBoxPatches.GetItemChecked(4))
+            try
             {
-                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta 6"), true);
-                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL HUD"), true);
+                // Brutal Doom
+                if (checkedListBoxPatches.GetItemChecked(3))
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("brutalv19"), true);
+                // DoomRL Arsenal
+                if (checkedListBoxPatches.GetItemChecked(4))
+                {
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta 6"), true);
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL HUD"), true);
+                }
+                // DoomRL monster Pack
+                if (checkedListBoxPatches.GetItemChecked(5))
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Monsters"), true);
             }
-            // DoomRL monster Pack
-            if (checkedListBoxPatches.GetItemChecked(5))
-                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Monsters"), true);
+            catch
+            {
+            }
 
             // If Map Number is 0, skill is irrelevent
             if (numericUpDownMapNumber.Value == 0)
