@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 6, 3);
+        Version version = new Version(0, 7);
         Config config = new Config();
 
         public FormMain()
@@ -31,10 +31,18 @@ namespace DoomRPG
             config.Load();
 
             // Populate dynamic controls
+            // IWAD
+            for (int i = 0; i < Enum.GetNames(typeof(IWAD)).Length; i++)
+                comboBoxIWAD.Items.Add(Enum.GetName(typeof(IWAD), i));
+            comboBoxIWAD.SelectedIndex = (int)config.iwad;
             // Difficulty
             for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
                 comboBoxDifficulty.Items.Add(Enum.GetName(typeof(Difficulty), i));
             comboBoxDifficulty.SelectedIndex = (int)config.difficulty;
+            // DRLA Class
+            for (int i = 0; i < Enum.GetNames(typeof(DRLAClass)).Length; i++)
+                comboBoxClass.Items.Add(Enum.GetName(typeof(DRLAClass), i));
+            comboBoxClass.SelectedIndex = (int)config.rlClass;
 
             // Mods
             PopulateMods();
@@ -119,7 +127,9 @@ namespace DoomRPG
             config.portPath = textBoxPortPath.Text;
             config.DRPGPath = textBoxDRPGPath.Text;
             config.modsPath = textBoxModsPath.Text;
+            config.iwad = (IWAD)comboBoxIWAD.SelectedIndex;
             config.difficulty = (Difficulty)comboBoxDifficulty.SelectedIndex;
+            config.rlClass = (DRLAClass)comboBoxClass.SelectedIndex;
             config.mapNumber = (int)numericUpDownMapNumber.Value;
             for (int i = 0; i < config.patches.Length; i++)
                 if (checkedListBoxPatches.GetItemChecked(i))
@@ -291,12 +301,22 @@ namespace DoomRPG
             // Build the command line
             cmdline = "\"" + config.portPath + "\"";
 
-            // Skill
-            cmdline += " -skill " + ((int)config.difficulty + 1);
+            // IWAD
+            cmdline += " -iwad " + config.iwad.ToString();
 
-            // Map Number
-            cmdline += " -warp " + config.mapNumber;
+            if (config.mapNumber > 0)
+            {
+                // Skill/Difficulty
+                cmdline += " -skill " + ((int)config.difficulty + 1);
 
+                // Map Number
+                cmdline += " -warp " + config.mapNumber;
+
+                // DRLA Class
+                if (checkedListBoxPatches.GetItemChecked(4))
+                    cmdline += " +playerclass " + config.rlClass.ToString();
+            }
+            
             // Multiplayer
             if (config.multiplayer)
             {
@@ -486,26 +506,32 @@ namespace DoomRPG
             }
         }
 
-        private void checkedListBoxMods_ItemCheck(object sender, ItemCheckEventArgs e)
+        private void timer_Tick(object sender, EventArgs e)
         {
-            try
+            // Brutal Doom
+            if (checkedListBoxPatches.GetItemChecked(3))
+                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("brutalv19"), true);
+            // DoomRL Arsenal
+            if (checkedListBoxPatches.GetItemChecked(4))
             {
-                // Brutal Doom
-                if (e.Index == 3 && e.CurrentValue == CheckState.Unchecked)
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("brutalv19"), true);
-                // DoomRL Arsenal
-                if (e.Index == 4 && e.CurrentValue == CheckState.Unchecked)
-                {
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta 6"), true);
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL HUD"), true);
-                }
-                // DoomRL monster Pack
-                if (e.Index == 5 && e.CurrentValue == CheckState.Unchecked)
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Monsters"), true);
+                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta 6"), true);
+                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL HUD"), true);
             }
-            catch
-            {
-            }
+            // DoomRL monster Pack
+            if (checkedListBoxPatches.GetItemChecked(5))
+                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Monsters"), true);
+
+            // If Map Number is 0, skill is irrelevent
+            if (numericUpDownMapNumber.Value == 0)
+                comboBoxDifficulty.Enabled = false;
+            else
+                comboBoxDifficulty.Enabled = true;
+
+            // Player Class
+            if (numericUpDownMapNumber.Value > 0 && checkedListBoxPatches.GetItemChecked(4))
+                comboBoxClass.Enabled = true;
+            else
+                comboBoxClass.Enabled = false;
         }
     }
 }

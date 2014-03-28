@@ -14,7 +14,9 @@ namespace DoomRPG
         public string portPath = string.Empty;
         public string DRPGPath = string.Empty;
         public string modsPath = string.Empty;
+        public IWAD iwad = IWAD.Doom2;
         public Difficulty difficulty = Difficulty.Normal;
+        public DRLAClass rlClass = DRLAClass.Marine;
         public int mapNumber = 1;
         public bool[] patches = new bool[7];
         public List<string> mods = new List<string>();
@@ -122,10 +124,18 @@ namespace DoomRPG
                             }
 
                             // Enums
+                            if (field.GetValue(this).GetType() == typeof(IWAD))
+                                for (int i = 0; i < Enum.GetNames(typeof(IWAD)).Length; i++)
+                                    if (Enum.GetNames(typeof(IWAD))[i].Contains(s[1]))
+                                        field.SetValue(this, Enum.ToObject(typeof(IWAD), i));
                             if (field.GetValue(this).GetType() == typeof(Difficulty))
                                 for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
                                     if (Enum.GetNames(typeof(Difficulty))[i].Contains(s[1]))
                                         field.SetValue(this, Enum.ToObject(typeof(Difficulty), i));
+                            if (field.GetValue(this).GetType() == typeof(DRLAClass))
+                                for (int i = 0; i < Enum.GetNames(typeof(DRLAClass)).Length; i++)
+                                    if (Enum.GetNames(typeof(DRLAClass))[i].Contains(s[1]))
+                                        field.SetValue(this, Enum.ToObject(typeof(DRLAClass), i));
                             if (field.GetValue(this).GetType() == typeof(MultiplayerMode))
                                 for (int i = 0; i < Enum.GetNames(typeof(MultiplayerMode)).Length; i++)
                                     if (Enum.GetNames(typeof(MultiplayerMode))[i].Contains(s[1]))
@@ -145,5 +155,5 @@ namespace DoomRPG
                 Utils.ShowError(e);
             }
         }
-    }
+   }
 }

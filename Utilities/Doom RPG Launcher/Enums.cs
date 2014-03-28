@@ -2,6 +2,14 @@
 
 namespace DoomRPG
 {
+    public enum IWAD
+    {
+        Doom,
+        Doom2,
+        Plutonia,
+        TNT
+    }
+
     public enum Difficulty
     {
         Easy,
@@ -10,6 +18,14 @@ namespace DoomRPG
         Nightmare,
         Hell,
         Armegeddon
+    }
+
+    public enum DRLAClass
+    {
+        Marine,
+        Scout,
+        Technician,
+        Renegade
     }
 
     public enum MultiplayerMode

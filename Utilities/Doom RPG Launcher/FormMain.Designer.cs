@@ -28,16 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabControlMain = new System.Windows.Forms.TabControl();
             this.tabPageBasic = new System.Windows.Forms.TabPage();
-            this.checkedListBoxMods = new System.Windows.Forms.CheckedListBox();
-            this.labelMods = new System.Windows.Forms.Label();
+            this.comboBoxClass = new System.Windows.Forms.ComboBox();
+            this.labelPlayerClass = new System.Windows.Forms.Label();
+            this.comboBoxIWAD = new System.Windows.Forms.ComboBox();
+            this.labelIWAD = new System.Windows.Forms.Label();
             this.buttonBrowseModsPath = new System.Windows.Forms.Button();
             this.textBoxModsPath = new System.Windows.Forms.TextBox();
             this.labelModsLocation = new System.Windows.Forms.Label();
-            this.checkedListBoxPatches = new System.Windows.Forms.CheckedListBox();
-            this.labelPatches = new System.Windows.Forms.Label();
             this.numericUpDownMapNumber = new System.Windows.Forms.NumericUpDown();
             this.labelMapNumber = new System.Windows.Forms.Label();
             this.comboBoxDifficulty = new System.Windows.Forms.ComboBox();
@@ -63,6 +64,11 @@
             this.radioButtonHosting = new System.Windows.Forms.RadioButton();
             this.radioButtonJoining = new System.Windows.Forms.RadioButton();
             this.checkBoxMultiplayer = new System.Windows.Forms.CheckBox();
+            this.tabPageModsPatches = new System.Windows.Forms.TabPage();
+            this.checkedListBoxMods = new System.Windows.Forms.CheckedListBox();
+            this.labelMods = new System.Windows.Forms.Label();
+            this.checkedListBoxPatches = new System.Windows.Forms.CheckedListBox();
+            this.labelPatches = new System.Windows.Forms.Label();
             this.tabPageCredits = new System.Windows.Forms.TabPage();
             this.richTextBoxCredits = new System.Windows.Forms.RichTextBox();
             this.buttonLaunch = new System.Windows.Forms.Button();
@@ -72,6 +78,7 @@
             this.toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.buttonCheckUpdates = new System.Windows.Forms.Button();
+            this.timer = new System.Windows.Forms.Timer(this.components);
             this.tabControlMain.SuspendLayout();
             this.tabPageBasic.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMapNumber)).BeginInit();
@@ -81,6 +88,7 @@
             this.groupBoxServerMode.SuspendLayout();
             this.groupBoxMode.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownPlayers)).BeginInit();
+            this.tabPageModsPatches.SuspendLayout();
             this.tabPageCredits.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.SuspendLayout();
@@ -89,6 +97,7 @@
             // 
             this.tabControlMain.Controls.Add(this.tabPageBasic);
             this.tabControlMain.Controls.Add(this.tabPageMultiplayer);
+            this.tabControlMain.Controls.Add(this.tabPageModsPatches);
             this.tabControlMain.Controls.Add(this.tabPageCredits);
             this.tabControlMain.Dock = System.Windows.Forms.DockStyle.Top;
             this.tabControlMain.Location = new System.Drawing.Point(0, 0);
@@ -99,13 +108,13 @@
             // 
             // tabPageBasic
             // 
-            this.tabPageBasic.Controls.Add(this.checkedListBoxMods);
-            this.tabPageBasic.Controls.Add(this.labelMods);
+            this.tabPageBasic.Controls.Add(this.comboBoxClass);
+            this.tabPageBasic.Controls.Add(this.labelPlayerClass);
+            this.tabPageBasic.Controls.Add(this.comboBoxIWAD);
+            this.tabPageBasic.Controls.Add(this.labelIWAD);
             this.tabPageBasic.Controls.Add(this.buttonBrowseModsPath);
             this.tabPageBasic.Controls.Add(this.textBoxModsPath);
             this.tabPageBasic.Controls.Add(this.labelModsLocation);
-            this.tabPageBasic.Controls.Add(this.checkedListBoxPatches);
-            this.tabPageBasic.Controls.Add(this.labelPatches);
             this.tabPageBasic.Controls.Add(this.numericUpDownMapNumber);
             this.tabPageBasic.Controls.Add(this.labelMapNumber);
             this.tabPageBasic.Controls.Add(this.comboBoxDifficulty);
@@ -124,22 +133,40 @@
             this.tabPageBasic.Text = "Basic";
             this.tabPageBasic.UseVisualStyleBackColor = true;
             // 
-            // checkedListBoxMods
+            // comboBoxClass
             // 
-            this.checkedListBoxMods.FormattingEnabled = true;
-            this.checkedListBoxMods.Location = new System.Drawing.Point(202, 176);
-            this.checkedListBoxMods.Name = "checkedListBoxMods";
-            this.checkedListBoxMods.Size = new System.Drawing.Size(210, 109);
-            this.checkedListBoxMods.TabIndex = 16;
+            this.comboBoxClass.Enabled = false;
+            this.comboBoxClass.FormattingEnabled = true;
+            this.comboBoxClass.Location = new System.Drawing.Point(11, 177);
+            this.comboBoxClass.Name = "comboBoxClass";
+            this.comboBoxClass.Size = new System.Drawing.Size(121, 21);
+            this.comboBoxClass.TabIndex = 18;
             // 
-            // labelMods
+            // labelPlayerClass
             // 
-            this.labelMods.AutoSize = true;
-            this.labelMods.Location = new System.Drawing.Point(199, 160);
-            this.labelMods.Name = "labelMods";
-            this.labelMods.Size = new System.Drawing.Size(82, 13);
-            this.labelMods.TabIndex = 15;
-            this.labelMods.Text = "WAD/PK3 Files";
+            this.labelPlayerClass.AutoSize = true;
+            this.labelPlayerClass.Location = new System.Drawing.Point(8, 161);
+            this.labelPlayerClass.Name = "labelPlayerClass";
+            this.labelPlayerClass.Size = new System.Drawing.Size(64, 13);
+            this.labelPlayerClass.TabIndex = 17;
+            this.labelPlayerClass.Text = "Player Class";
+            // 
+            // comboBoxIWAD
+            // 
+            this.comboBoxIWAD.FormattingEnabled = true;
+            this.comboBoxIWAD.Location = new System.Drawing.Point(12, 136);
+            this.comboBoxIWAD.Name = "comboBoxIWAD";
+            this.comboBoxIWAD.Size = new System.Drawing.Size(121, 21);
+            this.comboBoxIWAD.TabIndex = 16;
+            // 
+            // labelIWAD
+            // 
+            this.labelIWAD.AutoSize = true;
+            this.labelIWAD.Location = new System.Drawing.Point(9, 120);
+            this.labelIWAD.Name = "labelIWAD";
+            this.labelIWAD.Size = new System.Drawing.Size(67, 13);
+            this.labelIWAD.TabIndex = 15;
+            this.labelIWAD.Text = "Doom IWAD";
             // 
             // buttonBrowseModsPath
             // 
@@ -169,35 +196,14 @@
             this.labelModsLocation.Text = "WAD/PK3s Folder Location";
             this.labelModsLocation.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // checkedListBoxPatches
-            // 
-            this.checkedListBoxPatches.FormattingEnabled = true;
-            this.checkedListBoxPatches.Items.AddRange(new object[] {
-            "Doom 1",
-            "Brightmaps",
-            "Extras",
-            "Brutal Doom",
-            "DoomRL Arsenal",
-            "DoomRL Monster Pack",
-            "TUTNT"});
-            this.checkedListBoxPatches.Location = new System.Drawing.Point(11, 176);
-            this.checkedListBoxPatches.Name = "checkedListBoxPatches";
-            this.checkedListBoxPatches.Size = new System.Drawing.Size(185, 109);
-            this.checkedListBoxPatches.TabIndex = 11;
-            this.checkedListBoxPatches.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.checkedListBoxMods_ItemCheck);
-            // 
-            // labelPatches
-            // 
-            this.labelPatches.AutoSize = true;
-            this.labelPatches.Location = new System.Drawing.Point(9, 160);
-            this.labelPatches.Name = "labelPatches";
-            this.labelPatches.Size = new System.Drawing.Size(103, 13);
-            this.labelPatches.TabIndex = 10;
-            this.labelPatches.Text = "Doom RPG Patches";
-            // 
             // numericUpDownMapNumber
             // 
-            this.numericUpDownMapNumber.Location = new System.Drawing.Point(151, 136);
+            this.numericUpDownMapNumber.Location = new System.Drawing.Point(294, 136);
+            this.numericUpDownMapNumber.Maximum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
             this.numericUpDownMapNumber.Name = "numericUpDownMapNumber";
             this.numericUpDownMapNumber.Size = new System.Drawing.Size(74, 20);
             this.numericUpDownMapNumber.TabIndex = 9;
@@ -205,7 +211,7 @@
             // labelMapNumber
             // 
             this.labelMapNumber.AutoSize = true;
-            this.labelMapNumber.Location = new System.Drawing.Point(148, 120);
+            this.labelMapNumber.Location = new System.Drawing.Point(291, 120);
             this.labelMapNumber.Name = "labelMapNumber";
             this.labelMapNumber.Size = new System.Drawing.Size(68, 13);
             this.labelMapNumber.TabIndex = 8;
@@ -214,7 +220,7 @@
             // comboBoxDifficulty
             // 
             this.comboBoxDifficulty.FormattingEnabled = true;
-            this.comboBoxDifficulty.Location = new System.Drawing.Point(11, 136);
+            this.comboBoxDifficulty.Location = new System.Drawing.Point(152, 136);
             this.comboBoxDifficulty.Name = "comboBoxDifficulty";
             this.comboBoxDifficulty.Size = new System.Drawing.Size(121, 21);
             this.comboBoxDifficulty.TabIndex = 7;
@@ -222,7 +228,7 @@
             // labelDifficulty
             // 
             this.labelDifficulty.AutoSize = true;
-            this.labelDifficulty.Location = new System.Drawing.Point(8, 120);
+            this.labelDifficulty.Location = new System.Drawing.Point(149, 120);
             this.labelDifficulty.Name = "labelDifficulty";
             this.labelDifficulty.Size = new System.Drawing.Size(47, 13);
             this.labelDifficulty.TabIndex = 6;
@@ -457,6 +463,61 @@
             this.checkBoxMultiplayer.UseVisualStyleBackColor = true;
             this.checkBoxMultiplayer.CheckedChanged += new System.EventHandler(this.checkBoxMultiplayer_CheckedChanged);
             // 
+            // tabPageModsPatches
+            // 
+            this.tabPageModsPatches.Controls.Add(this.checkedListBoxMods);
+            this.tabPageModsPatches.Controls.Add(this.labelMods);
+            this.tabPageModsPatches.Controls.Add(this.checkedListBoxPatches);
+            this.tabPageModsPatches.Controls.Add(this.labelPatches);
+            this.tabPageModsPatches.Location = new System.Drawing.Point(4, 22);
+            this.tabPageModsPatches.Name = "tabPageModsPatches";
+            this.tabPageModsPatches.Size = new System.Drawing.Size(420, 298);
+            this.tabPageModsPatches.TabIndex = 3;
+            this.tabPageModsPatches.Text = "Mods/Patches";
+            this.tabPageModsPatches.UseVisualStyleBackColor = true;
+            // 
+            // checkedListBoxMods
+            // 
+            this.checkedListBoxMods.FormattingEnabled = true;
+            this.checkedListBoxMods.Location = new System.Drawing.Point(201, 16);
+            this.checkedListBoxMods.Name = "checkedListBoxMods";
+            this.checkedListBoxMods.Size = new System.Drawing.Size(210, 274);
+            this.checkedListBoxMods.TabIndex = 20;
+            // 
+            // labelMods
+            // 
+            this.labelMods.AutoSize = true;
+            this.labelMods.Location = new System.Drawing.Point(198, 0);
+            this.labelMods.Name = "labelMods";
+            this.labelMods.Size = new System.Drawing.Size(82, 13);
+            this.labelMods.TabIndex = 19;
+            this.labelMods.Text = "WAD/PK3 Files";
+            // 
+            // checkedListBoxPatches
+            // 
+            this.checkedListBoxPatches.FormattingEnabled = true;
+            this.checkedListBoxPatches.Items.AddRange(new object[] {
+            "Doom 1",
+            "Brightmaps",
+            "Extras",
+            "Brutal Doom",
+            "DoomRL Arsenal",
+            "DoomRL Monster Pack",
+            "TUTNT"});
+            this.checkedListBoxPatches.Location = new System.Drawing.Point(10, 16);
+            this.checkedListBoxPatches.Name = "checkedListBoxPatches";
+            this.checkedListBoxPatches.Size = new System.Drawing.Size(185, 274);
+            this.checkedListBoxPatches.TabIndex = 18;
+            // 
+            // labelPatches
+            // 
+            this.labelPatches.AutoSize = true;
+            this.labelPatches.Location = new System.Drawing.Point(8, 0);
+            this.labelPatches.Name = "labelPatches";
+            this.labelPatches.Size = new System.Drawing.Size(103, 13);
+            this.labelPatches.TabIndex = 17;
+            this.labelPatches.Text = "Doom RPG Patches";
+            // 
             // tabPageCredits
             // 
             this.tabPageCredits.Controls.Add(this.richTextBoxCredits);
@@ -544,6 +605,11 @@
             this.buttonCheckUpdates.UseVisualStyleBackColor = true;
             this.buttonCheckUpdates.Click += new System.EventHandler(this.buttonCheckUpdates_Click);
             // 
+            // timer
+            // 
+            this.timer.Enabled = true;
+            this.timer.Tick += new System.EventHandler(this.timer_Tick);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -575,6 +641,8 @@
             this.groupBoxMode.ResumeLayout(false);
             this.groupBoxMode.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownPlayers)).EndInit();
+            this.tabPageModsPatches.ResumeLayout(false);
+            this.tabPageModsPatches.PerformLayout();
             this.tabPageCredits.ResumeLayout(false);
             this.statusStrip.ResumeLayout(false);
             this.statusStrip.PerformLayout();
@@ -599,8 +667,6 @@
         private System.Windows.Forms.Label labelDifficulty;
         private System.Windows.Forms.NumericUpDown numericUpDownMapNumber;
         private System.Windows.Forms.Label labelMapNumber;
-        private System.Windows.Forms.CheckedListBox checkedListBoxPatches;
-        private System.Windows.Forms.Label labelPatches;
         private System.Windows.Forms.CheckBox checkBoxMultiplayer;
         private System.Windows.Forms.RadioButton radioButtonJoining;
         private System.Windows.Forms.RadioButton radioButtonHosting;
@@ -626,8 +692,16 @@
         private System.Windows.Forms.Button buttonCheckUpdates;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar;
+        private System.Windows.Forms.TabPage tabPageModsPatches;
         private System.Windows.Forms.CheckedListBox checkedListBoxMods;
         private System.Windows.Forms.Label labelMods;
+        private System.Windows.Forms.CheckedListBox checkedListBoxPatches;
+        private System.Windows.Forms.Label labelPatches;
+        private System.Windows.Forms.ComboBox comboBoxIWAD;
+        private System.Windows.Forms.Label labelIWAD;
+        private System.Windows.Forms.ComboBox comboBoxClass;
+        private System.Windows.Forms.Label labelPlayerClass;
+        private System.Windows.Forms.Timer timer;
     }
 }
 
