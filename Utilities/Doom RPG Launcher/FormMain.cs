@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 6, 1);
+        Version version = new Version(0, 6, 2);
         Config config = new Config();
 
         public FormMain()
@@ -240,52 +240,18 @@ namespace DoomRPG
 
         private async void ExtractDRPG()
         {
-            // Setup for extraction
             string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string zipPath = path + "\\DoomRPG.zip";
-            ZipInputStream zipStream = new ZipInputStream(File.OpenRead(zipPath));
-            ZipEntry entry;
+            FastZip zip = new FastZip();
 
-            // Iterate zip and extract files
             try
             {
-                while ((entry = zipStream.GetNextEntry()) != null)
-                {
-                    string directory = Path.GetDirectoryName(entry.Name);
-                    string filename = Path.GetFileName(entry.Name);
-                    string target = path + "\\" + directory;
+                // Extract the zip
+                toolStripStatusLabel.Text = "Extracting DoomRPG.zip...";
+                toolStripProgressBar.Style = ProgressBarStyle.Marquee;
+                zip.ExtractZip(zipPath, path, string.Empty);
 
-                    // Skip Utilities folder, most end-users don't want/need this anyway
-                    if (directory.Contains("Utilities"))
-                        continue;
-
-                    // Skip .git stuff
-                    if (filename.Contains(".git"))
-                        continue;
-
-                    // Create the directory if it doesn't exist
-                    if (directory.Length > 0 && !Directory.Exists(target))
-                        Directory.CreateDirectory(target);
-
-                    // Extract file
-                    if (filename != string.Empty)
-                    {
-                        FileStream fileStream = File.Create(path + "\\" + entry.Name);
-                        byte[] data = new byte[4096];
-
-                        while (true)
-                        {
-                            int size = fileStream.Read(data, 0, data.Length);
-
-                            if (size > 0)
-                                fileStream.Write(data, 0, size);
-                            else
-                                break;
-                        }
-
-                        fileStream.Close();
-                    }
-                }
+                await Task.Delay(1000);
 
                 // Move the files to the root folder
                 Directory.Move(path + "\\DoomRPG-master", config.DRPGPath);
@@ -304,6 +270,7 @@ namespace DoomRPG
             {
                 toolStripStatusLabel.ForeColor = Color.FromKnownColor(KnownColor.ControlText);
                 toolStripStatusLabel.Text = "Ready";
+                toolStripProgressBar.Style = ProgressBarStyle.Continuous;
                 buttonCheckUpdates.Enabled = true;
                 buttonLaunch.Enabled = true;
             }
