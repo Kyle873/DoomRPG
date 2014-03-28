@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 6, 2);
+        Version version = new Version(0, 6, 3);
         Config config = new Config();
 
         public FormMain()
@@ -35,7 +35,7 @@ namespace DoomRPG
             for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
                 comboBoxDifficulty.Items.Add(Enum.GetName(typeof(Difficulty), i));
             comboBoxDifficulty.SelectedIndex = (int)config.difficulty;
-            
+
             // Mods
             PopulateMods();
 
@@ -47,20 +47,18 @@ namespace DoomRPG
             richTextBoxCredits_TextChanged(null, null);
         }
 
-        private void PopulateMods(bool savePath = false)
+        private void PopulateMods()
         {
-            if (savePath)
-                config.modsPath = textBoxModsPath.Text;
-
             checkedListBoxMods.Items.Clear();
 
             if (config.modsPath != string.Empty)
-            {
-                IEnumerable<string> mods = Directory.EnumerateFiles(config.modsPath);
-                foreach (string mod in mods)
-                    if (mod.Contains(".wad") || mod.Contains("pk3") || mod.Contains("pk7"))
-                        checkedListBoxMods.Items.Add(Path.GetFileName(mod));
-            }
+                if (Directory.Exists(textBoxModsPath.Text))
+                {
+                    IEnumerable<string> mods = Directory.EnumerateFiles(textBoxModsPath.Text);
+                    foreach (string mod in mods)
+                        if (mod.Contains(".wad") || mod.Contains("pk3") || mod.Contains("pk7"))
+                            checkedListBoxMods.Items.Add(Path.GetFileName(mod));
+                }
         }
 
         private bool CheckForErrors()
@@ -216,6 +214,7 @@ namespace DoomRPG
                 await Task.Delay(1000 * 3);
                 toolStripProgressBar.Style = ProgressBarStyle.Continuous;
 
+
                 DownloadDRPG();
             }
             catch (Exception e)
@@ -238,7 +237,7 @@ namespace DoomRPG
             }
         }
 
-        private async void ExtractDRPG()
+        private void ExtractDRPG()
         {
             string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string zipPath = path + "\\DoomRPG.zip";
@@ -246,34 +245,43 @@ namespace DoomRPG
 
             try
             {
-                // Extract the zip
                 toolStripStatusLabel.Text = "Extracting DoomRPG.zip...";
                 toolStripProgressBar.Style = ProgressBarStyle.Marquee;
-                zip.ExtractZip(zipPath, path, string.Empty);
-
-                await Task.Delay(1000);
-
-                // Move the files to the root folder
-                Directory.Move(path + "\\DoomRPG-master", config.DRPGPath);
-
-                // Add the SHA-1 file
-                File.WriteAllText(config.DRPGPath + "\\SHA-1", await GetMasterSHA());
-
-                // Delete the zip
-                File.Delete(zipPath);
+                Thread extractThread = new Thread(ExtractZip);
+                extractThread.Start();
             }
             catch (Exception e)
             {
                 Utils.ShowError(e);
             }
-            finally
+        }
+
+        private async void ExtractZip()
+        {
+            string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string zipPath = path + "\\DoomRPG.zip";
+            FastZip zip = new FastZip();
+
+            // Extract the zip
+            zip.ExtractZip(zipPath, path, string.Empty);
+
+            // Move the files to the root folder
+            Directory.Move(path + "\\DoomRPG-master", config.DRPGPath);
+
+            // Add the SHA-1 file
+            File.WriteAllText(config.DRPGPath + "\\SHA-1", await GetMasterSHA());
+
+            // Delete the zip
+            File.Delete(zipPath);
+
+            Invoke(new MethodInvoker(delegate
             {
                 toolStripStatusLabel.ForeColor = Color.FromKnownColor(KnownColor.ControlText);
                 toolStripStatusLabel.Text = "Ready";
                 toolStripProgressBar.Style = ProgressBarStyle.Continuous;
                 buttonCheckUpdates.Enabled = true;
                 buttonLaunch.Enabled = true;
-            }
+            }));
         }
 
         private string BuildCommandLine()
@@ -322,7 +330,7 @@ namespace DoomRPG
             for (int i = 0; i < checkedListBoxMods.Items.Count; i++)
                 if (checkedListBoxMods.GetItemChecked(i))
                     cmdline += " \"" + config.modsPath + "\\" + checkedListBoxMods.Items[i].ToString() + "\"";
-            
+
             // Doom RPG
             cmdline += " \"" + config.DRPGPath + "\\DoomRPG\"";
             // Doom 1
@@ -377,9 +385,26 @@ namespace DoomRPG
             dialog.ShowDialog();
 
             textBoxModsPath.Text = dialog.SelectedPath;
-            
+
             // Re-populate the mods list
-            PopulateMods(true);
+            PopulateMods();
+        }
+
+        private void textBoxModsPath_TextChanged(object sender, EventArgs e)
+        {
+            // Re-populate the mods list
+            PopulateMods();
+        }
+
+        private async void buttonCheckUpdates_Click(object sender, EventArgs e)
+        {
+            // Error Handling
+            if (!CheckForErrors())
+                return;
+
+            buttonCheckUpdates.Enabled = false;
+            buttonLaunch.Enabled = false;
+            await CheckForUpdates();
         }
 
         private void buttonLaunch_Click(object sender, EventArgs e)
@@ -407,17 +432,6 @@ namespace DoomRPG
         {
             if (e.Button == MouseButtons.Right)
                 MessageBox.Show(BuildCommandLine(), "Command Line", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private async void buttonCheckUpdates_Click(object sender, EventArgs e)
-        {
-            // Error Handling
-            if (!CheckForErrors())
-                return;
-
-            buttonCheckUpdates.Enabled = false;
-            buttonLaunch.Enabled = false;
-            await CheckForUpdates();
         }
 
         private void checkBoxMultiplayer_CheckedChanged(object sender, EventArgs e)

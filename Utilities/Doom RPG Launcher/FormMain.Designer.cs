@@ -157,6 +157,7 @@
             this.textBoxModsPath.Name = "textBoxModsPath";
             this.textBoxModsPath.Size = new System.Drawing.Size(329, 20);
             this.textBoxModsPath.TabIndex = 13;
+            this.textBoxModsPath.TextChanged += new System.EventHandler(this.textBoxModsPath_TextChanged);
             // 
             // labelModsLocation
             // 
