@@ -13,7 +13,7 @@ int MarineSpotTID = 1300;
 int MarineTID = 1301;
 
 // Choices
-int LevelChoice = 1;
+int LevelChoice = 0;
 int SkillChoice = 0;
 int WaveChoice = 1;
 
@@ -130,8 +130,8 @@ function void SpawnShopSpecialItem()
 
 acscript EnterOutpost()
 {
-    InBase = true;
-    
+	InBase = true;
+	
 	// Automatically flag these as completed
 	Player.KillBonus = true;
 	Player.ItemsBonus = true;
@@ -139,10 +139,17 @@ acscript EnterOutpost()
 	Player.AllBonus = true;
 
 	// Add the reflections to the hallway floors
-    Sector_SetPlaneReflection(6, 128, 0);
+	Sector_SetPlaneReflection(6, 128, 0);
 	
 	// Assign the current level to the level choice
-	if (LevelNum != 999) LevelChoice = LevelNum;
+	for (int i = 0; i < NumVisitedLevels; ++i)
+	{
+		if(!StrICmp (StrParam ("%s\n", LastVisited), StrParam ("%s\n", VisitedLevels[i].LumpName)))
+		{
+			LevelChoice = i;
+			break;
+		};
+	};
 	
 	// Assign the current skill level to the skill choice
 	SkillChoice = GameSkill() - 1;
@@ -160,81 +167,88 @@ acscript RegenArea(int ID)
 	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
 	
 	Start:
-    // Input
-    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-    int Interval;
-    
+	// Input
+	int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+	int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+	int Interval;
+	
 	if (Buttons & BT_SPEED) Interval = 2 else Interval = 10;
-    
-    // Health
-    if (ID == 1)
-    {
-        if (CheckInventory("Credits") < 5)
-            return;
-        if (GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
-            return;
-        
-        HealThing(5);
+	
+	// Health
+	if (ID == 1)
+	{
+		if (CheckInventory("Credits") < 5)
+			return;
+		if (GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
+			return;
+		
+		HealThing(5);
 		TakeInventory("Credits", 5);
 
-        FadeRange(255, 0, 0, 0.1, 255, 0, 0, 0.0, 0.1);
-        
-        AmbientSound("regen/health", 127);
-        
-        Delay(Interval);
-        goto Start;
-    };
+		FadeRange(255, 0, 0, 0.1, 255, 0, 0, 0.0, 0.1);
+		
+		AmbientSound("regen/health", 127);
+		
+		Delay(Interval);
+		goto Start;
+	};
 	
-    // Armor
-    if (ID == 2)
-    {
-        if (CheckInventory("Credits") < 5)
-            return;
-        if (CheckInventory("Armor") >= Player.ArmorMax)
-            return;
-        
-        GiveInventory("ArmorBonus", 5);
+	// Armor
+	if (ID == 2)
+	{
+		if (CheckInventory("Credits") < 5)
+			return;
+		if (CheckInventory("Armor") >= Player.ArmorMax)
+			return;
+		
+		GiveInventory("ArmorBonus", 5);
 		TakeInventory("Credits", 5);
-        
-        FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0.0, 0.1);
-        AmbientSound("regen/armor", 127);
-        
-        Delay(Interval);
-        goto Start;
-    };
+		
+		FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0.0, 0.1);
+		AmbientSound("regen/armor", 127);
+		
+		Delay(Interval);
+		goto Start;
+	};
 	
-    // EP
-    if (ID == 3)
-    {
-        if (CheckInventory("Credits") < 5)
-            return;
-        if (Player.EP < Player.EPMax)
-            Player.EP += 5
-        else
-        if (Player.EP >= Player.EPMax)
-            return;
-        
-        FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.1);
-        AmbientSound("regen/ep", 127);
-        
+	// EP
+	if (ID == 3)
+	{
+		if (CheckInventory("Credits") < 5)
+			return;
+		if (Player.EP < Player.EPMax)
+			Player.EP += 5
+		else
+		if (Player.EP >= Player.EPMax)
+			return;
+		
+		FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.1);
+		AmbientSound("regen/ep", 127);
+		
 		TakeInventory("Credits", 5);
-        
-        Delay(Interval);
-        goto Start;
-    };
+		
+		Delay(Interval);
+		goto Start;
+	};
 };
 
 acscript LevelTransport()
 {
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_LEVELTRANSPORT) return;
-    
+	
 	SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
 	Player.OutpostMenu = OMENU_LEVELTRANSPORT;
 	
+	if(!NumVisitedLevels)
+	{
+		SetFont("BIGFONT");
+		HudMessage("The teleporter has been disabled.\n", HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 0.5);
+		return;
+	};
+	
 	while (true)
-    {
+	{
 		// Draw the background
 		if (GetCVar("drpg_menudim"))
 			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
@@ -244,80 +258,67 @@ acscript LevelTransport()
 		Player.InShop = false;
 		
 		// Stop Underflow
-        if (LevelChoice < 1)
-            LevelChoice = 1;
-        
-        // Text
-        SetFont("BIGFONT");
-        if (Player.MapsVisited[LevelChoice])
-			HudMessage("Choose Level: \cd%d\n", LevelChoice, HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 0.05, 0.5)
-        else
-			HudMessage("Choose Level: \cg%d\n", LevelChoice, HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 0.05, 0.5);
-        
-        // Input
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		if (LevelChoice < 0)
+			LevelChoice = 0;
+		// And Overflow
+		if (LevelChoice >= NumVisitedLevels)
+			LevelChoice = NumVisitedLevels - 1;
+		
+		// Text
+		SetFont("BIGFONT");
+		HudMessage("Choose Level:\n\cf%s: %s\n", VisitedLevels[LevelChoice].LumpName, VisitedLevels[LevelChoice].NiceName, HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 1.5, 0.5, 0.05, 0.5);
+		
+		// Input
+		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 
-        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && LevelChoice > 1)
-        {
-            ActivatorSound("menu/move", 127);
-            LevelChoice--;
-        };
-        if (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && LevelChoice > 1)
-        {
-            ActivatorSound("menu/move", 127);
-            LevelChoice -= 10;
-        };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK)
-        {
-            ActivatorSound("menu/move", 127);
-            LevelChoice++;
-        };
-        if (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT)
-        {
-            ActivatorSound("menu/move", 127);
-            LevelChoice += 10;
-        };
-        if (Buttons == BT_USE && OldButtons != BT_USE)
-        {
-            if (Player.MapsVisited[LevelChoice])
-            {
-                FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 2.0);
-                Delay(105);
-                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-                InBase = false;
-                Transported = true;
-				Player.OutpostMenu = 0;
-                Teleport_NewMap(LevelChoice, 0);
-                break;
-            }
-            else
-            {
-                HudMessage("You haven't reached this level yet\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 3.0, 1.0);
-                ActivatorSound("menu/error", 127);
-                FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 2.0);
-                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-                InBase = true;
-				Player.OutpostMenu = 0;
-                return;
-            };
-        };
-        if (Buttons == BT_SPEED)
-        {
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && LevelChoice > 0)
+		{
+			ActivatorSound("menu/move", 127);
+			LevelChoice--;
+		};
+		if (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && LevelChoice > 0)
+		{
+			ActivatorSound("menu/move", 127);
+			LevelChoice -= 10;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && LevelChoice < NumVisitedLevels - 1)
+		{
+			ActivatorSound("menu/move", 127);
+			LevelChoice++;
+		};
+		if (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && LevelChoice < NumVisitedLevels - 1)
+		{
+			ActivatorSound("menu/move", 127);
+			LevelChoice += 10;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 2.0);
+			Delay(105);
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			InBase = false;
+			Transported = true;
 			Player.OutpostMenu = 0;
-            return;
-        };
-        
-        Delay(1);
-    };
+			ChangeLevel (StrParam ("%s\n", VisitedLevels[LevelChoice].LumpName), 0, CHANGELEVEL_NOINTERMISSION, -1);
+			break;
+		};
+		if (Buttons == BT_SPEED)
+		{
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			Player.OutpostMenu = 0;
+			return;
+		};
+		
+		Delay(1);
+	};
 };
 
 acscript SkillComputer()
 {
 	// Terminate if you aren't the Arbitrator
 	if (InMultiplayer && !Arbitrator) return;
-    
+	
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_SKILLCOMPUTER) return;
 	
@@ -329,9 +330,9 @@ acscript SkillComputer()
 	
 	Player.OutpostMenu = OMENU_SKILLCOMPUTER;
 	SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
-    
-    while (true)
-    {
+	
+	while (true)
+	{
 		// Draw the background
 		if (GetCVar("drpg_menudim"))
 			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
@@ -340,60 +341,60 @@ acscript SkillComputer()
 		Player.InMenu = false;
 		Player.InShop = false;
 
-        // Text
-        SetFont("BIGFONT");
-        HudMessage("Skill Level: \cg%d (%s)\n", SkillChoice + 1, SkillLevels[SkillChoice],
-                   HUDMSG_FADEOUT, MENU_ID, CR_GOLD, 0.5, 0.5, 0.05, 0.5);
-        
-        // Input
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		// Text
+		SetFont("BIGFONT");
+		HudMessage("Skill Level: \cg%d (%s)\n", SkillChoice + 1, SkillLevels[SkillChoice],
+				   HUDMSG_FADEOUT, MENU_ID, CR_GOLD, 0.5, 0.5, 0.05, 0.5);
+		
+		// Input
+		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 
-        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && SkillChoice > 0)
-        {
-            ActivatorSound("menu/move", 127);
-            SkillChoice--;
-        };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && SkillChoice < (GetCVar("drpg_ext_doomrl") ? 5 : 4))
-        {
-            ActivatorSound("menu/move", 127);
-            SkillChoice++;
-        };
-        if (Buttons == BT_USE && OldButtons != BT_USE)
-        {
-            SetSkill(SkillChoice);
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && SkillChoice > 0)
+		{
+			ActivatorSound("menu/move", 127);
+			SkillChoice--;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && SkillChoice < (GetCVar("drpg_ext_doomrl") ? 5 : 4))
+		{
+			ActivatorSound("menu/move", 127);
+			SkillChoice++;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			SetSkill(SkillChoice);
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
 			Player.OutpostMenu = 0;
-            return;
-        };
-        if (Buttons == BT_SPEED)
-        {
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			return;
+		};
+		if (Buttons == BT_SPEED)
+		{
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
 			Player.OutpostMenu = 0;
-            return;
-        };
-        
-        Delay(1);
-    };
+			return;
+		};
+		
+		Delay(1);
+	};
 };
 
 acscript ToggleArena()
 {
 	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
 	
-    ArenaActive = !ArenaActive;
-    ActivatorSound("misc/secret", 127);
-    
-    SetFont("BIGFONT");
-    
-    if (ArenaActive)
+	ArenaActive = !ArenaActive;
+	ActivatorSound("misc/secret", 127);
+	
+	SetFont("BIGFONT");
+	
+	if (ArenaActive)
 	{
-        HudMessage("Arena Active\n", HUDMSG_FADEOUT, MENU_ID, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+		HudMessage("Arena Active\n", HUDMSG_FADEOUT, MENU_ID, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
 		ArenaPlayerNumber = PlayerNumber();
 	}
-    else
+	else
 	{
-        HudMessage("Arena Inactive\n", HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 1.0);
+		HudMessage("Arena Inactive\n", HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 1.0);
 		ArenaPlayerNumber = -1;
 	};
 };
@@ -401,12 +402,12 @@ acscript ToggleArena()
 acscript PassArenaLine()
 {
 	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
-    
+	
 	if (ArenaActive)
-    {
-        Ceiling_LowerToFloor(99, 64);
-        ArenaLoop();
-    };
+	{
+		Ceiling_LowerToFloor(99, 64);
+		ArenaLoop();
+	};
 };
 
 acscript SelectArenaWave()
@@ -416,18 +417,18 @@ acscript SelectArenaWave()
 	
 	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
 
-    ActivatorSound("menu/move", 127);
+	ActivatorSound("menu/move", 127);
 	Player.OutpostMenu = OMENU_WAVESELECTOR;
 
-    if (ArenaMaxWave == 0) ArenaMaxWave = 1;
-    WaveChoice = ArenaMaxWave;
-    
-    Delay(1);
+	if (ArenaMaxWave == 0) ArenaMaxWave = 1;
+	WaveChoice = ArenaMaxWave;
+	
+	Delay(1);
 
-    while (true)
-    {
-        SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
-        
+	while (true)
+	{
+		SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+		
 		// Draw the background
 		if (GetCVar("drpg_menudim"))
 			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
@@ -435,75 +436,75 @@ acscript SelectArenaWave()
 		// Prevent the menus from being opened
 		Player.InMenu = false;
 		Player.InShop = false;
-        
+		
 		// Text
-        SetFont("BIGFONT");
-        HudMessage("Wave: \cd%d\c-/\cd%d\n", WaveChoice, ArenaMaxWave,
-                   HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
-        
-        // Input
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		SetFont("BIGFONT");
+		HudMessage("Wave: \cd%d\c-/\cd%d\n", WaveChoice, ArenaMaxWave,
+				   HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
+		
+		// Input
+		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 
-        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && WaveChoice > 1)
-        {
-            ActivatorSound("menu/move", 127);
-            WaveChoice--;
-        };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && WaveChoice < ArenaMaxWave)
-        {
-            ActivatorSound("menu/move", 127);
-            WaveChoice++;
-        };
-        if (Buttons == BT_USE && OldButtons != BT_USE)
-        {
-            if (WaveChoice > 1)
-                ArenaWave = WaveChoice - 1
-            else
-                ArenaWave = 1;
-            
-            ActivatorSound("menu/move", 127);
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && WaveChoice > 1)
+		{
+			ActivatorSound("menu/move", 127);
+			WaveChoice--;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && WaveChoice < ArenaMaxWave)
+		{
+			ActivatorSound("menu/move", 127);
+			WaveChoice++;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			if (WaveChoice > 1)
+				ArenaWave = WaveChoice - 1
+			else
+				ArenaWave = 1;
+			
+			ActivatorSound("menu/move", 127);
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
 			Player.OutpostMenu = 0;
-            return;
-        };
-        if (Buttons == BT_SPEED)
-        {
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			return;
+		};
+		if (Buttons == BT_SPEED)
+		{
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
 			Player.OutpostMenu = 0;
-            return;
-        };
-        
-        Delay(1);
-    };
+			return;
+		};
+		
+		Delay(1);
+	};
 };
 
 acscript PissOffMarines()
 {
-    SetMusic("Outpost2", 3);
-    Thing_Activate(1);
-    SetActorProperty(1, APROP_Friendly, 0);
-    Thing_Hate(1, 0, 6);
-    Thing_ChangeTID(1, 1201);
-    
-    while (true)
-    {
-        // You are dead, NO BIG SURPRISE
-        if (GetActorProperty(Player.TID, APROP_Health) <= 0)
-        {
-            SetMusic("Outpost2", 1);
-            return;
-        };
-        
-        // Teleport in new Marines
-        if ((Timer() % (35 * 10)) == 1)
-        {
-            SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
-            SpawnSpotFacing("MarineRandomizer", MarineSpotTID, MarineTID);
-        };
+	SetMusic("Outpost2", 3);
+	Thing_Activate(1);
+	SetActorProperty(1, APROP_Friendly, 0);
+	Thing_Hate(1, 0, 6);
+	Thing_ChangeTID(1, 1201);
+	
+	while (true)
+	{
+		// You are dead, NO BIG SURPRISE
+		if (GetActorProperty(Player.TID, APROP_Health) <= 0)
+		{
+			SetMusic("Outpost2", 1);
+			return;
+		};
+		
+		// Teleport in new Marines
+		if ((Timer() % (35 * 10)) == 1)
+		{
+			SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
+			SpawnSpotFacing("MarineRandomizer", MarineSpotTID, MarineTID);
+		};
 
-        Delay(1);
-    };
+		Delay(1);
+	};
 };
 
 acscript TokenConverter()
@@ -863,8 +864,8 @@ acscript ShopSpecial()
 		Player.InShop = false;
 
 		// Input
-        if (Buttons == BT_USE && OldButtons != BT_USE)
-        {
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
 			// Buy Item
 			if (CheckInventory("Credits") >= Cost)
 			{
@@ -881,14 +882,14 @@ acscript ShopSpecial()
 			}
 			else
 				ActivatorSound("menu/error", 127);
-        };
-        if (Buttons == BT_SPEED)
-        {
+		};
+		if (Buttons == BT_SPEED)
+		{
 			ActivatorSound("menu/move", 127);
 			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
 			Player.OutpostMenu = 0;
-            return;
-        };
+			return;
+		};
 		
 		// Drawing
 		SetFont("BIGFONT");

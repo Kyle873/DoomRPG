@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Friday, March 28, 2014 at 1:28:31 PM";
+	"Friday, March 28, 2014 at 15:41:44";
 };
 
 bool ParBonus;
@@ -58,9 +58,6 @@ script Init() enter
 		// Initialize skill array
 		InitSkills();
 		
-		// The first map should always be accessible
-		Player.MapsVisited[1] = true;
-		
 		// Done first run
 		Player.FirstRun = true;
 	};
@@ -89,23 +86,20 @@ script Init() enter
 	{
 		for (int i = 0; i < MAX_PLAYERS; i++)
 			SetActorProperty(Players(i).TID, APROP_Invulnerable, false);
+		SetPlayerProperty (0, 0, PROP_TOTALLYFROZEN); // In case we were in the menu
 		FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
 		Transported = false;
 	};
 	
 	// Store the current map number
 	MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
-	if (MapNumber > 36) MapNumber = 36;
+	if (MapNumber > 39) MapNumber = 39;
 	
 	// Reset map flags
 	Player.KillBonus = false;
 	Player.ItemsBonus = false;
 	Player.SecretsBonus = false;
 	Player.AllBonus = false;
-	
-	// Flag this level as visited for the transporter
-	if (!Player.MapsVisited[GetLevelInfo(LEVELINFO_LEVELNUM)])
-		Player.MapsVisited[GetLevelInfo(LEVELINFO_LEVELNUM)] = true;
 	
 	// Clear the Player's summons
 	for (int i = 0; i < MAX_SUMMONS; i++)
@@ -115,6 +109,51 @@ script Init() enter
 	// Reset the menus if they were open in the last level
 	Player.InMenu = false;
 	Player.InShop = false;
+};
+
+function bool CheckVisited(str name)
+{
+	if(!NumVisitedLevels)
+		return false;
+	
+	for(int i = 0; i < NumVisitedLevels; ++i)
+	{
+		if(StrICmp (StrParam ("%s\n", VisitedLevels[i].LumpName), name) == 0)
+			return true;
+	};
+	
+	return false;
+};
+
+// Map Init Script
+script MapInit() __open
+{
+	int mapentrynum;
+	
+	if(!StrICmp (StrParam("%N\n", PRINTNAME_LEVEL), "Outpost"))
+	{
+		if(!NumVisitedLevels)
+		{
+			Log("\c[White]WARNING: \c[Brick]Do not start a game on the Outpost unless testing, or else the Level Teleporter will not function.\n");
+			Log("\c[Red]The Level Teleporter has been disabled.\n");
+		};
+
+		return;
+	};
+	
+	if(CheckVisited(StrParam("%N\n", PRINTNAME_LEVEL)))
+		return;
+	
+	mapentrynum = NumVisitedLevels;
+	++NumVisitedLevels;
+	
+	// Gotta do this the old-fashioned way
+	str levlump = StrParam("%N\n", PRINTNAME_LEVEL);
+	str levname = StrParam("%N\n", PRINTNAME_LEVELNAME);
+	for (int i = 0; i < 9 && i < StrLen (levlump); ++i)
+		VisitedLevels[mapentrynum].LumpName[i] = levlump[i];
+	for (int i = 0; i < 32 && i < StrLen (levname); ++i)
+		VisitedLevels[mapentrynum].NiceName[i] = levname[i];
 };
 
 // Monster Init Script
