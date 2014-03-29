@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Saturday, March 29, 2014 at 8:34:07 AM";
+	"Saturday, March 29, 2014 at 10:16:20 AM";
 };
 
 // Level Info
@@ -902,12 +902,16 @@ script Respawn() respawn
 	// XP/Rank Penalty
 	if (GetCVar("drpg_multi_takexp"))
 	{
-		int XPPenalty = Abs(Round((fixed)XPTable[Player.Level] / ((fixed)GameSkill() * 5.0)));
-		int RankPenalty = Abs(Round((fixed)RankTable[Player.RankLevel] / ((fixed)GameSkill() * 5.0)));
-		Player.XP -= XPPenalty;
-		Player.Rank -= RankPenalty;
-		SetFont("BIGFONT");
-		HudMessage("\cjXP -%d\n\ckRank -%d\n", XPPenalty, RankPenalty, HUDMSG_FADEOUT, 0, CR_WHITE, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 2.0, 2.0);
+		int XPPenalty = Abs(Round((fixed)XPTable[Player.Level] / 100.0 * GetCVarFixed("drpg_multi_takexp_percent")));
+		int RankPenalty = Abs(Round((fixed)RankTable[Player.RankLevel] / 100.0 * GetCVarFixed("drpg_multi_takexp_percent")));
+		
+		if (XPPenalty > 0 && RankPenalty > 0)
+		{
+			Player.XP -= XPPenalty;
+			Player.Rank -= RankPenalty;
+			SetFont("BIGFONT");
+			HudMessage("\cjXP -%d\n\ckRank -%d\n", XPPenalty, RankPenalty, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_WHITE, 1.5, 0.75, 2.0, 2.0);
+		};
 	};
 	
 	// Restore EP if CVAR is set
