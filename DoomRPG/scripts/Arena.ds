@@ -37,6 +37,7 @@ str[MAX_ENVIRONMENTS] ArenaEnvironments =
 
 str[MAX_BONUS] ArenaBonus =
 {
+	"\cjSelect Your Own!";
     "\cgFull Health";
     "\cvFull EP";
     "\cfMoney Drop";
@@ -99,7 +100,7 @@ acscript ArenaLoop()
 				if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu)
 					HudMessage("Press \cd%K\c- to start the next wave\nPress \cd%K\c- to exit the Arena\n", "+use" , "+speed",
 							   HUDMSG_PLAIN, 0, CR_WHITE, 1.5, 0.75, 0.05);
-						
+				
 				if (Buttons & BT_USE && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
 					ArenaState = ARENA_READY;
 				if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
@@ -239,13 +240,84 @@ acfunc void ArenaCheckMod()
 	};
 };
 
+acscript ArenaChooseBonus()
+{
+	int BonusChoice = 1;
+	bool CanChooseKey = false;
+	
+	// There's a 1/4 chance you can use Drop Key
+	if (Random(1, 4) == 1) CanChooseKey = true;
+	
+	Player.OutpostMenu = OMENU_BONUSSELECTOR;
+	
+	while (true)
+	{
+		fixed X = 48.1;
+		fixed Y = 50.0;
+		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		
+		SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+		
+		// Draw the background
+		if (GetCVar("drpg_menudim"))
+			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
+		
+		// Set the HUD Size
+		SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+		
+		// Title
+		SetFont("BIGFONT");
+		HudMessage("Choose a Bonus\n", HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
+		
+		// Input
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && BonusChoice > 1)
+		{
+			ActivatorSound("menu/move", 127);
+			BonusChoice--;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK && BonusChoice < MAX_BONUS - 1 - (CanChooseKey ? 0 : 1))
+		{
+			ActivatorSound("menu/move", 127);
+			BonusChoice++;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			ArenaGetBonus(BonusChoice);
+			Player.OutpostMenu = 0;
+			return;
+		};
+			
+		// Drawing
+		for (int i = 1; i < MAX_BONUS - 1 + (CanChooseKey ? 1 : 0); i++)
+		{
+			// Cursor
+			if (i == BonusChoice)
+				HudMessage("-->\n", HUDMSG_PLAIN, 0, MenuCursorColor, X - 24.0, Y, 0.05);
+			
+			// Bonus String
+			HudMessage("%s\n", ArenaBonus[i], HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+			
+			// Move down Y
+			Y += 16.0;
+		};
+		
+		Delay(1);
+	};
+};
+
 acfunc void ArenaGetBonus(int Bonus)
 {
 	str SpawnItem;
 	
 	switch (Bonus)
 	{
-		case 0: // Full Health
+		case 0: // Choose Your Own!
+			ActivatorSound("misc/secret", 127);
+			ArenaChooseBonus();
+			break;
+		case 1: // Full Health
 			if (InMultiplayer)
 				for (int i = 0; i < MAX_PLAYERS; i++)
 					SetActorProperty(Players(i).TID, APROP_Health, GetActorProperty(Players(i).TID, APROP_SpawnHealth))
@@ -260,7 +332,7 @@ acfunc void ArenaGetBonus(int Bonus)
 					HealThing(1000000);
 			};
 			break;
-		case 1: // Full EP
+		case 2: // Full EP
 			if (InMultiplayer)
 				for (int i = 0; i < MAX_PLAYERS; i++)
 					Players(i).EP = Players(i).EPMax
@@ -275,7 +347,7 @@ acfunc void ArenaGetBonus(int Bonus)
 					Player.EP = Player.EPMax;
 			};
 			break;
-		case 2: // Money Drop
+		case 3: // Money Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			for (int i = 0; i < ArenaWave * PlayerCount(); i++)
 			{
@@ -284,7 +356,7 @@ acfunc void ArenaGetBonus(int Bonus)
 				Thing_ChangeTID(ArenaItemTID, 0);
 			};
 			break;
-		case 3: // Ammo Drop
+		case 4: // Ammo Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			for (int i = 0; i < PlayerCount(); i++)
 			{
@@ -293,7 +365,7 @@ acfunc void ArenaGetBonus(int Bonus)
 				Thing_ChangeTID(ArenaItemTID, 0);
 			};
 			break;
-		case 4: // Health Drop
+		case 5: // Health Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			for (int i = 0; i < PlayerCount(); i++)
 			{
@@ -302,7 +374,7 @@ acfunc void ArenaGetBonus(int Bonus)
 				Thing_ChangeTID(ArenaItemTID, 0);
 			};
 			break;
-		case 5: // Armor Drop
+		case 6: // Armor Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			for (int i = 0; i < PlayerCount(); i++)
 			{
@@ -315,7 +387,7 @@ acfunc void ArenaGetBonus(int Bonus)
 				Thing_ChangeTID(ArenaItemTID, 0);
 			};
 			break;
-		case 6: // Weapon Drop
+		case 7: // Weapon Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			for (int i = 0; i < PlayerCount(); i++)
 			{
@@ -324,7 +396,7 @@ acfunc void ArenaGetBonus(int Bonus)
 				Thing_ChangeTID(ArenaItemTID, 0);
 			};
 			break;
-		case 7: // Powerup Drop
+		case 8: // Powerup Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			for (int i = 0; i < PlayerCount(); i++)
 			{
@@ -333,7 +405,7 @@ acfunc void ArenaGetBonus(int Bonus)
 				Thing_ChangeTID(ArenaItemTID, 0);
 			};
 			break;
-		case 8: // Rune Drop
+		case 9: // Rune Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			for (int i = 0; i < PlayerCount(); i++)
 			{
@@ -342,7 +414,7 @@ acfunc void ArenaGetBonus(int Bonus)
 				Thing_ChangeTID(ArenaItemTID, 0);
 			};
 			break;
-		case 9: // Stim Drop
+		case 10: // Stim Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			if (Random(1, 10) == 1)
 			{
@@ -361,7 +433,7 @@ acfunc void ArenaGetBonus(int Bonus)
 					Thing_ChangeTID(ArenaItemTID, 0);
 				};
 			break;
-		case 10: // Key Drop
+		case 11: // Key Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			if (ArenaKey == 0) SpawnItem = "RedCard";
 			if (ArenaKey == 1) SpawnItem = "YellowCard";
@@ -385,7 +457,7 @@ acfunc void ArenaGetBonus(int Bonus)
 	};
 	
 	// Bonus Message
-	if (Bonus >= 0)
+	if (Bonus > 0)
 	{
 		SetHudSize(0, 0, false);
 		SetFont("BIGFONT");
