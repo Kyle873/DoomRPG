@@ -401,7 +401,7 @@
             0,
             0});
             this.numericUpDownPlayers.Minimum = new decimal(new int[] {
-            2,
+            1,
             0,
             0,
             0});
@@ -461,7 +461,6 @@
             this.checkBoxMultiplayer.TabIndex = 0;
             this.checkBoxMultiplayer.Text = "Multiplayer Game";
             this.checkBoxMultiplayer.UseVisualStyleBackColor = true;
-            this.checkBoxMultiplayer.CheckedChanged += new System.EventHandler(this.checkBoxMultiplayer_CheckedChanged);
             // 
             // tabPageModsPatches
             // 

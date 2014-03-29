@@ -17,7 +17,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 7, 0, 3);
+        Version version = new Version(0, 7, 0, 4);
         Config config = new Config();
 
         public FormMain()
@@ -51,7 +51,6 @@ namespace DoomRPG
             PopulateMods();
             
             // send initial events to specific controls to refresh their states
-            checkBoxMultiplayer_CheckedChanged(null, null);
             richTextBoxCredits_TextChanged(null, null);
         }
 
@@ -465,23 +464,6 @@ namespace DoomRPG
             }
         }
 
-        private void checkBoxMultiplayer_CheckedChanged(object sender, EventArgs e)
-        {
-            // Multiplayer Checkbox
-            if (checkBoxMultiplayer.Checked)
-            {
-                groupBoxMode.Enabled = true;
-                groupBoxServerMode.Enabled = true;
-                groupBoxServerOptions.Enabled = true;
-            }
-            else
-            {
-                groupBoxMode.Enabled = false;
-                groupBoxServerMode.Enabled = false;
-                groupBoxServerOptions.Enabled = false;
-            }
-        }
-
         private void richTextBoxCredits_TextChanged(object sender, EventArgs e)
         {
             richTextBoxCredits.Find("Testers");
@@ -549,6 +531,37 @@ namespace DoomRPG
                 comboBoxClass.Enabled = true;
             else
                 comboBoxClass.Enabled = false;
+
+            // Multiplayer Checkbox
+            if (checkBoxMultiplayer.Checked)
+            {
+                groupBoxMode.Enabled = true;
+                groupBoxServerMode.Enabled = true;
+                if (radioButtonHosting.Checked)
+                {
+                    numericUpDownPlayers.Enabled = true;
+                    radioButtonPeerToPeer.Enabled = true;
+                    radioButtonPacketServer.Enabled = true;
+                    groupBoxServerOptions.Enabled = true;
+                }
+                else
+                {
+                    numericUpDownPlayers.Enabled = false;
+                    radioButtonPeerToPeer.Enabled = false;
+                    radioButtonPacketServer.Enabled = false;
+                    groupBoxServerOptions.Enabled = false;
+                }
+                if (radioButtonJoining.Checked)
+                    textBoxHostname.Enabled = true;
+                else
+                    textBoxHostname.Enabled = false;
+            }
+            else
+            {
+                groupBoxMode.Enabled = false;
+                groupBoxServerMode.Enabled = false;
+                groupBoxServerOptions.Enabled = false;
+            }
         }
     }
 }
