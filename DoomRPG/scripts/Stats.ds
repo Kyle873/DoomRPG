@@ -321,6 +321,7 @@ function void CheckRank()
 // Gives rewards for finding a secret and 100% Kills/Items/Secrets
 function void CheckLevelInfo()
 {
+	int LevelNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
 	int CurrentKills = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
 	int CurrentItems = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
 	int CurrentSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
@@ -337,18 +338,18 @@ function void CheckLevelInfo()
 	
 	// Check to see if any total stats are 0, if they are, silently flag them as received already
 	if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
-		Player.KillBonus = true;
+		LevelBonus[LevelNumber].KillBonus = true;
 	if (GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0)
-		Player.ItemsBonus = true;
+		LevelBonus[LevelNumber].ItemsBonus = true;
 	if (GetLevelInfo(LEVELINFO_TOTAL_SECRETS) == 0)
-		Player.SecretsBonus = true;
+		LevelBonus[LevelNumber].SecretsBonus = true;
 	
 	// If all the total stats are 0, no bonuses at all
 	if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0 && GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0 && GetLevelInfo(LEVELINFO_TOTAL_SECRETS) == 0)
-		Player.AllBonus = true;
+		LevelBonus[LevelNumber].AllBonus = true;
 	
 	// 100% Kills
-	if (CurrentKills >= GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) && !Player.KillBonus)
+	if (CurrentKills >= GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) && !LevelBonus[LevelNumber].KillBonus)
 	{
 		FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
 		
@@ -358,11 +359,11 @@ function void CheckLevelInfo()
 		HudMessageBold("100%% Monsters Killed!\n%d XP Bonus\n", XPBonus,
 					   HUDMSG_TYPEON, 0, CR_BRICK, 1.5, 0.4, 3.0, 0.1, 3.0);
 		
-		Player.KillBonus = true;
+		LevelBonus[LevelNumber].KillBonus = true;
 	};
 	
 	// 100% Items
-	if (CurrentItems >= GetLevelInfo(LEVELINFO_TOTAL_ITEMS) && !Player.ItemsBonus)
+	if (CurrentItems >= GetLevelInfo(LEVELINFO_TOTAL_ITEMS) && !LevelBonus[LevelNumber].ItemsBonus)
 	{
 		FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
 		
@@ -372,11 +373,11 @@ function void CheckLevelInfo()
 		HudMessageBold("100%% Items Found!\nFull HP/EP Restore\n",
 					   HUDMSG_TYPEON, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 0.1, 3.0);
 		
-		Player.ItemsBonus = true;
+		LevelBonus[LevelNumber].ItemsBonus = true;
 	};
 
 	// Secrets
-	if (CurrentSecretsFound == Player.SecretsFound + 1)
+	if (CurrentSecretsFound == SecretsFound + 1)
 	{
 		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
 		
@@ -384,7 +385,7 @@ function void CheckLevelInfo()
 		Player.Rank += RankBonus;
 		
 		// 100% Secrets
-		if (CurrentSecretsFound >= GetLevelInfo(LEVELINFO_TOTAL_SECRETS) && !Player.SecretsBonus)
+		if (CurrentSecretsFound >= GetLevelInfo(LEVELINFO_TOTAL_SECRETS) && !LevelBonus[LevelNumber].SecretsBonus)
 		{
 			FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
 			
@@ -394,12 +395,12 @@ function void CheckLevelInfo()
 			HudMessageBold("100%% Secrets Found!\n%d Rank Bonus\n", RankBonus,
 						   HUDMSG_TYPEON, 0, CR_YELLOW, 1.5, 0.8, 3.0, 0.1, 3.0);
 			
-			Player.SecretsBonus = true;
+			LevelBonus[LevelNumber].SecretsBonus = true;
 		};
 	};
 	
 	// All Kills/Items/Secrets 100%
-	if ((Player.KillBonus && Player.ItemsBonus && Player.SecretsBonus) && !Player.AllBonus)
+	if ((LevelBonus[LevelNumber].KillBonus && LevelBonus[LevelNumber].ItemsBonus && LevelBonus[LevelNumber].SecretsBonus) && !LevelBonus[LevelNumber].AllBonus)
 	{
 		FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
 		
@@ -416,12 +417,16 @@ function void CheckLevelInfo()
 					   XPBonus, RankBonus,
 					   HUDMSG_TYPEON, 0, CR_WHITE, 0.5, 0.2, 3.0, 0.1, 3.0);
 		
-		Player.AllBonus = true;
+		LevelBonus[LevelNumber].AllBonus = true;
+		
+		// Payout Bonus Increase
+		for (int i = 0; i < MAX_PLAYERS; i++)
+			Players(i).PayBonus++;
 	};
 	
-	Player.Kills = CurrentKills;
-	Player.Items = CurrentItems;
-	Player.SecretsFound = CurrentSecretsFound;
+	Kills = CurrentKills;
+	Items = CurrentItems;
+	SecretsFound = CurrentSecretsFound;
 };
 
 function void CheckHealth()
