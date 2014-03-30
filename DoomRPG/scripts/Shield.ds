@@ -305,6 +305,12 @@ acscript ToggleShield(bool Destroyed)
 	// If you have no Shield parts equipped or are misSing a part, terminate
 	if (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0)
 	{
+		if (Player.Shield.Body == 0)
+			Player.Shield.Body = 0;
+		if (Player.Shield.Battery == 0)
+			Player.Shield.Battery = 0;
+		if (Player.Shield.Capacitor == 0)
+			Player.Shield.Capacitor = 0;
 		ActivatorSound("menu/error", 127);
 		return;
 	};
@@ -344,11 +350,25 @@ function void CheckShields()
 	// Check to make sure the Shield has components
 	if (Player.Shield.Active && (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0))
 	{
-		ToggleShield(false);
-		Player.Shield.Charge = 0;
+		ActivatorSound("shield/off", 127);
+		Player.Shield.Active = false;
+		DamageNumbers();
+		SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);;
+		if (GetCVar("drpg_shield_reset"))
+			Player.Shield.Charge = 0;
+		GiveInventory("ShieldReflectionOff", 1);
+		GiveInventory("ShieldGhostOff", 1);
 		Player.Shield.Timer = 35 * Player.Shield.DelayRate;
 	};
 
+	// If a component is removed, unequip it internally too
+	if (Player.Shield.Body == 0)
+		Player.Shield.Body = 0;
+	if (Player.Shield.Battery == 0)
+		Player.Shield.Battery = 0;
+	if (Player.Shield.Capacitor == 0)
+		Player.Shield.Capacitor = 0;
+	
 	// EP -> Shield Charging
 	int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
 	if (Player.Shield.Active && (!Player.InMenu && !Player.InShop) && Buttons & BT_SPEED && Buttons & BT_USE && Player.Shield.Charge < Player.Shield.Capacity && Player.EP > 0)

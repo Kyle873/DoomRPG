@@ -91,6 +91,7 @@ acscript ArenaLoop()
 		else if (ArenaState == ARENA_WAITING)
 		{
 			int Buttons = GetPlayerInput(ArenaPlayerNumber, INPUT_BUTTONS);
+			bool Ready = true;
 			
 			SetHudSize(0, 0, false);
 			SetFont("BIGFONT");
@@ -102,7 +103,20 @@ acscript ArenaLoop()
 							   HUDMSG_PLAIN, 0, CR_WHITE, 1.5, 0.75, 0.05);
 				
 				if (Buttons & BT_USE && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
-					ArenaState = ARENA_READY;
+				{
+					// Check to see if others are still in the menu
+					for (int i = 0; i < MAX_PLAYERS; i++)
+						if (Players(i).InMenu || Players(i).InShop)
+							Ready = false;
+					
+					if (Ready)
+						ArenaState = ARENA_READY
+					else
+					{
+						ActivatorSound("menu/error", 127);
+						HudMessage("Someone is currently in a menu!\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 2.0);
+					};
+				};
 				if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
 				{
 					ArenaStop();
@@ -322,7 +336,8 @@ acfunc void ArenaGetBonus(int Bonus)
 		case 1: // Full Health
 			if (InMultiplayer)
 				for (int i = 0; i < MAX_PLAYERS; i++)
-					SetActorProperty(Players(i).TID, APROP_Health, GetActorProperty(Players(i).TID, APROP_SpawnHealth))
+					if (!Players(i).Shield.Active)
+						SetActorProperty(Players(i).TID, APROP_Health, GetActorProperty(Players(i).TID, APROP_SpawnHealth))
 			else
 			{
 				if (GetActorProperty(0, APROP_Health) >= Player.HealthMax)
@@ -331,7 +346,8 @@ acfunc void ArenaGetBonus(int Bonus)
 					return;
 				}
 				else
-					HealThing(1000000);
+					if (!Player.Shield.Active)
+						HealThing(1000000);
 			};
 			break;
 		case 2: // Full EP
