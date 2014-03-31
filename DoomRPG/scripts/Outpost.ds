@@ -912,7 +912,7 @@ acscript ShopSpecial()
 };
 
 // Player Locker
-acscript Locker()
+acscript Locker(bool Wireless)
 {
 	// Init Locker
 	LockerItem[][] LockerItems =
@@ -1242,10 +1242,20 @@ acscript Locker()
 		};
 	};
 	
+	// Base costs for wireless page access
+	int[] WirelessCosts =
+	{
+		100;	// Weapons
+		50;		// Armor
+		50;		// Mod Packs
+		50;		// Boots
+	};
+	
 	int Offset;
 	int Color;
 	int LockerSize;
 	int Total;
+	bool Success;
 	
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_LOCKER) return;
@@ -1255,9 +1265,6 @@ acscript Locker()
 
 	// Freeze the Player
 	SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-
-	// Set the HUD Size
-	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 	
 	Player.OutpostMenu = OMENU_LOCKER;
 	
@@ -1267,8 +1274,12 @@ acscript Locker()
 	{
 		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
 		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		int Efficiency = (Skills[5][5].CurrentLevel - 1) * 5;;
 		fixed X = 24.1;
 		fixed Y = 50.0;
+		
+		// Set the HUD Size
+		SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 		
 		// Draw the background
 		if (GetCVar("drpg_menudim"))
@@ -1335,6 +1346,8 @@ acscript Locker()
 		if (Buttons == BT_BACK)
 			Player.DelayTimer++;
 
+		Log("\cd%d, %d\n", Efficiency, (int)((fixed)WirelessCosts[Player.LockerPage] - ((fixed)WirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0))));
+
 		// Check Input
 		if (Buttons == BT_FORWARD && (OldButtons != BT_FORWARD || Player.DelayTimer > 35))
 		{
@@ -1369,49 +1382,72 @@ acscript Locker()
 			// Deposit
 			if (CheckInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor) > 0)
 			{
-				TakeInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor, 1);
-				Player.Locker[Player.LockerPage][Player.LockerIndex]++;
-				
-				if (Player.LockerPage == 0) // Weapons
+				if (!Wireless)
 				{
-					TakeInventory("RLWeaponLimit", 1);
-					
-					// Plasma Rifles portion of Nuclear Set Bonus Checking
-					for (int i = 0; SetWeapons[0][i] != ""; ++i)
-						if (LockerItems[Player.LockerPage][Player.LockerIndex].Actor == SetWeapons[0][i])
-						{
-							Log("Plasma weapon removed\n");
-							TakeInventory("RLNuclearWeaponSetBonusPlasmaRifle", 1);
-							TakeInventory("RLNuclearWeaponSetBonusActive", 1);
-						};
-					
-					// BFGs portion of Nuclear Set Bonus Checking
-					for (int i = 0; SetWeapons[1][i] != ""; ++i)
-						if (LockerItems[Player.LockerPage][Player.LockerIndex].Actor == SetWeapons[1][i])
-						{
-							Log("BFG weapon removed\n");
-							TakeInventory("RLNuclearWeaponSetBonusBFG", 1);
-							TakeInventory("RLNuclearWeaponSetBonusActive", 1);
-						};
-						
-					// Tristar blaster Set Bonus Checking
-					if (CheckInventory("RLTristarBlaster") == 0 && CheckInventory("RLHighPowerTristarBlaster") == 0 && CheckInventory("RLNanomanufactureAmmoTristarBlaster") == 0)
-						TakeInventory("RLCerberusSetBonusTristarBlaster", 1);
+					TakeInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor, 1);
+					Player.Locker[Player.LockerPage][Player.LockerIndex]++;
+					ActivatorSound("menu/move", 127);
+					Success = true;
 				}
-				else if (Player.LockerPage == 1) // Armor
-					TakeInventory("RLArmorInInventory", 1)
-				else if (Player.LockerPage == 2) // Mod Packs
-					if (Player.LockerIndex == 8) // Special handling case for Armor Modpack
-						TakeInventory("RLArmorModItemInInventory", 1)
+				else
+				{
+					if (Player.EP < (int)((fixed)WirelessCosts[Player.LockerPage] - ((fixed)WirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 00.0))))
+					{
+						SetHudSize(0, 0, false);
+						SetFont("BIGFONT");
+						HudMessage("Not Enough EP to Deposit item\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 2.0);
+						ActivatorSound("menu/error", 127);
+						Success = false;
+					}
 					else
-						if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
-							TakeInventory("RLScavengerModLimit", 1)
-						else
-							TakeInventory("RLModLimit", 1)
-				else if (Player.LockerPage == 3) // Boots
-					TakeInventory("RLBootsInInventory", 1);
+					{
+						TakeInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor, 1);
+						Player.Locker[Player.LockerPage][Player.LockerIndex]++;
+						Player.EP -= (int)((fixed)WirelessCosts[Player.LockerPage] - ((fixed)WirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0)));
+						ActivatorSound("menu/move", 127);
+						Success = true;
+					};
+				};
 				
-				ActivatorSound("menu/move", 127);
+				if (Success)
+					if (Player.LockerPage == 0) // Weapons
+					{
+						TakeInventory("RLWeaponLimit", 1);
+						
+						// Plasma Rifles portion of Nuclear Set Bonus Checking
+						for (int i = 0; SetWeapons[0][i] != ""; ++i)
+							if (LockerItems[Player.LockerPage][Player.LockerIndex].Actor == SetWeapons[0][i])
+							{
+								Log("Plasma weapon removed\n");
+								TakeInventory("RLNuclearWeaponSetBonusPlasmaRifle", 1);
+								TakeInventory("RLNuclearWeaponSetBonusActive", 1);
+							};
+						
+						// BFGs portion of Nuclear Set Bonus Checking
+						for (int i = 0; SetWeapons[1][i] != ""; ++i)
+							if (LockerItems[Player.LockerPage][Player.LockerIndex].Actor == SetWeapons[1][i])
+							{
+								Log("BFG weapon removed\n");
+								TakeInventory("RLNuclearWeaponSetBonusBFG", 1);
+								TakeInventory("RLNuclearWeaponSetBonusActive", 1);
+							};
+							
+						// Tristar blaster Set Bonus Checking
+						if (CheckInventory("RLTristarBlaster") == 0 && CheckInventory("RLHighPowerTristarBlaster") == 0 && CheckInventory("RLNanomanufactureAmmoTristarBlaster") == 0)
+							TakeInventory("RLCerberusSetBonusTristarBlaster", 1);
+					}
+					else if (Player.LockerPage == 1) // Armor
+						TakeInventory("RLArmorInInventory", 1)
+					else if (Player.LockerPage == 2) // Mod Packs
+						if (Player.LockerIndex == 8) // Special handling case for Armor Modpack
+							TakeInventory("RLArmorModItemInInventory", 1)
+						else
+							if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
+								TakeInventory("RLScavengerModLimit", 1)
+							else
+								TakeInventory("RLModLimit", 1)
+					else if (Player.LockerPage == 3) // Boots
+						TakeInventory("RLBootsInInventory", 1);
 			}
 			else
 				ActivatorSound("menu/error", 127);
@@ -1421,29 +1457,50 @@ acscript Locker()
 			// Withdraw
 			if (Player.Locker[Player.LockerPage][Player.LockerIndex] > 0)
 			{
-				// Checking
-				if (Player.LockerPage == 0 && CheckInventory("RLWeaponLimit") >= 6) // Weapons
-					ActivatorSound("menu/error", 127)
-				else if (Player.LockerPage == 1 && CheckInventory("RLArmorInInventory") >= 1) // Armor
-					ActivatorSound("menu/error", 127)
-				else if (Player.LockerPage == 2 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
-					ActivatorSound("menu/error", 127)
-				else if (Player.LockerPage == 2 && ((PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4)) // Mod Packs
-					ActivatorSound("menu/error", 127)
-				else if (Player.LockerPage == 3 && CheckInventory("RLBootsInInventory") >= 1) // Boots
-					ActivatorSound("menu/error", 127)
-				else if (Player.LockerPage == 0) // Weapons
-				{
-					GiveInventory(StrParam("%sPickup\n", LockerItems[Player.LockerPage][Player.LockerIndex].Actor), 1);
-					Player.Locker[Player.LockerPage][Player.LockerIndex]--;
-					ActivatorSound("menu/move", 127);
-				}
+				if (!Wireless)
+					Success = true
 				else
 				{
-					GiveInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor, 1);
-					Player.Locker[Player.LockerPage][Player.LockerIndex]--;
-					ActivatorSound("menu/move", 127);
+					if (Player.EP < (int)((fixed)WirelessCosts[Player.LockerPage] - ((fixed)WirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0))))
+					{
+						SetHudSize(0, 0, false);
+						SetFont("BIGFONT");
+						HudMessage("Not Enough EP to Withdraw item\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 2.0);
+						ActivatorSound("menu/error", 127);
+						Success = false;
+					}
+					else
+						Success = true;
 				};
+				
+				// Checking
+				if (Success)
+					if (Player.LockerPage == 0 && CheckInventory("RLWeaponLimit") >= 6) // Weapons
+						ActivatorSound("menu/error", 127)
+					else if (Player.LockerPage == 1 && CheckInventory("RLArmorInInventory") >= 1) // Armor
+						ActivatorSound("menu/error", 127)
+					else if (Player.LockerPage == 2 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
+						ActivatorSound("menu/error", 127)
+					else if (Player.LockerPage == 2 && ((PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4)) // Mod Packs
+						ActivatorSound("menu/error", 127)
+					else if (Player.LockerPage == 3 && CheckInventory("RLBootsInInventory") >= 1) // Boots
+						ActivatorSound("menu/error", 127)
+					else if (Player.LockerPage == 0) // Weapons
+					{
+						GiveInventory(StrParam("%sPickup\n", LockerItems[Player.LockerPage][Player.LockerIndex].Actor), 1);
+						Player.Locker[Player.LockerPage][Player.LockerIndex]--;
+						if (Wireless)
+							Player.EP -= (int)((fixed)WirelessCosts[Player.LockerPage] - ((fixed)WirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0)));
+						ActivatorSound("menu/move", 127);
+					}
+					else
+					{
+						GiveInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor, 1);
+						Player.Locker[Player.LockerPage][Player.LockerIndex]--;
+						if (Wireless)
+							Player.EP -= (int)((fixed)WirelessCosts[Player.LockerPage] - ((fixed)WirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0)));
+						ActivatorSound("menu/move", 127);
+					};
 			}
 			else
 				ActivatorSound("menu/error", 127);
