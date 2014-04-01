@@ -500,6 +500,64 @@ function void DropInventory()
 		};
 };
 
+// Fires a projectile from the Player
+function bool FireProjectile(str Type)
+{
+	fixed X = GetActorX(0);
+	fixed Y = GetActorY(0);
+	fixed Z = GetActorZ(0);
+	fixed Pitch = GetActorPitch(0);
+	fixed Angle = GetActorAngle(0);
+	fixed XSpeed = Cos(Angle) * 16.0;
+	fixed YSpeed = Sin(Angle) * 16.0;
+	fixed ZSpeed = -Sin(Pitch) * 16.0;
+	fixed FireHeight = GetActorViewHeight(0) * 0.8;
+	int TID = UniqueTID();
+	
+	SpawnProjectile(0, Type, 0, 0, 0, 0, TID);
+	SetActorVelocity(TID, XSpeed, YSpeed, ZSpeed, 0, 0);
+	SetActorAngle(TID, Angle);
+	SetActorPosition(TID, X, Y, Z + FireHeight, 0);
+	Thing_ChangeTID(TID, 0);
+	
+	return true;
+};
+
+// Emits a Nova from the Player
+function bool Nova(str Type, int Projectiles)
+{
+	fixed X = GetActorX(0);
+	fixed Y = GetActorY(0);
+	fixed Z = GetActorZ(0);
+	fixed Pitch = GetActorPitch(0);
+	fixed Angle = GetActorAngle(0);
+	fixed XSpeed = Cos(Angle) * 16.0;
+	fixed YSpeed = Sin(Angle) * 16.0;
+	fixed ZSpeed = -Sin(Pitch) * 16.0;
+	fixed FireHeight = GetActorViewHeight(0) * 0.8;
+	int TID = UniqueTID();
+	fixed AngleAdd;
+	
+	AngleAdd = 1.0 / Projectiles;
+	
+	for (int i = 0; i < Projectiles; i++)
+	{
+		XSpeed = Cos(Angle) * 16.0;
+		YSpeed = Sin(Angle) * 16.0;
+		ZSpeed = -Sin(Pitch) * 16.0;
+		
+		SpawnProjectile(0, Type, 0, 0, 0, 0, TID);
+		SetActorVelocity(TID, XSpeed, YSpeed, ZSpeed, 0, 0);
+		SetActorAngle(TID, Angle);
+		SetActorPosition(TID, X, Y, Z + FireHeight, 0);
+		Thing_ChangeTID(TID, 0);
+		
+		Angle += AngleAdd;
+	};
+	
+	return true;
+};
+
 // PrintSprite Utility Function
 function void PrintSprite(str sprite, int id, fixed x, fixed y, fixed d)
 {

@@ -255,37 +255,17 @@ function void InitSkills()
 	// --------------------------------------------------
 	// ATTACK
 	
-	/*
-	Skills[3][Index].Name = "Fireball";
-	Skills[3][Index].MaxLevel = 1;
-	Skills[3][Index].Cost = 5;
-	Skills[3][Index].Description[0] = "Shoots a fireball\n\caFire Damage";
-	Index++;
-
-	Skills[3][Index].Name = "Fireball Nova";
-	Skills[3][Index].MaxLevel = 10;
-	Skills[3][Index].Cost = 25;
-	Skills[3][Index].Description[0] = "Shoots fireballs in a circular nova around you\n\caFire Damage";
-	Index++;
-
-	Skills[3][Index].Name = "Ice Missile";
-	Skills[3][Index].MaxLevel = 1;
-	Skills[3][Index].Cost = 10;
-	Skills[3][Index].Description[0] = "Shoots an ice missile\n\cnIce Damage";
-	Index++;
-
-	Skills[3][Index].Name = "Ice Nova";
-	Skills[3][Index].MaxLevel = 10;
-	Skills[3][Index].Cost = 50;
-	Skills[3][Index].Description[0] = "Shoots ice missles in a circular nova around you\n\cnIce Damage";
-	Index++;
-	*/
-	
 	Skills[3][Index].Name = "Weaken";
 	Skills[3][Index].MaxLevel = 2;
 	Skills[3][Index].Cost = 200;
 	Skills[3][Index].Description[0] = "Weakens an enemy, halving their stats";
 	Skills[3][Index].Description[1] = "Weakens an enemy, halving their stats and destroying their Aura";
+	Index++;
+
+	Skills[3][Index].Name = "Translocate";
+	Skills[3][Index].MaxLevel = 1;
+	Skills[3][Index].Cost = 50;
+	Skills[3][Index].Description[0] = "Teleports a monster to the beginning of the level";
 	Index = 0;
 
 	// --------------------------------------------------
@@ -612,11 +592,8 @@ acscript UseSkill(int Index) net
 			case 3: // Attacks
 				switch (Player.SkillIndex[Index])
 				{
-					case 0:		Success = AttackSkill(1, 1);								break; // Fireball
-					case 1:		Success = AttackSkill(1, 2);								break; // Fireball Nova
-					case 2:		Success = AttackSkill(2, 1);								break; // Ice Missile
-					case 3:		Success = AttackSkill(2, 2);								break; // Ice Nova
-					case 4:		Success = Weaken();											break; // Weaken
+					case 0:		Success = Weaken();											break; // Weaken
+					case 1:		Success = FireProjectile("TranslocateBall");				break; // Translocate
 				};
 				break;
 			
@@ -1098,76 +1075,6 @@ function bool DropAmmo()
 	};
 
 	return false;
-};
-
-// Attack skills will use this
-acscript AttackSkill(int Element, int Type)
-{
-	fixed X = GetActorX(0);
-	fixed Y = GetActorY(0);
-	fixed Z = GetActorZ(0);
-	fixed Pitch = GetActorPitch(0);
-	fixed Angle = GetActorAngle(0);
-	fixed XSpeed = Cos(Angle) * 16.0;
-	fixed YSpeed = Sin(Angle) * 16.0;
-	fixed ZSpeed = -Sin(Pitch) * 16.0;
-	fixed FireHeight = GetActorViewHeight(0) * 0.8;
-	fixed Offset = 8.0;
-	fixed AngleAdd;
-	str AttackType;
-	int AttackLevel;
-	int Projectiles;
-	
-	// Hack - Can't use projectile skills in the water)
-	if (Type == 1 && GetActorProperty(Player.TID, APROP_Waterlevel) > 0)
-	{
-		AmbientSound("menu/error", 127);
-		SetResultValue(0);
-		return;
-	};
-	
-	// Apply proper projectile type from the specified element
-	switch (Element)
-	{
-		case 1: AttackType = "Fireball";	break;
-		case 2: AttackType = "IceMissile";	break;
-	};
-	
-	if (Type == 1) // Projectile
-	{
-		AttackLevel = Skills[3][Element * 2].CurrentLevel;
-		SpawnProjectile(0, AttackType, 0, 0, 0, 0, 2001);
-		SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
-		SetActorAngle(2001, Angle);
-		SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
-		Thing_ChangeTID(2001, UniqueTID());
-	};
-	if (Type == 2) // Nova
-	{
-		AttackLevel = Skills[3][Element * 2 - 1].CurrentLevel;
-		Projectiles = AttackLevel * 8;
-		AngleAdd = 1.0 / Projectiles;
-		
-		for (int i = 0; i < Projectiles; i++)
-		{
-			XSpeed = Cos(Angle) * 16.0;
-			YSpeed = Sin(Angle) * 16.0;
-			ZSpeed = -Sin(Pitch) * 16.0;
-			
-			SpawnProjectile(0, AttackType, 0, 0, 0, 0, 2001);
-			SetActorVelocity(2001, XSpeed, YSpeed, ZSpeed, 0, 0);
-			SetActorAngle(2001, Angle);
-			SetActorPosition(2001, X, Y, Z + FireHeight + Offset, 0);
-			Thing_ChangeTID(2001, UniqueTID());
-			
-			Angle += AngleAdd;
-		};
-	};
-	if (Type == 3) // Hitscan?
-	{
-		return;
-	};
-	// etc
 };
 
 // Weaken
