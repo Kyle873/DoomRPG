@@ -99,7 +99,7 @@ function void InitSkills()
 	Skills[0][Index].Name = "Player Teleport";
 	Skills[0][Index].MaxLevel = 1;
 	Skills[0][Index].Cost = 50;
-	Skills[0][Index].Description[0] = "Teleport to the closest player";
+	Skills[0][Index].Description[0] = "Teleport to another Player";
 	Index = 0;
 	
 	// --------------------------------------------------
@@ -868,45 +868,91 @@ function bool Repair()
 // Teleport to closest Player
 acscript bool PlayerTeleport()
 {
-	fixed[MAX_PLAYERS] Distances;
-	fixed Closest = 32767;
-	int ClosestPlayer = Player.TID;
-	int ClosestPlayerNumber;
+	str[MAX_PLAYERS] Names;
+	int PlayerChoice;
 	
-	// Calculate distances for all Players
+	// Get Player Names
 	for (int i = 0; i < MAX_PLAYERS; i++)
-		Distances[i] = Distance(Player.TID, Players(i).TID);
+		Names[i] = StrParam("%N\n", i);
 	
-	// Determine the closest Player
-	for (int i = 0; i < MAX_PLAYERS; i++)
-		if (Distances[i] < Closest && PlayerInGame(i) && i != PlayerNumber())
-		{
-			Closest = Distances[i];
-			ClosestPlayer = Players(i).TID;
-			ClosestPlayerNumber = i;
-		};
-	
-	// Refund - If you end up being your own target somehow
-	if (ClosestPlayer == Player.TID)
+	// Refund - If there is only one player or you aren't in multiplayer
+	if (PlayerCount() <= 1 || !InMultiplayer)
 	{
 		ActivatorSound("menu/error", 127);
 		return false;
 	};
-	
-	// Teleport to Player
-	GiveInventory("PlayerTeleportGhost", 1);
-	SetActorPosition(Player.TID, GetActorX(ClosestPlayer), GetActorY(ClosestPlayer), GetActorZ(ClosestPlayer), true);
-	SetActorAngle(Player.TID, GetActorAngle(ClosestPlayer));
-	Delay(35 * 5);
-	
-	// Make sure you're not inside the other player before we solidify
-	while (Distance(Player.TID, Players(ClosestPlayerNumber).TID) <= GetActorPropertyFixed(ClosestPlayer, APROP_Radius))
-		Delay(35);
-	
-	// Solidify
-	GiveInventory("PlayerTeleportNormal", 1);
-	
-	return true;
+
+	while (true)
+	{
+		fixed X = 48.1;
+		fixed Y = 50.0;
+		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		
+		SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+		
+		// Set the HUD Size
+		SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+		
+		// Title
+		SetFont("BIGFONT");
+		HudMessage("Choose a Player\n", HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
+		
+		// Input
+		if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
+		{
+			ActivatorSound("menu/move", 127);
+			PlayerChoice--;
+			if (PlayerChoice < 0) PlayerChoice = PlayerCount() - 1;
+		};
+		if (Buttons == BT_BACK && OldButtons != BT_BACK)
+		{
+			ActivatorSound("menu/move", 127);
+			PlayerChoice++;
+			if (PlayerChoice > PlayerCount() - 1) PlayerChoice = 0;
+		};
+		if (Buttons == BT_USE && OldButtons != BT_USE)
+		{
+			// You can't teleport to yourself
+			if (PlayerChoice == PlayerNumber())
+				ActivatorSound("menu/error", 127)
+			else
+			{
+				// Teleport
+				SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+				GiveInventory("PlayerTeleportGhost", 1);
+				SetActorPosition(Player.TID, GetActorX(Players(PlayerChoice).TID), GetActorY(Players(PlayerChoice).TID), GetActorZ(Players(PlayerChoice).TID), true);
+				SetActorAngle(Player.TID, GetActorAngle(Players(PlayerChoice).TID));
+				
+				// Make sure you're not inside the other player before we solidify
+				while (Distance(Player.TID, Players(PlayerChoice).TID) <= GetActorPropertyFixed(Players(PlayerChoice).TID, APROP_Radius))
+					Delay(35);
+				
+				// Solidify
+				GiveInventory("PlayerTeleportNormal", 1);
+				return true;
+			};
+		};
+			
+		// Drawing
+		for (int i = 0; i < PlayerCount(); i++)
+		{
+			// Cursor
+			if (i == PlayerChoice)
+				HudMessage("-->\n", HUDMSG_PLAIN, 0, MenuCursorColor, X - 24.0, Y, 0.05);
+			
+			// Bonus String
+			if (i == PlayerNumber())
+				HudMessage("%s\n", Names[i], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
+			else
+				HudMessage("%s\n", Names[i], HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+			
+			// Move down Y
+			Y += 16.0;
+		};
+		
+		Delay(1);
+	};
 };
 
 // Powerups
