@@ -201,14 +201,25 @@ function void CheckLevel()
 	// Now check for a level up
 	if (Player.XP >= XPTable[Player.Level] && Player.Level < MAX_LEVEL)
 	{
-		int StatTokens = (6 - GameSkill()) + (Player.Level / 10);
-		int SkillTokens = (Player.Level % GameSkill()) == 1;
+		int StatTokens;
+		int SkillTokens;
 		
-		// If you're on Armegeddon (DRLA), Only get one Stat Token per level
-		if (GameSkill() == 6) StatTokens = 1;
-		
-		// If you're on easy, just give one Skill Token per level
-		if (GameSkill() == 1) SkillTokens = 1;
+		if (GetCVar("drpg_levelup_type") == 0) // Skill-level
+		{
+			StatTokens = (6 - GameSkill()) + (Player.Level / 10);
+			SkillTokens = (Player.Level % GameSkill()) == 1;
+			
+			// If you're on Armegeddon (DRLA), Only get one Stat Token per level
+			if (GameSkill() == 6) StatTokens = 1;
+			
+			// If you're on easy, just give one Skill Token per level
+			if (GameSkill() == 1) SkillTokens = 1;
+		};
+		if (GetCVar("drpg_levelup_type") == 1) // Static
+		{
+			StatTokens = 5 + (Player.Level / 10);
+			SkillTokens = 1;
+		};
 		
 		if (GetCVar("drpg_autospend"))
 			Player.LevelTokens += StatTokens;
