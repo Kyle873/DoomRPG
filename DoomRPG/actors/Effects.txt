@@ -1,0 +1,544 @@
+// --------------------------------------------------
+// AURA FX
+
+// Red Aura - Strength
+Actor RedAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	Var Int user_radius;
+	Var Int user_height;
+	States
+	{
+	Spawn:
+		TNT1 A 2 NoDelay A_SpawnItemEx ("RedAuraParticle", 0,0,0, FRandom (0.1, 1.5 + (user_radius / 10)),0,FRandom (-2.5, 1.25), Random (0, 360))
+		Stop
+	}
+}
+
+Actor RedAuraParticle
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Add
+	Alpha 0.5
+	Scale 0.08
+	States
+	{
+	Spawn:
+		AUEF A 1 Bright
+		TNT1 A 0 A_FadeOut (0.5 / 35.0)
+		TNT1 A 0 A_ScaleVelocity (0.97)
+		TNT1 A 0 A_ChangeVelocity (0, 0, 0.125)
+		Loop
+	}
+}
+
+// White Aura - XP
+Actor WhiteAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	Var Int user_radius;
+	Var Int user_height;
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf (CallACS ("GetTimer") % 4, "DoNothing")
+		TNT1 A 0 A_SpawnItemEx ("WhiteAuraParticle",
+			Cos ((-CallACS ("GetTimer") / 60.0) * 360.0 + 180.0) * (user_radius * 2.0),
+			Sin ((-CallACS ("GetTimer") / 60.0) * 360.0 + 180.0) * (user_radius * 2.0),
+			Sin ((-CallACS ("GetTimer") / 50.0) * 360.0 + 180.0) * (user_height / 4),
+			0,0,0, 0)
+		TNT1 A 2 A_SpawnItemEx ("WhiteAuraParticle",
+			Cos ((CallACS ("GetTimer") / 50.0) * 360.0) * (user_radius * 2.0),
+			Sin ((CallACS ("GetTimer") / 50.0) * 360.0) * (user_radius * 2.0),
+			Sin ((CallACS ("GetTimer") / 60.0) * 360.0) * (user_height / 4),
+			0,0,0, 0)
+		Stop
+	DoNothing:
+		TNT1 A 2
+		Stop
+	}
+}
+
+Actor WhiteAuraParticle
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Add
+	Alpha 1.0
+	Scale 0.075
+	States
+	{
+	Spawn:
+		AUEF B 1 Bright
+		TNT1 A 0 A_FadeOut (1.0 / 35.0)
+		TNT1 A 0 A_SetScale (ScaleX - 0.0021)
+		Loop
+	}
+}
+
+// Purple Aura - Regeneration
+Actor PurpleAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	Var Int user_radius;
+	Var Int user_height;
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf (CallACS ("GetTimer") % 6, "DoNothing")
+		TNT1 A 2 A_SpawnItemEx ("PurpleAuraParticle",
+			Random (-user_radius,user_radius),
+			Random (-user_radius,user_radius),
+			Random (-(user_height/2),user_height/2),
+			0,0,1.0, 0)
+		Stop
+	DoNothing:
+		TNT1 A 2
+		Stop
+	}
+}
+
+// Same effect as Purple Aura but without the light
+actor RegenSphereEffect : PurpleAura {}
+
+Actor PurpleAuraParticle
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Add
+	Alpha 1.0
+	Scale 0.0375
+	States
+	{
+	Spawn:
+		AUEF C 1 Bright
+		TNT1 A 0 A_FadeOut (1.0 / 35.0)
+		TNT1 A 0 A_SetScale (ScaleX - 0.001, ScaleY + 0.001)
+		Loop
+	}
+}
+
+// Orange Aura - Agility
+Actor OrangeAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	Var Int user_radius;
+	Var Int user_height;
+	States
+	{
+	Spawn:
+		TNT1 A 2 NoDelay A_SpawnItemEx ("OrangeAuraParticle", -8,0,0, 0,0,0, 0)
+		Stop
+	}
+}
+
+Actor OrangeAuraParticle
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Add
+	Alpha 0.01
+	Scale 0.2
+	States
+	{
+	Spawn:
+		AUEF DDDDDDDDDDDDDDD 1 NoDelay Bright A_FadeIn (0.1 / 15.0)
+		AUEF D 1 Bright A_FadeOut (0.1 / 15.0)
+		Wait
+	}
+}
+
+// Green Aura - Defense
+Actor GreenAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	Var Int user_radius;
+	Var Int user_height;
+	Var Int user_cycle;
+	States
+	{
+	Spawn:
+		TNT1 A 0 A_JumpIf (user_cycle >= 360, "Done")
+		TNT1 A 0 A_SpawnItemEx ("GreenAuraParticle",
+			Cos (user_cycle) * (user_radius * 2),
+			Sin (user_cycle) * (user_radius * 2),
+			Sin (CallACS ("GetTimer") * 3 + user_cycle) * (user_height / 4),
+			0,0,0, 0)
+		TNT1 A 0 A_SetUserVar ("user_cycle", user_cycle + 20)
+		Loop
+	Done:
+		TNT1 A 2
+		Stop
+	}
+}
+
+Actor GreenAuraParticle
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Add
+	Alpha 1.0
+	Scale 0.025
+	States
+	{
+	Spawn:
+		AUEF E 1 Bright
+		TNT1 A 0 A_FadeOut (1.0 / 4.0)
+		Loop
+	}
+}
+
+// Pink Aura - Vitality
+Actor PinkAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	Var Int user_radius;
+	Var Int user_height;
+	RenderStyle None
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf (CallACS ("GetTimer") % 8, "DoNothing")
+		TNT1 A 2 A_SpawnItemEx ("PinkAuraParticle",
+			Random (-user_radius,user_radius),
+			Random (-user_radius,user_radius),
+			Random (-(user_height/2),user_height/2),
+			0,0,1.0, 0)
+		Stop
+	DoNothing:
+		TNT1 A 2
+		Stop
+	}
+}
+
+Actor PinkAuraParticle
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Add
+	Alpha 1.0
+	Scale 0.0375
+	States
+	{
+	Spawn:
+		AUEF F 1 Bright
+		TNT1 A 0 A_FadeOut (1.0 / 35.0)
+		TNT1 A 0 A_SetScale (ScaleX - 0.001)
+		Loop
+	}
+}
+
+// Blue Aura - Energy
+Actor CyanAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	Var Int user_radius;
+	Var Int user_height;
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf (CallACS ("GetTimer") % 8, "DoNothing")
+		TNT1 A 2 A_SpawnItemEx ("CyanAuraParticle",
+			Random (-user_radius,user_radius),
+			Random (-user_radius,user_radius),
+			Random (-(user_height/2),user_height/2),
+			0,0,0, 0)
+		Stop
+	DoNothing:
+		TNT1 A 2
+		Stop
+	}
+}
+
+Actor CyanAuraParticle
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Add
+	Alpha 0.66
+	Scale 0.025
+	States
+	{
+	Spawn:
+		AUEF G 1 Bright
+		TNT1 A 0 A_FadeOut (0.66 / 35.0)
+		TNT1 A 0 A_SetScale (ScaleX + 0.001)
+		Loop
+	}
+}
+
+// Dark Blue Aura - Capacity
+Actor BlueAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf (CallACS ("GetTimer") % 20, "DoNothing")
+		TNT1 A 2 A_SpawnItemEx ("BlueAuraParticle", 8,0,0, 0,0,0, 0)
+		Stop
+	DoNothing:
+		TNT1 A 2
+		Stop
+	}
+}
+
+Actor BlueAuraParticle
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Add
+	Alpha 0.33
+	Scale 0.15
+	States
+	{
+	Spawn:
+		AUEF H 1 Bright
+		TNT1 A 0 A_FadeOut (0.33 / 35.0)
+		TNT1 A 0 A_SetScale (ScaleX + 0.0014)
+		Loop
+	}
+}
+
+// Yellow Aura - Luck
+Actor YellowAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	Var Int user_radius;
+	Var Int user_height;
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf (CallACS ("GetTimer") % 8, "DoNothing")
+		TNT1 A 2 A_SpawnItemEx ("YellowAuraParticle",
+			Random (-user_radius,user_radius),
+			Random (-user_radius,user_radius),
+			Random (-(user_height/2),user_height/2),
+			0,0,0, 0)
+		TNT1 A 0 A_JumpIf (!(CallACS ("GetTimer") % 35) && !Random (0, 2), "DropCoin")
+		Stop
+	DropCoin:
+		TNT1 A 0 A_SpawnItemEx ("LuckAuraCoin", 0,0,0, FRandom (-3,3),FRandom (-3,3),FRandom (-3,3), 0)
+	DoNothing:
+		TNT1 A 2
+		Stop
+	}
+}
+
+Actor YellowAuraParticle
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Add
+	Alpha 1.0
+	Scale 0.075
+	States
+	{
+	Spawn:
+		AUEF I 1 Bright
+		TNT1 A 0 A_FadeOut (1.0 / 35.0)
+		TNT1 A 0 A_SetScale (ScaleX - 0.0021)
+		Loop
+	}
+}
+
+Actor LuckAuraCoin
+{
+	Projectile
+	+ThruActors
+	-NoGravity
+    +NotOnAutomap
+	Gravity 0.33
+	Damage 0
+	Speed 4
+	BounceCount 2
+	BounceType Doom
+	BounceSound "skills/coinbounce"
+	DeathSound "skills/coinbounce"
+	
+	States
+	{
+	Spawn:
+		AUEF J -1 Bright
+		Stop
+	Death:
+		AUEF J 70 Bright
+		AUEF J 1 Bright A_FadeOut (1.0 / 20.0)
+		Wait
+	}
+}
+
+// Black Aura - Miniboss
+Actor BlackAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	Var Int user_radius;
+	Var Int user_height;
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf (CallACS ("GetTimer") % 6 > 0, 2)
+		TNT1 A 0 A_SpawnItemEx ("BlackAuraFloorFire",
+			Random (-user_radius,user_radius),
+			Random (-user_radius,user_radius),
+			-(user_height / 2) + 8, 0,0,0, 0)
+		TNT1 A 0 A_JumpIf (CallACS ("GetTimer") % 8 > 0, 5)
+		TNT1 AA 0 A_SpawnItemEx ("BlackAuraDarkPuff1",
+			0,
+			Random (user_radius,user_radius * 2),
+			Random (-(user_height / 2),(user_height / 2)),
+			1.0,0,0, Random (0, 360), 0, 128)
+		TNT1 AA 0 A_SpawnItemEx ("BlackAuraDarkPuff2",
+			0,
+			Random (user_radius,user_radius * 2),
+			Random (-(user_height / 2),(user_height / 2)),
+			1.0,0,0, Random (0, 360), 0, 128)
+		TNT1 A 2
+		Stop
+	}
+}
+
+Actor BlackAuraFloorFire
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Shaded
+	Alpha 1.0
+	StencilColor "40 00 00"
+	
+	States
+	{
+	Spawn:
+		MBAU A 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU B 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU C 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU D 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU E 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU F 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU G 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU H 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU I 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU J 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU K 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU L 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		MBAU M 2 Bright
+		TNT1 A 0 A_FadeOut (0.05)
+		TNT1 A 0 A_SetScale (ScaleX - 0.05)
+		Loop
+	}
+}
+
+Actor BlackAuraDarkPuff1
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle Shaded
+	Alpha 1.0
+	StencilColor "2D 00 80"
+	
+	States
+	{
+	Spawn:
+		MBAU NNNOOOPPPQQQRRR 2 Bright A_FadeOut (0.05)
+		Loop
+	}
+}
+
+Actor BlackAuraDarkPuff2 : BlackAuraDarkPuff1
+{
+	StencilColor "00 00 00"
+}
+
+// Friendly Aura - Applied to friendly summons/monsters
+Actor FriendlyAura
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	RenderStyle None
+	States
+	{
+	Spawn:
+		TNT1 A 2 NoDelay
+		Stop
+	}
+}
+
+Actor FriendlyIndicator
+{
+	+NoTimeFreeze
+	+NoInteraction
+    +NotOnAutomap
+	Scale 0.05
+	States
+	{
+	Spawn:
+		GHRT A 1 Bright A_FadeOut (0.25)
+		Wait
+	}
+}
