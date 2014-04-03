@@ -90,6 +90,7 @@ acscript ArenaLoop()
 		else if (ArenaState == ARENA_WAITING)
 		{
 			int Buttons = GetPlayerInput(ArenaPlayerNumber, INPUT_BUTTONS);
+			int OldButtons = GetPlayerInput(ArenaPlayerNumber, INPUT_OLDBUTTONS);
 			bool Ready = true;
 			
 			SetHudSize(0, 0, false);
@@ -101,7 +102,7 @@ acscript ArenaLoop()
 					HudMessage("Press \cd%K\c- to start the next wave\nPress \cd%K\c- to exit the Arena\n", "+use" , "+speed",
 							   HUDMSG_PLAIN, 0, CR_WHITE, 1.5, 0.75, 0.05);
 				
-				if (Buttons & BT_USE && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
+				if (Buttons & BT_USE && !(OldButtons & BT_USE) && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
 				{
 					// Check to see if others are still in the menu
 					for (int i = 0; i < MAX_PLAYERS; i++)
@@ -116,7 +117,7 @@ acscript ArenaLoop()
 						HudMessage("Someone is currently in a menu!\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 2.0);
 					};
 				};
-				if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
+				if (Buttons & BT_SPEED && !(OldButtons & BT_SPEED) && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
 				{
 					ArenaStop();
 					return;
@@ -334,7 +335,7 @@ acfunc void ArenaGetBonus(int Bonus)
 					if (Players(i).Shield.Active)
 						Players(i).Shield.Health = Players(i).HealthMax
 					else
-						SetActorProperty(Players(i).TID, APROP_Health, Players(i).HealthMax)
+						SetActorProperty(Players(i).TID, APROP_Health, GetActorProperty(Players(i).TID, APROP_SpawnHealth))
 			else
 				if (GetActorProperty(0, APROP_Health) >= Player.HealthMax && !Player.Shield.Active)
 				{
