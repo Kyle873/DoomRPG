@@ -1300,8 +1300,12 @@ acscript Locker(bool Wireless)
 		// Calculate total items
 		Total = 0;
 		for (int i = 0; LockerItems[Player.LockerPage][i].Actor != ""; ++i)
-			if (Player.Locker[Player.LockerPage][i] > 0)
-				Total += Player.Locker[Player.LockerPage][i];
+			if (Player.LockerGlobal)
+				if (GlobalLocker[Player.LockerPage][i] > 0)
+					Total += GlobalLocker[Player.LockerPage][i]
+			else
+				if (Player.Locker[Player.LockerPage][i] > 0)
+					Total += Player.Locker[Player.LockerPage][i];
 		
 		// Title and Player.LockerPage
 		SetFont("BIGFONT");
@@ -1407,7 +1411,7 @@ acscript Locker(bool Wireless)
 			// Deposit
 			if (CheckInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor) > 0)
 			{
-				if (!Wireless)
+				if (!Wireless || InBase)
 				{
 					TakeInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor, 1);
 					if (Player.LockerGlobal)
@@ -1490,7 +1494,7 @@ acscript Locker(bool Wireless)
 			// Withdraw
 			if (Check)
 			{
-				if (!Wireless)
+				if (!Wireless || InBase)
 					Success = true
 				else
 				{
@@ -1531,11 +1535,6 @@ acscript Locker(bool Wireless)
 					}
 					else
 					{
-						if (Player.LockerPage == 0) // Ammo
-						{
-							
-						};
-						
 						GiveInventory(LockerItems[Player.LockerPage][Player.LockerIndex].Actor, 1);
 						if (Player.LockerGlobal)
 							GlobalLocker[Player.LockerPage][Player.LockerIndex]--
