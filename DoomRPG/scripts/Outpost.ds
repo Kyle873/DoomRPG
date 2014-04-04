@@ -1276,11 +1276,12 @@ acscript Locker(bool Wireless)
 	
 	while (Player.OutpostMenu == OMENU_LOCKER)
 	{
+		fixed X = 24.1;
+		fixed Y = 50.0;
 		int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
 		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 		int Efficiency = (Skills[5][5].CurrentLevel - 1) * 5;;
-		fixed X = 24.1;
-		fixed Y = 50.0;
+		int WirelessCost = (int)((fixed)LockerWirelessCosts[Player.LockerPage] - ((fixed)LockerWirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0)));
 		
 		// Set the HUD Size
 		SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
@@ -1299,13 +1300,18 @@ acscript Locker(bool Wireless)
 		
 		// Calculate total items
 		Total = 0;
-		for (int i = 0; LockerItems[Player.LockerPage][i].Actor != ""; ++i)
-			if (Player.LockerGlobal)
-				if (GlobalLocker[Player.LockerPage][i] > 0)
-					Total += GlobalLocker[Player.LockerPage][i]
-			else
-				if (Player.Locker[Player.LockerPage][i] > 0)
-					Total += Player.Locker[Player.LockerPage][i];
+		for (int i = 0; i < LOCKER_CATEGORIES; i++)
+			for (int j = 0; LockerItems[i][j].Actor != ""; ++j)
+				if (Player.LockerGlobal)
+				{
+					if (GlobalLocker[i][j] > 0)
+						Total += GlobalLocker[i][j];
+				}
+				else
+				{
+					if (Player.Locker[i][j] > 0)
+						Total += Player.Locker[i][j];
+				};
 		
 		// Title and Player.LockerPage
 		SetFont("BIGFONT");
@@ -1318,8 +1324,12 @@ acscript Locker(bool Wireless)
 					   LockerPages[Player.LockerPage], Player.LockerPage + 1, LOCKER_CATEGORIES,
 					   HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
 		
-		// Total amount of items in the Locker
-		HudMessage("Items: %d\n", Total, HUDMSG_PLAIN, 0, CR_GOLD, 24.1, 38.0, 0.05);
+		// Total Items, Wireless EP Cost, Transfer Efficiency
+		if (Wireless && !InBase)
+			HudMessage("Items: %d \cn(%d EP) [%d%% Efficiency]\n",
+					   Total, WirelessCost, Efficiency, HUDMSG_PLAIN, 0, CR_GOLD, 24.1, 38.0, 0.05)
+		else
+			HudMessage("Items: %d\n", Total, HUDMSG_PLAIN, 0, CR_GOLD, 24.1, 38.0, 0.05);
 		
 		// Determine Offset
 		if (Player.LockerIndex > SHOP_SCROLL)
@@ -1423,7 +1433,7 @@ acscript Locker(bool Wireless)
 				}
 				else
 				{
-					if (Player.EP < (int)((fixed)LockerWirelessCosts[Player.LockerPage] - ((fixed)LockerWirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 00.0))))
+					if (Player.EP < WirelessCost)
 					{
 						SetHudSize(0, 0, false);
 						SetFont("BIGFONT");
@@ -1438,7 +1448,7 @@ acscript Locker(bool Wireless)
 							GlobalLocker[Player.LockerPage][Player.LockerIndex]++
 						else
 							Player.Locker[Player.LockerPage][Player.LockerIndex]++;
-						Player.EP -= (int)((fixed)LockerWirelessCosts[Player.LockerPage] - ((fixed)LockerWirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0)));
+						Player.EP -= WirelessCost;
 						ActivatorSound("menu/move", 127);
 						Success = true;
 					};
@@ -1498,7 +1508,7 @@ acscript Locker(bool Wireless)
 					Success = true
 				else
 				{
-					if (Player.EP < (int)((fixed)LockerWirelessCosts[Player.LockerPage] - ((fixed)LockerWirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0))))
+					if (Player.EP < WirelessCost)
 					{
 						SetHudSize(0, 0, false);
 						SetFont("BIGFONT");
@@ -1529,8 +1539,8 @@ acscript Locker(bool Wireless)
 							GlobalLocker[Player.LockerPage][Player.LockerIndex]--
 						else
 							Player.Locker[Player.LockerPage][Player.LockerIndex]--;
-						if (Wireless)
-							Player.EP -= (int)((fixed)LockerWirelessCosts[Player.LockerPage] - ((fixed)LockerWirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0)));
+						if (Wireless && !InBase)
+							Player.EP -= WirelessCost;
 						ActivatorSound("menu/move", 127);
 					}
 					else
@@ -1540,8 +1550,8 @@ acscript Locker(bool Wireless)
 							GlobalLocker[Player.LockerPage][Player.LockerIndex]--
 						else
 							Player.Locker[Player.LockerPage][Player.LockerIndex]--;
-						if (Wireless)
-							Player.EP -= (int)((fixed)LockerWirelessCosts[Player.LockerPage] - ((fixed)LockerWirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0)));
+						if (Wireless && !InBase)
+							Player.EP -= WirelessCost;
 						ActivatorSound("menu/move", 127);
 					};
 			}
