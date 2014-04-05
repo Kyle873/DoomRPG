@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Saturday, April 05, 2014 at 4:45:35 AM";
+	"Saturday, April 05, 2014 at 7:43:17 PM";
 };
 
 // Level Info
@@ -281,6 +281,97 @@ script MonsterStats(int Flags)
 	if (GetActorPropertyFixed(0, APROP_DamageFactor) < 0.1) SetActorPropertyFixed(0, APROP_DamageFactor, 0.1);
 };
 
+script SpawnAura(int TID, int Type, bool ForceFancy)
+{
+	fixed X = GetActorX(TID);
+	fixed Y = GetActorY(TID);
+	fixed Z = GetActorZ(TID);
+	fixed Radius = GetActorPropertyFixed(TID, APROP_Radius);
+	fixed Height = GetActorPropertyFixed(TID, APROP_Height);
+	int Angle = GetActorAngle(TID) * 256;
+    bool Simple = (GetCVar("drpg_simple_auras") && !ForceFancy);
+    
+    if (Type != 0 && Type != 10 && IsStealth(TID))
+        return;
+    
+    switch (Type)
+    {
+		case 0: // Friendly Monster
+			if (!Simple)
+				SpawnForced("FriendlyAura", X, Y, Z + 32.0, 0, Angle);
+			SpawnForced("FriendlyIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 1: // Red Aura - Strength
+			if (!Simple)
+				SpawnForced("RedAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("RedAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 2: // Green Aura - Defense
+			if (!Simple)
+				SpawnForced("GreenAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("GreenAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 3: // White Aura - XP
+			if (!Simple)
+				SpawnForced("WhiteAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("WhiteAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 4: // Pink Aura - Vitality
+			if (!Simple)
+				SpawnForced("PinkAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("PinkAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 5: // Blue Aura - Energy
+			if (!Simple)
+				SpawnForced("CyanAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("CyanAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 6: // Purple Aura - Regeneration
+			if (!Simple)
+				SpawnForced("PurpleAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("PurpleAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 7: // Orange Aura - Agility
+			if (!Simple)
+				SpawnForced("OrangeAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("OrangeAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 8: // Dark Blue Aura - Capacity
+			if (!Simple)
+				SpawnForced("BlueAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("BlueAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 9: // Yellow Aura - Luck
+			if (!Simple)
+				SpawnForced("YellowAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("YellowAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+		case 10: // Black Aura - Miniboss
+			if (!Simple)
+				SpawnForced("BlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+			else
+				SpawnForced("BlackAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+			break;
+    };
+    
+	// Pass Radius and Height to the Auras for DECORATE usage
+    if (!Simple)
+    {
+        SetUserVariable(AuraTID, "user_radius", (int)Radius);
+        SetUserVariable(AuraTID, "user_height", (int)Height);
+        Thing_ChangeTID(AuraTID, 0);
+    };
+};
+
 // Monster Loop
 script MonsterLoop()
 {
@@ -306,56 +397,18 @@ script MonsterLoop()
 	
 	// Friendly Monster Aura
 	if (GetActorProperty(0, APROP_Friendly))
-	{
-		SpawnForced("FriendlyAura", X, Y, Z + 32.0, 0, Angle);
-		SpawnForced("FriendlyIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-	};
+		SpawnAura(0, 0, false);
 	
 	// Aura Loop Effects
 	switch (AuraType)
 	{
-		case 1: // Red Aura - Strength
-			if (!IsStealth(0))
-				SpawnForced("RedAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
-			break;
-		case 2: // Green Aura - Defense
-			if (!IsStealth(0))
-				SpawnForced("GreenAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
-			break;
-		case 3: // White Aura - XP
-			if (!IsStealth(0))
-				SpawnForced("WhiteAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
-			break;
-		case 4: // Pink Aura - Vitality
-			if (!IsStealth(0))
-				SpawnForced("PinkAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
-			break;
-		case 5: // Blue Aura - Energy
-			if (!IsStealth(0))
-				SpawnForced("CyanAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
-			break;
 		case 6: // Purple Aura - Regeneration
-			if (!IsStealth(0))
-				SpawnForced("PurpleAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
 			RegenAmount = 0.01 * GetActorProperty(0, APROP_SpawnHealth);
 			if (RegenAmount == 0) RegenAmount = 1;
 			if (GetActorProperty(0, APROP_Health) < GetActorProperty(0, APROP_SpawnHealth) && (Timer() % 35) == 1 && !CheckInventory("PowerTimeFreezer"))
 				HealThing(RegenAmount);
 			break;
-		case 7: // Orange Aura - Agility
-			if (!IsStealth(0))
-				SpawnForced("OrangeAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
-			break;
-		case 8: // Dark Blue Aura - Capacity
-			if (!IsStealth(0))
-				SpawnForced("BlueAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
-			break;
-		case 9: // Yellow Aura - Luck
-			if (!IsStealth(0))
-				SpawnForced("YellowAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
-			break;
 		case 10: // Black Aura - Miniboss
-			SpawnForced("BlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle);
 			SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy);
 			RegenAmount = 0.01 * GetActorProperty(0, APROP_SpawnHealth);
 			if (RegenAmount == 0) RegenAmount = 1;
@@ -364,10 +417,9 @@ script MonsterLoop()
 			break;
 	};
 	
-	// Pass Radius and Height to the Auras for DECORATE usage
-	SetUserVariable(AuraTID, "user_radius", (int)Radius);
-	SetUserVariable(AuraTID, "user_height", (int)Height);
-	Thing_ChangeTID(AuraTID, 0);
+	// Spawn Aura
+    if (AuraType)
+        SpawnAura(0, AuraType, false);
 	
 	// Strength
 	if (MonsterStrength >= 32000)
