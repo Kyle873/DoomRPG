@@ -451,7 +451,18 @@ function void CheckHealth()
 		Player.LowHealthTimer = 0;
 	};
 	
-	if (GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10 && GetActorProperty(Player.TID, APROP_Health) > 0)
+	// Strength, Defense and Vitality Perks
+	if (GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10)
+	{
+		if (Player.Perks[STAT_STRENGTH])
+			Player.TotalDamage *= 2;
+		if (Player.Perks[STAT_DEFENSE])
+			Player.DamageFactor /= 2;
+		if (Player.Perks[STAT_VITALITY])
+			Player.HPTime /= 2;
+	};
+	
+	if (GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10 && GetActorProperty(Player.TID, APROP_Health) > 0 && !Player.Perks[STAT_VITALITY])
 	{
 		FadeRange(Player.LowHealthTimer + 155, 0, 0, 0.25, Player.LowHealthTimer + 155, 0, 0, 0.0, 1.0);
 		Player.LowHealthTimer++;
@@ -635,7 +646,10 @@ function void CheckRegen()
 
 // Regeneration
 function void DoRegen()
-{	
+{
+	int HPAmount = 1;
+	int EPAmount = 1;
+	
 	// HP Regen
 	if (Player.HPRate >= Player.HPTime && GetActorProperty(Player.TID, APROP_Health) >= 0)
 	{
@@ -679,6 +693,13 @@ function void DoRegen()
 			Thing_ChangeTID(AuraTID, 0);
 		};
 		
+		// Regeneration Perk
+		if (Player.Perks[STAT_REGENERATION])
+		{
+			HPAmount = 1 + (GetActorProperty(Player.TID, APROP_SpawnHealth) / GetActorProperty(Player.TID, APROP_Health));
+			EPAmount = 1 + (Player.EPMax / Player.EP);
+		};
+		
 		// Movement/Crouching/Idling mechanics
 		if (GetCVar("drpg_regen_movement"))
 		{
@@ -686,24 +707,24 @@ function void DoRegen()
 				GetPlayerInput(PlayerNumber(), MODINPUT_SIDEMOVE) ||
 				GetPlayerInput(PlayerNumber(), MODINPUT_UPMOVE))
 			{
-				Player.HPRate++;
-				Player.EPRate++;
+				Player.HPRate += HPAmount;
+				Player.EPRate += EPAmount;
 			}
 			else if (Buttons & BT_CROUCH) // Crouch - 150% Regen Rate
 			{
-				Player.HPRate += 3;
-				Player.EPRate += 3;
+				Player.HPRate += HPAmount + 3;
+				Player.EPRate += EPAmount + 3;
 			}
 			else // Idle - 100% Regen Rate
 			{
-				Player.HPRate += 2;
-				Player.EPRate += 2;
+				Player.HPRate += HPAmount + 2;
+				Player.EPRate += EPAmount + 2;
 			};
 		}
 		else
 		{
-			Player.HPRate += 2;
-			Player.EPRate += 2;
+				Player.HPRate += HPAmount;
+				Player.EPRate += EPAmount;
 		};
 	};
 };
@@ -757,7 +778,11 @@ function void CheckStatBounds()
 	/* Prevent Overflow of EP - I'd rather we not do this, just for things like Stims
 	if (Player.EP > Player.EPMax)
 		Player.EP = Player.EPMax; */
-
+	
+	// Cap Defense/DamageFactor
+	if (Player.DamageFactor < 0.01)
+		Player.DamageFactor = 0.01;
+	
 	// Cap the max regen timer amounts to 1 second
 	if (Player.HPTime < 35)
 		Player.HPTime = 35;
@@ -834,5 +859,42 @@ function void CheckBurnout()
 		Player.Speed /= 2;
 		Player.JumpHeight /= 2;
 		Player.SurvivalBonus /= 2;
+		
+		// Energy Perk
+		if (Player.Perks[STAT_ENERGY])
+			Player.EPTime /= 2;
+	};
+};
+
+function void CheckPerks()
+{
+	if (Player.Strength >= 100) 	Player.Perks[STAT_STRENGTH] = true		else Player.Perks[STAT_STRENGTH] = false;
+	if (Player.Defense >= 100) 		Player.Perks[STAT_DEFENSE] = true		else Player.Perks[STAT_DEFENSE] = false;
+	if (Player.Vitality >= 100) 	Player.Perks[STAT_VITALITY] = true		else Player.Perks[STAT_VITALITY] = false;
+	if (Player.Energy >= 100) 		Player.Perks[STAT_ENERGY] = true		else Player.Perks[STAT_ENERGY] = false;
+	if (Player.Regeneration >= 100)	Player.Perks[STAT_REGENERATION] = true	else Player.Perks[STAT_REGENERATION] = false;
+	if (Player.Agility >= 100) 		Player.Perks[STAT_AGILITY] = true		else Player.Perks[STAT_AGILITY] = false;
+	if (Player.Capacity >= 100) 	Player.Perks[STAT_CAPACITY] = true		else Player.Perks[STAT_CAPACITY] = false;
+	if (Player.Luck >= 100) 		Player.Perks[STAT_LUCK] = true			else Player.Perks[STAT_LUCK] = false;
+	
+	// Agility Perk
+	if (Player.Perks[STAT_AGILITY])
+		Player.SurvivalBonus += 30;
+	
+	// Capacity Perk
+	if (Player.Perks[STAT_CAPACITY] && (Timer() % (35 * 30)) == 1)
+	{
+		GiveInventory("Clip", GetAmmoAmount("Clip"));
+		GiveInventory("Shell", GetAmmoAmount("Shell"));
+		GiveInventory("RocketAmmo", GetAmmoAmount("RocketAmmo"));
+		GiveInventory("Cell", GetAmmoAmount("Cell"));
+	};
+	
+	// Luck Perk
+	// TODO: Ability to see secrets
+	if (Player.Perks[STAT_LUCK])
+	{
+		GiveInventory("MapRevealer", 1);
+		GiveInventory("PowerScanner", 1);
 	};
 };
