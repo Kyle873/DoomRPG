@@ -32,18 +32,7 @@ namespace DoomRPG
             config.Load();
 
             // Populate dynamic controls
-            // IWAD
-            for (int i = 0; i < Enum.GetNames(typeof(IWAD)).Length; i++)
-                comboBoxIWAD.Items.Add(Enum.GetName(typeof(IWAD), i));
-            comboBoxIWAD.SelectedIndex = (int)config.iwad;
-            // Difficulty
-            for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
-                comboBoxDifficulty.Items.Add(Enum.GetName(typeof(Difficulty), i));
-            comboBoxDifficulty.SelectedIndex = (int)config.difficulty;
-            // DRLA Class
-            for (int i = 0; i < Enum.GetNames(typeof(DRLAClass)).Length; i++)
-                comboBoxClass.Items.Add(Enum.GetName(typeof(DRLAClass), i));
-            comboBoxClass.SelectedIndex = (int)config.rlClass;
+            PopulateComboBoxes();
 
             // Load Controls
             LoadControls();
@@ -53,6 +42,24 @@ namespace DoomRPG
             
             // send initial events to specific controls to refresh their states
             richTextBoxCredits_TextChanged(null, null);
+        }
+
+        private void PopulateComboBoxes()
+        {
+            // IWAD
+            for (int i = 0; i < Enum.GetNames(typeof(IWAD)).Length; i++)
+                comboBoxIWAD.Items.Add(Enum.GetName(typeof(IWAD), i));
+            comboBoxIWAD.SelectedIndex = (int)config.iwad;
+            
+            // Difficulty
+            for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
+                comboBoxDifficulty.Items.Add(Enum.GetName(typeof(Difficulty), i));
+            comboBoxDifficulty.SelectedIndex = (int)config.difficulty;
+            
+            // DRLA Class
+            for (int i = 0; i < Enum.GetNames(typeof(DRLAClass)).Length; i++)
+                comboBoxClass.Items.Add(Enum.GetName(typeof(DRLAClass), i));
+            comboBoxClass.SelectedIndex = (int)config.rlClass;
         }
 
         private void PopulateMods()
@@ -83,19 +90,28 @@ namespace DoomRPG
                 Utils.ShowError("You must specify a source port path!");
                 return false;
             }
+
             if (config.DRPGPath == string.Empty)
             {
                 Utils.ShowError("You must specify Doom RPG's path!");
                 return false;
             }
+
             if (config.modsPath == string.Empty && (config.patches[3] == true || config.patches[4] == true || config.patches[5] == true))
             {
                 Utils.ShowError("You must specify a WAD/PK3 path for the selected patches!");
                 return false;
             }
+
             if (Path.GetDirectoryName(config.portPath) == config.DRPGPath)
             {
                 Utils.ShowError("The Port Path and Doom RPG path cannot be the same!");
+                return false;
+            }
+
+            if (config.DRPGPath == Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
+            {
+                Utils.ShowError("You cannot keep the launcher within the Doom RPG folder! Please move it to a different location.");
                 return false;
             }
 
