@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading;
@@ -17,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 7, 0, 4);
+        Version version = new Version(0, 7, 1);
         Config config = new Config();
 
         public FormMain()
@@ -61,10 +62,17 @@ namespace DoomRPG
             if (textBoxModsPath.Text != string.Empty)
                 if (Directory.Exists(textBoxModsPath.Text))
                 {
-                    IEnumerable<string> mods = Directory.EnumerateFiles(textBoxModsPath.Text);
-                    foreach (string mod in mods)
-                        if (mod.Contains(".wad") || mod.Contains("pk3") || mod.Contains("pk7"))
-                            checkedListBoxMods.Items.Add(Path.GetFileName(mod));
+                    List<string> folders = Directory.EnumerateDirectories(textBoxModsPath.Text).ToList<string>();
+                    folders.Add(textBoxModsPath.Text);
+
+                    foreach (string folder in folders)
+                    {
+                        List<string> files = Directory.EnumerateFiles(folder).ToList<string>();
+                        
+                        foreach (string file in files)
+                            if (file.Contains(".wad") || file.Contains("pk3") || file.Contains("pk7"))
+                                checkedListBoxMods.Items.Add(Path.GetFileName(file));
+                    }
                 }
         }
         
