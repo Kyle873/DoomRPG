@@ -39,7 +39,7 @@ namespace DoomRPG
 
             // Mods
             PopulateMods();
-            
+
             // send initial events to specific controls to refresh their states
             richTextBoxCredits_TextChanged(null, null);
         }
@@ -55,7 +55,7 @@ namespace DoomRPG
             for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
                 comboBoxDifficulty.Items.Add(Enum.GetName(typeof(Difficulty), i));
             comboBoxDifficulty.SelectedIndex = (int)config.difficulty;
-            
+
             // DRLA Class
             for (int i = 0; i < Enum.GetNames(typeof(DRLAClass)).Length; i++)
                 comboBoxClass.Items.Add(Enum.GetName(typeof(DRLAClass), i));
@@ -75,14 +75,14 @@ namespace DoomRPG
                     foreach (string folder in folders)
                     {
                         List<string> files = Directory.EnumerateFiles(folder).ToList<string>();
-                        
+
                         foreach (string file in files)
                             if (file.Contains(".wad") || file.Contains("pk3") || file.Contains("pk7"))
                                 checkedListBoxMods.Items.Add(Path.GetFileName(file));
                     }
                 }
         }
-        
+
         private bool CheckForErrors()
         {
             if (config.portPath == string.Empty)
@@ -342,7 +342,7 @@ namespace DoomRPG
                 if (checkedListBoxPatches.GetItemChecked(4))
                     cmdline += " +playerclass " + config.rlClass.ToString();
             }
-            
+
             // Multiplayer
             if (config.multiplayer)
             {
@@ -447,7 +447,7 @@ namespace DoomRPG
             // Save config
             SaveControls();
             config.Save();
-            
+
             // Error Handling
             if (!CheckForErrors())
                 return;
