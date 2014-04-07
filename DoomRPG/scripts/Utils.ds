@@ -21,24 +21,72 @@ str[6] SkillLevels =
 };
 
 // Used for handling inventory items using the Capacity stat
-acscript bool CheckCapacity(bool Remove)
+acscript bool CheckCapacity()
 {
-	// if (!GetCVar("drpg_inv_capacity")) return true;
+	int Items = 0;
+	int MaxItems = Player.Capacity;
 	
-	if (Remove)
+	// Don't do checks if you don't have the system enabled
+	if (!GetCVar("drpg_inv_capacity")) return false;
+	
+	str[] ItemList =
 	{
-		Player.InvItems--;
-		return false;
-	}
-	else
-	{
-		if (Player.InvItems < Player.Capacity)
-		{
-			Player.InvItems++;
-			return false;
-		}
-		else return true;
+		// Health
+		{ "Stimpack"; };
+		{ "Medikit"; };
+		{ "LargeMedikit"; };
+		{ "XLMedikit"; };
+		{ "MedPack"; };
+		{ "SurgeryKit"; };
+		{ "Continue"; };
+		
+		// Armor
+		{ "GreenArmor"; };
+		{ "UsedGreenArmor"; };
+		{ "BlueArmor"; };
+		{ "UsedBlueArmor"; };
+		{ "YellowArmor"; };
+		{ "UsedYellowArmor"; };
+		{ "RedArmor"; };
+		{ "UsedRedArmor"; };
+		{ "WhiteArmor"; };
+		{ "UsedWhiteArmor"; };
+		
+		// Powerups
+		{ "InvulnerabilitySphere"; };
+		{ "InvulnerabilityCharge"; };
+		{ "BlurSphere"; };
+		{ "InvisibilityCharge"; };
+		{ "RegenSphere"; };
+		{ "RadSuit"; };
+		{ "Infrared"; };
+		{ "AllMap"; };
+		{ "Berserk"; };
+		{ "Wings"; };
+		{ "StimSmall"; };
+		{ "StimMedium"; };
+		{ "StimLarge"; };
+		
+		// DoomRL - Powerups
+		{ "InvulnerabilitySphere2"; };
+		{ "RadSuit2"; };
+		{ "Infrared2"; };
+		{ "Berserk2"; };
+
+		// Sentinel (Indicates end of list)
+		{ ""; };
 	};
+	
+	for (int i = 0; ItemList[i] != ""; i++)
+		if (CheckInventory(ItemList[i]) > 0)
+			Items += CheckInventory(ItemList[i]);
+	
+	Log("\cd%d\n", Items);
+	
+	if (Items >= MaxItems)
+		return true
+	else
+		return false;
 };
 
 // Return Timer() for DECORATE
