@@ -28,6 +28,11 @@ int[MAX_COMPOUNDS] CompoundColors =
 	CR_DARKGREEN; CR_DARKRED; CR_GOLD; CR_GREEN; CR_PURPLE; CR_ORANGE; CR_BRICK; CR_BLACK; CR_GRAY;
 };
 
+int StimStatsStart = 0;
+int StimStatsEnd = 8;
+int StimPowerupStart = 10;
+int StimPowerupEnd = MAX_COMPOUNDS;
+
 acscript UseStim() net
 {
 	// If you don't have a stim ready or components in it, terminate
@@ -38,7 +43,7 @@ acscript UseStim() net
 	};
 	
 	// Set Timer for Stat bonuses
-	for (int i = 0; i < 8; i++)
+	for (int i = StimStatsStart; i < StimStatsEnd; i++)
 		if (Player.Stim.Current[i] > 0)
 		{
 			Player.Stim.Active = true;
@@ -65,16 +70,17 @@ acscript UseStim() net
 	Player.CapacityBonus = Player.Stim.Current[STIM_CAPACITY] * 5;
 	Player.LuckBonus = Player.Stim.Current[STIM_LUCK] * 5;
 	
-	// Apply Powerups
-	for (int i = 0; i < Player.Stim.Current[STIM_INDESTRUCTIBLE]; i++) GiveInventory("PowerStimIndestructible", 1);
-	for (int i = 0; i < Player.Stim.Current[STIM_SHADOW]; i++) GiveInventory("PowerStimShadow", 1);
-	for (int i = 0; i < Player.Stim.Current[STIM_INFINITY]; i++) GiveInventory("PowerStimInfinity", 1);
-	for (int i = 0; i < Player.Stim.Current[STIM_CHRONO]; i++) GiveInventory("PowerStimChrono", 1);
-	for (int i = 0; i < Player.Stim.Current[STIM_ADRENALINE]; i++) Player.RegenBoostTimer += 35 * 10;
-	for (int i = 0; i < Player.Stim.Current[STIM_GRAVITY]; i++) GiveInventory("PowerStimGravity", 1);
-	for (int i = 0; i < Player.Stim.Current[STIM_VAMPIRE]; i++) GiveInventory("PowerStimVampire", 1);
-	for (int i = 0; i < Player.Stim.Current[STIM_RAGE]; i++) GiveInventory("PowerStimRage", 1);
-	for (int i = 0; i < Player.Stim.Current[STIM_MAGNETIC]; i++) Player.MagnetTimer += 35 * 10;
+	// Setup Powerup Timers
+	for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
+		if (Player.Stim.Current[i] > 0)
+		{
+			Player.Stim.PowerupTimer[i] = (35 * Player.Stim.Current[i]) * 10;
+			Player.Stim.PowerupTimerMax[i] = (35 * Player.Stim.Current[i]) * 10;
+			
+			// Regeneration Vial handling
+			if (i == STIM_ADRENALINE)
+				Player.RegenBoostTimer += (35 * Player.Stim.Current[i]) * 10;
+		};
 	
 	// Apply Active Flags
 	for (int i = 0; i < MAX_COMPOUNDS; i++)
@@ -105,6 +111,20 @@ acscript AddCompound(int Type, int Amount)
 
 function void CheckStim()
 {
+	// Saves typing and lets me iterate the powerup timers way easier
+	str[] StimPowerupHUDActors =
+	{
+		"StimIndestructible";
+		"StimShadow";
+		"StimInfinity";
+		"StimChrono";
+		"StimAdrenaline";
+		"StimGravity";
+		"StimVampire";
+		"StimRage";
+		"StimMagnetic";
+	};
+	
 	// Stim maximum capacities
 	if (Player.Stim.Size == 1) // Small
 		Player.Stim.Capacity = 10;
@@ -124,6 +144,16 @@ function void CheckStim()
 	if (Player.Stim.Timer > 0 && !CheckInventory("MenuFreezer") && !CheckInventory("PowerTimeFreezer"))
 		Player.Stim.Timer--;
 	
+	// Powerup Timer Handling
+	if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
+		for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
+			if (Player.Stim.PowerupTimer[i] > 0)
+			{
+				GiveInventory(StrParam("Power%s\n", StimPowerupHUDActors[i - StimPowerupStart]), 1);
+				SetInventory(StimPowerupHUDActors[i - StimPowerupStart], Player.Stim.PowerupTimer[i] * 100 / (Player.Stim.PowerupTimerMax[i] + 1));
+				Player.Stim.PowerupTimer[i]--;
+			};
+
 	// Remove bonuses and active flags when Stim has expired
 	if (Player.Stim.Timer <= 0 && Player.Stim.Active)
 	{
