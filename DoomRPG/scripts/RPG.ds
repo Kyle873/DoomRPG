@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Sunday, April 06, 2014 at 9:32:28 PM";
+	"Sunday, April 06, 2014 at 10:52:21 PM";
 };
 
 // Level Info
@@ -621,9 +621,9 @@ script Loop()
 	CheckBurnout();
 	CheckShields();
 	CheckShieldAccessory();
-	CheckStatBounds();
 	CheckStim();
 	CheckPerks();
+	CheckStatBounds();
 	CheckLevelInfo();
 	CheckHUD();
 	
@@ -689,7 +689,38 @@ script Loop()
 	// Give the Strength boosting item
 	if (Player.TotalDamage > 0 && Player.TotalDamage <= 32000)
 		GiveInventory(StrParam("Strength%d\n", Player.TotalDamage), 1);
-
+	
+	// Set mass stupid high when Invulnerable to prevent knockback
+	if (CheckInventory("PowerInvulnerable"))
+		Player.Mass *= 128;
+	
+	// Survival Bonus
+	if (RandomFixed(0.0, 100.0) <= Player.SurvivalBonus)
+	{
+		SetPlayerProperty(0, 1, PROP_BUDDHA);
+		
+		if (GetActorProperty(Player.TID, APROP_Health) == 1)
+		{
+			HealThing(1);
+			ActivatorSound("health/survive", 127);
+		};
+	}
+	else
+		SetPlayerProperty(0, 0, PROP_BUDDHA);
+	
+	// Continue check
+	if (CheckInventory("Continue") > 0)
+	{
+		SetPlayerProperty(0, 1, PROP_BUDDHA);
+		
+		if (GetActorProperty(Player.TID, APROP_Health) <= 1)
+		{
+			HealThing(1000000);
+			ActivatorSound("health/resurrect", 127);
+			TakeInventory("Continue", 1);
+		};
+	};
+	
 	// Apply Stats
 	SetActorProperty(Player.TID, APROP_SpawnHealth, Player.HealthMax);
 	SetActorPropertyFixed(Player.TID, APROP_DamageFactor, Player.DamageFactor);
