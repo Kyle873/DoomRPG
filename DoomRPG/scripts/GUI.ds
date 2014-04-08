@@ -2,9 +2,24 @@
 #include "GUI.dh"
 #include "Utils.dh"
 
+function void BuildTestWindow()
+{
+	GUIWindow Window;
+	
+	Window.Title = "Super Awesome Test Window";
+	Window.X = 40;
+	Window.Y = 40;
+	Window.Width = 300;
+	Window.Height = 300;
+	Window.Texture = "GUIBack";
+	
+	Player.Window = Window;
+};
+
 acscript ToggleGUI()
 {
 	Player.GUIOpen = !Player.GUIOpen;
+	BuildTestWindow();
 	
 	if (Player.GUIOpen)
 		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN)
@@ -21,7 +36,7 @@ script CheckCursor()
 		int Width = GetCVar("drpg_menu_width");
 		int Height = GetCVar("drpg_menu_height");
 		
-		// Set the resolution/HUD Size
+		// Set the Resolution/HUD Size
 		SetHudSize(Width, Height, true);
 		
 		// Get X/Y input
@@ -73,8 +88,52 @@ script CheckGUI()
 	
 	while (true)
 	{
-		// TODO
+		if (Player.GUIOpen)
+		{
+			// Handle Drawing and Input for the Window
+			HandleWindow(&Player.Window);
+		};
 		
 		Delay(1);
+	};
+};
+
+function void HandleWindow(GUIWindow *Window)
+{
+	// Set the Resolution/HUD Size
+	int Width = GetCVar("drpg_menu_width");
+	int Height = GetCVar("drpg_menu_height");
+	SetHudSize(Width, Height, true);
+	
+	// Title
+	SetFont("SMALLFONT");
+	HudMessage("%s\n", Window->Title, HUDMSG_PLAIN, 0, CR_WHITE, Window->X + 16.1, Window->Y + 8.0, 0.05);
+	
+	// Window Background
+	SetHudClipRect(Window->X, Window->Y, Window->Width, Window->Height);
+	PrintSprite(Window->Texture, 0, Window->X, Window->Y, 0.05);
+	SetHudClipRect(0, 0, 0, 0);
+	
+	// Dragging
+	if (Player.Mouse.X > Window->X && Player.Mouse.X < Window->X + Window->Width &&
+		Player.Mouse.Y > Window->Y && Player.Mouse.Y < Window->Y + 24 && Player.Mouse.LeftButton)
+	{
+		// Crappy Method
+		// Window->X = Player.Mouse.X - 16;
+		// Window->Y = Player.Mouse.Y - 16;
+		
+		// TODO: This would generally work better/smoother once I find the right values to scale it by
+		Window->X -= Player.Mouse.XAdd / 32;
+		Window->Y -= Player.Mouse.YAdd / 24;
+		
+		// Bounding
+		if (Window->X < 0)
+			Window->X = 0;
+		if (Window->X > Width - Window->Width)
+			Window->X = Width - Window->Width;
+		if (Window->Y < 0)
+			Window->Y = 0;
+		if (Window->Y > Height - Window->Height)
+			Window->Y = Height - Window->Height;
 	};
 };
