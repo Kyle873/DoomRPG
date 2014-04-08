@@ -1,0 +1,80 @@
+#include "Globals.dh"
+#include "GUI.dh"
+#include "Utils.dh"
+
+acscript ToggleGUI()
+{
+	Player.GUIOpen = !Player.GUIOpen;
+	
+	if (Player.GUIOpen)
+		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN)
+	else
+		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+};
+
+script CheckCursor()
+{
+	Start:
+	
+	while (Player.GUIOpen)
+	{
+		int Width = GetCVar("drpg_menu_width");
+		int Height = GetCVar("drpg_menu_height");
+		
+		// Set the resolution/HUD Size
+		SetHudSize(Width, Height, true);
+		
+		// Get X/Y input
+		Player.Mouse.XAdd = GetPlayerInput(PlayerNumber(), INPUT_YAW);
+		Player.Mouse.YAdd = GetPlayerInput(PlayerNumber(), INPUT_PITCH);
+		
+		// Get Buttons
+		Player.Mouse.Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		
+		// Add X/Y input to current position
+		Player.Mouse.X -= Player.Mouse.XAdd / 32;
+		Player.Mouse.Y -= Player.Mouse.YAdd / 24;
+		
+		// Check resolution boundaries
+		if (Player.Mouse.X < 0)
+			Player.Mouse.X = 0;
+		if (Player.Mouse.Y < 0)
+			Player.Mouse.Y = 0;
+		if (Player.Mouse.X > Width)
+			Player.Mouse.X = Width;
+		if (Player.Mouse.Y > Height)
+			Player.Mouse.Y = Height;
+		
+		// Draw Cursor
+		PrintSprite("Cursor", 0, Player.Mouse.X, Player.Mouse.Y, 0.05);
+		
+		// Mouse Input
+		if (Player.Mouse.Buttons & BT_ATTACK)
+			Player.Mouse.LeftButton = true
+		else
+			Player.Mouse.LeftButton = false;
+		if (Player.Mouse.Buttons & BT_ALTATTACK)
+			Player.Mouse.RightButton = true
+		else
+			Player.Mouse.RightButton = false;
+		
+		Delay(1);
+	};
+	
+	Delay(1);
+	goto Start;
+};
+
+script CheckGUI()
+{
+	// Center Mouse
+	Player.Mouse.X = GetCVar("drpg_menu_width") / 2;
+	Player.Mouse.Y = GetCVar("drpg_menu_height") / 2;
+	
+	while (true)
+	{
+		// TODO
+		
+		Delay(1);
+	};
+};

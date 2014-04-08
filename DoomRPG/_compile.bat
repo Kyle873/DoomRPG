@@ -16,6 +16,7 @@ rem Standard Libraries
 rem Doom RPG Modules
 %ACC% %SRC%\Arena.ds -o %OBJ%\Arena.o
 %ACC% %SRC%\Augs.ds -o %OBJ%\Augs.o
+%ACC% %SRC%\GUI.ds -o %OBJ%\GUI.o
 %ACC% %SRC%\Menu.ds -o %OBJ%\Menu.o
 %ACC% %SRC%\Minigame.ds -o %OBJ%\Minigame.o
 %ACC% %SRC%\Outpost.ds -o %OBJ%\Outpost.o
