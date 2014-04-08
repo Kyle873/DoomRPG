@@ -4,14 +4,14 @@
 
 function void BuildTestWindow()
 {
-	GUIWindow Window;
+	GUIWindow *Window = GUICreateWindow();
 	
-	Window.Title = "Super Awesome Test Window";
-	Window.X = 40;
-	Window.Y = 40;
-	Window.Width = 300;
-	Window.Height = 300;
-	Window.Texture = "GUIBack";
+	Window->Title = "Super Awesome Test Window";
+	Window->X = 40;
+	Window->Y = 40;
+	Window->Width = 300;
+	Window->Height = 300;
+	Window->Texture = "GUIBack";
 	
 	Player.Window = Window;
 };
@@ -91,7 +91,7 @@ script CheckGUI()
 		if (Player.GUIOpen)
 		{
 			// Handle Drawing and Input for the Window
-			HandleWindow(&Player.Window);
+			HandleWindow(Player.Window);
 		};
 		
 		Delay(1);
@@ -107,7 +107,7 @@ function void HandleWindow(GUIWindow *Window)
 	
 	// Title
 	SetFont("SMALLFONT");
-	HudMessage("%s\n", Window->Title, HUDMSG_PLAIN, 0, CR_WHITE, Window->X + 16.1, Window->Y + 8.0, 0.05);
+	HudMessage("%s\n", Window->Title, HUDMSG_PLAIN, 0, (InTitleBar(Window) ? CR_GREEN : CR_WHITE), Window->X + 16.1, Window->Y + 8.0, 0.05);
 	
 	// Window Background
 	SetHudClipRect(Window->X, Window->Y, Window->Width, Window->Height);
@@ -115,8 +115,7 @@ function void HandleWindow(GUIWindow *Window)
 	SetHudClipRect(0, 0, 0, 0);
 	
 	// Dragging
-	if (Player.Mouse.X > Window->X && Player.Mouse.X < Window->X + Window->Width &&
-		Player.Mouse.Y > Window->Y && Player.Mouse.Y < Window->Y + 24 && Player.Mouse.LeftButton)
+	if (InTitleBar(Window) && Player.Mouse.LeftButton)
 	{
 		// Crappy Method
 		// Window->X = Player.Mouse.X - 16;
@@ -136,6 +135,12 @@ function void HandleWindow(GUIWindow *Window)
 		if (Window->Y > Height - Window->Height)
 			Window->Y = Height - Window->Height;
 	};
+};
+
+function GUIWindow *GUICreateWindow()
+{
+	GUIWindow *Window = malloc(sizeof(GUIWindow));
+	return Window;
 };
 
 function GUILabel *GUICreateLabel(GUIWindow *Window)
@@ -186,4 +191,13 @@ function GUITooltip *GUICreateTooltip()
 {
 	GUITooltip *Tooltip = malloc(sizeof(GUITooltip));
 	return Tooltip;
+};
+
+function bool InTitleBar(GUIWindow *Window)
+{
+	if (Player.Mouse.X > Window->X && Player.Mouse.X < Window->X + Window->Width &&
+		Player.Mouse.Y > Window->Y + 10 && Player.Mouse.Y < Window->Y + 20)
+		return true
+	else
+		return false;
 };
