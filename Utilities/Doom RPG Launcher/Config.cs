@@ -31,6 +31,9 @@ namespace DoomRPG
         public bool extraTics = false;
         public int duplex = 0;
 
+        // Warnings
+        public bool wipeWarning = false;
+
         public void Save()
         {
             List<string> data = new List<string>();

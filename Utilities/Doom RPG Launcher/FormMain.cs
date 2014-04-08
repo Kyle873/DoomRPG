@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 7, 1);
+        Version version = new Version(0, 7, 2);
         Config config = new Config();
 
         public FormMain()
@@ -77,7 +77,7 @@ namespace DoomRPG
                         List<string> files = Directory.EnumerateFiles(folder).ToList<string>();
 
                         foreach (string file in files)
-                            if (file.Contains(".wad") || file.Contains("pk3") || file.Contains("pk7"))
+                            if (file.Contains(".wad") || file.Contains(".pk3") || file.Contains(".pk7") || file.Contains(".zip"))
                                 checkedListBoxMods.Items.Add(Path.GetFileName(file));
                     }
                 }
@@ -116,6 +116,27 @@ namespace DoomRPG
             }
 
             return true;
+        }
+
+        private bool CheckForMods()
+        {
+            if (textBoxDRPGPath.Text != string.Empty)
+                if (Directory.Exists(textBoxDRPGPath.Text))
+                {
+                    List<string> folders = Directory.EnumerateDirectories(textBoxDRPGPath.Text).ToList<string>();
+                    folders.Add(textBoxDRPGPath.Text);
+
+                    foreach (string folder in folders)
+                    {
+                        List<string> files = Directory.EnumerateFiles(folder).ToList<string>();
+
+                        foreach (string file in files)
+                            if (file.Contains(".wad") || file.Contains(".pk3") || file.Contains(".pk7") || file.Contains(".zip") || file.Contains(".exe"))
+                                return true;
+                    }
+                }
+
+            return false;
         }
 
         private void LoadControls()
@@ -187,72 +208,104 @@ namespace DoomRPG
 
         private async Task CheckForUpdates()
         {
+            DialogResult result;
+
             // Save the config
             SaveControls();
             config.Save();
 
-            toolStripStatusLabel.ForeColor = Color.FromKnownColor(KnownColor.ControlText);
-            toolStripStatusLabel.Text = "Checking for updates...";
-            toolStripProgressBar.Style = ProgressBarStyle.Marquee;
+            // Wipe Warning
+            if (!config.wipeWarning)
+                result = MessageBox.Show("This process will wipe whatever is in your selected Doom RPG folder. Are you sure you want to continue?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
+            else
+                result = DialogResult.Yes;
 
-            try
+            // Extra check to see if your selected Doom RPG path already has stuff in it
+            if (CheckForMods())
             {
-                string masterSHA = await GetMasterSHA();
-                string SHAPath = config.DRPGPath + "\\SHA-1";
+                DialogResult createResult = MessageBox.Show("The Doom RPG folder contains other mod files. Would you like to create a subfolder for Doom RPG?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-                // Does the SHA-1 of the current version match the remote branch?
-                if (Directory.Exists(config.DRPGPath + "\\.git")) // Version is pulled from git, why bother updating with the launcher?
+                if (createResult == DialogResult.Yes)
                 {
-                    toolStripStatusLabel.Text = "This version of Doom RPG is managed by git";
-                    toolStripProgressBar.Style = ProgressBarStyle.Continuous;
-                    buttonCheckUpdates.Enabled = true;
-                    buttonLaunch.Enabled = true;
+                    textBoxDRPGPath.Text += "\\DoomRPG";
+                    config.DRPGPath += "\\DoomRPG";
+                }
+                else
                     return;
-                }
-                else if (!Directory.Exists(config.DRPGPath)) // Directory wasn't found
-                {
-                    toolStripStatusLabel.ForeColor = Color.Red;
-                    toolStripStatusLabel.Text = "Could not find Doom RPG directory, downloading latest version...";
-                }
-                else if (File.Exists(SHAPath))
-                {
-                    string localSHA = File.ReadAllLines(SHAPath)[0];
+            }
 
-                    // Not a match, need to grab the latest version
-                    if (masterSHA != localSHA || !File.Exists(SHAPath))
+            if (result == DialogResult.Yes)
+            {
+                config.wipeWarning = true;
+
+                toolStripStatusLabel.ForeColor = Color.FromKnownColor(KnownColor.ControlText);
+                toolStripStatusLabel.Text = "Checking for updates...";
+                toolStripProgressBar.Style = ProgressBarStyle.Marquee;
+
+                try
+                {
+                    string masterSHA = await GetMasterSHA();
+                    string SHAPath = config.DRPGPath + "\\SHA-1";
+
+                    // Does the SHA-1 of the current version match the remote branch?
+                    if (Directory.Exists(config.DRPGPath + "\\.git")) // Version is pulled from git, why bother updating with the launcher?
                     {
-                        toolStripStatusLabel.ForeColor = Color.Red;
-                        toolStripStatusLabel.Text = "Out-of-date, downloading latest version...";
-                    }
-                    else // Up-to-date
-                    {
-                        toolStripStatusLabel.ForeColor = Color.Green;
-                        toolStripStatusLabel.Text = "Already up-to-date!";
+                        toolStripStatusLabel.Text = "This version of Doom RPG is managed by git";
                         toolStripProgressBar.Style = ProgressBarStyle.Continuous;
                         buttonCheckUpdates.Enabled = true;
                         buttonLaunch.Enabled = true;
                         return;
                     }
+                    else if (!Directory.Exists(config.DRPGPath)) // Directory wasn't found
+                    {
+                        toolStripStatusLabel.ForeColor = Color.Red;
+                        toolStripStatusLabel.Text = "Could not find Doom RPG directory, downloading latest version...";
+                    }
+                    else if (File.Exists(SHAPath))
+                    {
+                        string localSHA = File.ReadAllLines(SHAPath)[0];
+
+                        // Not a match, need to grab the latest version
+                        if (masterSHA != localSHA || !File.Exists(SHAPath))
+                        {
+                            toolStripStatusLabel.ForeColor = Color.Red;
+                            toolStripStatusLabel.Text = "Out-of-date, downloading latest version...";
+                        }
+                        else // Up-to-date
+                        {
+                            toolStripStatusLabel.ForeColor = Color.Green;
+                            toolStripStatusLabel.Text = "Already up-to-date!";
+                            toolStripProgressBar.Style = ProgressBarStyle.Continuous;
+                            buttonCheckUpdates.Enabled = true;
+                            buttonLaunch.Enabled = true;
+                            return;
+                        }
+                    }
+                    else // Could not find SHA-1, download a new copy
+                    {
+                        toolStripStatusLabel.ForeColor = Color.Red;
+                        toolStripStatusLabel.Text = "Could not find SHA-1, downloading latest version...";
+                    }
+
+                    // Delete the old folder
+                    if (Directory.Exists(config.DRPGPath))
+                        Directory.Delete(config.DRPGPath, true);
+
+                    await Task.Delay(1000 * 3);
+                    toolStripProgressBar.Style = ProgressBarStyle.Continuous;
+
+
+                    DownloadDRPG();
                 }
-                else // Could not find SHA-1, download a new copy
+                catch (Exception e)
                 {
-                    toolStripStatusLabel.ForeColor = Color.Red;
-                    toolStripStatusLabel.Text = "Could not find SHA-1, downloading latest version...";
+                    Utils.ShowError(e);
                 }
-
-                // Delete the old folder
-                if (Directory.Exists(config.DRPGPath))
-                    Directory.Delete(config.DRPGPath, true);
-
-                await Task.Delay(1000 * 3);
-                toolStripProgressBar.Style = ProgressBarStyle.Continuous;
-
-
-                DownloadDRPG();
             }
-            catch (Exception e)
+            else
             {
-                Utils.ShowError(e);
+                buttonCheckUpdates.Enabled = true;
+                buttonLaunch.Enabled = true;
             }
         }
 
