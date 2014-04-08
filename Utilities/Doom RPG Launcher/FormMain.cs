@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 7, 2);
+        Version version = new Version(0, 7, 2, 1);
         Config config = new Config();
 
         public FormMain()
@@ -123,17 +123,11 @@ namespace DoomRPG
             if (textBoxDRPGPath.Text != string.Empty)
                 if (Directory.Exists(textBoxDRPGPath.Text))
                 {
-                    List<string> folders = Directory.EnumerateDirectories(textBoxDRPGPath.Text).ToList<string>();
-                    folders.Add(textBoxDRPGPath.Text);
-
-                    foreach (string folder in folders)
-                    {
-                        List<string> files = Directory.EnumerateFiles(folder).ToList<string>();
+                    List<string> files = Directory.EnumerateFiles(textBoxDRPGPath.Text).ToList<string>();
 
                         foreach (string file in files)
                             if (file.Contains(".wad") || file.Contains(".pk3") || file.Contains(".pk7") || file.Contains(".zip") || file.Contains(".exe"))
                                 return true;
-                    }
                 }
 
             return false;
