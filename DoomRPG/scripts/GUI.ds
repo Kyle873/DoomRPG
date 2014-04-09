@@ -88,9 +88,12 @@ script CheckCursor()
 
 script CheckGUI()
 {
+	int Width = GetCVar("drpg_menu_width");
+	int Height = GetCVar("drpg_menu_height");
+	
 	// Center Mouse
-	Player.Mouse.X = GetCVar("drpg_menu_width") / 2;
-	Player.Mouse.Y = GetCVar("drpg_menu_height") / 2;
+	Player.Mouse.X = Width / 2;
+	Player.Mouse.Y = Height / 2;
 	
 	while (true)
 	{
@@ -100,6 +103,7 @@ script CheckGUI()
 			HandleWindow(Player.Window);
 			
 			// TODO: These should probably eventually be moved into their own Handle*() functions
+			SetHudSize(Width, Height, true);
 			
 			// Labels
 			for (int i = 0; Player.Window->Labels[i] != nullptr; i++)
@@ -109,7 +113,7 @@ script CheckGUI()
 				int Y + Player.Window->Y + Player.Window->Labels[i]->Y;
 				int Color = Player.Window->Labels[i]->Color;
 				
-				HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
+				// HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
 			};
 		};
 		
@@ -128,9 +132,11 @@ function void HandleWindow(GUIWindow *Window)
 	SetFont("SMALLFONT");
 	HudMessage("%s\n", Window->Title, HUDMSG_PLAIN, 0, ((InTitleBar(Window) || Window->Dragging) ? CR_GREEN : CR_WHITE), Window->X + 16.1, Window->Y + 8.0, 0.05);
 	
-	// Window Background
+	// Window Background & Border
 	SetHudClipRect(Window->X, Window->Y, Window->Width, Window->Height);
 	PrintSprite(Window->Texture, 0, Window->X, Window->Y, 0.05);
+	DrawBorder(Window->X, Window->Y, Window->Width, Window->Height);
+	SetFont("");
 	SetHudClipRect(0, 0, 0, 0);
 	
 	// Drag Checking
@@ -232,4 +238,15 @@ function bool InTitleBar(GUIWindow *Window)
 		return true
 	else
 		return false;
+};
+
+function void DrawBorder(int X, int Y, int Width, int Height)
+{
+	SetHudClipRect(X, Y, Width, Height);
+	PrintSprite("BarHorz", 0, X, Y, 0.05);
+	PrintSprite("BarHorz", 0, X, Y + Height - 1, 0.05);
+	PrintSprite("BarVert", 0, X, Y, 0.05);
+	PrintSprite("BarVert", 0, X + Width - 1, Y, 0.05);
+	SetHudClipRect(0, 0, 0, 0);
+	SetFont("");
 };
