@@ -1225,31 +1225,46 @@ acscript Locker(bool Wireless)
 				
 				// Checking
 				if (Success)
+				{
 					if (Player.LockerPage == 0 && CheckInventory("RLWeaponLimit") >= 6) // Weapons
-						ActivatorSound("menu/error", 127)
-					else if (Player.LockerPage == 2 && CheckInventory("RLArmorInInventory") >= 1) // Armor
-						ActivatorSound("menu/error", 127)
-					else if (Player.LockerPage == 3 && Player.LockerIndex == 8 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
-						ActivatorSound("menu/error", 127)
-					else if (Player.LockerPage == 3 && ((PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4)) // Mod Packs
-						ActivatorSound("menu/error", 127)
-					else if (Player.LockerPage == 4 && CheckInventory("RLBootsInInventory") >= 1) // Boots
-						ActivatorSound("menu/error", 127)
-					else if (Player.LockerPage == 0) // Weapons
 					{
-						SpawnForced(StrParam("%sPickup\n", ItemData[Player.LockerPage][Player.LockerIndex].Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
-						SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
-						if (Player.LockerGlobal)
-							GlobalLocker[Player.LockerPage][Player.LockerIndex]--
-						else
-							Player.Locker[Player.LockerPage][Player.LockerIndex]--;
-						if (Wireless && !InBase)
-							Player.EP -= WirelessCost;
-						ActivatorSound("menu/move", 127);
+						ActivatorSound("menu/error", 127);
+						Success = false;
 					}
-					else
+					else if (Player.LockerPage == 1 && CheckInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor) >= GetAmmoCapacity(ItemData[Player.LockerPage][Player.LockerIndex].Actor)) // Ammo
 					{
+						ActivatorSound("menu/error", 127);
+						Success = false;
+					}
+					else if (Player.LockerPage == 2 && CheckInventory("RLArmorInInventory") >= 1) // Armor
+					{
+						ActivatorSound("menu/error", 127);
+						Success = false;
+					}
+					else if (Player.LockerPage == 3 && Player.LockerIndex == 8 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
+					{
+						ActivatorSound("menu/error", 127);
+						Success = false;
+					}
+					else if (Player.LockerPage == 3 && ((PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4)) // Mod Packs
+					{
+						ActivatorSound("menu/error", 127);
+						Success = false;
+					}
+					else if (Player.LockerPage == 4 && CheckInventory("RLBootsInInventory") >= 1) // Boots
+					{
+						ActivatorSound("menu/error", 127);
+						Success = false;
+					}
+					else if (Player.LockerPage == 0) // Weapons
+						SpawnForced(StrParam("%sPickup\n", ItemData[Player.LockerPage][Player.LockerIndex].Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0)
+					else if (Player.LockerPage == 1) // Ammo
+						GiveInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1)
+					else // Everything else
 						SpawnForced(ItemData[Player.LockerPage][Player.LockerIndex].Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+					
+					if (Success)
+					{
 						SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
 						if (Player.LockerGlobal)
 							GlobalLocker[Player.LockerPage][Player.LockerIndex]--
@@ -1259,6 +1274,7 @@ acscript Locker(bool Wireless)
 							Player.EP -= WirelessCost;
 						ActivatorSound("menu/move", 127);
 					};
+				};
 			}
 			else
 				ActivatorSound("menu/error", 127);
