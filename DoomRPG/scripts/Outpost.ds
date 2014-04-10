@@ -946,10 +946,6 @@ acscript ShopSpecial()
 // Player Locker
 acscript Locker(bool Wireless)
 {
-	int Offset;
-	int Color;
-	bool Success;
-	
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_LOCKER) return;
 
@@ -968,6 +964,10 @@ acscript Locker(bool Wireless)
 		int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 		int Efficiency = (Skills[5][5].CurrentLevel - 1) * 5;
 		int WirelessCost = (int)((fixed)LockerWirelessCosts[Player.LockerPage] - ((fixed)LockerWirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0)));
+		bool Success = false;
+		int Offset;
+		int Available;
+		int Color;
 		
 		// Set the HUD Size
 		SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
@@ -1009,8 +1009,14 @@ acscript Locker(bool Wireless)
 						   WirelessCost, Efficiency, HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 24.1, 38.0, 0.05);
 		};
 		
+		// Calculate a total of how many of the items are actually storable
+		Available = 0;
+		for (int i = 0; i < ItemMax[Player.LockerPage]; i++)
+			if (!ItemData[Player.LockerPage][i].Unstorable)
+				Available++;
+		
 		// Determine Offset
-		if (Player.LockerIndex > MENU_SCROLL)
+		if (Player.LockerIndex > MENU_SCROLL && Available > MENU_SCROLL)
 			Offset = Player.LockerIndex - MENU_SCROLL
 		else
 			Offset = 0;
