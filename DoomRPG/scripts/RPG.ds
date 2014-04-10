@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Thursday, April 10, 2014 at 1:13:13 PM";
+	"Thursday, April 10, 2014 at 1:23:03 PM";
 };
 
 // Level Info
@@ -987,12 +987,7 @@ script Dead() death
 	// Drop Inventory
 	if (GetCVar("drpg_multi_dropinv"))
 		DropInventory();
-	
-	// Terminate Scripts
-	ACS_NamedTerminate("DamageNumbers", 0);
-	ACS_NamedTerminate("InfoPopoffs", 0);
-	ACS_NamedTerminate("HealthBars", 0);
-	
+		
 	// Remove TID
 	Thing_ChangeTID(Player.TID, 0);
 };
@@ -1077,6 +1072,9 @@ script InfoPopoffs()
 			Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPGAIN);
 		if (AfterEP < BeforeEP)
 			Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPLOSS);
+			
+		// Terminate if the Player is dead
+		if (GetActorProperty(0, APROP_Health) <= 0) return;
 	};
 };
 
@@ -1146,6 +1144,9 @@ script DamageNumbers()
 				
 				SetInventory("MonsterHasTicked", 1);
 			};
+			
+		// Terminate if the Player is dead
+		if (GetActorProperty(0, APROP_Health) <= 0) return;
 	};
 };
 
@@ -1393,6 +1394,9 @@ script HealthBars()
 						PrintSprite(FillType, 0, (X - 97.0) + (i * 2.0), Y, 0.05);
 			};
 		};
+		
+		// Terminate if the Player is dead
+		if (GetActorProperty(Players(PlayerNum).TID, APROP_Health) <= 0) return;
 	};
 	
 	Delay(1);
