@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Thursday, April 10, 2014 at 12:36:43 PM";
+	"Thursday, April 10, 2014 at 12:52:19 PM";
 };
 
 // Level Info
@@ -1126,28 +1126,24 @@ script DamageNumbers()
 					else // Normal
 						Color = DNUM_NORMAL;
 					
-					for (int i = PLAYER_TID; i < PLAYER_TID + MAX_PLAYERS; i++)
+					// Player handling
+					if (ActivatorTID() == Player.TID)
 					{
-						if (ActivatorTID() == i)
+						if (CheckInventory("Shield"))
 						{
-							if (CheckInventory("Shield"))
-							{
-								if (Shield > 0)
-									Popoff(i, Shield, DNUM_SHIELDLOSS)
-								else if (Shield < 0)
-									Popoff(i, Shield, DNUM_SHIELDGAIN);
-							}
-							else
-								Popoff(i, NewHealth, Color);
-							break;
+							if (Shield > 0)
+								Popoff(Player.TID, Shield, DNUM_SHIELDLOSS)
+							else if (Shield < 0)
+								Popoff(Player.TID, Shield, DNUM_SHIELDGAIN);
 						}
 						else
-						{
-							Thing_ChangeTID(0, TID);
-							Popoff(TID, NewHealth, Color);
-							Thing_ChangeTID(TID, 0);
-							break;
-						};
+							Popoff(Player.TID, NewHealth, Color);
+					}
+					else
+					{
+						Thing_ChangeTID(0, TID);
+						Popoff(TID, NewHealth, Color);
+						Thing_ChangeTID(TID, 0);
 					};
 				};
 				
