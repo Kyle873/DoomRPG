@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Thursday, April 10, 2014 at 10:15:04 AM";
+	"Thursday, April 10, 2014 at 10:42:40 AM";
 };
 
 // Level Info
@@ -1053,13 +1053,15 @@ script DamageNumbers()
 		SetInventory("MonsterHasTicked", 0);
 		
 		// Lag handling
-		int DelayRate = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) / 100;
-		Delay(1 + DelayRate + GetCVar("drpg_damagenumbers_delay"));
+		Delay(1);
 		
 		if (GetActorProperty(0, APROP_Health) != CheckInventory("MonsterCurrentHealth"))
 			if (CheckInventory("MonsterHasTicked") == 0)
 			{
+				int TID = UniqueTID();
 				int NewHealth = CheckInventory("MonsterCurrentHealth") - GetActorProperty(0, APROP_Health);
+				bool Healed = (NewHealth < 0);
+				int Color;
 				
 				// Prevent digit overflow
 				if (NewHealth > 9999999)
@@ -1071,146 +1073,21 @@ script DamageNumbers()
 					
 				if (NewHealth != 0)
 				{
-					int Digit1 = GetDigit(Abs(NewHealth), 0);
-					int Digit2 = GetDigit(Abs(NewHealth), 1);
-					int Digit3 = GetDigit(Abs(NewHealth), 2);
-					int Digit4 = GetDigit(Abs(NewHealth), 3);
-					int Digit5 = GetDigit(Abs(NewHealth), 4);
-					int Digit6 = GetDigit(Abs(NewHealth), 5);
-					int Digit7 = GetDigit(Abs(NewHealth), 6);
+					if (NewHealth >= GetActorProperty(0, APROP_SpawnHealth)) // Critical
+						Color = DNUM_CRITICAL
+					else if (Healed) // Healed
+						Color = DNUM_HEAL
+					else if (NewHealth == 1) // Scratch
+						Color = DNUM_SCRATCH
+					else // Normal
+						Color = DNUM_NORMAL;
 					
-					fixed X = GetActorX(0);
-					fixed Y = GetActorY(0);
-					fixed Z;
-					int ActorHeight = CheckInventory("MonsterHeightCheck");
-					
-					int DigitID = Random(4000, 5000);
-					bool Healed = (NewHealth < 0);
-					
-					if (ActorHeight > 0)
-						Z = GetActorZ(0) + ActorHeight - 4
-					else
-						Z = GetActorZ(0) + GetActorProperty(0, APROP_Height) - 4;
-					
-					switch (Digit1)
-					{
-						case 0:	Spawn("Digit1Num0", X, Y, Z, DigitID, 0);	break;
-						case 1:	Spawn("Digit1Num1", X, Y, Z, DigitID, 0);	break;
-						case 2:	Spawn("Digit1Num2", X, Y, Z, DigitID, 0);	break;
-						case 3:	Spawn("Digit1Num3", X, Y, Z, DigitID, 0);	break;
-						case 4:	Spawn("Digit1Num4", X, Y, Z, DigitID, 0);	break;
-						case 5:	Spawn("Digit1Num5", X, Y, Z, DigitID, 0);	break;
-						case 6:	Spawn("Digit1Num6", X, Y, Z, DigitID, 0);	break;
-						case 7:	Spawn("Digit1Num7", X, Y, Z, DigitID, 0);	break;
-						case 8:	Spawn("Digit1Num8", X, Y, Z, DigitID, 0);	break;
-						case 9:	Spawn("Digit1Num9", X, Y, Z, DigitID, 0);	break;
-					};
-					
-					if (NewHealth >= 10 || NewHealth <= -10)
-						switch (Digit2)
-						{
-							case 0:	Spawn("Digit2Num0", X, Y, Z, DigitID, 0);	break;
-							case 1:	Spawn("Digit2Num1", X, Y, Z, DigitID, 0);	break;
-							case 2:	Spawn("Digit2Num2", X, Y, Z, DigitID, 0);	break;
-							case 3:	Spawn("Digit2Num3", X, Y, Z, DigitID, 0);	break;
-							case 4:	Spawn("Digit2Num4", X, Y, Z, DigitID, 0);	break;
-							case 5:	Spawn("Digit2Num5", X, Y, Z, DigitID, 0);	break;
-							case 6:	Spawn("Digit2Num6", X, Y, Z, DigitID, 0);	break;
-							case 7:	Spawn("Digit2Num7", X, Y, Z, DigitID, 0);	break;
-							case 8:	Spawn("Digit2Num8", X, Y, Z, DigitID, 0);	break;
-							case 9:	Spawn("Digit2Num9", X, Y, Z, DigitID, 0);	break;
-						};
-					
-					if (NewHealth >= 100 || NewHealth <= -100)
-						switch (Digit3)
-						{
-							case 0:	Spawn("Digit3Num0", X, Y, Z, DigitID, 0);	break;
-							case 1:	Spawn("Digit3Num1", X, Y, Z, DigitID, 0);	break;
-							case 2:	Spawn("Digit3Num2", X, Y, Z, DigitID, 0);	break;
-							case 3:	Spawn("Digit3Num3", X, Y, Z, DigitID, 0);	break;
-							case 4:	Spawn("Digit3Num4", X, Y, Z, DigitID, 0);	break;
-							case 5:	Spawn("Digit3Num5", X, Y, Z, DigitID, 0);	break;
-							case 6:	Spawn("Digit3Num6", X, Y, Z, DigitID, 0);	break;
-							case 7:	Spawn("Digit3Num7", X, Y, Z, DigitID, 0);	break;
-							case 8:	Spawn("Digit3Num8", X, Y, Z, DigitID, 0);	break;
-							case 9:	Spawn("Digit3Num9", X, Y, Z, DigitID, 0);	break;
-						};
-					
-					if (NewHealth >= 1000 || NewHealth <= -1000)
-						switch (Digit4)
-						{
-							case 0:	Spawn("Digit4Num0", X, Y, Z, DigitID, 0);	break;
-							case 1:	Spawn("Digit4Num1", X, Y, Z, DigitID, 0);	break;
-							case 2:	Spawn("Digit4Num2", X, Y, Z, DigitID, 0);	break;
-							case 3:	Spawn("Digit4Num3", X, Y, Z, DigitID, 0);	break;
-							case 4:	Spawn("Digit4Num4", X, Y, Z, DigitID, 0);	break;
-							case 5:	Spawn("Digit4Num5", X, Y, Z, DigitID, 0);	break;
-							case 6:	Spawn("Digit4Num6", X, Y, Z, DigitID, 0);	break;
-							case 7:	Spawn("Digit4Num7", X, Y, Z, DigitID, 0);	break;
-							case 8:	Spawn("Digit4Num8", X, Y, Z, DigitID, 0);	break;
-							case 9:	Spawn("Digit4Num9", X, Y, Z, DigitID, 0);	break;
-						};
-					
-					if (NewHealth >= 10000 || NewHealth <= -10000)
-						switch (Digit5)
-						{
-							case 0:	Spawn("Digit5Num0", X, Y, Z, DigitID, 0);	break;
-							case 1:	Spawn("Digit5Num1", X, Y, Z, DigitID, 0);	break;
-							case 2:	Spawn("Digit5Num2", X, Y, Z, DigitID, 0);	break;
-							case 3:	Spawn("Digit5Num3", X, Y, Z, DigitID, 0);	break;
-							case 4:	Spawn("Digit5Num4", X, Y, Z, DigitID, 0);	break;
-							case 5:	Spawn("Digit5Num5", X, Y, Z, DigitID, 0);	break;
-							case 6:	Spawn("Digit5Num6", X, Y, Z, DigitID, 0);	break;
-							case 7:	Spawn("Digit5Num7", X, Y, Z, DigitID, 0);	break;
-							case 8:	Spawn("Digit5Num8", X, Y, Z, DigitID, 0);	break;
-							case 9:	Spawn("Digit5Num9", X, Y, Z, DigitID, 0);	break;
-						};
-
-					if (NewHealth >= 100000 || NewHealth <= -100000)
-						switch (Digit6)
-						{
-							case 0:	Spawn("Digit6Num0", X, Y, Z, DigitID, 0);	break;
-							case 1:	Spawn("Digit6Num1", X, Y, Z, DigitID, 0);	break;
-							case 2:	Spawn("Digit6Num2", X, Y, Z, DigitID, 0);	break;
-							case 3:	Spawn("Digit6Num3", X, Y, Z, DigitID, 0);	break;
-							case 4:	Spawn("Digit6Num4", X, Y, Z, DigitID, 0);	break;
-							case 5:	Spawn("Digit6Num5", X, Y, Z, DigitID, 0);	break;
-							case 6:	Spawn("Digit6Num6", X, Y, Z, DigitID, 0);	break;
-							case 7:	Spawn("Digit6Num7", X, Y, Z, DigitID, 0);	break;
-							case 8:	Spawn("Digit6Num8", X, Y, Z, DigitID, 0);	break;
-							case 9:	Spawn("Digit6Num9", X, Y, Z, DigitID, 0);	break;
-						};
-					
-					if (NewHealth >= 1000000 || NewHealth <= -1000000)
-						switch (Digit7)
-						{
-							case 0:	Spawn("Digit7Num0", X, Y, Z, DigitID, 0);	break;
-							case 1:	Spawn("Digit7Num1", X, Y, Z, DigitID, 0);	break;
-							case 2:	Spawn("Digit7Num2", X, Y, Z, DigitID, 0);	break;
-							case 3:	Spawn("Digit7Num3", X, Y, Z, DigitID, 0);	break;
-							case 4:	Spawn("Digit7Num4", X, Y, Z, DigitID, 0);	break;
-							case 5:	Spawn("Digit7Num5", X, Y, Z, DigitID, 0);	break;
-							case 6:	Spawn("Digit7Num6", X, Y, Z, DigitID, 0);	break;
-							case 7:	Spawn("Digit7Num7", X, Y, Z, DigitID, 0);	break;
-							case 8:	Spawn("Digit7Num8", X, Y, Z, DigitID, 0);	break;
-							case 9:	Spawn("Digit7Num9", X, Y, Z, DigitID, 0);	break;
-						};
-					
-					// Overkill
-					if (NewHealth >= GetActorProperty(0, APROP_SpawnHealth))
-						Thing_SetTranslation(DigitID, 1);
-
-					// Healed
-					if (Healed)
-						Thing_SetTranslation(DigitID, 2);
-
-					// Scratch
-					if (NewHealth == 1)
-						Thing_SetTranslation(DigitID, 3);
-					
-					SetActorVelocity(DigitID, Random(-1.0, 1.0), Random(-1.0, 1.0), 0.5, 0, 0);
-					SetInventory("MonsterHasTicked", 1);
+					Thing_ChangeTID(0, TID);
+					Popoff(TID, NewHealth, Color);
+					Thing_ChangeTID(TID, 0);
 				};
+				
+				SetInventory("MonsterHasTicked", 1);
 			};
 			
 		if (!GetCVar("drpg_damagenumbers")) return;

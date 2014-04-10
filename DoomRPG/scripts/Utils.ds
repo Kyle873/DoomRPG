@@ -21,6 +21,7 @@ str[6] SkillLevels =
 	"Hell";
 };
 
+// Get the max inventory size
 acscript int CheckInventoryMax()
 {
 	return Player.Capacity * 5;
@@ -474,18 +475,18 @@ acscript ThrustMomentum()
 
 function void CreateTranslations()
 {
-	// Damage Numbers - Overkill
-	CreateTranslationStart(1);
+	// Damage Numbers - Critical
+	CreateTranslationStart(DNUM_CRITICAL);
 	CreateTranslationPalette(81, 111, 176, 176);
 	CreateTranslationEnd();
 	
 	// Damage Numbers - Healed
-	CreateTranslationStart(2);
+	CreateTranslationStart(DNUM_HEAL);
 	CreateTranslationPalette(81, 111, 112, 112);
 	CreateTranslationEnd();
 
 	// Damage Numbers - Scratch
-	CreateTranslationStart(3);
+	CreateTranslationStart(DNUM_SCRATCH);
 	CreateTranslationPalette(81, 111, 100, 100);
 	CreateTranslationEnd();
 };
@@ -664,6 +665,56 @@ function int SetActorInventory(int tid, str item, int count)
 		TakeActorInventory(tid, item, -1 * n);
 	
 	return n;
+};
+
+// Spawn a popoff number
+function Popoff(int TID, int Value, int Color)
+{
+	int[] Digits;
+	int ActorHeight = CheckActorInventory(TID, "MonsterHeightCheck");
+	int DigitTID = UniqueTID();
+	int DigitBase = 1;
+	fixed X = GetActorX(TID);
+	fixed Y = GetActorY(TID);
+	fixed Z;
+	
+	// Put the digits into the array
+	for (int i = 0; i < DNUM_DIGITS; i++)
+		Digits[i] = GetDigit(Abs(Value), i);
+	
+	// Get Z Height
+	if (ActorHeight > 0)
+		Z = GetActorZ(TID) + ActorHeight - 4
+	else
+		Z = GetActorZ(TID) + GetActorProperty(TID, APROP_Height) - 4;
+	
+	// Digit Spawning
+	for (int i = 0; i < DNUM_DIGITS; i++)
+	{
+		str DigitActor = StrParam("Digit%dNum%d\n", i + 1, Digits[i]);
+		
+		if (Value >= DigitBase || Value <= -DigitBase)
+			switch (Digits[1])
+			{
+				case 0:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 1:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 2:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 3:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 4:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 5:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 6:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 7:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 8:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 9:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+			};
+		
+		DigitBase *= 10;
+	};
+	
+	if (Color > 0)
+		Thing_SetTranslation(DigitTID, Color);
+	
+	SetActorVelocity(DigitTID, Random(-1.0, 1.0), Random(-1.0, 1.0), 0.5, 0, 0);
 };
 
 // For Damage Digits
