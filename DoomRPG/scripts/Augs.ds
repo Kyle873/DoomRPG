@@ -1,78 +1,10 @@
+#include "AugData.dh"
 #include "Augs.dh"
 #include "Globals.dh"
 #include "RPG.dh"
 #include "Stats.dh"
 #include "Skills.dh"
 #include "Utils.dh"
-
-str[MAX_AUGS][AUG_LEVELS + 1] AugData =
-{
-	// Name, Icon, Description...
-	
-	// Augs
-	{
-		"Muscle Replacer";
-		"1.25x Damage";
-		"1.5x Damage";
-		"2x Damage";
-		"4x Damage";
-	};
-	{
-		"Dermal Armor";
-		"-10x Damage Taken";
-		"-20x Damage Taken";
-		"-30x Damage Taken";
-		"-40x Damage Taken";
-		"-50x Damage Taken";
-	};
-	{
-		"Pain Inhibitor";
-		"2x Max Health";
-		"2x Health Regen";
-	};
-	{
-		"Psi Projector";
-		"2x Max EP";
-		"2x EP Regen";
-		"2x Aura Timer";
-		"-25% Skill Costs";
-		"-50% Skill Costs";
-	};
-	{
-		"Adrenaline Booster";
-		"2x HP/EP Regen Amounts";
-		"-2x HP/EP Regen Timers";
-		"2x Shield Charge Rate";
-		"-2x Shield Delay Rate";
-		"-2x Shield Charge Interval";
-	};
-	{
-		"Wired Reflexes";
-		"2x Movement Speed";
-		"2x Jump Height";
-		"Double Weapon Speed";
-		"2x Survival Chance";
-	};
-	{
-		"Weight Distributor";
-		"2x Ammo Limits";
-		"4x Ammo Limits";
-		"2x Stim Vial Capacity";
-	};
-	{
-		"Precognition Unit";
-		"1.25x Luck Drop Chances";
-		"1.5x Luck Drop Chances";
-		"2x Luck Drop Chances";
-		"3x Luck Drop Chances";
-		"4x Luck Drop Chances";
-	};
-};
-
-int[MAX_AUGS] AugLevelMax =
-{
-	4; 5; 2; 5; 5; 4; 3; 5;
-};
 
 acscript DisableAugs()
 {
@@ -94,7 +26,7 @@ function void CheckAugSlots()
 	
 	// Unequip Augs if you pass the limit (sell a slot upgrade, change difficulty, etc)
 	while (Player.Augs.SlotsUsed > Player.Augs.Slots)
-		for (int i = 0; i < MAX_AUGS; i++)
+		for (int i = MAX_AUGS; i >= 0; i--)
 			if (Player.Augs.Active[i])
 			{
 				EquipAug(i);
@@ -231,9 +163,6 @@ function void CheckAugs()
 		Player.ShieldChance *= LuckMult;
 		Player.StimChance *= LuckMult;
 	};
-
-	// Keep adding more
-	// ...
 };
 
 function void EquipAug(int Aug)
@@ -266,7 +195,7 @@ function void EquipAug(int Aug)
 
 function void LevelUpAug(int Aug)
 {
-	if (Player.Augs.Level[Aug] < AugLevelMax[Aug])
+	if (Player.Augs.Level[Aug] < AugData[Aug].MaxLevel)
 	{
 		if (Player.Augs.Level[Aug] == 0)
 		{
