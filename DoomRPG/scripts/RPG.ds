@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Thursday, April 10, 2014 at 10:42:40 AM";
+	"Thursday, April 10, 2014 at 11:35:43 AM";
 };
 
 // Level Info
@@ -76,6 +76,7 @@ script Init() enter
 	StatRandomizer();
 	AutosaveHandler();
 	DamageNumbers();
+	InfoPopoffs();
 	HealthBars();
 	
 	// GUI
@@ -1040,7 +1041,42 @@ script Respawn() respawn
 	
 	// Run Scripts
 	DamageNumbers();
+	InfoPopoffs();
 	HealthBars();
+};
+
+// Handles informational popoffs
+script InfoPopoffs()
+{
+	while (GetCVar("drpg_popoffs"))
+	{
+		int BeforeCredits;
+		int AfterCredits;
+		int BeforeEP;
+		int AfterEP;
+		
+		// Before Checks
+		BeforeCredits = CheckInventory("Credits");
+		BeforeEP = Player.EP;
+		
+		Delay(1);
+		
+		// After Checks
+		AfterCredits = CheckInventory("Credits");
+		AfterEP = Player.EP;
+		
+		// Credits Popoffs
+		if (AfterCredits > BeforeCredits)
+			Popoff(Player.TID, AfterCredits - BeforeCredits, DNUM_CREDGAIN);
+		if (AfterCredits < BeforeCredits)
+			Popoff(Player.TID, AfterCredits - BeforeCredits, DNUM_CREDLOSS);
+		
+		// EP Popoffs
+		if (AfterEP > BeforeEP)
+			Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPGAIN);
+		if (AfterEP < BeforeEP)
+			Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPLOSS);
+	};
 };
 
 // Handles Damage Numbers
@@ -1048,6 +1084,12 @@ script DamageNumbers()
 {
 	while (GetActorProperty(0, APROP_Health) > 0 && GetCVar("drpg_damagenumbers"))
 	{
+		int TID = UniqueTID();
+		int Shield = Player.Shield.Charge;
+		int NewHealth;
+		bool Healed;
+		int Color;
+		
 		SetInventory("MonsterHeightCheck", (int)GetActorPropertyFixed(0, APROP_Height));
 		SetInventory("MonsterCurrentHealth", GetActorProperty(0, APROP_Health));
 		SetInventory("MonsterHasTicked", 0);
@@ -1058,20 +1100,22 @@ script DamageNumbers()
 		if (GetActorProperty(0, APROP_Health) != CheckInventory("MonsterCurrentHealth"))
 			if (CheckInventory("MonsterHasTicked") == 0)
 			{
-				int TID = UniqueTID();
-				int NewHealth = CheckInventory("MonsterCurrentHealth") - GetActorProperty(0, APROP_Health);
-				bool Healed = (NewHealth < 0);
-				int Color;
+				NewHealth = CheckInventory("MonsterCurrentHealth") - GetActorProperty(0, APROP_Health);
+				Healed = (NewHealth < 0);
 				
 				// Prevent digit overflow
 				if (NewHealth > 9999999)
 					NewHealth = 9999999;
 				
-				// Don't show damage numbers when the shield is active
-				if (CheckInventory("Shield") || GetActorProperty(0, APROP_Health) == SHIELD_HEALTH)
+				// Different checking when the Shield is active
+				if (CheckInventory("Shield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH)
 					NewHealth = 0;
-					
-				if (NewHealth != 0)
+				
+				// Shield checks
+				if (CheckInventory("Shield"))
+					Shield = Shield - Player.Shield.Charge;
+				
+				if (NewHealth != 0 || Shield != 0)
 				{
 					if (NewHealth >= GetActorProperty(0, APROP_SpawnHealth)) // Critical
 						Color = DNUM_CRITICAL
@@ -1082,15 +1126,33 @@ script DamageNumbers()
 					else // Normal
 						Color = DNUM_NORMAL;
 					
-					Thing_ChangeTID(0, TID);
-					Popoff(TID, NewHealth, Color);
-					Thing_ChangeTID(TID, 0);
+					for (int i = PLAYER_TID; i < PLAYER_TID + MAX_PLAYERS; i++)
+					{
+						if (ActivatorTID() == i)
+						{
+							if (CheckInventory("Shield"))
+							{
+								if (Shield > 0)
+									Popoff(Player.TID, Shield, DNUM_SHIELDLOSS)
+								else if (Shield < 0)
+									Popoff(Player.TID, Shield, DNUM_SHIELDGAIN);
+							}
+							else
+								Popoff(Player.TID, NewHealth, Color);
+							break;
+						}
+						else
+						{
+							Thing_ChangeTID(0, TID);
+							Popoff(TID, NewHealth, Color);
+							Thing_ChangeTID(TID, 0);
+							break;
+						};
+					};
 				};
 				
 				SetInventory("MonsterHasTicked", 1);
 			};
-			
-		if (!GetCVar("drpg_damagenumbers")) return;
 	};
 };
 
