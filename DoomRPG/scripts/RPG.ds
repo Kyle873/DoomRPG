@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Friday, April 11, 2014 at 10:02:05 AM";
+	"Friday, April 11, 2014 at 11:21:16 AM";
 };
 
 // Level Info
@@ -1085,10 +1085,10 @@ script DamageNumbers()
 {
 	while (GetActorProperty(0, APROP_Health) > 0 && GetCVar("drpg_damagenumbers"))
 	{
+		int PlayerTID;
 		int TID = UniqueTID();
-		int Shield = Player.Shield.Charge;
 		int NewHealth;
-		bool Healed;
+		int NewShield = Player.Shield.Charge;
 		int Color;
 		
 		SetInventory("MonsterHeightCheck", (int)GetActorPropertyFixed(0, APROP_Height));
@@ -1102,46 +1102,52 @@ script DamageNumbers()
 			if (CheckInventory("MonsterHasTicked") == 0)
 			{
 				NewHealth = CheckInventory("MonsterCurrentHealth") - GetActorProperty(0, APROP_Health);
-				Healed = (NewHealth < 0);
 				
 				// Different checking when the Shield is active
-				if (CheckInventory("Shield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH)
+				if (CheckInventory("Shield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH - GetActorProperty(0, APROP_SpawnHealth))
+					NewHealth = 0;
+				
+				// Shield breaking hits will cause a major health drop, don't show this
+				if (NewHealth >= (SHIELD_HEALTH / 1000) - GetActorProperty(0, APROP_SpawnHealth))
 					NewHealth = 0;
 				
 				// Shield checks
 				if (CheckInventory("Shield"))
-					Shield = Shield - Player.Shield.Charge;
+					NewShield = NewShield - Player.Shield.Charge;
 				
-				if (NewHealth != 0 || Shield != 0)
+				if (NewHealth != 0 || NewShield != 0)
 				{
 					if (NewHealth >= GetActorProperty(0, APROP_SpawnHealth)) // Critical
 						Color = DNUM_CRITICAL
-					else if (Healed) // Healed
+					else if (NewHealth < 0 && !CheckInventory("Shield")) // Healed
 						Color = DNUM_HEAL
 					else if (NewHealth == 1) // Scratch
 						Color = DNUM_SCRATCH
+					else if (CheckInventory("Shield") && NewShield > 0) // Shield Loss
+						Color = DNUM_SHIELDLOSS
+					else if (CheckInventory("Shield") && NewShield < 0) // Shield Gain
+						Color = DNUM_SHIELDGAIN
 					else // Normal
 						Color = DNUM_NORMAL;
 					
-					// Player handling
+					// Player Handling
 					if (ActivatorTID() == Player.TID)
-					{
-						if (CheckInventory("Shield"))
-						{
-							if (Shield > 0)
-								Popoff(Player.TID, Shield, DNUM_SHIELDLOSS)
-							else if (Shield < 0)
-								Popoff(Player.TID, Shield, DNUM_SHIELDGAIN);
-						}
-						else
-							Popoff(Player.TID, NewHealth, Color);
-					}
+						PlayerTID = Player.TID;
+					
+					// Give the activator a TID
+					Thing_ChangeTID(0, TID);
+					
+					// Damage Popoff
+					if (CheckInventory("Shield"))
+						Popoff(TID, NewShield, Color)
 					else
-					{
-						Thing_ChangeTID(0, TID);
 						Popoff(TID, NewHealth, Color);
+					
+					// Change TID back
+					if (PlayerTID > 0)
+						Thing_ChangeTID(TID, PlayerTID)
+					else
 						Thing_ChangeTID(TID, 0);
-					};
 				};
 				
 				SetInventory("MonsterHasTicked", 1);
