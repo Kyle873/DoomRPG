@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Friday, April 11, 2014 at 10:02:05 AM";
+	"Friday, April 11, 2014 at 11:06:33";
 };
 
 // Level Info
@@ -805,19 +805,49 @@ script StatRandomizer()
 	goto Start;
 };
 
+#define SAFETIME 20 * 35
+#define RETRYTIME 5 * 35
+
 // Handles autosaving
 script AutosaveHandler()
 {
+    // Terminate if the autosave CVar is disabled
+    if (GetCVar("drpg_autosave") == 0 || (PlayerCount() > 1 && !Arbitrator)) return;
+    
+    int SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
+    bool Safe;
+    bool DamageTimer;
+    
 	while (true)
 	{
-		// Terminate if the autosave CVar is disabled
-		if (GetCVar("drpg_autosave") == 0) return;
-		
-		int Minutes = GetCVar("drpg_autosave");
-		Delay(35 * Minutes * 60);
-		
-		if (GetActorProperty(0, APROP_Health) > 0)
-			Autosave();
+        if (Player.HealthLoss)
+            DamageTimer = 0
+        else
+            ++DamageTimer;
+        
+        if ((Player.InMenu || Player.InShop) && !GetCVar("drpg_menufreeze"))
+            DamageTimer = SAFETIME;
+        
+        if (!SaveTimer)
+        {
+            Safe = true;
+            
+            if (DamageTimer < SAFETIME ||
+                GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10)
+                Safe = false;
+            
+            if (Safe)
+            {
+                Autosave();
+                SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
+            }
+            else
+                SaveTimer = RETRYTIME;
+        }
+        else
+            --SaveTimer;
+        
+        Delay (1);
 	};
 };
 
