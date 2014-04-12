@@ -47,6 +47,7 @@ str[MAX_BONUS] ArenaBonus =
     "\cuWeapon Drop";
 	"\caPowerup Drop";
 	"\cuStim Drop";
+	"\ciMod Drop";
 	"\cqKey Drop";
 };
 
@@ -289,13 +290,17 @@ acscript ArenaChooseBonus()
 		{
 			ActivatorSound("menu/move", 127);
 			BonusChoice--;
-			if (BonusChoice < 1) BonusChoice = MAX_BONUS - 1 - (CanChooseKey ? 0 : 1);
+			if (BonusChoice < 1) BonusChoice = MAX_BONUS - 1;
+			if (BonusChoice == 11 && !CanChooseKey) BonusChoice--;
+			if (BonusChoice == 10 && !GetCVar("drpg_ext_doomrl")) BonusChoice--;
 		};
 		if (Buttons == BT_BACK && OldButtons != BT_BACK)
 		{
 			ActivatorSound("menu/move", 127);
 			BonusChoice++;
-			if (BonusChoice > MAX_BONUS - 1 - (CanChooseKey ? 0 : 1)) BonusChoice = 1;
+			if (BonusChoice == 10 && !GetCVar("drpg_ext_doomrl")) BonusChoice++;
+			if (BonusChoice == 11 && !CanChooseKey) BonusChoice++;
+			if (BonusChoice > MAX_BONUS - 1) BonusChoice = 1;
 		};
 		if (Buttons == BT_USE && OldButtons != BT_USE)
 		{
@@ -308,6 +313,9 @@ acscript ArenaChooseBonus()
 		// Drawing
 		for (int i = 1; i < MAX_BONUS - 1 + (CanChooseKey ? 1 : 0); i++)
 		{
+			// Skip Mod Drop if DRLA extension isn't enabled
+			if (i == 10 && !GetCVar("drpg_ext_doomrl")) continue;
+			
 			// Cursor
 			if (i == BonusChoice)
 				HudMessage("-->\n", HUDMSG_PLAIN, 0, MenuCursorColor, X - 24.0, Y, 0.05);
@@ -444,7 +452,37 @@ acfunc void ArenaGetBonus(int Bonus)
 					Thing_ChangeTID(ArenaItemTID, 0);
 				};
 			break;
-		case 10: // Key Drop
+		case 10: // Mod Drop (DRLA Only)
+			if (GetCVar("drpg_ext_doomrl"))
+			{
+				SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+				for (int i = 0; i < PlayerCount(); i++)
+				{
+					switch (Random(1, 8))
+					{
+						case 1: SpawnItem = "RLPowerModItem";		break;
+						case 2: SpawnItem = "RLBulkModItem";		break;
+						case 3: SpawnItem = "RLAgilityModItem";		break;
+						case 4: SpawnItem = "RLTechnicalModItem";	break;
+						case 5: SpawnItem = "RLSniperModItem";		break;
+						case 6: SpawnItem = "RLFirestormModItem";	break;
+						case 7: SpawnItem = "RLNanoModItem";		break;
+						case 8: SpawnItem = "RLOnyxModItem";		break;
+						case 9: SpawnItem = "RLArmorModItem";		break;
+					};
+					
+					SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
+					SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+					Thing_ChangeTID(ArenaItemTID, 0);
+				};
+			}
+			else
+			{
+				ArenaGetBonus(Random(0, MAX_BONUS - 1));
+				return;
+			};
+			break;
+		case 11: // Key Drop
 			SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
 			if (ArenaKey == 0) SpawnItem = "RedCard";
 			if (ArenaKey == 1) SpawnItem = "YellowCard";
