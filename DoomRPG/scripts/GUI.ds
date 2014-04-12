@@ -7,6 +7,7 @@ function void BuildTestWindow()
 	GUIWindow *Window = GUICreateWindow();
 	GUILabel *Label = GUICreateLabel(Window);
 	GUIIcon *Icon = GUICreateIcon(Window);
+	GUIButton *Button = GUICreateButton(Window);
 	
 	Window->Title = "Super Awesome Test Window";
 	Window->X = 40;
@@ -25,6 +26,13 @@ function void BuildTestWindow()
 	Icon->Y = 48;
 	Icon->Width = 32;
 	Icon->Height = 32;
+	
+	Button->Text = "Test Button";
+	Button->X = 48;
+	Button->Y = 64;
+	Button->Width = 32;
+	Button->Height = 8;
+	Button->Color = CR_GREEN;
 	
 	Player.Window = Window;
 };
@@ -111,11 +119,15 @@ script CheckGUI()
 			
 			// Handle Labels
 			for (int i = 0; Player.Window->Labels[i] != nullptr; i++)
-				HandleLabel(Player.Window, Player.Window->Labels[i]);
+				HandleLabel(Player.Window->Labels[i]);
 			
 			// Handle Icons
 			for (int i = 0; Player.Window->Icons[i] != nullptr; i++)
-				HandleIcon(Player.Window, Player.Window->Icons[i]);
+				HandleIcon(Player.Window->Icons[i]);
+			
+			// Handle Buttons
+			for (int i = 0; Player.Window->Buttons[i] != nullptr; i++)
+				HandleButton(Player.Window->Buttons[i]);
 			
 			// Handle Drawing and Input for the Window
 			HandleWindow(Player.Window);
@@ -167,23 +179,44 @@ function void HandleWindow(GUIWindow *Window)
 	};
 };
 
-function void HandleLabel(GUIWindow *Window, GUILabel *Label)
+function void HandleLabel(GUILabel *Label)
 {
 	str Text = Label->Text;
-	int X = Window->X + Label->X;
-	int Y = Window->Y + Label->Y;
+	int X = Label->Window->X + Label->X;
+	int Y = Label->Window->Y + Label->Y;
 	int Color = Label->Color;
 	
 	HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y + 0.1, 0.05);
 };
 
-function void HandleIcon(GUIWindow *Window, GUIIcon *Icon)
+function void HandleIcon(GUIIcon *Icon)
 {
 	str Texture = Icon->Texture;
-	int X = Window->X + Icon->X;
-	int Y = Window->Y + Icon->Y;
+	int X = Icon->Window->X + Icon->X;
+	int Y = Icon->Window->Y + Icon->Y;
 	
 	PrintSprite(Texture, 0, X + 0.1, Y + 0.1, 0.05);
+};
+
+function void HandleButton(GUIButton *Button)
+{
+	str Text = Button->Text;
+	int X = Button->Window->X + Button->X;
+	int Y = Button->Window->Y + Button->Y;
+	int Width = Button->Width;
+	int Height = Button->Height;
+	int Color = Button->Color;
+	int HoverColor = Button->HoverColor;
+	
+	// TODO: Auto-calculate width and height based on string length and size if width/height == 0
+	
+	if (HoverColor == 0)
+		HoverColor = Color;
+	
+	if (InRegion(X, Y, Width, Height))
+		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y + 0.1, 0.05)
+	else
+		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y + 0.1, 0.05);
 };
 
 function GUIWindow *GUICreateWindow()
@@ -195,6 +228,7 @@ function GUIWindow *GUICreateWindow()
 function GUILabel *GUICreateLabel(GUIWindow *Window)
 {
 	GUILabel *Label = malloc(sizeof(GUILabel));
+	Label->Window = Window;
 	
 	for (int i = 0; i < MAX_CONTROLS; i++)
 		if (Window->Labels[i] == nullptr)
@@ -209,6 +243,7 @@ function GUILabel *GUICreateLabel(GUIWindow *Window)
 function GUIIcon *GUICreateIcon(GUIWindow *Window)
 {
 	GUIIcon *Icon = malloc(sizeof(GUIIcon));
+	Icon->Window = Window;
 	
 	for (int i = 0; i < MAX_CONTROLS; i++)
 		if (Window->Icons[i] == nullptr)
@@ -223,6 +258,7 @@ function GUIIcon *GUICreateIcon(GUIWindow *Window)
 function GUIButton *GUICreateButton(GUIWindow *Window)
 {
 	GUIButton *Button = malloc(sizeof(GUIButton));
+	Button->Window = Window;
 	
 	for (int i = 0; i < MAX_CONTROLS; i++)
 		if (Window->Buttons[i] == nullptr)
@@ -237,6 +273,7 @@ function GUIButton *GUICreateButton(GUIWindow *Window)
 function GUIBar *GUICreateBar(GUIWindow *Window)
 {
 	GUIBar *Bar = malloc(sizeof(GUIBar));
+	Bar->Window = Window;
 	
 	for (int i = 0; i < MAX_CONTROLS; i++)
 		if (Window->Bars[i] == nullptr)
@@ -258,6 +295,15 @@ function bool InTitleBar(GUIWindow *Window)
 {
 	if (Player.Mouse.X > Window->X && Player.Mouse.X < Window->X + Window->Width &&
 		Player.Mouse.Y > Window->Y + 10 && Player.Mouse.Y < Window->Y + 20)
+		return true
+	else
+		return false;
+};
+
+function bool InRegion(int X, int Y, int Width, int Height)
+{
+	if (Player.Mouse.X > X && Player.Mouse.X < X + Width &&
+		Player.Mouse.Y > Y && Player.Mouse.Y < Y + Height)
 		return true
 	else
 		return false;
