@@ -6,6 +6,7 @@ function void BuildTestWindow()
 {
 	GUIWindow *Window = GUICreateWindow();
 	GUILabel *Label = GUICreateLabel(Window);
+	GUIIcon *Icon = GUICreateIcon(Window);
 	
 	Window->Title = "Super Awesome Test Window";
 	Window->X = 40;
@@ -18,6 +19,12 @@ function void BuildTestWindow()
 	Label->X = 24;
 	Label->Y = 24;
 	Label->Color = CR_GOLD;
+	
+	Icon->Texture = "STAT1";
+	Icon->X = 24;
+	Icon->Y = 48;
+	Icon->Width = 32;
+	Icon->Height = 32;
 	
 	Player.Window = Window;
 };
@@ -99,22 +106,19 @@ script CheckGUI()
 	{
 		if (Player.GUIOpen)
 		{
-			// Handle Drawing and Input for the Window
-			HandleWindow(Player.Window);
-			
-			// TODO: These should probably eventually be moved into their own Handle*() functions
+			// Set the Resolution/HUD Size
 			SetHudSize(Width, Height, true);
 			
-			// Labels
+			// Handle Labels
 			for (int i = 0; Player.Window->Labels[i] != nullptr; i++)
-			{
-				str Text = Player.Window->Labels[i]->Text;
-				int X = Player.Window->X + Player.Window->Labels[i]->X;
-				int Y + Player.Window->Y + Player.Window->Labels[i]->Y;
-				int Color = Player.Window->Labels[i]->Color;
-				
-				HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y + 0.1, 0.05);
-			};
+				HandleLabel(Player.Window, Player.Window->Labels[i]);
+			
+			// Handle Icons
+			for (int i = 0; Player.Window->Icons[i] != nullptr; i++)
+				HandleIcon(Player.Window, Player.Window->Icons[i]);
+			
+			// Handle Drawing and Input for the Window
+			HandleWindow(Player.Window);
 		};
 		
 		Delay(1);
@@ -161,6 +165,25 @@ function void HandleWindow(GUIWindow *Window)
 		if (Window->Y > Height - Window->Height)
 			Window->Y = Height - Window->Height;
 	};
+};
+
+function void HandleLabel(GUIWindow *Window, GUILabel *Label)
+{
+	str Text = Label->Text;
+	int X = Window->X + Label->X;
+	int Y = Window->Y + Label->Y;
+	int Color = Label->Color;
+	
+	HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y + 0.1, 0.05);
+};
+
+function void HandleIcon(GUIWindow *Window, GUIIcon *Icon)
+{
+	str Texture = Icon->Texture;
+	int X = Window->X + Icon->X;
+	int Y = Window->Y + Icon->Y;
+	
+	PrintSprite(Texture, 0, X + 0.1, Y + 0.1, 0.05);
 };
 
 function GUIWindow *GUICreateWindow()
