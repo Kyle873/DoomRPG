@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Monday, April 14, 2014 at 2:09:42 PM";
+	"Monday, April 14, 2014 at 4:11:44 PM";
 };
 
 // Level Info
@@ -168,7 +168,8 @@ acscript MonsterInit(int Flags)
 	SetInventory("MonsterFlags", Flags);
 	
 	// Apply Stats
-	MonsterStats(Flags);
+	if (!(Flags & MF_NOSTATS))
+		MonsterStats(Flags);
 };
 
 // Special handling for DRLA Monsters
@@ -1116,73 +1117,68 @@ script DamageNumbers()
 {
 	Start:
 	
-	while (GetActorProperty(0, APROP_Health) > 0 && GetCVar("drpg_damagenumbers"))
+	while (GetCVar("drpg_damagenumbers"))
 	{
 		int OldTID;
 		int TID = UniqueTID();
-		int NewHealth;
-		int NewShield = Player.Shield.Charge;
+		int Health = GetActorProperty(0, APROP_Health);
+		int Shield = Player.Shield.Charge;
 		int Color;
-		
-		SetInventory("MonsterHeightCheck", (int)GetActorPropertyFixed(0, APROP_Height));
-		SetInventory("MonsterCurrentHealth", GetActorProperty(0, APROP_Health));
 		
 		// Lag handling
 		Delay(1 + GetCVar("drpg_damagenumbers_delay"));
 		
-		if (GetActorProperty(0, APROP_Health) != CheckInventory("MonsterCurrentHealth"))
+		// Check Health
+		Health = Health - GetActorProperty(0, APROP_Health);
+		
+		// Nullify Health if a Shield is active
+		if (CheckInventory("Shield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH - GetActorProperty(0, APROP_SpawnHealth))
+			Health = 0;
+		
+		// Shield breaking hits will cause a major health drop, don't show this
+		if (Health >= (SHIELD_HEALTH / 1000) - GetActorProperty(0, APROP_SpawnHealth))
+			Health = 0;
+		
+		// Shield checks
+		if (CheckInventory("Shield"))
+			Shield = Shield - Player.Shield.Charge;
+		
+		if (Health != 0 || Shield != 0)
 		{
-			NewHealth = CheckInventory("MonsterCurrentHealth") - GetActorProperty(0, APROP_Health);
+			if (Health >= GetActorProperty(0, APROP_SpawnHealth)) // Critical
+				Color = DNUM_CRITICAL
+			else if (Health < 0 && !CheckInventory("Shield")) // Healed
+				Color = DNUM_HEAL
+			else if (Health == 1) // Scratch
+				Color = DNUM_SCRATCH
+			else if (CheckInventory("Shield") && Shield > 0) // Shield Loss
+				Color = DNUM_SHIELDLOSS
+			else if (CheckInventory("Shield") && Shield < 0) // Shield Gain
+				Color = DNUM_SHIELDGAIN
+			else // Normal
+				Color = DNUM_NORMAL;
 			
-			// Different checking when the Shield is active
-			if (CheckInventory("Shield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH - GetActorProperty(0, APROP_SpawnHealth))
-				NewHealth = 0;
+			// Store the old TID if it has one
+			if (ActivatorTID() > 0)
+				OldTID = ActivatorTID();
 			
-			// Shield breaking hits will cause a major health drop, don't show this
-			if (NewHealth >= (SHIELD_HEALTH / 1000) - GetActorProperty(0, APROP_SpawnHealth))
-				NewHealth = 0;
+			// Give the activator a TID
+			Thing_ChangeTID(0, TID);
 			
-			// Shield checks
+			// Damage Popoff
 			if (CheckInventory("Shield"))
-				NewShield = NewShield - Player.Shield.Charge;
+				Popoff(TID, Shield, Color)
+			else
+				Popoff(TID, Health, Color);
 			
-			if (NewHealth != 0 || NewShield != 0)
-			{
-				if (NewHealth >= GetActorProperty(0, APROP_SpawnHealth)) // Critical
-					Color = DNUM_CRITICAL
-				else if (NewHealth < 0 && !CheckInventory("Shield")) // Healed
-					Color = DNUM_HEAL
-				else if (NewHealth == 1) // Scratch
-					Color = DNUM_SCRATCH
-				else if (CheckInventory("Shield") && NewShield > 0) // Shield Loss
-					Color = DNUM_SHIELDLOSS
-				else if (CheckInventory("Shield") && NewShield < 0) // Shield Gain
-					Color = DNUM_SHIELDGAIN
-				else // Normal
-					Color = DNUM_NORMAL;
-				
-				// Store the old TID if it has one
-				if (ActivatorTID() > 0)
-					OldTID = ActivatorTID();
-				
-				// Give the activator a TID
-				Thing_ChangeTID(0, TID);
-				
-				// Damage Popoff
-				if (CheckInventory("Shield"))
-					Popoff(TID, NewShield, Color)
-				else
-					Popoff(TID, NewHealth, Color);
-				
-				// Change the TID back
-				if (OldTID > 0)
-					Thing_ChangeTID(TID, OldTID)
-				else
-					Thing_ChangeTID(TID, 0);
-			};
+			// Change the TID back
+			if (OldTID > 0)
+				Thing_ChangeTID(TID, OldTID)
+			else
+				Thing_ChangeTID(TID, 0);
 		};
 			
-		// Terminate if the Player is dead
+		// Terminate if the Actor is dead
 		if (GetActorProperty(0, APROP_Health) <= 0) return;
 	};
 	
