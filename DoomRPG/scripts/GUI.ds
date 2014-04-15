@@ -1,5 +1,6 @@
 #include "Globals.dh"
 #include "GUI.dh"
+#include "Menu.dh"
 #include "Utils.dh"
 
 function void ClickTest()
@@ -35,7 +36,6 @@ function void BuildTestWindow()
 	Button->Text = "Test Button";
 	Button->X = 48;
 	Button->Y = 64;
-	Button->Color = CR_GREEN;
 	
 	Player.Window = Window;
 };
@@ -198,6 +198,8 @@ function void HandleLabel(GUILabel *Label)
 	int Y = Label->Window->Y + Label->Y;
 	int Color = Label->Color;
 	
+	// Drawing
+	SetFont("SMALLFONT");
 	HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y + 0.1, 0.05);
 };
 
@@ -209,10 +211,11 @@ function void HandleIcon(GUIIcon *Icon)
 	int Width = Icon->Width;
 	int Height = Icon->Height;
 	
+	// Drawing
 	PrintSprite(Texture, 0, X + 0.1, Y + 0.1, 0.05);
 	
 	// OnClick event
-	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton)
+	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Icon->OnClick != nullptr)
 		Icon->OnClick();
 };
 
@@ -226,18 +229,30 @@ function void HandleButton(GUIButton *Button)
 	int Color = Button->Color;
 	int HoverColor = Button->HoverColor;
 	
-	// TODO: Auto-calculate width and height based on string length and size if width/height == 0
+	// Default Color
+	if (Color == 0)
+		Color = CR_WHITE;
 	
+	// Default Hover Color
 	if (HoverColor == 0)
-		HoverColor = Color;
+		HoverColor = MenuCursorColor;
 	
+	// Auto-calculate width and height based on string length and size
+	if (Width == 0 && Height == 0)
+	{
+		Width = StrLen(Text) * 8;
+		Height = 14;
+	};
+	
+	// Drawing
+	SetFont("SMALLFONT");
 	if (InRegion(X, Y, Width, Height))
-		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y + 0.1, 0.05)
+		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y, 0.05)
 	else
-		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y + 0.1, 0.05);
+		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
 	
 	// OnClick event
-	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton)
+	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Button->OnClick != nullptr)
 		Button->OnClick();
 };
 
