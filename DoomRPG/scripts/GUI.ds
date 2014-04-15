@@ -2,6 +2,11 @@
 #include "GUI.dh"
 #include "Utils.dh"
 
+function void ClickTest()
+{
+	Log("\ckClick!\n");
+};
+
 function void BuildTestWindow()
 {
 	GUIWindow *Window = GUICreateWindow();
@@ -14,7 +19,6 @@ function void BuildTestWindow()
 	Window->Y = 40;
 	Window->Width = 300;
 	Window->Height = 300;
-	Window->Texture = "GUIBack";
 	
 	Label->Text = "Mega Label";
 	Label->X = 24;
@@ -26,12 +30,11 @@ function void BuildTestWindow()
 	Icon->Y = 48;
 	Icon->Width = 32;
 	Icon->Height = 32;
+	Icon->OnClick = ClickTest;
 	
 	Button->Text = "Test Button";
 	Button->X = 48;
 	Button->Y = 64;
-	Button->Width = 32;
-	Button->Height = 8;
 	Button->Color = CR_GREEN;
 	
 	Player.Window = Window;
@@ -66,6 +69,7 @@ script CheckCursor()
 		
 		// Get Buttons
 		Player.Mouse.Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		Player.Mouse.OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 		
 		// Add X/Y input to current position
 		Player.Mouse.X -= Player.Mouse.XAdd / 32;
@@ -86,10 +90,18 @@ script CheckCursor()
 		
 		// Mouse Input
 		if (Player.Mouse.Buttons & BT_ATTACK)
+			Player.Mouse.LeftButtonDown = true
+		else
+			Player.Mouse.LeftButtonDown = false;
+		if (Player.Mouse.Buttons & BT_ATTACK && !(Player.Mouse.OldButtons & BT_ATTACK))
 			Player.Mouse.LeftButton = true
 		else
 			Player.Mouse.LeftButton = false;
 		if (Player.Mouse.Buttons & BT_ALTATTACK)
+			Player.Mouse.RightButtonDown = true
+		else
+			Player.Mouse.RightButtonDown = false;
+		if (Player.Mouse.Buttons & BT_ALTATTACK && !(Player.Mouse.OldButtons & BT_ALTATTACK))
 			Player.Mouse.RightButton = true
 		else
 			Player.Mouse.RightButton = false;
@@ -150,15 +162,15 @@ function void HandleWindow(GUIWindow *Window)
 	
 	// Window Background & Border
 	SetHudClipRect(Window->X, Window->Y, Window->Width, Window->Height);
-	PrintSprite(Window->Texture, 0, Window->X, Window->Y, 0.05);
+	PrintSprite("GUIBack", 0, Window->X, Window->Y, 0.05);
 	DrawBorder(Window->X, Window->Y, Window->Width, Window->Height);
 	SetHudClipRect(0, 0, 0, 0);
 	SetFont("");
 	
 	// Drag Checking
-	if (InTitleBar(Window) && Player.Mouse.LeftButton)
+	if (InTitleBar(Window) && Player.Mouse.LeftButtonDown)
 		Window->Dragging = true;
-	if (Window->Dragging && !Player.Mouse.LeftButton)
+	if (Window->Dragging && !Player.Mouse.LeftButtonDown)
 		Window->Dragging = false;
 	
 	// Dragging
@@ -194,8 +206,14 @@ function void HandleIcon(GUIIcon *Icon)
 	str Texture = Icon->Texture;
 	int X = Icon->Window->X + Icon->X;
 	int Y = Icon->Window->Y + Icon->Y;
+	int Width = Icon->Width;
+	int Height = Icon->Height;
 	
 	PrintSprite(Texture, 0, X + 0.1, Y + 0.1, 0.05);
+	
+	// OnClick event
+	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton)
+		Icon->OnClick();
 };
 
 function void HandleButton(GUIButton *Button)
@@ -217,6 +235,10 @@ function void HandleButton(GUIButton *Button)
 		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y + 0.1, 0.05)
 	else
 		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y + 0.1, 0.05);
+	
+	// OnClick event
+	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton)
+		Button->OnClick();
 };
 
 function GUIWindow *GUICreateWindow()
