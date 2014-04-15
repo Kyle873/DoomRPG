@@ -704,12 +704,11 @@ function int SetActorInventory(int tid, str item, int count)
 function Popoff(int TID, int Value, int Color)
 {
 	int[] Digits;
-	int ActorHeight = (int)GetActorPropertyFixed(TID, APROP_Height);
 	int DigitTID = UniqueTID();
 	int DigitBase = 1;
 	fixed X = GetActorX(TID);
 	fixed Y = GetActorY(TID);
-	fixed Z;
+	fixed Z = GetActorZ(TID) + CheckInventory("HeightCheck") - 4;
 	
 	// Prevent digit overflow
 	if (Value > 9999999)
@@ -718,12 +717,6 @@ function Popoff(int TID, int Value, int Color)
 	// Put the digits into the array
 	for (int i = 0; i < DNUM_DIGITS; i++)
 		Digits[i] = GetDigit(Abs(Value), i);
-	
-	// Get Z Height
-	if (ActorHeight > 0)
-		Z = GetActorZ(TID) + ActorHeight - 4
-	else
-		Z = GetActorZ(TID) + GetActorProperty(TID, APROP_Height) - 4;
 	
 	// Digit Spawning
 	for (int i = 0; i < DNUM_DIGITS; i++)
@@ -748,9 +741,11 @@ function Popoff(int TID, int Value, int Color)
 		DigitBase *= 10;
 	};
 	
+	// Color
 	if (Color > 0)
 		Thing_SetTranslation(DigitTID, Color);
 	
+	// Float away
 	SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), 0.5, 0, 0);
 };
 
