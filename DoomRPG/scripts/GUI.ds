@@ -3,9 +3,19 @@
 #include "Menu.dh"
 #include "Utils.dh"
 
-function void ClickTest(GUIIcon *Icon)
+function void IconClickTest(GUIIcon *Icon)
+{
+	Log("\ckIcon Click!\n");
+};
+
+function void ClickTest(GUIButton *Button)
 {
 	Log("\ckClick!\n");
+};
+
+function void ToggleWindow2(GUIButton *Button)
+{
+	Player.Window[WINDOW_TEST + 1]->Visible = !Player.Window[WINDOW_TEST + 1]->Visible;
 };
 
 function void LogSelected(GUIList *List)
@@ -19,30 +29,43 @@ function void BuildTestWindow()
 	GUILabel *Label = GUICreateLabel(Window);
 	GUIIcon *Icon = GUICreateIcon(Window);
 	GUIButton *Button = GUICreateButton(Window);
+	GUIButton *Button2 = GUICreateButton(Window);
 	GUIBar *Bar = GUICreateBar(Window);
 	GUIList *List = GUICreateList(Window);
+	
+	GUIWindow *Window2 = GUICreateWindow();
+	GUIIcon *Icon2 = GUICreateIcon(Window2);
 	
 	Window->Title = "Super Awesome Test Window";
 	Window->X = 40;
 	Window->Y = 40;
 	Window->Width = 300;
 	Window->Height = 300;
-	
+	Window->CanClose = false;
+		
 	Label->Text = "Mega Label";
 	Label->X = 24;
 	Label->Y = 24;
 	Label->Color = CR_GOLD;
 	
 	Icon->Texture = "STAT1";
-	Icon->X = 24;
-	Icon->Y = 48;
-	Icon->Width = 32;
-	Icon->Height = 32;
-	Icon->OnClick = ClickTest;
+	Icon->X = 16;
+	Icon->Y = 32;
+	Icon->XOff = 14;
+	Icon->YOff = 24;
+	Icon->Width = 28;
+	Icon->Height = 24;
+	Icon->OnClick = IconClickTest;
 	
 	Button->Text = "Test Button";
 	Button->X = 48;
 	Button->Y = 64;
+	Button->OnClick = ClickTest;
+	
+	Button2->Text = "Toggle Window 2";
+	Button2->X = 48;
+	Button2->Y = 80;
+	Button2->OnClick = ToggleWindow2;
 	
 	Bar->X = 48;
 	Bar->Y = 96;
@@ -56,7 +79,18 @@ function void BuildTestWindow()
 		List->Entries[i] = StrParam("Entry %d\n", i + 1);
 	List->OnClick = LogSelected;
 	
-	Player.Window = Window;
+	Window2->Title = "Super Awesome Test Window Mk II";
+	Window2->X = 100;
+	Window2->Y = 360;
+	Window2->Width = 320;
+	Window2->Height = 96;
+
+	Icon2->Texture = "STAT8";
+	Icon2->X = 32;
+	Icon2->Y = 48;
+	
+	Player.Window[WINDOW_TEST] = Window;
+	Player.Window[WINDOW_TEST + 1] = Window2;
 };
 
 acscript ToggleGUI()
@@ -64,15 +98,9 @@ acscript ToggleGUI()
 	Player.GUIOpen = !Player.GUIOpen;
 	
 	if (Player.GUIOpen)
-	{
-		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-		BuildTestWindow();
-	}
+		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN)
 	else
-	{
 		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-		GUIDeleteWindow(Player.Window);
-	};
 };
 
 script CheckCursor()
@@ -146,35 +174,45 @@ script CheckGUI()
 	Player.Mouse.X = Width / 2;
 	Player.Mouse.Y = Height / 2;
 	
+	// Build the Test Window
+	BuildTestWindow();
+	
 	while (true)
 	{
 		if (Player.GUIOpen)
 		{
-			// Set the Resolution/HUD Size
-			SetHudSize(Width, Height, true);
-			
-			// Handle Labels
-			for (int i = 0; Player.Window->Labels[i] != nullptr; i++)
-				HandleLabel(Player.Window->Labels[i]);
-			
-			// Handle Icons
-			for (int i = 0; Player.Window->Icons[i] != nullptr; i++)
-				HandleIcon(Player.Window->Icons[i]);
-			
-			// Handle Buttons
-			for (int i = 0; Player.Window->Buttons[i] != nullptr; i++)
-				HandleButton(Player.Window->Buttons[i]);
-			
-			// Handle Bars
-			for (int i = 0; Player.Window->Bars[i] != nullptr; i++)
-				HandleBar(Player.Window->Bars[i]);
-			
-			// Handle Lists
-			for (int i = 0; Player.Window->Lists[i] != nullptr; i++)
-				HandleList(Player.Window->Lists[i]);
-			
-			// Handle Drawing and Input for the Window
-			HandleWindow(Player.Window);
+			// Window Handling
+			for (int i = 0; Player.Window[i] != nullptr; i++)
+			{
+				if (Player.Window[i]->Visible)
+				{
+					if (!Player.Window[i]->RolledUp)
+					{
+						// Handle Labels
+						for (int j = 0; Player.Window[i]->Labels[j] != nullptr; j++)
+							HandleLabel(Player.Window[i]->Labels[j]);
+						
+						// Handle Icons
+						for (int j = 0; Player.Window[i]->Icons[j] != nullptr; j++)
+							HandleIcon(Player.Window[i]->Icons[j]);
+						
+						// Handle Buttons
+						for (int j = 0; Player.Window[i]->Buttons[j] != nullptr; j++)
+							HandleButton(Player.Window[i]->Buttons[j]);
+						
+						// Handle Bars
+						for (int j = 0; Player.Window[i]->Bars[j] != nullptr; j++)
+							HandleBar(Player.Window[i]->Bars[j]);
+						
+						// Handle Lists
+						for (int j = 0; Player.Window[i]->Lists[j] != nullptr; j++)
+							HandleList(Player.Window[i]->Lists[j]);
+					};
+					
+					// Handle Drawing and Input for the Window
+					HandleWindow(Player.Window[i]);
+				};
+			};
 		};
 		
 		Delay(1);
@@ -190,17 +228,50 @@ function void HandleWindow(GUIWindow *Window)
 	
 	// Title
 	SetFont("SMALLFONT");
-	HudMessage("%s\n", Window->Title, HUDMSG_PLAIN, 0, ((InTitleBar(Window) || Window->Dragging) ? CR_GREEN : CR_WHITE), Window->X + 16.1, Window->Y + 8.0, 0.05);
+	if (Window->Focused)
+		HudMessage("%s\n", Window->Title, HUDMSG_PLAIN, 0, ((InTitleBar(Window) || Window->Dragging) ? CR_GREEN : CR_WHITE), Window->X + 16.1, Window->Y + 8.0, 0.05)
+	else
+		HudMessage("%s\n", Window->Title, HUDMSG_PLAIN, 0, CR_DARKGRAY, Window->X + 16.1, Window->Y + 8.0, 0.05);
+	
+	// X Button
+	if (Window->CanClose)
+		if (InRegion(Window->X + Window->Width - 14.1, Window->Y + 12.0, 16, 8) && Window->Focused)
+		{
+			HudMessage("X\n", HUDMSG_PLAIN, 0, MenuCursorColor, Window->X + Window->Width - 14.1, Window->Y + 8.0, 0.05);
+			
+			if (Player.Mouse.LeftButton)
+				Window->Visible = false;
+			if (Player.Mouse.RightButton) // For Testing!
+				GUIDeleteWindow(Window);
+		}
+		else
+			HudMessage("X\n", HUDMSG_PLAIN, 0, CR_WHITE, Window->X + Window->Width - 14.1, Window->Y + 8.0, 0.05);
+	
+	// Roll Button
+	if (Window->CanRoll)
+		if (InRegion(Window->X + Window->Width - 28.1, Window->Y + 12.0, 14, 8) && Window->Focused)
+		{
+			HudMessage("_\n", HUDMSG_PLAIN, 0, MenuCursorColor, Window->X + Window->Width - 28.1, Window->Y + 8.0, 0.05);
+			
+			if (Player.Mouse.LeftButton)
+				Window->RolledUp = !Window->RolledUp;
+		}
+		else
+			HudMessage("_\n", HUDMSG_PLAIN, 0, CR_WHITE, Window->X + Window->Width - 28.1, Window->Y + 8.0, 0.05);
 	
 	// Window Background & Border
-	SetHudClipRect(Window->X, Window->Y, Window->Width, Window->Height);
+	if (Window->RolledUp)
+		SetHudClipRect(Window->X, Window->Y, Window->Width, 15)
+	else
+		SetHudClipRect(Window->X, Window->Y, Window->Width, Window->Height);
 	PrintSprite("GUIBack", 0, Window->X, Window->Y, 0.05);
-	DrawBorder(Window->X, Window->Y, Window->Width, Window->Height);
+	PrintSprite("BarHorz", 0, Window->X, Window->Y + 14.0, 0.05);
+	DrawBorder(Window->X, Window->Y, Window->Width, (Window->RolledUp ? 15 : Window->Height));
 	SetHudClipRect(0, 0, 0, 0);
 	SetFont("");
 	
 	// Drag Checking
-	if (InTitleBar(Window) && Player.Mouse.LeftButtonDown)
+	if (InTitleBar(Window) && Player.Mouse.LeftButtonDown && Window->Focused)
 		Window->Dragging = true;
 	if (Window->Dragging && !Player.Mouse.LeftButtonDown)
 		Window->Dragging = false;
@@ -218,9 +289,13 @@ function void HandleWindow(GUIWindow *Window)
 			Window->X = Width - Window->Width;
 		if (Window->Y < 0)
 			Window->Y = 0;
-		if (Window->Y > Height - Window->Height)
-			Window->Y = Height - Window->Height;
+		if (Window->Y > (Window->RolledUp ? Height - 15 : Height - Window->Height))
+			Window->Y = (Window->RolledUp ? Height - 15 : Height - Window->Height);
 	};
+	
+	// Put into focus
+	if (InRegion(Window->X, Window->Y, Window->Width, (Window->RolledUp ? 15 : Window->Height)) && Player.Mouse.LeftButton)
+		FocusWindow(Window);
 };
 
 function void HandleLabel(GUILabel *Label)
@@ -229,6 +304,9 @@ function void HandleLabel(GUILabel *Label)
 	int X = Label->Window->X + Label->X;
 	int Y = Label->Window->Y + Label->Y;
 	int Color = Label->Color;
+	
+	// Set the Resolution/HUD Size
+	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 	
 	// Drawing
 	SetFont("SMALLFONT");
@@ -240,14 +318,24 @@ function void HandleIcon(GUIIcon *Icon)
 	str Texture = Icon->Texture;
 	int X = Icon->Window->X + Icon->X;
 	int Y = Icon->Window->Y + Icon->Y;
+	int XOff = Icon->XOff;
+	int YOff = Icon->YOff;
 	int Width = Icon->Width;
 	int Height = Icon->Height;
 	
+	// Set the Resolution/HUD Size
+	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+	
 	// Drawing
-	PrintSprite(Texture, 0, X + 0.1, Y + 0.1, 0.05);
+	PrintSprite(Texture, 0, X + XOff + 0.1, Y + YOff + 0.1, 0.05);
+	
+	// Debugging - Draw a border to show the Icon's width/height
+#if DEBUG
+	DrawBorder(X, Y, Width, Height);
+#endif
 	
 	// OnClick event
-	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Icon->OnClick)
+	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Icon->OnClick && Icon->Window->Focused)
 		Icon->OnClick(Icon);
 };
 
@@ -260,6 +348,9 @@ function void HandleButton(GUIButton *Button)
 	int Height = Button->Height;
 	int Color = Button->Color;
 	int HoverColor = Button->HoverColor;
+	
+	// Set the Resolution/HUD Size
+	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 	
 	// Default Color
 	if (Color == 0)
@@ -278,13 +369,13 @@ function void HandleButton(GUIButton *Button)
 	
 	// Drawing
 	SetFont("SMALLFONT");
-	if (InRegion(X, Y, Width, Height))
+	if (InRegion(X, Y, Width, Height) && !Button->Window->Dragging && Button->Window->Focused)
 		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y, 0.05)
 	else
 		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
 	
 	// OnClick event
-	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Button->OnClick)
+	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Button->OnClick && Button->Window->Focused)
 		Button->OnClick(Button);
 };
 
@@ -295,6 +386,9 @@ function void HandleBar(GUIBar *Bar)
 	int Value = Bar->Value;
 	int ValueMax = Bar->ValueMax;
 	str Texture = Bar->Texture;
+	
+	// Set the Resolution/HUD Size
+	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 	
 	// Default Max Value
 	if (ValueMax == 0)
@@ -323,6 +417,9 @@ function void HandleList(GUIList *List)
 	int MaxEntries;
 	int Longest;
 	
+	// Set the Resolution/HUD Size
+	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+	
 	// Default Color
 	if (Color == 0)
 		Color = CR_WHITE;
@@ -348,7 +445,7 @@ function void HandleList(GUIList *List)
 		// Checking for the longest width in the entries
 		if (Width > Longest) Longest = Width;
 		
-		if (InRegion(X, Y + ((i - Offset) * 11), Width, 12))
+		if (InRegion(X, Y + ((i - Offset) * 11), Width, 12) && !List->Window->Dragging && List->Window->Focused)
 		{
 			HudMessage("%s\n", Entries[i], HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
 			List->Selected = i;
@@ -386,6 +483,13 @@ function void HandleList(GUIList *List)
 function GUIWindow *GUICreateWindow()
 {
 	GUIWindow *Window = malloc(sizeof(GUIWindow));
+	
+	FocusWindow(Window);
+	
+	Window->Visible = true;
+	Window->CanClose = true;
+	Window->CanRoll = true;
+	
 	return Window;
 };
 
@@ -486,10 +590,37 @@ function GUITooltip *GUICreateTooltip()
 	return Tooltip;
 };
 
+function void FocusWindow(GUIWindow *Window)
+{
+	// Intersect Checking
+	for (int i = 0; Player.Window[i] != nullptr; i++)
+	{
+		// Continue if it's the same window
+		if (Player.Window[i] == Window) continue;
+		
+		// TODO: This check still needs some work
+		// It needs to also account for a window not being completely inside another, as it is, a window will be completely unselectable if it's inside another one
+		if (Window->X >= Player.Window[i]->X &&
+			Window->X <= Player.Window[i]->Width &&
+			Window->Y >= Player.Window[i]->Y &&
+			Window->Y <= Player.Window[i]->Height)
+		{
+			Log("\cdIntersecting!\n");
+			return;
+		};
+	};
+	
+	// Unfocus all Windows
+	for (int i = 0; Player.Window[i] != nullptr; i++)
+		Player.Window[i]->Focused = false;
+	
+	Window->Focused = true;
+};
+
 function bool InTitleBar(GUIWindow *Window)
 {
-	if (Player.Mouse.X > Window->X && Player.Mouse.X < Window->X + Window->Width &&
-		Player.Mouse.Y > Window->Y + 10 && Player.Mouse.Y < Window->Y + 20)
+	if (Player.Mouse.X > Window->X && Player.Mouse.X < Window->X + Window->Width - 32 &&
+		Player.Mouse.Y > Window->Y && Player.Mouse.Y < Window->Y + 20)
 		return true
 	else
 		return false;

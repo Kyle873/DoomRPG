@@ -25,6 +25,7 @@ struct GUIIcon;
 struct GUIButton;
 struct GUIBar;
 struct GUIList;
+struct GUITooltip;
 
 // GUI Event Function Pointers
 typedef funcpointer(GUILabel *) LabelEventFunc;
@@ -32,6 +33,14 @@ typedef funcpointer(GUIIcon *) IconEventFunc;
 typedef funcpointer(GUIButton *) ButtonEventFunc;
 typedef funcpointer(GUIBar *) BarEventFunc;
 typedef funcpointer(GUIList *) ListEventFunc;
+
+// Tooltip Types
+enum TooltipType
+{
+	Basic,
+	Icon,
+	Complex
+};
 
 struct GUIWindow
 {
@@ -42,6 +51,10 @@ struct GUIWindow
 	int Height;
 	bool Dragging;
 	bool Focused;
+	bool Visible;
+	bool RolledUp;
+	bool CanClose;
+	bool CanRoll;
 	
 	// Controls
 	GUILabel 	*[MAX_CONTROLS] Labels;
@@ -57,8 +70,10 @@ struct GUILabel
 	int X;
 	int Y;
 	int Color;
+	bool Big;
 	
 	GUIWindow *Window;
+	GUITooltip *Tooltip;
 };
 
 struct GUIIcon
@@ -66,10 +81,13 @@ struct GUIIcon
 	str Texture;
 	int X;
 	int Y;
+	int XOff;
+	int YOff;
 	int Width;
 	int Height;
 	
 	GUIWindow *Window;
+	GUITooltip *Tooltip;
 	
 	IconEventFunc OnClick;
 };
@@ -83,8 +101,10 @@ struct GUIButton
 	int Height;
 	int Color;
 	int HoverColor;
+	bool Big;
 	
 	GUIWindow *Window;
+	GUITooltip *Tooltip;
 	
 	ButtonEventFunc OnClick;
 };
@@ -98,6 +118,7 @@ struct GUIBar
 	str Texture;
 	
 	GUIWindow *Window;
+	GUITooltip *Tooltip;
 };
 
 struct GUIList
@@ -112,12 +133,14 @@ struct GUIList
 	str[MAX_LIST] Entries;
 	
 	GUIWindow *Window;
+	GUITooltip *Tooltip;
 	
 	ListEventFunc OnClick;
 };
 
 struct GUITooltip
 {
+	TooltipType Type;
 	str Title;
 	str Text;
 	int Width;
@@ -138,6 +161,7 @@ extern
 
 extern
 {
+	// Window/Control Handling
 	function void HandleWindow(GUIWindow *);
 	function void HandleLabel(GUILabel *);
 	function void HandleIcon(GUIIcon *);
@@ -145,6 +169,7 @@ extern
 	function void HandleBar(GUIBar *);
 	function void HandleList(GUIList *);
 	
+	// Window/Control Creation
 	function GUIWindow *GUICreateWindow();
 	function void GUIDeleteWindow(GUIWindow *);
 	function GUILabel *GUICreateLabel(GUIWindow *);
@@ -154,6 +179,8 @@ extern
 	function GUIList *GUICreateList(GUIWindow *);
 	function GUITooltip *GUICreateTooltip();
 	
+	// Utility
+	function void FocusWindow(GUIWindow *);
 	function bool InTitleBar(GUIWindow *);
 	function bool InRegion(int, int, int, int);
 	function void DrawBorder(int, int, int, int);
