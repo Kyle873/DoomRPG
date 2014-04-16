@@ -62,12 +62,17 @@ function void BuildTestWindow()
 acscript ToggleGUI()
 {
 	Player.GUIOpen = !Player.GUIOpen;
-	BuildTestWindow();
 	
 	if (Player.GUIOpen)
-		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN)
+	{
+		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+		BuildTestWindow();
+	}
 	else
+	{
 		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+		GUIDeleteWindow(Player.Window);
+	};
 };
 
 script CheckCursor()
@@ -382,6 +387,22 @@ function GUIWindow *GUICreateWindow()
 {
 	GUIWindow *Window = malloc(sizeof(GUIWindow));
 	return Window;
+};
+
+function void GUIDeleteWindow(GUIWindow *Window)
+{
+	// Free Controls
+	for (int i = 0; i < MAX_CONTROLS; i++)
+	{
+		if (Window->Labels[i] != nullptr) 	free(Window->Labels[i]);
+		if (Window->Icons[i] != nullptr) 	free(Window->Icons[i]);
+		if (Window->Buttons[i] != nullptr) 	free(Window->Buttons[i]);
+		if (Window->Bars[i] != nullptr) 	free(Window->Bars[i]);
+		if (Window->Lists[i] != nullptr) 	free(Window->Lists[i]);
+	};
+	
+	// Free Window
+	free(Window);
 };
 
 function GUILabel *GUICreateLabel(GUIWindow *Window)
