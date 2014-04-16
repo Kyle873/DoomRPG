@@ -26,6 +26,8 @@ function void LogSelected(GUIList *List)
 function void BuildTestWindow()
 {
 	GUIWindow *Window = GUICreateWindow();
+	GUITooltip *Tooltip = GUICreateTooltip();
+	GUITooltip *Tooltip2 = GUICreateTooltip();
 	GUILabel *Label = GUICreateLabel(Window);
 	GUIIcon *Icon = GUICreateIcon(Window);
 	GUIButton *Button = GUICreateButton(Window);
@@ -43,11 +45,22 @@ function void BuildTestWindow()
 	Window->Width = 300;
 	Window->Height = 300;
 	Window->CanClose = false;
-		
+	
+	Tooltip->Type = TT_BASIC;
+	Tooltip->Text = "This is a tooltip, it tells you things";
+	
+	Tooltip2->Type = TT_COMPLEX;
+	Tooltip2->Title = "Title";
+	Tooltip2->Text = "This is a description, it also tells you things";
+	Tooltip2->Icon = "STAT8";
+	Tooltip2->IconXOff = 14;
+	Tooltip2->IconYOff = 24;
+
 	Label->Text = "Mega Label";
 	Label->X = 24;
 	Label->Y = 24;
 	Label->Color = CR_GOLD;
+	Label->Tooltip = Tooltip;
 	
 	Icon->Texture = "STAT1";
 	Icon->X = 16;
@@ -62,6 +75,7 @@ function void BuildTestWindow()
 	Button->X = 48;
 	Button->Y = 64;
 	Button->OnClick = ClickTest;
+	Button->Tooltip = Tooltip2;
 	
 	Button2->Text = "Toggle Window 2";
 	Button2->X = 48;
@@ -309,15 +323,28 @@ function void HandleLabel(GUILabel *Label)
 	str Text = Label->Text;
 	int X = Label->Window->X + Label->X;
 	int Y = Label->Window->Y + Label->Y;
+	int Width = Label->Width;
+	int Height = Label->Height;
 	int Color = Label->Color;
 	bool Big = Label->Big;
 	
 	// Set the Resolution/HUD Size
 	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 	
+	// Auto-calculate width and height based on string length and size
+	if (Width == 0 && Height == 0)
+	{
+		Width = StrLen(Text) * (Big ? 13 : 8);
+		Height = 14;
+	};
+	
 	// Drawing
 	SetFont((Big ? "BIGFONT" : "SMALLFONT"));
 	HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
+	
+	// Tooltip
+	if (InRegion(X, Y, Width, Height) && Label->Tooltip != nullptr)
+		DrawTooltip(Label->Tooltip);
 };
 
 function void HandleIcon(GUIIcon *Icon)
@@ -340,6 +367,10 @@ function void HandleIcon(GUIIcon *Icon)
 #if DEBUG
 	DrawBorder(X, Y, Width, Height);
 #endif
+	
+	// Tooltip
+	if (InRegion(X, Y, Width, Height) && Icon->Tooltip != nullptr)
+		DrawTooltip(Icon->Tooltip);
 	
 	// OnClick event
 	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Icon->OnClick && Icon->Window->Focused)
@@ -382,6 +413,10 @@ function void HandleButton(GUIButton *Button)
 	else
 		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
 	
+	// Tooltip
+	if (InRegion(X, Y, Width, Height) && Button->Tooltip != nullptr)
+		DrawTooltip(Button->Tooltip);
+	
 	// OnClick event
 	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Button->OnClick && Button->Window->Focused)
 		Button->OnClick(Button);
@@ -391,6 +426,8 @@ function void HandleBar(GUIBar *Bar)
 {
 	int X = Bar->Window->X + Bar->X;
 	int Y = Bar->Window->Y + Bar->Y;
+	int Width = Bar->Width;
+	int Height = Bar->Height;
 	int Value = Bar->Value;
 	int ValueMax = Bar->ValueMax;
 	str Texture = Bar->Texture;
@@ -408,9 +445,20 @@ function void HandleBar(GUIBar *Bar)
 	if (Value > ValueMax)
 		Value = ValueMax;
 	
+	// Auto-calculate width and height based on ValueMax
+	if (Width == 0 && Height == 0)
+	{
+		Width = ValueMax;
+		Height = 6;
+	};
+	
 	// Drawing
 	for (int i = 0; i < (int)(((fixed)Value / (fixed)(ValueMax + 1)) * 100.0); i++)
 		PrintSprite(Texture, 0, ++X, Y, 0.05);
+	
+	// Tooltip
+	if (InRegion(X, Y, Width, Height) && Bar->Tooltip != nullptr)
+		DrawTooltip(Bar->Tooltip);
 };
 
 function void HandleList(GUIList *List)
@@ -486,6 +534,82 @@ function void HandleList(GUIList *List)
 	}
 	else
 		HudMessage("V\n", HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1 + Longest, Y + (Shown * 10.0) - 14.0, 0.05);
+};
+
+function void DrawTooltip(GUITooltip *Tooltip)
+{
+	TooltipType Type = Tooltip->Type;
+	str Title = Tooltip->Text;
+	str Text = Tooltip->Text;
+	int X = Player.Mouse.X + 8;
+	int Y = Player.Mouse.Y + 8;
+	int ScreenWidth = GetCVar("drpg_menu_width");
+	int ScreenHeight = GetCVar("drpg_menu_height");
+	int Width = Tooltip->Width;
+	int Height = Tooltip->Height;
+	str Icon = Tooltip->Icon;
+	int IconXOff = Tooltip->IconXOff;
+	int IconYOff = Tooltip->IconYOff;
+	
+	// Set the Resolution/HUD Size
+	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+	
+	// Auto-calculate width and height based on string length and size
+	if (Width == 0 && Height == 0)
+	{
+		Width = StrLen(Text) * 7;
+		Height = 15;
+	};
+	
+	// Basic Tooltip
+	if (Type == TT_BASIC)
+	{
+		// Bounding
+		if (X > ScreenWidth - Width)
+			X = ScreenWidth - Width;
+		if (Y > ScreenHeight - Height)
+			Y > ScreenHeight - Height;
+		
+		// Border
+		DrawBorder(X, Y, Width, Height);
+		
+		// Text
+		SetFont("SMALLFONT");
+		HudMessage("%s\n", Tooltip->Text, HUDMSG_PLAIN, 0, CR_WHITE, X + 4.1, Y + 8.0, 0.05);
+	};
+	
+	// Complex Tooltip
+	if (Type == TT_COMPLEX)
+	{
+		// Add more Width
+		Width += 100;
+		Height += 48;
+		
+		// Bounding
+		if (X > ScreenWidth - Width)
+			X = ScreenWidth - Width;
+		if (Y > ScreenHeight - Height)
+			Y > ScreenHeight - Height;
+		
+		// Border
+		DrawBorder(X, Y, Width, Height);
+		
+		// Title
+		SetFont("BIGFONT");
+		HudMessage("%s\n", Tooltip->Title, HUDMSG_PLAIN, 0, CR_WHITE, X + 64.1, Y + 16.0, 0.05);
+		
+		// Text
+		SetFont("SMALLFONT");
+		HudMessage("%s\n", Tooltip->Text, HUDMSG_PLAIN, 0, CR_WHITE, X + 64.1, Y + 32.0, 0.05);
+		
+		// Icon
+		PrintSprite(Tooltip->Icon, 0, X + IconXOff + 16.1, Y + IconYOff + 16.1, 0.05);
+	};
+	
+	// Draw Background
+	SetHudClipRect(X, Y, Width, Height);
+	PrintSprite("GUIBack", 0, X, Y, 0.05);
+	SetHudClipRect(0, 0, 0, 0);
 };
 
 function GUIWindow *GUICreateWindow()
