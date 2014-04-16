@@ -14,6 +14,7 @@ function void BuildTestWindow()
 	GUILabel *Label = GUICreateLabel(Window);
 	GUIIcon *Icon = GUICreateIcon(Window);
 	GUIButton *Button = GUICreateButton(Window);
+	GUIBar *Bar = GUICreateBar(Window);
 	
 	Window->Title = "Super Awesome Test Window";
 	Window->X = 40;
@@ -36,6 +37,11 @@ function void BuildTestWindow()
 	Button->Text = "Test Button";
 	Button->X = 48;
 	Button->Y = 64;
+	
+	Bar->X = 48;
+	Bar->Y = 96;
+	Bar->Value = Random(25, 100);
+	Bar->Texture = StrParam("Stim%d\n", Random(1, 18));
 	
 	Player.Window = Window;
 };
@@ -140,6 +146,9 @@ script CheckGUI()
 			// Handle Buttons
 			for (int i = 0; Player.Window->Buttons[i] != nullptr; i++)
 				HandleButton(Player.Window->Buttons[i]);
+			
+			for (int i = 0; Player.Window->Bars[i] != nullptr; i++)
+				HandleBar(Player.Window->Bars[i]);
 			
 			// Handle Drawing and Input for the Window
 			HandleWindow(Player.Window);
@@ -254,6 +263,29 @@ function void HandleButton(GUIButton *Button)
 	// OnClick event
 	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Button->OnClick)
 		Button->OnClick();
+};
+
+function void HandleBar(GUIBar *Bar)
+{
+	int X = Bar->Window->X + Bar->X;
+	int Y = Bar->Window->Y + Bar->Y;
+	int Value = Bar->Value;
+	int ValueMax = Bar->ValueMax;
+	str Texture = Bar->Texture;
+	
+	// Default Max Value
+	if (ValueMax == 0)
+		ValueMax = 100;
+	
+	// Prevent Value under/overflow
+	if (Value < 0)
+		Value = 0;
+	if (Value > ValueMax)
+		Value = ValueMax;
+	
+	// Drawing
+	for (int i = 0; i < (int)(((fixed)Value / (fixed)(ValueMax + 1)) * 100.0); i++)
+		PrintSprite(Texture, 0, ++X, Y, 0.05);
 };
 
 function GUIWindow *GUICreateWindow()
