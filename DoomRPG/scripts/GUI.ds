@@ -8,6 +8,11 @@ function void ClickTest()
 	Log("\ckClick!\n");
 };
 
+function void LogSelected()
+{
+	Log("\cd%d\n", Player.Window->Lists[0]->Selected);
+};
+
 function void BuildTestWindow()
 {
 	GUIWindow *Window = GUICreateWindow();
@@ -15,6 +20,7 @@ function void BuildTestWindow()
 	GUIIcon *Icon = GUICreateIcon(Window);
 	GUIButton *Button = GUICreateButton(Window);
 	GUIBar *Bar = GUICreateBar(Window);
+	GUIList *List = GUICreateList(Window);
 	
 	Window->Title = "Super Awesome Test Window";
 	Window->X = 40;
@@ -42,6 +48,13 @@ function void BuildTestWindow()
 	Bar->Y = 96;
 	Bar->Value = Random(25, 100);
 	Bar->Texture = StrParam("Stim%d\n", Random(1, 18));
+	
+	List->X = 24;
+	List->Y = 128;
+	List->Shown = 10;
+	for (int i = 0; i < 50; i++)
+		List->Entries[i] = StrParam("Entry %d\n", i + 1);
+	List->OnClick = LogSelected;
 	
 	Player.Window = Window;
 };
@@ -147,8 +160,13 @@ script CheckGUI()
 			for (int i = 0; Player.Window->Buttons[i] != nullptr; i++)
 				HandleButton(Player.Window->Buttons[i]);
 			
+			// Handle Bars
 			for (int i = 0; Player.Window->Bars[i] != nullptr; i++)
 				HandleBar(Player.Window->Bars[i]);
+			
+			// Handle Lists
+			for (int i = 0; Player.Window->Lists[i] != nullptr; i++)
+				HandleList(Player.Window->Lists[i]);
 			
 			// Handle Drawing and Input for the Window
 			HandleWindow(Player.Window);
@@ -209,7 +227,7 @@ function void HandleLabel(GUILabel *Label)
 	
 	// Drawing
 	SetFont("SMALLFONT");
-	HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y + 0.1, 0.05);
+	HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
 };
 
 function void HandleIcon(GUIIcon *Icon)
@@ -288,6 +306,78 @@ function void HandleBar(GUIBar *Bar)
 		PrintSprite(Texture, 0, ++X, Y, 0.05);
 };
 
+function void HandleList(GUIList *List)
+{
+	int X = List->Window->X + List->X;
+	int Y = List->Window->Y + List->Y;
+	int Color = List->Color;
+	int HoverColor = List->HoverColor;
+	int Shown = List->Shown;
+	int Offset = List->Offset;
+	str[MAX_LIST] Entries = List->Entries;
+	int MaxEntries;
+	int Longest;
+	
+	// Default Color
+	if (Color == 0)
+		Color = CR_WHITE;
+	
+	// Default Hover Color
+	if (HoverColor == 0)
+		HoverColor = MenuCursorColor;
+	
+	// Can't show less than 5 items
+	if (Shown < 5)
+		Shown = 5;
+	
+	// Calculate max amount of entries
+	for (int i = 0; StrLen(Entries[i]) != 0; i++)
+		MaxEntries++;
+	
+	// Drawing/Selection
+	SetFont("SMALLFONT");
+	for (int i = Offset; i < MaxEntries && i < Offset + Shown; i++)
+	{
+		int Width = StrLen(Entries[i]) * 8;
+		
+		// Checking for the longest width in the entries
+		if (Width > Longest) Longest = Width;
+		
+		if (InRegion(X, Y + ((i - Offset) * 11), Width, 12))
+		{
+			HudMessage("%s\n", Entries[i], HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
+			List->Selected = i;
+			
+			// OnClick event
+			if (Player.Mouse.LeftButton && List->OnClick)
+				List->OnClick();
+		}
+		else
+			HudMessage("%s\n", Entries[i], HUDMSG_PLAIN, 0, Color, X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
+	};
+	
+	// Scroll Arrows
+	SetFont("BIGFONT");
+	if (InRegion(X + 4.1 + Longest, Y + 1.0, 16, 12))
+	{
+		HudMessage("^\n", HUDMSG_PLAIN, 0, MenuCursorColor, X + 0.1 + Longest, Y + 1.0, 0.05);
+		
+		if (Player.Mouse.LeftButton && List->Offset > 0)
+			List->Offset--;
+	}
+	else
+		HudMessage("^\n", HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1 + Longest, Y + 1.0, 0.05);
+	if (InRegion(X + 4.1 + Longest, Y + (Shown * 10.0) - 14.0, 16, 16))
+	{
+		HudMessage("V\n", HUDMSG_PLAIN, 0, MenuCursorColor, X + 0.1 + Longest, Y + (Shown * 10.0) - 14.0, 0.05);
+		
+		if (Player.Mouse.LeftButton && List->Offset < MaxEntries - Shown)
+			List->Offset++;
+	}
+	else
+		HudMessage("V\n", HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1 + Longest, Y + (Shown * 10.0) - 14.0, 0.05);
+};
+
 function GUIWindow *GUICreateWindow()
 {
 	GUIWindow *Window = malloc(sizeof(GUIWindow));
@@ -352,6 +442,21 @@ function GUIBar *GUICreateBar(GUIWindow *Window)
 		};
 	
 	return Bar;
+};
+
+function GUIList *GUICreateList(GUIWindow *Window)
+{
+	GUIList *List = malloc(sizeof(GUIList));
+	List->Window = Window;
+	
+	for (int i = 0; i < MAX_CONTROLS; i++)
+		if (Window->Lists[i] == nullptr)
+		{
+			Window->Lists[i] = List;
+			break;
+		};
+	
+	return List;
 };
 
 function GUITooltip *GUICreateTooltip()
