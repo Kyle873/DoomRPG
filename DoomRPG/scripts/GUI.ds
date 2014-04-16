@@ -30,6 +30,7 @@ function void BuildTestWindow()
 	GUIIcon *Icon = GUICreateIcon(Window);
 	GUIButton *Button = GUICreateButton(Window);
 	GUIButton *Button2 = GUICreateButton(Window);
+	GUIButton *Button3 = GUICreateButton(Window);
 	GUIBar *Bar = GUICreateBar(Window);
 	GUIList *List = GUICreateList(Window);
 	
@@ -66,6 +67,11 @@ function void BuildTestWindow()
 	Button2->X = 48;
 	Button2->Y = 80;
 	Button2->OnClick = ToggleWindow2;
+	
+	Button3->Text = "Big Button";
+	Button3->X = 144;
+	Button3->Y = 64;
+	Button3->Big = true;
 	
 	Bar->X = 48;
 	Bar->Y = 96;
@@ -304,12 +310,13 @@ function void HandleLabel(GUILabel *Label)
 	int X = Label->Window->X + Label->X;
 	int Y = Label->Window->Y + Label->Y;
 	int Color = Label->Color;
+	bool Big = Label->Big;
 	
 	// Set the Resolution/HUD Size
 	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 	
 	// Drawing
-	SetFont("SMALLFONT");
+	SetFont((Big ? "BIGFONT" : "SMALLFONT"));
 	HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
 };
 
@@ -348,6 +355,7 @@ function void HandleButton(GUIButton *Button)
 	int Height = Button->Height;
 	int Color = Button->Color;
 	int HoverColor = Button->HoverColor;
+	bool Big = Button->Big;
 	
 	// Set the Resolution/HUD Size
 	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
@@ -363,12 +371,12 @@ function void HandleButton(GUIButton *Button)
 	// Auto-calculate width and height based on string length and size
 	if (Width == 0 && Height == 0)
 	{
-		Width = StrLen(Text) * 8;
+		Width = StrLen(Text) * (Big ? 13 : 8);
 		Height = 14;
 	};
 	
 	// Drawing
-	SetFont("SMALLFONT");
+	SetFont((Big ? "BIGFONT" : "SMALLFONT"));
 	if (InRegion(X, Y, Width, Height) && !Button->Window->Dragging && Button->Window->Focused)
 		HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y, 0.05)
 	else
