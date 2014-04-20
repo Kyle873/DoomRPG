@@ -818,10 +818,6 @@ acscript bool PlayerTeleport()
 	str[MAX_PLAYERS] Names;
 	int PlayerChoice;
 	
-	// Get Player Names
-	for (int i = 0; i < MAX_PLAYERS; i++)
-		Names[i] = StrParam("%N\n", i + 1);
-	
 	// Refund - If there is only one player or you aren't in multiplayer
 	if (PlayerCount() <= 1 || !InMultiplayer)
 	{
@@ -884,10 +880,30 @@ acscript bool PlayerTeleport()
 				return true;
 			};
 		};
-			
-		// Drawing
-		for (int i = 0; i < PlayerCount(); i++)
+		if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
 		{
+			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+			ActivatorSound("menu/move", 127);
+			return false;
+		};
+		
+		// Drawing
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
+			// Skip over players that aren't in the game
+			if (!PlayerInGame(i))
+			{
+				// If you are highlighting someone who left, reset the cursor
+				if (PlayerChoice == i)
+					PlayerChoice = 0;
+				
+				continue;
+			};
+			
+			// Get Player Names
+			for (int i = 0; i < MAX_PLAYERS; i++)
+				Names[i] = StrParam("%N\n", i + 1);
+			
 			// Cursor
 			if (i == PlayerChoice)
 				HudMessage("-->\n", HUDMSG_PLAIN, 0, MenuCursorColor, X - 24.0, Y, 0.05);
