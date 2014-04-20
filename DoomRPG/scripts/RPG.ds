@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Sunday, April 20, 2014 at 4:32:08 PM";
+	"Sunday, April 20, 2014 at 6:46:30 PM";
 };
 
 // Level Info
@@ -1255,7 +1255,7 @@ script HealthBars()
 		{
 			// Find the right Player
 			for (int i = 0; i < MAX_PLAYERS; i++)
-				if (Players(i).TID == ActivatorTID())
+				if (Players(i).TID == ActivatorTID() && PlayerInGame(i))
 				{
 					ID = i;
 					IsPlayer = true;
@@ -1275,6 +1275,11 @@ script HealthBars()
 			Stats[9] = Players(ID).Luck;
 			Stats[10] = CheckInventory("Armor");
 			Stats[11] = Players(ID).ArmorMax;
+			
+			// Indestructible Armor check
+			if (GetCVar("drpg_ext_doomrl"))
+				if (CheckInventory("RLIndestructibleArmorWorn"))
+					Stats[11] = 10000;
 			
 			// If the Player has a Shield active, change the health to Shield amounts instead
 			if (Shield)
@@ -1347,23 +1352,28 @@ script HealthBars()
 					HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, Color, X, Y - 24.0, 0.05);
 				};
 				
-				// HP/Max HP
+				// HP/Max HP and Armor
 				SetFont("SMALLFONT");
 				if (Shield)
 					if (IsPlayer && Stats[10] > 0)
-						HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, MaxHealth, Stats[10], Stats[11], HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
+						if (Stats[11] >= 10000) // Indestructible Armor
+							HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
+						else
+							HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, MaxHealth, Stats[10], Stats[11], HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
 					else
 						HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
 				else
 					if (IsPlayer && Stats[10] > 0)
-						HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, MaxHealth, Stats[10], Stats[11], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
+						if (Stats[11] >= 10000) // Indestructible Armor
+							HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
+						else
+							HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, MaxHealth, Stats[10], Stats[11], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
 					else
 						HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
 				
 				// Monster Stats
 				if (GetCVar("drpg_monster_levels") > 0 && CurrentLevel > 0 && !IsPlayer)
 				{
-                    
 					SetFont("BIGFONT");
 					
 					// Stat Amounts
