@@ -15,7 +15,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Monday, April 21, 2014 at 8:48:10 PM";
+	"Monday, April 21, 2014 at 9:22:22 PM";
 };
 
 // Level Info
@@ -219,17 +219,14 @@ script MonsterStats(int Flags)
 		if (LevelNum == 999) // UAC Outpost
 			if (ArenaActive) // If the Arena is active, base the Monster Level's Map Number portion on the current wave
 				LevelNum = ArenaWave
-			else // If not in the Arena, base it off the level the player teleported from
-				LevelNum = LevelNum;
+			else // If not in the Arena, base it off the level the average Player level
+				LevelNum = PlayerAvgLevel;
 		if (LevelType == 1 || LevelType == 3) // Player Level
-			MonsterLevel = Round((fixed)PlayerAvgLevel + RandomFixed(0.0, (fixed)GameSkill() * 2.0) + RandomFixed(0.0, (fixed)MonsterCurve) * RandomFixed(1.0, LevelMult));
+			MonsterLevel = Round((fixed)PlayerAvgLevel + RandomFixed(0.0, (fixed)GameSkill() * 2.0) + RandomFixed(0.0, (fixed)MonsterCurve) * LevelMult);
 		if (LevelType == 2 || LevelType == 3) // Map Number
-			MonsterLevel += Round((fixed)LevelNum * RandomFixed(1.0, (fixed)LevelMult));
-		// [KS] Bad place to do that! We don't know who the owner is.
-		/*
+			MonsterLevel += Round((fixed)LevelNum * (fixed)LevelMult);
 		if (GetActorProperty(0, APROP_Friendly)) // If the monster is friendly, it has the same level as you
-			MonsterLevel = Player.Level;
-		*/
+			MonsterLevel = PlayerAvgLevel;
 		if (MonsterLevel <= 0) MonsterLevel = 1;
 		
 		// Strength
