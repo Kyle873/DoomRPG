@@ -1530,6 +1530,7 @@ acscript Transport()
 	// If you're dead, terminate
 	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
 	
+	// Multiplayer
 	if (InMultiplayer && PlayerCount() > 1)
 	{
 		int Players = PlayerCount();
@@ -1579,7 +1580,7 @@ acscript Transport()
 			HudMessageBold("\cd%N has requested Transport\n\c-Players: %d (\cd%d\c-/\cg%d\c-)\n\n\cd%K\c- to Approve\n\cd%K\c- to Deny\n",
 						   PlayerNumber() + 1, Players, PlayersApprove, PlayersDeny, "+use", "+speed",
 						   HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.75, 1.0, 4.0);
-
+			
 			Delay(1);
 		};
 		
@@ -1614,7 +1615,7 @@ acscript Transport()
 			};
 		};
 	}
-	else
+	else // Single Player
 	{
 		// Fade Screen
 		FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 1.0);
@@ -1632,17 +1633,17 @@ acscript Transport()
 	// Transport
 	if (!InBase)
 	{
-		str levlump = StrParam("%N\n", PRINTNAME_LEVEL);
-		for (int i = 0; i < 8 && i < StrLen (levlump); ++i)
-			LastVisited[i] = levlump[i];
+		str LevelLump = StrParam("%N\n", PRINTNAME_LEVEL);
+		for (int i = 0; i < 8 && i < StrLen(LevelLump); i++)
+			LastVisited[i] = LevelLump[i];
 		
-		ChangeLevel ("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, -1);
+		ChangeLevel("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, -1);
 		InBase = true;
 		Transported = true;
 	}
 	else
 	{
-		ChangeLevel (StrParam ("%s\n", LastVisited), 0, CHANGELEVEL_NOINTERMISSION, -1);
+		ChangeLevel(StrParam("%s\n", LastVisited), 0, CHANGELEVEL_NOINTERMISSION, -1);
 		InBase = false;
 		Transported = true;
 	};
