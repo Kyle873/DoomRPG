@@ -21,6 +21,12 @@ str[6] SkillLevels =
 	"Hell";
 };
 
+// Add Toxicity to the Player
+acscript AddToxicity(int Amount)
+{
+	Player.Toxicity += Amount;
+};
+
 // Get the max inventory size
 acscript int CheckInventoryMax()
 {
@@ -676,6 +682,11 @@ function void PrintSpriteFade(str sprite, int id, fixed x, fixed y, fixed d, fix
 	HudMessage("A\n", HUDMSG_FADEOUT, id, CR_UNTRANSLATED, x, y, d, h);
 };
 
+function void ClearMessage(int ID)
+{
+	HudMessage("\n", HUDMSG_PLAIN, ID, CR_WHITE, 0, 0, 0.05);
+};
+
 function int SetInventory(str Item, int Count)
 {
 	int n = Count - CheckInventory(Item);
@@ -839,6 +850,27 @@ function void DrawPay(int Amount)
 	SetFont("BIGFONT");
 	SetHudSize(0, 0, false);
 	HudMessage("+%d Credits\n", Amount, HUDMSG_FADEOUT, PAY_ID, CR_GOLD, -0.025, 0.775, 4.0, 2.0);
+};
+
+function void DrawToxicity(int X, int Y)
+{
+	str Color;
+	
+	// Pixel Color
+	if (Player.Toxicity >= 0 && Player.Toxicity <= 25)
+		Color = "PGreen";
+	if (Player.Toxicity >= 26 && Player.Toxicity <= 50)
+		Color = "PYellow";
+	if (Player.Toxicity >= 51 && Player.Toxicity <= 75)
+		Color = "POrange";
+	if (Player.Toxicity >= 76)
+		Color = "PRed";
+	
+	// Draw Pixel
+	if (Player.Toxicity >= 100)
+		PrintSpriteFade(Color, ID_TOXMETER + (Timer() % 100), X + (Timer() % 100), Y, 0.05, 1.0)
+	else
+		PrintSpriteFade(Color, ID_TOXMETER + (Timer() % 100), X + (Timer() % 100), Y + Round(Sin((fixed)Timer() / (116.0 - Player.Toxicity)) * 8.0), 0.05, 1.0);
 };
 
 // Computes n-th power of x
