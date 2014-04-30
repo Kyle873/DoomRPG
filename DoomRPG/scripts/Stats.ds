@@ -512,6 +512,7 @@ function void CheckStats()
 	Player.Mass = 100 + (Player.Defense * 10);
 	Player.HealthMax = Player.Vitality * 10;
 	Player.EPMax = Player.Energy * 10;
+	Player.ToxicityRegenBonus = Player.Regeneration / 20;
 	Player.Speed = 1.0 + 0.25 * ((fixed)Player.Agility / 100);
 	Player.JumpHeight = 8.0 + (8.0 * ((fixed)Player.Agility / 100));
 	Player.WeaponSpeed = Player.Agility;
@@ -707,6 +708,10 @@ function void CheckStatBounds()
 	if (Player.EPTime < 35)
 		Player.EPTime = 35;
 	
+	// Cap Toxicity Regen Bonus
+	if (Player.ToxicityRegenBonus > 9)
+		Player.ToxicityRegenBonus = 9;
+	
 	// Prevent Underflow of DamageFactor
 	if (Player.DamageFactor < 0.01)
 		Player.DamageFactor = 0.01;
@@ -823,8 +828,12 @@ function void CheckPerks()
 
 function void CheckToxicity()
 {
+	// Prevent Underflow
+	if (Player.Toxicity < 0)
+		Player.Toxicity = 0;
+	
 	// Slowly decrease Toxicity
-	if (Player.Toxicity > 0 && Timer() % (35 * 10) == 0)
+	if (Player.Toxicity > 0 && Timer() % (35 * (11 - Player.ToxicityRegenBonus)) == 0)
 		Player.Toxicity--;
 	
 	// Death at 100% Toxicity
