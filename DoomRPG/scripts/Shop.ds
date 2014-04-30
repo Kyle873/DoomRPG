@@ -119,7 +119,7 @@ function void ShopLoop()
 			Available++;
 	
 	// Get the sell price
-	SellPrice = GetSellPrice(1);
+	SellPrice = GetSellPrice("", 1);
 	
 	// Set the HUD Size
 	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
@@ -173,11 +173,12 @@ function void ShopLoop()
 		else
 			Color = CR_RED;
 		
-		// Set the Item String
+		// Build the Item String
+		Item = StrParam("%s\n", Name);
 		if (Held > 0)
-			Item = StrParam("%s \cd[%d]\n", Name, Held)
-		else
-			Item = StrParam("%s\n", Name);
+			Item = StrParam("%s \cd[%d]\n", Item, Held);
+		if (Player.AutoSell[Player.ShopPage][i])
+			Item = StrParam("%s \ck[Sell]\n", Item);
 		
 		// Display the item string
 		HudMessage("%s\n", Item, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
@@ -233,6 +234,12 @@ function void ShopLoop()
 			Player.DelayTimer = 0;
 		};
 	};
+	if (Buttons == BT_ATTACK && OldButtons != BT_ATTACK)
+		if (Player.ShopPage != 1 && Player.ShopPage != 5) // Ammo and Tokens
+		{
+			Player.AutoSell[Player.ShopPage][Player.ShopIndex] = !Player.AutoSell[Player.ShopPage][Player.ShopIndex];
+			ActivatorSound("menu/move", 127);
+		};
 	
 	// Reset the Delay Timer if no buttons are pressed
 	if (Buttons == 0 && OldButtons == 0)
@@ -313,12 +320,28 @@ function void BuyItem(str Item)
 	TakeInventory("Credits", Cost);
 };
 
-function int GetSellPrice(int Amount)
+function int GetSellPrice(str Item, int Amount)
 {
-	int SellCost = ItemData[Player.ShopPage][Player.ShopIndex].Price;
+	int SellCost;
+	
+	// Just use the current index if item is blank
+	if (Item == "")
+		SellCost = ItemData[Player.ShopPage][Player.ShopIndex].Price;
+	
+	// Iterate to find the item
+	for (int i = 0; i < ItemCategories; i++)
+		for (int j = 0; j < ItemMax[i]; j++)
+			if (ItemData[i][j].Actor == Item)
+			{
+				SellCost = ItemData[i][j].Price;
+				break;
+			};
 	
 	// 1/10th normal buying price
 	SellCost /= 10;
+	
+	// Multiply by amount
+	SellCost *= Amount;
 	
 	// Make sure you always get at least 1 Credit from a sale
 	if (SellCost == 0) SellCost = 1;
@@ -351,12 +374,9 @@ function int SellItem(str Item, bool SellAll)
 	if (SellAll)
 		Amount = CheckInventory(Item);
 	
-	if (Player.ShopPage == 1) // Ammo
-		Amount = GetAmmoAmount(Item);
-	
 	// Get Sell Price
-	SellCost = GetSellPrice(Amount);
-
+	SellCost = GetSellPrice(Item, Amount);
+	
 	// DoomRL Compatibility
 	if (GetCVar("drpg_ext_doomrl"))
 		for (int i = 1; i <= Amount; i++)
@@ -382,10 +402,28 @@ function int SellItem(str Item, bool SellAll)
 	{
 		ActivatorSound("credits/payout", 127);
 		TakeInventory(Item, Amount);
-		GiveInventory("Credits", SellCost * Amount);
+		GiveInventory("Credits", SellCost);
 	}
 	else
 		ActivatorSound("menu/error", 127);
 	
 	return SellCost;
+};
+
+function void CheckAutoSell()
+{
+	// Terminate if you can't sell items yet
+	if (Player.RankLevel == 0 && !InBase) return;
+	
+	for (int i = 0; i < ItemCategories; i++)
+		for (int j = 0; j < ItemMax[i]; j++)
+			if (Player.AutoSell[i][j] && CheckInventory(ItemData[i][j].Actor) > 0 && ItemData[i][j].Rank <= Player.RankLevel)
+			{
+				Player.AutoSellPay += SellItem(ItemData[i][j].Actor, true);
+				DrawPay(Player.AutoSellPay);
+				Player.AutoSellTimer = 35 * 6;
+			};
+	
+	if (Player.AutoSellTimer <= 0)
+		Player.AutoSellPay = 0;
 };
