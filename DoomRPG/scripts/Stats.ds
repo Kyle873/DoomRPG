@@ -828,6 +828,25 @@ function void CheckPerks()
 
 function void CheckToxicity()
 {
+	DamageFloor[] ToxicFloors =
+	{
+		{ "NUKAGE1"; 2; };
+		{ "NUKAGE2"; 2; };
+		{ "NUKAGE3"; 2; };
+		{ "NUKAGE4"; 2; };
+		{ "SLIME01"; 1; };
+		{ "SLIME02"; 1; };
+		{ "SLIME03"; 1; };
+		{ "SLIME04"; 1; };
+		{ "BLOOD1"; 1; };
+		{ "BLOOD2"; 1; };
+		{ "BLOOD3"; 1; };
+		{ "BLOOD4"; 1; };
+		
+		// Sentinel (Indicates end of list)
+		{ ""; };
+	};
+	
 	// Prevent Underflow
 	if (Player.Toxicity < 0)
 		Player.Toxicity = 0;
@@ -835,6 +854,15 @@ function void CheckToxicity()
 	// Slowly decrease Toxicity
 	if (Player.Toxicity > 0 && Timer() % (35 * (30 - Player.ToxicityRegenBonus)) == 0)
 		Player.Toxicity--;
+	
+	// Toxicity Flat Damage
+	for (int i = 0; ToxicFloors[i].Name != ""; i++)
+		if (CheckActorFloorTexture(Player.TID, ToxicFloors[i].Name) && Timer() % 35 == 0 && !CheckInventory("PowerIronFeet") &&
+			GetActorZ(Player.TID) == GetActorFloorZ(Player.TID))
+		{
+			Player.Toxicity += ToxicFloors[i].Toxicity;
+			FadeRange(0, 255, 0, (fixed)ToxicFloors[i].Toxicity / 10.0, 0, 255, 0, 0.0, 0.25);
+		};
 	
 	// Toxicity Penalties
 	if (GetCVar("drpg_toxicity_penalties"))
@@ -856,7 +884,7 @@ function void CheckToxicity()
 	// Death at 100% Toxicity
 	if (Player.Toxicity >= 100)
 	{
-		DamageThing(0);
+		Thing_Damage(Player.TID, 1000000000, MOD_SLIME);
 		Player.Toxicity = 0;
 	};
 };
