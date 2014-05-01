@@ -419,6 +419,26 @@ function void CheckAutoSell()
 		for (int j = 0; j < ItemMax[i]; j++)
 			if (Player.AutoSell[i][j] && CheckInventory(ItemData[i][j].Actor) > 0 && ItemData[i][j].Rank <= Player.RankLevel)
 			{
+				// DoomRL Compatibility
+				if (GetCVar("drpg_ext_doomrl"))
+					for (int k = 1; k <= CheckInventory(ItemData[i][j].Actor); k++)
+					{
+						if (i == 0) // Weapons
+							TakeInventory("RLWeaponLimit", 1);
+						if (i == 3) // Armor
+							TakeInventory("RLArmorInInventory", 1);
+						if (i == 8) // Mod Packs
+							if (j == 8) // Special handling case for Armor Modpack
+								TakeInventory("RLArmorModItemInInventory", 1)
+							else
+								if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
+									TakeInventory("RLScavengerModLimit", 1)
+								else
+									TakeInventory("RLModLimit", 1);
+						if (i == 9) // Boots
+							TakeInventory("RLBootsInInventory", 1);
+					};
+				
 				Player.AutoSellPay += SellItem(ItemData[i][j].Actor, true);
 				DrawPay(Player.AutoSellPay);
 				Player.AutoSellTimer = 35 * 6;
