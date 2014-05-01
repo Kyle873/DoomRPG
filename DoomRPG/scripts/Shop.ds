@@ -66,7 +66,7 @@ acscript SellAllPage(int SellPage, bool Silent)
 	// Sell Items
 	for (int i = 0; i < ItemMax[SellPage]; i++)
 		if (CheckInventory(ItemData[SellPage][i].Actor) > 0)
-			Total += SellItem(ItemData[SellPage][i].Actor, true)
+			Total += SellItem(ItemData[SellPage][i].Actor, true, false)
 		else continue;
 	
 	// Display Message
@@ -221,7 +221,7 @@ function void ShopLoop()
 	};
 	if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
 		if (ItemData[Player.ShopPage][Player.ShopIndex].Held > 0)
-			SellItem(ItemData[Player.ShopPage][Player.ShopIndex].Actor, false)
+			SellItem(ItemData[Player.ShopPage][Player.ShopIndex].Actor, false, false)
 		else
 			ActivatorSound("menu/error", 127);
 	if (Buttons & BT_SPEED)
@@ -230,7 +230,7 @@ function void ShopLoop()
 		
 		if (Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat") && ItemData[Player.ShopPage][Player.ShopIndex].Held > 0)
 		{
-			SellItem(ItemData[Player.ShopPage][Player.ShopIndex].Actor, true);
+			SellItem(ItemData[Player.ShopPage][Player.ShopIndex].Actor, true, false);
 			Player.DelayTimer = 0;
 		};
 	};
@@ -349,7 +349,7 @@ function int GetSellPrice(str Item, int Amount)
 	return SellCost;
 };
 
-function int SellItem(str Item, bool SellAll)
+function int SellItem(str Item, bool SellAll, bool AutoSold)
 {
 	int Amount = 1;
 	int SellCost;
@@ -365,7 +365,7 @@ function int SellItem(str Item, bool SellAll)
 	};
 	
 	// Page blacklist
-	if (Player.ShopPage == 1 || Player.ShopPage == 5) // Ammo and Tokens
+	if (!AutoSold && (Player.ShopPage == 1 || Player.ShopPage == 5)) // Ammo and Tokens
 	{
 		ActivatorSound("menu/error", 127);
 		return 0;
@@ -378,7 +378,7 @@ function int SellItem(str Item, bool SellAll)
 	SellCost = GetSellPrice(Item, Amount);
 	
 	// DoomRL Compatibility
-	if (GetCVar("drpg_ext_doomrl"))
+	if (GetCVar("drpg_ext_doomrl") && !AutoSold)
 		for (int i = 1; i <= Amount; i++)
 		{
 			if (Player.ShopPage == 0) // Weapons
@@ -421,25 +421,24 @@ function void CheckAutoSell()
 			{
 				// DoomRL Compatibility
 				if (GetCVar("drpg_ext_doomrl"))
-					for (int k = 1; k <= CheckInventory(ItemData[i][j].Actor); k++)
-					{
-						if (i == 0) // Weapons
-							TakeInventory("RLWeaponLimit", 1);
-						if (i == 3) // Armor
-							TakeInventory("RLArmorInInventory", 1);
-						if (i == 8) // Mod Packs
-							if (j == 8) // Special handling case for Armor Modpack
-								TakeInventory("RLArmorModItemInInventory", 1)
+				{
+					if (i == 0) // Weapons
+						TakeInventory("RLWeaponLimit", CheckInventory(ItemData[i][j].Actor));
+					if (i == 3) // Armor
+						TakeInventory("RLArmorInInventory", CheckInventory(ItemData[i][j].Actor));
+					if (i == 8) // Mod Packs
+						if (j == 8) // Special handling case for Armor Modpack
+							TakeInventory("RLArmorModItemInInventory", CheckInventory(ItemData[i][j].Actor))
+						else
+							if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
+								TakeInventory("RLScavengerModLimit", CheckInventory(ItemData[i][j].Actor))
 							else
-								if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
-									TakeInventory("RLScavengerModLimit", 1)
-								else
-									TakeInventory("RLModLimit", 1);
-						if (i == 9) // Boots
-							TakeInventory("RLBootsInInventory", 1);
-					};
+								TakeInventory("RLModLimit", CheckInventory(ItemData[i][j].Actor));
+					if (i == 9) // Boots
+						TakeInventory("RLBootsInInventory", CheckInventory(ItemData[i][j].Actor));
+				};
 				
-				Player.AutoSellPay += SellItem(ItemData[i][j].Actor, true);
+				Player.AutoSellPay += SellItem(ItemData[i][j].Actor, true, true);
 				DrawPay(Player.AutoSellPay);
 				Player.AutoSellTimer = 35 * 6;
 			};
