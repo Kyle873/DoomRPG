@@ -16,7 +16,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Saturday, May 17, 2014 at 11:32:01 PM";
+	"Tuesday, May 20, 2014 at 04:10:37";
 };
 
 // Level Info
@@ -302,13 +302,37 @@ script SpawnAura(int TID, int Type, bool ForceFancy)
 	fixed Radius = GetActorPropertyFixed(TID, APROP_Radius);
 	fixed Height = GetActorPropertyFixed(TID, APROP_Height);
 	int Angle = GetActorAngle(TID) * 256;
-    bool Simple = (GetCVar("drpg_simple_auras") && !ForceFancy);
-    
-    if (Type != 0 && Type != 10 && IsStealth(TID))
-        return;
-    
-    switch (Type)
-    {
+	bool Simple = (GetCVar("drpg_simple_auras") && !ForceFancy);
+	bool SpawnOK = false;
+	
+	if (Type != 0 && Type != 10 && IsStealth(TID))
+		return;
+	
+	if (GameType () == GAME_SINGLE_PLAYER)
+	{
+		if (CheckSight (Players(0).TID, TID, CSF_NOBLOCKALL))
+			SpawnOK = true;
+	}
+	else
+	{
+		for (int pl = 0; pl < MAX_PLAYERS; ++pl)
+		{
+			if (!PlayerInGame (pl))
+				continue;
+			
+			if (CheckSight (Players(pl).TID, TID, CSF_NOBLOCKALL))
+			{
+				SpawnOK = true;
+				break;
+			};
+		};
+	};
+	
+	if (!SpawnOK)
+		return;
+	
+	switch (Type)
+	{
 		case 0: // Friendly Monster
 			if (!Simple)
 				SpawnForced("FriendlyAura", X, Y, Z + 32.0, 0, Angle);
@@ -374,15 +398,15 @@ script SpawnAura(int TID, int Type, bool ForceFancy)
 			else
 				SpawnForced("BlackAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
 			break;
-    };
-    
+	};
+	
 	// Pass Radius and Height to the Auras for DECORATE usage
-    if (!Simple)
-    {
-        SetUserVariable(AuraTID, "user_radius", (int)Radius);
-        SetUserVariable(AuraTID, "user_height", (int)Height);
-        Thing_ChangeTID(AuraTID, 0);
-    };
+	if (!Simple)
+	{
+		SetUserVariable(AuraTID, "user_radius", (int)Radius);
+		SetUserVariable(AuraTID, "user_height", (int)Height);
+		Thing_ChangeTID(AuraTID, 0);
+	};
 };
 
 // Monster Loop
@@ -431,8 +455,8 @@ script MonsterLoop()
 	};
 	
 	// Spawn Aura
-    if (AuraType)
-        SpawnAura(0, AuraType, false);
+	if (AuraType)
+		SpawnAura(0, AuraType, false);
 	
 	// Strength
 	if (MonsterStrength >= 32000)
@@ -821,43 +845,43 @@ script StatRandomizer()
 // Handles autosaving
 script AutosaveHandler()
 {
-    // Terminate if the autosave CVar is disabled
-    if (GetCVar("drpg_autosave") == 0 || (PlayerCount() > 1 && !Arbitrator)) return;
-    
-    int SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
-    bool Safe;
-    bool DamageTimer;
-    
+	// Terminate if the autosave CVar is disabled
+	if (GetCVar("drpg_autosave") == 0 || (PlayerCount() > 1 && !Arbitrator)) return;
+	
+	int SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
+	bool Safe;
+	bool DamageTimer;
+	
 	while (true)
 	{
-        if (Player.HealthLoss)
-            DamageTimer = 0
-        else
-            ++DamageTimer;
-        
-        if ((Player.InMenu || Player.InShop) && !GetCVar("drpg_menufreeze"))
-            DamageTimer = ASAVE_SAFETIME;
-        
-        if (!SaveTimer)
-        {
-            Safe = true;
-            
-            if (DamageTimer < ASAVE_SAFETIME ||
-                GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10)
-                Safe = false;
-            
-            if (Safe)
-            {
-                Autosave();
-                SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
-            }
-            else
-                SaveTimer = ASAVE_RETRYTIME;
-        }
-        else
-            --SaveTimer;
-        
-        Delay(1);
+		if (Player.HealthLoss)
+			DamageTimer = 0
+		else
+			++DamageTimer;
+		
+		if ((Player.InMenu || Player.InShop) && !GetCVar("drpg_menufreeze"))
+			DamageTimer = ASAVE_SAFETIME;
+		
+		if (!SaveTimer)
+		{
+			Safe = true;
+			
+			if (DamageTimer < ASAVE_SAFETIME ||
+				GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10)
+				Safe = false;
+			
+			if (Safe)
+			{
+				Autosave();
+				SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
+			}
+			else
+				SaveTimer = ASAVE_RETRYTIME;
+		}
+		else
+			--SaveTimer;
+		
+		Delay(1);
 	};
 };
 
