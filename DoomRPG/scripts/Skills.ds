@@ -615,46 +615,54 @@ acscript UseSkill(int Index) net
 // Skill HUD Script
 script DrawSkillHUD() enter
 {
+    Start:
 	while (true)
 	{
+        // Don't draw if the hide skills while menu is open option is enabled
+        if (GetCVar("drpg_menu_hideskills") && (Player.InMenu || Player.InShop || Player.OutpostMenu))
+        {
+            Delay(1);
+            goto Start;
+        };
+        
 		fixed X = GetCVarFixed("drpg_skill_x");
 		fixed Y = GetCVarFixed("drpg_skill_y");
+        
+        for (int i = MAX_SKILLKEYS - 1; i >= 0; i--)
+        {
+            // If the skill key is blank, skip
+            if (Player.SkillCatagory[i] == -1 || Player.SkillIndex[i] == -1) continue;
+            
+            // Current Skill
+            Skill *CurrentSkill = &Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]];
+            
+            int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
+            int Color = CR_GREEN;
 
-		for (int i = MAX_SKILLKEYS - 1; i >= 0; i--)
-		{
-			// If the skill key is blank, skip
-			if (Player.SkillCatagory[i] == -1 || Player.SkillIndex[i] == -1) continue;
-			
-			// Current Skill
-			Skill *CurrentSkill = &Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]];
-			
-			int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
-			int Color = CR_GREEN;
-
-			if (Player.EP < SkillCost)
-				Color = CR_RED;
-			
-			if (CurrentSkill->Level == 0)
-			{
-				Color = CR_RED;
-				
-				HudMessage("%d. %s [\cu%K\c-]\n", i + 1, CurrentSkill->Name, StrParam("drpg_useskill_%d\n", i + 1),
-						   HUDMSG_PLAIN, 0, Color,
-						   X, Y, 0.05);
-			}
-			else
-			{
-				HudMessage("%d. %s (%d/%d) [\cn%d\c-] [\cu%K\c-]\n", i + 1,
-						   CurrentSkill->Name,
-						   CurrentSkill->CurrentLevel,
-						   CurrentSkill->Level,
-						   SkillCost, StrParam("drpg_useskill_%d\n", i + 1),
-						   HUDMSG_PLAIN, 0, Color,
-						   X, Y, 0.05);
-			};
-			
-			Y -= 0.025;
-		};
+            if (Player.EP < SkillCost)
+                Color = CR_RED;
+            
+            if (CurrentSkill->Level == 0)
+            {
+                Color = CR_RED;
+                
+                HudMessage("%d. %s [\cu%K\c-]\n", i + 1, CurrentSkill->Name, StrParam("drpg_useskill_%d\n", i + 1),
+                           HUDMSG_PLAIN, 0, Color,
+                           X, Y, 0.05);
+            }
+            else
+            {
+                HudMessage("%d. %s (%d/%d) [\cn%d\c-] [\cu%K\c-]\n", i + 1,
+                           CurrentSkill->Name,
+                           CurrentSkill->CurrentLevel,
+                           CurrentSkill->Level,
+                           SkillCost, StrParam("drpg_useskill_%d\n", i + 1),
+                           HUDMSG_PLAIN, 0, Color,
+                           X, Y, 0.05);
+            };
+            
+            Y -= 0.025;
+        };
 		
 		Delay(1);
 	};
