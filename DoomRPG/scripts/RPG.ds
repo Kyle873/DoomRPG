@@ -16,7 +16,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Thursday, May 29, 2014 at 3:12:34 AM";
+	"Thursday, May 29, 2014 at 3:29:03 AM";
 };
 
 // Level Info
@@ -779,6 +779,9 @@ script Loop()
 	if ((Player.InMenu || Player.InShop) && GetCVar("drpg_menufreeze"))
 		SetActorProperty(Player.TID, APROP_DamageFactor, 0);
 	
+    // Reset Damage Type
+    Player.DamageType = DT_NONE;
+    
 	// Loop
 	Delay(1);
 	
@@ -1218,15 +1221,26 @@ script DamageNumbersHUD()
 	int Before = GetActorProperty(Player.TID, APROP_Health);
 	Delay(1);
 	
-	int Color = GetCVar("drpg_damagenumbers_hud_color");
 	int After = GetActorProperty(Player.TID, APROP_Health);
 	int Loss = Before - After;
+	int Color;
 	
+    // Size
 	if (Loss == 1)
 		SetFont("SMALLFONT")
 	else
 		SetFont("BIGFONT");
 	
+    // Color
+    switch (Player.DamageType)
+    {
+        case DT_NORMAL: Color = CR_WHITE;       break;
+        case DT_TOXIC:  Color = CR_GREEN;       break;
+        case DT_MELEE:  Color = CR_GREY;        break;
+        case DT_FIRE:   Color = CR_RED;         break;
+        case DT_PLASMA: Color = CR_LIGHTBLUE;   break;
+    };
+    
 	if (Before > After)
 		HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0);
 };
