@@ -437,8 +437,12 @@ acscript UseSkill(int Index) net
 	
 	// Current Skill
 	Skill *CurrentSkill = &Skills[Player.SkillCatagory[Index]][Player.SkillIndex[Index]];
+    
+    // Quickuse
+	if (Index == -1)
+        CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
 	
-	int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
 	int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 	int EPCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
 	bool Success;
@@ -447,10 +451,11 @@ acscript UseSkill(int Index) net
 	Overdrive = false;
 	if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop))
 		Overdrive = true;
-
-	// If you're in the Skills menu, assign the key to the selected skill
-	if (Player.InMenu && Player.Menu == 3 && Index != MAX_SKILLKEYS)
+    
+    // If you're in the Skills menu, assign the key to the selected skill
+	if (Player.InMenu && Player.Menu == 3 && Index != -1)
 	{
+        // Remove the skill from this key
 		if (Buttons & BT_SPEED)
 		{
 			ActivatorSound("menu/move", 127);
@@ -458,7 +463,8 @@ acscript UseSkill(int Index) net
 			Player.SkillIndex[Index] = -1;
 			return;
 		};
-
+        
+        // Can't assign two skills to the same key
 		for (int i = 0; i < MAX_SKILLKEYS; i++)
 			if (Player.SkillCatagory[i] == Player.SkillPage && Player.SkillIndex[i] == Player.MenuIndex)
 			{
@@ -466,6 +472,7 @@ acscript UseSkill(int Index) net
 				return;
 			};
 		
+        // Assign skill to this key
 		ActivatorSound("menu/move", 127);
 		Player.SkillCatagory[Index] = Player.SkillPage;
 		Player.SkillIndex[Index] = Player.MenuIndex;
@@ -473,7 +480,8 @@ acscript UseSkill(int Index) net
 	};
 	
 	// If the key is unassigned, terminate
-	if (Player.SkillCatagory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
+    if (Index != -1)
+        if (Player.SkillCatagory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
 
 	// Overdriving an unlearnt skill will learn it
 	if (Overdrive && CheckInventory("SkillToken") > 0 && CurrentSkill->Level == 0)
@@ -506,10 +514,10 @@ acscript UseSkill(int Index) net
 	// Normal skills
 	if (Player.EP >= EPCost || Overdrive)
 	{
-		switch (Player.SkillCatagory[Index])
+		switch ((Index == -1 ? Player.SkillPage : Player.SkillCatagory[Index]))
 		{
 			case 0: // Healing
-				switch (Player.SkillIndex[Index])
+				switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
 				{
 					case 0:		Success = Heal(1);											break; // Heal
 					case 1:		Success = Heal(2);											break; // Heal Summons
@@ -521,7 +529,7 @@ acscript UseSkill(int Index) net
 				break;
 			
 			case 1: // Powerups
-				switch (Player.SkillIndex[Index])
+				switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
 				{
 					case 0:		Success = Powerup(1);										break; // Invulnerability
 					case 1:		Success = Powerup(2);										break; // Invisibility
@@ -541,7 +549,7 @@ acscript UseSkill(int Index) net
 					Player.AuraTimer += (1050 + Player.Energy * 5.25) * (1 + Player.AuraBonus)
 				else
 					Player.AuraTimer = (1050 + Player.Energy * 5.25) * (1 + Player.AuraBonus);
-				switch (Player.SkillIndex[Index])
+				switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
 				{
 					case 0:		Player.Aura = 1;											break; // Red Aura
 					case 1:		Player.Aura = 2;											break; // Green Aura
@@ -557,7 +565,7 @@ acscript UseSkill(int Index) net
 				break;
 			
 			case 3: // Attacks
-				switch (Player.SkillIndex[Index])
+				switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
 				{
 					case 0:		Success = Weaken();											break; // Weaken
 					case 1:		Success = FireProjectile("TranslocateBall");				break; // Translocate
@@ -565,7 +573,7 @@ acscript UseSkill(int Index) net
 				break;
 			
 			case 4: // Summoning
-				switch (Player.SkillIndex[Index])
+				switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
 				{
 					case 0:		Success = Summon(1);										break; // Summon Marine
 					case 1:		Success = Summon(2);										break; // Summon Zombieman
@@ -588,7 +596,7 @@ acscript UseSkill(int Index) net
 				break;
 				
 			case 5: // Utility
-				switch (Player.SkillIndex[Index])
+				switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
 				{
 					case 0:		Success = BreakdownArmor();									break; // Breakdown Armor
 					case 1:		Success = ForceWall();										break; // Force Wall
