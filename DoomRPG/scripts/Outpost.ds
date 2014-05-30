@@ -63,19 +63,15 @@ int[ITEM_CATEGORIES] LockerWirelessCosts =
 	50;		// Boots
 };
 
-function void CheckShopSpecial()
+function void CheckShopSpecial(bool Force)
 {
 	// Reset the item
-	if (ShopSpecialTimer <= 0)
+	if (ShopSpecialTimer <= 0 || Force)
 	{
 		int Category;
 		int Index;
 		bool ValidItem;
 
-#if DEBUG
-		if (Arbitrator) Log("\cdDEBUG: Shop Special expired! Switching...\n");
-#endif
-		
 		// Item Blacklist
 		int[][2] ItemBlacklist =
 		{
@@ -98,10 +94,7 @@ function void CheckShopSpecial()
 			
 			// Armor
 			{ 3;	0;	};	// Armor Bonus
-			
-			// Powerups
-			{ 4;	10;	};	// Wings
-			
+            
 			// Sentinel (Indicates end of list)
 			{ -1;   -1; };
 		};
@@ -139,6 +132,10 @@ function void CheckShopSpecial()
 		// Reset the timer and bought status
 		ShopSpecialTimer = SHOP_SPECIAL_TIMER;
 		ShopSpecialBought = false;
+        
+        if (GetCVar("drpg_debug"))
+            if (Arbitrator)
+                Log("\cdDEBUG: Shop Special expired! Now \cj%s\n", ShopSpecialItem.Name);
 	};
 	
 	// Remove the item if it was bought
@@ -159,9 +156,13 @@ function void SpawnShopSpecialItem()
 				ShopSpecialItem.Actor = StrParam("%sPickup\n", ShopSpecialItem.Actor);
 		
 		Thing_Remove(ShopSpecialTID + 1);
-		SpawnSpotForced("TeleportFog", ShopSpecialTID, 0, 0);
-		SpawnSpotForced(ShopSpecialItem.Actor, ShopSpecialTID, ShopSpecialTID + 1, 0);
-		SetActorProperty(ShopSpecialTID + 1, APROP_Invulnerable, true);
+		if (!SpawnSpotForced(ShopSpecialItem.Actor, ShopSpecialTID, ShopSpecialTID + 1, 0))
+            CheckShopSpecial(true)
+        else
+        {
+            SpawnSpotForced("TeleportFog", ShopSpecialTID, 0, 0);
+            SetActorProperty(ShopSpecialTID, APROP_Invulnerable, true);
+        };
 	};
 };
 
