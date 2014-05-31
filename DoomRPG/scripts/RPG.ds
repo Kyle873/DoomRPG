@@ -16,7 +16,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Friday, May 30, 2014 at 11:17:01 PM";
+	"Saturday, May 31, 2014 at 1:59:18 AM";
 };
 
 // Level Info
@@ -494,6 +494,10 @@ acscript MonsterDeath()
 	int DropTID = (Players(Killer).Stim.PowerupTimer[STIM_MAGNETIC] > 0 ? Players(Killer).TID : 0);
 	int LuckDrops = 1;
 	
+    // Don't scale drops to skill level
+    if (!GetCVar("drpg_scale_drops"))
+        SkillDropMod = 0;
+    
 	// Drops
 	if (!(MonsterFlags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly))
 	{
@@ -511,8 +515,8 @@ acscript MonsterDeath()
 				DropItem(DropTID, "VialDropperRare", 1, 32);
 				break;
 			case 3: // White Aura - XP
-				DropItem(DropTID, "SmallTokenDropper", 1, 96 - SkillDropMod);
 				XPAmount *= 2;
+				DropItem(DropTID, "SmallTokenDropper", 1, 96 - SkillDropMod);
 				DropItem(DropTID, "VialPotency", 1, 255 - SkillDropMod);
 				DropItem(DropTID, "VialDropperRare", 1, 32);
 				break;
@@ -550,6 +554,8 @@ acscript MonsterDeath()
 				DropItem(DropTID, "VialDropperRare", 1, 32);
 				break;
 			case 10: // Black Aura - Miniboss
+				XPAmount *= 4;
+				LuckDrops = 4;
 				DropItem(DropTID, "WeaponDropper", 1, 128 - SkillDropMod);
 				DropItem(DropTID, "UsedArmorDropper", 1, 128 - SkillDropMod);
 				DropItem(DropTID, "SmallTokenDropper", 1, 96 - SkillDropMod);
@@ -559,8 +565,8 @@ acscript MonsterDeath()
 				DropItem(DropTID, "BigEPCapsule", 1, 64 - SkillDropMod);
 				DropItem(DropTID, "RegenSphere", 1, 128 - SkillDropMod);
 				DropItem(DropTID, "AmmoDropper", 1, 128 - SkillDropMod);
-				LuckDrops = 4;
-				XPAmount *= 4;
+                if (GetCVar("drpg_ext_doomrl"))
+                    DropItem(DropTID, "RLModpackSpawner", 1, 128 - SkillDropMod);
 				DropItem(DropTID, "VialStrength", 1, 192 - SkillDropMod);
 				DropItem(DropTID, "VialDefense", 1, 192 - SkillDropMod);
 				DropItem(DropTID, "VialAgility", 1, 192 - SkillDropMod);
