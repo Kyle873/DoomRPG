@@ -22,32 +22,6 @@ int WaveChoice = 1;
 // Invasion
 bool Invasion = false;
 
-// Set Weapons - Weapons which are part of Set Bonuses
-str[2][] LockerSetWeapons =
-{
-	// Plasma Rifles
-	{
-		"RLNuclearPlasmaRifle";
-		"RLHighPowerNuclearPlasmaRifle";
-		"RLAssaultRifleNuclearPlasmaRifle";
-		"RLBurstCannonNuclearPlasmaRifle";
-		
-		// Sentinel (Indicates end of list)
-		{ ""; ""; };
-	};
-	
-	// BFGs
-	{
-		"RLNuclearBFG9000";
-		"RLHighPowerNuclearBFG9000";
-		"RLNuclearVBFG9000";
-		"RLNuclearBiggestFuckingGun";
-		
-		// Sentinel (Indicates end of list)
-		{ ""; ""; };
-	};
-};
-
 // Base costs for wireless page access
 int[ITEM_CATEGORIES] LockerWirelessCosts =
 {
@@ -1173,26 +1147,17 @@ acscript Locker(bool Wireless)
 					{
 						TakeInventory("RLWeaponLimit", 1);
 						
-						// Plasma Rifles portion of Nuclear Set Bonus Checking
-						for (int i = 0; LockerSetWeapons[0][i] != ""; ++i)
-							if (ItemData[Player.LockerPage][Player.LockerIndex].Actor == LockerSetWeapons[0][i])
-							{
-								Log("Plasma weapon removed\n");
-								TakeInventory("RLNuclearWeaponSetBonusPlasmaRifle", 1);
-								TakeInventory("RLNuclearWeaponSetBonusActive", 1);
-							};
+						// Weapon portion of Nuclear Set Bonus Checking
+                        if (!CheckInventory("RLNuclearPlasmaPistol") || !CheckInventory("RLHighPowerNuclearPlasmaPistol") && !CheckInventory("RLStormNuclearPlasmaPistol") && CheckInventory("RLSuperchargedNuclearPlasmaPistol") &&
+                            !CheckInventory("RLNuclearPlasmaRifle") || !CheckInventory("RLHighPowerNuclearPlasmaRifle") && !CheckInventory("RLAssaultRifleNuclearPlasmaRifle") || !CheckInventory("RLBurstCannonNuclearPlasmaRifle") &&
+                            !CheckInventory("RLNuclearBFG9000") || !CheckInventory("RLHighPowerNuclearBFG9000") && !CheckInventory("RLNuclearVBFG9000") || !CheckInventory("RLNuclearBiggestFuckingGun"))
+                        {
+                            TakeInventory("RLNuclearWeaponSetBonusWeapon", 1);
+                            TakeInventory("RLNuclearWeaponSetBonusActive", 1);
+                        };
 						
-						// BFGs portion of Nuclear Set Bonus Checking
-						for (int i = 0; LockerSetWeapons[1][i] != ""; ++i)
-							if (ItemData[Player.LockerPage][Player.LockerIndex].Actor == LockerSetWeapons[1][i])
-							{
-								Log("BFG weapon removed\n");
-								TakeInventory("RLNuclearWeaponSetBonusBFG", 1);
-								TakeInventory("RLNuclearWeaponSetBonusActive", 1);
-							};
-							
 						// Tristar blaster Set Bonus Checking
-						if (CheckInventory("RLTristarBlaster") == 0 && CheckInventory("RLHighPowerTristarBlaster") == 0 && CheckInventory("RLNanomanufactureAmmoTristarBlaster") == 0)
+						if (!CheckInventory("RLTristarBlaster") == 0 && CheckInventory("RLHighPowerTristarBlaster") || !CheckInventory("RLNanomanufactureAmmoTristarBlaster"))
 							TakeInventory("RLCerberusSetBonusTristarBlaster", 1);
 					}
 					else if (Player.LockerPage == 3) // Armor
