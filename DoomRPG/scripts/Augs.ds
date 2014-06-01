@@ -33,6 +33,14 @@ acscript DisableAugs()
 	FadeRange(0, 0, 0, 1.0, 0, 0, 0, 0.0, 3.0);
 };
 
+acscript AddBattery(int Amount)
+{
+    Player.Augs.Battery += Amount;
+    
+    if (Player.Augs.Battery > Player.Augs.BatteryMax)
+        Player.Augs.Battery = Player.Augs.BatteryMax;
+};
+
 function void CheckAugSlots()
 {
 	Player.Augs.Slots = (6 - GameSkill()) + CheckInventory("AugSlotUpgrade");
@@ -40,7 +48,7 @@ function void CheckAugSlots()
 	// Cap max Aug slots at 8
 	if (Player.Augs.Slots > 8) Player.Augs.Slots = 8;
 	
-	// Unequip Augs if you pass the limit (sell a slot upgrade, change difficulty, etc)
+	// Unequip Augs if you pass the limit (sell a slot upgrade, change difficulty, etc) or the battery runs out
 	while (Player.Augs.SlotsUsed > Player.Augs.Slots)
 		for (int i = MAX_AUGS; i >= 0; i--)
 			if (Player.Augs.Active[i])
@@ -55,8 +63,44 @@ function void CheckAugs()
 	// Sanity check to prevent negative slots used
 	if (Player.Augs.SlotsUsed < 0)
 		Player.Augs.SlotsUsed = 0;
-
-	// Strength Aug
+    
+    // Sanity check to prevent battery from going negative
+    if (Player.Augs.Battery < 0)
+        Player.Augs.Battery = 0;
+    
+    // Play energy drained sound
+    if (Player.Augs.Battery <= 0 && Player.Augs.SlotsUsed > 0)
+        ActivatorSound("aug/dead", 127);
+    
+    // Disable Augs if your battery is dead
+    if (Player.Augs.Battery <= 0)
+    {
+        for (int i = 0; i < MAX_AUGS; i++)
+            if (Player.Augs.Active[i])
+                Player.Augs.Active[i] = false;
+        
+        // Reset the amount of slots used
+        Player.Augs.SlotsUsed = 0;
+    };
+    
+    if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
+    {
+        // Decrease Battery
+        for (int i = 0; i < MAX_AUGS; i++)
+            if (Player.Augs.Active[i] && (Timer() % (35 * 5)) == 0)
+                Player.Augs.Battery -= Player.Augs.Level[i];
+        
+        // Display new battery amount on the HUD
+        if (Player.Augs.SlotsUsed > 0 && (Timer() % (35 * 5)) == 0)
+        {
+            SetHudSize(0, 0, false);
+            PrintSpriteFade("AUGBATT", 0, -0.475, -0.935, 3.0, 2.0);
+            SetFont("BIGFONT");
+            HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, 0, CR_YELLOW, -0.5, 0.95, 3.0, 2.0);
+        };
+    };
+    
+    // Strength Aug
 	if (Player.Augs.Active[AUG_STRENGTH])
 	{
 		if (Player.Augs.Level[AUG_STRENGTH] == 1)
@@ -183,7 +227,14 @@ function void CheckAugs()
 
 function void EquipAug(int Aug)
 {
-	if (Player.Augs.Level[Aug] > 0)
+    // If battery is dead, return
+    if (Player.Augs.Battery <= 0)
+    {
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+	
+    if (Player.Augs.Level[Aug] > 0)
 	{
 		if (Player.Augs.Active[Aug])
 		{
