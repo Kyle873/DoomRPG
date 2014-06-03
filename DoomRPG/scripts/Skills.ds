@@ -429,6 +429,52 @@ function int ScaleEPCost(int Cost)
 	return Cost;
 };
 
+// Skill Wheel
+acscript SkillWheel() net
+{
+    // Terminate if you're in a menu that isn't the Skills menu
+    // if ((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0) return;
+    
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+    
+    int Selected = -1;
+    
+    while (true)
+    {
+        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        
+        // Cancel
+        if (Buttons & BT_SPEED)
+            break;
+        
+        // Selection
+        if (Buttons & BT_FORWARD)
+            Selected = 1;
+        
+        // Draw Wheel
+        SetHudSize(640, 480, false);
+        for (int i = 0; i < MAX_SKILLKEYS; i++)
+        {
+            int Radius = 96;
+            fixed Angle = (1.0 / MAX_SKILLKEYS) * i;
+            fixed X = 320.0 + (Radius * Cos(Angle));
+            fixed Y = 240.0 + (Radius * Sin(Angle));
+            
+            // Cursor
+            if (i == Selected)
+                PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
+            
+            // Box
+            PrintSprite("ItemBox", 0, (int)X, (int)Y, 0.05);
+        };
+        
+        Delay(1);
+    };
+    
+    SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+};
+
 // Use Skill Script
 acscript UseSkill(int Index) net
 {
@@ -654,13 +700,13 @@ script DrawSkillHUD() enter
             {
                 Color = CR_RED;
                 
-                HudMessage("%d. %s [\cu%K\c-]\n", i + 1, CurrentSkill->Name, StrParam("drpg_useskill_%d\n", i + 1),
+                HudMessage("%s [\cu%K\c-]\n", CurrentSkill->Name, StrParam("drpg_useskill_%d\n", i + 1),
                            HUDMSG_PLAIN, 0, Color,
                            X, Y, 0.05);
             }
             else
             {
-                HudMessage("%d. %s (%d/%d) [\cn%d\c-] [\cu%K\c-]\n", i + 1,
+                HudMessage("%s (%d/%d) [\cn%d\c-] [\cu%K\c-]\n",
                            CurrentSkill->Name,
                            CurrentSkill->CurrentLevel,
                            CurrentSkill->Level,
