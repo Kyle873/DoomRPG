@@ -141,6 +141,7 @@ function void InitSkills()
 	// AURAS
 	
 	Skills[2][Index].Name = "Red Aura";
+    Skills[2][Index].Icon = "Aura1";
 	Skills[2][Index].MaxLevel = 3;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "2x Damage";
@@ -149,6 +150,7 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "Green Aura";
+    Skills[2][Index].Icon = "Aura2";
 	Skills[2][Index].MaxLevel = 3;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "-25% Damage Taken";
@@ -157,6 +159,7 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "White Aura";
+    Skills[2][Index].Icon = "Aura3";
 	Skills[2][Index].MaxLevel = 5;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "Double Combo";
@@ -167,6 +170,7 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "Pink Aura";
+    Skills[2][Index].Icon = "Aura4";
 	Skills[2][Index].MaxLevel = 2;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "Drain Enemy HP";
@@ -174,6 +178,7 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "Blue Aura";
+    Skills[2][Index].Icon = "Aura5";
 	Skills[2][Index].MaxLevel = 3;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "25% Skill Cost Reduction";
@@ -182,6 +187,7 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "Purple Aura";
+    Skills[2][Index].Icon = "Aura6";
 	Skills[2][Index].MaxLevel = 4;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "2x HP/EP Regen Amount";
@@ -191,6 +197,7 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "Orange Aura";
+    Skills[2][Index].Icon = "Aura7";
 	Skills[2][Index].MaxLevel = 3;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "Double Movement Speed";
@@ -199,6 +206,7 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "Dark Blue Aura";
+    Skills[2][Index].Icon = "Aura8";
 	Skills[2][Index].MaxLevel = 6;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "Clip Regen";
@@ -210,6 +218,7 @@ function void InitSkills()
 	Index++;
 
 	Skills[2][Index].Name = "Yellow Aura";
+    Skills[2][Index].Icon = "Aura9";
 	Skills[2][Index].MaxLevel = 5;
 	Skills[2][Index].Cost = 100;
 	Skills[2][Index].Description[0] = "Slow Money Generation\n1.25x Drop Chances";
@@ -432,41 +441,137 @@ function int ScaleEPCost(int Cost)
 // Skill Wheel
 acscript SkillWheel() net
 {
-    // Terminate if you're in a menu that isn't the Skills menu
-    // if ((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0) return;
+    
+    int Selected = -1;
+    int LastSelected = -1;
+    bool Opened = false;
     
     SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     
-    int Selected = -1;
-    
     while (true)
     {
+        // Terminate if you're in a menu that isn't the Skills menu
+        if ((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0)
+        {
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            return;
+        };
+        
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        Skill *CurrentSkill;
         
         // Cancel
-        if (Buttons & BT_SPEED)
+        if (Buttons == BT_SPEED)
             break;
         
         // Selection
-        if (Buttons & BT_FORWARD)
-            Selected = 1;
+        if (Buttons == BT_FORWARD)
+            Selected = 0
+        else if (Buttons == (BT_FORWARD | BT_MOVERIGHT))
+            Selected = 1
+        else if (Buttons == BT_MOVERIGHT)
+            Selected = 2
+        else if (Buttons == (BT_MOVERIGHT | BT_BACK))
+            Selected = 3
+        else if (Buttons == BT_BACK)
+            Selected = 4
+        else if (Buttons == (BT_BACK | BT_MOVELEFT))
+            Selected = 5
+        else if (Buttons == BT_MOVELEFT)
+            Selected = 6
+        else if (Buttons == (BT_MOVELEFT | BT_FORWARD))
+            Selected = 7
+        else
+            Selected = -1;
+        
+        // Set Skill
+        if (Selected >= 0 && Player.SkillCatagory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
+            CurrentSkill = &Skills[Player.SkillCatagory[Selected]][Player.SkillIndex[Selected]]
+        else
+            CurrentSkill = nullptr;
+        
+        // Play sound
+        if (Selected != LastSelected && Selected >= 0)
+            ActivatorSound("menu/click", 127);
+        
+        LastSelected = Selected;
         
         // Draw Wheel
+        int Radius = 96;
         SetHudSize(640, 480, false);
-        for (int i = 0; i < MAX_SKILLKEYS; i++)
+        if (!Opened)
+            for (int i = 0; i <= Radius; i += 8)
+            {
+                for (int j = 0; j < MAX_SKILLKEYS; j++)
+                {
+                    fixed Angle = -0.25 + ((1.0 / MAX_SKILLKEYS) * j);
+                    fixed X = 320.0 + (i * Cos(Angle));
+                    fixed Y = 240.0 + (i * Sin(Angle));
+                    
+                    // Cursor
+                    if (j == Selected)
+                        PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
+                    
+                    // TODO: Icon
+                    if (Player.SkillCatagory[j] != -1 && Player.SkillIndex[j] != -1)
+                    {
+                        if (StrLen(Skills[Player.SkillCatagory[j]][Player.SkillIndex[j]].Icon) == 0)
+                            PrintSprite("SNone", 0, (int)X, (int)Y, 0.05)
+                        else
+                            PrintSprite(Skills[Player.SkillCatagory[j]][Player.SkillIndex[j]].Icon, 0, (int)X, (int)Y, 0.05);
+                    };
+                    
+                    // Box
+                    PrintSprite("ItemBox", 0, (int)X, (int)Y, 0.05);
+                };
+                
+                if (i >= Radius)
+                    Opened = true;
+                
+                Delay(1);
+            };
+        
+        if (Opened)
+            for (int i = 0; i < MAX_SKILLKEYS; i++)
+            {
+                fixed Angle = -0.25 + ((1.0 / MAX_SKILLKEYS) * i);
+                fixed X = 320.0 + (Radius * Cos(Angle));
+                fixed Y = 240.0 + (Radius * Sin(Angle));
+                
+                // Cursor
+                if (i == Selected)
+                    PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
+                
+                // Icon
+                if (Player.SkillCatagory[i] != -1 && Player.SkillIndex[i] != -1)
+                {
+                    if (StrLen(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon) == 0)
+                        PrintSpriteFade("SNone", WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0)
+                    else
+                        PrintSpriteFade(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0);
+                };
+                
+                // Box
+                PrintSpriteFade("ItemBox", WHEEL_ID + MAX_SKILLKEYS + i, (int)X, (int)Y, 0.05, 1.0);
+            };
+        
+        // Skill Info
+        if (CurrentSkill != nullptr)
         {
-            int Radius = 96;
-            fixed Angle = (1.0 / MAX_SKILLKEYS) * i;
-            fixed X = 320.0 + (Radius * Cos(Angle));
-            fixed Y = 240.0 + (Radius * Sin(Angle));
+            int Cost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
+            str CostColor = (Player.EP < Cost ? "\cg" : "\cv");
+            str Info;
             
-            // Cursor
-            if (i == Selected)
-                PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
+            // Build info string
+            Info = StrParam("\cd%s\n\n\n", CurrentSkill->Name);
+            Info = StrParam("%s\cjLevel: %d/%d\n\n", Info, CurrentSkill->CurrentLevel, CurrentSkill->Level);
+            Info = StrParam("%s%s%d EP\n", Info, CostColor, Cost);
             
-            // Box
-            PrintSprite("ItemBox", 0, (int)X, (int)Y, 0.05);
+            // Display
+            SetFont("SMALLFONT");
+            SetHudClipRect(0, 0, 0, 0, 128);
+            HudMessage("%s\n", Info, HUDMSG_FADEOUT, WHEEL_ID + (MAX_SKILLKEYS * 2), CR_WHITE, 320.4, 240.0, 0.05, 1.0);
+            SetHudClipRect(0, 0, 0, 0, 0);
         };
         
         Delay(1);
