@@ -439,50 +439,90 @@ function int ScaleEPCost(int Cost)
 };
 
 // Skill Wheel
-acscript SkillWheel() net
+script SkillWheel() enter
 {
+    Start:
     
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
     int Selected = -1;
     int LastSelected = -1;
-    bool Opened = false;
+    bool Animated = false;
+    Skill *CurrentSkill;
     
-    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-    
-    while (true)
+    // Open the wheel
+    if (Buttons & BT_USER1 && !((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0))
     {
-        // Terminate if you're in a menu that isn't the Skills menu
-        if ((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0)
+        ActivatorSound("menu/click", 127);
+        Player.SkillWheelOpen = true;
+    };
+    
+    // Wheel Loop
+    while (Player.SkillWheelOpen)
+    {
+        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        
+        // Check Input
+        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        
+        // Check for release
+        if (!(Buttons & BT_USER1))
         {
+            if (Player.InMenu && Player.Menu == 3)
+            {
+                Player.SkillCatagory[Selected] = Player.SkillPage;
+                Player.SkillIndex[Selected] = Player.MenuIndex;
+            }
+            else
+                Player.SkillSelected = Selected;
+            
             SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-            return;
+            Player.SkillWheelOpen = false;
         };
         
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        Skill *CurrentSkill;
-        
-        // Cancel
-        if (Buttons == BT_SPEED)
-            break;
-        
         // Selection
-        if (Buttons == BT_FORWARD)
+        int MouseX = GetPlayerInput(PlayerNumber(), INPUT_YAW) / 32;
+        int MouseY = GetPlayerInput(PlayerNumber(), INPUT_PITCH) / 24;
+        if (Buttons == (BT_USER1 | BT_FORWARD))
             Selected = 0
-        else if (Buttons == (BT_FORWARD | BT_MOVERIGHT))
+        else if (Buttons == (BT_USER1 | BT_FORWARD | BT_MOVERIGHT))
             Selected = 1
-        else if (Buttons == BT_MOVERIGHT)
+        else if (Buttons == (BT_USER1 | BT_MOVERIGHT))
             Selected = 2
-        else if (Buttons == (BT_MOVERIGHT | BT_BACK))
+        else if (Buttons == (BT_USER1 | BT_MOVERIGHT | BT_BACK))
             Selected = 3
-        else if (Buttons == BT_BACK)
+        else if (Buttons == (BT_USER1 | BT_BACK))
             Selected = 4
-        else if (Buttons == (BT_BACK | BT_MOVELEFT))
+        else if (Buttons == (BT_USER1 | BT_BACK | BT_MOVELEFT))
             Selected = 5
-        else if (Buttons == BT_MOVELEFT)
+        else if (Buttons == (BT_USER1 | BT_MOVELEFT))
             Selected = 6
-        else if (Buttons == (BT_MOVELEFT | BT_FORWARD))
+        else if (Buttons == (BT_USER1 | BT_MOVELEFT | BT_FORWARD))
             Selected = 7
-        else
-            Selected = -1;
+        else if (MouseY > 0)
+            Selected = 0
+        else if (MouseY > 0 && MouseX < 0)
+            Selected = 1
+        else if (MouseX < 0)
+            Selected = 2
+        else if (MouseX < 0 && MouseY < 0)
+            Selected = 3
+        else if (MouseY < 0)
+            Selected = 4
+        else if (MouseY < 0 && MouseX > 0)
+            Selected = 5
+        else if (MouseX > 0)
+            Selected = 6
+        else if (MouseX > 0 && MouseY > 0)
+            Selected = 7;
+        // else
+           // Selected = -1;
+        
+        // Clear Skill
+        if (Buttons & BT_SPEED)
+        {
+            Player.SkillCatagory[Selected] = -1;
+            Player.SkillIndex[Selected] = -1;
+        };
         
         // Set Skill
         if (Selected >= 0 && Player.SkillCatagory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
@@ -499,8 +539,8 @@ acscript SkillWheel() net
         // Draw Wheel
         int Radius = 96;
         SetHudSize(640, 480, false);
-        if (!Opened)
-            for (int i = 0; i <= Radius; i += 8)
+        if (!Animated)
+            for (int i = 0; i <= Radius; i += GetCVar("drpg_skill_wheelspeed"))
             {
                 for (int j = 0; j < MAX_SKILLKEYS; j++)
                 {
@@ -526,12 +566,12 @@ acscript SkillWheel() net
                 };
                 
                 if (i >= Radius)
-                    Opened = true;
+                    Animated = true;
                 
                 Delay(1);
             };
         
-        if (Opened)
+        if (Animated)
             for (int i = 0; i < MAX_SKILLKEYS; i++)
             {
                 fixed Angle = -0.25 + ((1.0 / MAX_SKILLKEYS) * i);
@@ -577,16 +617,21 @@ acscript SkillWheel() net
         Delay(1);
     };
     
-    SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+    Delay(1);
+    goto Start;
 };
 
 // Use Skill Script
-acscript UseSkill(int Index) net
+acscript UseSkill() net
 {
 	// If you're dead, terminate
 	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
 	
+    // If you have no current skill selected, terminate
+    if (Player.SkillSelected == -1) return;
+    
 	// Current Skill
+    int Index = Player.SkillSelected;
 	Skill *CurrentSkill = &Skills[Player.SkillCatagory[Index]][Player.SkillIndex[Index]];
     
     // Quickuse
@@ -784,45 +829,35 @@ script DrawSkillHUD() enter
             goto Start;
         };
         
+        SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 		fixed X = GetCVarFixed("drpg_skill_x");
 		fixed Y = GetCVarFixed("drpg_skill_y");
         
-        for (int i = MAX_SKILLKEYS - 1; i >= 0; i--)
+        // Current Skill
+        if (Player.SkillCatagory[Player.SkillSelected] != -1 && Player.SkillIndex[Player.SkillSelected] != -1)
         {
-            // If the skill key is blank, skip
-            if (Player.SkillCatagory[i] == -1 || Player.SkillIndex[i] == -1) continue;
+            Skill *CurrentSkill = &Skills[Player.SkillCatagory[Player.SkillSelected]][Player.SkillIndex[Player.SkillSelected]];
             
-            // Current Skill
-            Skill *CurrentSkill = &Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]];
+            int Cost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
+            int Color = CR_LIGHTBLUE;
             
-            int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
-            int Color = CR_GREEN;
-
-            if (Player.EP < SkillCost)
+            if (Player.EP < Cost)
                 Color = CR_RED;
             
-            if (CurrentSkill->Level == 0)
-            {
-                Color = CR_RED;
-                
-                HudMessage("%s [\cu%K\c-]\n", CurrentSkill->Name, StrParam("drpg_useskill_%d\n", i + 1),
-                           HUDMSG_PLAIN, 0, Color,
-                           X, Y, 0.05);
-            }
+            // Cost
+            SetFont("SMALLFONT");
+            HudMessage("%d\n", Cost, HUDMSG_PLAIN, 0, Color, X, Y - 16.0, 0.05);
+            
+            // Level
+            HudMessage("%d/%d\n", CurrentSkill->CurrentLevel, CurrentSkill->Level, HUDMSG_PLAIN, 0, CR_GREEN, X, Y + 16.0, 0.05);
+            
+            // Icon
+            if (StrLen(CurrentSkill->Icon) == 0)
+                PrintSprite("SNone", 0, X, Y, 0.05)
             else
-            {
-                HudMessage("%s (%d/%d) [\cn%d\c-] [\cu%K\c-]\n",
-                           CurrentSkill->Name,
-                           CurrentSkill->CurrentLevel,
-                           CurrentSkill->Level,
-                           SkillCost, StrParam("drpg_useskill_%d\n", i + 1),
-                           HUDMSG_PLAIN, 0, Color,
-                           X, Y, 0.05);
-            };
-            
-            Y -= 0.025;
+                PrintSprite(CurrentSkill->Icon, 0, X, Y, 0.05);
         };
-		
+        
 		Delay(1);
 	};
 };
