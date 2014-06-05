@@ -446,7 +446,8 @@ script SkillWheel() enter
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
     int Selected = -1;
     int LastSelected = -1;
-    bool Animated = false;
+    int Radius = 96;
+    int CurrentRadius = 0;
     Skill *CurrentSkill;
     
     // Open the wheel
@@ -476,6 +477,7 @@ script SkillWheel() enter
                 Player.SkillSelected = Selected;
             
             SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            CurrentRadius = Radius;
             Player.SkillWheelOpen = false;
         };
         
@@ -543,63 +545,33 @@ script SkillWheel() enter
         LastSelected = Selected;
         
         // Draw Wheel
-        int Radius = 96;
         SetHudSize(640, 480, false);
-        if (!Animated)
-            for (int i = 0; i <= Radius; i += GetCVar("drpg_skill_wheelspeed"))
+        for (int i = 0; i < MAX_SKILLKEYS; i++)
+        {
+            fixed Angle = -0.25 + ((1.0 / MAX_SKILLKEYS) * i);
+            fixed X = 320.0 + (CurrentRadius * Cos(Angle));
+            fixed Y = 240.0 + (CurrentRadius * Sin(Angle));
+            
+            // Cursor
+            if (i == Selected)
+                PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
+            
+            // Icon
+            if (Player.SkillCatagory[i] != -1 && Player.SkillIndex[i] != -1)
             {
-                for (int j = 0; j < MAX_SKILLKEYS; j++)
-                {
-                    fixed Angle = -0.25 + ((1.0 / MAX_SKILLKEYS) * j);
-                    fixed X = 320.0 + (i * Cos(Angle));
-                    fixed Y = 240.0 + (i * Sin(Angle));
-                    
-                    // Cursor
-                    if (j == Selected)
-                        PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
-                    
-                    // TODO: Icon
-                    if (Player.SkillCatagory[j] != -1 && Player.SkillIndex[j] != -1)
-                    {
-                        if (StrLen(Skills[Player.SkillCatagory[j]][Player.SkillIndex[j]].Icon) == 0)
-                            PrintSprite("SNone", 0, (int)X, (int)Y, 0.05)
-                        else
-                            PrintSprite(Skills[Player.SkillCatagory[j]][Player.SkillIndex[j]].Icon, 0, (int)X, (int)Y, 0.05);
-                    };
-                    
-                    // Box
-                    PrintSprite("ItemBox", 0, (int)X, (int)Y, 0.05);
-                };
-                
-                if (i >= Radius)
-                    Animated = true;
-                
-                Delay(1);
+                if (StrLen(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon) == 0)
+                    PrintSpriteFade("SNone", WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0)
+                else
+                    PrintSpriteFade(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0);
             };
+            
+            // Box
+            PrintSpriteFade("ItemBox", WHEEL_ID + MAX_SKILLKEYS + i, (int)X, (int)Y, 0.05, 1.0);
+        };
         
-        if (Animated)
-            for (int i = 0; i < MAX_SKILLKEYS; i++)
-            {
-                fixed Angle = -0.25 + ((1.0 / MAX_SKILLKEYS) * i);
-                fixed X = 320.0 + (Radius * Cos(Angle));
-                fixed Y = 240.0 + (Radius * Sin(Angle));
-                
-                // Cursor
-                if (i == Selected)
-                    PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
-                
-                // Icon
-                if (Player.SkillCatagory[i] != -1 && Player.SkillIndex[i] != -1)
-                {
-                    if (StrLen(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon) == 0)
-                        PrintSpriteFade("SNone", WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0)
-                    else
-                        PrintSpriteFade(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0);
-                };
-                
-                // Box
-                PrintSpriteFade("ItemBox", WHEEL_ID + MAX_SKILLKEYS + i, (int)X, (int)Y, 0.05, 1.0);
-            };
+        // Animate Wheel
+        if (CurrentRadius < Radius)
+            CurrentRadius += GetCVar("drpg_skill_wheelspeed");
         
         // Skill Info
         if (CurrentSkill != nullptr)
