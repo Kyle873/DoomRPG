@@ -480,8 +480,8 @@ script SkillWheel() enter
         };
         
         // Selection
-        int MouseX = GetPlayerInput(PlayerNumber(), INPUT_YAW) / 32;
-        int MouseY = GetPlayerInput(PlayerNumber(), INPUT_PITCH) / 24;
+        fixed MouseX = -GetPlayerInputFixed(PlayerNumber(), INPUT_YAW) * 1.2;
+        fixed MouseY = GetPlayerInputFixed(PlayerNumber(), INPUT_PITCH);
         if (Buttons == (BT_USER1 | BT_FORWARD))
             Selected = 0
         else if (Buttons == (BT_USER1 | BT_FORWARD | BT_MOVERIGHT))
@@ -498,22 +498,29 @@ script SkillWheel() enter
             Selected = 6
         else if (Buttons == (BT_USER1 | BT_MOVELEFT | BT_FORWARD))
             Selected = 7
-        else if (MouseY > 0)
-            Selected = 0
-        else if (MouseY > 0 && MouseX < 0)
-            Selected = 1
-        else if (MouseX < 0)
-            Selected = 2
-        else if (MouseX < 0 && MouseY < 0)
-            Selected = 3
-        else if (MouseY < 0)
-            Selected = 4
-        else if (MouseY < 0 && MouseX > 0)
-            Selected = 5
-        else if (MouseX > 0)
-            Selected = 6
-        else if (MouseX > 0 && MouseY > 0)
-            Selected = 7;
+        
+        // There used to be non-working stuff here, but I fixed it to be working. -Kate
+        else if ((FixedSqrt(MouseX * MouseX + MouseY * MouseY)) > 0.02)
+        {
+            if (VectorAngle (MouseX, MouseY) > 0.1875 && VectorAngle (MouseX, MouseY) < 0.3125)
+                Selected = 0
+            else if (VectorAngle (MouseX, MouseY) > 0.0625 && VectorAngle (MouseX, MouseY) < 0.1875)
+                Selected = 1
+            else if (VectorAngle (MouseX, MouseY) >= 0 && VectorAngle (MouseX, MouseY) < 0.0625)
+                Selected = 2
+            else if (VectorAngle (MouseX, MouseY) <= 1 && VectorAngle (MouseX, MouseY) > 0.9375)
+                Selected = 2
+            else if (VectorAngle (MouseX, MouseY) > 0.8125 && VectorAngle (MouseX, MouseY) < 0.9375)
+                Selected = 3
+            else if (VectorAngle (MouseX, MouseY) > 0.6875 && VectorAngle (MouseX, MouseY) < 0.8125)
+                Selected = 4
+            else if (VectorAngle (MouseX, MouseY) > 0.5625 && VectorAngle (MouseX, MouseY) < 0.6875)
+                Selected = 5
+            else if (VectorAngle (MouseX, MouseY) > 0.4375 && VectorAngle (MouseX, MouseY) < 0.5625)
+                Selected = 6
+            else if (VectorAngle (MouseX, MouseY) > 0.3125 && VectorAngle (MouseX, MouseY) < 0.4375)
+                Selected = 7;
+        };
         // else
            // Selected = -1;
         
