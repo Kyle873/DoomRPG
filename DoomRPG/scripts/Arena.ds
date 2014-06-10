@@ -510,9 +510,19 @@ acfunc void ArenaGetBonus(int Bonus)
 acfunc void ArenaSpawnMobs()
 {
 	int MonsterID;
+    int Spawned;
 	
-	for (int i = ArenaSpotSpawns; i < ArenaSpotSpawns + 30; i++)
+	for (int i = ArenaSpotSpawns; i <= ArenaSpotSpawns + 30; i++)
 	{
+        // Check to make sure there wasn't a chance that nothing at all spawned
+        if (i == ArenaSpotSpawns + 30)
+        {
+            if (Spawned == 0)
+                i = ArenaSpotSpawns
+            else
+                break;
+        };
+        
 		// Get a random monster from the list
 		MonsterID = Random(-5 + (ArenaWave / 10), ArenaWave / 5);
 		
@@ -522,10 +532,13 @@ acfunc void ArenaSpawnMobs()
 		// Skip this spawn spot if < 0 is hit by the randomizer
 		if (MonsterID < 0)
 			continue;
-			
+        
 		// Spawn the monster
 		if (SpawnSpotFacingForced(Monsters[MonsterID], i, ArenaMonstersTID))
+        {
 			SpawnSpotForced("TeleportFog", i, 0, 0);
+            Spawned++;
+        };
 	};
 };
 
