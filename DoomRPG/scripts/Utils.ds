@@ -21,6 +21,7 @@ str[6] SkillLevels =
 	"Hell";
 };
 
+// Set the damage type recieved by the Player this tic (for DECORATE)
 acscript SetDamageType(int Type)
 {
 	Player.DamageType = Type;
@@ -44,7 +45,7 @@ acscript int CheckCapacity()
 	int Items = 0;
 	int MaxItems = CheckInventoryMax();
 	
-	// Don't do checks if you don't have the system disabled
+	// Don't do checks if you have the system disabled
 	if (!GetCVar("drpg_inv_capacity")) return false;
 	
 	str[] ItemList =
@@ -119,8 +120,6 @@ acscript int GetTimer()
 // Set Skill Level during the game
 acscript SetSkill(int NewSkill)
 {
-	SetFont("BIGFONT");
-	
 	if (NewSkill < 0 || NewSkill > (GetCVar("drpg_ext_doomrl") ? 5 : 4))
 	{
 		HudMessage("Invalid Skill Level\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
@@ -130,6 +129,7 @@ acscript SetSkill(int NewSkill)
 	FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0.0, 0.5);
 	ChangeSkill(NewSkill);
 	ActivatorSound("misc/secret", 127);
+	SetFont("BIGFONT");
 	HudMessageBold("\cjSkill Level has been changed to\n\cg%d - %s\n", NewSkill + 1, SkillLevels[NewSkill],
 				   HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, 0.5, 2.0, 1.0);
 };
@@ -137,7 +137,6 @@ acscript SetSkill(int NewSkill)
 // Respec - Respecialize your Player
 acscript Respec(bool DoStats, bool DoSkills)
 {
-	// Vars
 	int StatPoints;
 	int SkillPoints;
 	int OldCredits;
@@ -168,11 +167,6 @@ acscript Respec(bool DoStats, bool DoSkills)
 		// Give Respecced Stat Tokens back
 		GiveInventory("StatToken", StatPoints);
 
-		// Reset HP and EP
-		SetActorProperty(Player.TID, APROP_Health, 100);
-		Player.EPMax = 100;
-		Player.EP = Player.EPMax;
-		
 		// Reset Shield
 		Player.Shield.Charge = 0;
 		Player.Shield.Timer = 375;
@@ -184,18 +178,18 @@ acscript Respec(bool DoStats, bool DoSkills)
 		// Reset skills, add skill levels together into a pool of tokens to give back to the player
 		for (int i = 0; i < MAX_CATEGORIES; i++)
 			for (int j = 0; j < MAX_SKILLS; j++)
-			{
-				SkillPoints += Skills[i][j].Level;
-				Skills[i][j].Level = 0;
-				Skills[i][j].CurrentLevel = 0;
-			};
-
+                if (i != 5 && j != 6) // Skip Transport
+                {
+                    SkillPoints += Skills[i][j].Level;
+                    Skills[i][j].Level = 0;
+                    Skills[i][j].CurrentLevel = 0;
+                };
+        
 		// Give Respecced Skill Tokens back
 		GiveInventory("SkillToken", SkillPoints);
 
 		// Remove Auras
-		Player.Aura = 0;
-		Player.AuraTimer = 0;
+        RemoveAura();
 	};
 	
 	// Take 1/2 Credits
@@ -204,6 +198,7 @@ acscript Respec(bool DoStats, bool DoSkills)
 	
 	// FX
 	FadeRange(255, 255, 255, 0.75, 0, 0, 0, 0.0, 2.5);
+    SetFont("BIGFONT");
 	HudMessage("Respec Complete\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.5, 2.5);
 	ActivatorSound("misc/secret", 127);
 };
@@ -230,7 +225,7 @@ acscript int GetEP()
 	return Player.EP;
 };
 
-// Gets Max EP (for DECORATE)
+// Gets your current max EP (for DECORATE)
 acscript int GetEPMax()
 {
 	return Player.EPMax;
@@ -304,9 +299,9 @@ acscript Cheat(int StatBoost)
 	GiveInventory("StatCapToken", 100);
 	GiveInventory("SkillToken", 10000);
 	
-	// Checck Stat Caps
+	// Check Stat Caps
 	CheckStatCaps();
-
+    
 	// Items - Health
 	GiveInventory("StimPack", ItemMax);
 	GiveInventory("Medikit", ItemMax);
@@ -374,6 +369,7 @@ acscript Cheat(int StatBoost)
 	GiveInventory("StimMedium", ItemMax);
 	GiveInventory("StimLarge", ItemMax);
 	GiveInventory("StimXL", ItemMax);
+	GiveInventory("StimDetox", ItemMax);
 	
 	// Restore HP/EP/Shields
 	HealThing(1000000);
@@ -424,12 +420,9 @@ acscript ShopSpecialShuffle()
 // Give all Augs
 acscript GiveAugs(int Canisters, int Upgrades, int Slots)
 {
-	if (Canisters)
-	{
-		GiveInventory("AugCanister", Canisters);
-		GiveInventory("AugUpgradeCanister", Upgrades);
-		GiveInventory("AugSlotUpgrade", Slots);
-	};
+    GiveInventory("AugCanister", Canisters);
+    GiveInventory("AugUpgradeCanister", Upgrades);
+    GiveInventory("AugSlotUpgrade", Slots);
 	
 	for (int i = 0; i < MAX_AUGS; i++)
 		Player.Augs.Level[i] = AugData[i].MaxLevel;
@@ -477,7 +470,7 @@ acscript FullShield()
 acscript GiveCompounds(int Amount)
 {
 	for (int i = 0; i < MAX_COMPOUNDS; i++)
-		if (Amount > 0)
+		if (Amount == 0)
 			Player.Stim.Vials[i] += Amount
 		else
 			Player.Stim.Vials[i] = Player.Capacity * 10;
