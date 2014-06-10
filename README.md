@@ -4,9 +4,7 @@ Come join the fun on IRC: irc://esper.net/doomrpg
 
 PLEASE READ THIS!
 -----------------
-- The DoomRPG-Brutal and DoomRPG-Extras packages CAN NOT BE USED TOGETHER, you must use either one or the other, or else loading will fail.
-- When using DoomRPG-Brutal (Brutal Doom Doom RPG Patch), make sure you have Brutal Doom Compatibility enabled in the Doom RPG Options menu. If you don't do this, there will be errors and/or strange issues.
-- If you need help, have questions, or find bugs, please post them in the Doom RPG Thread on the ZDoom forum.
+If you need help, have questions, or find bugs, please post them in the Doom RPG Thread on the ZDoom forum.
 
 TIPS
 ----
