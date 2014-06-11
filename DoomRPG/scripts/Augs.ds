@@ -53,14 +53,16 @@ acscript AddBattery(int Amount)
     
     if (Player.Augs.Battery > Player.Augs.BatteryMax)
         Player.Augs.Battery = Player.Augs.BatteryMax;
+    
+    DrawBattery();
 };
 
 function void CheckAugSlots()
 {
 	Player.Augs.Slots = (6 - GameSkill()) + CheckInventory("AugSlotUpgrade");
 	
-	// Cap max Aug slots at 8
-	if (Player.Augs.Slots > 8) Player.Augs.Slots = 8;
+	// Cap max Aug slots at the max amount of available Augs
+	if (Player.Augs.Slots > MAX_AUGS) Player.Augs.Slots = MAX_AUGS;
 	
 	// Unequip Augs if you pass the limit (sell a slot upgrade, change difficulty, etc)
 	while (Player.Augs.SlotsUsed > Player.Augs.Slots)
@@ -77,6 +79,17 @@ function void CheckAugs()
 	// Sanity check to prevent negative slots used
 	if (Player.Augs.SlotsUsed < 0)
 		Player.Augs.SlotsUsed = 0;
+    
+    // Determine max Battery
+    if (Player.Augs.Active[AUG_BATTERY])
+    {
+        if (Player.Augs.Level[AUG_BATTERY] == 1)
+            Player.Augs.BatteryMax = 150;
+        if (Player.Augs.Level[AUG_BATTERY] >= 2)
+            Player.Augs.BatteryMax = 200;
+    }
+    else
+        Player.Augs.BatteryMax = 100;
     
     // Play energy drained sound
     if (Player.Augs.Battery <= 0 && Player.Augs.SlotsUsed > 0)
@@ -95,10 +108,24 @@ function void CheckAugs()
     
     if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
     {
-        // Decrease Battery
+        int Drain;
+        
+        // Calculate Battery Drain
         for (int i = 0; i < MAX_AUGS; i++)
             if (Player.Augs.Active[i] && (Timer() % (35 * 30)) == 0)
-                Player.Augs.Battery -= Player.Augs.Level[i];
+                Drain += Player.Augs.Level[i];
+        
+        // Battery Management checks
+        if (Player.Augs.Active[AUG_BATTERY])
+        {
+            if (Player.Augs.Level[AUG_BATTERY] == 3)
+                Drain = Drain / 1.33;
+            if (Player.Augs.Level[AUG_BATTERY] >= 4)
+                Drain /= 2;
+        };
+        
+        // Decrease Battery
+        Player.Augs.Battery -= (int)Drain;
         
         // Sanity check to prevent battery from going negative
         if (Player.Augs.Battery < 0)
@@ -106,15 +133,18 @@ function void CheckAugs()
         
         // Display new battery amount on the HUD
         if (Player.Augs.SlotsUsed > 0 && (((Timer() % (35 * 30)) == 0) || GetCVar("drpg_aug_showbattery")))
-        {   
-            int HoldTime = (GetCVar("drpg_aug_showbattery") ? 0.05 : 3.0);
-            int FadeTime = (GetCVar("drpg_aug_showbattery") ? 0.05 : 2.0);
-            SetHudSize(0, 0, false);
-            PrintSpriteFade("AUGBATT", 0, -0.475, -0.935, HoldTime, FadeTime);
-            SetFont("BIGFONT");
-            HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, 0, CR_YELLOW, -0.5, 0.95, HoldTime, FadeTime);
-        };
+            DrawBattery();
     };
+    
+    // Battery Management Recharging
+    if (Player.Augs.Active[AUG_BATTERY] && Player.Augs.Level[AUG_BATTERY] >= 5 && ((Timer() % (35 * 10)) == 0))
+        if (!GetPlayerInput(PlayerNumber(), MODINPUT_FORWARDMOVE) &&
+            !GetPlayerInput(PlayerNumber(), MODINPUT_SIDEMOVE) &&
+            !GetPlayerInput(PlayerNumber(), MODINPUT_UPMOVE))
+        {
+            Player.Augs.Battery++;
+            DrawBattery();
+        };
     
     // Strength Aug
 	if (Player.Augs.Active[AUG_STRENGTH])
