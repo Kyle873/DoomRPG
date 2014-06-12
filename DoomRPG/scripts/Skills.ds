@@ -602,15 +602,19 @@ script SkillWheel() enter
 // Use Skill Script
 acscript UseSkill() net
 {
-	// If you're dead, terminate
+    // Current Skill
+    int Index = (Player.InMenu && Player.Menu == 3 ? -1 : Player.SkillSelected);
+	Skill *CurrentSkill = &Skills[Player.SkillCatagory[Index]][Player.SkillIndex[Index]];
+	
+    // If you're dead, terminate
 	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
 	
     // If you have no current skill selected, terminate
     if (Player.SkillSelected == -1) return;
     
-	// Current Skill
-    int Index = Player.SkillSelected;
-	Skill *CurrentSkill = &Skills[Player.SkillCatagory[Index]][Player.SkillIndex[Index]];
+	// If the key is unassigned, terminate
+    if (Index != -1)
+        if (Player.SkillCatagory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
     
     // Quickuse
 	if (Index == -1)
@@ -625,38 +629,7 @@ acscript UseSkill() net
 	Overdrive = false;
 	if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop))
 		Overdrive = true;
-    
-    // If you're in the Skills menu, assign the key to the selected skill
-	if (Player.InMenu && Player.Menu == 3 && Index != -1)
-	{
-        // Remove the skill from this key
-		if (Buttons & BT_SPEED)
-		{
-			ActivatorSound("menu/move", 127);
-			Player.SkillCatagory[Index] = -1;
-			Player.SkillIndex[Index] = -1;
-			return;
-		};
-        
-        // Can't assign two skills to the same key
-		for (int i = 0; i < MAX_SKILLKEYS; i++)
-			if (Player.SkillCatagory[i] == Player.SkillPage && Player.SkillIndex[i] == Player.MenuIndex)
-			{
-				ActivatorSound("menu/error", 127);
-				return;
-			};
-		
-        // Assign skill to this key
-		ActivatorSound("menu/move", 127);
-		Player.SkillCatagory[Index] = Player.SkillPage;
-		Player.SkillIndex[Index] = Player.MenuIndex;
-		return;
-	};
 	
-	// If the key is unassigned, terminate
-    if (Index != -1)
-        if (Player.SkillCatagory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
-
 	// Overdriving an unlearnt skill will learn it
 	if (Overdrive && CheckInventory("SkillToken") > 0 && CurrentSkill->Level == 0)
 	{
@@ -718,11 +691,7 @@ acscript UseSkill() net
 				break;
 			
 			case 2: // Auras
-				ActivatorSound("skills/buff", 127);
-				if (Player.SkillIndex[Index] == Player.Aura - 1)
-					Player.AuraTimer += (1050 + Player.Energy * 5.25) * (1 + Player.AuraBonus)
-				else
-					Player.AuraTimer = (1050 + Player.Energy * 5.25) * (1 + Player.AuraBonus);
+                int PreviousAura = Player.Aura;
 				switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
 				{
 					case 0:		Player.Aura = 1;											break; // Red Aura
@@ -735,6 +704,11 @@ acscript UseSkill() net
 					case 7:		Player.Aura = 8;											break; // Dark Blue Aura
 					case 8:		Player.Aura = 9;											break; // Yellow Aura
 				};
+				ActivatorSound("skills/buff", 127);
+				if (Player.Aura == PreviousAura)
+					Player.AuraTimer += (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1)
+				else
+					Player.AuraTimer = (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1);
 				Success = true;
 				break;
 			
