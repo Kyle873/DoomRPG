@@ -49,12 +49,15 @@ acscript DisableAugs()
 
 acscript AddBattery(int Amount)
 {
+    int PrevBattery = Player.Augs.Battery;
+    
     Player.Augs.Battery += Amount;
     
     if (Player.Augs.Battery > Player.Augs.BatteryMax)
         Player.Augs.Battery = Player.Augs.BatteryMax;
     
-    DrawBattery();
+    if (PrevBattery != Player.Augs.Battery)
+        DrawBattery();
 };
 
 function void CheckAugSlots()
@@ -145,6 +148,10 @@ function void CheckAugs()
             Player.Augs.Battery++;
             DrawBattery();
         };
+    
+    // Lightning damage type increases your Battery
+    if (Player.DamageType == DT_LIGHTNING)
+        AddBattery(1);
     
     // Strength Aug
 	if (Player.Augs.Active[AUG_STRENGTH])
