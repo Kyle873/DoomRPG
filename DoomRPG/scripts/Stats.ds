@@ -1,5 +1,6 @@
 #include "Globals.dh"
 #include "ItemData.dh"
+#include "Map.dh"
 #include "RPG.dh"
 #include "Shield.dh"
 #include "Shop.dh"
@@ -132,7 +133,7 @@ function void CheckCombo()
 		// Time Freeze special handling
 		if (Player.Combo > 0 && CheckInventory("PowerTimeFreezer") && Player.ComboTimer >= COMBO_MAX)
 			Player.ComboTimer = COMBO_MAX - 1;
-
+        
 		// Subtract the combo timer each tic
 		if ((Player.Combo > 0 || Player.ComboTimer < COMBO_MAX) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
 			Player.ComboTimer--;
@@ -148,7 +149,7 @@ function void CheckCombo()
 		// Add up and randomize the XP and Rank gain
 		if (Player.ComboTimer == COMBO_STOP)
 		{
-			fixed ComboBonus = ((((fixed)Player.Combo / (fixed)GameSkill()) * (Player.XPGained + Player.RankGained)) / 10.0);
+			int ComboBonus = (int)((((fixed)Player.Combo / (fixed)GameSkill()) * (Player.XPGained + Player.RankGained)) / 10.0);
 			if (ComboBonus < 0) ComboBonus = 0;
 			
 			// You cannot gain Negative XP, but you can lose Rank
@@ -156,9 +157,9 @@ function void CheckCombo()
 			
 			if (Player.Combo > 1)
 			{
-				Player.BonusGained += (int)ComboBonus;
-				Player.XP += Player.XPGained + (int)ComboBonus;
-				Player.Rank += Player.RankGained + (int)ComboBonus;
+				Player.BonusGained += ComboBonus;
+				Player.XP += Player.XPGained + ComboBonus;
+				Player.Rank += Player.RankGained + ComboBonus;
 			}
 			else
 			{
