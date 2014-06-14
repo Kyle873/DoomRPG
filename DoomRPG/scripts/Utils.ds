@@ -31,6 +31,9 @@ acscript SetDamageType(int Type)
 acscript AddToxicity(int Amount)
 {
 	Player.Toxicity += Amount;
+    Player.ToxicTimer = 0;
+    Player.ToxicOffset = 0;
+    Player.ToxicStage = 0;
 };
 
 // Get the max inventory size
@@ -862,23 +865,47 @@ function void DrawPay(int Amount)
 
 function void DrawToxicity(int X, int Y)
 {
-	str Color;
-	
 	// Pixel Color
-	if (Player.Toxicity >= 0 && Player.Toxicity <= 25)
+	str Color;
+	if (Player.Toxicity >= 0 && Player.Toxicity <= 24)
 		Color = "PGreen";
-	if (Player.Toxicity >= 26 && Player.Toxicity <= 50)
+	if (Player.Toxicity >= 25 && Player.Toxicity <= 49)
 		Color = "PYellow";
-	if (Player.Toxicity >= 51 && Player.Toxicity <= 75)
+	if (Player.Toxicity >= 50 && Player.Toxicity <= 74)
 		Color = "POrange";
-	if (Player.Toxicity >= 76)
+	if (Player.Toxicity >= 75)
 		Color = "PRed";
 	
+    // Beat
+    int[] BeatTics = { 8 / (1 + (Player.Toxicity >= 75)); 16 / (1 + (Player.Toxicity >= 50)); 8 / (1 + (Player.Toxicity >= 25)); };
+    int TotalTics;
+    for (int i = 0; i < 3; i++)
+        TotalTics += BeatTics[i];
+    if ((Player.ToxicTimer % (35 * (3 - (Player.Toxicity * 0.0275)))) < TotalTics)
+    {
+        if (Player.ToxicOffset >= -8 && Player.ToxicStage == 0)
+            Player.ToxicOffset -= 1 + (Player.Toxicity >= 75);
+        if (Player.ToxicOffset <= 8 && Player.ToxicStage == 1)
+            Player.ToxicOffset += 1 + (Player.Toxicity >= 50);
+        if (Player.ToxicOffset >= 0 && Player.ToxicStage == 2)
+            Player.ToxicOffset -= 1 + (Player.Toxicity >= 25);
+        
+        if (Player.ToxicOffset == -8)
+            Player.ToxicStage = 1;
+        if (Player.ToxicOffset == 8)
+            Player.ToxicStage = 2;
+        if (Player.ToxicOffset == 0 && Player.ToxicStage == 2)
+            Player.ToxicStage = 0;
+    };
+    
+    // Increase Timer
+    Player.ToxicTimer++;
+    
 	// Draw Pixel
 	if (Player.Toxicity >= 100)
-		PrintSpriteFade(Color, TOXMETER_ID + (Timer() % 100), X + (Timer() % 100), Y, 0.05, 1.0)
+		PrintSpriteFade(Color, TOXMETER_ID + (Player.ToxicTimer % 100), X + (Player.ToxicTimer % 100), Y, 0.05, 1.0)
 	else
-		PrintSpriteFade(Color, TOXMETER_ID + (Timer() % 100), X + (Timer() % 100), Y + Round(Sin((fixed)Timer() / (116.0 - Player.Toxicity)) * 8.0), 0.05, 1.0);
+		PrintSpriteFade(Color, TOXMETER_ID + (Player.ToxicTimer % 100), X + (Player.ToxicTimer % 100), Y + Player.ToxicOffset, 0.05, 1.0);
 };
 
 function void DrawBattery()
