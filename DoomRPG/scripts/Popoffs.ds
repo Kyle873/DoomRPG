@@ -1,0 +1,201 @@
+#include "Globals.dh"
+#include "Popoffs.dh"
+#include "Utils.dh"
+
+// Handles Damage Numbers
+script DamageNumbers()
+{
+	Start:
+	
+	while (GetCVar("drpg_damagenumbers"))
+	{
+		int OldTID;
+		int TID = UniqueTID();
+		int Health = GetActorProperty(0, APROP_Health);
+		int Shield = Player.Shield.Charge;
+		int Color;
+		
+		// Lag handling
+		Delay(1 + GetCVar("drpg_damagenumbers_delay"));
+		
+		// Check Health
+		Health = Health - GetActorProperty(0, APROP_Health);
+		
+		// Nullify Health if a Shield is active
+		if (CheckInventory("Shield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH - GetActorProperty(0, APROP_SpawnHealth))
+			Health = 0;
+		
+		// Shield breaking hits will cause a major health drop, don't show this
+		if (Health >= (SHIELD_HEALTH / 1000) - GetActorProperty(0, APROP_SpawnHealth))
+			Health = 0;
+		
+		// Shield checks
+		if (CheckInventory("Shield"))
+			Shield = Shield - Player.Shield.Charge;
+		
+		if (Health != 0 || Shield != 0)
+		{
+			if (Health >= GetActorProperty(0, APROP_SpawnHealth)) // Critical
+				Color = DNUM_CRITICAL
+			else if (Health < 0 && !CheckInventory("Shield")) // Healed
+				Color = DNUM_HEAL
+			else if (Health == 1) // Scratch
+				Color = DNUM_SCRATCH
+			else if (CheckInventory("Shield") && Shield > 0) // Shield Loss
+				Color = DNUM_SHIELDLOSS
+			else if (CheckInventory("Shield") && Shield < 0) // Shield Gain
+				Color = DNUM_SHIELDGAIN
+			else // Normal
+				Color = DNUM_NORMAL;
+			
+			// Store the old TID if it has one
+			if (ActivatorTID() > 0)
+				OldTID = ActivatorTID();
+			
+			// Give the activator a TID
+			Thing_ChangeTID(0, TID);
+			
+			// Damage Popoff
+			if (CheckInventory("Shield"))
+				Popoff(TID, Shield, Color)
+			else
+				Popoff(TID, Health, Color);
+			
+			// Change the TID back
+			if (OldTID > 0)
+				Thing_ChangeTID(TID, OldTID)
+			else
+				Thing_ChangeTID(TID, 0);
+		};
+			
+		// Terminate if the Actor is dead
+		if (GetActorProperty(0, APROP_Health) <= 0) return;
+	};
+	
+	Delay(1);
+	goto Start;
+};
+
+// Psuedo Damage Numbers on the HUD
+script DamageNumbersHUD()
+{
+	int Before = GetActorProperty(Player.TID, APROP_Health);
+	Delay(1);
+	
+	int After = GetActorProperty(Player.TID, APROP_Health);
+	int Loss = Before - After;
+	int Color = CR_WHITE;
+	
+    // Size
+	if (Loss == 1)
+		SetFont("SMALLFONT")
+	else
+		SetFont("BIGFONT");
+	
+    // Color
+    switch (Player.DamageType)
+    {
+        case DT_NORMAL:                     Color = CR_WHITE;       break;
+        case DT_TOXIC:                      Color = CR_GREEN;       break;
+        case DT_MELEE:                      Color = CR_GREY;        break;
+        case DT_FIRE:                       Color = CR_RED;         break;
+        case DT_PLASMA: case DT_LIGHTNING:  Color = CR_LIGHTBLUE;   break;
+    };
+    
+	if (Before > After)
+		HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0);
+};
+
+// Handles informational popoffs
+script InfoPopoffs()
+{
+	Start:
+	
+	while (GetCVar("drpg_popoffs"))
+	{
+		int BeforeCredits;
+		int AfterCredits;
+		int BeforeEP;
+		int AfterEP;
+		
+		// Before Checks
+		BeforeCredits = CheckInventory("Credits");
+		BeforeEP = Player.EP;
+		
+		Delay(1);
+		
+		// After Checks
+		AfterCredits = CheckInventory("Credits");
+		AfterEP = Player.EP;
+		
+		// Credits Popoffs
+		if (AfterCredits > BeforeCredits)
+			Popoff(Player.TID, AfterCredits - BeforeCredits, DNUM_CREDGAIN);
+		if (AfterCredits < BeforeCredits)
+			Popoff(Player.TID, AfterCredits - BeforeCredits, DNUM_CREDLOSS);
+		
+		// EP Popoffs
+		if (AfterEP > BeforeEP)
+			Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPGAIN);
+		if (AfterEP < BeforeEP)
+			Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPLOSS);
+			
+		// Terminate if the Player is dead
+		if (GetActorProperty(0, APROP_Health) <= 0) return;
+	};
+	
+	Delay(1);
+	goto Start;
+};
+
+// Spawn a popoff number
+function Popoff(int TID, int Value, int Color)
+{
+	int[] Digits;
+	int DigitTID = UniqueTID();
+	int DigitBase = 1;
+	fixed X = GetActorX(TID);
+	fixed Y = GetActorY(TID);
+	fixed Z = GetActorZ(TID) + CheckInventory("HeightCheck") - 4;
+	
+	// Prevent digit overflow
+	if (Value > 9999999)
+		Value = 9999999;
+	
+	// Put the digits into the array
+	for (int i = 0; i < DNUM_DIGITS; i++)
+		Digits[i] = GetDigit(Abs(Value), i);
+	
+	// Digit Spawning
+	for (int i = 0; i < DNUM_DIGITS; i++)
+	{
+		str DigitActor = StrParam("Digit%dNum%d\n", i + 1, Digits[i]);
+		
+		if (Value >= DigitBase || Value <= -DigitBase)
+			switch (Digits[1])
+			{
+				case 0:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 1:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 2:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 3:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 4:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 5:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 6:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 7:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 8:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+				case 9:	Spawn(DigitActor, X, Y, Z, DigitTID, 0);	break;
+			};
+		
+		DigitBase *= 10;
+	};
+	
+	// Color
+	if (Color > 0)
+		Thing_SetTranslation(DigitTID, Color);
+	
+	// Set Fade Speed
+	SetUserVariable(DigitTID, "user_fade", GetCVar("drpg_damagenumbers_fade"));
+	
+	// Float away
+	SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), 0.5, 0, 0);
+};

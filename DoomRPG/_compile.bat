@@ -23,6 +23,8 @@ echo Compiling Augs
 %ACC% -c %SRC%\Augs.ds -o %OBJ%\Augs.o
 echo Compiling GUI
 %ACC% -c %SRC%\GUI.ds -o %OBJ%\GUI.o
+echo Compiling HealthBars
+%ACC% -c %SRC%\HealthBars.ds -o %OBJ%\HealthBars.o
 echo Compiling Map
 %ACC% -c %SRC%\Map.ds -o %OBJ%\Map.o
 echo Compiling Menu
@@ -33,6 +35,8 @@ echo Compiling Monsters
 %ACC% -c %SRC%\Monsters.ds -o %OBJ%\Monsters.o
 echo Compiling Outpost
 %ACC% -c %SRC%\Outpost.ds -o %OBJ%\Outpost.o
+echo Compiling Popoffs
+%ACC% -c %SRC%\Popoffs.ds -o %OBJ%\Popoffs.o
 echo Compiling RPG
 %ACC% -c %SRC%\RPG.ds -o %OBJ%\RPG.o
 echo Compiling Shield
@@ -48,7 +52,7 @@ echo Compiling Stims
 echo Compiling Utils
 %ACC% -c %SRC%\Utils.ds -o %OBJ%\Utils.o
 echo Linking RPG.lib
-%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\GUI.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Monsters.o %OBJ%\Outpost.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
+%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\GUI.o %OBJ%\HealthBars.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Monsters.o %OBJ%\Outpost.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
 
 echo ----------------------------------------
 
