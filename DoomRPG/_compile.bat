@@ -4,7 +4,7 @@ color F
 set PATH=..\..\DH-ACC
 set SRC=.\scripts
 set OBJ=.\acs
-set ACC=DH-acc --named-scripts --use-chunk-ATAG --debug-error-pos -D__LIBDS_NOLIB --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log -Z -i %SRC%\inc
+set ACC=DH-acc --named-scripts --use-chunk-ATAG --debug-error-pos -D__LIBDS_NOLIB --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc
 
 _timestamp
 
