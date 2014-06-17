@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 7, 2, 1);
+        Version version = new Version(0, 8);
         Config config = new Config();
 
         public FormMain()
@@ -60,6 +60,16 @@ namespace DoomRPG
             for (int i = 0; i < Enum.GetNames(typeof(DRLAClass)).Length; i++)
                 comboBoxClass.Items.Add(Enum.GetName(typeof(DRLAClass), i));
             comboBoxClass.SelectedIndex = (int)config.rlClass;
+
+            // Savegames
+            if (config.portPath != string.Empty)
+            {
+                List<string> files = Directory.EnumerateFiles(Path.GetDirectoryName(config.portPath)).ToList<string>();
+                
+                foreach (string file in files)
+                    if (file.Contains(".zds"))
+                        comboBoxSaveGame.Items.Add(Path.GetFileName(file));
+            }
         }
 
         private void PopulateMods()
@@ -115,6 +125,12 @@ namespace DoomRPG
                 return false;
             }
 
+            if (checkedListBoxPatches.GetItemChecked(2) && (checkedListBoxPatches.GetItemChecked(3) || checkedListBoxPatches.GetItemChecked(4)))
+            {
+                Utils.ShowError("You cannot use the Extras patch with DoomRL!");
+                return false;
+            }
+
             return true;
         }
 
@@ -139,6 +155,9 @@ namespace DoomRPG
             textBoxDRPGPath.Text = config.DRPGPath;
             textBoxModsPath.Text = config.modsPath;
             numericUpDownMapNumber.Value = config.mapNumber;
+            textBoxDemo.Text = config.demo;
+            checkBoxEnableCheats.Checked = config.enableCheats;
+            checkBoxLogging.Checked = config.enableLogging;
             for (int i = 0; i < config.patches.Length; i++)
                 checkedListBoxPatches.SetItemChecked(i, config.patches[i]);
             checkBoxMultiplayer.Checked = config.multiplayer;
@@ -169,6 +188,9 @@ namespace DoomRPG
             config.difficulty = (Difficulty)comboBoxDifficulty.SelectedIndex;
             config.rlClass = (DRLAClass)comboBoxClass.SelectedIndex;
             config.mapNumber = (int)numericUpDownMapNumber.Value;
+            config.demo = textBoxDemo.Text;
+            config.enableCheats = checkBoxEnableCheats.Checked;
+            config.enableLogging = checkBoxLogging.Checked;
             for (int i = 0; i < config.patches.Length; i++)
                 if (checkedListBoxPatches.GetItemChecked(i))
                     config.patches[i] = true;
@@ -416,6 +438,22 @@ namespace DoomRPG
                 }
             }
 
+            // Enable Cheats
+            if (checkBoxEnableCheats.Checked)
+                cmdline += " +sv_cheats 1";
+
+            // Enable Logging to File
+            if (checkBoxLogging.Checked)
+                cmdline += " +logfile \"Doom RPG.log\"";
+
+            // Load Savegame
+            if (comboBoxSaveGame.Text != "None")
+                cmdline += " -loadgame " + Path.GetDirectoryName(textBoxPortPath.Text) + "\\" + comboBoxSaveGame.Text;
+
+            // Record Demo
+            if (textBoxDemo.TextLength > 0)
+                cmdline += " -record " + textBoxDemo.Text + ".lmp";
+
             // Mods & Patches
             cmdline += " -file";
 
@@ -435,17 +473,14 @@ namespace DoomRPG
             // Extras
             if (checkedListBoxPatches.GetItemChecked(2))
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Extras\"";
-            // Brutal Doom
-            if (checkedListBoxPatches.GetItemChecked(3))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Brutal\"";
             // DoomRL Arsenal
-            if (checkedListBoxPatches.GetItemChecked(4))
+            if (checkedListBoxPatches.GetItemChecked(3))
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLArsenal\"";
             // Brutal Doom
-            if (checkedListBoxPatches.GetItemChecked(5))
+            if (checkedListBoxPatches.GetItemChecked(4))
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLMonsters\"";
             // TUTNT
-            if (checkedListBoxPatches.GetItemChecked(6))
+            if (checkedListBoxPatches.GetItemChecked(5))
                 cmdline += " \"" + config.DRPGPath + "\\DoomRPG-TUTNT\"";
 
             // Custom Commands
@@ -572,19 +607,17 @@ namespace DoomRPG
 
         private void timer_Tick(object sender, EventArgs e)
         {
+            // Automatically check relevent WAD/PK3 files associated with patches
             try
             {
-                // Brutal Doom
-                if (checkedListBoxPatches.GetItemChecked(3))
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("brutalv19"), true);
                 // DoomRL Arsenal
-                if (checkedListBoxPatches.GetItemChecked(4))
+                if (checkedListBoxPatches.GetItemChecked(3))
                 {
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta 6"), true);
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta 7"), true);
                     checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL HUD"), true);
                 }
                 // DoomRL monster Pack
-                if (checkedListBoxPatches.GetItemChecked(5))
+                if (checkedListBoxPatches.GetItemChecked(4))
                     checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Monsters"), true);
             }
             catch

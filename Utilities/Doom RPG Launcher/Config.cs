@@ -18,7 +18,10 @@ namespace DoomRPG
         public Difficulty difficulty = Difficulty.Normal;
         public DRLAClass rlClass = DRLAClass.Marine;
         public int mapNumber = 1;
-        public bool[] patches = new bool[7];
+        public string demo = string.Empty;
+        public bool enableCheats = false;
+        public bool enableLogging = false;
+        public bool[] patches = new bool[6];
         public List<string> mods = new List<string>();
         public string customCommands = string.Empty;
 
