@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 8);
+        Version version = new Version(0, 8, 0, 1);
         Config config = new Config();
 
         public FormMain()

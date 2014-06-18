@@ -32,6 +32,12 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabControlMain = new System.Windows.Forms.TabControl();
             this.tabPageBasic = new System.Windows.Forms.TabPage();
+            this.textBoxDemo = new System.Windows.Forms.TextBox();
+            this.labelRecordDemo = new System.Windows.Forms.Label();
+            this.checkBoxLogging = new System.Windows.Forms.CheckBox();
+            this.checkBoxEnableCheats = new System.Windows.Forms.CheckBox();
+            this.comboBoxSaveGame = new System.Windows.Forms.ComboBox();
+            this.labelSavegame = new System.Windows.Forms.Label();
             this.comboBoxClass = new System.Windows.Forms.ComboBox();
             this.labelPlayerClass = new System.Windows.Forms.Label();
             this.comboBoxIWAD = new System.Windows.Forms.ComboBox();
@@ -79,12 +85,6 @@
             this.toolStripProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.buttonCheckUpdates = new System.Windows.Forms.Button();
             this.timer = new System.Windows.Forms.Timer(this.components);
-            this.comboBoxSaveGame = new System.Windows.Forms.ComboBox();
-            this.labelSavegame = new System.Windows.Forms.Label();
-            this.checkBoxEnableCheats = new System.Windows.Forms.CheckBox();
-            this.checkBoxLogging = new System.Windows.Forms.CheckBox();
-            this.labelRecordDemo = new System.Windows.Forms.Label();
-            this.textBoxDemo = new System.Windows.Forms.TextBox();
             this.tabControlMain.SuspendLayout();
             this.tabPageBasic.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMapNumber)).BeginInit();
@@ -144,6 +144,62 @@
             this.tabPageBasic.TabIndex = 0;
             this.tabPageBasic.Text = "Basic";
             this.tabPageBasic.UseVisualStyleBackColor = true;
+            // 
+            // textBoxDemo
+            // 
+            this.textBoxDemo.Location = new System.Drawing.Point(294, 177);
+            this.textBoxDemo.Name = "textBoxDemo";
+            this.textBoxDemo.Size = new System.Drawing.Size(118, 20);
+            this.textBoxDemo.TabIndex = 24;
+            // 
+            // labelRecordDemo
+            // 
+            this.labelRecordDemo.AutoSize = true;
+            this.labelRecordDemo.Location = new System.Drawing.Point(291, 161);
+            this.labelRecordDemo.Name = "labelRecordDemo";
+            this.labelRecordDemo.Size = new System.Drawing.Size(73, 13);
+            this.labelRecordDemo.TabIndex = 23;
+            this.labelRecordDemo.Text = "Record Demo";
+            // 
+            // checkBoxLogging
+            // 
+            this.checkBoxLogging.AutoSize = true;
+            this.checkBoxLogging.Location = new System.Drawing.Point(12, 238);
+            this.checkBoxLogging.Name = "checkBoxLogging";
+            this.checkBoxLogging.Size = new System.Drawing.Size(131, 17);
+            this.checkBoxLogging.TabIndex = 22;
+            this.checkBoxLogging.Text = "Enable Logging to File";
+            this.checkBoxLogging.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxEnableCheats
+            // 
+            this.checkBoxEnableCheats.AutoSize = true;
+            this.checkBoxEnableCheats.Location = new System.Drawing.Point(12, 215);
+            this.checkBoxEnableCheats.Name = "checkBoxEnableCheats";
+            this.checkBoxEnableCheats.Size = new System.Drawing.Size(95, 17);
+            this.checkBoxEnableCheats.TabIndex = 21;
+            this.checkBoxEnableCheats.Text = "Enable Cheats";
+            this.checkBoxEnableCheats.UseVisualStyleBackColor = true;
+            // 
+            // comboBoxSaveGame
+            // 
+            this.comboBoxSaveGame.FormattingEnabled = true;
+            this.comboBoxSaveGame.Items.AddRange(new object[] {
+            "None"});
+            this.comboBoxSaveGame.Location = new System.Drawing.Point(152, 177);
+            this.comboBoxSaveGame.Name = "comboBoxSaveGame";
+            this.comboBoxSaveGame.Size = new System.Drawing.Size(121, 21);
+            this.comboBoxSaveGame.TabIndex = 20;
+            this.comboBoxSaveGame.Text = "None";
+            // 
+            // labelSavegame
+            // 
+            this.labelSavegame.AutoSize = true;
+            this.labelSavegame.Location = new System.Drawing.Point(149, 161);
+            this.labelSavegame.Name = "labelSavegame";
+            this.labelSavegame.Size = new System.Drawing.Size(58, 13);
+            this.labelSavegame.TabIndex = 19;
+            this.labelSavegame.Text = "Savegame";
             // 
             // comboBoxClass
             // 
@@ -295,9 +351,9 @@
             this.labelPortLocation.AutoSize = true;
             this.labelPortLocation.Location = new System.Drawing.Point(8, 3);
             this.labelPortLocation.Name = "labelPortLocation";
-            this.labelPortLocation.Size = new System.Drawing.Size(134, 13);
+            this.labelPortLocation.Size = new System.Drawing.Size(94, 13);
             this.labelPortLocation.TabIndex = 0;
-            this.labelPortLocation.Text = "ZDoom/GZDoom Location";
+            this.labelPortLocation.Text = "GZDoom Location";
             this.labelPortLocation.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // tabPageMultiplayer
@@ -619,62 +675,6 @@
             // 
             this.timer.Enabled = true;
             this.timer.Tick += new System.EventHandler(this.timer_Tick);
-            // 
-            // comboBoxSaveGame
-            // 
-            this.comboBoxSaveGame.FormattingEnabled = true;
-            this.comboBoxSaveGame.Items.AddRange(new object[] {
-            "None"});
-            this.comboBoxSaveGame.Location = new System.Drawing.Point(152, 177);
-            this.comboBoxSaveGame.Name = "comboBoxSaveGame";
-            this.comboBoxSaveGame.Size = new System.Drawing.Size(121, 21);
-            this.comboBoxSaveGame.TabIndex = 20;
-            this.comboBoxSaveGame.Text = "None";
-            // 
-            // labelSavegame
-            // 
-            this.labelSavegame.AutoSize = true;
-            this.labelSavegame.Location = new System.Drawing.Point(149, 161);
-            this.labelSavegame.Name = "labelSavegame";
-            this.labelSavegame.Size = new System.Drawing.Size(58, 13);
-            this.labelSavegame.TabIndex = 19;
-            this.labelSavegame.Text = "Savegame";
-            // 
-            // checkBoxEnableCheats
-            // 
-            this.checkBoxEnableCheats.AutoSize = true;
-            this.checkBoxEnableCheats.Location = new System.Drawing.Point(12, 215);
-            this.checkBoxEnableCheats.Name = "checkBoxEnableCheats";
-            this.checkBoxEnableCheats.Size = new System.Drawing.Size(95, 17);
-            this.checkBoxEnableCheats.TabIndex = 21;
-            this.checkBoxEnableCheats.Text = "Enable Cheats";
-            this.checkBoxEnableCheats.UseVisualStyleBackColor = true;
-            // 
-            // checkBoxLogging
-            // 
-            this.checkBoxLogging.AutoSize = true;
-            this.checkBoxLogging.Location = new System.Drawing.Point(12, 238);
-            this.checkBoxLogging.Name = "checkBoxLogging";
-            this.checkBoxLogging.Size = new System.Drawing.Size(131, 17);
-            this.checkBoxLogging.TabIndex = 22;
-            this.checkBoxLogging.Text = "Enable Logging to File";
-            this.checkBoxLogging.UseVisualStyleBackColor = true;
-            // 
-            // labelRecordDemo
-            // 
-            this.labelRecordDemo.AutoSize = true;
-            this.labelRecordDemo.Location = new System.Drawing.Point(291, 161);
-            this.labelRecordDemo.Name = "labelRecordDemo";
-            this.labelRecordDemo.Size = new System.Drawing.Size(73, 13);
-            this.labelRecordDemo.TabIndex = 23;
-            this.labelRecordDemo.Text = "Record Demo";
-            // 
-            // textBoxDemo
-            // 
-            this.textBoxDemo.Location = new System.Drawing.Point(294, 177);
-            this.textBoxDemo.Name = "textBoxDemo";
-            this.textBoxDemo.Size = new System.Drawing.Size(118, 20);
-            this.textBoxDemo.TabIndex = 24;
             // 
             // FormMain
             // 
