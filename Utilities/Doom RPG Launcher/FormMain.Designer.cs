@@ -32,6 +32,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabControlMain = new System.Windows.Forms.TabControl();
             this.tabPageBasic = new System.Windows.Forms.TabPage();
+            this.buttonCopyCommandClipboard = new System.Windows.Forms.Button();
             this.textBoxDemo = new System.Windows.Forms.TextBox();
             this.labelRecordDemo = new System.Windows.Forms.Label();
             this.checkBoxLogging = new System.Windows.Forms.CheckBox();
@@ -114,6 +115,7 @@
             // 
             // tabPageBasic
             // 
+            this.tabPageBasic.Controls.Add(this.buttonCopyCommandClipboard);
             this.tabPageBasic.Controls.Add(this.textBoxDemo);
             this.tabPageBasic.Controls.Add(this.labelRecordDemo);
             this.tabPageBasic.Controls.Add(this.checkBoxLogging);
@@ -144,6 +146,16 @@
             this.tabPageBasic.TabIndex = 0;
             this.tabPageBasic.Text = "Basic";
             this.tabPageBasic.UseVisualStyleBackColor = true;
+            // 
+            // buttonCopyCommandClipboard
+            // 
+            this.buttonCopyCommandClipboard.Location = new System.Drawing.Point(294, 203);
+            this.buttonCopyCommandClipboard.Name = "buttonCopyCommandClipboard";
+            this.buttonCopyCommandClipboard.Size = new System.Drawing.Size(118, 36);
+            this.buttonCopyCommandClipboard.TabIndex = 25;
+            this.buttonCopyCommandClipboard.Text = "Copy Command-Line to Clipboard";
+            this.buttonCopyCommandClipboard.UseVisualStyleBackColor = true;
+            this.buttonCopyCommandClipboard.Click += new System.EventHandler(this.buttonCopyCommandClipboard_Click);
             // 
             // textBoxDemo
             // 
@@ -617,7 +629,6 @@
             this.buttonLaunch.Text = "Launch Doom RPG";
             this.buttonLaunch.UseVisualStyleBackColor = true;
             this.buttonLaunch.Click += new System.EventHandler(this.buttonLaunch_Click);
-            this.buttonLaunch.MouseDown += new System.Windows.Forms.MouseEventHandler(this.buttonLaunch_MouseDown);
             // 
             // labelCustomCommands
             // 
@@ -774,6 +785,7 @@
         private System.Windows.Forms.CheckBox checkBoxEnableCheats;
         private System.Windows.Forms.TextBox textBoxDemo;
         private System.Windows.Forms.Label labelRecordDemo;
+        private System.Windows.Forms.Button buttonCopyCommandClipboard;
     }
 }
 

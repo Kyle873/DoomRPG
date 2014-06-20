@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 8, 1);
+        Version version = new Version(0, 8, 2);
         Config config = new Config();
 
         // Extensions of known mod filetypes
@@ -569,16 +569,6 @@ namespace DoomRPG
             }
         }
 
-        private void buttonLaunch_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Right)
-            {
-                SaveControls();
-                config.Save();
-                MessageBox.Show(BuildCommandLine(), "Command Line", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-        }
-
         private void richTextBoxCredits_TextChanged(object sender, EventArgs e)
         {
             richTextBoxCredits.Find("Testers");
@@ -675,6 +665,13 @@ namespace DoomRPG
                 groupBoxServerMode.Enabled = false;
                 groupBoxServerOptions.Enabled = false;
             }
+        }
+
+        private void buttonCopyCommandClipboard_Click(object sender, EventArgs e)
+        {
+            SaveControls();
+            config.Save();
+            Clipboard.SetText(BuildCommandLine());
         }
     }
 }
