@@ -13,6 +13,11 @@ bool Overdrive;
 int BulletTimeMode;
 int BulletTimeTimer;
 
+int[MAX_CATEGORIES] SkillCategoryMax =
+{
+	6; 9; 9; 3; 17; 7;
+};
+
 function void InitSkills()
 {
 	int Index;
@@ -233,8 +238,17 @@ function void InitSkills()
 	Skills[3][Index].MaxLevel = 1;
 	Skills[3][Index].Cost = 50;
 	Skills[3][Index].Description[0] = "Teleports a monster to the beginning of the level";
-	Index = 0;
-
+	Index++;
+    
+	Skills[3][Index].Name = "Repulsion";
+	Skills[3][Index].MaxLevel = 4;
+	Skills[3][Index].Cost = 50;
+	Skills[3][Index].Description[0] = "A small blast which slightly pushes enemies away";
+	Skills[3][Index].Description[1] = "A blast which pushes enemies away";
+	Skills[3][Index].Description[2] = "A large blast which greatly pushes enemies away";
+	Skills[3][Index].Description[3] = "A huge blast which launches enemies away";
+    Index = 0;
+    
 	// --------------------------------------------------
 	// SUMMONING
 	
@@ -731,6 +745,7 @@ acscript UseSkill() net
 				{
 					case 0:		Success = Weaken();											break; // Weaken
 					case 1:		Success = FireProjectile("TranslocateBall");				break; // Translocate
+                    case 2:     Success = Repulse();                                        break; // Repulsion                
 				};
 				break;
 			
@@ -1256,8 +1271,8 @@ function bool DropAmmo()
 // Weaken
 acscript bool Weaken()
 {
-	int PlayerNum = PlayerNumber ();
-	int WeakenLevel = Skills[3][4].CurrentLevel;
+	int PlayerNum = PlayerNumber();
+	int WeakenLevel = Skills[3][0].CurrentLevel;
 	int MonsterLevel;
 	int MonsterAura;
 	int MonsterStrength;
@@ -1309,6 +1324,19 @@ acscript bool Weaken()
 	FadeRange(0, 0, 0, 0.25, 0, 0, 0, 0.0, 1.0);
 	ActivatorSound("skills/weaken", 127);
 	return true;
+};
+
+// Repulsion
+function bool Repulse()
+{
+	int RepulsionLevel = Skills[3][2].CurrentLevel;
+    
+    SetInventory(StrParam("SkillBlast%d\n", RepulsionLevel), 1);
+    UseInventory(StrParam("SkillBlast%d\n", RepulsionLevel));
+    
+    FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.5 + (0.25 * RepulsionLevel));
+    
+    return true;
 };
 
 // Summoning
