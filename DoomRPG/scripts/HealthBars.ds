@@ -86,8 +86,8 @@ script HealthBars()
 			SetActivator(Players(PlayerNum).TID);
 			NEEDVALIDPLAYER; // Verify that SetActivator is doing its' thing.
 			
-			int X = GetUserCVar(PlayerNum, "drpg_healthbars_x");
-			int Y = GetUserCVar(PlayerNum, "drpg_healthbars_y");
+			fixed X = GetUserCVar(PlayerNum, "drpg_healthbars_x");
+			fixed Y = GetUserCVar(PlayerNum, "drpg_healthbars_y");
 			
 			if (HasHealthBar && (Shield || CurrentHealth > 0) && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
 			{
@@ -95,9 +95,7 @@ script HealthBars()
 				if (MaxHealth > 0)
 					HealthPercent = (CurrentHealth * 100) / MaxHealth;
 				
-				if (HealthPercent > 100)
-					FillType = "Fill5";
-				if (HealthPercent >= 75 && HealthPercent <= 100)
+				if (HealthPercent >= 75)
 					FillType = "Fill1";
 				if (HealthPercent >= 50 && HealthPercent <= 74)
 					FillType = "Fill2";
@@ -106,7 +104,7 @@ script HealthBars()
 				if (HealthPercent <= 24)
 					FillType = "Fill4";
 				if (Shield)
-					FillType = "Fill6";
+					FillType = "Fill8";
 				
 				SetHudSize(800, 600, false);
 				
@@ -227,16 +225,42 @@ script HealthBars()
 					PrintSprite(AuraType, 0, X - 136.0, Y + 30.0, 0.05);
 				
 				// Prevent bar overflow
-				if (HealthPercent > 100)
-					HealthPercent = 100;
+				if (HealthPercent > 800)
+					HealthPercent = 800;
 				
-				// Bar fill
-				if (GetCVar("screenblocks") == 10)
-					for (int i = 0; i <= HealthPercent * 1.165; i++)
-						PrintSprite(FillType, 0, (X - 120.0) + (i * 2.0), Y, 0.05)
-				else
-					for (int i = 0; i <= HealthPercent * 1.05; i++)
-						PrintSprite(FillType, 0, (X - 97.0) + (i * 2.0), Y, 0.05);
+                // Adjust X to draw the Bar Fill
+                X -= 95.0;
+				
+                // SS Bar needs to be redone for the new setup
+				// if (GetCVar("screenblocks") == 10)
+                
+                // Quaternary Bar Fill (>400% Health, Black Auras)
+                if (HealthPercent > 400 && !Shield)
+                {
+                    SetHudClipRect((int)X, (int)(Y - 6), (int)((fixed)(HealthPercent - 400.0) * (2.02 / 4.0)), (int)(Y + 6));
+                    PrintSprite("Fill7", 0, X + 0.1, Y, 0.05);
+                };
+                
+                // Tertiary Bar Fill (>200% Health, Pink Auras)
+                if (HealthPercent > 200 && !Shield)
+                {
+                    SetHudClipRect((int)X, (int)(Y - 6), (int)((fixed)(HealthPercent - 200.0) * (2.02 / 2.0)), (int)(Y + 6));
+                    PrintSprite("Fill6", 0, X + 0.1, Y, 0.05);
+                };
+                
+                // Secondary Bar Fill (>100% Health, Generic Auras)
+                if (HealthPercent > 100 && !Shield)
+                {
+                    SetHudClipRect((int)X, (int)(Y - 6), (int)((fixed)(HealthPercent - 100.0) * 2.02), (int)(Y + 6));
+                    PrintSprite("Fill5", 0, X + 0.1, Y, 0.05);
+                };
+                
+                // Primary fill
+                SetHudClipRect((int)X, (int)(Y - 6), (int)((fixed)HealthPercent * 2.02), (int)(Y + 6));
+                PrintSprite(FillType, 0, X + 0.1, Y, 0.05);
+                
+                // Reset Clipping Rectangle
+                SetHudClipRect(0, 0, 0, 0);
 			};
 		};
 		
