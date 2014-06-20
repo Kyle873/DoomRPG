@@ -18,8 +18,16 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 8, 0, 1);
+        Version version = new Version(0, 8, 1);
         Config config = new Config();
+
+        // Extensions of known mod filetypes
+        string[] fileTypes =
+        {
+            "wad",                  // Original vanilla Doom archive type
+            "zip", "pk3", "pk7",    // Archive File Types
+            "deh", "bex"            // DeHackEd File Types
+        };
 
         public FormMain()
         {
@@ -87,8 +95,9 @@ namespace DoomRPG
                         List<string> files = Directory.EnumerateFiles(folder).ToList<string>();
 
                         foreach (string file in files)
-                            if (file.Contains(".wad") || file.Contains(".pk3") || file.Contains(".pk7") || file.Contains(".zip"))
-                                checkedListBoxMods.Items.Add(Path.GetFileName(file));
+                            for (int i = 0; i < fileTypes.Length; i++)
+                                if (file.ToLower().Contains("." + fileTypes[i]))
+                                    checkedListBoxMods.Items.Add(Path.GetFileName(file));
                     }
                 }
         }
