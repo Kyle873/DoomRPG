@@ -407,13 +407,18 @@
             // 
             this.numericUpDownDuplex.Location = new System.Drawing.Point(82, 39);
             this.numericUpDownDuplex.Maximum = new decimal(new int[] {
-            10,
+            5,
             0,
             0,
             0});
             this.numericUpDownDuplex.Name = "numericUpDownDuplex";
             this.numericUpDownDuplex.Size = new System.Drawing.Size(120, 20);
             this.numericUpDownDuplex.TabIndex = 6;
+            this.numericUpDownDuplex.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             // 
             // checkBoxExtraTics
             // 

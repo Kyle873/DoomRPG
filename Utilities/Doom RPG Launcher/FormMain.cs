@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 8, 2);
+        Version version = new Version(0, 8, 3);
         Config config = new Config();
 
         // Extensions of known mod filetypes
@@ -42,12 +42,12 @@ namespace DoomRPG
             // Populate dynamic controls
             PopulateComboBoxes();
 
-            // Load Controls
-            LoadControls();
-
             // Mods
             PopulateMods();
 
+            // Load Controls
+            LoadControls();
+            
             // send initial events to specific controls to refresh their states
             richTextBoxCredits_TextChanged(null, null);
         }
@@ -75,7 +75,7 @@ namespace DoomRPG
                 List<string> files = Directory.EnumerateFiles(Path.GetDirectoryName(config.portPath)).ToList<string>();
                 
                 foreach (string file in files)
-                    if (file.Contains(".zds"))
+                    if (file.EndsWith(".zds"))
                         comboBoxSaveGame.Items.Add(Path.GetFileName(file));
             }
         }
@@ -96,8 +96,12 @@ namespace DoomRPG
 
                         foreach (string file in files)
                             for (int i = 0; i < fileTypes.Length; i++)
-                                if (file.ToLower().Contains("." + fileTypes[i]))
-                                    checkedListBoxMods.Items.Add(Path.GetFileName(file));
+                                if (file.ToLower().EndsWith("." + fileTypes[i]))
+                                {
+                                    string filePath = Path.GetFullPath(file);
+                                    filePath = filePath.Substring(textBoxModsPath.Text.Length + 1);
+                                    checkedListBoxMods.Items.Add(filePath);
+                                }
                     }
                 }
         }
@@ -151,8 +155,9 @@ namespace DoomRPG
                     List<string> files = Directory.EnumerateFiles(textBoxDRPGPath.Text).ToList<string>();
 
                         foreach (string file in files)
-                            if (file.Contains(".wad") || file.Contains(".pk3") || file.Contains(".pk7") || file.Contains(".zip") || file.Contains(".exe"))
-                                return true;
+                            for (int i = 0; i < fileTypes.Length; i++)
+                                if (file.ToLower().EndsWith(fileTypes[i]))
+                                    return true;
                 }
 
             return false;
@@ -171,8 +176,7 @@ namespace DoomRPG
                 checkedListBoxPatches.SetItemChecked(i, config.patches[i]);
             checkBoxMultiplayer.Checked = config.multiplayer;
             for (int i = 0; i < config.mods.Count; i++)
-                if (checkedListBoxMods.FindString(config.mods[i]) >= 0)
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString(config.mods[i]), true);
+                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindStringExact(config.mods[i]), true);
             if (config.multiplayerMode == MultiplayerMode.Hosting)
                 radioButtonHosting.Checked = true;
             if (config.multiplayerMode == MultiplayerMode.Joining)
@@ -205,6 +209,7 @@ namespace DoomRPG
                     config.patches[i] = true;
                 else
                     config.patches[i] = false;
+            config.mods.Clear();
             for (int i = 0; i < checkedListBoxMods.Items.Count; i++)
                 if (checkedListBoxMods.GetItemChecked(i))
                     config.mods.Add(checkedListBoxMods.Items[i].ToString());
@@ -606,13 +611,14 @@ namespace DoomRPG
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            // Automatically check relevent WAD/PK3 files associated with patches
+            /* Automatically check relevent WAD/PK3 files associated with patches
+             * The search algorithm of CheckedListBox is pretty shit, just let the user do it manually, let the cfg handle it from there
             try
             {
                 // DoomRL Arsenal
                 if (checkedListBoxPatches.GetItemChecked(3))
                 {
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta 7"), true);
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta"), true);
                     checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL HUD"), true);
                 }
                 // DoomRL monster Pack
@@ -622,6 +628,7 @@ namespace DoomRPG
             catch
             {
             }
+            */
 
             // If Map Number is 0, skill is irrelevent
             if (numericUpDownMapNumber.Value == 0)
