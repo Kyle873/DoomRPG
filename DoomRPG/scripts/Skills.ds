@@ -1,6 +1,7 @@
 #include "Arena.dh"
 #include "Globals.dh"
 #include "Menu.dh"
+#include "Monsters.dh"
 #include "Outpost.dh"
 #include "RPG.dh"
 #include "Shop.dh"
@@ -1293,7 +1294,8 @@ acscript bool Weaken()
 		ThingSound(Players(PlayerNum).TID, "menu/error", 127);
 		return false;
 	};
-
+    
+    // Get Monster Stats
 	MonsterLevel = CheckInventory("MonsterLevel") / 2;
 	MonsterStrength = CheckInventory("MonsterStrength") / 2;
 	MonsterDefense = CheckInventory("MonsterDefense") / 2;
@@ -1308,18 +1310,17 @@ acscript bool Weaken()
 		MonsterAura = 0;
 	};
 	
-	if (MonsterLevel <= 0) MonsterLevel = 1;
-	if (MonsterStrength <= 0) MonsterStrength = 1;
-	if (MonsterDefense <= 0) MonsterDefense = 1;
-	
 	// Apply the stats to the monster
 	SetInventory("MonsterLevel", MonsterLevel);
-	SetInventory("MonsterAura", MonsterAura);
 	SetInventory("MonsterStrength", MonsterStrength);
 	SetInventory("MonsterDefense", MonsterDefense);
-	SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.9 * (MonsterDefense / 100)));
-
-	SetActivator(Players(PlayerNum).TID);
+	SetInventory("MonsterAura", MonsterAura);
+    
+    // Re-run the Stats Script
+    MonsterStats(CheckInventory("MonsterFlags"), true);
+	
+    // Reset Activator
+    SetActivator(Players(PlayerNum).TID);
 	
 	FadeRange(0, 0, 0, 0.25, 0, 0, 0, 0.0, 1.0);
 	ActivatorSound("skills/weaken", 127);

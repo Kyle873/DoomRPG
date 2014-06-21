@@ -33,20 +33,39 @@ acscript MonsterInit(int Flags)
 	
 	// Apply Stats
 	if (!(Flags & MF_NOSTATS))
-		MonsterStats(Flags);
+		MonsterStats(Flags, false);
+};
+
+// Modify the targeted monster (mainly for debugging)
+acscript MonsterSet(int Level, int Aura, int Flags)
+{
+    // Move script to the targeted monster
+    SetActivatorToTarget(Player.TID);
+    
+    // Set Stats/Flags
+    SetInventory("MonsterLevel", Level);
+    SetInventory("MonsterAura", Aura);
+    SetInventory("MonsterFlags", Flags);
+    
+    // Re-run the Stats Script
+    MonsterStats(Flags, true);
 };
 
 // Apply stats to monsters
-script MonsterStats(int Flags)
+script MonsterStats(int Flags, bool Modify)
 {
+    // Move Activator to whoever the player is targeting
+    if (Modify)
+        SetActivatorToTarget(Player.TID);
+	
+    int MonsterLevel = CheckInventory("MonsterLevel");
+	int MonsterAura = CheckInventory("MonsterAura");
+	int MonsterStrength = CheckInventory("MonsterStrength");
+	int MonsterDefense = CheckInventory("MonsterDefense");
 	int NumPlayers;
 	int PlayerAvgLevel;
-	int MonsterLevel;
-	int MonsterAura;
-	int MonsterStrength;
-	int MonsterDefense;
 	int AuraRandomizer;
-	
+    
 	// Add up the levels of all the players in the game
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
@@ -59,36 +78,39 @@ script MonsterStats(int Flags)
 	PlayerAvgLevel /= NumPlayers;
 	
 	// Monster Stats System
-	if (GetCVar("drpg_monster_levels") > 0 && (!(Flags & MF_NOSTATS)))
+	if (GetCVar("drpg_monster_levels") > 0)
 	{
 		// level
-		int LevelType = GetCVar("drpg_monster_levels");
-		fixed LevelWeight = GetCVarFixed("drpg_monster_level_weight");
-		fixed MapWeight = GetCVarFixed("drpg_monster_map_weight");
-        fixed RandomMinWeight = GetCVarFixed("drpg_monster_random_min_mult");
-        fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
-		int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+        if (!Modify)
+        {
+            int LevelType = GetCVar("drpg_monster_levels");
+            fixed LevelWeight = GetCVarFixed("drpg_monster_level_weight");
+            fixed MapWeight = GetCVarFixed("drpg_monster_map_weight");
+            fixed RandomMinWeight = GetCVarFixed("drpg_monster_random_min_mult");
+            fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
+            int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+            
+            // Calculate Monster Level
+            if (LevelType == 1 || LevelType == 3) // Player Level
+                MonsterLevel += (int)((fixed)PlayerAvgLevel * LevelWeight);
+            if (LevelType == 2 || LevelType == 3) // Map Number
+                MonsterLevel += (int)((fixed)LevelNum * MapWeight);
+            
+            // Randomization Weight
+            if (RandomMinWeight > RandomMaxWeight)
+                Log("\cgERROR: \c-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!\n")
+            else
+                MonsterLevel *= (int)RandomFixed(RandomMinWeight, RandomMaxWeight);
+            
+            // If the Arena is active, base the Monster Levels Map Number portion on the current wave
+            if (LevelNum == 999 && ArenaActive)
+                MonsterLevel = ArenaWave;
+            
+            // If the monster is friendly, it has the average level of all players in the game
+            if (GetActorProperty(0, APROP_Friendly))
+                MonsterLevel = PlayerAvgLevel;
+		};
         
-        // Calculate Monster Level
-        if (LevelType == 1 || LevelType == 3) // Player Level
-			MonsterLevel += (int)((fixed)PlayerAvgLevel * LevelWeight);
-		if (LevelType == 2 || LevelType == 3) // Map Number
-            MonsterLevel += (int)((fixed)LevelNum * MapWeight);
-		
-        // Randomization Weight
-        if (RandomMinWeight > RandomMaxWeight)
-            Log("\cgERROR: \c-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!\n")
-        else
-            MonsterLevel *= (int)RandomFixed(RandomMinWeight, RandomMaxWeight);
-        
-        // If the Arena is active, base the Monster Levels Map Number portion on the current wave
-        if (LevelNum == 999 && ArenaActive)
-            MonsterLevel = ArenaWave;
-        
-        // If the monster is friendly, it has the average level of all players in the game
-        if (GetActorProperty(0, APROP_Friendly))
-			MonsterLevel = PlayerAvgLevel;
-		
         // Monster level can't be below 1
         if (MonsterLevel <= 0)
             MonsterLevel = 1;
@@ -103,7 +125,7 @@ script MonsterStats(int Flags)
 	};
 	
 	// Apply Aura
-	if (!GetActorProperty(0, APROP_Friendly) && !(Flags & MF_NOAURA))
+	if (!GetActorProperty(0, APROP_Friendly) && !(Flags & MF_NOAURA) && !Modify)
 	{
 		int AuraCurve = GetCVar("drpg_aura_curve");
 		int AuraMin = -100 + ((GameSkill() * (GameSkill() * 2))) + AuraCurve;
@@ -115,7 +137,7 @@ script MonsterStats(int Flags)
 	};
 	
 	// If the monster has an Aura, double it's initial health
-	if (AuraRandomizer > 0)
+	if (AuraRandomizer > 0 || MonsterAura > 0)
 		SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth) * 2);
 	
 	// Apply the aura effects
@@ -131,27 +153,27 @@ script MonsterStats(int Flags)
 			MonsterLevel *= 2;
 			break;
 		case 4: // Pink Aura - Vitality
-			SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) * 2);
+			SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth) * 4);
 			break;
 		case 7: // Orange Aura - Agility
 			SetActorProperty(0, APROP_Speed, GetActorProperty(0, APROP_Speed) * 2);
 			break;
 		case 10: // Black Aura - Miniboss
-			MonsterStrength *= 2;
-			MonsterDefense *= 2;
 			MonsterLevel *= Random(2, 3 + GameSkill());
+			MonsterStrength += MonsterLevel *= (Random(2, 3 + GameSkill()));
+			MonsterDefense += MonsterLevel *= (Random(2, 3 + GameSkill()));
 			SetActorProperty(0, APROP_Speed, GetActorProperty(0, APROP_Speed) * 2);
-			SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) * 4);
+			SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth) * 8);
 			break;
 	};
 	
 	// Apply the stats to the monster
-	SetInventory("MonsterLevel", MonsterLevel);
-	SetInventory("MonsterAura", MonsterAura);
-	SetInventory("MonsterStrength", MonsterStrength);
-	SetInventory("MonsterDefense", MonsterDefense);
-	SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (MonsterDefense / 100)));
-	if (GetActorPropertyFixed(0, APROP_DamageFactor) < 0.1) SetActorPropertyFixed(0, APROP_DamageFactor, 0.1);
+    SetInventory("MonsterLevel", MonsterLevel);
+    SetInventory("MonsterAura", MonsterAura);
+    SetInventory("MonsterStrength", MonsterStrength);
+    SetInventory("MonsterDefense", MonsterDefense);
+    SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (MonsterDefense / 100)));
+    if (GetActorPropertyFixed(0, APROP_DamageFactor) < 0.1) SetActorPropertyFixed(0, APROP_DamageFactor, 0.1);
 };
 
 // Monster Loop
@@ -191,14 +213,14 @@ script MonsterLoop()
 				HealThing(RegenAmount);
 			break;
 		case 10: // Black Aura - Miniboss
-			SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy);
 			RegenAmount = 0.01 * GetActorProperty(0, APROP_SpawnHealth);
+            SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy);
 			if (RegenAmount == 0) RegenAmount = 1;
 			if (GetActorProperty(0, APROP_Health) < GetActorProperty(0, APROP_SpawnHealth) && (Timer() % 35) == 1 && !CheckInventory("PowerTimeFreezer"))
 				HealThing(RegenAmount);
 			break;
 	};
-	
+    
 	// Spawn Aura
 	if (AuraType)
 		SpawnAura(0, AuraType, false);
