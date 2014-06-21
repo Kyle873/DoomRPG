@@ -18,7 +18,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Friday, June 20, 2014 at 9:40:31 PM";
+	"Saturday, June 21, 2014 at 1:15:25 PM";
 };
 
 // Init Script
@@ -291,35 +291,24 @@ script Speed()
 	goto Start;
 };
 
-// Stat Token Randomizer Script
+// Stat Randomizer Script
 script StatRandomizer()
 {
 	Start:
-	int StatTokens = CheckInventory("StatToken");
-	
+    
+    if (GetCVar("drpg_auto_spend"))
+        while (CheckInventory("StatToken") > 0)
+        {
+            if (Random(1, 2) == 1 && GetCVar("drpg_auto_spend_pref") > 0) // Select Preferred Stat
+                IncreaseStat(GetCVar("drpg_auto_spend_pref"))
+            else
+                IncreaseStat(Random(1, 8));
+            
+            // Should prevent runaway issues if you have a ton of Stat Tokens
+            Delay(1);
+        };
+    
 	Delay(1);
-
-	// Only randomize your starting tokens
-	if (GetCVar("drpg_randomstatgrowth") == 1 && !RandomizedStartTokens)
-	{
-		if (StatTokens > 0)
-			IncreaseStat(Random(1, 8))
-		else if (StatTokens == 0)
-			RandomizedStartTokens = true;;
-	}
-	// Always spend Tokens, no matter how you got them
-	else if (GetCVar("drpg_randomstatgrowth") == 2)
-		if (StatTokens > 0)
-			IncreaseStat(Random(1, 8));
-
-	// Spend Tokens only on level up
-	if (GetCVar("drpg_autospend"))
-		while (Player.LevelTokens > 0)
-		{
-			IncreaseStat(Random(1, 8));
-			Delay(1);
-		};
-	
 	goto Start;
 };
 
