@@ -58,26 +58,40 @@ script MonsterStats(int Flags)
 	// Now calculate the average level between them
 	PlayerAvgLevel /= NumPlayers;
 	
-	// Monster Level System
+	// Monster Stats System
 	if (GetCVar("drpg_monster_levels") > 0 && (!(Flags & MF_NOSTATS)))
 	{
 		// level
 		int LevelType = GetCVar("drpg_monster_levels");
-		fixed LevelMult = GetCVarFixed("drpg_monster_level_mult");
-		int MonsterCurve = GetCVar("drpg_monster_curve");
+		fixed LevelWeight = GetCVarFixed("drpg_monster_level_weight");
+		fixed MapWeight = GetCVarFixed("drpg_monster_map_weight");
+        fixed RandomMinWeight = GetCVarFixed("drpg_monster_random_min_mult");
+        fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
 		int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
-		if (LevelNum == 999) // UAC Outpost
-			if (ArenaActive) // If the Arena is active, base the Monster Level's Map Number portion on the current wave
-				LevelNum = ArenaWave
-			else // If not in the Arena, base it off the level the average Player level
-				LevelNum = PlayerAvgLevel;
-		if (LevelType == 1 || LevelType == 3) // Player Level
-			MonsterLevel = Round((fixed)PlayerAvgLevel + RandomFixed(0.0, (fixed)GameSkill() * 2.0) + RandomFixed(0.0, (fixed)MonsterCurve) * LevelMult);
+        
+        // Calculate Monster Level
+        if (LevelType == 1 || LevelType == 3) // Player Level
+			MonsterLevel += (int)((fixed)PlayerAvgLevel * LevelWeight);
 		if (LevelType == 2 || LevelType == 3) // Map Number
-			MonsterLevel += Round(((fixed)LevelNum + (fixed)Random(0, MonsterCurve)) * (fixed)LevelMult);
-		if (GetActorProperty(0, APROP_Friendly)) // If the monster is friendly, it has the average level of all players in the game
+            MonsterLevel += (int)((fixed)LevelNum * MapWeight);
+		
+        // Randomization Weight
+        if (RandomMinWeight > RandomMaxWeight)
+            Log("\cgERROR: \c-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!\n")
+        else
+            MonsterLevel *= (int)RandomFixed(RandomMinWeight, RandomMaxWeight);
+        
+        // If the Arena is active, base the Monster Levels Map Number portion on the current wave
+        if (LevelNum == 999 && ArenaActive)
+            MonsterLevel = ArenaWave;
+        
+        // If the monster is friendly, it has the average level of all players in the game
+        if (GetActorProperty(0, APROP_Friendly))
 			MonsterLevel = PlayerAvgLevel;
-		if (MonsterLevel <= 0) MonsterLevel = 1;
+		
+        // Monster level can't be below 1
+        if (MonsterLevel <= 0)
+            MonsterLevel = 1;
 		
 		// Strength
 		MonsterStrength = Random(MonsterLevel, MonsterLevel + (GameSkill() * 5));
@@ -202,7 +216,6 @@ script MonsterLoop()
 script MonsterDeath()
 {
 	int Killer = WhoKilledMe();
-	
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
 	int AuraType = CheckInventory("MonsterAura");
