@@ -60,8 +60,15 @@ script MonsterStats(int Flags, bool Modify)
 	
     int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterAura = CheckInventory("MonsterAura");
+    int MonsterThreat = CheckInventory("MonsterThreat");
 	int MonsterStrength = CheckInventory("MonsterStrength");
 	int MonsterDefense = CheckInventory("MonsterDefense");
+    int MonsterVitality = CheckInventory("MonsterVitality");
+    int MonsterEnergy = CheckInventory("MonsterEnergy");
+    int MonsterRegeneration = CheckInventory("MonsterRegeneration");
+    int MonsterAgility = CheckInventory("MonsterAgility");
+    int MonsterCapacity = CheckInventory("MonsterCapacity");
+    int MonsterLuck = CheckInventory("MonsterLuck");
 	int NumPlayers;
 	int PlayerAvgLevel;
 	int AuraRandomizer;
@@ -111,46 +118,28 @@ script MonsterStats(int Flags, bool Modify)
                 MonsterLevel = PlayerAvgLevel;
 		};
         
-        // Monster level can't be below 1
-        if (MonsterLevel <= 0)
-            MonsterLevel = 1;
-		
-        // Monster level can't go above 10000
-        if (MonsterLevel > 10000)
-            MonsterLevel = 10000;
-        
-		// Strength
-		MonsterStrength = Random(MonsterLevel, MonsterLevel + (GameSkill() * 5));
-		if (MonsterStrength <= 0) MonsterStrength = 1;
-		
-        // Monster Strength can't go above 32000
-        if (MonsterStrength > 32000)
-            MonsterStrength = 32000;
-        
-		// Defense
-		MonsterDefense = Random(MonsterLevel, MonsterLevel + (GameSkill() * 5));
-		if (MonsterDefense <= 0) MonsterDefense = 1;
-        
-        // Monster Defense can't go above 1000
-        if (MonsterDefense > 1000)
-            MonsterDefense = 1000;
+		// Calculate Monster Stats
+		MonsterStrength = Random(MonsterLevel, MonsterLevel + GameSkill());
+		MonsterDefense = Random(MonsterLevel, MonsterLevel + GameSkill());
+        MonsterVitality = Random(MonsterLevel, MonsterLevel + GameSkill());;
+        MonsterEnergy = Random(MonsterLevel, MonsterLevel + GameSkill());
+        MonsterRegeneration = Random(MonsterLevel, MonsterLevel + GameSkill());
+        MonsterAgility = Random(MonsterLevel, MonsterLevel + GameSkill());
+        MonsterCapacity = Random(MonsterLevel, MonsterLevel + GameSkill());
+        MonsterLuck = Random(MonsterLevel, MonsterLevel + GameSkill());
 	};
 	
 	// Apply Aura
 	if (!GetActorProperty(0, APROP_Friendly) && !(Flags & MF_NOAURA) && !Modify)
 	{
 		int AuraCurve = GetCVar("drpg_aura_curve");
-		int AuraMin = -100 + ((GameSkill() * (GameSkill() * 2))) + AuraCurve;
+		int AuraMin = -1000 + MonsterEnergy + ((GameSkill() * (GameSkill() * 2))) + AuraCurve;
 		if (AuraMin > 0) AuraMin = 0;
 		int AuraMax = 10;
 		AuraRandomizer = Random(AuraMin, AuraMax);
 		if (AuraRandomizer > 0)
 			MonsterAura = AuraRandomizer;
 	};
-	
-	// If the monster has an Aura, double it's initial health
-	if (AuraRandomizer > 0 || MonsterAura > 0)
-		SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth) * 2);
 	
 	// Apply the aura effects
 	switch (MonsterAura)
@@ -165,31 +154,83 @@ script MonsterStats(int Flags, bool Modify)
 			MonsterLevel *= 2;
 			break;
 		case 4: // Pink Aura - Vitality
-			SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth) * 4);
+            MonsterVitality *= 2;
 			break;
+        case 5: // Blue Aura - Energy
+            MonsterEnergy *= 2;
+            break;
+        case 6: // Purple Aura - Regeneration
+            MonsterRegeneration *= 2;
+            break;
 		case 7: // Orange Aura - Agility
-			SetActorProperty(0, APROP_Speed, GetActorProperty(0, APROP_Speed) * 2);
+            MonsterAgility *= 2;
 			break;
         case 8: // Dark Blue Aura - Capacity
+            MonsterCapacity *= 2;
             GiveInventory("AggressionBooster", 1);
             break;
+        case 9: // Yellow Aura - Luck
+            MonsterLuck *= 2;
+            break;
 		case 10: // Black Aura - Miniboss
-			MonsterLevel *= Random(2, 3 + GameSkill());
-			MonsterStrength += MonsterLevel *= (Random(2, 3 + GameSkill()));
-			MonsterDefense += MonsterLevel *= (Random(2, 3 + GameSkill()));
-			SetActorProperty(0, APROP_Speed, GetActorProperty(0, APROP_Speed) * 2);
-			SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth) * 8);
+			MonsterLevel *= 2;
+            MonsterStrength *= 2;
+            MonsterDefense *= 2;
+            MonsterVitality *= 2;
+            MonsterEnergy *= 2;
+            MonsterRegeneration *= 2;
+            MonsterAgility *= 2;
+            MonsterCapacity *= 2;
+            MonsterLuck *= 2;
             GiveInventory("AggressionBooster", 1);
 			break;
 	};
 	
-	// Apply the stats to the monster
+    // Cap Level and Stats
+    if (MonsterLevel <= 0)
+        MonsterLevel = 1;
+    if (MonsterLevel > 1000)
+        MonsterLevel = 1000;
+    if (MonsterThreat > 10)
+        MonsterThreat = 10;
+    if (MonsterStrength > 1000)
+        MonsterStrength = 1000;
+    if (MonsterDefense > 1000)
+        MonsterDefense = 1000;
+    if (MonsterVitality > 1000)
+        MonsterVitality = 1000;
+    if (MonsterEnergy > 1000)
+        MonsterEnergy = 1000;
+    if (MonsterRegeneration > 1000)
+        MonsterRegeneration = 1000;
+    if (MonsterAgility > 1000)
+        MonsterAgility = 1000;
+    if (MonsterCapacity > 1000)
+        MonsterCapacity = 1000;
+    if (MonsterLuck > 1000)
+        MonsterLuck = 1000;
+	
+    // Apply the stats to the monster
     SetInventory("MonsterLevel", MonsterLevel);
     SetInventory("MonsterAura", MonsterAura);
     SetInventory("MonsterStrength", MonsterStrength);
     SetInventory("MonsterDefense", MonsterDefense);
+    SetInventory("MonsterVitality", MonsterVitality);
+    SetInventory("MonsterEnergy", MonsterEnergy);
+    SetInventory("MonsterRegeneration", MonsterRegeneration);
+    SetInventory("MonsterAgility", MonsterAgility);
+    SetInventory("MonsterCapacity", MonsterCapacity);
+    SetInventory("MonsterLuck", MonsterLuck);
+    
+    // Apply Defense
     SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (MonsterDefense / 100)));
     if (GetActorPropertyFixed(0, APROP_DamageFactor) < 0.1) SetActorPropertyFixed(0, APROP_DamageFactor, 0.1);
+    
+    // Apply Health
+    SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth) * (1.0 + ((fixed)MonsterVitality / 125.0)));
+    
+    // Apply Speed
+    SetActorProperty(0, APROP_Speed, GetActorProperty(0, APROP_Speed) * (int)(1.0 + ((fixed)MonsterAgility / 400.0)));
 };
 
 // Monster Loop
