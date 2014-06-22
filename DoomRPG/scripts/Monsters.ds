@@ -134,7 +134,7 @@ script MonsterStats(int Flags, bool Modify)
 	if (!GetActorProperty(0, APROP_Friendly) && !(Flags & MF_NOAURA) && !Modify)
 	{
 		int AuraCurve = GetCVar("drpg_aura_curve");
-		int AuraMin = -100 + (MonsterEnergy / 10) + ((GameSkill() * (GameSkill() * 2))) + AuraCurve;
+		int AuraMin = -1000 + MonsterEnergy + AuraCurve;
 		if (AuraMin > 0) AuraMin = 0;
 		AuraRandomizer = Random(AuraMin, 10);
 		if (AuraRandomizer > 0)
@@ -195,11 +195,12 @@ script MonsterStats(int Flags, bool Modify)
     ThreatPool += MonsterAgility;
     ThreatPool += MonsterCapacity;
     ThreatPool += MonsterLuck;
+    ThreatPool /= 1000;
     if (MonsterAura > 0 && MonsterAura < 9) // Normal Auras
         ThreatPool++
     else if (MonsterAura == 10) // Black Aura
         ThreatPool += 2;
-    MonsterThreat = ThreatPool / 1000;
+    MonsterThreat = ThreatPool;
     
     // Cap Level and Stats
     if (MonsterLevel <= 0)
@@ -238,10 +239,6 @@ script MonsterStats(int Flags, bool Modify)
     SetInventory("MonsterCapacity", MonsterCapacity);
     SetInventory("MonsterLuck", MonsterLuck);
     
-    // Apply Defense
-    SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (MonsterDefense / 100)));
-    if (GetActorPropertyFixed(0, APROP_DamageFactor) < 0.1) SetActorPropertyFixed(0, APROP_DamageFactor, 0.1);
-    
     // Apply Health
     SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth) * (1.0 + ((fixed)MonsterVitality / 125.0)));
     
@@ -257,6 +254,8 @@ script MonsterLoop()
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
 	int MonsterStrength = CheckInventory("MonsterStrength");
+    int MonsterDefense = CheckInventory("MonsterDefense");
+    int MonsterEnergy = CheckInventory("MonsterEnergy");
     int MonsterRegeneration = CheckInventory("MonsterRegeneration");
 	int AuraType = CheckInventory("MonsterAura");
 	
@@ -285,14 +284,26 @@ script MonsterLoop()
             SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth));
     };
     
+    // Blue Aura Level Increase
+    if (AuraType == 5 && (Timer() % (35 * (60 - (MonsterEnergy / 20)))) == 0)
+    {
+        SetInventory("MonsterLevel", MonsterLevel + 1);
+        MonsterStats(CheckInventory("MonsterFlags"), true);
+        SpawnForced("LevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
+    };
+    
 	// Spawn Aura
 	if (AuraType)
 		SpawnAura(0, AuraType, false);
 	
 	// Strength
-    SetInventory(StrParam("Strength%d\n", MonsterStrength), 1);
+    SetInventory(StrParam("Strength%d\n", MonsterStrength * GameSkill()), 1);
 	
-	Delay(1);
+    // Apply Defense
+    SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (MonsterDefense / 100)));
+    if (GetActorPropertyFixed(0, APROP_DamageFactor) < 0.1) SetActorPropertyFixed(0, APROP_DamageFactor, 0.1);
+	
+    Delay(1);
 	goto Start;
 };
 
@@ -301,130 +312,143 @@ script MonsterDeath()
 	int Killer = WhoKilledMe();
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
+    int MonsterCapacity = CheckInventory("MonsterCapacity");
     int MonsterLuck = CheckInventory("MonsterLuck");
 	int AuraType = CheckInventory("MonsterAura");
 	fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2, GetActorProperty(0, APROP_SpawnHealth));
-	int SkillDropMod = ((GameSkill() - 1) * 32) + (MonsterLuck * 0.128);
+	int DropMod = MonsterLuck * 0.256;
+    int DropAmount = 1 + (MonsterCapacity / 100);
 	int DropTID = (Players(Killer).Stim.PowerupTimer[STIM_MAGNETIC] > 0 ? Players(Killer).TID : 0);
-	int LuckDrops = 1;
-	
+    
     // Don't scale drops to skill level
-    if (!GetCVar("drpg_scale_drops"))
-        SkillDropMod = 0;
+    if (GetCVar("drpg_scale_drops"))
+        DropAmount /= GameSkill();
+    
+    // Always drop at least one item
+    if (DropAmount < 1)
+        DropAmount = 1;
+    
+    // Prevent Drop Mod from overflowing
+    if (DropMod > 256)
+        DropMod = 256;
+    
+    // Double XP
+    if (AuraType == 3 || AuraType == 10)
+        XPAmount *= 2;
+    
+    // Double Drop Amount
+    if (AuraType == 9 || AuraType == 10)
+        DropAmount *= 2;
     
 	// Drops
 	if (!(MonsterFlags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly))
 	{
 		// Aura Drops
-		switch (AuraType)
-		{
-			case 1: // Red Aura - Strength
-				DropItem(DropTID, "WeaponDropper", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "VialStrength", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-			case 2: // Green Aura - Defense
-				DropItem(DropTID, "UsedArmorDropper", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "VialDefense", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-			case 3: // White Aura - XP
-				XPAmount *= 2;
-				DropItem(DropTID, "SmallTokenDropper", 1, 96 - SkillDropMod);
-				DropItem(DropTID, "VialPotency", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-			case 4: // Pink Aura - Vitality
-				DropItem(DropTID, "HealthDropper", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "VialVitality", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-			case 5: // Blue Aura - Energy
-				DropItem(DropTID, "EPCapsule", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "BigEPCapsule", 1, 64 - SkillDropMod);
-				DropItem(DropTID, "VialEnergy", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-			case 6: // Purple Aura - Regeneration
-				DropItem(DropTID, "RegenSphere", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "VialRegeneration", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-			case 7: // Orange Aura - Agility
-				DropItem(DropTID, "TimeSphere", 1, 64 - (SkillDropMod / 2));
-				DropItem(DropTID, "VialAgility", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-			case 8: // Dark Blue Aura - Capacity
-				DropItem(DropTID, "AmmoDropper", 1, 128 - SkillDropMod);
-                if (GetCVar("drpg_ext_doomrl"))
-                    DropItem(DropTID, "RLModpackSpawner", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "VialCapacity", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-			case 9: // Yellow Aura - Luck
-				LuckDrops = 4;
-				DropItem(DropTID, "VialLuck", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-			case 10: // Black Aura - Miniboss
-				XPAmount *= 4;
-				LuckDrops = 4;
-				DropItem(DropTID, "WeaponDropper", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "UsedArmorDropper", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "SmallTokenDropper", 1, 96 - SkillDropMod);
-				DropItem(DropTID, "TimeSphere", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "HealthDropper", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "EPCapsule", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "BigEPCapsule", 1, 64 - SkillDropMod);
-				DropItem(DropTID, "RegenSphere", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "AmmoDropper", 1, 128 - SkillDropMod);
-                if (GetCVar("drpg_ext_doomrl"))
-                    DropItem(DropTID, "RLModpackSpawner", 1, 128 - SkillDropMod);
-				DropItem(DropTID, "VialStrength", 1, 192 - SkillDropMod);
-				DropItem(DropTID, "VialDefense", 1, 192 - SkillDropMod);
-				DropItem(DropTID, "VialAgility", 1, 192 - SkillDropMod);
-				DropItem(DropTID, "VialVitality", 1, 192 - SkillDropMod);
-				DropItem(DropTID, "VialEnergy", 1, 192 - SkillDropMod);
-				DropItem(DropTID, "VialRegeneration", 1, 192 - SkillDropMod);
-				DropItem(DropTID, "VialCapacity", 1, 192 - SkillDropMod);
-				DropItem(DropTID, "VialLuck", 1, 192 - SkillDropMod);
-				DropItem(DropTID, "VialPurifier", 1, 255 - SkillDropMod);
-				DropItem(DropTID, "VialPotency", 1, 192 - SkillDropMod);
-				DropItem(DropTID, "VialDropperRare", 1, 32);
-				break;
-		};
+        for (int i = 1; i <= DropAmount; i++)
+        {
+            switch (AuraType)
+            {
+                case 1: // Red Aura - Strength
+                    DropItem(DropTID, "WeaponDropper", 1, 128 + DropMod);
+                    DropItem(DropTID, "VialStrength", 1, 255);
+                    DropItem(DropTID, "VialDropperRare", 1, 32);
+                    break;
+                case 2: // Green Aura - Defense
+                    DropItem(DropTID, "UsedArmorDropper", 1, 128 + DropMod);
+                    DropItem(DropTID, "VialDefense", 1, 255);
+                    DropItem(DropTID, "VialDropperRare", 1, 32);
+                    break;
+                case 3: // White Aura - XP
+                    DropItem(DropTID, "SmallTokenDropper", 1, 96 + DropMod);
+                    DropItem(DropTID, "VialPotency", 1, 255);
+                    DropItem(DropTID, "VialDropperRare", 1, 32);
+                    break;
+                case 4: // Pink Aura - Vitality
+                    DropItem(DropTID, "HealthDropper", 1, 128 + DropMod);
+                    DropItem(DropTID, "VialVitality", 1, 255);
+                    DropItem(DropTID, "VialDropperRare", 1, 32);
+                    break;
+                case 5: // Blue Aura - Energy
+                    DropItem(DropTID, "EPCapsule", 1, 128 + DropMod);
+                    DropItem(DropTID, "BigEPCapsule", 1, 64 + DropMod);
+                    DropItem(DropTID, "VialEnergy", 1, 255);
+                    DropItem(DropTID, "VialDropperRare", 1, 32);
+                    break;
+                case 6: // Purple Aura - Regeneration
+                    DropItem(DropTID, "RegenSphere", 1, 128 + DropMod);
+                    DropItem(DropTID, "VialRegeneration", 1, 255);
+                    DropItem(DropTID, "VialDropperRare", 1, 32);
+                    break;
+                case 7: // Orange Aura - Agility
+                    DropItem(DropTID, "TimeSphere", 1, 64 + (DropMod / 2));
+                    DropItem(DropTID, "VialAgility", 1, 255);
+                    DropItem(DropTID, "VialDropperRare", 1, 32);
+                    break;
+                case 8: // Dark Blue Aura - Capacity
+                    DropItem(DropTID, "AmmoDropper", 1, 128 + DropMod);
+                    if (GetCVar("drpg_ext_doomrl"))
+                        DropItem(DropTID, "RLModpackSpawner", 1, 128 + DropMod);
+                    DropItem(DropTID, "VialCapacity", 1, 255);
+                    DropItem(DropTID, "VialDropperRare", 1, 32);
+                    break;
+                case 9: // Yellow Aura - Luck
+                    DropItem(DropTID, "VialLuck", 1, 255);
+                    DropItem(DropTID, "VialDropperRare", 1, 32);
+                    break;
+                case 10: // Black Aura - Miniboss
+                    DropItem(DropTID, "WeaponDropper", 1, 128 + DropMod);
+                    DropItem(DropTID, "UsedArmorDropper", 1, 128 + DropMod);
+                    DropItem(DropTID, "SmallTokenDropper", 1, 96 + DropMod);
+                    DropItem(DropTID, "HealthDropper", 1, 128 + DropMod);
+                    DropItem(DropTID, "EPCapsule", 1, 128 + DropMod);
+                    DropItem(DropTID, "BigEPCapsule", 1, 64 + DropMod);
+                    DropItem(DropTID, "RegenSphere", 1, 128 + DropMod);
+                    DropItem(DropTID, "TimeSphere", 1, 64 + (DropMod / 2));
+                    DropItem(DropTID, "AmmoDropper", 1, 128 + DropMod);
+                    if (GetCVar("drpg_ext_doomrl"))
+                        DropItem(DropTID, "RLModpackSpawner", 1, 128 + DropMod);
+                    DropItem(DropTID, "VialStrength", 1, 192 + DropMod);
+                    DropItem(DropTID, "VialDefense", 1, 192 + DropMod);
+                    DropItem(DropTID, "VialAgility", 1, 192 + DropMod);
+                    DropItem(DropTID, "VialVitality", 1, 192 + DropMod);
+                    DropItem(DropTID, "VialEnergy", 1, 192 + DropMod);
+                    DropItem(DropTID, "VialRegeneration", 1, 192 + DropMod);
+                    DropItem(DropTID, "VialCapacity", 1, 192 + DropMod);
+                    DropItem(DropTID, "VialLuck", 1, 192 + DropMod);
+                    DropItem(DropTID, "VialPurifier", 1, 255);
+                    DropItem(DropTID, "VialPotency", 1, 192 + DropMod);
+                    DropItem(DropTID, "VialDropperRare", 1, 255);
+                    break;
+            };
 		
-		// Luck-based Drops
-		if (Killer > -1)
-		{
-			for (int i = 0; i < LuckDrops; i++)
-			{
-				if (RandomFixed(0.0, 100.0) < Players(Killer).CreditChance)	DropItem(DropTID, "MoneyDropper", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).HealthChance)	DropItem(DropTID, "HealthDropper", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).EPChance)		DropItem(DropTID, "EPCapsule", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).ArmorChance)	DropItem(DropTID, "ArmorDropper", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).PowerupChance)DropItem(DropTID, "PowerupDropper", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance)	DropItem(DropTID, "WeaponDropper", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).TokenChance)	DropItem(DropTID, "SmallTokenDropper", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).AugChance)	DropItem(DropTID, "AugDropper", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).ShieldChance)	DropItem(DropTID, "ShieldDropper", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)	DropItem(DropTID, "StimDropper", 1, 255);
-				if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)	DropItem(DropTID, "VialDropper", 1, 255);
-			};
-		};
+            // Luck-based Drops
+            if (Killer > -1)
+            {
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).CreditChance)	DropItem(DropTID, "MoneyDropper", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).HealthChance)	DropItem(DropTID, "HealthDropper", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).EPChance)		DropItem(DropTID, "EPCapsule", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).ArmorChance)	DropItem(DropTID, "ArmorDropper", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).PowerupChance)DropItem(DropTID, "PowerupDropper", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance)	DropItem(DropTID, "WeaponDropper", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance)	DropItem(DropTID, "RLModpackSpawner", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).TokenChance)	DropItem(DropTID, "SmallTokenDropper", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).AugChance)	DropItem(DropTID, "AugDropper", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).ShieldChance)	DropItem(DropTID, "ShieldDropper", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)	DropItem(DropTID, "StimDropper", 1, 255);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)	DropItem(DropTID, "VialDropper", 1, 255);
+            };
 		
-		// Boss Drops
-		if (MonsterFlags & MF_BOSS)
-		{
-			DropItem(DropTID, "Credits1000", 1, 255);
-			DropItem(DropTID, "SoulsphereRandomizer", 1, 255);
-			DropItem(DropTID, "Continue", 1, 128 - SkillDropMod);
-			DropItem(DropTID, "TokenDropper", 1, 255 - SkillDropMod);
-			DropItem(DropTID, "WeaponDropper", 1, 255 - SkillDropMod);
-			DropItem(DropTID, "AugDropper", 1, 160 - SkillDropMod);
-			DropItem(DropTID, "ShieldDropper", 1, 160 - SkillDropMod);
-		};
+            // Boss Drops
+            if ((i % 5) == 0 && MonsterFlags & MF_BOSS)
+            {
+                DropItem(DropTID, "Credits1000", 1, 255);
+                DropItem(DropTID, "SoulsphereRandomizer", 1, 255);
+                DropItem(DropTID, "Continue", 1, 128 - DropMod);
+                DropItem(DropTID, "TokenDropper", 1, 255 - DropMod);
+                DropItem(DropTID, "AugDropper", 1, 160 - DropMod);
+                DropItem(DropTID, "ShieldDropper", 1, 160 - DropMod);
+            };
+        };
 	};
 	
 	// Add XP
