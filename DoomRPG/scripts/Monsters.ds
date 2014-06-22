@@ -98,6 +98,10 @@ script MonsterStats(int Flags, bool Modify)
             fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
             int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
             
+            // If the Arena is active, base the Monster Levels Map Number portion on the current wave
+            if (LevelNum == 999 && ArenaActive)
+                LevelNum = PlayerAvgLevel;
+            
             // Calculate Monster Level
             if (LevelType == 1 || LevelType == 3) // Player Level
                 MonsterLevel += (int)((fixed)PlayerAvgLevel * LevelWeight);
@@ -108,11 +112,7 @@ script MonsterStats(int Flags, bool Modify)
             if (RandomMinWeight > RandomMaxWeight)
                 Log("\cgERROR: \c-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!\n")
             else
-                MonsterLevel *= (int)RandomFixed(RandomMinWeight, RandomMaxWeight);
-            
-            // If the Arena is active, base the Monster Levels Map Number portion on the current wave
-            if (LevelNum == 999 && ArenaActive)
-                MonsterLevel = ArenaWave;
+                MonsterLevel = (int)(MonsterLevel * RandomFixed(RandomMinWeight, RandomMaxWeight));
             
             // If the monster is friendly, it has the average level of all players in the game
             if (GetActorProperty(0, APROP_Friendly))
@@ -317,7 +317,7 @@ script MonsterDeath()
 	int AuraType = CheckInventory("MonsterAura");
 	fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2, GetActorProperty(0, APROP_SpawnHealth));
 	int DropMod = MonsterLuck * 0.256;
-    int DropAmount = 1 + (MonsterCapacity / 100);
+    int DropAmount = (int)(1.0 + ((fixed)MonsterCapacity / 100.0));
 	int DropTID = (Players(Killer).Stim.PowerupTimer[STIM_MAGNETIC] > 0 ? Players(Killer).TID : 0);
     
     // Don't scale drops to skill level
