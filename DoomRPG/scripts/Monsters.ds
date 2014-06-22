@@ -181,8 +181,8 @@ script MonsterStats(int Flags, bool Modify)
             MonsterRegeneration *= 2;
             MonsterAgility *= 2;
             MonsterCapacity *= 2;
-            MonsterLuck *= 2;
             GiveInventory("AggressionBooster", 1);
+            MonsterLuck *= 2;
 			break;
 	};
 	
@@ -239,11 +239,11 @@ script MonsterStats(int Flags, bool Modify)
     SetInventory("MonsterCapacity", MonsterCapacity);
     SetInventory("MonsterLuck", MonsterLuck);
     
-    // Apply Health
+    // Health
     SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth) * (1.0 + ((fixed)MonsterVitality / 125.0)));
     
-    // Apply Speed
-    SetActorProperty(0, APROP_Speed, GetActorProperty(0, APROP_Speed) * (int)(1.0 + ((fixed)MonsterAgility / 800.0)));
+    // Speed
+    SetActorPropertyFixed(0, APROP_Speed, GetActorPropertyFixed(0, APROP_Speed) * (1.0 + ((fixed)MonsterAgility / 800.0)));
 };
 
 // Monster Loop
@@ -257,6 +257,7 @@ script MonsterLoop()
     int MonsterDefense = CheckInventory("MonsterDefense");
     int MonsterEnergy = CheckInventory("MonsterEnergy");
     int MonsterRegeneration = CheckInventory("MonsterRegeneration");
+    int MonsterAgility = CheckInventory("MonsterAgility");
 	int AuraType = CheckInventory("MonsterAura");
 	
 	// Death
@@ -299,10 +300,9 @@ script MonsterLoop()
 	// Strength
     SetInventory(StrParam("Strength%d\n", MonsterStrength * GameSkill()), 1);
 	
-    // Apply Defense
+    // Defense
     SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (MonsterDefense / 100)));
-    if (GetActorPropertyFixed(0, APROP_DamageFactor) < 0.1) SetActorPropertyFixed(0, APROP_DamageFactor, 0.1);
-	
+    
     Delay(1);
 	goto Start;
 };
