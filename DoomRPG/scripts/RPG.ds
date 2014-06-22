@@ -19,7 +19,7 @@
 str[2] Version =
 {
 	"v0.98 Beta - Multiplayer Insanity Edition";
-	"Saturday, June 21, 2014 at 8:54:02 PM";
+	"Saturday, June 21, 2014 at 9:48:16 PM";
 };
 
 // Init Script
@@ -33,17 +33,26 @@ script Init() enter
 		
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: Player TID: %d\n", Player.TID);
-
-		// Setup initial vars
-		Player.EP = 100;
-		Player.RankString = Ranks[0];
-		Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
-		Player.Vitality = 10;
-		Player.Energy = 10;
-		Player.Capacity = 10;
-		Player.Shield.Timer = 175;
-        Player.Augs.Battery = 100;
 		
+        // Setup Stats and Special Starts
+        if (GetCVar("drpg_special_start") == 0) // None
+        {
+            Player.Vitality = 10;
+            Player.Energy = 10;
+            Player.Capacity = 10;
+            Player.EP = 100;
+        };
+        if (GetCVar("drpg_special_start") == 1) // Luck Based
+        {
+            Player.Defense = -100;
+            Player.Vitality = 1;
+            Player.Regeneration = -100;
+            Player.Capacity = 5;
+            Player.Luck = 100;
+            
+            SetActorProperty(0, APROP_Health, 10);
+        };
+        
 		// Height Check
 		SetInventory("HeightCheck", (int)GetActorPropertyFixed(0, APROP_Height));
 		
@@ -65,6 +74,9 @@ script Init() enter
 		
         // Set default selected skill to nothing
         Player.SkillSelected = -1;
+        
+        // Fill Augmentation Battery
+        Player.Augs.Battery = 100;
         
 		// Done first run
 		Player.FirstRun = true;
@@ -112,10 +124,6 @@ script Init() enter
 	
 	// Initial build of ItemData
 	BuildItemData();
-	
-	// Reset the menus if they were open in the last level
-	Player.InMenu = false;
-	Player.InShop = false;
 };
 
 // Loop Script
@@ -585,8 +593,9 @@ function void CheckHUD()
 	EPMax[PlayerNum] = Player.EPMax;
 	
 	// For EP Bar on HUD
-	SetInventory("EP", Player.EP * 100 / Player.EPMax);
-
+    if (Player.EP > 0)
+        SetInventory("EP", Player.EP * 100 / Player.EPMax);
+    
 	// Combo System
 	Combo[PlayerNum] = Player.Combo;
 	BonusGained[PlayerNum] = Player.BonusGained;
