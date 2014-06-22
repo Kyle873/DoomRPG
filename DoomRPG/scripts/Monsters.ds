@@ -134,10 +134,9 @@ script MonsterStats(int Flags, bool Modify)
 	if (!GetActorProperty(0, APROP_Friendly) && !(Flags & MF_NOAURA) && !Modify)
 	{
 		int AuraCurve = GetCVar("drpg_aura_curve");
-		int AuraMin = -1000 + MonsterEnergy + ((GameSkill() * (GameSkill() * 2))) + AuraCurve;
+		int AuraMin = -100 + (MonsterEnergy / 10) + ((GameSkill() * (GameSkill() * 2))) + AuraCurve;
 		if (AuraMin > 0) AuraMin = 0;
-		int AuraMax = 10;
-		AuraRandomizer = Random(AuraMin, AuraMax);
+		AuraRandomizer = Random(AuraMin, 10);
 		if (AuraRandomizer > 0)
 			MonsterAura = AuraRandomizer;
 	};
@@ -302,9 +301,10 @@ script MonsterDeath()
 	int Killer = WhoKilledMe();
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
+    int MonsterLuck = CheckInventory("MonsterLuck");
 	int AuraType = CheckInventory("MonsterAura");
 	fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2, GetActorProperty(0, APROP_SpawnHealth));
-	int SkillDropMod = (GameSkill() - 1) * 32;
+	int SkillDropMod = ((GameSkill() - 1) * 32) + (MonsterLuck * 0.128);
 	int DropTID = (Players(Killer).Stim.PowerupTimer[STIM_MAGNETIC] > 0 ? Players(Killer).TID : 0);
 	int LuckDrops = 1;
 	
