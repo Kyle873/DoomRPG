@@ -72,6 +72,7 @@ script MonsterStats(int Flags, bool Modify)
 	int NumPlayers;
 	int PlayerAvgLevel;
 	int AuraRandomizer;
+    int ThreatPool;
     
 	// Add up the levels of all the players in the game
 	for (int i = 0; i < MAX_PLAYERS; i++)
@@ -186,6 +187,21 @@ script MonsterStats(int Flags, bool Modify)
 			break;
 	};
 	
+    // Calculate Monster Threat Level
+    ThreatPool += MonsterStrength;
+    ThreatPool += MonsterDefense;
+    ThreatPool += MonsterVitality;
+    ThreatPool += MonsterEnergy;
+    ThreatPool += MonsterRegeneration;
+    ThreatPool += MonsterAgility;
+    ThreatPool += MonsterCapacity;
+    ThreatPool += MonsterLuck;
+    if (MonsterAura > 0 && MonsterAura < 9) // Normal Auras
+        ThreatPool++
+    else if (MonsterAura == 10) // Black Aura
+        ThreatPool += 2;
+    MonsterThreat = ThreatPool / 1000;
+    
     // Cap Level and Stats
     if (MonsterLevel <= 0)
         MonsterLevel = 1;
@@ -213,6 +229,7 @@ script MonsterStats(int Flags, bool Modify)
     // Apply the stats to the monster
     SetInventory("MonsterLevel", MonsterLevel);
     SetInventory("MonsterAura", MonsterAura);
+    SetInventory("MonsterThreat", MonsterThreat);
     SetInventory("MonsterStrength", MonsterStrength);
     SetInventory("MonsterDefense", MonsterDefense);
     SetInventory("MonsterVitality", MonsterVitality);
