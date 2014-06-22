@@ -237,17 +237,12 @@ script MonsterStats(int Flags, bool Modify)
 script MonsterLoop()
 {
 	Start:
-	fixed X = GetActorX(0);
-	fixed Y = GetActorY(0);
-	fixed Z = GetActorZ(0);
+	
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
 	int MonsterStrength = CheckInventory("MonsterStrength");
+    int MonsterRegeneration = CheckInventory("MonsterRegeneration");
 	int AuraType = CheckInventory("MonsterAura");
-	fixed Radius = GetActorPropertyFixed(0, APROP_Radius);
-	fixed Height = GetActorPropertyFixed(0, APROP_Height);
-	int Angle = GetActorAngle(0) * 256;
-	int RegenAmount;
 	
 	// Death
 	if (GetActorProperty(0, APROP_Health) <= 0)
@@ -260,33 +255,26 @@ script MonsterLoop()
 	if (GetActorProperty(0, APROP_Friendly))
 		SpawnAura(0, 0, false);
 	
-	// Aura Loop Effects
-	switch (AuraType)
-	{
-		case 6: // Purple Aura - Regeneration
-			RegenAmount = 0.01 * GetActorProperty(0, APROP_SpawnHealth);
-			if (RegenAmount == 0) RegenAmount = 1;
-			if (GetActorProperty(0, APROP_Health) < GetActorProperty(0, APROP_SpawnHealth) && (Timer() % 35) == 1 && !CheckInventory("PowerTimeFreezer"))
-				HealThing(RegenAmount);
-			break;
-		case 10: // Black Aura - Miniboss
-			RegenAmount = 0.01 * GetActorProperty(0, APROP_SpawnHealth);
-            SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy);
-			if (RegenAmount == 0) RegenAmount = 1;
-			if (GetActorProperty(0, APROP_Health) < GetActorProperty(0, APROP_SpawnHealth) && (Timer() % 35) == 1 && !CheckInventory("PowerTimeFreezer"))
-				HealThing(RegenAmount);
-			break;
-	};
+	// Black Aura Effects
+	if (AuraType == 10)
+        SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy);
+    
+    // Regeneration
+    if (GetActorProperty(0, APROP_Health) < GetActorProperty(0, APROP_SpawnHealth) && (Timer() % (35 * (10 - GameSkill()))) == 1 && !CheckInventory("PowerTimeFreezer"))
+    {
+        HealThing(GetActorProperty(0, APROP_SpawnHealth) * (MonsterRegeneration / 1000.0));
+        
+        // Prevent going over 100%
+        if (GetActorProperty(0, APROP_Health) > GetActorProperty(0, APROP_SpawnHealth))
+            SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth));
+    };
     
 	// Spawn Aura
 	if (AuraType)
 		SpawnAura(0, AuraType, false);
 	
 	// Strength
-	if (MonsterStrength >= 32000)
-		SetInventory("Strength32000", 1)
-	else if (MonsterStrength > 0)
-		SetInventory(StrParam("Strength%d\n", MonsterStrength), 1);
+    SetInventory(StrParam("Strength%d\n", MonsterStrength), 1);
 	
 	Delay(1);
 	goto Start;
