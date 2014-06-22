@@ -16,7 +16,7 @@ int BulletTimeTimer;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
-	6; 9; 9; 3; 17; 7;
+	7; 9; 9; 3; 17; 7;
 };
 
 function void InitSkills()
@@ -49,7 +49,7 @@ function void InitSkills()
 	Skills[0][Index].Description[2] = "Heals you and your teammates for 75% HP";
 	Skills[0][Index].Description[3] = "Heals you and your teammates for all HP";
 	Index++;
-
+    
 	Skills[0][Index].Name = "Life Leech";
 	Skills[0][Index].MaxLevel = 5;
 	Skills[0][Index].Cost = 100;
@@ -60,7 +60,16 @@ function void InitSkills()
 	Skills[0][Index].Description[4] = "Steal 50% of the target's current HP";
 	Index++;
 
-	Skills[0][Index].Name = "Repair Armor";
+	Skills[0][Index].Name = "Decontamination";
+	Skills[0][Index].MaxLevel = 4;
+	Skills[0][Index].Cost = 100;
+	Skills[0][Index].Description[0] = "Remove 25% of your Toxicity";
+	Skills[0][Index].Description[1] = "Remove 50% of your Toxicity";
+	Skills[0][Index].Description[2] = "Remove 75% of your Toxicity";
+	Skills[0][Index].Description[3] = "Remove all of your Toxicity";
+	Index++;
+	
+    Skills[0][Index].Name = "Repair Armor";
 	Skills[0][Index].MaxLevel = 4;
 	Skills[0][Index].Cost = 100;
 	Skills[0][Index].Description[0] = "Repair 25% Armor";
@@ -699,8 +708,9 @@ acscript UseSkill() net
 					case 1:		Success = Heal(2);											break; // Heal Summons
 					case 2:		Success = Heal(3);											break; // Heal Team
 					case 3:		Success = LifeLeech();										break; // Life Leech
-					case 4:		Success = Repair();											break; // Repair Armor
-					case 5:		Success = PlayerTeleport();									break; // Player Teleport
+                    case 4:     Success = Decontaminate();                                  break; // Decontamination
+					case 5:		Success = Repair();											break; // Repair Armor
+					case 6:		Success = PlayerTeleport();									break; // Player Teleport
 				};
 				break;
 			
@@ -874,8 +884,8 @@ function bool Heal(int Type)
 // Life Leech
 acscript bool LifeLeech()
 {
-	int PlayerNum = PlayerNumber ();
-	int LeechLevel = Skills[0][2].CurrentLevel;
+	int PlayerNum = PlayerNumber();
+	int LeechLevel = Skills[0][3].CurrentLevel;
 	
 	SetActivatorToTarget(Players(PlayerNum).TID);
 	
@@ -909,6 +919,22 @@ acscript bool LifeLeech()
 	FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
 	ActivatorSound("skills/lifeleech", 127);
 	return true;
+};
+
+// Decontamination
+function bool Decontaminate()
+{
+    int DecontaminationLevel = Skills[0][4].CurrentLevel;
+    
+    Player.Toxicity -= (25 * DecontaminationLevel);
+    Player.ToxicTimer = 0;
+    Player.ToxicOffset = 0;
+    Player.ToxicStage = 0;
+    
+    ActivatorSound("skills/decontaminate", 127);
+    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0 + (0.25 * DecontaminationLevel));
+    
+    return true;
 };
 
 // Repair Armor
