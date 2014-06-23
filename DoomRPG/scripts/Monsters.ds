@@ -75,6 +75,7 @@ script MonsterStats(int Flags, bool Modify)
 	int NumPlayers;
 	int PlayerAvgLevel;
 	int AuraRandomizer;
+    int[8] StatEffect;
     int ThreatPool;
     
 	// Add up the levels of all the players in the game
@@ -122,15 +123,69 @@ script MonsterStats(int Flags, bool Modify)
                 MonsterLevel = PlayerAvgLevel;
 		};
         
-		// Calculate Monster Stats
-		MonsterStrength = Random(MonsterLevel, MonsterLevel + GameSkill());
-		MonsterDefense = Random(MonsterLevel, MonsterLevel + GameSkill());
-        MonsterVitality = Random(MonsterLevel, MonsterLevel + GameSkill());;
-        MonsterEnergy = Random(MonsterLevel, MonsterLevel + GameSkill());
-        MonsterRegeneration = Random(MonsterLevel, MonsterLevel + GameSkill());
-        MonsterAgility = Random(MonsterLevel, MonsterLevel + GameSkill());
-        MonsterCapacity = Random(MonsterLevel, MonsterLevel + GameSkill());
-        MonsterLuck = Random(MonsterLevel, MonsterLevel + GameSkill());
+        // Calculate the monster's cut and special stats
+        if (GetCVar("drpg_monster_specialize"))
+        {
+            int DelayCounter = 0;
+            int CutCount = 0;
+            int SpecializedCount = 0;
+            int SelectedStat = 0;
+            while (CutCount < 4 || SpecializedCount < 2)
+            {
+                SelectedStat = Random(0, 8);
+                
+                if (StatEffect[SelectedStat] == 0)
+                {
+                    if (CutCount < 4 && Random(1, 2) == 1) // Cut Stat
+                    {
+                        StatEffect[SelectedStat] = 1;
+                        CutCount++;
+                    }
+                    else if (SpecializedCount < 2) // Specialized Stat
+                    {
+                        StatEffect[SelectedStat] = 2;
+                        SpecializedCount++;
+                    };
+                };
+                
+                DelayCounter++;
+                if ((DelayCounter % 10) == 0)
+                    Delay(1);
+            };
+		};
+        
+        // Calculate Monster Stats
+		MonsterStrength = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+		MonsterDefense = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterVitality = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterEnergy = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterRegeneration = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterAgility = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterCapacity = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterLuck = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        
+        if (GetCVar("drpg_monster_specialize"))
+        {
+            // Cut Stats
+            if (StatEffect[0] == 1) MonsterStrength /= 2;
+            if (StatEffect[1] == 1) MonsterDefense /= 2;
+            if (StatEffect[2] == 1) MonsterVitality /= 2;
+            if (StatEffect[3] == 1) MonsterEnergy /= 2;
+            if (StatEffect[4] == 1) MonsterRegeneration /= 2;
+            if (StatEffect[5] == 1) MonsterAgility /= 2;
+            if (StatEffect[6] == 1) MonsterCapacity /= 2;
+            if (StatEffect[7] == 1) MonsterLuck /= 2;
+            
+            // Specialized Stats
+            if (StatEffect[0] == 2) MonsterStrength *= 2;
+            if (StatEffect[1] == 2) MonsterDefense *= 2;
+            if (StatEffect[2] == 2) MonsterVitality *= 2;
+            if (StatEffect[3] == 2) MonsterEnergy *= 2;
+            if (StatEffect[4] == 2) MonsterRegeneration *= 2;
+            if (StatEffect[5] == 2) MonsterAgility *= 2;
+            if (StatEffect[6] == 2) MonsterCapacity *= 2;
+            if (StatEffect[7] == 2) MonsterLuck *= 2;
+        };
 	};
 	
 	// Apply Aura
