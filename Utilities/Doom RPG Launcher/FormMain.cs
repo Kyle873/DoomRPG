@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 8, 4);
+        Version version = new Version(0, 8, 5);
         Config config = new Config();
         string currentBranch = string.Empty;
 
@@ -184,7 +184,8 @@ namespace DoomRPG
                 checkedListBoxPatches.SetItemChecked(i, config.patches[i]);
             checkBoxMultiplayer.Checked = config.multiplayer;
             for (int i = 0; i < config.mods.Count; i++)
-                checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindStringExact(config.mods[i]), true);
+                if (checkedListBoxMods.FindStringExact(config.mods[i]) != -1)
+                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindStringExact(config.mods[i]), true);
             if (config.multiplayerMode == MultiplayerMode.Hosting)
                 radioButtonHosting.Checked = true;
             if (config.multiplayerMode == MultiplayerMode.Joining)
