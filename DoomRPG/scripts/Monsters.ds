@@ -326,6 +326,7 @@ script MonsterDeath()
     int MonsterLuck = CheckInventory("MonsterLuck");
 	int AuraType = CheckInventory("MonsterAura");
 	fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2, GetActorProperty(0, APROP_SpawnHealth)) * (1.0 + MonsterThreat * 0.3);
+    fixed RankAmount = GetActorProperty(0, APROP_SpawnHealth) * (1.0 + (MonsterThreat - (MonsterThreat > 0 ? 1 : 0)));
 	int DropMod = MonsterLuck * 0.256;
     int DropAmount = (int)(1.0 + ((fixed)MonsterCapacity / 100.0));
 	int DropTID = (Players(Killer).Stim.PowerupTimer[STIM_MAGNETIC] > 0 ? Players(Killer).TID : 0);
@@ -342,9 +343,16 @@ script MonsterDeath()
     if (DropMod > 256)
         DropMod = 256;
     
-    // Double XP
-    if (AuraType == 3 || AuraType == 10)
+    // Aura-Based XP/Rank Modifiers
+    if (AuraType > 0 && AuraType < 10) // All Auras except Black
+        RankAmount *= 2;
+    if (AuraType == 3) // White
         XPAmount *= 2;
+    if (AuraType == 10) // Black
+    {
+        XPAmount *= 2;
+        RankAmount *= 4;
+    };
     
     // Double Drop Amount
     if (AuraType == 9 || AuraType == 10)
@@ -461,7 +469,7 @@ script MonsterDeath()
         };
 	};
 	
-	// Add XP
+	// Add XP/Rank
 	if (!(MonsterFlags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
 	{
 		// XP modifications based on level and skill
@@ -471,13 +479,13 @@ script MonsterDeath()
 		for (int i = 0; i < MAX_PLAYERS; i++)
 		{
 			if (MonsterFlags & MF_NEGATIVEXP)
-				AddXP(i, -(int)XPAmount, false)
+				AddXP(i, -(int)XPAmount, 0, false)
 			else
 			{
 				if (Killer == i)
-					AddXP(i, (int)XPAmount, false)
+					AddXP(i, (int)XPAmount, (int)RankAmount, false)
 				else
-					AddXP(i, (int)XPAmount, true);
+					AddXP(i, (int)XPAmount, (int)RankAmount, true);
 			};
 		};
 	};
