@@ -93,13 +93,19 @@ script DrawSkillHUD() enter
 // Psuedo Damage Numbers on the HUD
 script DamageNumbersHUD()
 {
-	int Before = GetActorProperty(Player.TID, APROP_Health);
-	Delay(1);
+    int Color = CR_WHITE;
+	int Loss;
 	
-	int After = GetActorProperty(Player.TID, APROP_Health);
-	int Loss = Before - After;
-	int Color = CR_WHITE;
-	
+    // Shield or Health?
+    if (Player.Shield.Active)
+        Loss = Player.ShieldLoss
+    else
+        Loss = Player.HealthLoss;
+    
+    // Return if a hit breaks the Shield, we don't want to show the ludicrous loss this would incur
+    if (Loss > 0 && (Player.BeforeShield >= 0 && Player.AfterShield <= 0) && Player.Shield.Active)
+        return;
+    
     // Size
 	if (Loss == 1)
 		SetFont("SMALLFONT")
@@ -116,6 +122,11 @@ script DamageNumbersHUD()
         case DT_PLASMA: case DT_LIGHTNING:  Color = CR_LIGHTBLUE;   break;
     };
     
-	if (Before > After)
-		HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0);
+	if (Loss > 0 && Loss < SHIELD_HEALTH - Player.HealthMax - Loss)
+    {
+        if (Loss > Player.HealthMax / 2)
+            HudMessage("\cgCRITICAL!\n\c-%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 1.0, 1.0)
+        else
+            HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0);
+    };
 };
