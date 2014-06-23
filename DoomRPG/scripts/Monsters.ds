@@ -34,6 +34,9 @@ acscript MonsterInit(int Flags)
 	// Apply Stats
 	if (!(Flags & MF_NOSTATS))
 		MonsterStats(Flags, false);
+        
+    // Save the Render Type
+    SetInventory("MonsterRenderStyle", GetActorProperty(0, APROP_RenderStyle));
 };
 
 // Modify the targeted monster (mainly for debugging)
@@ -253,6 +256,7 @@ script MonsterLoop()
 	
 	int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterFlags = CheckInventory("MonsterFlags");
+    int MonsterRenderStyle = CheckInventory("MonsterRenderStyle");
 	int MonsterStrength = CheckInventory("MonsterStrength");
     int MonsterDefense = CheckInventory("MonsterDefense");
     int MonsterEnergy = CheckInventory("MonsterEnergy");
@@ -273,12 +277,17 @@ script MonsterLoop()
 	
 	// Black Aura Effects
 	if (AuraType == 10)
-        SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy);
+    {
+        if (GetActorLightLevel(0) < 128)
+            SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy)
+        else
+            SetActorProperty(0, APROP_RenderStyle, MonsterRenderStyle);
+    };
     
     // Regeneration
     if (GetActorProperty(0, APROP_Health) < GetActorProperty(0, APROP_SpawnHealth) && (Timer() % (35 * 30)) == 1 && !CheckInventory("PowerTimeFreezer"))
     {
-        HealThing(GetActorProperty(0, APROP_SpawnHealth) * (MonsterRegeneration / 1000.0));
+        HealThing(GetActorProperty(0, APROP_SpawnHealth) * (MonsterRegeneration / 1000));
         
         // Prevent going over 100%
         if (GetActorProperty(0, APROP_Health) > GetActorProperty(0, APROP_SpawnHealth))
