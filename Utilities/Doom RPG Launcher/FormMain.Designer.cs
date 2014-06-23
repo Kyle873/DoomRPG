@@ -86,6 +86,8 @@
             this.toolStripProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.buttonCheckUpdates = new System.Windows.Forms.Button();
             this.timer = new System.Windows.Forms.Timer(this.components);
+            this.comboBoxBranch = new System.Windows.Forms.ComboBox();
+            this.labelBranch = new System.Windows.Forms.Label();
             this.tabControlMain.SuspendLayout();
             this.tabPageBasic.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMapNumber)).BeginInit();
@@ -115,6 +117,8 @@
             // 
             // tabPageBasic
             // 
+            this.tabPageBasic.Controls.Add(this.comboBoxBranch);
+            this.tabPageBasic.Controls.Add(this.labelBranch);
             this.tabPageBasic.Controls.Add(this.buttonCopyCommandClipboard);
             this.tabPageBasic.Controls.Add(this.textBoxDemo);
             this.tabPageBasic.Controls.Add(this.labelRecordDemo);
@@ -149,7 +153,7 @@
             // 
             // buttonCopyCommandClipboard
             // 
-            this.buttonCopyCommandClipboard.Location = new System.Drawing.Point(294, 203);
+            this.buttonCopyCommandClipboard.Location = new System.Drawing.Point(294, 256);
             this.buttonCopyCommandClipboard.Name = "buttonCopyCommandClipboard";
             this.buttonCopyCommandClipboard.Size = new System.Drawing.Size(118, 36);
             this.buttonCopyCommandClipboard.TabIndex = 25;
@@ -692,6 +696,26 @@
             this.timer.Enabled = true;
             this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
+            // comboBoxBranch
+            // 
+            this.comboBoxBranch.Enabled = false;
+            this.comboBoxBranch.FormattingEnabled = true;
+            this.comboBoxBranch.Location = new System.Drawing.Point(294, 216);
+            this.comboBoxBranch.Name = "comboBoxBranch";
+            this.comboBoxBranch.Size = new System.Drawing.Size(118, 21);
+            this.comboBoxBranch.TabIndex = 27;
+            this.comboBoxBranch.Text = "Checking...";
+            this.comboBoxBranch.SelectedIndexChanged += new System.EventHandler(this.comboBoxBranch_SelectedIndexChanged);
+            // 
+            // labelBranch
+            // 
+            this.labelBranch.AutoSize = true;
+            this.labelBranch.Location = new System.Drawing.Point(291, 200);
+            this.labelBranch.Name = "labelBranch";
+            this.labelBranch.Size = new System.Drawing.Size(41, 13);
+            this.labelBranch.TabIndex = 26;
+            this.labelBranch.Text = "Branch";
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -791,6 +815,8 @@
         private System.Windows.Forms.TextBox textBoxDemo;
         private System.Windows.Forms.Label labelRecordDemo;
         private System.Windows.Forms.Button buttonCopyCommandClipboard;
+        private System.Windows.Forms.ComboBox comboBoxBranch;
+        private System.Windows.Forms.Label labelBranch;
     }
 }
 

@@ -18,8 +18,9 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 8, 3);
+        Version version = new Version(0, 8, 4);
         Config config = new Config();
+        string currentBranch = string.Empty;
 
         // Extensions of known mod filetypes
         string[] fileTypes =
@@ -52,7 +53,7 @@ namespace DoomRPG
             richTextBoxCredits_TextChanged(null, null);
         }
 
-        private void PopulateComboBoxes()
+        private async Task PopulateComboBoxes()
         {
             // IWAD
             for (int i = 0; i < Enum.GetNames(typeof(IWAD)).Length; i++)
@@ -78,6 +79,13 @@ namespace DoomRPG
                     if (file.EndsWith(".zds"))
                         comboBoxSaveGame.Items.Add(Path.GetFileName(file));
             }
+
+            // Branches
+            List<string> branches = await GetBranches();
+            foreach (string branch in branches)
+                comboBoxBranch.Items.Add(branch);
+            comboBoxBranch.SelectedIndex = 0;
+            comboBoxBranch.Enabled = true;
         }
 
         private void PopulateMods()
@@ -232,8 +240,20 @@ namespace DoomRPG
         private async Task<string> GetMasterSHA()
         {
             GitHubClient client = new GitHubClient(new ProductHeaderValue("DoomRPG"));
-            Branch master = await client.Repository.GetBranch("Kyle873", "DoomRPG", "master");
+            Branch master = await client.Repository.GetBranch("Kyle873", "DoomRPG", currentBranch);
             return master.Commit.Sha;
+        }
+
+        private async Task<List<String>> GetBranches()
+        {
+            GitHubClient client = new GitHubClient(new ProductHeaderValue("DoomRPG"));
+            List<String> branchNames = new List<string>();
+            IReadOnlyList<Branch> branches = await client.Repository.GetAllBranches("Kyle873", "DoomRPG");
+
+            foreach (Branch branch in branches)
+                    branchNames.Add(branch.Name);
+
+            return branchNames;
         }
 
         private async Task CheckForUpdates()
@@ -324,7 +344,6 @@ namespace DoomRPG
                     await Task.Delay(1000 * 3);
                     toolStripProgressBar.Style = ProgressBarStyle.Continuous;
 
-
                     DownloadDRPG();
                 }
                 catch (Exception e)
@@ -341,7 +360,7 @@ namespace DoomRPG
 
         private void DownloadDRPG()
         {
-            Uri uri = new Uri("https://github.com/Kyle873/DoomRPG/archive/master.zip");
+            Uri uri = new Uri("https://github.com/Kyle873/DoomRPG/archive/" + currentBranch + ".zip");
             string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string zipName = "\\DoomRPG.zip";
 
@@ -382,7 +401,7 @@ namespace DoomRPG
             zip.ExtractZip(zipPath, path, string.Empty);
 
             // Move the files to the root folder
-            Directory.Move(path + "\\DoomRPG-master", config.DRPGPath);
+            Directory.Move(path + "\\DoomRPG-" + currentBranch, config.DRPGPath);
 
             // Add the SHA-1 file
             File.WriteAllText(config.DRPGPath + "\\SHA-1", await GetMasterSHA());
@@ -679,6 +698,11 @@ namespace DoomRPG
             SaveControls();
             config.Save();
             Clipboard.SetText(BuildCommandLine());
+        }
+
+        private void comboBoxBranch_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            currentBranch = comboBoxBranch.Text;
         }
     }
 }
