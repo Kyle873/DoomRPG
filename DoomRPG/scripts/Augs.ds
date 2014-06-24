@@ -114,7 +114,7 @@ function void CheckAugs()
     };
     
     // Battery Handling
-    if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && (Timer() % (35 * 30)) == 0 && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
+    if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && !CheckInventory("PowerTimeFreezer") && !CheckInventory("MenuFreezer"))
     {
         fixed Drain;
         
@@ -133,14 +133,18 @@ function void CheckAugs()
         };
         
         // Decrease Battery
-        Player.Augs.Battery -= (int)Drain;
+        if ((Timer() % (35 * 30)) == 0)
+        {
+            Player.Augs.Battery -= (int)Drain;
+            DrawBattery();
+        };
         
         // Sanity check to prevent battery from going negative
         if (Player.Augs.Battery < 0)
             Player.Augs.Battery = 0;
         
-        // Display new battery amount on the HUD
-        if (Player.Augs.SlotsUsed > 0 || GetCVar("drpg_aug_showbattery"))
+        // Permanently Display battery amount on the HUD if CVAR is set
+        if (Player.Augs.SlotsUsed > 0 && GetCVar("drpg_aug_showbattery"))
             DrawBattery();
     };
     
