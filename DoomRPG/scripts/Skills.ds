@@ -464,6 +464,7 @@ script SkillWheel() enter
     Start:
     
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
     int Selected = -1;
     int LastSelected = -1;
     int Radius = 96;
@@ -484,9 +485,10 @@ script SkillWheel() enter
         
         // Check Input
         Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
         
         // Check for release
-        if (!(Buttons & BT_USER1))
+        if (!(Buttons & BT_USER1) && !(Buttons & BT_SPEED))
         {
             if (Selected != -1)
             {
@@ -563,11 +565,32 @@ script SkillWheel() enter
                // Selected = -1;
         };
         
-        // Clear Skill
-        if (Buttons & BT_SPEED)
+        // Extra Input Handling
+        if (Buttons & BT_SPEED && Selected != -1)
         {
-            Player.SkillCatagory[Selected] = -1;
-            Player.SkillIndex[Selected] = -1;
+            Skill *CurrentSkill = &Skills[Player.SkillCatagory[Selected]][Player.SkillIndex[Selected]];
+            
+            // Decrease selected skill level
+            if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && CurrentSkill->CurrentLevel > 1)
+            {
+                CurrentSkill->CurrentLevel--;
+                AmbientSound("menu/move", 127);
+            };
+            
+            // Increase selected skill level
+            if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT) && CurrentSkill->CurrentLevel < CurrentSkill->Level)
+            {
+                CurrentSkill->CurrentLevel++;
+                AmbientSound("menu/move", 127);
+            };
+            
+            // Clear Skill
+            if (Buttons & BT_USE)
+            {
+                Player.SkillCatagory[Selected] = -1;
+                Player.SkillIndex[Selected] = -1;
+                AmbientSound("menu/move", 127);
+            };
         };
         
         // Set Skill
