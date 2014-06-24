@@ -55,10 +55,10 @@ acscript MonsterSet(int Level, int Aura, int Flags)
 };
 
 // Apply stats to monsters
-script MonsterStats(int Flags, bool Modify)
+script MonsterStats(int Flags, int StatFlags)
 {
     // Move Activator to whoever the player is targeting
-    if (Modify)
+    if (StatFlags & SF_PLAYERTARGET)
         SetActivatorToTarget(Player.TID);
 	
     int MonsterLevel = CheckInventory("MonsterLevel");
@@ -93,7 +93,7 @@ script MonsterStats(int Flags, bool Modify)
 	if (GetCVar("drpg_monster_levels") > 0)
 	{
 		// level
-        if (!Modify)
+        if (!StatFlags)
         {
             int LevelType = GetCVar("drpg_monster_levels");
             fixed LevelWeight = GetCVarFixed("drpg_monster_level_weight");
@@ -193,7 +193,7 @@ script MonsterStats(int Flags, bool Modify)
 	};
 	
 	// Apply Aura
-	if (!GetActorProperty(0, APROP_Friendly) && !(Flags & MF_NOAURA) && !Modify)
+	if (!GetActorProperty(0, APROP_Friendly) && !(Flags & MF_NOAURA) && !StatFlags)
 	{
 		int AuraCurve = GetCVar("drpg_aura_curve");
 		int AuraMin = -1000 + MonsterEnergy + AuraCurve;
@@ -362,7 +362,7 @@ script MonsterLoop()
     if (AuraType == 5 && (Timer() % (35 * (60 - (MonsterEnergy / 20)))) == 0)
     {
         SetInventory("MonsterLevel", MonsterLevel + 1);
-        MonsterStats(CheckInventory("MonsterFlags"), true);
+        MonsterStats(CheckInventory("MonsterFlags"), SF_LEVELUP);
         SpawnForced("LevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
     };
     
