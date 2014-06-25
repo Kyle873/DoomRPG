@@ -753,24 +753,28 @@ acscript void UseSkill() net
 				break;
 			
 			case 2: // Auras
-                int PreviousAura = Player.Aura;
-				switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
-				{
-					case 0:		Player.Aura = 1;											break; // Red Aura
-					case 1:		Player.Aura = 2;											break; // Green Aura
-					case 2:		Player.Aura = 3;											break; // White Aura
-					case 3:		Player.Aura = 4;											break; // Pink Aura
-					case 4:		Player.Aura = 5;											break; // Blue Aura
-					case 5:		Player.Aura = 6;											break; // Purple Aura
-					case 6:		Player.Aura = 7;											break; // Orange Aura
-					case 7:		Player.Aura = 8;											break; // Dark Blue Aura
-					case 8:		Player.Aura = 9;											break; // Yellow Aura
-				};
 				ActivatorSound("skills/buff", 127);
-				if (Player.Aura == PreviousAura)
+				if (Player.Perks[STAT_ENERGY])
 					Player.AuraTimer += (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1)
 				else
-					Player.AuraTimer = (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1);
+                {
+                    for (int i = 0; i < AURA_MAX; i++)
+                        Player.Aura[i] = false;
+					
+                    Player.AuraTimer = (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1);
+                };
+				switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
+				{
+					case 0:		Player.Aura[0] = true;										break; // Red Aura
+					case 1:		Player.Aura[1] = true;										break; // Green Aura
+					case 2:		Player.Aura[2] = true;										break; // White Aura
+					case 3:		Player.Aura[3] = true;										break; // Pink Aura
+					case 4:		Player.Aura[4] = true;										break; // Blue Aura
+					case 5:		Player.Aura[5] = true;										break; // Purple Aura
+					case 6:		Player.Aura[6] = true;										break; // Orange Aura
+					case 7:		Player.Aura[7] = true;										break; // Dark Blue Aura
+					case 8:		Player.Aura[8] = true;								        break; // Yellow Aura
+				};
 				Success = true;
 				break;
 			
@@ -1855,7 +1859,9 @@ acscript void SetProjectileDamage(str Type)
 // Removes a player's Aura
 acscript void RemoveAura()
 {
-    Player.Aura = 0;
+    for (int i = 0; i < AURA_MAX; i++)
+        Player.Aura[i] = false;
+    
     Player.AuraTimer = 0;
 };
 
@@ -1896,7 +1902,12 @@ function void CheckSkills()
 	
 	// Make the Player's Aura appear in their Health Bar
 	if (InMultiplayer)
-		SetInventory("MonsterAura", Player.Aura);
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Player.Aura[i])
+            {
+                SetInventory("MonsterAura", i + 1);
+                break;
+            };
 	
 	// DoomRL Compatibility
 	if (GetCVar("drpg_ext_doomrl"))
@@ -1971,158 +1982,170 @@ function void CheckSkills()
 	// Aura handling
 	if (Player.AuraTimer > 0)
 	{
-		if (!CheckInventory("MenuFreezer")) // lolhax
-			switch (Player.Aura)
-			{
-				// Red Aura
-				case 1:
-					FadeRange(255, 0, 0, 0.05, 255, 0, 0, 0.0, 1.0);
-					if (RedAuraLevel == 1)
-						GiveInventory("RedAura2x", 1);
-					if (RedAuraLevel >= 2)
-						GiveInventory("RedAura4x", 1);
-					if (RedAuraLevel >= 3)
-						GiveInventory("RedAuraInfiniteAmmo", 1);
-					break;
-				// Green Aura
-				case 2:
-					FadeRange(0, 255, 0, 0.05, 0, 255, 0, 0.0, 1.0);
-					if (GreenAuraLevel == 1)
-						Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
-					if (GreenAuraLevel == 2)
-						Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.5;
-					if (GreenAuraLevel == 3)
-					{
-						Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
-						GiveInventory("GreenAuraIronFeet", 1);
-					};
-					break;
-				// White Aura
-				case 3:
-					FadeRange(255, 255, 255, 0.05, 255, 255, 255, 0.0, 1.0);
-					if (WhiteAuraLevel >= 2)
-					{
-						if (Player.Combo == 0) Player.Combo++;
-						Player.ComboTimer = COMBO_MAX - 1;
-					};
-					if (WhiteAuraLevel == 3)
-						if ((Timer() % (35 * 4)) == 1)
-							Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
-					if (WhiteAuraLevel >= 4)
-						if ((Timer() % (35 * 2)) == 1)
-							Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
-					break;
-				// Pink Aura
-				case 4:
-					FadeRange(255, 0, 255, 0.05, 255, 0, 255, 0.0, 1.0);
-					if (PinkAuraLevel >= 1)
-						GiveInventory("PinkAuraDrain", 1);
-					if (PinkAuraLevel >= 2)
-						Player.HealthMax *= 2;
-					break;
-				// Blue Aura
-				case 5:
-					FadeRange(0, 255, 255, 0.05, 0, 255, 255, 0.0, 1.0);
-					if (BlueAuraLevel == 1)
-						Player.SkillCostMult /= 1.33;
-					if (BlueAuraLevel == 2)
-						Player.SkillCostMult /= 2;
-					if (BlueAuraLevel == 3)
-						Player.SkillCostMult /= 4;
-					break;
-				// Purple Aura
-				case 6:
-					FadeRange(255, 0, 128, 0.05, 255, 0, 128, 0.0, 1.0);
-					if (PurpleAuraLevel == 1)
-					{
-						Player.HPAmount *= 2;
-						Player.EPAmount *= 2;
-					};
-					if (PurpleAuraLevel == 2)
-					{
-						Player.HPAmount *= 3;
-						Player.EPAmount *= 3;
-					};
-					if (PurpleAuraLevel == 3)
-					{
-						Player.HPAmount *= 4;
-						Player.EPAmount *= 4;
-					};
-					if (PurpleAuraLevel == 4)
-					{
-						Player.HPAmount *= 4;
-						Player.EPAmount *= 4;
-						Player.HPTime /= 2;
-						Player.EPTime /= 2;
-					};
-					break;
-				// Orange Aura
-				case 7:
-					FadeRange(255, 128, 0, 0.05, 255, 128, 0, 0.0, 1.0);
-					if (OrangeAuraLevel >= 1)
-						Player.Speed *= 2;
-					if (OrangeAuraLevel >= 2)
-						Player.JumpHeight *= 2;
-					if (OrangeAuraLevel >= 3)
-						Player.WeaponSpeed = 100;
-					break;
-				// Dark Blue Aura
-				case 8:
-					FadeRange(0, 0, 128, 0.05, 0, 0, 128, 0.0, 1.0);
-					if (DarkBlueAuraLevel == 5)
-						AmmoRegenMult = 2;
-					if (DarkBlueAuraLevel == 6)
-						AmmoRegenMult = 4;
-					if (DarkBlueAuraLevel >= 1)
-						if ((Timer() % (35 / 2)) == 1)
-							GiveInventory("Clip", AmmoRegenMult);
-					if (DarkBlueAuraLevel >= 2)
-						if ((Timer() % 35) == 1)
-							GiveInventory("Shell", AmmoRegenMult);
-					if (DarkBlueAuraLevel >= 3)
-						if ((Timer() % (35 * 2)) == 1)
-							GiveInventory("RocketAmmo", AmmoRegenMult);
-					if (DarkBlueAuraLevel >= 4)
-						if ((Timer() % (35 / 2)) == 1)
-							GiveInventory("Cell", AmmoRegenMult);
-					break;
-				// Yellow Aura
-				case 9:
-					FadeRange(255, 255, 0, 0.05, 255, 255, 0, 0.0, 1.0);
-					if ((Timer() % (35 * (6 - YellowAuraLevel))) == 1)
-						GiveInventory("Credits", (Player.RankLevel + 1));
-					if (YellowAuraLevel == 1)
-						LuckMult = 1.25;
-					if (YellowAuraLevel == 2)
-						LuckMult = 1.5;
-					if (YellowAuraLevel == 3)
-						LuckMult = 2;
-					if (YellowAuraLevel == 4)
-						LuckMult = 4;
-					if (YellowAuraLevel == 5)
-						LuckMult = 8;
-					Player.HealthChance *= LuckMult;
-					Player.EPChance *= LuckMult;
-					Player.ArmorChance *= LuckMult;
-					Player.PowerupChance *= LuckMult;
-					Player.WeaponChance *= LuckMult;
-					Player.TokenChance *= LuckMult;
-					Player.AugChance *= LuckMult;
-					Player.ShieldChance *= LuckMult;
-					Player.StimChance *= LuckMult;
-					break;
-			};
-		
-		// Aura FX
-		if (Player.Aura > 0)
-			SpawnAura(0, Player.Aura, false);
-		
-		// Decrease timer this tic and calculate HUD timer amount
-		if (!CheckInventory("MenuFreezer") && !CheckInventory("PowerTimeFreezer"))
-			Player.AuraTimer--;
-	}
-	else
-		Player.Aura = 0;
+        // Red Aura
+        if (Player.Aura[AURA_RED])
+        {
+            SpawnAura(0, AURA_RED + 1, false);
+            if (RedAuraLevel == 1)
+                GiveInventory("RedAura2x", 1);
+            if (RedAuraLevel >= 2)
+                GiveInventory("RedAura4x", 1);
+            if (RedAuraLevel >= 3)
+                GiveInventory("RedAuraInfiniteAmmo", 1);
+        };
+        
+        // Green Aura
+        if (Player.Aura[AURA_GREEN])
+        {
+            SpawnAura(0, AURA_GREEN + 1, false);
+            if (GreenAuraLevel == 1)
+                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
+            if (GreenAuraLevel == 2)
+                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.5;
+            if (GreenAuraLevel == 3)
+            {
+                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
+                GiveInventory("GreenAuraIronFeet", 1);
+            };
+        };
+        
+        // White Aura
+        if (Player.Aura[AURA_WHITE])
+        {
+            SpawnAura(0, AURA_WHITE + 1, false);
+            if (WhiteAuraLevel >= 2)
+            {
+                if (Player.Combo == 0) Player.Combo++;
+                Player.ComboTimer = COMBO_MAX - 1;
+            };
+            if (WhiteAuraLevel == 3)
+                if ((Timer() % (35 * 4)) == 1)
+                    Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
+            if (WhiteAuraLevel >= 4)
+                if ((Timer() % (35 * 2)) == 1)
+                    Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
+        };
+        
+        // Pink Aura
+        if (Player.Aura[AURA_PINK])
+        {
+            SpawnAura(0, AURA_PINK + 1, false);
+            if (PinkAuraLevel >= 1)
+                GiveInventory("PinkAuraDrain", 1);
+            if (PinkAuraLevel >= 2)
+                Player.HealthMax *= 2;
+        };
+        
+        // Blue Aura
+        if (Player.Aura[AURA_BLUE])
+        {
+            SpawnAura(0, AURA_BLUE + 1, false);
+            if (BlueAuraLevel == 1)
+                Player.SkillCostMult /= 1.33;
+            if (BlueAuraLevel == 2)
+                Player.SkillCostMult /= 2;
+            if (BlueAuraLevel == 3)
+                Player.SkillCostMult /= 4;
+        };
+        
+        // Purple Aura
+        if (Player.Aura[AURA_PURPLE])
+        {
+            SpawnAura(0, AURA_PURPLE + 1, false);
+            if (PurpleAuraLevel == 1)
+            {
+                Player.HPAmount *= 2;
+                Player.EPAmount *= 2;
+            };
+            if (PurpleAuraLevel == 2)
+            {
+                Player.HPAmount *= 3;
+                Player.EPAmount *= 3;
+            };
+            if (PurpleAuraLevel == 3)
+            {
+                Player.HPAmount *= 4;
+                Player.EPAmount *= 4;
+            };
+            if (PurpleAuraLevel == 4)
+            {
+                Player.HPAmount *= 4;
+                Player.EPAmount *= 4;
+                Player.HPTime /= 2;
+                Player.EPTime /= 2;
+            };
+        };
+        
+        // Orange Aura
+        if (Player.Aura[AURA_ORANGE])
+        {
+            SpawnAura(0, AURA_ORANGE + 1, false);
+            if (OrangeAuraLevel >= 1)
+                Player.Speed *= 2;
+            if (OrangeAuraLevel >= 2)
+                Player.JumpHeight *= 2;
+            if (OrangeAuraLevel >= 3)
+                Player.WeaponSpeed = 100;
+        };
+
+        // Dark Blue Aura
+        if (Player.Aura[AURA_DARKBLUE])
+        {
+            SpawnAura(0, AURA_DARKBLUE + 1, false);
+            if (DarkBlueAuraLevel == 5)
+                AmmoRegenMult = 2;
+            if (DarkBlueAuraLevel == 6)
+                AmmoRegenMult = 4;
+            if (DarkBlueAuraLevel >= 1)
+                if ((Timer() % (35 / 2)) == 1)
+                    GiveInventory("Clip", AmmoRegenMult);
+            if (DarkBlueAuraLevel >= 2)
+                if ((Timer() % 35) == 1)
+                    GiveInventory("Shell", AmmoRegenMult);
+            if (DarkBlueAuraLevel >= 3)
+                if ((Timer() % (35 * 2)) == 1)
+                    GiveInventory("RocketAmmo", AmmoRegenMult);
+            if (DarkBlueAuraLevel >= 4)
+                if ((Timer() % (35 / 2)) == 1)
+                    GiveInventory("Cell", AmmoRegenMult);
+        };
+        
+        // Yellow Aura
+        if (Player.Aura[AURA_YELLOW])
+        {
+            SpawnAura(0, AURA_YELLOW + 1, false);
+            if ((Timer() % (35 * (6 - YellowAuraLevel))) == 1)
+                GiveInventory("Credits", (Player.RankLevel + 1));
+            if (YellowAuraLevel == 1)
+                LuckMult = 1.25;
+            if (YellowAuraLevel == 2)
+                LuckMult = 1.5;
+            if (YellowAuraLevel == 3)
+                LuckMult = 2;
+            if (YellowAuraLevel == 4)
+                LuckMult = 4;
+            if (YellowAuraLevel == 5)
+                LuckMult = 8;
+            Player.HealthChance *= LuckMult;
+            Player.EPChance *= LuckMult;
+            Player.ArmorChance *= LuckMult;
+            Player.PowerupChance *= LuckMult;
+            Player.WeaponChance *= LuckMult;
+            Player.TokenChance *= LuckMult;
+            Player.AugChance *= LuckMult;
+            Player.ShieldChance *= LuckMult;
+            Player.StimChance *= LuckMult;
+        };
+    };
+    
+    // Decrease timer this tic and calculate HUD timer amount
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Player.Aura[i])
+            if (!CheckInventory("MenuFreezer") && !CheckInventory("PowerTimeFreezer"))
+            {
+                Player.AuraTimer--;
+                break;
+            };
 	
 	// Summoned Monsters Handling
 	for (int i = 0; i < MAX_SUMMONS; i++)
