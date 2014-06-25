@@ -529,10 +529,16 @@ function void CheckStatBonus()
 function void CheckRegen()
 {
 	// Determine the max timer amounts
-	Player.HPTime = (350 - (Player.Regeneration * 1.575)) * 2;
-	Player.EPTime = (350 - (Player.Regeneration * 1.575)) * 2;
+	Player.HPTime = (350 - (Player.Regeneration * 1.575) - (Player.AgilityTimer * 0.5)) * 2;
+	Player.EPTime = (350 - (Player.Regeneration * 1.575) - (Player.AgilityTimer * 0.5)) * 2;
 	
-	// Determine the max regen amounts
+    // Cap Times
+    if (Player.HPTime < 35)
+        Player.HPTime = 35;
+    if (Player.EPTime < 35)
+        Player.EPTime = 35;
+    
+    // Determine the max regen amounts
 	Player.HPAmount = 1 + Player.Vitality / 50;
 	Player.EPAmount = 1 + Player.Energy / 50;
 };
@@ -588,7 +594,7 @@ function void DoRegen()
 			Thing_ChangeTID(AuraTID, 0);
 		};
 		
-		// Regeneration Perk
+		// Regeneration Perk - Exponentially increase Health/Energy regeneration rates as they lower
 		if (Player.Perks[STAT_REGENERATION])
 		{
 			// Health
@@ -780,24 +786,33 @@ function void CheckPerks()
     if (DefensePercent < 0.01)
         DefensePercent = 0.01;
     
-    // Strength Perk
+    // Strength Perk - Exponentially increase Strength as Health Decreases
     if (Player.Perks[STAT_STRENGTH] && StrengthPercent >= 1)
         Player.TotalDamage *= StrengthPercent;
     
-    // Defense Perk
+    // Defense Perk - Exponentially increase Defense as Health Decreases
     if (Player.Perks[STAT_DEFENSE] && DefensePercent > 0)
         Player.DamageFactor *= DefensePercent;
     
-    // Vitality Perk
+    // Vitality Perk - Halve Health regeneration time
     if (Player.Perks[STAT_VITALITY])
         Player.HPTime /= 2;
 	
     // Agility Perk
 	if (Player.Perks[STAT_AGILITY])
+    {
+        // Increment Agility timer to effect regeneration times the longer you are moving
+        if (GetActorVelX(0) != 0 || GetActorVelY(0) != 0)
+            Player.AgilityTimer++
+        else
+            Player.AgilityTimer = 0;
+        
+        // +30% Survival Bonus
 		Player.SurvivalBonus += 30;
+    };
 	
-	// Capacity Perk
-	if (Player.Perks[STAT_CAPACITY] && (Timer() % (35 * 30)) == 1)
+	// Capacity Perk - Regenerate ammo
+	if (Player.Perks[STAT_CAPACITY] && (Timer() % (35 * 30)) == 0)
 	{
 		GiveInventory("Clip", GetAmmoAmount("Clip"));
 		GiveInventory("Shell", GetAmmoAmount("Shell"));
@@ -805,7 +820,7 @@ function void CheckPerks()
 		GiveInventory("Cell", GetAmmoAmount("Cell"));
 	};
 	
-	// Luck Perk
+	// Luck Perk - Always have Automap/Scanner
 	// TODO: Ability to see secrets
 	if (Player.Perks[STAT_LUCK])
 	{
