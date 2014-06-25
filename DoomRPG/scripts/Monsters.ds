@@ -136,28 +136,36 @@ script MonsterStats(int Flags, int StatFlags)
             int DelayCounter = 0;
             int CutCount = 0;
             int SpecializedCount = 0;
-            int SelectedStat = 0;
             while (CutCount < 4 || SpecializedCount < 2)
             {
-                SelectedStat = Random(0, 7);
-                
-                if (StatEffect[SelectedStat] == 0)
+                for (int i = 0; i < 8; i++)
                 {
-                    if (CutCount < 4 && Random(1, 2) == 1) // Cut Stat
+                    if (StatEffect[i] == 0)
                     {
-                        StatEffect[SelectedStat] = 1;
-                        CutCount++;
-                    }
-                    else if (SpecializedCount < 2) // Specialized Stat
-                    {
-                        StatEffect[SelectedStat] = 2;
-                        SpecializedCount++;
+                        if (CutCount < 4 && Random(1, 2) == 1) // Cut Stat
+                        {
+                            StatEffect[i] = 1;
+                            CutCount++;
+                        }
+                        else if (SpecializedCount < 2) // Specialized Stat
+                        {
+                            StatEffect[i] = 2;
+                            SpecializedCount++;
+                        };
                     };
                 };
                 
                 DelayCounter++;
                 if ((DelayCounter % 10) == 0)
                     Delay(1);
+                
+                // Give up if it takes too long
+                if (DelayCounter > 100)
+                {
+                    if (GetUserCVar(Arbitrator, "drpg_debug"))
+                        Log("\cgERROR: \c-Gave up on specializing monster!\n");
+                    break;
+                };
             };
 		};
         
