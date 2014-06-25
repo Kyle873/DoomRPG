@@ -4,7 +4,7 @@ color F
 set PATH=..\..\DH-ACC
 set SRC=.\scripts
 set OBJ=.\acs
-set ACC=DH-acc --named-scripts --use-chunk-ATAG --debug-error-pos -D__LIBDS_NOLIB --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc
+set ACC=DH-acc --named-scripts --use-chunk-ATAG --debug-error-pos -D__LIBDS_NOLIB --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc -i %SRC%\lib
 
 _timestamp
 
@@ -15,6 +15,10 @@ echo Compiling Standard Libraries
 %ACC% -c %PATH%/lib/stdlib.ds -o %OBJ%\stdlib.o
 %ACC% -c %PATH%/lib/stdio.ds -o %OBJ%\stdio.o
 %ACC% -c %PATH%/lib/string.ds -o %OBJ%\string.o
+
+rem Doom RPG Libraries
+echo Compiling BitIO
+%ACC% -c %SRC%/lib/BitIO.c -o %OBJ%\BitIO.o
 
 rem Doom RPG Modules
 echo Compiling Arena
@@ -58,7 +62,7 @@ echo Compiling Stims
 echo Compiling Utils
 %ACC% -c %SRC%\Utils.ds -o %OBJ%\Utils.o
 echo Linking RPG.lib
-%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\GUI.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Missions.o %OBJ%\Monsters.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
+%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\GUI.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Missions.o %OBJ%\Monsters.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
 
 echo ----------------------------------------
 
