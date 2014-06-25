@@ -37,110 +37,7 @@ int[ITEM_CATEGORIES] LockerWirelessCosts =
 	50;		// Boots
 };
 
-function void CheckShopSpecial(bool Force)
-{
-	// Reset the item
-	if (ShopSpecialTimer <= 0 || Force)
-	{
-		int Category;
-		int Index;
-		bool ValidItem;
-
-		// Item Blacklist
-		int[][2] ItemBlacklist =
-		{
-			// Category, Index
-			
-			// Ammo
-			{ 1;	0; 	};	// Clip
-			{ 1;	1; 	};	// Box of Bullets
-			{ 1;	2; 	};	// Shells
-			{ 1;	3; 	};	// Box of Shells
-			{ 1;	4; 	};	// Rockets
-			{ 1;	5; 	};	// Box of Rockets
-			{ 1;	6; 	};	// Cell
-			{ 1;	7; 	};	// Cell Pack
-			{ 1;	8; 	};	// Small Backpack
-			{ 1;	9; 	};	// Backpack
-			
-			// Health
-			{ 2;	0;	};	// Health Bonus
-			
-			// Armor
-			{ 3;	0;	};	// Armor Bonus
-            
-			// Sentinel (Indicates end of list)
-			{ -1;   -1; };
-		};
-		
-		while (!ValidItem)
-		{
-			// Pick an item
-			BuildItemData();
-			Category = Random(0, ItemCategories - 1);
-			Index = Random(0, ItemMax[Category] - 1);
-			
-			// Check the item against the blacklist
-			for (int i = 0; ItemBlacklist[i][0] != -1; i++)
-			{
-				ValidItem = true;
-				if (Category == ItemBlacklist[i][0] && Index == ItemBlacklist[i][1])
-				{
-					ValidItem = false;
-					break;
-				};
-			};
-			
-			// Retry if you land on an item with no cost
-			if (ItemData[Category][Index].Price == 0)
-				ValidItem = false;
-		};
-		
-		// Assign the item to the Shop Special item
-		ShopSpecialItem = ItemData[Category][Index];
-		ShopSpecialItem.Category = Category;
-		
-		// Spawn the item if you're in the Outpost
-		SpawnShopSpecialItem();
-		
-		// Reset the timer and bought status
-		ShopSpecialTimer = SHOP_SPECIAL_TIMER;
-		ShopSpecialBought = false;
-        
-        if (GetCVar("drpg_debug"))
-            if (Arbitrator)
-                Log("\cdDEBUG: Shop Special expired! Now \cj%s\n", ShopSpecialItem.Name);
-	};
-	
-	// Remove the item if it was bought
-	if (InBase && ShopSpecialBought)
-		Thing_Remove(ShopSpecialTID + 1);
-	
-	// Decrease the timer
-	ShopSpecialTimer--;
-};
-
-function void SpawnShopSpecialItem()
-{
-	if (InBase)
-	{
-		// DoomRL Compatibility
-		if (GetCVar("drpg_ext_doomrl"))
-			if (ShopSpecialItem.Category == 0) // Weapons
-				ShopSpecialItem.Actor = StrParam("%sPickup\n", ShopSpecialItem.Actor);
-		
-		Thing_Remove(ShopSpecialTID + 1);
-		if (!SpawnSpotForced(ShopSpecialItem.Actor, ShopSpecialTID, ShopSpecialTID + 1, 0))
-            CheckShopSpecial(true)
-        else
-        {
-            SpawnSpotForced("TeleportFog", ShopSpecialTID, 0, 0);
-            SetActorProperty(ShopSpecialTID, APROP_Invulnerable, true);
-        };
-	};
-};
-
-acscript EnterOutpost()
+acscript void EnterOutpost()
 {
 	InBase = true;
 	
@@ -164,7 +61,7 @@ acscript EnterOutpost()
 	SpawnShopSpecialItem();
 };
 
-acscript RegenArea(int ID)
+acscript void RegenArea(int ID)
 {
 	// If you're dead, terminate
 	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
@@ -238,7 +135,7 @@ acscript RegenArea(int ID)
 	};
 };
 
-acscript LevelTransport()
+acscript void LevelTransport()
 {
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_LEVELTRANSPORT) return;
@@ -321,7 +218,7 @@ acscript LevelTransport()
 	};
 };
 
-acscript SkillComputer()
+acscript void SkillComputer()
 {
 	// Terminate if you aren't the Arbitrator
 	if (InMultiplayer && !Arbitrator) return;
@@ -385,7 +282,7 @@ acscript SkillComputer()
 	};
 };
 
-acscript ToggleArena()
+acscript void ToggleArena()
 {
 	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
 	
@@ -406,7 +303,7 @@ acscript ToggleArena()
 	};
 };
 
-acscript PassArenaLine()
+acscript void PassArenaLine()
 {
 	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
 	
@@ -417,7 +314,7 @@ acscript PassArenaLine()
 	};
 };
 
-acscript SelectArenaWave()
+acscript void SelectArenaWave()
 {
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_TOKENCONVERTER) return;
@@ -500,7 +397,7 @@ acscript SelectArenaWave()
 	};
 };
 
-acscript PissOffMarines()
+acscript void PissOffMarines()
 {
 	SetMusic("Outpost2", 3);
 	Thing_Activate(1);
@@ -528,7 +425,7 @@ acscript PissOffMarines()
 	};
 };
 
-acscript TokenConverter()
+acscript void TokenConverter()
 {
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_TOKENCONVERTER) return;
@@ -721,7 +618,7 @@ acscript TokenConverter()
 };
 
 // Credit Room Script
-acscript CreditRoom(int ID)
+acscript void CreditRoom(int ID)
 {
 	if (ID == 1) // Enter
 		LocalSetMusic("Credits");
@@ -840,7 +737,7 @@ acscript CreditRoom(int ID)
 };
 
 // Shop Special UI
-acscript ShopSpecial()
+acscript void ShopSpecial()
 {
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_SHOPSPECIAL) return;
@@ -926,7 +823,7 @@ acscript ShopSpecial()
 };
 
 // Player Locker
-acscript Locker(bool Wireless)
+acscript void Locker(bool Wireless)
 {
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_LOCKER) return;
@@ -1268,12 +1165,115 @@ acscript Locker(bool Wireless)
 };
 
 // Handles the 6 Key Secret
-acscript OutpostSecret()
+acscript void OutpostSecret()
 {
 	if (CheckInventory("RedCard2") && CheckInventory("YellowCard2") && CheckInventory("BlueCard2") &&
 		CheckInventory("RedSkull2") && CheckInventory("YellowSkull2") && CheckInventory("BlueSkull2"))
 	{
 		ActivatorSound("misc/secret", 127);
 		Teleport(SecretTeleportTID + PlayerNumber(), false);
+	};
+};
+
+function void CheckShopSpecial(bool Force)
+{
+	// Reset the item
+	if (ShopSpecialTimer <= 0 || Force)
+	{
+		int Category;
+		int Index;
+		bool ValidItem;
+
+		// Item Blacklist
+		int[][2] ItemBlacklist =
+		{
+			// Category, Index
+			
+			// Ammo
+			{ 1;	0; 	};	// Clip
+			{ 1;	1; 	};	// Box of Bullets
+			{ 1;	2; 	};	// Shells
+			{ 1;	3; 	};	// Box of Shells
+			{ 1;	4; 	};	// Rockets
+			{ 1;	5; 	};	// Box of Rockets
+			{ 1;	6; 	};	// Cell
+			{ 1;	7; 	};	// Cell Pack
+			{ 1;	8; 	};	// Small Backpack
+			{ 1;	9; 	};	// Backpack
+			
+			// Health
+			{ 2;	0;	};	// Health Bonus
+			
+			// Armor
+			{ 3;	0;	};	// Armor Bonus
+            
+			// Sentinel (Indicates end of list)
+			{ -1;   -1; };
+		};
+		
+		while (!ValidItem)
+		{
+			// Pick an item
+			BuildItemData();
+			Category = Random(0, ItemCategories - 1);
+			Index = Random(0, ItemMax[Category] - 1);
+			
+			// Check the item against the blacklist
+			for (int i = 0; ItemBlacklist[i][0] != -1; i++)
+			{
+				ValidItem = true;
+				if (Category == ItemBlacklist[i][0] && Index == ItemBlacklist[i][1])
+				{
+					ValidItem = false;
+					break;
+				};
+			};
+			
+			// Retry if you land on an item with no cost
+			if (ItemData[Category][Index].Price == 0)
+				ValidItem = false;
+		};
+		
+		// Assign the item to the Shop Special item
+		ShopSpecialItem = ItemData[Category][Index];
+		ShopSpecialItem.Category = Category;
+		
+		// Spawn the item if you're in the Outpost
+		SpawnShopSpecialItem();
+		
+		// Reset the timer and bought status
+		ShopSpecialTimer = SHOP_SPECIAL_TIMER;
+		ShopSpecialBought = false;
+        
+        if (GetCVar("drpg_debug"))
+            if (Arbitrator)
+                Log("\cdDEBUG: Shop Special expired! Now \cj%s\n", ShopSpecialItem.Name);
+	};
+	
+	// Remove the item if it was bought
+	if (InBase && ShopSpecialBought)
+		Thing_Remove(ShopSpecialTID + 1);
+	
+	// Decrease the timer
+	ShopSpecialTimer--;
+};
+
+function void SpawnShopSpecialItem()
+{
+	if (InBase)
+	{
+		// DoomRL Compatibility
+		if (GetCVar("drpg_ext_doomrl"))
+			if (ShopSpecialItem.Category == 0) // Weapons
+				ShopSpecialItem.Actor = StrParam("%sPickup\n", ShopSpecialItem.Actor);
+		
+		Thing_Remove(ShopSpecialTID + 1);
+		if (!SpawnSpotForced(ShopSpecialItem.Actor, ShopSpecialTID, ShopSpecialTID + 1, 0))
+            CheckShopSpecial(true)
+        else
+        {
+            SpawnSpotForced("TeleportFog", ShopSpecialTID, 0, 0);
+            SetActorProperty(ShopSpecialTID, APROP_Invulnerable, true);
+        };
 	};
 };

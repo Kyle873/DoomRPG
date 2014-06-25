@@ -60,10 +60,9 @@ str[] Monsters =
 };
 
 // Arena Script
-acscript ArenaLoop()
+acscript void ArenaLoop()
 {
 	ArenaSetMusic();
-    // SetMusic("Outpost", 3);
 	ArenaSetEnvironment(0);
 	
 	// Arena Loop
@@ -159,7 +158,7 @@ acscript ArenaLoop()
 };
 
 // Stop the Arena session
-acscript ArenaStop()
+acscript void ArenaStop()
 {
 	if (ArenaWave > 1)
 		ArenaState = ARENA_WAITING
@@ -188,7 +187,7 @@ acscript ArenaStop()
 };
 
 // Arena Test Script
-acscript SetArena(int Wave, int Environment, int Bonus)
+acscript void SetArena(int Wave, int Environment, int Bonus)
 {
     if (Wave > 0)
 		ArenaWave = Wave;
@@ -200,67 +199,7 @@ acscript SetArena(int Wave, int Environment, int Bonus)
 		ArenaGetBonus(Bonus);
 };
 
-function void ArenaDrawHUD()
-{
-	fixed X = 0.1;
-	fixed Y = 24.0;
-	
-	// Don't draw the HUD if you're in a menu
-	if (Player.InMenu || Player.InShop || Player.OutpostMenu > 0) return;
-	
-	SetHudSize(320, 240, false);
-	SetFont("SMALLFONT");
-	
-	// Wave
-	HudMessageBold("Wave: %d\n", ArenaWave,
-				   HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
-	Y += 8.0;
-
-	// Monster Count
-	if (ArenaCount > 0)
-	{
-		HudMessageBold("Monsters: %d\n", ArenaCount,
-					   HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
-		Y += 8.0;
-	};
-	
-	// Timer
-	if (ArenaTimerActive && ArenaTimer > 0)
-	{
-		HudMessageBold("Time: %d\n", ArenaTimer / 35 + 1,
-					   HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
-		Y += 8.0;
-	};
-	
-	// Mod
-	if (ArenaMod >= 0)
-	{
-		HudMessageBold("%s\n", ArenaMods[ArenaMod],
-					   HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
-		Y += 8.0;
-	};
-
-	// Environment
-	if (ArenaEnvironment > 0)
-	{
-		HudMessageBold("%s\n", ArenaEnvironments[ArenaEnvironment - 1],
-					   HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
-		Y += 8.0;
-	};
-};
-
-function void ArenaCheckMod()
-{
-	switch (ArenaMod)
-	{
-		case 0: // No Regeneration
-			Player.HPRate = 0;
-			Player.EPRate = 0;
-			break;
-	};
-};
-
-acscript ArenaChooseBonus()
+acscript void ArenaChooseBonus()
 {
 	int BonusChoice = 1;
 	bool CanChooseKey = false;
@@ -507,6 +446,66 @@ function void ArenaGetBonus(int Bonus)
 	};
 };
 
+function void ArenaDrawHUD()
+{
+	fixed X = 0.1;
+	fixed Y = 24.0;
+	
+	// Don't draw the HUD if you're in a menu
+	if (Player.InMenu || Player.InShop || Player.OutpostMenu > 0) return;
+	
+	SetHudSize(320, 240, false);
+	SetFont("SMALLFONT");
+	
+	// Wave
+	HudMessageBold("Wave: %d\n", ArenaWave,
+				   HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
+	Y += 8.0;
+
+	// Monster Count
+	if (ArenaCount > 0)
+	{
+		HudMessageBold("Monsters: %d\n", ArenaCount,
+					   HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
+		Y += 8.0;
+	};
+	
+	// Timer
+	if (ArenaTimerActive && ArenaTimer > 0)
+	{
+		HudMessageBold("Time: %d\n", ArenaTimer / 35 + 1,
+					   HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+		Y += 8.0;
+	};
+	
+	// Mod
+	if (ArenaMod >= 0)
+	{
+		HudMessageBold("%s\n", ArenaMods[ArenaMod],
+					   HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+		Y += 8.0;
+	};
+
+	// Environment
+	if (ArenaEnvironment > 0)
+	{
+		HudMessageBold("%s\n", ArenaEnvironments[ArenaEnvironment - 1],
+					   HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+		Y += 8.0;
+	};
+};
+
+function void ArenaCheckMod()
+{
+	switch (ArenaMod)
+	{
+		case 0: // No Regeneration
+			Player.HPRate = 0;
+			Player.EPRate = 0;
+			break;
+	};
+};
+
 function void ArenaSpawnMobs()
 {
 	int MonsterID;
@@ -604,7 +603,6 @@ function void ArenaSetEnvironment(int ID)
 	ArenaEnvironment = ID;
 };
 
-// ERROR: Unknown P-Code 5456705 in script "ArenaLoop"
 function void ArenaSetMusic()
 {
     int Music = Random(0, MAX_MUSIC);
