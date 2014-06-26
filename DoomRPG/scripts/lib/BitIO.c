@@ -22,24 +22,22 @@
 
 #include "BitIO.h"
 
+
+//----------------------------------------------------------------------------|
+// Macros                                                                     |
+//
+
+#define WORD_BIT 32
+
+
 //----------------------------------------------------------------------------|
 // Global Functions                                                           |
 //
 
 //
-// BitIO_Open
-//
-void BitIO_Open(struct BitIO_State *state, int *data)
-{
-   state->data = data;
-   state->posW = 0;
-   state->posB = 0;
-}
-
-//
 // BitIO_GetBits
 //
-int BitIO_GetBits(struct BitIO_State *state, int bits)
+int BitIO_GetBits(BitIO_State *state, int bits)
 {
    int data;
 
@@ -85,9 +83,19 @@ int BitIO_GetBits(struct BitIO_State *state, int bits)
 }
 
 //
+// BitIO_Open
+//
+void BitIO_Open(BitIO_State *state, int *data)
+{
+   state->data = data;
+   state->posW = 0;
+   state->posB = 0;
+}
+
+//
 // BitIO_PutBits
 //
-void BitIO_PutBits(struct BitIO_State *state, int bits, int data)
+void BitIO_PutBits(BitIO_State *state, int bits, int data)
 {
    // Cache structure members because far pointers are so slow.
    int  posB = state->posB;
@@ -128,6 +136,22 @@ void BitIO_PutBits(struct BitIO_State *state, int bits, int data)
       state->posB = bits;
       state->posW = posW + 1;
    }
+}
+
+//
+// BitIO_UsedB
+//
+int BitIO_UsedB(BitIO_State *state)
+{
+   return state->posW * WORD_BIT + state->posB;
+}
+
+//
+// BitIO_UsedW
+//
+int BitIO_UsedW(BitIO_State *state)
+{
+   return state->posB ? state->posW + 1 : state->posW;
 }
 
 // EOF

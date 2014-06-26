@@ -20,41 +20,53 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef _BITIO_H_
-#define _BITIO_H_
+#ifndef BitIO_H__
+#define BitIO_H__
+
 
 //----------------------------------------------------------------------------|
 // Macros                                                                     |
 //
 
-#define WORD_BIT 32
+#if defined(__LANG_DS__)
+#  define BitIO_FuncDecl extern "C" __function
+#elif defined(__cplusplus)
+#  define BitIO_FuncDecl extern "C"
+#else
+#  define BitIO_FuncDecl extern
+#endif
+
 
 //----------------------------------------------------------------------------|
 // Types                                                                      |
 //
 
-struct BitIO_State
+typedef struct BitIO_State
 {
    int *data;
    int  posB;
    int  posW;
-};
+} BitIO_State;
+
 
 //----------------------------------------------------------------------------|
 // Global Functions                                                           |
 //
 
-#ifdef __LANG_DS__
-extern "C"
-{
-    __function void BitIO_Open(BitIO_State *state, int *data);
-    __function int BitIO_GetBits(BitIO_State *state, int bits);
-    __function void BitIO_PutBits(BitIO_State *state, int bits, int data);
-};
-#else
-    void BitIO_Open(struct BitIO_State *state, int *data);
-    int BitIO_GetBits(struct BitIO_State *state, int bits);
-    void BitIO_PutBits(struct BitIO_State *state, int bits, int data);
-#endif
+// Retrieves a value from the stream.
+BitIO_FuncDecl int BitIO_GetBits(BitIO_State *state, int bits);
 
-#endif
+// Creates a new stream using data as the buffer.
+BitIO_FuncDecl void BitIO_Open(BitIO_State *state, int *data);
+
+// Writes a value to the stream.
+BitIO_FuncDecl void BitIO_PutBits(BitIO_State *state, int bits, int data);
+
+// Returns number of bits read/written.
+BitIO_FuncDecl int BitIO_UsedB(BitIO_State *state);
+
+// Returns number of words read/written.
+BitIO_FuncDecl int BitIO_UsedW(BitIO_State *state);
+
+#endif//BitIO_H__
+
