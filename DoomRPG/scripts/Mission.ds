@@ -107,22 +107,29 @@ function void CheckMission()
     if (Complete)
     {
         // Message
+        ActivatorSound("mission/complete", 127);
         SetFont("BIGFONT");
         SetHudSize(640, 480, false);
         HudMessage("Mission Complete!\n\n\cj+%d XP\n\ck+%d Rank\n\cf+%d Credits\n\ciItem: %s\n",
                    Player.Mission.RewardXP, Player.Mission.RewardRank, Player.Mission.RewardCredits, Player.Mission.RewardItem.Name,
                    HUDMSG_FADEOUT, 0, CR_GREEN, 320.4, 240.0, 3.0, 2.0);
-        ActivatorSound("mission/complete", 127);
         
-        // Reward
+        // Reward - XP/Rank
         Player.XP += Player.Mission.RewardXP;
         Player.Rank += Player.Mission.RewardRank;
+        
+        // Credits
         GiveInventory("Credits", Player.Mission.RewardCredits);
-        GiveInventory(Player.Mission.RewardItem.Actor, 1);
-        Complete = false;
+        
+        // Item
+        SpawnForced(Player.Mission.RewardItem.Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+		SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
         
         // Clear the Mission
         ClearMission();
+        
+        // Reset the completion flag
+        Complete = false;
     };
 };
 
