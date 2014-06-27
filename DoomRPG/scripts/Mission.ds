@@ -1,0 +1,157 @@
+#include "Globals.dh"
+#include "ItemData.dh"
+#include "LootData.dh"
+#include "Mission.dh"
+#include "Utils.dh"
+
+/*
+    -- Generic Loot Types ---
+    
+    * Medical Supplies
+    * Chemicals
+    * Hazardous Materials
+    * Anomalous Materials
+    * Briefcase Data
+    * Computer Data
+    * Gun Parts
+    * Ammo Casings
+    * Fuel Capsule
+    * Scrap Metals
+    * Scrap Electronics
+    * Experimental Parts
+    * Demon Artifacts
+    
+*/
+
+str[MAX_DIFFICULTIES] MissionDifficulties =
+{
+    "\cdVery Easy";
+    "\cdEasy";
+    "\cjNormal";
+    "\caHard";
+    "\caVery Hard";
+    "\caNightmare";
+    "\cgInsane";
+    "\cgImpossible";
+    "\cgSuicide";
+};
+
+acscript void GetMission(int Type)
+{
+    int Difficulty = Random(0, MAX_DIFFICULTIES - 1);
+    int RewardXP = Random(1, 100);          // Placeholders
+    int RewardRank = Random(1, 100);
+    int RewardCredits = Random(1, 100);
+    ItemInfo RewardItem = GetRewardItem(Difficulty);
+    
+    // You already have a mission
+    if (Player.Mission.Active)
+    {
+        ActivatorSound("menu/error", 127);
+        SetFont("BIGFONT");
+        HudMessage("You are already on a mission!\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 3.0, 2.0);
+        return;
+    };
+    
+    if (Type == MT_COLLECT) // Collection
+    {
+        // Generate Item and Amount
+        int Item = Random(0, MAX_LOOT - 1);
+        int Amount = Random(5, 10);
+        
+        // Message and Loot Icon
+        SetFont("BIGFONT");
+        SetHudSize(640, 480, false);
+        HudMessage("New Mission! (%s\c-)\n\n\cdCollection\n\n\ckFind %d %s\n", MissionDifficulties[Difficulty], Amount, LootData[Item].Name, HUDMSG_FADEOUT, 0, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
+        PrintSpriteFade(LootData[Item].Icon, 0, 320.4, 300.4, 3.0, 2.0);
+        FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
+        
+        // Pass amount to the Mission struct
+        Player.Mission.Amount = Amount;
+        Player.Mission.Item = LootData[Item];
+    };
+    
+    // Mission Accepted
+    ActivatorSound("mission/get", 127);
+    Player.Mission.Active = true;
+    Player.Mission.Type = Type;
+    Player.Mission.Difficulty = Difficulty;
+    
+    // Assign Rewards to Mission struct
+    Player.Mission.RewardXP = RewardXP;
+    Player.Mission.RewardRank = RewardRank;
+    Player.Mission.RewardCredits = RewardCredits;
+    Player.Mission.RewardItem = RewardItem;
+};
+
+function void CheckMission()
+{
+    bool Complete = false;
+    
+    // If you currently have no mission, return
+    if (!Player.Mission.Active) return;
+    
+    if (Player.Mission.Type == MT_COLLECT) // Collection
+    {
+        Player.Mission.Current = CheckInventory(Player.Mission.Item.Actor);
+        
+        // Complete
+        if (Player.Mission.Current >= Player.Mission.Amount)
+        {
+            TakeInventory(Player.Mission.Item.Actor, Player.Mission.Amount);
+            Complete = true;
+        };
+    };
+    
+    // Mission Complete!
+    if (Complete)
+    {
+        // Message
+        SetFont("BIGFONT");
+        SetHudSize(640, 480, false);
+        HudMessage("Mission Complete!\n\n\cj+%d XP\n\ck+%d Rank\n\cf+%d Credits\n\ciItem: %s\n",
+                   Player.Mission.RewardXP, Player.Mission.RewardRank, Player.Mission.RewardCredits, Player.Mission.RewardItem.Name,
+                   HUDMSG_FADEOUT, 0, CR_GREEN, 320.4, 240.0, 3.0, 2.0);
+        ActivatorSound("mission/complete", 127);
+        
+        // Reward
+        Player.XP += Player.Mission.RewardXP;
+        Player.Rank += Player.Mission.RewardRank;
+        GiveInventory("Credits", Player.Mission.RewardCredits);
+        GiveInventory(Player.Mission.RewardItem.Actor, 1);
+        Complete = false;
+        
+        // Clear the Mission
+        ClearMission();
+    };
+};
+
+function void ClearMission()
+{
+    Player.Mission.Active = false;
+    Player.Mission.Difficulty = 0;
+    
+    Player.Mission.RewardXP = 0;
+    Player.Mission.RewardRank = 0;
+    Player.Mission.RewardCredits = 0;
+    // Player.Mission.RewardItem
+    
+    // Player.Mission.Item
+    Player.Mission.Monster = "";
+    Player.Mission.Current = 0;
+    Player.Mission.Amount = 0;
+};
+
+// TODO: Difficulty effects which category it will pick items from
+function ItemInfo GetRewardItem(int Difficulty)
+{
+    int Category = Random(0, ItemCategories);
+    int Index = Random(0, ItemMax[Category]);
+    ItemInfo Item = ItemData[Category][Index];
+    
+    // DoomRL Compatibility
+    if (Category == 0) // Weapons
+        Item.Actor = StrParam("%sPickup\n", Item.Actor);
+    
+    return Item;
+};
