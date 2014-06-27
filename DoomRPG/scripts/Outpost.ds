@@ -19,10 +19,8 @@ int LevelChoice = 0;
 int SkillChoice = 0;
 int WaveChoice = 1;
 
-// Marines
+// Flags
 bool MarinesHostile = false;
-
-// Invasion
 bool Invasion = false;
 
 // Base costs for wireless page access
@@ -36,6 +34,7 @@ int[ITEM_CATEGORIES] LockerWirelessCosts =
 	200;	// Tokens
 	100;	// Shield Parts
 	100;	// Stims/Augmentations
+    10;     // Loot
 	50;		// Mod Packs
 	50;		// Boots
 };
@@ -404,9 +403,27 @@ acscript void PissOffMarines()
 {
 	ArenaSetMusic();
 	
+    Thing_Activate(1);
+    SetActorProperty(1, APROP_Friendly, 0);
+    Thing_Hate(1, 0, 6);
+    Thing_ChangeTID(1, 1201);
+    
     // Set flag
     MarinesHostile = true;
     
+    while (true)
+    {
+        // Teleport in new Marines
+        if ((Timer() % (35 * 10)) == 1)
+        {
+            SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
+            SpawnSpotFacing("MarineRandomizer", MarineSpotTID, MarineTID);
+        };
+
+        Delay(1);
+    };
+    
+    /* New code for when new Marines are finished
     // Set Marine States
     SetActorState(1, "Enraged", true);
     
@@ -417,11 +434,11 @@ acscript void PissOffMarines()
 		{
 			SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
 			SpawnSpotFacing("MarineRandomizer", MarineSpotTID, MarineTID);
-            SetActorState(MarineTID, "Attack", true);
+            SetActorState(MarineTID, "Enraged", true);
 		};
         
 		Delay(1);
-	};
+	}; */
 };
 
 acscript void TokenConverter()
