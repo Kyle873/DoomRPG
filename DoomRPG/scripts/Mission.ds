@@ -36,9 +36,9 @@ str[MAX_DIFFICULTIES] MissionDifficulties =
     "\cgSuicide";
 };
 
-acscript void GetMission(int Type)
+acscript void GetMission(int Type, int Difficulty)
 {
-    int Difficulty = Random(0, MAX_DIFFICULTIES - 1);
+    int Difficulty = (Difficulty > 0 ? Difficulty - 1 : Random(0, MAX_DIFFICULTIES - 1));
     int RewardXP = Random(1, 100);          // Placeholders
     int RewardRank = Random(1, 100);
     int RewardCredits = Random(1, 100);
@@ -58,6 +58,10 @@ acscript void GetMission(int Type)
         // Generate Item and Amount
         int Item = Random(0, MAX_LOOT - 1);
         int Amount = Random(5, 10);
+        
+        // Remove any of the selected loot item if you already have any
+        if (CheckInventory(LootData[Item].Actor) > 0)
+            SetInventory(LootData[Item].Actor, 0);
         
         // Message and Loot Icon
         SetFont("BIGFONT");
@@ -122,7 +126,7 @@ function void CheckMission()
         ActivatorSound("mission/complete", 127);
         SetFont("BIGFONT");
         SetHudSize(640, 480, false);
-        HudMessage("Mission Complete!\n\n\cj+%d XP\n\ck+%d Rank\n\cf+%d Credits\n\ciItem: %s\n",
+        HudMessage("Mission Complete!\n\n\cj+%d XP\n\ck+%d Rank\n\cf+%d Credits\n\ciItem: \cj%s\n",
                    Player.Mission.RewardXP, Player.Mission.RewardRank, Player.Mission.RewardCredits, Player.Mission.RewardItem.Name,
                    HUDMSG_FADEOUT, 0, CR_GREEN, 320.4, 240.0, 3.0, 2.0);
         
