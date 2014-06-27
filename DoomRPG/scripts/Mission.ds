@@ -2,6 +2,7 @@
 #include "ItemData.dh"
 #include "LootData.dh"
 #include "Mission.dh"
+#include "MonsterData.dh"
 #include "Stats.dh"
 #include "Utils.dh"
 
@@ -37,12 +38,13 @@ str[MAX_DIFFICULTIES] MissionDifficulties =
     "\cgSuicide";
 };
 
-acscript void GetMission(int Type, int ForceDifficulty)
+acscript void GetMission(int ForceType, int ForceDifficulty)
 {
+    int Type = (ForceType > 0 ? ForceType - 1 : Random(0, 1));
     int Difficulty = (ForceDifficulty > 0 ? ForceDifficulty - 1 : Random(0, MAX_DIFFICULTIES - 1));
     int RewardXP = (Difficulty + 2) * (XPTable[Player.Level] / 100);
     int RewardRank = (Difficulty + 2) * (RankTable[Player.RankLevel] / 100);
-    int RewardCredits = Random((Difficulty + 2), (Difficulty + 2) * 100) * Player.RankLevel;
+    int RewardCredits = Random((Difficulty + 2), (Difficulty + 2) * 100) * (Player.RankLevel + 1);
     ItemInfo RewardItem = GetRewardItem(Difficulty);
     
     // You already have a mission
@@ -54,26 +56,53 @@ acscript void GetMission(int Type, int ForceDifficulty)
         return;
     };
     
-    if (Type == MT_COLLECT) // Collection
+    // Collection Mission
+    if (Type == MT_COLLECT)
     {
         // Generate Item and Amount
-        int Item = Random(0, MAX_LOOT - 1);
+        int ItemIndex = Random(0, MAX_LOOT - 1);
         int Amount = Random(5, 10);
+        LootItem Item = LootData[ItemIndex];
         
         // Remove any of the selected loot item if you already have any
-        if (CheckInventory(LootData[Item].Actor) > 0)
-            SetInventory(LootData[Item].Actor, 0);
+        if (CheckInventory(Item.Actor) > 0)
+            SetInventory(Item.Actor, 0);
         
         // Message and Loot Icon
         SetFont("BIGFONT");
         SetHudSize(640, 480, false);
-        HudMessage("New Mission! (%s\c-)\n\n\cdCollection\n\n\ckFind %d %s\n", MissionDifficulties[Difficulty], Amount, LootData[Item].Name, HUDMSG_FADEOUT, 0, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
-        PrintSpriteFade(LootData[Item].Icon, 0, 320.4, 300.4, 3.0, 2.0);
+        HudMessage("New Mission! (%s\c-)\n\n\cdCollection\n\n\ckFind %d %s\n", MissionDifficulties[Difficulty], Amount, Item.Name, HUDMSG_FADEOUT, 0, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
+        PrintSpriteFade(Item.Icon, 0, 320.4, 300.4, 3.0, 2.0);
         FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
         
-        // Pass amount to the Mission struct
+        // Pass data to the Mission struct
+        Player.Mission.Item = Item;
         Player.Mission.Amount = Amount;
-        Player.Mission.Item = LootData[Item];
+    };
+    
+    // Kill Mission
+    if (Type == MT_KILL)
+    {
+        bool DRLA = GetCVar("drpg_ext_doomrl");
+        int MonsterIndex = (DRLA ? Random((GameSkill() >= 5 ? 20 : 0), MAX_MONSTERS_DRLA - ((GameSkill() >= 5 ? 8 - Difficulty : 36 - (Difficulty * 4))) - 1) : Random(0, MAX_MONSTERS - 1));
+        int Amount = Random(2 + (Difficulty * 2), 2 + (2 * (Difficulty * 2)));
+        MonsterInfo Monster;
+        
+        // Do we lookup data from the Vanilla or DRLA table?
+        if (DRLA)
+            Monster = MonsterDataDRLA[MonsterIndex]
+        else
+            Monster = MonsterData[MonsterIndex];
+        
+        // Message
+        SetFont("BIGFONT");
+        SetHudSize(640, 480, false);
+        HudMessage("New Mission! (%s\c-)\n\n\caKill\n\n\ckKill %d %ss\n", MissionDifficulties[Difficulty], Amount, Monster.Name, HUDMSG_FADEOUT, 0, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
+        FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
+        
+        // Pass data to the Mission struct
+        Player.Mission.Monster = Monster;
+        Player.Mission.Amount = Amount;
     };
     
     // Mission Accepted
@@ -108,7 +137,8 @@ function void CheckMission()
     // If you currently have no mission, return
     if (!Player.Mission.Active) return;
     
-    if (Player.Mission.Type == MT_COLLECT) // Collection
+    // Collection Mission
+    if (Player.Mission.Type == MT_COLLECT)
     {
         Player.Mission.Current = CheckInventory(Player.Mission.Item.Actor);
         
@@ -119,6 +149,11 @@ function void CheckMission()
             Complete = true;
         };
     };
+    
+    // Kill Mission
+    if (Player.Mission.Type == MT_KILL)
+        if (Player.Mission.Current >= Player.Mission.Amount)
+            Complete = true;
     
     // Mission Complete!
     if (Complete)
@@ -161,7 +196,7 @@ function void ClearMission()
     // Player.Mission.RewardItem
     
     // Player.Mission.Item
-    Player.Mission.Monster = "";
+    // Player.Mission.Monster
     Player.Mission.Current = 0;
     Player.Mission.Amount = 0;
 };
@@ -169,9 +204,13 @@ function void ClearMission()
 // TODO: Difficulty effects which category it will pick items from
 function ItemInfo GetRewardItem(int Difficulty)
 {
-    int Category = Random(0, ItemCategories);
+    int Category = Random(0, ItemCategories - 1);
     int Index = Random(0, ItemMax[Category] - 1);
     ItemInfo Item = ItemData[Category][Index];
+    
+    // Debugging
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-Mission Reward Item: Category %d, Index %d\n", Category, Index);
     
     // DoomRL Compatibility
     if (Category == 0) // Weapons

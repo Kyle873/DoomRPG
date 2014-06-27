@@ -571,14 +571,18 @@ script void MonsterDeath()
 	if (!(MonsterFlags & MF_NOPAYKILL) && Killer > -1)
 		Players(Killer).PayKills++;
 	
-    // Missions
+    // Mission Handling
     if (Killer > -1 && Players(Killer).Mission.Active)
     {
-        if (Players(Killer).Mission.Type == MT_COLLECT) // Collection
-        {
+        // Collection Mission
+        if (Players(Killer).Mission.Type == MT_COLLECT)
             if (Random(1, Pow(2, Players(Killer).Mission.Difficulty)) == 1)
                 DropItem(0, Players(Killer).Mission.Item.Actor, 1, 255);
-        };
+        
+        // Kill Mission
+        if (Players(Killer).Mission.Type == MT_KILL)
+            if (StrCmp(GetActorClass(0), Players(Killer).Mission.Monster.Actor) >= 0)
+                Players(Killer).Mission.Current++;
     };
     
 	// SHOTGUNS!
