@@ -204,13 +204,35 @@ function void ClearMission()
 // TODO: Difficulty effects which category it will pick items from
 function ItemInfo GetRewardItem(int Difficulty)
 {
-    int Category = Random(0, ItemCategories - 1);
-    int Index = Random(0, ItemMax[Category] - 1);
-    ItemInfo Item = ItemData[Category][Index];
+    // Category Mapping
+    int[ITEM_CATEGORIES] Categories = 
+    {
+        1;  // Weapons
+        2;  // Ammo
+        3;  // Health
+        10; // Boots
+        9;  // Loot
+        3;  // Armor
+        4;  // Powerups
+        9;  // Mod Packs
+        7;  // Stims/Augs
+        5;  // Tokens
+        6;  // Shield Parts
+    };
+    
+    // Calculate Category
+    int Category = Random(0, Difficulty + 2);
+    
+    // Calculate Index
+    fixed IndexRatio = (fixed)Difficulty / (fixed)MAX_DIFFICULTIES;
+    int IndexMax = (int)((ItemMax[Categories[Category]] - 1) * IndexRatio);
+    int IndexMin = IndexMax / 2;
+    int Index = Random(IndexMin, IndexMax);
+    ItemInfo Item = ItemData[Categories[Category]][Index];
     
     // Debugging
     if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \c-Mission Reward Item: Category %d, Index %d\n", Category, Index);
+        Log("\cdDEBUG: \c-Mission Reward Item: Category %d (mapped to %d), Index %d\n", Category, Categories[Category], Index);
     
     // DoomRL Compatibility
     if (Category == 0) // Weapons
