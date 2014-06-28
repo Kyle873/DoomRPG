@@ -1,5 +1,6 @@
 #include "Arena.dh"
 #include "Globals.dh"
+#include "MonsterData.dh"
 #include "Monsters.dh"
 #include "Popoffs.dh"
 #include "RPG.dh"
@@ -581,8 +582,30 @@ script void MonsterDeath()
         
         // Kill Mission
         if (Players(Killer).Mission.Type == MT_KILL && !ArenaActive)
-            if (StrCmp(GetActorClass(0), Players(Killer).Mission.Monster.Actor) >= 0)
+        {
+            str Actor = GetActorClass(0);
+            str NeededActor = StrParam("%sRPG\n", Players(Killer).Mission.Monster.Actor);
+            int Match = StrCmp(Actor, NeededActor);
+            
+            // Special Handling for Humans
+            for (int i = 0; i < MAX_HUMANS; i++)
+            {
+                str NewActor = StrLeft(Actor, StrLen(Actor) - 3);
+                
+                if (StrCmp(NewActor, MonsterHumanData[i][0]) == 0)
+                {
+                    Actor = StrParam("%sRPG\n", MonsterHumanData[i][1]);
+                    Match = StrCmp(Actor, NeededActor);
+                    break;
+                };
+            };
+            
+            if (GetUserCVar(Killer, "drpg_debug"))
+                Log("\cdDEBUG: \caKilled %s, need %s, match was %d\n", Actor, NeededActor, Match);
+            
+            if (Match == 0)
                 Players(Killer).Mission.Current++;
+        };
     };
     
 	// SHOTGUNS!
