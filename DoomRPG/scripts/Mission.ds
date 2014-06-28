@@ -47,12 +47,22 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
     int RewardCredits = Random((Difficulty + 2), (Difficulty + 2) * 100) * (Player.RankLevel + 1);
     ItemInfo RewardItem = GetRewardItem(Difficulty);
     
+    // Clear extended message portions
+    ClearMessage(MISSION_ID + 1);
+    
+    // Abort Mission
+    if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
+    {
+        AbortMission();
+        return;
+    };
+    
     // You already have a mission
     if (Player.Mission.Active)
     {
         ActivatorSound("menu/error", 127);
         SetFont("BIGFONT");
-        HudMessage("You are already on a mission!\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 3.0, 2.0);
+        HudMessage("You are already on a mission!\n", HUDMSG_FADEOUT, MISSION_ID, CR_RED, 1.5, 0.5, 3.0, 2.0);
         return;
     };
     
@@ -71,8 +81,8 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
         // Message and Loot Icon
         SetFont("BIGFONT");
         SetHudSize(640, 480, false);
-        HudMessage("New Mission! (%s\c-)\n\n\cdCollection\n\n\ckFind %d %s\n", MissionDifficulties[Difficulty], Amount, Item.Name, HUDMSG_FADEOUT, 0, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
-        PrintSpriteFade(Item.Icon, 0, 320.4, 300.4, 3.0, 2.0);
+        HudMessage("New Mission! (%s\c-)\n\n\cdCollection\n\n\ckFind %d %s\n", MissionDifficulties[Difficulty], Amount, Item.Name, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
+        PrintSpriteFade(Item.Icon, MISSION_ID + 1, 320.4, 300.4, 3.0, 2.0);
         FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
         
         // Pass data to the Mission struct
@@ -97,7 +107,7 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
         // Message
         SetFont("BIGFONT");
         SetHudSize(640, 480, false);
-        HudMessage("New Mission! (%s\c-)\n\n\caKill\n\n\ckKill %d %ss\n", MissionDifficulties[Difficulty], Amount, Monster.Name, HUDMSG_FADEOUT, 0, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
+        HudMessage("New Mission! (%s\c-)\n\n\caKill\n\n\ckKill %d %ss\n", MissionDifficulties[Difficulty], Amount, Monster.Name, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
         FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
         
         // Pass data to the Mission struct
@@ -124,7 +134,7 @@ acscript void AbortMission()
     ActivatorSound("mission/fail", 127);
     SetFont("BIGFONT");
     SetHudSize(640, 480, false);
-    HudMessage("Mission Aborted!\n", HUDMSG_FADEOUT, 0, CR_RED, 320.4, 240.0, 3.0, 2.0);
+    HudMessage("Mission Aborted!\n", HUDMSG_FADEOUT, MISSION_ID, CR_ORANGE, 320.4, 240.0, 3.0, 2.0);
     
     // Clear the Mission
     ClearMission();
@@ -164,7 +174,7 @@ function void CheckMission()
         SetHudSize(640, 480, false);
         HudMessage("Mission Complete!\n\n\cj+%d XP\n\ck+%d Rank\n\cf+%d Credits\n\ciItem: \cj%s\n",
                    Player.Mission.RewardXP, Player.Mission.RewardRank, Player.Mission.RewardCredits, Player.Mission.RewardItem.Name,
-                   HUDMSG_FADEOUT, 0, CR_GREEN, 320.4, 240.0, 3.0, 2.0);
+                   HUDMSG_FADEOUT, MISSION_ID, CR_GREEN, 320.4, 240.0, 3.0, 2.0);
         
         // Reward - XP/Rank
         Player.XP += Player.Mission.RewardXP;
