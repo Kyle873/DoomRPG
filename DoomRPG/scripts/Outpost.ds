@@ -12,7 +12,9 @@
 int ShopSpecialTID = 1001;
 int SecretTeleportTID = 1010;
 int MarineSpotTID = 1300;
-int MarineTID = 1301;
+int MarineMinigunSpotTID = 1302;
+int MarineTID = 1400;
+int MarineMaxTID = 1419;
 
 // Choices
 int LevelChoice = 0;
@@ -44,7 +46,7 @@ acscript void EnterOutpost()
 	InBase = true;
 	
 	// Assign the current level to the level choice
-	for (int i = 0; i < NumVisitedLevels; ++i)
+	for (int i = 0; i < NumVisitedLevels; i++)
 	{
 		if (!StrICmp(StrParam("%s\n", LastVisited), StrParam("%s\n", VisitedLevels[i].LumpName)))
 		{
@@ -52,7 +54,7 @@ acscript void EnterOutpost()
 			break;
 		};
 	};
-	
+    
 	// Assign the current skill level to the skill choice
 	SkillChoice = GameSkill() - 1;
 	
@@ -222,6 +224,9 @@ acscript void LevelTransport()
 
 acscript void SkillComputer()
 {
+    // If Marines are hostile, terminate
+    if (MarinesHostile) return;
+    
 	// Terminate if you aren't the Arbitrator
 	if (InMultiplayer && !Arbitrator) return;
 	
@@ -286,7 +291,11 @@ acscript void SkillComputer()
 
 acscript void ToggleArena()
 {
-	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
+    // If Marines are hostile, terminate
+    if (MarinesHostile) return;
+	
+    // If you try to toggle the Arena and you aren't the Arena Arbitrator, terminate
+    if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
 	
 	ArenaActive = !ArenaActive;
 	ActivatorSound("misc/secret", 127);
@@ -307,7 +316,10 @@ acscript void ToggleArena()
 
 acscript void PassArenaLine()
 {
-	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
+    // If Marines are hostile, terminate
+    if (MarinesHostile) return;
+	
+    if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
 	
 	if (ArenaActive)
 	{
@@ -318,7 +330,10 @@ acscript void PassArenaLine()
 
 acscript void SelectArenaWave()
 {
-	// if you're already in a menu, terminate
+    // If Marines are hostile, terminate
+    if (MarinesHostile) return;
+	
+    // if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_TOKENCONVERTER) return;
 	
 	if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
@@ -399,51 +414,83 @@ acscript void SelectArenaWave()
 	};
 };
 
-acscript void PissOffMarines()
+acscript void PissOffMarines(bool Steal)
 {
 	ArenaSetMusic();
-	
-    Thing_Activate(1);
-    SetActorProperty(1, APROP_Friendly, 0);
-    Thing_Hate(1, 0, 6);
-    Thing_ChangeTID(1, 1201);
-    
+        
     // Set flag
     MarinesHostile = true;
     
-    while (true)
-    {
-        // Teleport in new Marines
-        if ((Timer() % (35 * 10)) == 1)
+    // Iterate Marines pre-Delay
+    if (Steal)
+        for (int i = MarineTID; i <= MarineMaxTID; i++)
         {
-            SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
-            SpawnSpotFacing("MarineRandomizer", MarineSpotTID, MarineTID);
+            // Sight Alert
+            if (CheckSight(i, 0, 0))
+            {
+                PlaySound(i, "misc/alert", 0, 1.0);
+                SpawnForced("AlertIcon", GetActorX(i), GetActorY(i), GetActorZ(i) + GetActorPropertyFixed(i, APROP_Height) + 4.0, 0, 0);
+            };
         };
-
-        Delay(1);
+    
+    Delay(35 * 2);
+    
+    // Iterate Marines post-Delay
+    for (int i = MarineTID; i <= MarineMaxTID; i++)
+    {
+        // Remove Friendly flag
+        SetActorProperty(i, APROP_Friendly, false);
+        
+        // Set Marine States
+        if (GetActorProperty(i, APROP_Health) > 0)
+            SetActorState(i, "Enraged", false);
+        
+        /* Heal up to 200 on higher difficulties
+        if (GameSkill() >= 5)
+            if (GetActorProperty(i, APROP_Health) > 0 && GetActorProperty(i, APROP_Health) < 200)
+                SetActorProperty(i, APROP_Health, GetActorProperty(i, APROP_SpawnHealth)); */
+        
+        // Give Credits to Marines
+        SetActorInventory(i, "Credits", Random(10, 1000));
     };
     
-    /* New code for when new Marines are finished
-    // Set Marine States
-    SetActorState(1, "Enraged", true);
+    // Sector Lighting
+    for (int i = 0; i <= 200; i++)
+    {
+        Sector_SetColor(i, 255, 0, 0, 0);
+        Light_Glow(i, 160, 192, 30);
+    };
     
     // Teleport in new Marines
 	while (true)
 	{
-		if ((Timer() % (35 * 10)) == 1)
+        // Spawning
+		if ((Timer() % (35 * 10)) == 0)
 		{
+            // Spawn Reinforcements
 			SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
-			SpawnSpotFacing("MarineRandomizer", MarineSpotTID, MarineTID);
-            SetActorState(MarineTID, "Enraged", true);
+			SpawnSpotFacing("MarineReinforcementSpawner", MarineSpotTID, MarineTID);
+			SpawnSpot("TeleportFog", MarineMinigunSpotTID, 0, 0);
+			SpawnSpotFacing("DRPGMarineReinforcementMinigun", MarineMinigunSpotTID, MarineTID);
+            
+            // Remove Friendly property
+            SetActorProperty(MarineTID, APROP_Friendly, false);
 		};
         
+        // Alarm
+		if ((Timer() % 30) == 0)
+            AmbientSound("misc/alarm", 127);
+        
 		Delay(1);
-	}; */
+	};
 };
 
 acscript void TokenConverter()
 {
-	// if you're already in a menu, terminate
+    // If Marines are hostile, terminate
+    if (MarinesHostile) return;
+	
+    // if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_TOKENCONVERTER) return;
 	
 	int StatWorth = 1;
@@ -1290,6 +1337,7 @@ function void SpawnShopSpecialItem()
         {
             SpawnSpotForced("TeleportFog", ShopSpecialTID, 0, 0);
             SetActorProperty(ShopSpecialTID, APROP_Invulnerable, true);
+            Thing_SetSpecial(ShopSpecialTID, 80, 8);
         };
 	};
 };

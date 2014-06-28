@@ -106,8 +106,12 @@ script MonsterStats(int Flags, int StatFlags)
             fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
             int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
             
+            // Cap Level Number to 100
+            if (LevelNum > 100)
+                LevelNum = 100;
+            
             // If the Arena is active, base the Monster Levels Map Number portion on the current wave
-            if (LevelNum == 999 && ArenaActive)
+            if (InBase && ArenaActive)
                 LevelNum = ArenaWave;
             
             // Calculate Monster Level
@@ -348,7 +352,7 @@ script void MonsterLoop()
 	};
 	
 	// Friendly Monster Aura
-	if (GetActorProperty(0, APROP_Friendly))
+	if (GetActorProperty(0, APROP_Friendly) && GetActorPropertyString(0, APROP_Nametag) != "Marine")
 		SpawnAura(0, 0, false);
 	
 	// Black Aura Effects
@@ -557,7 +561,7 @@ script void MonsterDeath()
 		for (int i = 0; i < MAX_PLAYERS; i++)
 		{
 			if (MonsterFlags & MF_NEGATIVEXP)
-				AddXP(i, -(int)XPAmount, 0, false)
+				AddXP(i, (int)XPAmount, -RankAmount, false)
 			else
 			{
 				if (Killer == i)
