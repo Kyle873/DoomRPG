@@ -215,10 +215,12 @@ acscript void LevelTransport()
                 while (TransportTimer > 0)
                 {
                     int TransportPercent = (int)Abs(100 - ((fixed)TransportTimer / (TransportTimerMax)) * 100.0);
+                    Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
                     
-                    if (GetActorProperty(Player.TID, APROP_Health) <= 0)
+                    if (GetActorProperty(Player.TID, APROP_Health) <= 0 || Buttons & BT_SPEED)
                     {
                         PlaySound(0, "transfer/fail", CHAN_BODY, 1.0, false, ATTN_NONE);
+                        SetPlayerProperty(false, 0, PROP_FROZEN);
                         return;
                     };
                     
@@ -730,7 +732,10 @@ acscript void CreditRoom(int ID)
 	if (ID == 1) // Enter
 		LocalSetMusic("Credits");
 	if (ID == 2) // Exit
-		LocalSetMusic("Outpost");
+        if (PowerOut)
+            LocalSetMusic("Outpost", 4)
+        else
+            LocalSetMusic("Outpost");
 	
 	if (ID == 3) // Kyle873 - That's me!
 	{
