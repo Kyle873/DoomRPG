@@ -203,18 +203,24 @@ acscript void LevelTransport()
             // Special handling for emergency power
             if (PowerOut)
             {
-                int TransportTimerMax = 35 * (5 + GameSkill() + PlayerCount());
+                bool IsTechnician = (GetCVar("drpg_ext_doomrl") && PlayerClass(PlayerNumber()) == 2);
+                int TransportTimerMax = (35 * (5 + GameSkill() + PlayerCount())) / (IsTechnician ? 2 : 1);
                 int TransportTimer = TransportTimerMax;
                 
                 SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
                 SetPlayerProperty(false, 1, PROP_FROZEN);
                 Player.OutpostMenu = 0;
-                Delay(35);
-                PlaySound(0, "misc/transfer", CHAN_BODY, 1.0, true, ATTN_NONE);
+                PlaySound(0, "transfer/loop", CHAN_BODY, 1.0, true, ATTN_NONE);
                 
                 while (TransportTimer > 0)
                 {
                     int TransportPercent = (int)Abs(100 - ((fixed)TransportTimer / (TransportTimerMax)) * 100.0);
+                    
+                    if (GetActorProperty(Player.TID, APROP_Health) <= 0)
+                    {
+                        PlaySound(0, "transfer/fail", CHAN_BODY, 1.0, false, ATTN_NONE);
+                        return;
+                    };
                     
                     SetHudSize(320, 240, false);
                     SetFont("SMALLFONT");
@@ -227,7 +233,7 @@ acscript void LevelTransport()
                     Delay(1);
                 };
                 
-                PlaySound(0, "misc/transfercomplete", CHAN_BODY, 1.0, false, ATTN_NONE);
+                PlaySound(0, "transfer/complete", CHAN_BODY, 1.0, false, ATTN_NONE);
                 Delay(10);
             };
             
