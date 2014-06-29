@@ -446,6 +446,9 @@ acscript void SelectArenaWave()
 
 acscript void PissOffMarines(bool Steal)
 {
+    // If the Marines are already hostile, terminate
+    if (MarinesHostile) return;
+    
     // Set flag
     MarinesHostile = true;
     
@@ -1379,15 +1382,21 @@ function void SpawnShopSpecialItem()
 
 acscript void PowerOutage()
 {
+    // If the power is already out, terminate
+    if (PowerOut) return;
+    
     Delay(10);
     
     PowerOut = true;
     
     // Blackout
-    SetMusic("");
-    ActivatorSound("misc/poweroff", 127);
-    for (int i = 0; i < MAX_OUTPOST_ID; i++)
-        Light_Fade(i, 0, 10);
+    if (!MarinesHostile)
+    {
+        SetMusic("");
+        ActivatorSound("misc/poweroff", 127);
+        for (int i = 0; i < MAX_OUTPOST_ID; i++)
+            Light_Fade(i, 0, 10);
+    };
     
     // Disable Forcefields
     Line_SetBlocking(ForcefieldID, 0, 1023);
@@ -1397,11 +1406,14 @@ acscript void PowerOutage()
     Delay(Random(35 * 3, 35 * 5));
     
     // Enable Emergency Power
-    SetMusic("Outpost", 4);
-    ActivatorSound("misc/poweron", 127);
-    for (int i = 0; i < MAX_OUTPOST_ID; i++)
+    if (!MarinesHostile)
     {
-        Sector_SetColor(i, 255, 0, 0, 0);
-        Light_Fade(i, 160, 60);
+        SetMusic("Outpost", 4);
+        ActivatorSound("misc/poweron", 127);
+        for (int i = 0; i < MAX_OUTPOST_ID; i++)
+        {
+            Sector_SetColor(i, 255, 0, 0, 0);
+            Light_Fade(i, 160, 60);
+        };
     };
 };
