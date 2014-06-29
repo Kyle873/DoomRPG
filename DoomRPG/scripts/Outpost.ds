@@ -24,6 +24,7 @@ int WaveChoice = 1;
 
 // Flags
 bool MarinesHostile = false;
+bool PowerOut = false;
 bool Invasion = false;
 
 // Base costs for wireless page access
@@ -145,7 +146,7 @@ acscript void LevelTransport()
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_LEVELTRANSPORT) return;
 	
-	if (!NumVisitedLevels)
+	if (NumVisitedLevels == 0)
 	{
 		SetFont("BIGFONT");
 		HudMessage("The teleporter has been disabled.\n", HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 0.5);
@@ -157,10 +158,6 @@ acscript void LevelTransport()
 	
 	while (true)
 	{
-		// Draw the background
-		if (GetCVar("drpg_menudim"))
-			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
-
 		// Prevent the menus from being opened
 		Player.InMenu = false;
 		Player.InShop = false;
@@ -203,14 +200,46 @@ acscript void LevelTransport()
 		};
 		if (Buttons == BT_USE && OldButtons != BT_USE)
 		{
-			FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 2.0);
-			Delay(105);
-			SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-			InBase = false;
-			Transported = true;
-			Player.OutpostMenu = 0;
-			ChangeLevel(StrParam("%s\n", VisitedLevels[LevelChoice].LumpName), 0, CHANGELEVEL_NOINTERMISSION, -1);
-			break;
+            // Special handling for emergency power
+            if (PowerOut)
+            {
+                int TransportTimerMax = 35 * (5 + GameSkill() + PlayerCount());
+                int TransportTimer = TransportTimerMax;
+                
+                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+                SetPlayerProperty(false, 1, PROP_FROZEN);
+                Player.OutpostMenu = 0;
+                Delay(35);
+                PlaySound(0, "misc/transfer", CHAN_BODY, 1.0, true, ATTN_NONE);
+                
+                while (TransportTimer > 0)
+                {
+                    int TransportPercent = (int)Abs(100 - ((fixed)TransportTimer / (TransportTimerMax)) * 100.0);
+                    
+                    SetHudSize(320, 240, false);
+                    SetFont("SMALLFONT");
+                    HudMessage("Transferring Power: %d%%\n", TransportPercent, HUDMSG_PLAIN, 0, CR_GREEN, 160.4, 200.4, 0.05);
+                    SetHudClipRect(60, 200 - 6, (int)((fixed)TransportPercent * 2.02), 200 + 6);
+                    PrintSprite("Fill9", 0, 160.4, 200.4, 0.05);
+                    SetHudClipRect(0, 0, 0, 0);
+                    
+                    TransportTimer--;
+                    Delay(1);
+                };
+                
+                PlaySound(0, "misc/transfercomplete", CHAN_BODY, 1.0, false, ATTN_NONE);
+                Delay(10);
+            };
+            
+            Player.OutpostMenu = 0;
+            FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 2.0);
+            Delay(105);
+            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(false, 0, PROP_FROZEN);
+            InBase = false;
+            Transported = true;
+            ChangeLevel(StrParam("%s\n", VisitedLevels[LevelChoice].LumpName), 0, CHANGELEVEL_NOINTERMISSION, -1);
+            break;
 		};
 		if (Buttons == BT_SPEED)
 		{
@@ -225,8 +254,8 @@ acscript void LevelTransport()
 
 acscript void SkillComputer()
 {
-    // If Marines are hostile, terminate
-    if (MarinesHostile) return;
+    // If Marines are hostile or the power is out, terminate
+    if (MarinesHostile || PowerOut) return;
     
 	// Terminate if you aren't the Arbitrator
 	if (InMultiplayer && !Arbitrator) return;
@@ -292,9 +321,9 @@ acscript void SkillComputer()
 
 acscript void ToggleArena()
 {
-    // If Marines are hostile, terminate
-    if (MarinesHostile) return;
-	
+    // If Marines are hostile or the power is out, terminate
+    if (MarinesHostile || PowerOut) return;
+    
     // If you try to toggle the Arena and you aren't the Arena Arbitrator, terminate
     if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
 	
@@ -317,9 +346,9 @@ acscript void ToggleArena()
 
 acscript void PassArenaLine()
 {
-    // If Marines are hostile, terminate
-    if (MarinesHostile) return;
-	
+    // If Marines are hostile or the power is out, terminate
+    if (MarinesHostile || PowerOut) return;
+    
     if (InMultiplayer && (ArenaPlayerNumber >= 0 && PlayerNumber() != ArenaPlayerNumber)) return;
 	
 	if (ArenaActive)
@@ -331,9 +360,9 @@ acscript void PassArenaLine()
 
 acscript void SelectArenaWave()
 {
-    // If Marines are hostile, terminate
-    if (MarinesHostile) return;
-	
+    // If Marines are hostile or the power is out, terminate
+    if (MarinesHostile || PowerOut) return;
+    
     // if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_TOKENCONVERTER) return;
 	
@@ -1351,6 +1380,8 @@ function void SpawnShopSpecialItem()
 acscript void PowerOutage()
 {
     Delay(10);
+    
+    PowerOut = true;
     
     // Blackout
     SetMusic("");
