@@ -1,0 +1,132 @@
+ACTOR DRPGMarineMinigun
+{
+  Health 500
+  GibHealth -70
+  Radius 20
+  Height 56
+  Speed 0
+  Mass 30000
+  MinMissileChance 1
+  PainChance 25
+  PainChance "Fire", 75
+  PainChance "Plasma", 125
+  DamageFactor "Crush", 10
+  DamageFactor "Melee", 0.4
+  DamageFactor "Bullet", 0.2
+  DamageFactor "Fire", 0.8
+  Monster
+  +FLOORCLIP
+  +AVOIDMELEE
+  +MISSILEMORE
+  -COUNTKILL
+  +AMBUSH
+  +NEVERRESPAWN
+  +QUICKTORETALIATE
+  +NOBLOCKMONST
+  +NOINFIGHTING
+  +SEEINVISIBLE
+  +DONTHARMSPECIES
+  Obituary "%o couldn't escape the UAC's wrath."
+  Species "Human"
+  Tag "Heavy Marine"
+  SeeSound "drpgmarinemale1/sight"
+  PainSound "drpgmarinemale1/pain"
+  DeathSound "drpgmarinemale1/death"
+  ActiveSound "drpgmarinemale/active"
+  AttackSound ""
+  States
+  {
+  Spawn:
+    TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NEGATIVEXP | MF_NOPAYKILL | MF_NODROPS)
+    TNT1 A 0
+    TNT1 A 0 A_StopSound(CHAN_WEAPON)
+    TNT1 A 0 A_StopSound(6)
+	Goto SpawnSearch
+  SpawnSearch:
+    TNT1 A 0 A_Jump (128, 2)
+    NM10 A 1 A_Look
+	Goto SpawnSearch+1
+    NM10 C 1 A_Look
+	Goto SpawnSearch+2
+  See:
+    TNT1 A 0 A_StopSound(CHAN_WEAPON)
+    NM10 X 2 A_FaceTarget
+    TNT1 A 0 A_PlaySound("drpgmarines/hpminigunwindup", 6, 1, 0, 0.9)
+    NM10 XXXXX 4 A_FaceTarget
+    Goto Overwatch
+  Overwatch:
+    TNT1 A 0 A_StopSound(CHAN_WEAPON)
+    TNT1 A 0 A_PlaySound("drpgmarines/hpminigunspin", 6, 1, 1, 0.9)
+    TNT1 A 0 A_Chase ("", "MissileRestartFire")
+    NM10 X 1 A_FaceTarget
+    TNT1 A 0 A_Chase ("", "MissileRestartFire")
+    NM10 X 1 A_FaceTarget
+    Loop
+  MissileRestartFire:
+    NM10 X 1 A_FaceTarget
+    TNT1 A 0 A_Jump (256, 1,2,3,4,5,6)
+    NM10 XXXXX 1 A_FaceTarget
+    Goto Missile
+  Missile:
+    TNT1 A 0 A_FaceTarget
+    TNT1 A 0 A_PlaySound("drpgmarines/hpminigun", CHAN_WEAPON, 1, 1, 0.4)
+    TNT1 A 0 A_JumpIfInventory ("DRPGMarineChaingunStateCounter", 1, "MissileAlt")
+    TNT1 A 0 A_GiveInventory ("DRPGMarineChaingunStateCounter", 1)
+    NM10 F 1 Bright A_CustomBulletAttack (30, 5, 1, random(1,7) * 4, "DRPGMarineMinigunBulletPuff", 0, CBAF_NORANDOM)
+    TNT1 A 0 A_MonsterRefire(30, "Overwatch")
+    Goto Missile
+  MissileAlt:
+    TNT1 A 0 A_TakeInventory ("DRPGMarineChaingunStateCounter", 1)
+    NM10 E 1 Bright A_CustomBulletAttack (30, 5, 1, random(1,7) * 4, "DRPGMarineMinigunBulletPuff", 0, CBAF_NORANDOM)
+    TNT1 A 0 A_MonsterRefire(30, "Overwatch")
+    Goto Missile
+  Pain:
+    TNT1 A 0 A_StopSound(CHAN_WEAPON)
+    TNT1 A 0 A_StopSound(6)
+    NM10 G 3
+    NM10 G 3 A_Pain
+    Goto See
+  Death:
+    TNT1 A 0 A_StopSound(CHAN_WEAPON)
+    TNT1 A 0 A_StopSound(6)
+    NM10 H 4
+    NM10 I 4 A_Scream
+    NM10 J 4 A_NoBlocking
+    NM10 K 4
+    TNT1 A 0 A_SpawnItem ("DRPGBodyThud", 0, 0, 0, 0)
+    NM10 LM 4
+    NM10 N -1
+    Stop
+  XDeath:
+    TNT1 A 0 A_StopSound(CHAN_WEAPON)
+    TNT1 A 0 A_StopSound(6)
+    NM10 O 4
+    NM10 P 4 A_XScream
+    NM10 Q 4 A_NoBlocking
+    NM10 PQ 4
+    TNT1 A 0 A_SpawnItem ("DRPGGibThud", 0, 0, 0, 0)
+    NM10 RSTUV 4
+    NM10 W -1
+    Stop
+  Crush:
+    TNT1 A 0 A_StopSound(CHAN_WEAPON)
+    TNT1 A 0 A_StopSound(6)
+    TNT1 A 1 A_SpawnItem("DRPGCrushedMarine",0,0,0,0)
+    Stop
+  }
+}
+
+ACTOR DRPGMarineMinigunNotActuallyPeople : DRPGMarineMinigun 19995
+{
+  +NODAMAGE
+  States
+  {
+  Spawn:
+    NM10 A 10
+ Loop
+  Enraged:
+    TNT1 A 0 A_SpawnItemEx("TeleportFog", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+    TNT1 A 35
+    Stop
+  }
+}

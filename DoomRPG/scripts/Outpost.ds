@@ -16,6 +16,7 @@ int MarineMinigunSpotTID = 1302;
 int MarineTID = 1400;
 int MarineMaxTID = 1419;
 int ForcefieldID = 1500;
+int TurretTID = 1420;
 
 // Choices
 int LevelChoice = 0;
@@ -241,7 +242,7 @@ acscript void LevelTransport()
             
             Player.OutpostMenu = 0;
             FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 2.0);
-            Delay(105);
+            Delay(35 * 2.5);
             SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
             SetPlayerProperty(false, 0, PROP_FROZEN);
             InBase = false;
@@ -500,6 +501,10 @@ acscript void PissOffMarines(bool Steal)
         SetActorInventory(i, "Credits", Random(10, 1000));
     };
     
+    // Set Turret States
+    if (GetActorProperty(TurretTID, APROP_Health) > 0)
+        SetActorState(TurretTID, "Enraged", false);
+    
     // Sector Lighting
     for (int i = 0; i <= MAX_OUTPOST_ID; i++)
     {
@@ -509,7 +514,7 @@ acscript void PissOffMarines(bool Steal)
     
     // Teleport in minigunners
     SpawnSpot("TeleportFog", MarineMinigunSpotTID, 0, 0);
-    SpawnSpotFacing("DRPGMarineReinforcementMinigun", MarineMinigunSpotTID, MarineTID);
+    SpawnSpotFacing("DRPGMarineMinigun", MarineMinigunSpotTID, MarineTID);
     
     // Spawn Reinforcements
 	while (true)
@@ -517,7 +522,10 @@ acscript void PissOffMarines(bool Steal)
 		if ((Timer() % (35 * 10)) == 0)
 		{
 			SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
-			SpawnSpotFacing("MarineReinforcementSpawner", MarineSpotTID, MarineTID);
+            if (GetCVar("drpg_ext_doomrl"))
+                SpawnSpotFacing("DRPGMarineReinforcementDRLASpawner", MarineSpotTID, MarineTID)
+            else
+                SpawnSpotFacing("DRPGMarineReinforcementSpawner", MarineSpotTID, MarineTID);
             SetActorProperty(MarineTID, APROP_Friendly, false);
 		};
         
@@ -1410,6 +1418,9 @@ acscript void PowerOutage()
     // Disable Forcefields
     Line_SetBlocking(ForcefieldID, 0, 1023);
     SetLineTexture(ForcefieldID, SIDE_FRONT, TEXTURE_MIDDLE, "");
+    
+    // Send Turrets into PoweredDown state
+    SetActorState(TurretTID, "PoweredDown");
     
     // Randomized delay for the power to come back on
     Delay(Random(35 * 3, 35 * 5));
