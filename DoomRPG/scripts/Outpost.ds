@@ -1136,7 +1136,7 @@ acscript void Locker(bool Wireless)
 					else if (Player.LockerPage == 10) // Boots
 						TakeInventory("RLBootsInInventory", 1);
 			}
-			else
+			else if (Player.DelayTimer < 35.0 * GetCVarFixed("drpg_menu_repeat"))
 				ActivatorSound("menu/error", 127);
 		};
 		if (Buttons == BT_SPEED && (OldButtons != BT_SPEED || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
@@ -1167,38 +1167,42 @@ acscript void Locker(bool Wireless)
 				{
 					if (Player.LockerPage == 0 && CheckInventory("RLWeaponLimit") >= 6) // Weapons
 					{
-						ActivatorSound("menu/error", 127);
+                        ActivatorSound("menu/error", 127);
 						Success = false;
 					}
 					else if (Player.LockerPage == 1 && CheckInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor) >= GetAmmoCapacity(ItemData[Player.LockerPage][Player.LockerIndex].Actor)) // Ammo
 					{
-						ActivatorSound("menu/error", 127);
+                        ActivatorSound("menu/error", 127);
 						Success = false;
 					}
 					else if (Player.LockerPage == 2 && CheckInventory("RLArmorInInventory") >= 1) // Armor
 					{
-						ActivatorSound("menu/error", 127);
+                        ActivatorSound("menu/error", 127);
 						Success = false;
 					}
 					else if (Player.LockerPage == 3 && Player.LockerIndex == 8 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
 					{
-						ActivatorSound("menu/error", 127);
+                        ActivatorSound("menu/error", 127);
 						Success = false;
 					}
 					else if (Player.LockerPage == 3 && ((PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4)) // Mod Packs
 					{
-						ActivatorSound("menu/error", 127);
+                        ActivatorSound("menu/error", 127);
 						Success = false;
 					}
 					else if (Player.LockerPage == 4 && CheckInventory("RLBootsInInventory") >= 1) // Boots
 					{
-						ActivatorSound("menu/error", 127);
+                        ActivatorSound("menu/error", 127);
 						Success = false;
 					}
 					else if (Player.LockerPage == 0) // Weapons
 						SpawnForced(StrParam("%sPickup\n", ItemData[Player.LockerPage][Player.LockerIndex].Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0)
 					else if (Player.LockerPage == 1) // Ammo
-						GiveInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1)
+                    {
+						GiveInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1);
+                        if (GameSkill() == 1 || GameSkill() >= 5) // Take one extra ammo to account for the double ammo factor
+                            TakeInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1);
+                    }
 					else // Everything else
 						SpawnForced(ItemData[Player.LockerPage][Player.LockerIndex].Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
 					
@@ -1215,7 +1219,7 @@ acscript void Locker(bool Wireless)
 					};
 				};
 			}
-			else
+			else if (Player.DelayTimer < 35.0 * GetCVarFixed("drpg_menu_repeat"))
 				ActivatorSound("menu/error", 127);
 		};
 		
