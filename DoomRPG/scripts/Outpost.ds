@@ -1,4 +1,4 @@
-#include "Arena.dh"
+    #include "Arena.dh"
 #include "Globals.dh"
 #include "ItemData.dh"
 #include "Menu.dh"
@@ -12,11 +12,13 @@
 int ShopSpecialTID = 1001;
 int SecretTeleportTID = 1010;
 int MarineSpotTID = 1300;
-int MarineMinigunSpotTID = 1302;
+int NotorietySpotTID = 1301;
 int MarineTID = 1400;
+int MarineBossTID = 1420;
 int MarineMaxTID = 1419;
+int TurretTID = 1450;
+int BossSpotTID = 1475;
 int ForcefieldID = 1500;
-int TurretTID = 1420;
 
 // Choices
 int LevelChoice = 0;
@@ -66,6 +68,10 @@ acscript void EnterOutpost()
 	
 	// Spawn the Shop Special item
 	SpawnShopSpecialItem();
+    
+    // Boss Placement
+    if (OutpostNotoriety >= 0) // Minigunners
+        SpawnSpotFacing("DRPGMarineMinigunNotActuallyPeople", BossSpotTID, 0);
 };
 
 acscript void RegenArea(int ID)
@@ -461,6 +467,9 @@ acscript void PissOffMarines(bool Steal)
     // Set flag
     MarinesHostile = true;
     
+    // Increase Notoriety
+    OutpostNotoriety++;
+    
     // Demotion
     if (Player.RankLevel > 0 && Steal)
         Player.Rank = RankTable[Player.RankLevel - 2];
@@ -512,9 +521,12 @@ acscript void PissOffMarines(bool Steal)
         Light_Glow(i, 160, 192, 30);
     };
     
-    // Teleport in minigunners
-    SpawnSpot("TeleportFog", MarineMinigunSpotTID, 0, 0);
-    SpawnSpotFacing("DRPGMarineMinigun", MarineMinigunSpotTID, MarineTID);
+    // Boss Placement
+    if (OutpostNotoriety >= 0) // Minigunners
+    {
+        SpawnSpot("TeleportFog", NotorietySpotTID, 0, 0);
+        SpawnSpotFacing("DRPGMarineMinigun", NotorietySpotTID, MarineBossTID);
+    };
     
     // Spawn Reinforcements
 	while (true)
