@@ -721,9 +721,25 @@ function void SpawnAura(int TID, int Type, bool ForceFancy)
 	fixed Radius = GetActorPropertyFixed(TID, APROP_Radius);
 	fixed Height = GetActorPropertyFixed(TID, APROP_Height);
 	int Angle = GetActorAngle(TID) * 256;
-	bool Simple = (GetCVar("drpg_simple_auras") && !ForceFancy);
+    bool Simple = (GetCVar("drpg_simple_auras") && !ForceFancy);
 	bool SpawnOK = false;
-	
+    bool IsPlayer = (ActivatorTID() == Player.TID);
+    int AuraCount;
+    
+    // Calculate number of active Auras
+    if (IsPlayer)
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Player.Aura[i])
+                AuraCount++;
+    
+    // Create rotation for simple Aura icons
+    if (Simple && IsPlayer && AuraCount > 1)
+    {
+        fixed Time = (fixed)Timer() + ((fixed)Type * 14.5);
+        X += Sin(Time / 128.0) * 32.0;
+        Y += Cos(Time / 128.0) * 32.0;
+    };
+    
 	if (Type != 0 && Type != 10 && IsStealth(TID))
 		return;
 	
