@@ -153,7 +153,10 @@ acscript void LevelTransport()
 	// if you're already in a menu, terminate
 	if (Player.OutpostMenu == OMENU_LEVELTRANSPORT) return;
 	
-	if (NumVisitedLevels == 0)
+	// If the Marines are hostile and the bosses aren't dead, terminate
+    if (MarinesHostile && ThingCount(0, MarineBossTID) > 0) return;
+    
+    if (NumVisitedLevels == 0)
 	{
 		SetFont("BIGFONT");
 		HudMessage("The teleporter has been disabled.\n", HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 0.5);
@@ -207,8 +210,8 @@ acscript void LevelTransport()
 		};
 		if (Buttons == BT_USE && OldButtons != BT_USE)
 		{
-            // Special handling for emergency power
-            if (PowerOut)
+            // Special handling for Marine Hostility and Emergency Power
+            if (MarinesHostile || PowerOut)
             {
                 bool IsTechnician = (GetCVar("drpg_ext_doomrl") && PlayerClass(PlayerNumber()) == 2);
                 int TransportTimerMax = (35 * (5 + GameSkill() + PlayerCount())) / (IsTechnician ? 2 : 1);
@@ -467,9 +470,6 @@ acscript void PissOffMarines(bool Steal)
     // Set flag
     MarinesHostile = true;
     
-    // Increase Notoriety
-    OutpostNotoriety++;
-    
     // Demotion
     if (Player.RankLevel > 0 && Steal)
         Player.Rank = RankTable[Player.RankLevel - 2];
@@ -542,12 +542,17 @@ acscript void PissOffMarines(bool Steal)
 		if ((Timer() % 30) == 0)
             AmbientSound("misc/alarm", 127);
         
-        // Check Boss count
+        // Bosses are dead
         if (ThingCount(0, MarineBossTID) <= 0)
         {
             ActivatorSound("misc/poweroff", 127);
+            
+            // Disable Transporter Generator Forcefield
             Line_SetBlocking(ForcefieldGeneratorID, 0, 1023);
             SetLineTexture(ForcefieldGeneratorID, SIDE_FRONT, TEXTURE_MIDDLE, "");
+            
+            // Increase Notoriety
+            OutpostNotoriety++;
         };
         
 		Delay(1);
