@@ -19,6 +19,7 @@ int MarineMaxTID = 1419;
 int TurretTID = 1450;
 int BossSpotTID = 1475;
 int ForcefieldID = 1500;
+int ForcefieldGeneratorID = 1501;
 
 // Choices
 int LevelChoice = 0;
@@ -70,8 +71,7 @@ acscript void EnterOutpost()
 	SpawnShopSpecialItem();
     
     // Boss Placement
-    if (OutpostNotoriety >= 0) // Minigunners
-        SpawnSpotFacing("DRPGMarineMinigunNotActuallyPeople", BossSpotTID, MarineTID);
+    PlaceBoss();
 };
 
 acscript void RegenArea(int ID)
@@ -521,16 +521,13 @@ acscript void PissOffMarines(bool Steal)
         Light_Glow(i, 160, 192, 30);
     };
     
-    // Boss Placement
-    if (OutpostNotoriety >= 0) // Minigunners
-    {
-        SpawnSpot("TeleportFog", NotorietySpotTID, 0, 0);
-        SpawnSpotFacing("DRPGMarineMinigun", NotorietySpotTID, MarineBossTID);
-    };
+    // Boss Spawning
+    SpawnBoss();
     
-    // Spawn Reinforcements
+    // Loop
 	while (true)
 	{
+        // Spawn Reinforcements
 		if ((Timer() % (35 * 10)) == 0)
 		{
 			SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
@@ -544,6 +541,14 @@ acscript void PissOffMarines(bool Steal)
         // Alarm
 		if ((Timer() % 30) == 0)
             AmbientSound("misc/alarm", 127);
+        
+        // Check Boss count
+        if (ThingCount(0, MarineBossTID) <= 0)
+        {
+            ActivatorSound("misc/poweroff", 127);
+            Line_SetBlocking(ForcefieldGeneratorID, 0, 1023);
+            SetLineTexture(ForcefieldGeneratorID, SIDE_FRONT, TEXTURE_MIDDLE, "");
+        };
         
 		Delay(1);
 	};
@@ -1427,7 +1432,7 @@ acscript void PowerOutage()
             Light_Fade(i, 0, 10);
     };
     
-    // Disable Forcefields
+    // Disable Shop Forcefields
     Line_SetBlocking(ForcefieldID, 0, 1023);
     SetLineTexture(ForcefieldID, SIDE_FRONT, TEXTURE_MIDDLE, "");
     
@@ -1447,5 +1452,22 @@ acscript void PowerOutage()
             Sector_SetColor(i, 255, 0, 0, 0);
             Light_Fade(i, 160, 60);
         };
+    };
+};
+
+function void PlaceBoss()
+{
+    // Minigunners
+    if (OutpostNotoriety >= 0)
+        SpawnSpotFacing("DRPGMarineMinigunNotActuallyPeople", BossSpotTID, MarineTID);
+};
+
+function void SpawnBoss()
+{
+    // Minigunners
+    if (OutpostNotoriety >= 0)
+    {
+        SpawnSpot("TeleportFog", NotorietySpotTID, 0, 0);
+        SpawnSpotFacing("DRPGMarineMinigun", NotorietySpotTID, MarineBossTID);
     };
 };
