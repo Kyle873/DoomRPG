@@ -92,6 +92,7 @@ acscript void MonsterDump()
     Log(" Level: %d\n", CheckInventory("MonsterLevel"));
     Log(" Aura: %d\n", CheckInventory("MonsterAura"));
     Log(" Threat: %d\n", CheckInventory("MonsterThreat"));
+    Log(" Current Speed: %d\n", CheckInventory("MonsterSpeed"));
     Log(" \cgStrength: %d\n", CheckInventory("MonsterStrength"));
     Log(" \cdDefense: %d\n", CheckInventory("MonsterDefense"));
     Log(" \caVitality: %d\n", CheckInventory("MonsterVitality"));
@@ -112,6 +113,8 @@ script MonsterStats(int Flags, int StatFlags)
     int MonsterLevel = CheckInventory("MonsterLevel");
 	int MonsterAura = CheckInventory("MonsterAura");
     int MonsterThreat = CheckInventory("MonsterThreat");
+    int MonsterSpeed = CheckInventory("MonsterSpeed");
+    int MonsterSpeedFraction = CheckInventory("MonsterSpeedFraction");
 	int MonsterStrength = CheckInventory("MonsterStrength");
 	int MonsterDefense = CheckInventory("MonsterDefense");
     int MonsterVitality = CheckInventory("MonsterVitality");
@@ -348,10 +351,25 @@ script MonsterStats(int Flags, int StatFlags)
     if (MonsterLuck > 1000)
         MonsterLuck = 1000;
 	
+    // Health
+    int Health = GetActorProperty(0, APROP_SpawnHealth);
+    Health *= 100 + MonsterVitality * 100 / 142;
+    Health /= 100;
+    SetActorProperty(0, APROP_Health, Health);
+    
+    // Speed
+    if (!StatFlags)
+        MonsterSpeed = (int)GetActorPropertyFixed(0, APROP_Speed);
+    fixed SpeedMult = MonsterSpeed;
+    SpeedMult *= 1.0 + (fixed)MonsterAgility / 1000.0;
+    SetActorPropertyFixed(0, APROP_Speed, SpeedMult);
+    
     // Apply the stats to the monster
     SetInventory("MonsterLevel", MonsterLevel);
     SetInventory("MonsterAura", MonsterAura);
     SetInventory("MonsterThreat", MonsterThreat);
+    SetInventory("MonsterSpeed", MonsterSpeed);
+    SetInventory("MonsterSpeedFraction", MonsterSpeedFraction);
     SetInventory("MonsterStrength", MonsterStrength);
     SetInventory("MonsterDefense", MonsterDefense);
     SetInventory("MonsterVitality", MonsterVitality);
@@ -360,17 +378,6 @@ script MonsterStats(int Flags, int StatFlags)
     SetInventory("MonsterAgility", MonsterAgility);
     SetInventory("MonsterCapacity", MonsterCapacity);
     SetInventory("MonsterLuck", MonsterLuck);
-    
-    // Health
-    int Health = GetActorProperty(0, APROP_SpawnHealth);
-    Health *= 100 + MonsterVitality * 100 / 142;
-    Health /= 100;
-    SetActorProperty(0, APROP_Health, Health);
-    
-    // Speed
-    fixed SpeedMult = GetActorPropertyFixed(0, APROP_Speed);
-    SpeedMult *= 1.0 + (fixed)MonsterAgility / 800.0;
-    SetActorPropertyFixed(0, APROP_Speed, SpeedMult);
 };
 
 // Monster Loop
