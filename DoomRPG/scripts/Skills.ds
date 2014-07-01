@@ -692,11 +692,11 @@ acscript void UseSkill() net
 		Overdrive = true;
 	
 	// Overdriving an unlearnt skill will learn it
-	if (Overdrive && CheckInventory("SkillToken") > 0 && CurrentSkill->Level == 0)
+	if (Overdrive && CheckInventory("DRPGSkillToken") > 0 && CurrentSkill->Level == 0)
 	{
 		CurrentSkill->Level++;
 		CurrentSkill->CurrentLevel++;
-		TakeInventory("SkillToken", 1);
+		TakeInventory("DRPGSkillToken", 1);
 		FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
 		return;
 	};
@@ -936,7 +936,7 @@ acscript bool LifeLeech()
 	};
 	
 	// Refund - If the target isn't actually a valid monster
-	if (!CheckInventory("MonsterInit"))
+	if (!CheckInventory("DRPGMonsterInit"))
 	{
 		ThingSound(Players(PlayerNum).TID, "menu/error", 127);
 		return false;
@@ -1000,7 +1000,7 @@ function bool Repair()
 	if (CheckInventory("Armor") > 0 && CheckInventory("Armor") < Player.ArmorMax)
 	{
 		FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
-		GiveInventory("ArmorBonus", RepairAmount);
+		GiveInventory("DRPGArmorBonus", RepairAmount);
 		
 		if (CheckInventory("Armor") > Player.ArmorMax)
 		{
@@ -1075,7 +1075,7 @@ acscript bool PlayerTeleport()
 			{
 				// Teleport
 				SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-				GiveInventory("PlayerTeleportGhost", 1);
+				GiveInventory("DRPGPlayerTeleportGhost", 1);
 				SetActorPosition(Player.TID, GetActorX(Players(PlayerChoice).TID), GetActorY(Players(PlayerChoice).TID), GetActorZ(Players(PlayerChoice).TID), true);
 				SetActorAngle(Player.TID, GetActorAngle(Players(PlayerChoice).TID));
 				
@@ -1084,7 +1084,7 @@ acscript bool PlayerTeleport()
 					Delay(35);
 				
 				// Solidify
-				GiveInventory("PlayerTeleportNormal", 1);
+				GiveInventory("DRPGPlayerTeleportNormal", 1);
 				return true;
 			};
 		};
@@ -1147,7 +1147,7 @@ function bool Powerup(int Type)
 				return false;
 			};
 			ActivatorSound("powerups/protect", 127);
-			GiveInventory(StrParam("SkillInvulnerability%d\n", InvulnLevel), 1);
+			GiveInventory(StrParam("DRPGSkillInvulnerability%d\n", InvulnLevel), 1);
 			break;
 		case 2: // Invisibility
 			if (CheckInventory("PowerShadow"))
@@ -1156,7 +1156,7 @@ function bool Powerup(int Type)
 				return false;
 			};
 			ActivatorSound("powerups/invis", 127);
-			GiveInventory(StrParam("SkillInvisibility%d\n", InvisLevel), 1);
+			GiveInventory(StrParam("DRPGSkillInvisibility%d\n", InvisLevel), 1);
 			break;
 		case 3: // Time Freeze
 			BulletTime(TimeLevel);
@@ -1185,8 +1185,8 @@ function bool Powerup(int Type)
 			break;
 		case 7: // Mind Mapping
 			ActivatorSound("powerups/map", 127);
-            GiveInventory("AllMapRevealer", 1);
-            GiveInventory("AllMapScanner", 1);
+            GiveInventory("DRPGAllMapRevealer", 1);
+            GiveInventory("DRPGAllMapScanner", 1);
 			break;
 		case 8: // Drop Rune
 			return DropWeapon();
@@ -1210,16 +1210,16 @@ function void BulletTime(int Mode)
 	
 	if (Mode == 1) // Stutter Time
 	{
-		SpawnForced("TimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
+		SpawnForced("DRPGTimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
 		SetActorState(1999, "Spawn");
 		TakeInventory("PowerTimeFreezer", 1);
-		GiveInventory("TimeFreezerQuick", 1);
+		GiveInventory("DRPGTimeFreezerQuick", 1);
 	};
 	if (Mode == 2) // Freeze Time
 	{
-		SpawnForced("TimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
+		SpawnForced("DRPGTimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
 		SetActorState(1999, "Spawn");
-		GiveInventory("TimeFreezer", 1);
+		GiveInventory("DRPGTimeFreezer", 1);
 	};
 };
 
@@ -1314,17 +1314,17 @@ acscript bool Weaken()
 	};
 	
 	// Refund - If the target isn't actually a valid monster
-	if (!CheckInventory("MonsterInit"))
+	if (!CheckInventory("DRPGMonsterInit"))
 	{
 		ThingSound(Players(PlayerNum).TID, "menu/error", 127);
 		return false;
 	};
     
     // Get Monster Stats
-	MonsterLevel = CheckInventory("MonsterLevel") / 2;
-	MonsterStrength = CheckInventory("MonsterStrength") / 2;
-	MonsterDefense = CheckInventory("MonsterDefense") / 2;
-	MonsterAura = CheckInventory("MonsterAura");
+	MonsterLevel = CheckInventory("DRPGMonsterLevel") / 2;
+	MonsterStrength = CheckInventory("DRPGMonsterStrength") / 2;
+	MonsterDefense = CheckInventory("DRPGMonsterDefense") / 2;
+	MonsterAura = CheckInventory("DRPGMonsterAura");
 	
 	// Destroy Aura
 	if (WeakenLevel == 2) 
@@ -1336,13 +1336,13 @@ acscript bool Weaken()
 	};
 	
 	// Apply the stats to the monster
-	SetInventory("MonsterLevel", MonsterLevel);
-	SetInventory("MonsterStrength", MonsterStrength);
-	SetInventory("MonsterDefense", MonsterDefense);
-	SetInventory("MonsterAura", MonsterAura);
+	SetInventory("DRPGMonsterLevel", MonsterLevel);
+	SetInventory("DRPGMonsterStrength", MonsterStrength);
+	SetInventory("DRPGMonsterDefense", MonsterDefense);
+	SetInventory("DRPGMonsterAura", MonsterAura);
     
     // Re-run the Stats Script
-    MonsterStats(CheckInventory("MonsterFlags"), SF_PLAYERTARGET);
+    MonsterStats(CheckInventory("DRPGMonsterFlags"), SF_PLAYERTARGET);
 	
     // Reset Activator
     SetActivator(Players(PlayerNum).TID);
@@ -1357,8 +1357,8 @@ function bool Repulse()
 {
 	int RepulsionLevel = Skills[3][2].CurrentLevel;
     
-    SetInventory(StrParam("SkillBlast%d\n", RepulsionLevel), 1);
-    UseInventory(StrParam("SkillBlast%d\n", RepulsionLevel));
+    SetInventory(StrParam("DRPGSkillBlast%d\n", RepulsionLevel), 1);
+    UseInventory(StrParam("DRPGSkillBlast%d\n", RepulsionLevel));
     
     FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.5 + (0.25 * RepulsionLevel));
     
@@ -1544,7 +1544,7 @@ function bool Summon(int Type)
 		SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
 		SetActorAngle(NewID, Angle);
 		SetActorProperty(NewID, APROP_Friendly, 1);
-		GiveActorInventory(NewID, "FriendlyBooster", 1);
+		GiveActorInventory(NewID, "DRPGFriendlyBooster", 1);
 		
 		// Add summon to your summon array
 		for (int i = 0; i < MAX_SUMMONS; i++)
@@ -1577,7 +1577,7 @@ function bool BreakdownArmor()
 	if (Armor > 0)
 	{
 		TakeInventory("BasicArmor", Armor);
-		GiveInventory("Credits", Armor);
+		GiveInventory("DRPGCredits", Armor);
 		
 		// DoomRL Compatibility
 		if (GetCVar("drpg_ext_doomrl"))
@@ -1898,16 +1898,16 @@ function void CheckSkills()
 			
 	// Give the player the Aura item while an Aura is active (for SBARINFO hax)
 	if (Player.AuraTimer > 0)
-		GiveInventory("Aura", 1)
+		GiveInventory("DRPGAura", 1)
 	else
-		TakeInventory("Aura", 1);
+		TakeInventory("DRPGAura", 1);
 	
 	// Make the Player's Aura appear in their Health Bar
 	if (InMultiplayer)
         for (int i = 0; i < AURA_MAX; i++)
             if (Player.Aura[i])
             {
-                SetInventory("MonsterAura", i + 1);
+                SetInventory("DRPGMonsterAura", i + 1);
                 break;
             };
 	
@@ -1989,11 +1989,11 @@ function void CheckSkills()
         {
             SpawnAura(0, AURA_RED + 1, false);
             if (RedAuraLevel == 1)
-                GiveInventory("RedAura2x", 1);
+                GiveInventory("DRPGRedAura2x", 1);
             if (RedAuraLevel >= 2)
-                GiveInventory("RedAura4x", 1);
+                GiveInventory("DRPGRedAura4x", 1);
             if (RedAuraLevel >= 3)
-                GiveInventory("RedAuraInfiniteAmmo", 1);
+                GiveInventory("DRPGRedAuraInfiniteAmmo", 1);
         };
         
         // Green Aura
@@ -2007,7 +2007,7 @@ function void CheckSkills()
             if (GreenAuraLevel == 3)
             {
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
-                GiveInventory("GreenAuraIronFeet", 1);
+                GiveInventory("DRPGGreenAuraIronFeet", 1);
             };
         };
         
@@ -2033,7 +2033,7 @@ function void CheckSkills()
         {
             SpawnAura(0, AURA_PINK + 1, false);
             if (PinkAuraLevel >= 1)
-                GiveInventory("PinkAuraDrain", 1);
+                GiveInventory("DRPGPinkAuraDrain", 1);
             if (PinkAuraLevel >= 2)
                 Player.HealthMax *= 2;
         };
@@ -2117,7 +2117,7 @@ function void CheckSkills()
         {
             SpawnAura(0, AURA_YELLOW + 1, false);
             if ((Timer() % (35 * (6 - YellowAuraLevel))) == 1)
-                GiveInventory("Credits", (Player.RankLevel + 1));
+                GiveInventory("DRPGCredits", (Player.RankLevel + 1));
             if (YellowAuraLevel == 1)
                 LuckMult = 1.25;
             if (YellowAuraLevel == 2)
@@ -2145,7 +2145,7 @@ function void CheckSkills()
     // Decrease timer this tic and calculate HUD timer amount
     for (int i = 0; i < AURA_MAX; i++)
         if (Player.AuraTimer > 0 && Player.Aura[i])
-            if (!CheckInventory("MenuFreezer") && !CheckInventory("PowerTimeFreezer"))
+            if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
             {
                 Player.AuraTimer--;
                 break;
@@ -2172,7 +2172,7 @@ function void CheckSkills()
 	if (BulletTimeTimer >= 0)
 	{
 		if (BulletTimeTimer % 3)
-			GiveInventory("TimeFreezerQuick", 1);
+			GiveInventory("DRPGTimeFreezerQuick", 1);
 		
 		BulletTimeTimer--;
 	};

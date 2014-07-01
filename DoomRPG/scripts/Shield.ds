@@ -25,8 +25,8 @@ script void ShieldScript()
 				  Player.HealthLoss); */
 			
 			// Inventory items for multiplayer/health bar handling
-			SetInventory("ShieldCharge", Player.Shield.Charge);
-			SetInventory("ShieldChargeMax", Player.Shield.Capacity);
+			SetInventory("DRPGShieldCharge", Player.Shield.Charge);
+			SetInventory("DRPGShieldChargeMax", Player.Shield.Capacity);
 			
 			// Shield is Full
 			if (Player.Shield.Charge >= Player.Shield.Capacity && !Player.Shield.Full)
@@ -69,7 +69,7 @@ script void ShieldScript()
 			};
 
 			// Shield Timer
-			if (Player.Shield.Timer > 0 && !CheckInventory("MenuFreezer") && !CheckInventory("PowerTimeFreezer"))
+			if (Player.Shield.Timer > 0 && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
 				Player.Shield.Timer--;
 		};
 		
@@ -93,7 +93,7 @@ acscript void ToggleShield(bool Destroyed) net
 	
 	if (!Player.Shield.Active)
 	{
-        GiveInventory("ShieldOn", 1);
+        GiveInventory("DRPGShieldOn", 1);
 		ActivatorSound("shield/on", 127);
 		Player.Shield.Health = GetActorProperty(Player.TID, APROP_Health);
 		SetActorProperty(Player.TID, APROP_Health, SHIELD_HEALTH);
@@ -102,14 +102,14 @@ acscript void ToggleShield(bool Destroyed) net
 	}
 	else
 	{
-        GiveInventory("ShieldOff", 1);
+        GiveInventory("DRPGShieldOff", 1);
 		ActivatorSound("shield/off", 127);
 		if (!Destroyed) SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);
 		Player.Shield.Active = false;
 		if (GetCVar("drpg_shield_reset"))
 			Player.Shield.Charge = 0;
-		GiveInventory("ShieldReflectionOff", 1);
-		GiveInventory("ShieldGhostOff", 1);
+		GiveInventory("DRPGShieldReflectionOff", 1);
+		GiveInventory("DRPGShieldGhostOff", 1);
 	};
 };
 
@@ -134,9 +134,9 @@ function void CheckShields()
 		SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);;
 		if (GetCVar("drpg_shield_reset"))
 			Player.Shield.Charge = 0;
-        GiveInventory("ShieldOff", 1);
-		GiveInventory("ShieldReflectionOff", 1);
-		GiveInventory("ShieldGhostOff", 1);
+        GiveInventory("DRPGShieldOff", 1);
+		GiveInventory("DRPGShieldReflectionOff", 1);
+		GiveInventory("DRPGShieldGhostOff", 1);
 		Player.Shield.Timer = 35 * Player.Shield.DelayRate;
 	};
 	
@@ -218,7 +218,7 @@ function void CheckShieldAccessory()
 	};
 	
 	if (Player.Shield.Active && Player.Shield.Accessory == 6) // Reflective
-		GiveInventory("ShieldReflection", 1);
+		GiveInventory("DRPGShieldReflection", 1);
 	
 	if (Player.Shield.Active && Player.Shield.Accessory == 7) // Ghost
 	{
@@ -227,7 +227,7 @@ function void CheckShieldAccessory()
 		{
 			if (Random(1, 8) == 1)
 			{
-				GiveInventory("ShieldGhost", 1);
+				GiveInventory("DRPGShieldGhost", 1);
 				Player.Shield.Ghost = true;
 				Player.Shield.GhostTimer = 35 * 5;
 			};
@@ -236,7 +236,7 @@ function void CheckShieldAccessory()
 		// Remove when time is up
 		if (Player.Shield.GhostTimer <= 0)
 		{
-			GiveInventory("ShieldGhostOff", 1);
+			GiveInventory("DRPGShieldGhostOff", 1);
 			Player.Shield.Ghost = false;
 		};
 		

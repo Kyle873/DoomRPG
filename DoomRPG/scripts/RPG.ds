@@ -20,7 +20,7 @@
 str[2] Version =
 {
 	"v0.9.9 Beta - Monsters Intensify Edition";
-	"Tuesday, July 01, 2014 at 10:43:44 AM";
+	"Tuesday, July 01, 2014 at 11:45:05 AM";
 };
 
 // Init Script
@@ -55,7 +55,7 @@ script void Init() enter
         };
         
 		// Height Check
-		SetInventory("HeightCheck", (int)GetActorPropertyFixed(0, APROP_Height));
+		SetInventory("DRPGHeightCheck", (int)GetActorPropertyFixed(0, APROP_Height));
 		
 		// Give the default loadout based on compatibility switches
 		DefaultLoadout();
@@ -167,7 +167,7 @@ script void Loop()
 	CheckHUD();
 	
 	// Give the Player a Health Bar for Multiplayer
-	if (InMultiplayer) SetInventory("HealthBar", 1);
+	if (InMultiplayer) SetInventory("DRPGHealthBar", 1);
 	
 	// Handle the menu cursor color
 	MenuCursorColor = CursorColors[(Timer() / 3) % 6];
@@ -191,7 +191,7 @@ script void Loop()
 	if (Player.InMenu || Player.InShop || Player.OutpostMenu > 0)
 	{
 		if (GetCVar("drpg_menufreeze"))
-			GiveInventory("MenuFreezer", 1);
+			GiveInventory("DRPGMenuFreezer", 1);
 		if (GetCVar("drpg_menudim"))
 			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
 	};
@@ -232,9 +232,9 @@ script void Loop()
 	
 	// Give the Strength boosting item
     if (Player.TotalDamage >= 32000)
-		GiveInventory("Strength32000", 1)
+		GiveInventory("DRPGStrength32000", 1)
 	else if (Player.TotalDamage > 0)
-		GiveInventory(StrParam("Strength%d\n", Player.TotalDamage), 1);
+		GiveInventory(StrParam("DRPGStrength%d\n", Player.TotalDamage), 1);
 	
 	// Set mass stupid high when Invulnerable to prevent knockback
 	if (CheckInventory("PowerInvulnerable"))
@@ -258,7 +258,7 @@ script void Loop()
 		SetPlayerProperty(0, 0, PROP_BUDDHA);
 	
 	// Continue check
-	if (CheckInventory("Continue") > 0)
+	if (CheckInventory("DRPGContinue") > 0)
 	{
 		SetPlayerProperty(0, 1, PROP_BUDDHA);
 		
@@ -266,7 +266,7 @@ script void Loop()
 		{
 			HealThing(1000000);
 			ActivatorSound("health/resurrect", 127);
-			TakeInventory("Continue", 1);
+			TakeInventory("DRPGContinue", 1);
 		};
 	};
 	
@@ -312,7 +312,7 @@ script void Speed()
         Time = 0;
     
     if (GetCVar("drpg_stat_weaponspeed"))
-        GiveInventory("Speed", 1);
+        GiveInventory("DRPGSpeed", 1);
 	
 	Delay(Time + 1);
 	goto Start;
@@ -324,7 +324,7 @@ script void StatRandomizer()
 	Start:
     
     if (GetCVar("drpg_auto_spend"))
-        while (CheckInventory("StatToken") > 0)
+        while (CheckInventory("DRPGStatToken") > 0)
         {
             if (Random(1, 2) == 1 && GetCVar("drpg_auto_spend_pref") > 0) // Select Preferred Stat
                 IncreaseStat(GetCVar("drpg_auto_spend_pref"))
@@ -429,21 +429,21 @@ acscript void QuickHeal(int Quick) net
 	{
 		if (GetCVar("drpg_auto_heal_order") == 1) // Smallest to Largest
 		{
-				 if (CheckInventory("StimPack"))			UseInventory("StimPack")
-			else if (CheckInventory("Medikit"))				UseInventory("Medikit")
-			else if (CheckInventory("LargeMedikit"))		UseInventory("LargeMedikit")
-			else if (CheckInventory("XLMedikit"))			UseInventory("XLMedikit")
-			else if (CheckInventory("MedPack"))				UseInventory("MedPack")
-			else if (CheckInventory("SurgeryKit"))			UseInventory("SurgeryKit");
+				 if (CheckInventory("DRPGStimPack"))			UseInventory("DRPGStimPack")
+			else if (CheckInventory("DRPGMedikit"))				UseInventory("DRPGMedikit")
+			else if (CheckInventory("DRPGLargeMedikit"))		UseInventory("DRPGLargeMedikit")
+			else if (CheckInventory("DRPGXLMedikit"))			UseInventory("DRPGXLMedikit")
+			else if (CheckInventory("DRPGMedPack"))				UseInventory("DRPGMedPack")
+			else if (CheckInventory("DRPGSurgeryKit"))			UseInventory("DRPGSurgeryKit");
 		}
 		else if (GetCVar("drpg_auto_heal_order") == 2) // Largest to Smallest
 		{
-				 if (CheckInventory("SurgeryKit"))			UseInventory("SurgeryKit")
-			else if (CheckInventory("MedPack"))				UseInventory("MedPack")
-			else if (CheckInventory("XLMedikit"))			UseInventory("XLMedikit")
-			else if (CheckInventory("LargeMedikit"))		UseInventory("LargeMedikit")
-			else if (CheckInventory("Medikit"))				UseInventory("Medikit")
-			else if (CheckInventory("StimPack"))			UseInventory("StimPack");
+				 if (CheckInventory("DRPGSurgeryKit"))			UseInventory("DRPGSurgeryKit")
+			else if (CheckInventory("DRPGMedPack"))				UseInventory("DRPGMedPack")
+			else if (CheckInventory("DRPGXLMedikit"))			UseInventory("DRPGXLMedikit")
+			else if (CheckInventory("DRPGLargeMedikit"))		UseInventory("DRPGLargeMedikit")
+			else if (CheckInventory("DRPGMedikit"))				UseInventory("DRPGMedikit")
+			else if (CheckInventory("DRPGStimPack"))			UseInventory("DRPGStimPack");
 		};
 	};
 };
@@ -459,14 +459,14 @@ acscript void QuickEP() net
 	
 	int Amount = Player.EPMax - Player.EP;
 	
-	if (CheckInventory("Credits") > 0 && Player.EP < Player.EPMax)
+	if (CheckInventory("DRPGCredits") > 0 && Player.EP < Player.EPMax)
 	{
 		ActivatorSound("health/epcapsule", 127);
 		
-		if (CheckInventory("Credits") < Amount)
-			Amount = CheckInventory("Credits");
+		if (CheckInventory("DRPGCredits") < Amount)
+			Amount = CheckInventory("DRPGCredits");
 		
-		TakeInventory("Credits", Amount);
+		TakeInventory("DRPGCredits", Amount);
 		AddEP(Amount);
 	}
 	else
@@ -494,14 +494,14 @@ script void Dead() death
 		ToggleShield(true);
 	
 	// Drop Credits
-	if (GetCVar("drpg_multi_dropcredits") && CheckInventory("Credits") > 0)
+	if (GetCVar("drpg_multi_dropcredits") && CheckInventory("DRPGCredits") > 0)
 	{
-		int DropAmount = CheckInventory("Credits") / 100 * GetCVar("drpg_multi_dropcredits_percent");
+		int DropAmount = CheckInventory("DRPGCredits") / 100 * GetCVar("drpg_multi_dropcredits_percent");
 		
 		// Cap out at a million so if you have stupid amounts of Credits you don't freeze/nuke the game
 		if (DropAmount > 1000000) DropAmount = 1000000;
 		
-		TakeInventory("Credits", DropAmount);
+		TakeInventory("DRPGCredits", DropAmount);
 		
 		// Credit Fountain
 		int Total = DropAmount;
@@ -610,7 +610,7 @@ function void CheckHUD()
 	
 	// For EP Bar on HUD
     if (Player.EP > 0)
-        SetInventory("EP", Player.EP * 100 / Player.EPMax);
+        SetInventory("DRPGEP", Player.EP * 100 / Player.EPMax);
     
 	// Combo System
 	Combo[PlayerNum] = Player.Combo;
@@ -622,23 +622,23 @@ function void CheckHUD()
 	AuraTimerHUD[PlayerNum] = Player.AuraTimer / 35 + 1;
 	
 	// Regen Boost
-	SetInventory("RegenBoost", (Player.RegenBoostTimer > 0));
+	SetInventory("DRPGRegenBoost", (Player.RegenBoostTimer > 0));
 	RegenBoostTimerHUD[PlayerNum] = Player.RegenBoostTimer / 35 + 1;
 	
 	// For Combo Bar on HUD
 	if (Player.ComboTimer < 35 * 4 && Player.ComboTimer > 35 * 2)
 	{
-		SetInventory("Combo", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
-		SetInventory("Combo2", 0);
+		SetInventory("DRPGCombo", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+		SetInventory("DRPGCombo2", 0);
 	}
 	else if (Player.ComboTimer <= 35 * 2)
 	{
-		SetInventory("Combo", 0);
-		SetInventory("Combo2", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+		SetInventory("DRPGCombo", 0);
+		SetInventory("DRPGCombo2", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
 	};
 	
 	// Stim Timer
-	SetInventory("StimActive", Player.Stim.Active);
+	SetInventory("DRPGStimActive", Player.Stim.Active);
 	if (Player.Stim.Timer > 0)
 		StimTimerHUD[PlayerNum] = Player.Stim.Timer / 35 + 1
 	else
@@ -647,9 +647,9 @@ function void CheckHUD()
 	// Shield
 	Shield[PlayerNum] = Player.Shield.Charge;
 	ShieldCapacity[PlayerNum] = Player.Shield.Capacity;
-	TakeInventory("ShieldCapacity", 100);
-	GiveInventory("ShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
-	SetInventory("Shield", Player.Shield.Active);
+	TakeInventory("DRPGShieldCapacity", 100);
+	GiveInventory("DRPGShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
+	SetInventory("DRPGShield", Player.Shield.Active);
 	
 	// Status Timer
 	if (Player.StatusTimer > 0)
@@ -658,8 +658,8 @@ function void CheckHUD()
 		StatusTimerHUD[PlayerNum] = 0;
 	
 	// Items
-	Credits[PlayerNum] = CheckInventory("Credits");
-	Continues[PlayerNum] = CheckInventory("Continue");
+	Credits[PlayerNum] = CheckInventory("DRPGCredits");
+	Continues[PlayerNum] = CheckInventory("DRPGContinue");
 };
 
 function void DefaultLoadout()
