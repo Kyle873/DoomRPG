@@ -14,12 +14,16 @@ int SecretTeleportTID = 1010;
 int MarineSpotTID = 1300;
 int NotorietySpotTID = 1301;
 int MarineTID = 1400;
-int MarineBossTID = 1420;
 int MarineMaxTID = 1419;
+int MarineBossTID = 1421;
 int TurretTID = 1450;
 int BossSpotTID = 1475;
 int ForcefieldID = 1500;
 int ForcefieldGeneratorID = 1501;
+int GeneratorTID = 1510;
+
+// Timers
+int BossTimer = 35 * 60 * GameSkill(); // 1 Minute per skill increment
 
 // Choices
 int LevelChoice = 0;
@@ -218,16 +222,20 @@ acscript void LevelTransport()
                 int TransportTimerMax = (35 * (5 + GameSkill() + PlayerCount())) / (IsTechnician ? 2 : 1);
                 int TransportTimer = TransportTimerMax;
                 
+                // Setup power transfer
                 SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
                 SetPlayerProperty(false, 1, PROP_FROZEN);
                 Player.OutpostMenu = 0;
                 PlaySound(0, "transfer/loop", CHAN_BODY, 1.0, true, ATTN_NONE);
                 
+                // Power transfer loop
                 while (TransportTimer > 0)
                 {
+                    // Calculate percentage complete and input
                     int TransportPercent = (int)Abs(100 - ((fixed)TransportTimer / (TransportTimerMax)) * 100.0);
                     Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
                     
+                    // Transfer is cancelled either by death or input
                     if (GetActorProperty(Player.TID, APROP_Health) <= 0 || Buttons & BT_SPEED)
                     {
                         PlaySound(0, "transfer/fail", CHAN_BODY, 1.0, false, ATTN_NONE);
@@ -235,6 +243,7 @@ acscript void LevelTransport()
                         return;
                     };
                     
+                    // Draw transfer bar/text
                     SetHudSize(320, 240, false);
                     SetFont("SMALLFONT");
                     HudMessage("Transferring Power: %d%%\n", TransportPercent, HUDMSG_PLAIN, 0, CR_GREEN, 160.4, 200.4, 0.05);
@@ -242,6 +251,7 @@ acscript void LevelTransport()
                     PrintSprite("Fill9", 0, 160.4, 200.4, 0.05);
                     SetHudClipRect(0, 0, 0, 0);
                     
+                    // Decrement timer
                     TransportTimer--;
                     Delay(1);
                 };
@@ -257,6 +267,7 @@ acscript void LevelTransport()
             SetPlayerProperty(false, 0, PROP_FROZEN);
             InBase = false;
             Transported = true;
+            if (BossDead) OutpostNotoriety++;
             ChangeLevel(StrParam("%s\n", VisitedLevels[LevelChoice].LumpName), 0, CHANGELEVEL_NOINTERMISSION, -1);
             break;
 		};
@@ -482,7 +493,7 @@ acscript void PissOffMarines(bool Steal)
             // Sight Alert
             if (CheckSight(i, 0, 0))
             {
-                PlaySound(i, "misc/alert", 0, 1.0);
+                PlaySound(i, "drpgmarines/shopkeephatred", 0, 1.0);
                 SpawnForced("DRPGAlertIcon", GetActorX(i), GetActorY(i), GetActorZ(i) + GetActorPropertyFixed(i, APROP_Height) + 4.0, 0, 0);
             };
         };
@@ -498,22 +509,26 @@ acscript void PissOffMarines(bool Steal)
         // Remove Friendly flag
         SetActorProperty(i, APROP_Friendly, false);
         
-        // Set Marine States
+        // Enrage Marines
         if (GetActorProperty(i, APROP_Health) > 0)
             SetActorState(i, "Enraged", false);
-        
-        /* Heal up to 200 on higher difficulties
-        if (GameSkill() >= 5)
-            if (GetActorProperty(i, APROP_Health) > 0 && GetActorProperty(i, APROP_Health) < 200)
-                SetActorProperty(i, APROP_Health, GetActorProperty(i, APROP_SpawnHealth)); */
         
         // Give Credits to Marines
         SetActorInventory(i, "DRPGCredits", Random(10, 1000));
     };
     
-    // Set Turret States
+    // Enrage Turrets
     if (GetActorProperty(TurretTID, APROP_Health) > 0)
+    {
         SetActorState(TurretTID, "Enraged", false);
+        
+        // Power-down Turrets for Large Powersuit
+        if (OutpostNotoriety >= 3)
+            SetActorState(TurretTID, "PoweredDown", false);
+    };
+    
+    // Enrage placeholder bosses
+    SetActorState(MarineBossTID - 1, "Enraged", false);
     
     // Sector Lighting
     for (int i = 0; i <= MAX_OUTPOST_ID; i++)
@@ -528,36 +543,51 @@ acscript void PissOffMarines(bool Steal)
     // Raise Entry Forcefield
     Line_SetBlocking(ForcefieldGeneratorID, 1023, 0);
     SetLineTexture(ForcefieldGeneratorID, SIDE_FRONT, TEXTURE_MIDDLE, "FORCEFIE");
+    SpawnSpotForced("TeleportFog", GeneratorTID, 0, 0);
+    SpawnSpotForced("DRPGForcefieldGenerator", GeneratorTID, GeneratorTID, 0);
     
     // Loop
 	while (true)
 	{
         // Spawn Reinforcements
-		if ((Timer() % (35 * 10)) == 0)
+		if ((Timer() % (35 * 10)) == 0 && OutpostNotoriety <= 2)
 		{
-			SpawnSpot("TeleportFog", MarineSpotTID, 0, 0);
-            if (GetCVar("drpg_ext_doomrl"))
-                SpawnSpotFacing("DRPGMarineReinforcementDRLASpawner", MarineSpotTID, MarineTID)
+			SpawnSpotForced("TeleportFog", MarineSpotTID, 0, 0);
+            if (OutpostNotoriety == 2) // Special handling for Chasing Minigunners
+                SpawnSpotFacingForced("DRPGMarineMinigunHuntingYerAss", MarineSpotTID, MarineTID)
             else
-                SpawnSpotFacing("DRPGMarineReinforcementSpawner", MarineSpotTID, MarineTID);
+                if (GetCVar("drpg_ext_doomrl"))
+                    SpawnSpotFacingForced("DRPGMarineReinforcementDRLASpawner", MarineSpotTID, MarineTID)
+                else
+                    SpawnSpotFacingForced("DRPGMarineReinforcementSpawner", MarineSpotTID, MarineTID);
             SetActorProperty(MarineTID, APROP_Friendly, false);
 		};
+        
+        // Boss Timer
+        if (BossTimer > 0 && OutpostNotoriety == 2)
+        {
+            // Set completion state on the Shield Generator
+            SetActorState(GeneratorTID, StrParam("%dPowerLoop\n", BossTimer / ((35 * 60 * GameSkill()) / 7)), false);
+            
+            // Decrement timer
+            BossTimer--;
+        };
         
         // Alarm
 		if ((Timer() % 30) == 0)
             AmbientSound("misc/alarm", 127);
         
-        // Bosses are dead
-        if (ThingCount(0, MarineBossTID) <= 0 && !BossDead)
+        // Bosses are dead or boss timer expires
+        if ((OutpostNotoriety == 2 ? BossTimer <= 0 : ThingCount(0, MarineBossTID) <= 0) && !BossDead)
         {
             AmbientSound("misc/poweroff", 127);
-            
+                
             // Disable Entry Forcefield
             Line_SetBlocking(ForcefieldGeneratorID, 0, 1023);
             SetLineTexture(ForcefieldGeneratorID, SIDE_FRONT, TEXTURE_MIDDLE, "");
+            SetActorState(GeneratorTID, "Death", false);
             
-            // Increase Notoriety
-            OutpostNotoriety++;
+            // Boss is dead
             BossDead = true;
         };
         
@@ -1321,6 +1351,105 @@ acscript void OutpostSecret()
 	};
 };
 
+acscript void PowerOutage()
+{
+    // If the power is already out, terminate
+    if (PowerOut) return;
+    
+    Delay(10);
+    
+    PowerOut = true;
+    
+    // Blackout
+    if (!MarinesHostile)
+    {
+        SetMusic("");
+        ActivatorSound("misc/poweroff", 127);
+        for (int i = 0; i < MAX_OUTPOST_ID; i++)
+            Light_Fade(i, 0, 10);
+    };
+    
+    // Disable Shop Forcefields
+    Line_SetBlocking(ForcefieldID, 0, 1023);
+    SetLineTexture(ForcefieldID, SIDE_FRONT, TEXTURE_MIDDLE, "");
+    
+    // Send Turrets into PoweredDown state
+    SetActorState(TurretTID, "PoweredDown");
+    
+    // Randomized delay for the power to come back on
+    Delay(Random(35 * 3, 35 * 5));
+    
+    // Enable Emergency Power
+    if (!MarinesHostile)
+    {
+        SetMusic("Outpost", 4);
+        ActivatorSound("misc/poweron", 127);
+        for (int i = 0; i < MAX_OUTPOST_ID; i++)
+        {
+            Sector_SetColor(i, 255, 0, 0, 0);
+            Light_Fade(i, 160, 60);
+        };
+    };
+};
+
+acscript void PlaceBoss()
+{
+    // Minigunners
+    if (OutpostNotoriety == 0)
+        SpawnSpotFacingForced("DRPGMarineMinigunNotActuallyPeople", BossSpotTID, MarineBossTID - 1);
+    
+    // Small Powersuit
+    if (OutpostNotoriety == 1)
+        SpawnSpotFacingForced("DRPGPowerSuitSlackingOffDownstairs", BossSpotTID + 1, MarineBossTID - 1);
+    
+    // Heavy Marines
+    if (OutpostNotoriety == 2)
+        SpawnSpotFacingForced("DRPGMarineMinigunNotActuallyPeople", BossSpotTID, MarineBossTID - 1);
+    
+    // Large Powersuit
+    if (OutpostNotoriety >= 3)
+        SpawnSpotFacingForced("DRPGHeavyPowerSuitHavingASiesta", BossSpotTID + 2, MarineBossTID - 1);
+};
+
+acscript void SpawnBoss()
+{
+    // Minigunners
+    if (OutpostNotoriety == 0)
+    {
+        SpawnSpotForced("TeleportFog", NotorietySpotTID, 0, 0);
+        SpawnSpotFacingForced("DRPGMarineMinigun", NotorietySpotTID, MarineBossTID);
+    };
+    
+    // Small Powersuit
+    if (OutpostNotoriety == 1)
+    {
+        SpawnSpotForced("DRPGBigTeleportFog", NotorietySpotTID, 0, 0);
+        SpawnSpotFacingForced("DRPGPowerSuit", NotorietySpotTID, MarineBossTID);
+    };
+    
+    // Heavy Marines
+    if (OutpostNotoriety == 2)
+    {
+        SpawnSpotForced("TeleportFog", NotorietySpotTID, 0, 0);
+        SpawnSpotFacingForced("DRPGMarineMinigunHuntingYerAss", NotorietySpotTID, MarineBossTID);
+    };
+    
+    // Large Powersuit
+    if (OutpostNotoriety >= 3)
+    {
+        // Teleport out guards
+        for (int i = MarineTID; i <= MarineMaxTID; i++)
+        {
+            SpawnSpot("TeleportFog", i, 0, 0);
+            Thing_Remove(i);
+        };
+        
+        SetMusic("Boss");
+        SpawnSpotForced("DRPGHugeTeleportFog", NotorietySpotTID + 1, 0, 0);
+        SpawnSpotFacingForced("DRPGHeavyPowerSuit", NotorietySpotTID + 1, MarineBossTID);
+    };
+};
+
 function void CheckShopSpecial(bool Force)
 {
 	// Reset the item
@@ -1423,62 +1552,4 @@ function void SpawnShopSpecialItem()
             Thing_SetSpecial(ShopSpecialTID, 80, 8);
         };
 	};
-};
-
-acscript void PowerOutage()
-{
-    // If the power is already out, terminate
-    if (PowerOut) return;
-    
-    Delay(10);
-    
-    PowerOut = true;
-    
-    // Blackout
-    if (!MarinesHostile)
-    {
-        SetMusic("");
-        ActivatorSound("misc/poweroff", 127);
-        for (int i = 0; i < MAX_OUTPOST_ID; i++)
-            Light_Fade(i, 0, 10);
-    };
-    
-    // Disable Shop Forcefields
-    Line_SetBlocking(ForcefieldID, 0, 1023);
-    SetLineTexture(ForcefieldID, SIDE_FRONT, TEXTURE_MIDDLE, "");
-    
-    // Send Turrets into PoweredDown state
-    SetActorState(TurretTID, "PoweredDown");
-    
-    // Randomized delay for the power to come back on
-    Delay(Random(35 * 3, 35 * 5));
-    
-    // Enable Emergency Power
-    if (!MarinesHostile)
-    {
-        SetMusic("Outpost", 4);
-        ActivatorSound("misc/poweron", 127);
-        for (int i = 0; i < MAX_OUTPOST_ID; i++)
-        {
-            Sector_SetColor(i, 255, 0, 0, 0);
-            Light_Fade(i, 160, 60);
-        };
-    };
-};
-
-function void PlaceBoss()
-{
-    // Minigunners
-    if (OutpostNotoriety >= 0)
-        SpawnSpotFacing("DRPGMarineMinigunNotActuallyPeople", BossSpotTID, MarineTID);
-};
-
-function void SpawnBoss()
-{
-    // Minigunners
-    if (OutpostNotoriety >= 0)
-    {
-        SpawnSpot("TeleportFog", NotorietySpotTID, 0, 0);
-        SpawnSpotFacing("DRPGMarineMinigun", NotorietySpotTID, MarineBossTID);
-    };
 };
