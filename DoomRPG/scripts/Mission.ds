@@ -240,11 +240,19 @@ function ItemInfo GetRewardItem(int Difficulty)
     // Calculate Category
     int Category = Random(0, Difficulty + 2);
     
-    // Calculate Index
-    fixed IndexRatio = (fixed)Difficulty / (fixed)MAX_DIFFICULTIES;
-    int IndexMax = (int)((ItemMax[Categories[Category]] - 1) * IndexRatio);
-    int IndexMin = (IndexMax / 2) + (Categories[Category] == 2 || Categories[Category] == 3 ? 1 : 0);
-    int Index = Random(IndexMin, IndexMax);
+    /* We calculate an offset to make the highest reward scope larger if the category is not evenly divisible by
+       MAX_DIFFICULTIES. The ScopeLength is calculated based on an evenly divisible measurement of the category.
+       ScopeStart is a simple multiplier according to Difficulty. This creates evenly sized reward scopes within
+       a category of items. Much better than what we've been doing.
+       
+       Thanks to SidDoyle for the super math
+    */
+    int RewardOffset = ItemMax[Categories[Category]] % MAX_DIFFICULTIES;
+    int ScopeLength = (ItemMax[Categories[Category]] - RewardOffset) / MAX_DIFFICULTIES;
+    int ScopeStart = Difficulty * ScopeLength;
+    if (Difficulty == MAX_DIFFICULTIES - 1)
+        ScopeLength += RewardOffset;
+    int Index = Random(ScopeStart, ScopeStart + ScopeLength - 1);    
     ItemInfo Item = ItemData[Categories[Category]][Index];
     
     // Debugging
