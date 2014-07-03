@@ -41,6 +41,8 @@ echo Compiling Mission
 %ACC% -c %SRC%\Mission.ds -o %OBJ%\Mission.o
 echo Compiling Monsters
 %ACC% -c %SRC%\Monsters.ds -o %OBJ%\Monsters.o
+echo Compiling Namegen
+%ACC% -c %SRC%\Namegen.ds -o %OBJ%\Namegen.o
 echo Compiling Outpost
 %ACC% -c %SRC%\Outpost.ds -o %OBJ%\Outpost.o
 echo Compiling Password
@@ -62,7 +64,7 @@ echo Compiling Stims
 echo Compiling Utils
 %ACC% -c %SRC%\Utils.ds -o %OBJ%\Utils.o
 echo Linking RPG.lib
-%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\GUI.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
+%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\GUI.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
 
 echo ----------------------------------------
 
