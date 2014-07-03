@@ -642,22 +642,21 @@ script void MonsterDeath()
             str NeededActor = StrParam("DRPG%s\n", Players(Killer).Mission.Monster.Actor);
             int Match = StrCmp(Actor, NeededActor);
             
-            // Special Handling for Humans
+            // DoomRL Compatibility
             if (GetCVar("drpg_ext_doomrl"))
             {
                 NeededActor = StrParam("%sRPG\n", Players(Killer).Mission.Monster.Actor);
                 
+                // Special handling for Humans
                 for (int i = 0; i < MAX_HUMANS; i++)
-                {
-                    str NewActor = StrLeft(Actor, StrLen(Actor) - 3);
-                    
-                    if (StrCmp(NewActor, MonsterHumanData[i][0]) == 0)
+                    if (StrCmp(StrLeft(Actor, StrLen(Actor) - 3), MonsterHumanData[i][0]) == 0)
                     {
                         Actor = StrParam("%sRPG\n", MonsterHumanData[i][1]);
-                        Match = StrCmp(Actor, NeededActor);
                         break;
                     };
-                };
+                
+                // Re-check the match
+                Match = StrCmp(Actor, NeededActor);
             };
             
             if (GetUserCVar(Killer, "drpg_debug"))
