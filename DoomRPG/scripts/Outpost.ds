@@ -23,7 +23,7 @@ int ForcefieldGeneratorID = 1501;
 int GeneratorTID = 1510;
 
 // Timers
-int BossTimer = 35 * 60 * GameSkill(); // 1 Minute per skill increment
+int ForcefieldTimer = 35 * 60 * GameSkill(); // 1 Minute per skill increment
 
 // Choices
 int LevelChoice = 0;
@@ -56,6 +56,10 @@ acscript void EnterOutpost()
 {
 	InBase = true;
 	
+    // Use alternate music if you have a high Notoriety
+    if (OutpostNotoriety >= 3)
+        SetMusic("Outpost2");
+    
 	// Assign the current level to the level choice
 	for (int i = 0; i < NumVisitedLevels; i++)
 	{
@@ -476,6 +480,8 @@ acscript void SelectArenaWave()
 
 acscript void PissOffMarines(bool Steal)
 {
+    int ForcefieldState;
+    
     // If the Marines are already hostile, terminate
     if (MarinesHostile) return;
     
@@ -537,14 +543,21 @@ acscript void PissOffMarines(bool Steal)
         Light_Glow(i, 160, 192, 30);
     };
     
+    // Start the Alarm loop
+    AlarmLoop();
+    
     // Boss Spawning
     SpawnBoss();
     
     // Raise Entry Forcefield
-    Line_SetBlocking(ForcefieldGeneratorID, 1023, 0);
+    Line_SetBlocking(ForcefieldGeneratorID, BLOCKF_EVERYTHING | BLOCKF_SIGHT | BLOCKF_HITSCAN, 0);
     SetLineTexture(ForcefieldGeneratorID, SIDE_FRONT, TEXTURE_MIDDLE, "FORCEFIE");
     SpawnSpotForced("TeleportFog", GeneratorTID, 0, 0);
     SpawnSpotForced("DRPGForcefieldGenerator", GeneratorTID, GeneratorTID, 0);
+    
+    // Synchronize delay with SpawnBoss()
+    if (OutpostNotoriety == 3)
+        Delay(35 * 30);
     
     // Loop
 	while (true)
@@ -564,31 +577,35 @@ acscript void PissOffMarines(bool Steal)
 		};
         
         // Boss Timer
-        if (BossTimer > 0 && OutpostNotoriety == 2)
+        if (ForcefieldTimer > 0 && OutpostNotoriety == 2)
         {
             // Set completion state on the Shield Generator
-            SetActorState(GeneratorTID, StrParam("%dPowerLoop\n", BossTimer / ((35 * 60 * GameSkill()) / 7)), false);
+            SetActorState(GeneratorTID, StrParam("%dPowerLoop\n", ForcefieldTimer / ((35 * 60 * GameSkill()) / 7)), false);
             
             // Decrement timer
-            BossTimer--;
+            ForcefieldTimer--;
         };
         
-        // Alarm
-		if ((Timer() % 30) == 0)
-            AmbientSound("misc/alarm", 127);
+        // Different checks for specific Notoriety levels
+        if (ForcefieldState == 0)
+            if (OutpostNotoriety == 2 && ForcefieldTimer <= 0)
+                ForcefieldState = 1
+            else if (OutpostNotoriety != 2 && ThingCount(0, MarineBossTID) <= 0)
+                ForcefieldState = 1;
         
         // Bosses are dead or boss timer expires
-        if ((OutpostNotoriety == 2 ? BossTimer <= 0 : ThingCount(0, MarineBossTID) <= 0) && !BossDead)
+        if (ForcefieldState == 1)
         {
             AmbientSound("misc/poweroff", 127);
-                
+            
             // Disable Entry Forcefield
-            Line_SetBlocking(ForcefieldGeneratorID, 0, 1023);
+            Line_SetBlocking(ForcefieldGeneratorID, 0, BLOCKF_EVERYTHING | BLOCKF_SIGHT | BLOCKF_HITSCAN);
             SetLineTexture(ForcefieldGeneratorID, SIDE_FRONT, TEXTURE_MIDDLE, "");
             SetActorState(GeneratorTID, "Death", false);
             
             // Boss is dead
             BossDead = true;
+            ForcefieldState = 2;
         };
         
 		Delay(1);
@@ -797,9 +814,15 @@ acscript void CreditRoom(int ID)
 		LocalSetMusic("Credits");
 	if (ID == 2) // Exit
         if (PowerOut)
-            LocalSetMusic("Outpost", 4)
+            if (OutpostNotoriety >= 3)
+                LocalSetMusic("Outpost2", 4)
+            else
+                LocalSetMusic("Outpost", 4)
         else
-            LocalSetMusic("Outpost");
+            if (OutpostNotoriety >= 3)
+                LocalSetMusic("Outpost")
+            else
+                LocalSetMusic("Outpost");
 	
 	if (ID == 3) // Kyle873 - That's me!
 	{
@@ -1370,7 +1393,7 @@ acscript void PowerOutage()
     };
     
     // Disable Shop Forcefields
-    Line_SetBlocking(ForcefieldID, 0, 1023);
+    Line_SetBlocking(ForcefieldID, 0, BLOCKF_EVERYTHING | BLOCKF_SIGHT | BLOCKF_HITSCAN);
     SetLineTexture(ForcefieldID, SIDE_FRONT, TEXTURE_MIDDLE, "");
     
     // Send Turrets into PoweredDown state
@@ -1382,13 +1405,27 @@ acscript void PowerOutage()
     // Enable Emergency Power
     if (!MarinesHostile)
     {
-        SetMusic("Outpost", 4);
+        if (OutpostNotoriety >= 3)
+            SetMusic("Outpost2", 39)
+        else
+            SetMusic("Outpost", 4);
         ActivatorSound("misc/poweron", 127);
         for (int i = 0; i < MAX_OUTPOST_ID; i++)
         {
             Sector_SetColor(i, 255, 0, 0, 0);
             Light_Fade(i, 160, 60);
         };
+    };
+};
+
+acscript void AlarmLoop()
+{
+    while (true)
+    {
+        if ((Timer() % 30) == 0)
+            AmbientSound("misc/alarm", 127);
+        
+        Delay(1);
     };
 };
 
@@ -1434,7 +1471,7 @@ acscript void SpawnBoss()
         SpawnSpotFacingForced("DRPGMarineMinigunHuntingYerAss", NotorietySpotTID, MarineBossTID);
     };
     
-    // Large Powersuit
+    // Heavy Powersuit
     if (OutpostNotoriety >= 3)
     {
         // Teleport out guards
@@ -1443,6 +1480,9 @@ acscript void SpawnBoss()
             SpawnSpot("TeleportFog", i, 0, 0);
             Thing_Remove(i);
         };
+        
+        SetMusic("");
+        Delay(35 * 30);
         
         SetMusic("Boss");
         SpawnSpotForced("DRPGHugeTeleportFog", NotorietySpotTID + 1, 0, 0);
