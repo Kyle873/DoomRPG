@@ -10,91 +10,91 @@ bool ParBonus;
 // Map Init Script
 script void MapInit() open
 {
-	int MapEntryNum;
-	
-	if (!StrICmp(StrParam("%N\n", PRINTNAME_LEVEL), "Outpost"))
-	{
-		if (!NumVisitedLevels)
-		{
-			Log("\c[White]WARNING: \c[Brick]Do not start a game on the Outpost unless testing, or else the Level Teleporter will not function.\n");
-			Log("\c[Red]The Level Teleporter has been disabled.\n");
-		};
-		
-		return;
-	};
-	
-	if (CheckVisited(StrParam("%N\n", PRINTNAME_LEVEL)))
-		return;
-	
-	MapEntryNum = NumVisitedLevels;
-	++NumVisitedLevels;
-	
-	// Gotta do this the old-fashioned way
-	str LevelLump = StrParam("%N\n", PRINTNAME_LEVEL);
-	str LevelName = StrParam("%N\n", PRINTNAME_LEVELNAME);
-	for (int i = 0; i < 8 && i < StrLen(LevelLump); i++)
-		VisitedLevels[MapEntryNum].LumpName[i] = LevelLump[i];
-	for (int i = 0; i < 47 && i < StrLen(LevelName); i++)
-		VisitedLevels[MapEntryNum].NiceName[i] = LevelName[i];
+    int MapEntryNum;
+    
+    if (!StrICmp(StrParam("%N\n", PRINTNAME_LEVEL), "Outpost"))
+    {
+        if (!NumVisitedLevels)
+        {
+            Log("\c[White]WARNING: \c[Brick]Do not start a game on the Outpost unless testing, or else the Level Teleporter will not function.\n");
+            Log("\c[Red]The Level Teleporter has been disabled.\n");
+        };
+        
+        return;
+    };
+    
+    if (CheckVisited(StrParam("%N\n", PRINTNAME_LEVEL)))
+        return;
+    
+    MapEntryNum = NumVisitedLevels;
+    ++NumVisitedLevels;
+    
+    // Gotta do this the old-fashioned way
+    str LevelLump = StrParam("%N\n", PRINTNAME_LEVEL);
+    str LevelName = StrParam("%N\n", PRINTNAME_LEVELNAME);
+    for (int i = 0; i < 8 && i < StrLen(LevelLump); i++)
+        VisitedLevels[MapEntryNum].LumpName[i] = LevelLump[i];
+    for (int i = 0; i < 47 && i < StrLen(LevelName); i++)
+        VisitedLevels[MapEntryNum].NiceName[i] = LevelName[i];
 };
 
 // Level exit script
 // Can't use NamedExecute in xlat, lame
 acscript void Exit(bool Secret) @ 30000
 {
-	NEEDVALIDPLAYER;
-	
-	int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
-	bool Waiting = true;
-	
-	// Prevent level exit until everyone is outside the menu
-	if (InMultiplayer && PlayerCount() > 1)
-		while (Waiting)
-		{
-			Waiting = false;
-			
-			for (int i = 0; i < MAX_PLAYERS; i++)
-				if (Players(i).InMenu || Players(i).InShop || Players(i).OutpostMenu > 0)
-					Waiting = true;
-			
-			Delay(35 * 3);
-		};
-	
-	// Check par time and give bonus if you beat it
-	if ((Timer() / 35) <= ParTime && !(ParTime <= 0 || ParBonus))
-	{
-		int RankBonus = RankTable[Player.RankLevel] / 20;
-		
-		FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
-		ActivatorSound("misc/secret", 127);
-		
-		Player.Rank += RankBonus;
-		
-		HudMessageBold("Par Time Beaten!\n%d Rank Bonus\n",
-					   RankBonus,
-					   HUDMSG_FADEOUT, 0, CR_GOLD, 1.5, 0.5, 3.0, 2.0);
-		
-		ParBonus = true;
-		Delay(35 * 5);
-	};
-	
-	// Now exit the level
-	if (Secret)
-		Exit_Secret(0)
-	else
-		Exit_Normal(0);
+    NEEDVALIDPLAYER;
+    
+    int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
+    bool Waiting = true;
+    
+    // Prevent level exit until everyone is outside the menu
+    if (InMultiplayer && PlayerCount() > 1)
+        while (Waiting)
+        {
+            Waiting = false;
+            
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (Players(i).InMenu || Players(i).InShop || Players(i).OutpostMenu > 0)
+                    Waiting = true;
+            
+            Delay(35 * 3);
+        };
+    
+    // Check par time and give bonus if you beat it
+    if ((Timer() / 35) <= ParTime && !(ParTime <= 0 || ParBonus))
+    {
+        int RankBonus = RankTable[Player.RankLevel] / 20;
+        
+        FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
+        ActivatorSound("misc/secret", 127);
+        
+        Player.Rank += RankBonus;
+        
+        HudMessageBold("Par Time Beaten!\n%d Rank Bonus\n",
+                       RankBonus,
+                       HUDMSG_FADEOUT, 0, CR_GOLD, 1.5, 0.5, 3.0, 2.0);
+        
+        ParBonus = true;
+        Delay(35 * 5);
+    };
+    
+    // Now exit the level
+    if (Secret)
+        Exit_Secret(0)
+    else
+        Exit_Normal(0);
 };
 
 function bool CheckVisited(str Name)
 {
-	if (!NumVisitedLevels)
-		return false;
-	
-	for (int i = 0; i < NumVisitedLevels; i++)
-	{
-		if (StrICmp(StrParam("%s\n", VisitedLevels[i].LumpName), Name) == 0)
-			return true;
-	};
-	
-	return false;
+    if (!NumVisitedLevels)
+        return false;
+    
+    for (int i = 0; i < NumVisitedLevels; i++)
+    {
+        if (StrICmp(StrParam("%s\n", VisitedLevels[i].LumpName), Name) == 0)
+            return true;
+    };
+    
+    return false;
 };

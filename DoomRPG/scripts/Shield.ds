@@ -13,234 +13,234 @@ int[4] ShieldPartsMax = { 7; 7; 5; 7; };
 
 script void ShieldScript()
 {
-	while (true)
-	{
-		if (Player.Shield.Active)
-		{
-			/* Debugging
-			SetFont("BIGFONT");
-			Print("%d\n%d\n%d\n",
-				  Player.BeforeHealth,
-				  Player.AfterHealth,
-				  Player.HealthLoss); */
-			
-			// Inventory items for multiplayer/health bar handling
-			SetInventory("DRPGShieldCharge", Player.Shield.Charge);
-			SetInventory("DRPGShieldChargeMax", Player.Shield.Capacity);
-			
-			// Shield is Full
-			if (Player.Shield.Charge >= Player.Shield.Capacity && !Player.Shield.Full)
-			{
-				ActivatorSound("shield/full", 127);
-				Player.Shield.Full = true;
-			};
-			
-			// Damage
-			if (Player.HealthLoss > 0)
-			{
-				if (Player.Shield.Charge == 0)
-				{
-					Player.Shield.Health -= Player.HealthLoss;
-					ToggleShield(false);
-				}
-				else if (Player.HealthLoss > Player.Shield.Charge)
-				{
-					SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health - (Player.HealthLoss - Player.Shield.Charge));
-					Player.Shield.Charge = 0;
-					if (Player.Shield.Accessory == 5) // Nova
-						Nova("Fireball", Random(64, 128));
-					ToggleShield(true);
-				}
-				else
-				{
-					Player.Shield.Charge -= Player.HealthLoss;
-					SetActorProperty(Player.TID, APROP_Health, SHIELD_HEALTH);
-				};
-				
-				Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
-				Player.Shield.Full = false;
-			};
-			
-			// Increase Charge
-			if (Player.Shield.Timer == 0)
-			{
-				Player.Shield.Charge += Player.Shield.ChargeRate;
-				Player.Shield.Timer = Player.Shield.Interval;
-			};
+    while (true)
+    {
+        if (Player.Shield.Active)
+        {
+            /* Debugging
+            SetFont("BIGFONT");
+            Print("%d\n%d\n%d\n",
+                  Player.BeforeHealth,
+                  Player.AfterHealth,
+                  Player.HealthLoss); */
+            
+            // Inventory items for multiplayer/health bar handling
+            SetInventory("DRPGShieldCharge", Player.Shield.Charge);
+            SetInventory("DRPGShieldChargeMax", Player.Shield.Capacity);
+            
+            // Shield is Full
+            if (Player.Shield.Charge >= Player.Shield.Capacity && !Player.Shield.Full)
+            {
+                ActivatorSound("shield/full", 127);
+                Player.Shield.Full = true;
+            };
+            
+            // Damage
+            if (Player.HealthLoss > 0)
+            {
+                if (Player.Shield.Charge == 0)
+                {
+                    Player.Shield.Health -= Player.HealthLoss;
+                    ToggleShield(false);
+                }
+                else if (Player.HealthLoss > Player.Shield.Charge)
+                {
+                    SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health - (Player.HealthLoss - Player.Shield.Charge));
+                    Player.Shield.Charge = 0;
+                    if (Player.Shield.Accessory == 5) // Nova
+                        Nova("Fireball", Random(64, 128));
+                    ToggleShield(true);
+                }
+                else
+                {
+                    Player.Shield.Charge -= Player.HealthLoss;
+                    SetActorProperty(Player.TID, APROP_Health, SHIELD_HEALTH);
+                };
+                
+                Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
+                Player.Shield.Full = false;
+            };
+            
+            // Increase Charge
+            if (Player.Shield.Timer == 0)
+            {
+                Player.Shield.Charge += Player.Shield.ChargeRate;
+                Player.Shield.Timer = Player.Shield.Interval;
+            };
 
-			// Shield Timer
-			if (Player.Shield.Timer > 0 && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
-				Player.Shield.Timer--;
-		};
-		
-		Delay(1);
-	};
+            // Shield Timer
+            if (Player.Shield.Timer > 0 && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
+                Player.Shield.Timer--;
+        };
+        
+        Delay(1);
+    };
 };
 
 acscript void ToggleShield(bool Destroyed) net
 {
-	// If you're dead, terminate
-	if (GetActorProperty(Player.TID, APROP_Health) <= 0 && !Destroyed) return;
-	
-	// If you have no Shield parts equipped or are missing a part, terminate
-	if (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0)
-	{
-		ActivatorSound("menu/error", 127);
-		return;
-	};
-	
-	FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
-	
-	if (!Player.Shield.Active)
-	{
+    // If you're dead, terminate
+    if (GetActorProperty(Player.TID, APROP_Health) <= 0 && !Destroyed) return;
+    
+    // If you have no Shield parts equipped or are missing a part, terminate
+    if (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0)
+    {
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
+    
+    if (!Player.Shield.Active)
+    {
         GiveInventory("DRPGShieldOn", 1);
-		ActivatorSound("shield/on", 127);
-		Player.Shield.Health = GetActorProperty(Player.TID, APROP_Health);
-		SetActorProperty(Player.TID, APROP_Health, SHIELD_HEALTH);
-		Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
-		Player.Shield.Active = true;
-	}
-	else
-	{
+        ActivatorSound("shield/on", 127);
+        Player.Shield.Health = GetActorProperty(Player.TID, APROP_Health);
+        SetActorProperty(Player.TID, APROP_Health, SHIELD_HEALTH);
+        Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
+        Player.Shield.Active = true;
+    }
+    else
+    {
         GiveInventory("DRPGShieldOff", 1);
-		ActivatorSound("shield/off", 127);
-		if (!Destroyed) SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);
-		Player.Shield.Active = false;
-		if (GetCVar("drpg_shield_reset"))
-			Player.Shield.Charge = 0;
-		GiveInventory("DRPGShieldReflectionOff", 1);
-		GiveInventory("DRPGShieldGhostOff", 1);
-	};
+        ActivatorSound("shield/off", 127);
+        if (!Destroyed) SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);
+        Player.Shield.Active = false;
+        if (GetCVar("drpg_shield_reset"))
+            Player.Shield.Charge = 0;
+        GiveInventory("DRPGShieldReflectionOff", 1);
+        GiveInventory("DRPGShieldGhostOff", 1);
+    };
 };
 
 acscript void AddShield(int Amount)
 {
-	FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 0.25);
-	Player.Shield.Charge += Amount;
+    FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 0.25);
+    Player.Shield.Charge += Amount;
 };
 
 acscript void AddShieldHealth(int Amount)
 {
-	Player.Shield.Health += Amount;
+    Player.Shield.Health += Amount;
 };
 
 function void CheckShields()
 {
-	// Check to make sure the Shield has components
-	if (Player.Shield.Active && (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0))
-	{
-		ActivatorSound("shield/off", 127);
-		Player.Shield.Active = false;
-		SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);;
-		if (GetCVar("drpg_shield_reset"))
-			Player.Shield.Charge = 0;
+    // Check to make sure the Shield has components
+    if (Player.Shield.Active && (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0))
+    {
+        ActivatorSound("shield/off", 127);
+        Player.Shield.Active = false;
+        SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);;
+        if (GetCVar("drpg_shield_reset"))
+            Player.Shield.Charge = 0;
         GiveInventory("DRPGShieldOff", 1);
-		GiveInventory("DRPGShieldReflectionOff", 1);
-		GiveInventory("DRPGShieldGhostOff", 1);
-		Player.Shield.Timer = 35 * Player.Shield.DelayRate;
-	};
-	
-	// EP -> Shield Charging
-	int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-	if (Player.Shield.Active && (!Player.InMenu && !Player.InShop) && Buttons & BT_SPEED && Buttons & BT_USE && Player.Shield.Charge < Player.Shield.Capacity && Player.EP > 0)
-	{
-		FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
-		// ActivatorSound("regen/shield", 64);
-		Player.EP--;
-		Player.Shield.Charge++;
-	};
-	
-	// If a part is sold/dropped/nuked from orbit/etc, unequip it
-	if (!CheckInventory(ShieldData[0][Player.Shield.Body - 1].Actor)) 		Player.Shield.Body = 0;
-	if (!CheckInventory(ShieldData[1][Player.Shield.Battery - 1].Actor)) 	Player.Shield.Battery = 0;
-	if (!CheckInventory(ShieldData[2][Player.Shield.Capacitor - 1].Actor))	Player.Shield.Capacitor = 0;
-	if (!CheckInventory(ShieldData[3][Player.Shield.Accessory - 1].Actor))	Player.Shield.Accessory = 0;
-	
-	// Apply Components stats to Shield
-	Player.Shield.Capacity = ShieldData[0][Player.Shield.Body - 1].Capacity + ShieldData[1][Player.Shield.Battery - 1].Capacity + ShieldData[2][Player.Shield.Capacitor - 1].Capacity;
-	Player.Shield.ChargeRate = ShieldData[0][Player.Shield.Body - 1].ChargeRate + ShieldData[1][Player.Shield.Battery- 1].ChargeRate + ShieldData[2][Player.Shield.Capacitor- 1].ChargeRate;
-	Player.Shield.DelayRate = 5.0 + ShieldData[0][Player.Shield.Body - 1].DelayRate + ShieldData[1][Player.Shield.Battery - 1].DelayRate + ShieldData[2][Player.Shield.Capacitor - 1].DelayRate;
-	Player.Shield.Interval = 35;
-	
-	// Aug Handling
-	if (Player.Augs.Active[AUG_REGENERATION])
-	{
-		if (Player.Augs.Level[AUG_REGENERATION] >= 3)
-			Player.Shield.ChargeRate *= 2;
-		if (Player.Augs.Level[AUG_REGENERATION] >= 4)
-			Player.Shield.DelayRate /= 2.0;
-		if (Player.Augs.Level[AUG_REGENERATION] >= 5)
-			Player.Shield.Interval /= 2;
-	};
+        GiveInventory("DRPGShieldReflectionOff", 1);
+        GiveInventory("DRPGShieldGhostOff", 1);
+        Player.Shield.Timer = 35 * Player.Shield.DelayRate;
+    };
+    
+    // EP -> Shield Charging
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    if (Player.Shield.Active && (!Player.InMenu && !Player.InShop) && Buttons & BT_SPEED && Buttons & BT_USE && Player.Shield.Charge < Player.Shield.Capacity && Player.EP > 0)
+    {
+        FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
+        // ActivatorSound("regen/shield", 64);
+        Player.EP--;
+        Player.Shield.Charge++;
+    };
+    
+    // If a part is sold/dropped/nuked from orbit/etc, unequip it
+    if (!CheckInventory(ShieldData[0][Player.Shield.Body - 1].Actor))       Player.Shield.Body = 0;
+    if (!CheckInventory(ShieldData[1][Player.Shield.Battery - 1].Actor))    Player.Shield.Battery = 0;
+    if (!CheckInventory(ShieldData[2][Player.Shield.Capacitor - 1].Actor))  Player.Shield.Capacitor = 0;
+    if (!CheckInventory(ShieldData[3][Player.Shield.Accessory - 1].Actor))  Player.Shield.Accessory = 0;
+    
+    // Apply Components stats to Shield
+    Player.Shield.Capacity = ShieldData[0][Player.Shield.Body - 1].Capacity + ShieldData[1][Player.Shield.Battery - 1].Capacity + ShieldData[2][Player.Shield.Capacitor - 1].Capacity;
+    Player.Shield.ChargeRate = ShieldData[0][Player.Shield.Body - 1].ChargeRate + ShieldData[1][Player.Shield.Battery- 1].ChargeRate + ShieldData[2][Player.Shield.Capacitor- 1].ChargeRate;
+    Player.Shield.DelayRate = 5.0 + ShieldData[0][Player.Shield.Body - 1].DelayRate + ShieldData[1][Player.Shield.Battery - 1].DelayRate + ShieldData[2][Player.Shield.Capacitor - 1].DelayRate;
+    Player.Shield.Interval = 35;
+    
+    // Aug Handling
+    if (Player.Augs.Active[AUG_REGENERATION])
+    {
+        if (Player.Augs.Level[AUG_REGENERATION] >= 3)
+            Player.Shield.ChargeRate *= 2;
+        if (Player.Augs.Level[AUG_REGENERATION] >= 4)
+            Player.Shield.DelayRate /= 2.0;
+        if (Player.Augs.Level[AUG_REGENERATION] >= 5)
+            Player.Shield.Interval /= 2;
+    };
 };
 
 // Amp, Absorb, Adaptive, Booster, Roid, Spike, Nova, Turtle, Immunity
 function void CheckShieldAccessory()
 {
-	fixed X, Y, Z;
-	fixed Angle;
-	
-	if (Player.Shield.Active && Player.Shield.Accessory == 1) // Amp
-		if (Player.Shield.Charge >= Player.Shield.Capacity)
-		{
-			int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-			
-			if (Buttons & BT_ATTACK && !Player.InMenu && !Player.InShop && !Player.OutpostMenu)
-			{
-				ActivatorSound("shield/amp", 127);
-				FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.5);
-				Player.Shield.Charge /= 2;
-			};
-			
-			Player.TotalDamage *= 2;
-		};
-	
-	if (Player.Shield.Active && Player.Shield.Accessory == 2) // Booster
-		if (Player.HealthLoss > 0)
-			if (Random(1, 4) <= 1)
-			{
-				Angle = GetActorAngle(0);
-				X = GetActorX(0) + Cos(Angle) * 96.0;
-				Y = GetActorY(0) + Sin(Angle) * 96.0;
-				Z = GetActorZ(0) + 48.0;
+    fixed X, Y, Z;
+    fixed Angle;
+    
+    if (Player.Shield.Active && Player.Shield.Accessory == 1) // Amp
+        if (Player.Shield.Charge >= Player.Shield.Capacity)
+        {
+            int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+            
+            if (Buttons & BT_ATTACK && !Player.InMenu && !Player.InShop && !Player.OutpostMenu)
+            {
+                ActivatorSound("shield/amp", 127);
+                FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.5);
+                Player.Shield.Charge /= 2;
+            };
+            
+            Player.TotalDamage *= 2;
+        };
+    
+    if (Player.Shield.Active && Player.Shield.Accessory == 2) // Booster
+        if (Player.HealthLoss > 0)
+            if (Random(1, 4) <= 1)
+            {
+                Angle = GetActorAngle(0);
+                X = GetActorX(0) + Cos(Angle) * 96.0;
+                Y = GetActorY(0) + Sin(Angle) * 96.0;
+                Z = GetActorZ(0) + 48.0;
 
-				Spawn("DRPGShieldBooster", X, Y, Z, 0, Angle);
-			};
-	
-	if (Player.Shield.Active && Player.Shield.Accessory == 3) // Roid
-		if (CheckWeapon("Fist") || CheckWeapon("Knuckle") || CheckWeapon("Melee_Attacks") || CheckWeapon("RLFistRedux"))
-			Player.TotalDamage *= 2;
-	
-	if (Player.Shield.Accessory == 4) // Turtle
-	{
-		Player.Shield.Capacity *= 2;
-		Player.HealthMax /= 2;
-	};
-	
-	if (Player.Shield.Active && Player.Shield.Accessory == 6) // Reflective
-		GiveInventory("DRPGShieldReflection", 1);
-	
-	if (Player.Shield.Active && Player.Shield.Accessory == 7) // Ghost
-	{
-		// 1/8 chance of activating
-		if (Player.HealthLoss > 0)
-		{
-			if (Random(1, 8) == 1)
-			{
-				GiveInventory("DRPGShieldGhost", 1);
-				Player.Shield.Ghost = true;
-				Player.Shield.GhostTimer = 35 * 5;
-			};
-		};
-		
-		// Remove when time is up
-		if (Player.Shield.GhostTimer <= 0)
-		{
-			GiveInventory("DRPGShieldGhostOff", 1);
-			Player.Shield.Ghost = false;
-		};
-		
-		// Decrease the ghost timer
-		if (Player.Shield.Ghost) Player.Shield.GhostTimer--;
-	};
+                Spawn("DRPGShieldBooster", X, Y, Z, 0, Angle);
+            };
+    
+    if (Player.Shield.Active && Player.Shield.Accessory == 3) // Roid
+        if (CheckWeapon("Fist") || CheckWeapon("Knuckle") || CheckWeapon("Melee_Attacks") || CheckWeapon("RLFistRedux"))
+            Player.TotalDamage *= 2;
+    
+    if (Player.Shield.Accessory == 4) // Turtle
+    {
+        Player.Shield.Capacity *= 2;
+        Player.HealthMax /= 2;
+    };
+    
+    if (Player.Shield.Active && Player.Shield.Accessory == 6) // Reflective
+        GiveInventory("DRPGShieldReflection", 1);
+    
+    if (Player.Shield.Active && Player.Shield.Accessory == 7) // Ghost
+    {
+        // 1/8 chance of activating
+        if (Player.HealthLoss > 0)
+        {
+            if (Random(1, 8) == 1)
+            {
+                GiveInventory("DRPGShieldGhost", 1);
+                Player.Shield.Ghost = true;
+                Player.Shield.GhostTimer = 35 * 5;
+            };
+        };
+        
+        // Remove when time is up
+        if (Player.Shield.GhostTimer <= 0)
+        {
+            GiveInventory("DRPGShieldGhostOff", 1);
+            Player.Shield.Ghost = false;
+        };
+        
+        // Decrease the ghost timer
+        if (Player.Shield.Ghost) Player.Shield.GhostTimer--;
+    };
 };

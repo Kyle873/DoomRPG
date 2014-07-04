@@ -19,22 +19,22 @@
 // Version and Timestamp
 str[2] Version =
 {
-	"v0.9.9 Beta - Monsters Intensify Edition";
-	"Friday, July 4, 2014 at 03:56:04";
+    "v0.9.9 Beta - Monsters Intensify Edition";
+    "Friday, July 4, 2014 at 03:56:04";
 };
 
 // Init Script
 script void Init() enter
 {
-	if (!Player.FirstRun)
-	{
-		// Player TID
-		Player.TID = PLAYER_TID + PlayerNumber();
-		Thing_ChangeTID(0, Player.TID);
-		
+    if (!Player.FirstRun)
+    {
+        // Player TID
+        Player.TID = PLAYER_TID + PlayerNumber();
+        Thing_ChangeTID(0, Player.TID);
+        
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: Player TID: %d\n", Player.TID);
-		
+        
         // Setup Stats and Special Starts
         if (GetCVar("drpg_special_start") == 0) // None
         {
@@ -54,258 +54,258 @@ script void Init() enter
             SetActorProperty(0, APROP_Health, 10);
         };
         
-		// Height Check
-		SetInventory("DRPGHeightCheck", (int)GetActorPropertyFixed(0, APROP_Height));
-		
-		// Give the default loadout based on compatibility switches
-		DefaultLoadout();
+        // Height Check
+        SetInventory("DRPGHeightCheck", (int)GetActorPropertyFixed(0, APROP_Height));
+        
+        // Give the default loadout based on compatibility switches
+        DefaultLoadout();
 
-		// Version Info
-		if (Arbitrator) Log("\cnDoom RPG %s (%s) loaded!\n", Version[0], Version[1]);
-		
-		// Set the default skill indices
-		for (int i = 0; i < MAX_SKILLKEYS; i++)
-		{
-			Player.SkillCatagory[i] = -1;
-			Player.SkillIndex[i] = -1;
-		};
+        // Version Info
+        if (Arbitrator) Log("\cnDoom RPG %s (%s) loaded!\n", Version[0], Version[1]);
+        
+        // Set the default skill indices
+        for (int i = 0; i < MAX_SKILLKEYS; i++)
+        {
+            Player.SkillCatagory[i] = -1;
+            Player.SkillIndex[i] = -1;
+        };
         
         // Get the XP Curve from the CVAR
         XPCurve = GetCVar("drpg_xp_curve");
         
-		// Initialize skill array
-		InitSkills();
-		
+        // Initialize skill array
+        InitSkills();
+        
         // Set default selected skill to nothing
         Player.SkillSelected = -1;
         
         // Fill Augmentation Battery
         Player.Augs.Battery = 100;
         
-		// Done first run
-		Player.FirstRun = true;
-	};
-	
+        // Done first run
+        Player.FirstRun = true;
+    };
+    
     // Initialize XP & Rank Tables
     InitTables();
-	
+    
     // Create Translations
-	CreateTranslations();
-	
-	// Execute Game Loops
-	Loop();
-	ShieldScript();
-	Speed();
-	StatRandomizer();
-	AutosaveHandler();
-	DamageNumbers();
-	InfoPopoffs();
-	HealthBars();
-	
-	// GUI
-	CheckGUI();
-	CheckCursor();
-	
-	// Remove Aura if the keep Aura CVAR is off
-	if (!GetCVar("drpg_skill_keepauras"))
+    CreateTranslations();
+    
+    // Execute Game Loops
+    Loop();
+    ShieldScript();
+    Speed();
+    StatRandomizer();
+    AutosaveHandler();
+    DamageNumbers();
+    InfoPopoffs();
+    HealthBars();
+    
+    // GUI
+    CheckGUI();
+    CheckCursor();
+    
+    // Remove Aura if the keep Aura CVAR is off
+    if (!GetCVar("drpg_skill_keepauras"))
         RemoveAura();
-	
-	// Transport from/to Outpost Screen Fading
-	if (Transported)
-	{
-		for (int i = 0; i < MAX_PLAYERS; i++)
-			SetActorProperty(Players(i).TID, APROP_Invulnerable, false);
-		SetPlayerProperty (0, 0, PROP_TOTALLYFROZEN); // In case we were in the menu
-		FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
-		Transported = false;
-	};
-	
-	// Store the current map number
-	MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
-	if (MapNumber > 39) MapNumber = 39;
-	
-	// Clear the Player's summons
-	for (int i = 0; i < MAX_SUMMONS; i++)
-		Player.SummonTID[i] = 0;
-	Player.Summons = 0;
-	
-	// Initial build of ItemData
-	BuildItemData();
+    
+    // Transport from/to Outpost Screen Fading
+    if (Transported)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            SetActorProperty(Players(i).TID, APROP_Invulnerable, false);
+        SetPlayerProperty (0, 0, PROP_TOTALLYFROZEN); // In case we were in the menu
+        FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
+        Transported = false;
+    };
+    
+    // Store the current map number
+    MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
+    if (MapNumber > 39) MapNumber = 39;
+    
+    // Clear the Player's summons
+    for (int i = 0; i < MAX_SUMMONS; i++)
+        Player.SummonTID[i] = 0;
+    Player.Summons = 0;
+    
+    // Initial build of ItemData
+    BuildItemData();
 };
 
 // Loop Script
 script void Loop()
 {
-	Start:
-	
+    Start:
+    
     // Update Functions
-	CheckCombo();
-	CheckStats();
-	CheckStatBonus();
-	CheckHardStatCaps();
-	CheckRegen();
-	CheckLuck();
-	CheckHealth();
-	CheckArmorMax();
-	CheckAugSlots();
-	CheckAugs();
-	CheckLevel();
-	CheckRank();
-	CheckSkills();
-	CheckBurnout();
-	CheckShields();
-	CheckShieldAccessory();
-	CheckStim();
-	CheckPerks();
-	CheckStatBounds();
-	CheckToxicity();
-	CheckLevelInfo();
-	CheckCapacity();
-	CheckAutoSell();
+    CheckCombo();
+    CheckStats();
+    CheckStatBonus();
+    CheckHardStatCaps();
+    CheckRegen();
+    CheckLuck();
+    CheckHealth();
+    CheckArmorMax();
+    CheckAugSlots();
+    CheckAugs();
+    CheckLevel();
+    CheckRank();
+    CheckSkills();
+    CheckBurnout();
+    CheckShields();
+    CheckShieldAccessory();
+    CheckStim();
+    CheckPerks();
+    CheckStatBounds();
+    CheckToxicity();
+    CheckLevelInfo();
+    CheckCapacity();
+    CheckAutoSell();
     CheckShopCard();
     CheckMission();
-	CheckHUD();
-	
-	// Give the Player a Health Bar for Multiplayer
-	if (InMultiplayer) SetInventory("DRPGHealthBar", 1);
-	
-	// Handle the menu cursor color
-	MenuCursorColor = CursorColors[(Timer() / 3) % 6];
-	
-	// Calculate Shop Discount
-	Player.ShopDiscount = (int)((Player.RankLevel * 2.1) + (InBase ? (Player.ShopCard * 5) : 0));
-	
-	// Auto-Sell Timer Handling
-	if (Player.AutoSellTimer > 0)
-		Player.AutoSellTimer--;
-	
-	// Main Menu
-	if (Player.InMenu)
-		MenuLoop();
-	
-	// Shop Menu
-	if (Player.InShop)
-		ShopLoop();
-	
-	// Menu freezing/dimming
-	if (Player.InMenu || Player.InShop || Player.OutpostMenu > 0)
-	{
-		if (GetCVar("drpg_menufreeze"))
-			GiveInventory("DRPGMenuFreezer", 1);
-		if (GetCVar("drpg_menudim"))
-			FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
-	};
-	
-	// Menu-specific Help
-	if (Player.InMenu || Player.InShop || Player.OutpostMenu > 0)
-		MenuHelp();
-	
-	// Menu icon in multiplayer
-	if (InMultiplayer && (Player.InMenu || Player.InShop || Player.OutpostMenu > 0))
-	{
-		fixed X = GetActorX(Player.TID);
-		fixed Y = GetActorY(Player.TID);
-		fixed Z = GetActorZ(Player.TID);
-		fixed Height = GetActorPropertyFixed(Player.TID, APROP_Height);
-		
-		SpawnForced("DRPGMenuIcon", X, Y, Z + Height + 8.0, 0, 0);
-	};
-	
-	// Shop Special Handling
-	if (Arbitrator) CheckShopSpecial(false);
-	
-	// Always Quick Heal if CVAR is set
-	if (GetCVar("drpg_auto_heal"))
-		QuickHeal(false);
-	
-	// Handle damage numbers on the HUD
-	if (GetCVar("drpg_damagenumbers_hud"))
-		DamageNumbersHUD();
+    CheckHUD();
     
-	// Check Health/Shield for this tic
-	Player.BeforeHealth = GetActorProperty(Player.TID, APROP_Health);
-	Player.BeforeShield = Player.Shield.Charge;
+    // Give the Player a Health Bar for Multiplayer
+    if (InMultiplayer) SetInventory("DRPGHealthBar", 1);
     
-	// Regeneration
-	if (GetActorProperty(Player.TID, APROP_Health) > 0)
-		DoRegen();
-	
-	// Give the Strength boosting item
+    // Handle the menu cursor color
+    MenuCursorColor = CursorColors[(Timer() / 3) % 6];
+    
+    // Calculate Shop Discount
+    Player.ShopDiscount = (int)((Player.RankLevel * 2.1) + (InBase ? (Player.ShopCard * 5) : 0));
+    
+    // Auto-Sell Timer Handling
+    if (Player.AutoSellTimer > 0)
+        Player.AutoSellTimer--;
+    
+    // Main Menu
+    if (Player.InMenu)
+        MenuLoop();
+    
+    // Shop Menu
+    if (Player.InShop)
+        ShopLoop();
+    
+    // Menu freezing/dimming
+    if (Player.InMenu || Player.InShop || Player.OutpostMenu > 0)
+    {
+        if (GetCVar("drpg_menufreeze"))
+            GiveInventory("DRPGMenuFreezer", 1);
+        if (GetCVar("drpg_menudim"))
+            FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
+    };
+    
+    // Menu-specific Help
+    if (Player.InMenu || Player.InShop || Player.OutpostMenu > 0)
+        MenuHelp();
+    
+    // Menu icon in multiplayer
+    if (InMultiplayer && (Player.InMenu || Player.InShop || Player.OutpostMenu > 0))
+    {
+        fixed X = GetActorX(Player.TID);
+        fixed Y = GetActorY(Player.TID);
+        fixed Z = GetActorZ(Player.TID);
+        fixed Height = GetActorPropertyFixed(Player.TID, APROP_Height);
+        
+        SpawnForced("DRPGMenuIcon", X, Y, Z + Height + 8.0, 0, 0);
+    };
+    
+    // Shop Special Handling
+    if (Arbitrator) CheckShopSpecial(false);
+    
+    // Always Quick Heal if CVAR is set
+    if (GetCVar("drpg_auto_heal"))
+        QuickHeal(false);
+    
+    // Handle damage numbers on the HUD
+    if (GetCVar("drpg_damagenumbers_hud"))
+        DamageNumbersHUD();
+    
+    // Check Health/Shield for this tic
+    Player.BeforeHealth = GetActorProperty(Player.TID, APROP_Health);
+    Player.BeforeShield = Player.Shield.Charge;
+    
+    // Regeneration
+    if (GetActorProperty(Player.TID, APROP_Health) > 0)
+        DoRegen();
+    
+    // Give the Strength boosting item
     if (Player.TotalDamage >= 32000)
-		GiveInventory("DRPGStrength32000", 1)
-	else if (Player.TotalDamage > 0)
-		GiveInventory(StrParam("DRPGStrength%d\n", Player.TotalDamage), 1);
-	
-	// Set mass stupid high when Invulnerable to prevent knockback
-	if (CheckInventory("PowerInvulnerable"))
-		Player.Mass *= 128;
-	
-	// Survival Bonus
-	if (RandomFixed(0.0, 100.0) <= Player.SurvivalBonus)
-	{
-		SetPlayerProperty(0, 1, PROP_BUDDHA);
-		
-		if (GetActorProperty(Player.TID, APROP_Health) == 1)
-		{
-			HealThing(1);
-			ActivatorSound("health/survive", 127);
+        GiveInventory("DRPGStrength32000", 1)
+    else if (Player.TotalDamage > 0)
+        GiveInventory(StrParam("DRPGStrength%d\n", Player.TotalDamage), 1);
+    
+    // Set mass stupid high when Invulnerable to prevent knockback
+    if (CheckInventory("PowerInvulnerable"))
+        Player.Mass *= 128;
+    
+    // Survival Bonus
+    if (RandomFixed(0.0, 100.0) <= Player.SurvivalBonus)
+    {
+        SetPlayerProperty(0, 1, PROP_BUDDHA);
+        
+        if (GetActorProperty(Player.TID, APROP_Health) == 1)
+        {
+            HealThing(1);
+            ActivatorSound("health/survive", 127);
             SetHudSize(100, 100, false);
             SetFont("PINSA0");
             HudMessage("A\n", HUDMSG_FADEOUT | HUDMSG_ADDBLEND, 0, CR_UNTRANSLATED, 61.4, 89.4, 0.5, 0.5);
-		};
-	}
-	else
-		SetPlayerProperty(0, 0, PROP_BUDDHA);
-	
-	// Continue check
-	if (CheckInventory("DRPGContinue") > 0)
-	{
-		SetPlayerProperty(0, 1, PROP_BUDDHA);
-		
-		if (GetActorProperty(Player.TID, APROP_Health) <= 1)
-		{
-			HealThing(1000000);
-			ActivatorSound("health/resurrect", 127);
-			TakeInventory("DRPGContinue", 1);
-		};
-	};
-	
-	// Apply Stats
-	SetActorProperty(Player.TID, APROP_SpawnHealth, Player.HealthMax);
-	SetActorPropertyFixed(Player.TID, APROP_DamageFactor, Player.DamageFactor);
-	SetActorProperty(Player.TID, APROP_Mass, Player.Mass);
-	SetActorPropertyFixed(Player.TID, APROP_Speed, Player.Speed);
-	SetActorPropertyFixed(Player.TID, APROP_JumpZ, Player.JumpHeight);
-	
-	// Clear your Status Effect if the timer is empty
-	if (Player.StatusTimer <= 0)
-		Player.StatusType = 0;
-	
-	// Make you invincible while in the Menus and if menu freezing is enabled
-	if ((Player.InMenu || Player.InShop) && GetCVar("drpg_menufreeze"))
-		SetActorProperty(Player.TID, APROP_DamageFactor, 0);
-	
+        };
+    }
+    else
+        SetPlayerProperty(0, 0, PROP_BUDDHA);
+    
+    // Continue check
+    if (CheckInventory("DRPGContinue") > 0)
+    {
+        SetPlayerProperty(0, 1, PROP_BUDDHA);
+        
+        if (GetActorProperty(Player.TID, APROP_Health) <= 1)
+        {
+            HealThing(1000000);
+            ActivatorSound("health/resurrect", 127);
+            TakeInventory("DRPGContinue", 1);
+        };
+    };
+    
+    // Apply Stats
+    SetActorProperty(Player.TID, APROP_SpawnHealth, Player.HealthMax);
+    SetActorPropertyFixed(Player.TID, APROP_DamageFactor, Player.DamageFactor);
+    SetActorProperty(Player.TID, APROP_Mass, Player.Mass);
+    SetActorPropertyFixed(Player.TID, APROP_Speed, Player.Speed);
+    SetActorPropertyFixed(Player.TID, APROP_JumpZ, Player.JumpHeight);
+    
+    // Clear your Status Effect if the timer is empty
+    if (Player.StatusTimer <= 0)
+        Player.StatusType = 0;
+    
+    // Make you invincible while in the Menus and if menu freezing is enabled
+    if ((Player.InMenu || Player.InShop) && GetCVar("drpg_menufreeze"))
+        SetActorProperty(Player.TID, APROP_DamageFactor, 0);
+    
     // Reset Damage Type
     Player.DamageType = DT_NONE;
     
-	// Loop
-	Delay(1);
-	
-	// this needs to be done in a separate tic
-	Player.AfterHealth = GetActorProperty(Player.TID, APROP_Health);
-	Player.HealthLoss = Player.BeforeHealth - Player.AfterHealth;
+    // Loop
+    Delay(1);
+    
+    // this needs to be done in a separate tic
+    Player.AfterHealth = GetActorProperty(Player.TID, APROP_Health);
+    Player.HealthLoss = Player.BeforeHealth - Player.AfterHealth;
     Player.AfterShield = Player.Shield.Charge;
     Player.ShieldLoss = Player.BeforeShield - Player.AfterShield;
-	
-	goto Start;
+    
+    goto Start;
 };
 
 // Handles Weapon Firing Speed
 script void Speed()
 {
-	Start:
-	int Time;
-	
+    Start:
+    int Time;
+    
     if (Player.Agility <= 100)
         Time = Abs(Round(Player.WeaponSpeed * 0.35 - 35.0))
     else
@@ -313,15 +313,15 @@ script void Speed()
     
     if (GetCVar("drpg_stat_weaponspeed"))
         GiveInventory("DRPGSpeed", 1);
-	
-	Delay(Time + 1);
-	goto Start;
+    
+    Delay(Time + 1);
+    goto Start;
 };
 
 // Stat Randomizer Script
 script void StatRandomizer()
 {
-	Start:
+    Start:
     
     if (GetCVar("drpg_auto_spend"))
         while (CheckInventory("DRPGStatToken") > 0)
@@ -335,340 +335,340 @@ script void StatRandomizer()
             Delay(1);
         };
     
-	Delay(1);
-	goto Start;
+    Delay(1);
+    goto Start;
 };
 
 // Handles autosaving
 script void AutosaveHandler()
 {
-	// Terminate if the autosave CVar is disabled
-	if (GetCVar("drpg_autosave") == 0 || (PlayerCount() > 1 && !Arbitrator)) return;
-	
-	int SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
-	bool Safe;
-	bool DamageTimer;
-	
-	while (true)
-	{
-		if (Player.HealthLoss)
-			DamageTimer = 0
-		else
-			++DamageTimer;
-		
-		if ((Player.InMenu || Player.InShop) && !GetCVar("drpg_menufreeze"))
-			DamageTimer = ASAVE_SAFETIME;
-		
-		if (!SaveTimer)
-		{
-			Safe = true;
-			
-			if (DamageTimer < ASAVE_SAFETIME ||
-				GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10)
-				Safe = false;
-			
-			if (Safe)
-			{
-				Autosave();
-				SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
-			}
-			else
-				SaveTimer = ASAVE_RETRYTIME;
-		}
-		else
-			--SaveTimer;
-		
-		Delay(1);
-	};
+    // Terminate if the autosave CVar is disabled
+    if (GetCVar("drpg_autosave") == 0 || (PlayerCount() > 1 && !Arbitrator)) return;
+    
+    int SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
+    bool Safe;
+    bool DamageTimer;
+    
+    while (true)
+    {
+        if (Player.HealthLoss)
+            DamageTimer = 0
+        else
+            ++DamageTimer;
+        
+        if ((Player.InMenu || Player.InShop) && !GetCVar("drpg_menufreeze"))
+            DamageTimer = ASAVE_SAFETIME;
+        
+        if (!SaveTimer)
+        {
+            Safe = true;
+            
+            if (DamageTimer < ASAVE_SAFETIME ||
+                GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10)
+                Safe = false;
+            
+            if (Safe)
+            {
+                Autosave();
+                SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
+            }
+            else
+                SaveTimer = ASAVE_RETRYTIME;
+        }
+        else
+            --SaveTimer;
+        
+        Delay(1);
+    };
 };
 
 // Handles Status Effects
 acscript void StatusEffect(int Type, int Time, int Intensity)
 {
-	Player.StatusType = Type;
-	Player.StatusTimer = Time * 35;
-	
-	if (Intensity == 0)
-		Intensity = 1;
-	
-	while (Player.StatusTimer > 0)
-	{
-		if (Type == 1) // Confusion
-		{
-			SetActorAngle(0, GetActorAngle(0) + 1024 * Cos(Timer() * (Intensity * 0.01)));
-			SetActorPitch(0, 1024 * 8, Cos(Timer() * (Intensity * 0.01)));
-		};
-		
-		if (Type == 2) // Blind
-			FadeRange(0, 0, 0, (0.75 + (Intensity / 400)) - ((1024 * 8) * Sin(Timer() * 0.01)), 0, 0, 0, 0.0, 0.5);
-		
-		if (Type == 3) // Poisoned
-			if ((Timer() % 35) == 1 && (GetActorProperty(Player.TID, APROP_Health) - Intensity) > 1)
-			{
-				DamageThing(Intensity);
-				FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + Intensity / 100));
-			};
-		
-		if (Player.StatusTimer > 0)
-			Player.StatusTimer--;
-		
-		Delay(1);
-	};
+    Player.StatusType = Type;
+    Player.StatusTimer = Time * 35;
+    
+    if (Intensity == 0)
+        Intensity = 1;
+    
+    while (Player.StatusTimer > 0)
+    {
+        if (Type == 1) // Confusion
+        {
+            SetActorAngle(0, GetActorAngle(0) + 1024 * Cos(Timer() * (Intensity * 0.01)));
+            SetActorPitch(0, 1024 * 8, Cos(Timer() * (Intensity * 0.01)));
+        };
+        
+        if (Type == 2) // Blind
+            FadeRange(0, 0, 0, (0.75 + (Intensity / 400)) - ((1024 * 8) * Sin(Timer() * 0.01)), 0, 0, 0, 0.0, 0.5);
+        
+        if (Type == 3) // Poisoned
+            if ((Timer() % 35) == 1 && (GetActorProperty(Player.TID, APROP_Health) - Intensity) > 1)
+            {
+                DamageThing(Intensity);
+                FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + Intensity / 100));
+            };
+        
+        if (Player.StatusTimer > 0)
+            Player.StatusTimer--;
+        
+        Delay(1);
+    };
 };
 
 // Quick Heal
 acscript void QuickHeal(int Quick) net
 {
-	// If you're dead, return
-	if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
-	
-	int Health = GetActorProperty(Player.TID, APROP_Health);
-	int Percent = GetCVar("drpg_auto_heal_percent");
-	
-	if ((Health < Player.HealthMax / Percent) || Quick)
-	{
-		if (GetCVar("drpg_auto_heal_order") == 1) // Smallest to Largest
-		{
-				 if (CheckInventory("DRPGStimPack"))			UseInventory("DRPGStimPack")
-			else if (CheckInventory("DRPGMedikit"))				UseInventory("DRPGMedikit")
-			else if (CheckInventory("DRPGLargeMedikit"))		UseInventory("DRPGLargeMedikit")
-			else if (CheckInventory("DRPGXLMedikit"))			UseInventory("DRPGXLMedikit")
-			else if (CheckInventory("DRPGMedPack"))				UseInventory("DRPGMedPack")
-			else if (CheckInventory("DRPGSurgeryKit"))			UseInventory("DRPGSurgeryKit");
-		}
-		else if (GetCVar("drpg_auto_heal_order") == 2) // Largest to Smallest
-		{
-				 if (CheckInventory("DRPGSurgeryKit"))			UseInventory("DRPGSurgeryKit")
-			else if (CheckInventory("DRPGMedPack"))				UseInventory("DRPGMedPack")
-			else if (CheckInventory("DRPGXLMedikit"))			UseInventory("DRPGXLMedikit")
-			else if (CheckInventory("DRPGLargeMedikit"))		UseInventory("DRPGLargeMedikit")
-			else if (CheckInventory("DRPGMedikit"))				UseInventory("DRPGMedikit")
-			else if (CheckInventory("DRPGStimPack"))			UseInventory("DRPGStimPack");
-		};
-	};
+    // If you're dead, return
+    if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
+    
+    int Health = GetActorProperty(Player.TID, APROP_Health);
+    int Percent = GetCVar("drpg_auto_heal_percent");
+    
+    if ((Health < Player.HealthMax / Percent) || Quick)
+    {
+        if (GetCVar("drpg_auto_heal_order") == 1) // Smallest to Largest
+        {
+                 if (CheckInventory("DRPGStimPack"))            UseInventory("DRPGStimPack")
+            else if (CheckInventory("DRPGMedikit"))             UseInventory("DRPGMedikit")
+            else if (CheckInventory("DRPGLargeMedikit"))        UseInventory("DRPGLargeMedikit")
+            else if (CheckInventory("DRPGXLMedikit"))           UseInventory("DRPGXLMedikit")
+            else if (CheckInventory("DRPGMedPack"))             UseInventory("DRPGMedPack")
+            else if (CheckInventory("DRPGSurgeryKit"))          UseInventory("DRPGSurgeryKit");
+        }
+        else if (GetCVar("drpg_auto_heal_order") == 2) // Largest to Smallest
+        {
+                 if (CheckInventory("DRPGSurgeryKit"))          UseInventory("DRPGSurgeryKit")
+            else if (CheckInventory("DRPGMedPack"))             UseInventory("DRPGMedPack")
+            else if (CheckInventory("DRPGXLMedikit"))           UseInventory("DRPGXLMedikit")
+            else if (CheckInventory("DRPGLargeMedikit"))        UseInventory("DRPGLargeMedikit")
+            else if (CheckInventory("DRPGMedikit"))             UseInventory("DRPGMedikit")
+            else if (CheckInventory("DRPGStimPack"))            UseInventory("DRPGStimPack");
+        };
+    };
 };
 
 // Quickly buy EP
 acscript void QuickEP() net
 {
-	if (!GetCVar("drpg_shoptype") && !InBase)
-	{
-		ActivatorSound("menu/error", 127);
-		return;
-	};
-	
-	int Amount = Player.EPMax - Player.EP;
-	
-	if (CheckInventory("DRPGCredits") > 0 && Player.EP < Player.EPMax)
-	{
-		ActivatorSound("health/epcapsule", 127);
-		
-		if (CheckInventory("DRPGCredits") < Amount)
-			Amount = CheckInventory("DRPGCredits");
-		
-		TakeInventory("DRPGCredits", Amount);
-		AddEP(Amount);
-	}
-	else
-	{
-		ActivatorSound("menu/error", 127);
-		return;
-	};
+    if (!GetCVar("drpg_shoptype") && !InBase)
+    {
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    int Amount = Player.EPMax - Player.EP;
+    
+    if (CheckInventory("DRPGCredits") > 0 && Player.EP < Player.EPMax)
+    {
+        ActivatorSound("health/epcapsule", 127);
+        
+        if (CheckInventory("DRPGCredits") < Amount)
+            Amount = CheckInventory("DRPGCredits");
+        
+        TakeInventory("DRPGCredits", Amount);
+        AddEP(Amount);
+    }
+    else
+    {
+        ActivatorSound("menu/error", 127);
+        return;
+    };
 };
 
 // Death Script
 script void Dead() death
 {
-	// Taunt the Player
-	ActivatorSound("Taunt", 127);
-	
-	// Reset menu vars
-	Player.InMenu = false;
-	Player.InShop = false;
-	
-	// Remove Aura
-	RemoveAura();
-	
-	// Remove Shield
-	if (Player.Shield.Active)
-		ToggleShield(true);
-	
-	// Drop Credits
-	if (GetCVar("drpg_multi_dropcredits") && CheckInventory("DRPGCredits") > 0)
-	{
-		int DropAmount = CheckInventory("DRPGCredits") / 100 * GetCVar("drpg_multi_dropcredits_percent");
-		
-		// Cap out at a million so if you have stupid amounts of Credits you don't freeze/nuke the game
-		if (DropAmount > 1000000) DropAmount = 1000000;
-		
-		TakeInventory("DRPGCredits", DropAmount);
-		
-		// Credit Fountain
-		int Total = DropAmount;
-		int Drops;
-		
-		Drops = Total / 1000;
-		while (Drops--) DropItem(0, "DRPGCredits1000", 1, 256);
-		Total -= (Total / 1000) * 1000;
+    // Taunt the Player
+    ActivatorSound("Taunt", 127);
+    
+    // Reset menu vars
+    Player.InMenu = false;
+    Player.InShop = false;
+    
+    // Remove Aura
+    RemoveAura();
+    
+    // Remove Shield
+    if (Player.Shield.Active)
+        ToggleShield(true);
+    
+    // Drop Credits
+    if (GetCVar("drpg_multi_dropcredits") && CheckInventory("DRPGCredits") > 0)
+    {
+        int DropAmount = CheckInventory("DRPGCredits") / 100 * GetCVar("drpg_multi_dropcredits_percent");
+        
+        // Cap out at a million so if you have stupid amounts of Credits you don't freeze/nuke the game
+        if (DropAmount > 1000000) DropAmount = 1000000;
+        
+        TakeInventory("DRPGCredits", DropAmount);
+        
+        // Credit Fountain
+        int Total = DropAmount;
+        int Drops;
+        
+        Drops = Total / 1000;
+        while (Drops--) DropItem(0, "DRPGCredits1000", 1, 256);
+        Total -= (Total / 1000) * 1000;
 
-		Drops = Total / 100;
-		while (Drops--) DropItem(0, "DRPGCredits100", 1, 256);
-		Total -= (Total / 100) * 100;
+        Drops = Total / 100;
+        while (Drops--) DropItem(0, "DRPGCredits100", 1, 256);
+        Total -= (Total / 100) * 100;
 
-		Drops = Total / 50;
-		while (Drops--) DropItem(0, "DRPGCredits50", 1, 256);
-		Total -= (Total / 50) * 50;
+        Drops = Total / 50;
+        while (Drops--) DropItem(0, "DRPGCredits50", 1, 256);
+        Total -= (Total / 50) * 50;
 
-		Drops = Total / 20;
-		while (Drops--) DropItem(0, "DRPGCredits20", 1, 256);
-		Total -= (Total / 20) * 20;
+        Drops = Total / 20;
+        while (Drops--) DropItem(0, "DRPGCredits20", 1, 256);
+        Total -= (Total / 20) * 20;
 
-		Drops = Total / 10;
-		while (Drops--) DropItem(0, "DRPGCredits10", 1, 256);
-		Total -= (Total / 10) * 10;
+        Drops = Total / 10;
+        while (Drops--) DropItem(0, "DRPGCredits10", 1, 256);
+        Total -= (Total / 10) * 10;
 
-		Drops = Total / 5;
-		while (Drops--) DropItem(0, "DRPGCredits5", 1, 256);
-		Total -= (Total / 5) * 5;
-		
-		Drops = Total;
-		while (Total--) DropItem(0, "DRPGCredits1", 1, 256);
-	};
-	
-	// Drop Inventory
-	if (GetCVar("drpg_multi_dropinv"))
-		DropInventory();
-	
-	// Remove TID
-	Thing_ChangeTID(Player.TID, 0);
+        Drops = Total / 5;
+        while (Drops--) DropItem(0, "DRPGCredits5", 1, 256);
+        Total -= (Total / 5) * 5;
+        
+        Drops = Total;
+        while (Total--) DropItem(0, "DRPGCredits1", 1, 256);
+    };
+    
+    // Drop Inventory
+    if (GetCVar("drpg_multi_dropinv"))
+        DropInventory();
+    
+    // Remove TID
+    Thing_ChangeTID(Player.TID, 0);
 };
 
 // Respawn
 script void Respawn() respawn
 {
-	// Reassign TID
-	Player.TID = PLAYER_TID + PlayerNumber();
-	Thing_ChangeTID(0, Player.TID);
-	
+    // Reassign TID
+    Player.TID = PLAYER_TID + PlayerNumber();
+    Thing_ChangeTID(0, Player.TID);
+    
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: Player TID: %d\n", Player.TID);
-	
+    
     // Heal to max health
     SetActorProperty(0, APROP_Health, Player.HealthMax);
     
-	// XP/Rank Penalty
-	if (GetCVar("drpg_multi_takexp"))
-	{
-		int XPPenalty = Abs(Round((fixed)XPTable[Player.Level] / 100.0 * GetCVarFixed("drpg_multi_takexp_percent")));
-		int RankPenalty = Abs(Round((fixed)RankTable[Player.RankLevel] / 100.0 * GetCVarFixed("drpg_multi_takexp_percent")));
-		
-		if (XPPenalty > 0 && RankPenalty > 0)
-		{
-			Player.XP -= XPPenalty;
-			Player.Rank -= RankPenalty;
-			SetFont("BIGFONT");
-			HudMessage("\cjXP -%d\n\ckRank -%d\n", XPPenalty, RankPenalty, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_WHITE, 1.5, 0.75, 2.0, 2.0);
-		};
-	};
-	
-	// Restore EP if CVAR is set
-	if (GetCVar("drpg_multi_restoreep"))
-		Player.EP = Player.EPMax;
-	
-	// Give a box of ammo if a specific ammo type is empty if the CVAR is set
-	if (GetCVar("drpg_multi_restoreammo"))
-	{
-		if (CheckInventory("Clip") < GetAmmoAmount("Clip") * (Player.Capacity / 10))
-			SetInventory("Clip", GetAmmoAmount("Clip") * (Player.Capacity / 10));
-		if (CheckInventory("Shell") < GetAmmoAmount("Shell") * (Player.Capacity / 10))
-			SetInventory("Shell", GetAmmoAmount("Shell") * (Player.Capacity / 10));
-		if (CheckInventory("RocketAmmo") < GetAmmoAmount("RocketAmmo") * (Player.Capacity / 10))
-			SetInventory("RocketAmmo", GetAmmoAmount("RocketAmmo") * (Player.Capacity / 10));
-		if (CheckInventory("Cell") < GetAmmoAmount("Cell") * (Player.Capacity / 10))
-			SetInventory("Cell", GetAmmoAmount("Cell") * (Player.Capacity / 10));
-	};
-	
-	// Run Scripts
-	DamageNumbers();
-	InfoPopoffs();
-	HealthBars();
+    // XP/Rank Penalty
+    if (GetCVar("drpg_multi_takexp"))
+    {
+        int XPPenalty = Abs(Round((fixed)XPTable[Player.Level] / 100.0 * GetCVarFixed("drpg_multi_takexp_percent")));
+        int RankPenalty = Abs(Round((fixed)RankTable[Player.RankLevel] / 100.0 * GetCVarFixed("drpg_multi_takexp_percent")));
+        
+        if (XPPenalty > 0 && RankPenalty > 0)
+        {
+            Player.XP -= XPPenalty;
+            Player.Rank -= RankPenalty;
+            SetFont("BIGFONT");
+            HudMessage("\cjXP -%d\n\ckRank -%d\n", XPPenalty, RankPenalty, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_WHITE, 1.5, 0.75, 2.0, 2.0);
+        };
+    };
+    
+    // Restore EP if CVAR is set
+    if (GetCVar("drpg_multi_restoreep"))
+        Player.EP = Player.EPMax;
+    
+    // Give a box of ammo if a specific ammo type is empty if the CVAR is set
+    if (GetCVar("drpg_multi_restoreammo"))
+    {
+        if (CheckInventory("Clip") < GetAmmoAmount("Clip") * (Player.Capacity / 10))
+            SetInventory("Clip", GetAmmoAmount("Clip") * (Player.Capacity / 10));
+        if (CheckInventory("Shell") < GetAmmoAmount("Shell") * (Player.Capacity / 10))
+            SetInventory("Shell", GetAmmoAmount("Shell") * (Player.Capacity / 10));
+        if (CheckInventory("RocketAmmo") < GetAmmoAmount("RocketAmmo") * (Player.Capacity / 10))
+            SetInventory("RocketAmmo", GetAmmoAmount("RocketAmmo") * (Player.Capacity / 10));
+        if (CheckInventory("Cell") < GetAmmoAmount("Cell") * (Player.Capacity / 10))
+            SetInventory("Cell", GetAmmoAmount("Cell") * (Player.Capacity / 10));
+    };
+    
+    // Run Scripts
+    DamageNumbers();
+    InfoPopoffs();
+    HealthBars();
 };
 
 // Apply values to global vars visible to the HUD
 function void CheckHUD()
 {
-	// New Multiplayer HUD Checking
-	int PlayerNum = PlayerNumber();
-	
-	// Max Health/Armor
-	HealthMax[PlayerNum] = Player.HealthMax;
-	ArmorMax[PlayerNum] = Player.ArmorMax;
-	
-	// EP
-	EP[PlayerNum] = Player.EP;
-	EPMax[PlayerNum] = Player.EPMax;
-	
-	// For EP Bar on HUD
+    // New Multiplayer HUD Checking
+    int PlayerNum = PlayerNumber();
+    
+    // Max Health/Armor
+    HealthMax[PlayerNum] = Player.HealthMax;
+    ArmorMax[PlayerNum] = Player.ArmorMax;
+    
+    // EP
+    EP[PlayerNum] = Player.EP;
+    EPMax[PlayerNum] = Player.EPMax;
+    
+    // For EP Bar on HUD
     if (Player.EP > 0)
         SetInventory("DRPGEP", Player.EP * 100 / Player.EPMax);
     
-	// Combo System
-	Combo[PlayerNum] = Player.Combo;
-	BonusGained[PlayerNum] = Player.BonusGained;
-	XPGained[PlayerNum] = Player.XPGained;
-	RankGained[PlayerNum] = Player.RankGained;
-	
-	// Aura Timer
-	AuraTimerHUD[PlayerNum] = Player.AuraTimer / 35 + 1;
-	
-	// Regen Boost
-	SetInventory("DRPGRegenBoost", (Player.RegenBoostTimer > 0));
-	RegenBoostTimerHUD[PlayerNum] = Player.RegenBoostTimer / 35 + 1;
-	
-	// For Combo Bar on HUD
-	if (Player.ComboTimer < 35 * 4 && Player.ComboTimer > 35 * 2)
-	{
-		SetInventory("DRPGCombo", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
-		SetInventory("DRPGCombo2", 0);
-	}
-	else if (Player.ComboTimer <= 35 * 2)
-	{
-		SetInventory("DRPGCombo", 0);
-		SetInventory("DRPGCombo2", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
-	};
-	
-	// Stim Timer
-	SetInventory("DRPGStimActive", Player.Stim.Active);
-	if (Player.Stim.Timer > 0)
-		StimTimerHUD[PlayerNum] = Player.Stim.Timer / 35 + 1
-	else
-		StimTimerHUD[PlayerNum] = 0;
-	
-	// Shield
-	Shield[PlayerNum] = Player.Shield.Charge;
-	ShieldCapacity[PlayerNum] = Player.Shield.Capacity;
-	TakeInventory("DRPGShieldCapacity", 100);
-	GiveInventory("DRPGShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
-	SetInventory("DRPGShield", Player.Shield.Active);
-	
-	// Status Timer
-	if (Player.StatusTimer > 0)
-		StatusTimerHUD[PlayerNum] = Player.StatusTimer / 35 + 1
-	else
-		StatusTimerHUD[PlayerNum] = 0;
-	
-	// Items
-	Credits[PlayerNum] = CheckInventory("DRPGCredits");
-	Continues[PlayerNum] = CheckInventory("DRPGContinue");
+    // Combo System
+    Combo[PlayerNum] = Player.Combo;
+    BonusGained[PlayerNum] = Player.BonusGained;
+    XPGained[PlayerNum] = Player.XPGained;
+    RankGained[PlayerNum] = Player.RankGained;
+    
+    // Aura Timer
+    AuraTimerHUD[PlayerNum] = Player.AuraTimer / 35 + 1;
+    
+    // Regen Boost
+    SetInventory("DRPGRegenBoost", (Player.RegenBoostTimer > 0));
+    RegenBoostTimerHUD[PlayerNum] = Player.RegenBoostTimer / 35 + 1;
+    
+    // For Combo Bar on HUD
+    if (Player.ComboTimer < 35 * 4 && Player.ComboTimer > 35 * 2)
+    {
+        SetInventory("DRPGCombo", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+        SetInventory("DRPGCombo2", 0);
+    }
+    else if (Player.ComboTimer <= 35 * 2)
+    {
+        SetInventory("DRPGCombo", 0);
+        SetInventory("DRPGCombo2", (int)((fixed)Player.ComboTimer / (((fixed)COMBO_MAX) / 100.0)));
+    };
+    
+    // Stim Timer
+    SetInventory("DRPGStimActive", Player.Stim.Active);
+    if (Player.Stim.Timer > 0)
+        StimTimerHUD[PlayerNum] = Player.Stim.Timer / 35 + 1
+    else
+        StimTimerHUD[PlayerNum] = 0;
+    
+    // Shield
+    Shield[PlayerNum] = Player.Shield.Charge;
+    ShieldCapacity[PlayerNum] = Player.Shield.Capacity;
+    TakeInventory("DRPGShieldCapacity", 100);
+    GiveInventory("DRPGShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
+    SetInventory("DRPGShield", Player.Shield.Active);
+    
+    // Status Timer
+    if (Player.StatusTimer > 0)
+        StatusTimerHUD[PlayerNum] = Player.StatusTimer / 35 + 1
+    else
+        StatusTimerHUD[PlayerNum] = 0;
+    
+    // Items
+    Credits[PlayerNum] = CheckInventory("DRPGCredits");
+    Continues[PlayerNum] = CheckInventory("DRPGContinue");
 };
 
 function void DefaultLoadout()
 {
-	// Extras Compatibility
-	if(GetCVar("drpg_ext_extras"))
-		SetWeapon("Pistol1");
-	
-	// DoomRL Compatibility
-	if (GetCVar("drpg_ext_doomrl"))
-		SetWeapon("RLPistol");
+    // Extras Compatibility
+    if(GetCVar("drpg_ext_extras"))
+        SetWeapon("Pistol1");
+    
+    // DoomRL Compatibility
+    if (GetCVar("drpg_ext_doomrl"))
+        SetWeapon("RLPistol");
 };

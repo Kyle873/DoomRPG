@@ -6,51 +6,51 @@
 // Handles HUD Health Bars
 script void HealthBars()
 {
-	int PlayerNum = PlayerNumber();
-	
+    int PlayerNum = PlayerNumber();
+    
     Start:
-	
-	while (GetUserCVar(PlayerNumber(), "drpg_healthbars"))
-	{
-		SetActivatorToTarget(Players(PlayerNum).TID);
-		
-		Delay(1);
-		
-		// Flags
-		bool HasHealthBar = (CheckInventory("DRPGHealthBar") > 0);
-		bool Friendly = GetActorProperty(0, APROP_Friendly);
-		bool Shield = CheckInventory("DRPGShield");
-		bool IsPlayer = false;
+    
+    while (GetUserCVar(PlayerNumber(), "drpg_healthbars"))
+    {
+        SetActivatorToTarget(Players(PlayerNum).TID);
+        
+        Delay(1);
+        
+        // Flags
+        bool HasHealthBar = (CheckInventory("DRPGHealthBar") > 0);
+        bool Friendly = GetActorProperty(0, APROP_Friendly);
+        bool Shield = CheckInventory("DRPGShield");
+        bool IsPlayer = false;
         bool IsNamed = CheckInventory("DRPGMonsterNamed");
-		
-		// Stats
-		int CurrentLevel = CheckInventory("DRPGMonsterLevel");
-		int CurrentAura = CheckInventory("DRPGMonsterAura");
+        
+        // Stats
+        int CurrentLevel = CheckInventory("DRPGMonsterLevel");
+        int CurrentAura = CheckInventory("DRPGMonsterAura");
         int CurrentThreat = CheckInventory("DRPGMonsterThreat");
-		int CurrentStrength = CheckInventory("DRPGMonsterStrength");
-		int CurrentDefense = CheckInventory("DRPGMonsterDefense");
+        int CurrentStrength = CheckInventory("DRPGMonsterStrength");
+        int CurrentDefense = CheckInventory("DRPGMonsterDefense");
         int CurrentVitality = CheckInventory("DRPGMonsterVitality");
         int CurrentEnergy = CheckInventory("DRPGMonsterEnergy");
         int CurrentRegeneration = CheckInventory("DRPGMonsterRegeneration");
         int CurrentAgility = CheckInventory("DRPGMonsterAgility");
         int CurrentCapacity = CheckInventory("DRPGMonsterCapacity");
         int CurrentLuck = CheckInventory("DRPGMonsterLuck");
-		int CurrentHealth = GetActorProperty(0, APROP_Health);
-		int MaxHealth = GetActorProperty(0, APROP_SpawnHealth);
-		
-		// Other
-		str Name = GetActorPropertyString(0, APROP_Nametag);
-		int HealthPercent;
-		str FillType;
-		str AuraType;
-		
-		// Player Stats
-		int ID;
-		int[12] Stats;
-		
-		// Blank out the name if it is the same as the actor itself
-		if (Name == GetActorClass(0)) Name = "";
-		
+        int CurrentHealth = GetActorProperty(0, APROP_Health);
+        int MaxHealth = GetActorProperty(0, APROP_SpawnHealth);
+        
+        // Other
+        str Name = GetActorPropertyString(0, APROP_Nametag);
+        int HealthPercent;
+        str FillType;
+        str AuraType;
+        
+        // Player Stats
+        int ID;
+        int[12] Stats;
+        
+        // Blank out the name if it is the same as the actor itself
+        if (Name == GetActorClass(0)) Name = "";
+        
         // Generate Name
         if ((CurrentAura == 10 || Name == "Marine" || Name == "Heavy Marine" || Name == "UAC Heavy Powersuit") && !IsNamed)
         {
@@ -58,120 +58,120 @@ script void HealthBars()
             Name = GetActorPropertyString(0, APROP_Nametag);
             SetInventory("DRPGMonsterNamed", 1);
         };
-		
+        
         // Special handling for Player Targets
-		if (ActivatorTID() != Players(PlayerNum).TID && (ActivatorTID() >= PLAYER_TID && ActivatorTID() <= PLAYER_TID + MAX_PLAYERS))
-		{
-			// Find the right Player
-			for (int i = 0; i < MAX_PLAYERS; i++)
-				if (Players(i).TID == ActivatorTID() && PlayerInGame(i))
-				{
-					ID = i;
-					IsPlayer = true;
-					break;
-				};
-			
-			// Apply Stats
-			Name = StrParam("%N\n", ID + 1);
-			Stats[0] = Players(ID).Level;
-			Stats[1] = Players(ID).RankLevel;
-			Stats[2] = Players(ID).Strength;
-			Stats[3] = Players(ID).Defense;
-			Stats[4] = Players(ID).Vitality;
-			Stats[5] = Players(ID).Energy;
-			Stats[6] = Players(ID).Regeneration;
-			Stats[7] = Players(ID).Agility;
-			Stats[8] = Players(ID).Capacity;
-			Stats[9] = Players(ID).Luck;
-			Stats[10] = CheckInventory("Armor");
-			Stats[11] = Players(ID).ArmorMax;
-			
-			// Indestructible Armor check
-			if (GetCVar("drpg_ext_doomrl"))
-				if (CheckInventory("RLIndestructibleArmorWorn"))
-					Stats[11] = 10000;
-			
-			// If the Player has a Shield active, change the health to Shield amounts instead
-			if (Shield)
-			{
-				CurrentHealth = CheckInventory("DRPGShieldCharge");
-				MaxHealth = CheckInventory("DRPGShieldChargeMax");
-			};
-		};
-		
-		if (ActivatorTID() != Players(PlayerNum).TID && GetActorProperty(Players(PlayerNum).TID, APROP_Health) > 0)
-		{
-			SetActivator(Players(PlayerNum).TID);
-			NEEDVALIDPLAYER; // Verify that SetActivator is doing its' thing.
-			
-			fixed X = GetUserCVar(PlayerNum, "drpg_healthbars_x");
-			fixed Y = GetUserCVar(PlayerNum, "drpg_healthbars_y");
-			
-			if (HasHealthBar && (Shield || CurrentHealth > 0) && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
-			{
-				// Divide-by-zero check
-				if (MaxHealth > 0)
-					HealthPercent = (CurrentHealth * 100) / MaxHealth;
-				
-				SetHudSize(800, 600, false);
-				
-				if (Friendly)
-					// if (GetCVar("screenblocks") == 10)
-					//	PrintSprite("HPBarSS", 0, X, Y, 0.05)
-					// else
-					PrintSprite("HPBar2", 0, X, Y, 0.05)
-				else
-					// if (GetCVar("screenblocks") == 10)
-					//	PrintSprite("HPBarSS", 0, X, Y, 0.05)
-					// else
-						PrintSprite("HPBar", 0, X, Y, 0.05);
-				
-				// Name
-				if (GetCVar("drpg_healthbars_names"))
-				{
-					int Color = CR_GRAY;
-					
-					switch (CurrentAura)
-					{
-						case 1: 	Color = CR_RED;		break;
-						case 2: 	Color = CR_GREEN;	break;
-						case 3: 	Color = CR_WHITE;	break;
-						case 4: 	Color = CR_BRICK;	break;
-						case 5: 	Color = CR_CYAN;	break;
-						case 6: 	Color = CR_PURPLE;	break;
-						case 7: 	Color = CR_ORANGE;	break;
-						case 8: 	Color = CR_BLUE;	break;
-						case 9: 	Color = CR_YELLOW;	break;
-						case 10: 	Color = CR_GRAY;	break;
-					};
-					
-					SetFont("BIGFONT");
+        if (ActivatorTID() != Players(PlayerNum).TID && (ActivatorTID() >= PLAYER_TID && ActivatorTID() <= PLAYER_TID + MAX_PLAYERS))
+        {
+            // Find the right Player
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (Players(i).TID == ActivatorTID() && PlayerInGame(i))
+                {
+                    ID = i;
+                    IsPlayer = true;
+                    break;
+                };
+            
+            // Apply Stats
+            Name = StrParam("%N\n", ID + 1);
+            Stats[0] = Players(ID).Level;
+            Stats[1] = Players(ID).RankLevel;
+            Stats[2] = Players(ID).Strength;
+            Stats[3] = Players(ID).Defense;
+            Stats[4] = Players(ID).Vitality;
+            Stats[5] = Players(ID).Energy;
+            Stats[6] = Players(ID).Regeneration;
+            Stats[7] = Players(ID).Agility;
+            Stats[8] = Players(ID).Capacity;
+            Stats[9] = Players(ID).Luck;
+            Stats[10] = CheckInventory("Armor");
+            Stats[11] = Players(ID).ArmorMax;
+            
+            // Indestructible Armor check
+            if (GetCVar("drpg_ext_doomrl"))
+                if (CheckInventory("RLIndestructibleArmorWorn"))
+                    Stats[11] = 10000;
+            
+            // If the Player has a Shield active, change the health to Shield amounts instead
+            if (Shield)
+            {
+                CurrentHealth = CheckInventory("DRPGShieldCharge");
+                MaxHealth = CheckInventory("DRPGShieldChargeMax");
+            };
+        };
+        
+        if (ActivatorTID() != Players(PlayerNum).TID && GetActorProperty(Players(PlayerNum).TID, APROP_Health) > 0)
+        {
+            SetActivator(Players(PlayerNum).TID);
+            NEEDVALIDPLAYER; // Verify that SetActivator is doing its' thing.
+            
+            fixed X = GetUserCVar(PlayerNum, "drpg_healthbars_x");
+            fixed Y = GetUserCVar(PlayerNum, "drpg_healthbars_y");
+            
+            if (HasHealthBar && (Shield || CurrentHealth > 0) && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
+            {
+                // Divide-by-zero check
+                if (MaxHealth > 0)
+                    HealthPercent = (CurrentHealth * 100) / MaxHealth;
+                
+                SetHudSize(800, 600, false);
+                
+                if (Friendly)
+                    // if (GetCVar("screenblocks") == 10)
+                    //  PrintSprite("HPBarSS", 0, X, Y, 0.05)
+                    // else
+                    PrintSprite("HPBar2", 0, X, Y, 0.05)
+                else
+                    // if (GetCVar("screenblocks") == 10)
+                    //  PrintSprite("HPBarSS", 0, X, Y, 0.05)
+                    // else
+                        PrintSprite("HPBar", 0, X, Y, 0.05);
+                
+                // Name
+                if (GetCVar("drpg_healthbars_names"))
+                {
+                    int Color = CR_GRAY;
+                    
+                    switch (CurrentAura)
+                    {
+                        case 1:     Color = CR_RED;     break;
+                        case 2:     Color = CR_GREEN;   break;
+                        case 3:     Color = CR_WHITE;   break;
+                        case 4:     Color = CR_BRICK;   break;
+                        case 5:     Color = CR_CYAN;    break;
+                        case 6:     Color = CR_PURPLE;  break;
+                        case 7:     Color = CR_ORANGE;  break;
+                        case 8:     Color = CR_BLUE;    break;
+                        case 9:     Color = CR_YELLOW;  break;
+                        case 10:    Color = CR_GRAY;    break;
+                    };
+                    
+                    SetFont("BIGFONT");
                     HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, Color, X, Y - 24.0, 0.05);
-				};
-				
-				// HP/Max HP and Armor
-				SetFont("SMALLFONT");
-				if (Shield)
-					if (IsPlayer && Stats[10] > 0)
-						if (Stats[11] >= 10000) // Indestructible Armor
-							HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
-						else
-							HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, MaxHealth, Stats[10], Stats[11], HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
-					else
-						HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
-				else
-					if (IsPlayer && Stats[10] > 0)
-						if (Stats[11] >= 10000) // Indestructible Armor
-							HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
-						else
-							HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, MaxHealth, Stats[10], Stats[11], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
-					else
-						HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
-				
-				// Monster Stats
-				if (GetCVar("drpg_monster_levels") > 0 && CurrentLevel > 0 && !IsPlayer)
-				{
-					for (int i = 1; i <= CurrentThreat; i++)
+                };
+                
+                // HP/Max HP and Armor
+                SetFont("SMALLFONT");
+                if (Shield)
+                    if (IsPlayer && Stats[10] > 0)
+                        if (Stats[11] >= 10000) // Indestructible Armor
+                            HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
+                        else
+                            HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, MaxHealth, Stats[10], Stats[11], HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
+                    else
+                        HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
+                else
+                    if (IsPlayer && Stats[10] > 0)
+                        if (Stats[11] >= 10000) // Indestructible Armor
+                            HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
+                        else
+                            HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, MaxHealth, Stats[10], Stats[11], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
+                    else
+                        HudMessage("%d/%d\n", CurrentHealth, MaxHealth, HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
+                
+                // Monster Stats
+                if (GetCVar("drpg_monster_levels") > 0 && CurrentLevel > 0 && !IsPlayer)
+                {
+                    for (int i = 1; i <= CurrentThreat; i++)
                     {
                         if (i == 1)
                             PrintSprite("RankEmb1", 0, X + 36.0 + (i * 7.0), Y + 22.0, 0.05)
@@ -186,88 +186,88 @@ script void HealthBars()
                         else if (i == 10)
                             PrintSprite("RankEmb6", 0, X + 36.0 + (i * 7.0), Y + 22.0, 0.05);
                     };
-					
-					SetFont("BIGFONT");
-					
-					// Stat Amounts
-					HudMessage("%d\n", CurrentLevel, HUDMSG_PLAIN, 0, CR_WHITE, X - 96.1, Y + 21.0, 0.05);
-					HudMessage("%d\n", CurrentStrength, HUDMSG_PLAIN, 0, CR_RED, X - 96.1, Y + 39.0, 0.05);
-					HudMessage("%d\n", CurrentDefense, HUDMSG_PLAIN, 0, CR_GREEN, X - 40.1, Y + 39.0, 0.05);
-					HudMessage("%d\n", CurrentVitality, HUDMSG_PLAIN, 0, CR_BRICK, X + 16.1, Y + 39.0, 0.05);
-					HudMessage("%d\n", CurrentEnergy, HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 72.1, Y + 39.0, 0.05);
-					HudMessage("%d\n", CurrentRegeneration, HUDMSG_PLAIN, 0, CR_PURPLE, X - 96.1, Y + 58.0, 0.05);
-					HudMessage("%d\n", CurrentAgility, HUDMSG_PLAIN, 0, CR_ORANGE, X - 40.1, Y + 58.0, 0.05);
-					HudMessage("%d\n", CurrentCapacity, HUDMSG_PLAIN, 0, CR_BLUE, X + 16.1, Y + 58.0, 0.05);
-					HudMessage("%d\n", CurrentLuck, HUDMSG_PLAIN, 0, CR_YELLOW, X + 72.1, Y + 58.0, 0.05);
-					
-					// Stat Icons
-					PrintSprite("MonLevel", 0, X - 107.0, Y + 21.0, 0.05);
-					PrintSprite("STAT1S", 0, X - 96.0, Y + 56.0, 0.05);
-					PrintSprite("STAT2S", 0, X - 40.0, Y + 54.0, 0.05);
-					PrintSprite("STAT3S", 0, X + 16.0, Y + 54.0, 0.05);
-					PrintSprite("STAT4S", 0, X + 72.0, Y + 56.0, 0.05);
-					PrintSprite("STAT5S", 0, X - 96.0, Y + 74.0, 0.05);
-					PrintSprite("STAT6S", 0, X - 40.0, Y + 75.0, 0.05);
-					PrintSprite("STAT7S", 0, X + 16.0, Y + 74.0, 0.05);
-					PrintSprite("STAT8S", 0, X + 71.0, Y + 73.0, 0.05);
-				}
-				else if (IsPlayer) // Player Stats
-				{
-					// Rank Emblems
-					for (int i = 0; i < Stats[1]; i++)
-						PrintSprite("RankEmb", 0, X - 55.0 + (i * 7.0), Y + 22.0, 0.05);
-					
-					SetFont("BIGFONT");
-					
-					// Stat Amounts
-					HudMessage("%d\n", Stats[0], HUDMSG_PLAIN, 0, CR_WHITE, X - 96.1, Y + 21.0, 0.05);
-					HudMessage("%d\n", Stats[2], HUDMSG_PLAIN, 0, CR_RED, X - 96.1, Y + 39.0, 0.05);
-					HudMessage("%d\n", Stats[3], HUDMSG_PLAIN, 0, CR_GREEN, X - 40.1, Y + 39.0, 0.05);
-					HudMessage("%d\n", Stats[4], HUDMSG_PLAIN, 0, CR_BRICK, X + 16.1, Y + 39.0, 0.05);
-					HudMessage("%d\n", Stats[5], HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 72.1, Y + 39.0, 0.05);
-					HudMessage("%d\n", Stats[6], HUDMSG_PLAIN, 0, CR_PURPLE, X - 96.1, Y + 58.0, 0.05);
-					HudMessage("%d\n", Stats[7], HUDMSG_PLAIN, 0, CR_ORANGE, X - 40.1, Y + 58.0, 0.05);
-					HudMessage("%d\n", Stats[8], HUDMSG_PLAIN, 0, CR_BLUE, X + 16.1, Y + 58.0, 0.05);
-					HudMessage("%d\n", Stats[9], HUDMSG_PLAIN, 0, CR_YELLOW, X + 72.1, Y + 58.0, 0.05);
-					
-					// Stat Icons
-					PrintSprite("MonLevel", 0, X - 107.0, Y + 21.0, 0.05);
-					PrintSprite("STAT1S", 0, X - 96.0, Y + 56.0, 0.05);
-					PrintSprite("STAT2S", 0, X - 40.0, Y + 54.0, 0.05);
-					PrintSprite("STAT3S", 0, X + 16.0, Y + 54.0, 0.05);
-					PrintSprite("STAT4S", 0, X + 72.0, Y + 56.0, 0.05);
-					PrintSprite("STAT5S", 0, X - 96.0, Y + 74.0, 0.05);
-					PrintSprite("STAT6S", 0, X - 40.0, Y + 75.0, 0.05);
-					PrintSprite("STAT7S", 0, X + 16.0, Y + 74.0, 0.05);
-					PrintSprite("STAT8S", 0, X + 71.0, Y + 73.0, 0.05);
-				};
-				
-				// Aura Icon
-				switch (CurrentAura)
-				{
-					case 1: 	AuraType = "AuraRed";	break;
-					case 2: 	AuraType = "AuraGree";	break;
-					case 3: 	AuraType = "AuraWhit";	break;
-					case 4: 	AuraType = "AuraPink";	break;
-					case 5: 	AuraType = "AuraCyan";	break;
-					case 6: 	AuraType = "AuraPurp";	break;
-					case 7: 	AuraType = "AuraOran";	break;
-					case 8: 	AuraType = "AuraBlue";	break;
-					case 9:		AuraType = "AuraYell";	break;
-					case 10: 	AuraType = "AuraBlac";	break;
-				};
-				if (CurrentAura > 0)
-					PrintSprite(AuraType, 0, X - 136.0, Y + 30.0, 0.05);
-				
-				// Prevent bar overflow
-				if (HealthPercent > 1000)
-					HealthPercent = 1000;
-				
+                    
+                    SetFont("BIGFONT");
+                    
+                    // Stat Amounts
+                    HudMessage("%d\n", CurrentLevel, HUDMSG_PLAIN, 0, CR_WHITE, X - 96.1, Y + 21.0, 0.05);
+                    HudMessage("%d\n", CurrentStrength, HUDMSG_PLAIN, 0, CR_RED, X - 96.1, Y + 39.0, 0.05);
+                    HudMessage("%d\n", CurrentDefense, HUDMSG_PLAIN, 0, CR_GREEN, X - 40.1, Y + 39.0, 0.05);
+                    HudMessage("%d\n", CurrentVitality, HUDMSG_PLAIN, 0, CR_BRICK, X + 16.1, Y + 39.0, 0.05);
+                    HudMessage("%d\n", CurrentEnergy, HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 72.1, Y + 39.0, 0.05);
+                    HudMessage("%d\n", CurrentRegeneration, HUDMSG_PLAIN, 0, CR_PURPLE, X - 96.1, Y + 58.0, 0.05);
+                    HudMessage("%d\n", CurrentAgility, HUDMSG_PLAIN, 0, CR_ORANGE, X - 40.1, Y + 58.0, 0.05);
+                    HudMessage("%d\n", CurrentCapacity, HUDMSG_PLAIN, 0, CR_BLUE, X + 16.1, Y + 58.0, 0.05);
+                    HudMessage("%d\n", CurrentLuck, HUDMSG_PLAIN, 0, CR_YELLOW, X + 72.1, Y + 58.0, 0.05);
+                    
+                    // Stat Icons
+                    PrintSprite("MonLevel", 0, X - 107.0, Y + 21.0, 0.05);
+                    PrintSprite("STAT1S", 0, X - 96.0, Y + 56.0, 0.05);
+                    PrintSprite("STAT2S", 0, X - 40.0, Y + 54.0, 0.05);
+                    PrintSprite("STAT3S", 0, X + 16.0, Y + 54.0, 0.05);
+                    PrintSprite("STAT4S", 0, X + 72.0, Y + 56.0, 0.05);
+                    PrintSprite("STAT5S", 0, X - 96.0, Y + 74.0, 0.05);
+                    PrintSprite("STAT6S", 0, X - 40.0, Y + 75.0, 0.05);
+                    PrintSprite("STAT7S", 0, X + 16.0, Y + 74.0, 0.05);
+                    PrintSprite("STAT8S", 0, X + 71.0, Y + 73.0, 0.05);
+                }
+                else if (IsPlayer) // Player Stats
+                {
+                    // Rank Emblems
+                    for (int i = 0; i < Stats[1]; i++)
+                        PrintSprite("RankEmb", 0, X - 55.0 + (i * 7.0), Y + 22.0, 0.05);
+                    
+                    SetFont("BIGFONT");
+                    
+                    // Stat Amounts
+                    HudMessage("%d\n", Stats[0], HUDMSG_PLAIN, 0, CR_WHITE, X - 96.1, Y + 21.0, 0.05);
+                    HudMessage("%d\n", Stats[2], HUDMSG_PLAIN, 0, CR_RED, X - 96.1, Y + 39.0, 0.05);
+                    HudMessage("%d\n", Stats[3], HUDMSG_PLAIN, 0, CR_GREEN, X - 40.1, Y + 39.0, 0.05);
+                    HudMessage("%d\n", Stats[4], HUDMSG_PLAIN, 0, CR_BRICK, X + 16.1, Y + 39.0, 0.05);
+                    HudMessage("%d\n", Stats[5], HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 72.1, Y + 39.0, 0.05);
+                    HudMessage("%d\n", Stats[6], HUDMSG_PLAIN, 0, CR_PURPLE, X - 96.1, Y + 58.0, 0.05);
+                    HudMessage("%d\n", Stats[7], HUDMSG_PLAIN, 0, CR_ORANGE, X - 40.1, Y + 58.0, 0.05);
+                    HudMessage("%d\n", Stats[8], HUDMSG_PLAIN, 0, CR_BLUE, X + 16.1, Y + 58.0, 0.05);
+                    HudMessage("%d\n", Stats[9], HUDMSG_PLAIN, 0, CR_YELLOW, X + 72.1, Y + 58.0, 0.05);
+                    
+                    // Stat Icons
+                    PrintSprite("MonLevel", 0, X - 107.0, Y + 21.0, 0.05);
+                    PrintSprite("STAT1S", 0, X - 96.0, Y + 56.0, 0.05);
+                    PrintSprite("STAT2S", 0, X - 40.0, Y + 54.0, 0.05);
+                    PrintSprite("STAT3S", 0, X + 16.0, Y + 54.0, 0.05);
+                    PrintSprite("STAT4S", 0, X + 72.0, Y + 56.0, 0.05);
+                    PrintSprite("STAT5S", 0, X - 96.0, Y + 74.0, 0.05);
+                    PrintSprite("STAT6S", 0, X - 40.0, Y + 75.0, 0.05);
+                    PrintSprite("STAT7S", 0, X + 16.0, Y + 74.0, 0.05);
+                    PrintSprite("STAT8S", 0, X + 71.0, Y + 73.0, 0.05);
+                };
+                
+                // Aura Icon
+                switch (CurrentAura)
+                {
+                    case 1:     AuraType = "AuraRed";   break;
+                    case 2:     AuraType = "AuraGree";  break;
+                    case 3:     AuraType = "AuraWhit";  break;
+                    case 4:     AuraType = "AuraPink";  break;
+                    case 5:     AuraType = "AuraCyan";  break;
+                    case 6:     AuraType = "AuraPurp";  break;
+                    case 7:     AuraType = "AuraOran";  break;
+                    case 8:     AuraType = "AuraBlue";  break;
+                    case 9:     AuraType = "AuraYell";  break;
+                    case 10:    AuraType = "AuraBlac";  break;
+                };
+                if (CurrentAura > 0)
+                    PrintSprite(AuraType, 0, X - 136.0, Y + 30.0, 0.05);
+                
+                // Prevent bar overflow
+                if (HealthPercent > 1000)
+                    HealthPercent = 1000;
+                
                 // Adjust X and Y to draw the Bar Fill
                 X -= 96.0;
-				
+                
                 // SS Bar needs to be redone for the new setup
-				// if (GetCVar("screenblocks") == 10)
+                // if (GetCVar("screenblocks") == 10)
                 
                 // > 900% Health Fill
                 if (HealthPercent > 900 && !Shield)
@@ -334,20 +334,20 @@ script void HealthBars()
                 
                 // Primary fill
                 SetHudClipRect((int)X, (int)(Y - 6), (int)((fixed)HealthPercent * 2.03), (int)(Y + 6));
-				if (Shield)
+                if (Shield)
                     PrintSprite("FillShld", 0, X + 0.1, Y, 0.05)
                 else
                     PrintSprite("Fill1", 0, X + 0.1, Y, 0.05);
                 
                 // Reset Clipping Rectangle
                 SetHudClipRect(0, 0, 0, 0);
-			};
-		};
-		
-		// Terminate if the Player is dead
-		if (GetActorProperty(Players(PlayerNum).TID, APROP_Health) <= 0) return;
-	};
-	
-	Delay(1);
-	goto Start;
+            };
+        };
+        
+        // Terminate if the Player is dead
+        if (GetActorProperty(Players(PlayerNum).TID, APROP_Health) <= 0) return;
+    };
+    
+    Delay(1);
+    goto Start;
 };
