@@ -98,15 +98,23 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
     if (Type == MT_KILL)
     {
         bool DRLA = GetCVar("drpg_ext_doomrl");
-        int MonsterIndex = (DRLA ? Random((GameSkill() >= 5 ? 20 : 0), MAX_MONSTERS_DRLA - ((GameSkill() >= 5 ? 8 - Difficulty : 36 - (Difficulty * 4))) - 1) : Random(0, MAX_MONSTERS - 1));
+        int MonsterIndex;
         int Amount;
         MonsterInfo Monster;
         
-        // Do we lookup data from the Vanilla or DRLA table?
-        if (DRLA)
-            Monster = MonsterDataDRLA[MonsterIndex]
-        else
-            Monster = MonsterData[MonsterIndex];
+        while (true)
+        {
+            MonsterIndex = (DRLA ? Random((GameSkill() >= 5 ? 20 : 0), MAX_MONSTERS_DRLA - ((GameSkill() >= 5 ? 8 - Difficulty : 36 - (Difficulty * 4))) - 1) : Random(0, MAX_MONSTERS - 1));
+            
+            // Do we lookup data from the Vanilla or DRLA table?
+            if (DRLA)
+                Monster = MonsterDataDRLA[MonsterIndex]
+            else
+                Monster = MonsterData[MonsterIndex];
+            
+            if (Monster.Difficulty <= 65 + (Difficulty * 10))
+                break;
+        };
         
         // Now that we know the monster type, we can calculate an amount
         int BaseAmount = ((20 * (Difficulty + 1)) * (101 - Monster.Difficulty)) / 100;
