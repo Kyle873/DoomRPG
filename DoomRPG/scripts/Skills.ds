@@ -653,7 +653,7 @@ acscript bool Powerup(Skill *Self)
     return true;
 };
 
-acscript void BulletTime(Skill *Self)
+acscript bool BulletTime(Skill *Self)
 {
     BulletTimeMode = Self->CurrentLevel;
     BulletTimeTimer = 350;
@@ -674,6 +674,8 @@ acscript void BulletTime(Skill *Self)
         SetActorState(1999, "Spawn");
         GiveInventory("DRPGTimeFreezer", 1);
     };
+    
+    return true;
 };
 
 acscript bool DropWeapon(Skill *Self)
@@ -745,6 +747,7 @@ acscript bool DropAmmo(Skill *Self)
 
 acscript bool UseAura(Skill *Self)
 {
+    // TODO
     
     return true;
 };
@@ -1171,7 +1174,7 @@ acscript bool WirelessLocker(Skill *Self)
     return true;
 }
 
-acscript void Transport(Skill *Self)
+acscript bool Transport(Skill *Self)
 {
     // If you're dead, terminate
     if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
@@ -1257,14 +1260,14 @@ acscript void Transport(Skill *Self)
             if (PlayersDeny > PlayersApprove)
             {
                 HudMessageBold("\cgTransport Denied!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
-                return;
+                return false;
             };
             
             // Draw
             if (PlayersApprove == PlayersDeny)
             {
                 HudMessageBold("\cjDraw!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
-                return;
+                return false;
             };
         };
     }
@@ -1293,12 +1296,14 @@ acscript void Transport(Skill *Self)
         ChangeLevel("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, -1);
         InBase = true;
         Transported = true;
+        return true;
     }
     else
     {
         ChangeLevel(StrParam("%s\n", LastVisited), 0, CHANGELEVEL_NOINTERMISSION, -1);
         InBase = false;
         Transported = true;
+        return true;
     };
 };
 
