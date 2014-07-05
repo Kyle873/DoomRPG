@@ -19,1304 +19,6 @@ int[MAX_CATEGORIES] SkillCategoryMax =
     7; 9; 9; 3; 17; 7;
 };
 
-// Skill Wheel
-script void SkillWheel() enter
-{
-    Start:
-    
-    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-    int Selected = -1;
-    int LastSelected = -1;
-    int Radius = 96;
-    int CurrentRadius = 0;
-    Skill *CurrentSkill;
-    
-    // Open the wheel
-    if (Buttons & BT_USER1 && !((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0))
-    {
-        ActivatorSound("menu/click", 127);
-        Player.SkillWheelOpen = true;
-    };
-    
-    // Wheel Loop
-    while (Player.SkillWheelOpen)
-    {
-        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-        
-        // Check Input
-        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-        
-        // Check for release
-        if (!(Buttons & BT_USER1) && !(Buttons & BT_SPEED))
-        {
-            if (Selected != -1)
-            {
-                if (Player.InMenu && Player.Menu == 3)
-                {
-                    Player.SkillCatagory[Selected] = Player.SkillPage;
-                    Player.SkillIndex[Selected] = Player.MenuIndex;
-                }
-                else
-                    Player.SkillSelected = Selected;
-            };
-            
-            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-            CurrentRadius = Radius;
-            Player.SkillWheelOpen = false;
-        };
-        
-        // Selection
-        fixed MouseX = -GetPlayerInputFixed(PlayerNumber(), INPUT_YAW) * 1.2;
-        fixed MouseY = GetPlayerInputFixed(PlayerNumber(), INPUT_PITCH);
-        if (CurrentRadius >= Radius)
-        {
-            if (Buttons == (BT_USER1 | BT_FORWARD) && Selected != 0)
-                Selected = 0
-            else if (Buttons == (BT_USER1 | BT_FORWARD | BT_MOVERIGHT) && Selected != 1)
-            {
-                Selected = 1;
-                Delay(5);
-            }
-            else if (Buttons == (BT_USER1 | BT_MOVERIGHT) && Selected != 2)
-                Selected = 2
-            else if (Buttons == (BT_USER1 | BT_MOVERIGHT | BT_BACK) && Selected != 3)
-            {
-                Selected = 3;
-                Delay(5);
-            }
-            else if (Buttons == (BT_USER1 | BT_BACK) && Selected != 4)
-                Selected = 4
-            else if (Buttons == (BT_USER1 | BT_BACK | BT_MOVELEFT) && Selected != 5)
-            {
-                Selected = 5;
-                Delay(5);
-            }
-            else if (Buttons == (BT_USER1 | BT_MOVELEFT) && Selected != 6)
-                Selected = 6
-            else if (Buttons == (BT_USER1 | BT_MOVELEFT | BT_FORWARD) && Selected != 7)
-            {
-                Selected = 7;
-                Delay(5);
-            }
-            // There used to be non-working stuff here, but I fixed it to be working. -Kate
-            else if ((FixedSqrt(MouseX * MouseX + MouseY * MouseY)) > 0.02)
-            {
-                if (VectorAngle(MouseX, MouseY) > 0.1875 && VectorAngle(MouseX, MouseY) < 0.3125)
-                    Selected = 0
-                else if (VectorAngle(MouseX, MouseY) > 0.0625 && VectorAngle(MouseX, MouseY) < 0.1875)
-                    Selected = 1
-                else if (VectorAngle(MouseX, MouseY) >= 0 && VectorAngle(MouseX, MouseY) < 0.0625)
-                    Selected = 2
-                else if (VectorAngle(MouseX, MouseY) <= 1 && VectorAngle(MouseX, MouseY) > 0.9375)
-                    Selected = 2
-                else if (VectorAngle(MouseX, MouseY) > 0.8125 && VectorAngle(MouseX, MouseY) < 0.9375)
-                    Selected = 3
-                else if (VectorAngle(MouseX, MouseY) > 0.6875 && VectorAngle(MouseX, MouseY) < 0.8125)
-                    Selected = 4
-                else if (VectorAngle(MouseX, MouseY) > 0.5625 && VectorAngle(MouseX, MouseY) < 0.6875)
-                    Selected = 5
-                else if (VectorAngle(MouseX, MouseY) > 0.4375 && VectorAngle(MouseX, MouseY) < 0.5625)
-                    Selected = 6
-                else if (VectorAngle(MouseX, MouseY) > 0.3125 && VectorAngle(MouseX, MouseY) < 0.4375)
-                    Selected = 7;
-            };
-            // else
-               // Selected = -1;
-        };
-        
-        // Extra Input Handling
-        if (Buttons & BT_SPEED && Selected != -1)
-        {
-            Skill *CurrentSkill = &Skills[Player.SkillCatagory[Selected]][Player.SkillIndex[Selected]];
-            
-            // Decrease selected skill level
-            if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && CurrentSkill->CurrentLevel > 1)
-            {
-                CurrentSkill->CurrentLevel--;
-                AmbientSound("menu/move", 127);
-            };
-            
-            // Increase selected skill level
-            if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT) && CurrentSkill->CurrentLevel < CurrentSkill->Level)
-            {
-                CurrentSkill->CurrentLevel++;
-                AmbientSound("menu/move", 127);
-            };
-            
-            // Clear Skill
-            if (Buttons & BT_USE)
-            {
-                Player.SkillCatagory[Selected] = -1;
-                Player.SkillIndex[Selected] = -1;
-                AmbientSound("menu/move", 127);
-            };
-        };
-        
-        // Set Skill
-        if (Selected >= 0 && Player.SkillCatagory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
-            CurrentSkill = &Skills[Player.SkillCatagory[Selected]][Player.SkillIndex[Selected]]
-        else
-            CurrentSkill = nullptr;
-        
-        // Play sound
-        if (Selected != LastSelected && Selected >= 0)
-            ActivatorSound("menu/click", 127);
-        
-        LastSelected = Selected;
-        
-        // Draw Wheel
-        SetHudSize(640, 480, false);
-        for (int i = 0; i < MAX_SKILLKEYS; i++)
-        {
-            fixed Angle = -0.25 + ((1.0 / MAX_SKILLKEYS) * i);
-            fixed X = 320.0 + (CurrentRadius * Cos(Angle));
-            fixed Y = 240.0 + (CurrentRadius * Sin(Angle));
-            
-            // Cursor
-            if (i == Selected)
-                PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
-            
-            // Icon
-            if (Player.SkillCatagory[i] != -1 && Player.SkillIndex[i] != -1)
-            {
-                if (StrLen(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon) == 0)
-                    PrintSpriteFade("S_None", WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0)
-                else
-                    PrintSpriteFade(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0);
-            };
-            
-            // Box
-            PrintSpriteFade("ItemBox", WHEEL_ID + MAX_SKILLKEYS + i, (int)X, (int)Y, 0.05, 1.0);
-        };
-        
-        // Animate Wheel
-        if (CurrentRadius < Radius)
-            CurrentRadius += GetCVar("drpg_skill_wheelspeed");
-        
-        // Skill Info
-        if (CurrentSkill != nullptr)
-        {
-            int Cost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
-            str CostColor = (Player.EP < Cost ? "\cg" : "\cv");
-            str Info;
-            
-            // Build info string
-            Info = StrParam("\cd%s\n\n\n", CurrentSkill->Name);
-            Info = StrParam("%s\cjLevel: %d/%d\n\n", Info, CurrentSkill->CurrentLevel, CurrentSkill->Level);
-            Info = StrParam("%s%s%d EP\n", Info, CostColor, Cost);
-            
-            // Display
-            SetFont("SMALLFONT");
-            SetHudClipRect(0, 0, 0, 0, 128);
-            HudMessage("%s\n", Info, HUDMSG_FADEOUT, WHEEL_ID + (MAX_SKILLKEYS * 2), CR_WHITE, 320.4, 240.0, 0.05, 1.0);
-            SetHudClipRect(0, 0, 0, 0, 0);
-        };
-        
-        Delay(1);
-    };
-    
-    Delay(1);
-    goto Start;
-};
-
-// Use Skill Script
-acscript void UseSkill() net
-{
-    // Current Skill
-    int Index = (Player.InMenu && Player.Menu == 3 ? -1 : Player.SkillSelected);
-    Skill *CurrentSkill = &Skills[Player.SkillCatagory[Index]][Player.SkillIndex[Index]];
-    
-    // If you're dead, terminate
-    if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
-    
-    // If you have no current skill selected, terminate
-    if (Player.SkillSelected == -1 && !Player.InMenu) return;
-    
-    // If the key is unassigned, terminate
-    if (Index != -1)
-        if (Player.SkillCatagory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
-    
-    // Quickuse
-    if (Index == -1)
-        CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
-    
-    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-    int EPCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
-    bool Success;
-    
-    // Overdrive?
-    Overdrive = false;
-    if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop))
-        Overdrive = true;
-    
-    // Overdriving an unlearnt skill will learn it
-    if (Overdrive && CheckInventory("DRPGSkillToken") > 0 && CurrentSkill->Level == 0)
-    {
-        CurrentSkill->Level++;
-        CurrentSkill->CurrentLevel++;
-        TakeInventory("DRPGSkillToken", 1);
-        FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
-        return;
-    };
-    
-    // Check if the Skill has been learned yet
-    if (CurrentSkill->Level == 0)
-    {
-        SetFont("BIGFONT");
-        HudMessage("You don't know this skill yet\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
-        ActivatorSound("skills/fail", 127);
-        return;
-    };
-
-    // Can't use skills while burned out
-    if (Player.EP < 0)
-    {
-        SetFont("BIGFONT");
-        HudMessage("You can't use skills while burned out\n", HUDMSG_FADEOUT, 0, CR_BLUE, 0.5, 0.5, 2.0, 1.0);
-        ActivatorSound("skills/fail", 127);
-        return;
-    };
-    
-    // Use the Skill
-    if (Player.EP >= EPCost || Overdrive)
-    {
-        // Debugging
-        if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: \c-EP Cost for %s (\cdLevel %d\c-): \cn%d\n", CurrentSkill->Name, CurrentSkill->CurrentLevel, EPCost);
-        
-        // TODO: Use Skill
-        // Success = CurrentSkill->Use(&CurrentSkill);
-        
-        // Check if the skill use was successful
-        if (Success)
-            Player.EP -= EPCost;
-    }
-    else // Not enough EP
-    {
-        SetFont("BIGFONT");
-        HudMessage("Not enough EP to use this skill!\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
-        ActivatorSound("skills/fail", 127);
-    };
-};
-
-// Heal
-acscript bool Heal(Skill *Self)
-{
-    int HealLevel = Skills[0][0].CurrentLevel;
-    int HealTeamLevel = Skills[0][2].CurrentLevel;
-    int HealAmount;
-    
-    // Calculate healing amount based on level
-    switch (HealLevel)
-    {
-        case 1: HealAmount = Player.HealthMax / 4;      break; // 25%
-        case 2: HealAmount = Player.HealthMax / 2;      break; // 50%
-        case 3: HealAmount = Player.HealthMax / 1.33;   break; // 75%
-        case 4: HealAmount = Player.HealthMax;          break; // 100%
-    };
-    
-    // Refund - If your health is max or above
-    if (Type == 1 && GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    // Refund - If you have no summoned monsters
-    if (Type == 2 && Player.Summons == 0)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
-    
-    if (Type == 1) // Player
-    {
-        HealThing(HealAmount);
-        ActivatorSound("skills/heal", 127);
-    };
-    if (Type == 2) // Summons
-    {
-        for (int i = 0; i < MAX_SUMMONS; i++)
-            if (Player.SummonTID[i] > 0)
-            {
-                int Health = CalculateMonsterMaxHealth(Player.SummonTID[i]);
-                SetActorProperty(Player.SummonTID[i], APROP_Health, Health);
-            };
-        
-        ActivatorSound("skills/heal2", 127);
-    };
-    if (Type == 3) // Team
-    {
-        int PlayerTID = Player.TID;
-        
-        for (int i = 0; i < MAX_PLAYERS; i++)
-            if (PlayerInGame(i))
-            {
-                // Calculate this player's max HP
-                switch (HealTeamLevel)
-                {
-                    case 1: HealAmount = Players(i).HealthMax / 4;      break; // 25%
-                    case 2: HealAmount = Players(i).HealthMax / 2;      break; // 50%
-                    case 3: HealAmount = Players(i).HealthMax / 1.33;   break; // 75%
-                    case 4: HealAmount = Players(i).HealthMax;          break; // 100%
-                };
-                
-                SetActivator(Players(i).TID);
-                FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
-                HealThing(HealAmount);
-                ActivatorSound("skills/heal", 127);
-            };
-         
-        SetActivator(PlayerTID);
-    };
-    
-    return true;
-};
-
-// Life Leech
-acscript bool LifeLeech()
-{
-    int PlayerNum = PlayerNumber();
-    int LeechLevel = Skills[0][3].CurrentLevel;
-    
-    SetActivatorToTarget(Players(PlayerNum).TID);
-    
-    // Refund - If the Player has no target
-    if (ActivatorTID() == Players(PlayerNum).TID)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    // Refund - If the target isn't actually a valid monster
-    if (!CheckInventory("DRPGMonsterInit"))
-    {
-        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
-        return false;
-    };
-    
-    int LeechAmount = Round((fixed)GetActorProperty(0, APROP_Health) * ((fixed)LeechLevel / 10.0));
-    
-    // Refund -- If you leech 0 HP
-    if (LeechAmount == 0)
-    {
-        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
-        return false;
-    };
-    
-    DamageThing(LeechAmount);
-    SetActivator(Players(PlayerNum).TID);
-    HealThing(LeechAmount);
-    
-    FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
-    ActivatorSound("skills/lifeleech", 127);
-    return true;
-};
-
-// Decontamination
-acscript bool Decontaminate()
-{
-    int DecontaminationLevel = Skills[0][4].CurrentLevel;
-    
-    if (Player.Toxicity <= 0)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    Player.Toxicity -= (25 * DecontaminationLevel);
-    Player.ToxicTimer = 0;
-    Player.ToxicOffset = 0;
-    Player.ToxicStage = 0;
-    
-    ActivatorSound("skills/decontaminate", 127);
-    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0 + (0.25 * DecontaminationLevel));
-    
-    return true;
-};
-
-// Repair Armor
-acscript bool Repair()
-{
-    int RepairLevel = Skills[0][5].CurrentLevel;
-    int RepairAmount;
-    
-    // Calculate repair amount based on level
-    switch (RepairLevel)
-    {
-        case 1: RepairAmount = Player.ArmorMax / 4;     break; // 25%
-        case 2: RepairAmount = Player.ArmorMax / 2;     break; // 50%
-        case 3: RepairAmount = Player.ArmorMax / 1.33;  break; // 75%
-        case 4: RepairAmount = Player.ArmorMax;         break; // 100%
-    };
-
-    if (CheckInventory("Armor") > 0 && CheckInventory("Armor") < Player.ArmorMax)
-    {
-        FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
-        GiveInventory("DRPGArmorBonus", RepairAmount);
-        
-        if (CheckInventory("Armor") > Player.ArmorMax)
-        {
-            int ArmorOverflow = CheckInventory("BasicArmor") - Player.ArmorMax;
-            TakeInventory("BasicArmor", ArmorOverflow);
-        };
-        
-        ActivatorSound("skills/repair", 127);
-        return true;
-    }
-    else
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    return false;
-};
-
-// Teleport to closest Player
-acscript bool PlayerTeleport()
-{
-    str[MAX_PLAYERS] Names;
-    int PlayerChoice;
-    
-    // Refund - If there is only one player or you aren't in multiplayer
-    if (PlayerCount() <= 1 || !InMultiplayer)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-
-    while (true)
-    {
-        fixed X = 48.1;
-        fixed Y = 50.0;
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-        
-        // Prevent the menus from being opened
-        Player.InMenu = false;
-        Player.InShop = false;
-        
-        SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
-        
-        // Set the HUD Size
-        SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
-        
-        // Title
-        SetFont("BIGFONT");
-        HudMessage("Choose a Player\n", HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
-        
-        // Input
-        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
-        {
-            ActivatorSound("menu/move", 127);
-            PlayerChoice--;
-            if (PlayerChoice < 0) PlayerChoice = PlayerCount() - 1;
-        };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK)
-        {
-            ActivatorSound("menu/move", 127);
-            PlayerChoice++;
-            if (PlayerChoice > PlayerCount() - 1) PlayerChoice = 0;
-        };
-        if (Buttons == BT_USE && OldButtons != BT_USE)
-        {
-            // You can't teleport to yourself
-            if (PlayerChoice == PlayerNumber())
-                ActivatorSound("menu/error", 127)
-            else
-            {
-                // Teleport
-                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-                GiveInventory("DRPGPlayerTeleportGhost", 1);
-                SetActorPosition(Player.TID, GetActorX(Players(PlayerChoice).TID), GetActorY(Players(PlayerChoice).TID), GetActorZ(Players(PlayerChoice).TID), true);
-                SetActorAngle(Player.TID, GetActorAngle(Players(PlayerChoice).TID));
-                
-                // Make sure you're not inside the other player before we solidify
-                while (Distance(Player.TID, Players(PlayerChoice).TID) <= GetActorPropertyFixed(Players(PlayerChoice).TID, APROP_Radius))
-                    Delay(35);
-                
-                // Solidify
-                GiveInventory("DRPGPlayerTeleportNormal", 1);
-                return true;
-            };
-        };
-        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
-        {
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-            ActivatorSound("menu/move", 127);
-            return false;
-        };
-        
-        // Drawing
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            // Skip over players that aren't in the game
-            if (!PlayerInGame(i))
-            {
-                // If you are highlighting someone who left, reset the cursor
-                if (PlayerChoice == i)
-                    PlayerChoice = 0;
-                
-                continue;
-            };
-            
-            // Get Player Names
-            for (int i = 0; i < MAX_PLAYERS; i++)
-                Names[i] = StrParam("%N\n", i + 1);
-            
-            // Cursor
-            if (i == PlayerChoice)
-                HudMessage("-->\n", HUDMSG_PLAIN, 0, MenuCursorColor, X - 24.0, Y, 0.05);
-            
-            // Bonus String
-            if (i == PlayerNumber())
-                HudMessage("%s\n", Names[i], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
-            else
-                HudMessage("%s (%k)\n", Names[i], Distance(Player.TID, Players(i).TID), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
-            
-            // Move down Y
-            Y += 16.0;
-        };
-        
-        Delay(1);
-    };
-};
-
-// Powerups
-acscript bool Powerup(int Type)
-{
-    // Levels
-    int InvulnLevel = Skills[1][0].CurrentLevel;
-    int InvisLevel = Skills[1][1].CurrentLevel;
-    int TimeLevel = Skills[1][2].CurrentLevel;
-    
-    switch (Type)
-    {
-        case 1: // Invulnerability
-            if (CheckInventory("PowerInvulnerable"))
-            {
-                ActivatorSound("menu/error", 127);
-                return false;
-            };
-            ActivatorSound("powerups/protect", 127);
-            GiveInventory(StrParam("DRPGSkillInvulnerability%d\n", InvulnLevel), 1);
-            break;
-        case 2: // Invisibility
-            if (CheckInventory("PowerShadow"))
-            {
-                ActivatorSound("menu/error", 127);
-                return false;
-            };
-            ActivatorSound("powerups/invis", 127);
-            GiveInventory(StrParam("DRPGSkillInvisibility%d\n", InvisLevel), 1);
-            break;
-        case 3: // Time Freeze
-            BulletTime(TimeLevel);
-            break;
-        case 4: // Iron Feet
-            if (CheckInventory("PowerIronFeet"))
-            {
-                ActivatorSound("menu/error", 127);
-                return false;
-            };
-            ActivatorSound("powerups/suit", 127);
-            GiveInventory("PowerIronFeet", 1);
-            break;
-        case 5: // Night Vision
-            if (CheckInventory("PowerLightAmp"))
-            {
-                ActivatorSound("menu/error", 127);
-                return false;
-            };
-            ActivatorSound("powerups/light", 127);
-            GiveInventory("PowerLightAmp", 1);
-            break;
-        case 6: // Berserk
-            ActivatorSound("powerups/berserk", 127);
-            GiveInventory("PowerStrength", 1);
-            break;
-        case 7: // Mind Mapping
-            ActivatorSound("powerups/map", 127);
-            GiveInventory("DRPGAllMapRevealer", 1);
-            GiveInventory("DRPGAllMapScanner", 1);
-            break;
-        case 8: // Drop Rune
-            return DropWeapon();
-            break;
-        case 9: // Drop Ammo
-            return DropAmmo();
-            break;
-    };
-    
-    return true;
-};
-
-// Abuse PowerTimeFreezer to create a bullet-time effect
-acscript void BulletTime(int Mode)
-{
-    BulletTimeMode = Mode;
-    BulletTimeTimer = 350;
-    
-    // Remove duplicate TimeFreezerSounds
-    Thing_Remove(1999);
-    
-    if (Mode == 1) // Stutter Time
-    {
-        SpawnForced("DRPGTimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
-        SetActorState(1999, "Spawn");
-        TakeInventory("PowerTimeFreezer", 1);
-        GiveInventory("DRPGTimeFreezerQuick", 1);
-    };
-    if (Mode == 2) // Freeze Time
-    {
-        SpawnForced("DRPGTimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
-        SetActorState(1999, "Spawn");
-        GiveInventory("DRPGTimeFreezer", 1);
-    };
-};
-
-// Drops a random Rune in front of you
-acscript bool DropWeapon()
-{
-    int DropWeaponLevel = Skills[1][7].CurrentLevel;
-    fixed Angle = GetActorAngle(0);
-    fixed X = GetActorX(0) + Cos(Angle) * 96.0;
-    fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
-    fixed Z = GetActorZ(0) + 48.0;
-    str Weapon;
-    
-    switch (DropWeaponLevel)
-    {
-        case 1: Weapon = "Pistol";          break;
-        case 2: Weapon = "Shotgun";         break;
-        case 3: Weapon = "SuperShotgun";    break;
-        case 4: Weapon = "Chaingun";        break;
-        case 5: Weapon = "RocketLauncher";  break;
-        case 6: Weapon = "PlasmaRifle";     break;
-        case 7: Weapon = "BFG9000";         break;
-    };
-    
-    if (Spawn(Weapon, X, Y, Z, 0, Angle))
-    {
-        ActivatorSound("skills/drop", 127);
-        Spawn("TeleportFog", X, Y, Z, 0, Angle);
-        return true;
-    }
-    else
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    return false;
-};
-
-// Drops a backpack in front of you
-acscript bool DropAmmo()
-{
-    int AmmoDropLevel = Skills[1][8].CurrentLevel;
-    fixed Angle = GetActorAngle(0);
-    fixed X = GetActorX(0) + Cos(Angle) * 96.0;
-    fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
-    fixed Z = GetActorZ(0) + 48.0;
-    str Ammo;
-    
-    switch (AmmoDropLevel)
-    {
-        case 1:         Ammo = "DRPGSmallBackpack"; break;
-        case 2:         Ammo = "DRPGBackpack";      break;
-        case 3: case 4: Ammo = "DRPGBigBackpack";   break;
-    };
-    
-    if (Spawn(Ammo, X, Y, Z, 0, Angle))
-    {
-        if (AmmoDropLevel == 4 && GetCVar("drpg_ext_doomrl"))
-            Spawn("RLSupplyCrate", X, Y, Z, 0, Angle);
-        
-        ActivatorSound("skills/drop", 127);
-        Spawn("TeleportFog", X, Y, Z, 0, Angle);
-        return true;
-    }
-    else
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-
-    return false;
-};
-
-// Weaken
-acscript bool Weaken()
-{
-    int PlayerNum = PlayerNumber();
-    int WeakenLevel = Skills[3][0].CurrentLevel;
-    int MonsterLevel;
-    int MonsterAura;
-    int MonsterStrength;
-    int MonsterDefense;
-    
-    SetActivatorToTarget(Players(PlayerNum).TID);
-    
-    // Refund - If the Player has no target
-    if (ActivatorTID() == Players(PlayerNum).TID)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    // Refund - If the target isn't actually a valid monster
-    if (!CheckInventory("DRPGMonsterInit"))
-    {
-        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
-        return false;
-    };
-    
-    // Get Monster Stats
-    MonsterLevel = CheckInventory("DRPGMonsterLevel") / 2;
-    MonsterStrength = CheckInventory("DRPGMonsterStrength") / 2;
-    MonsterDefense = CheckInventory("DRPGMonsterDefense") / 2;
-    MonsterAura = CheckInventory("DRPGMonsterAura");
-    
-    // Destroy Aura
-    if (WeakenLevel == 2) 
-    {
-        if (GetActorProperty(0, APROP_Health) > GetActorProperty(0, APROP_SpawnHealth))
-            SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth));
-        
-        MonsterAura = 0;
-    };
-    
-    // Apply the stats to the monster
-    SetInventory("DRPGMonsterLevel", MonsterLevel);
-    SetInventory("DRPGMonsterStrength", MonsterStrength);
-    SetInventory("DRPGMonsterDefense", MonsterDefense);
-    SetInventory("DRPGMonsterAura", MonsterAura);
-    
-    // Re-run the Stats Script
-    MonsterStats(CheckInventory("DRPGMonsterFlags"), SF_PLAYERTARGET);
-    
-    // Reset Activator
-    SetActivator(Players(PlayerNum).TID);
-    
-    FadeRange(0, 0, 0, 0.25, 0, 0, 0, 0.0, 1.0);
-    ActivatorSound("skills/weaken", 127);
-    return true;
-};
-
-// Repulsion
-acscript bool Repulse()
-{
-    int RepulsionLevel = Skills[3][2].CurrentLevel;
-    
-    SetInventory(StrParam("DRPGSkillBlast%d\n", RepulsionLevel), 1);
-    UseInventory(StrParam("DRPGSkillBlast%d\n", RepulsionLevel));
-    
-    FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.5 + (0.25 * RepulsionLevel));
-    
-    return true;
-};
-
-// Summoning
-acscript bool Summon(int Type)
-{
-    fixed Angle = GetActorAngle(0);
-    fixed X = GetActorX(0) + Cos(Angle) * 96.0;
-    fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
-    fixed Z = GetActorZ(0);
-    int MarineLevel = Skills[4][0].CurrentLevel;
-    int NewID = UniqueTID();
-    bool Success;
-    
-    str[][] DRLASummons =
-    {
-        // Former Human
-        {
-            "RLDRPGSummonedFormerHuman";
-            "RLDRPGSummonedEliteHuman";
-            "RLDRPGSummonedFormerCaptain";
-        };
-        
-        // Former Sergeant
-        {
-            "RLDRPGSummonedFormerSergeant";
-            "RLDRPGSummonedEliteSergeant";
-        };
-        
-        // Former Commando
-        {
-            "RLDRPGSummonedFormerCommando";
-            "RLDRPGSummonedEliteCommando";
-            "RLDRPGSummonedEliteCaptain2";
-        };
-        
-        // Imp
-        {
-            "RLDRPGSummonedImp";
-            "RLDRPGSummonedNightmareImp";
-            "RLDRPGSummonedCyberneticImp";
-        };
-        
-        // Demon
-        {
-            "RLDRPGSummonedDemon";
-            "RLDRPGSummonedSpectre";
-            "RLDRPGSummonedNightmareDemon";
-            "RLDRPGSummonedNightmareSpectre";
-            "RLDRPGSummonedCyberneticDemon";
-            "RLDRPGSummonedCyberneticSpectre";
-        };
-        
-        // Cacodemon
-        {
-            "RLDRPGSummonedCacodemon";
-            "RLDRPGSummonedNightmareCacodemon";
-        };
-        
-        // Hell Knight
-        {
-            "RLDRPGSummonedHellKnight";
-            "RLDRPGSummonedNightmareHellKnight";
-            "RLDRPGSummonedCyberneticHellKnight";
-        };
-        
-        // Baron of Hell
-        {
-            "RLDRPGSummonedBaronOfHell";
-            "RLDRPGSummonedNightmareBaronOfHell";
-            "RLDRPGSummonedCyberneticBaronOfHell";
-        };
-        
-        // Lost Soul
-        {
-            "RLDRPGSummonedLostSoul";
-            "RLDRPGSummonedNightmareLostSoul";
-            "RLDRPGSummonedCyberneticLostSoul";
-        };
-        
-        // Pain Elemental
-        {
-            "RLDRPGSummonedPainElemental";
-            "RLDRPGSummonedNightmarePainElemental";
-        };
-        
-        // Revenant
-        {
-            "RLDRPGSummonedRevenant";
-            "RLDRPGSummonedNightmareRevenant";
-            "RLDRPGSummonedCyberneticRevenant";
-        };
-        
-        // Mancubus
-        {
-            "RLDRPGSummonedMancubus";
-            "RLDRPGSummonedNightmareMancubus";
-            "RLDRPGSummonedCyberneticMancubus";
-        };
-        
-        // Arachnotron
-        {
-            "RLDRPGSummonedArachnotron";
-            "RLDRPGSummonedNightmareArachnotron";
-            "RLDRPGSummonedCyberneticArachnotron";
-        };
-        
-        // Arch-Vile
-        {
-            "RLDRPGSummonedArchVile";
-            "RLDRPGSummonedNightmareArchVile";
-        };
-        
-        // Cyberdemon
-        {
-            "RLDRPGSummonedCyberdemon";
-            "RLDRPGSummonedNightmareCyberdemon";
-        };
-        
-        // Spider Mastermind
-        {
-            "RLDRPGSummonedSpiderMastermind";
-            "RLDRPGSummonedCyberneticSpiderMastermind";
-        };
-    };
-    
-    // Stop if you already have the maximum amount of summons
-    if (Player.Summons >= MAX_SUMMONS)
-    {
-        SetFont("BIGFONT");
-        HudMessage("You cannot summon any more friendlies\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    if (Type == 1) // Marines
-    {
-        switch (MarineLevel)
-        {
-            case 1: Success = Spawn("MarinePistolRPG", X, Y, Z, NewID, Angle);                  break;
-            case 2: Success = Spawn("MarineShotgunRPG", X, Y, Z, NewID, Angle);                 break;
-            case 3: Success = Spawn("MarineSSGRPG", X, Y, Z, NewID, Angle);                     break;
-            case 4: Success = Spawn("MarineChaingunRPG", X, Y, Z, NewID, Angle);;               break;
-            case 5: Success = Spawn("MarineRocketRPG", X, Y, Z, NewID, Angle);                  break;
-            case 6: Success = Spawn("MarinePlasmaRPG", X, Y, Z, NewID, Angle);                  break;
-            case 7: Success = Spawn("MarineRailgunRPG", X, Y, Z, NewID, Angle);                 break;
-            case 8: Success = Spawn("MarineBFGRPG", X, Y, Z, NewID, Angle);                     break;
-        };
-    }
-    else // Monsters
-    {
-        if (GetCVar("drpg_ext_doomrl"))
-            Success = Spawn(DRLASummons[Type - 2][Skills[4][Type - 1].CurrentLevel - 1], X, Y, Z, NewID, Angle)
-        else
-        {
-            switch (Type)
-            {
-                case 2:     Success = Spawn("Zombieman", X, Y, Z, NewID, Angle);                break;
-                case 3:     Success = Spawn("ShotgunGuy", X, Y, Z, NewID, Angle);               break;
-                case 4:     Success = Spawn("ChaingunGuy", X, Y, Z, NewID, Angle);              break;
-                case 5:     Success = Spawn("DoomImp", X, Y, Z, NewID, Angle);                  break;
-                case 6:     Success = Spawn("Demon", X, Y, Z, NewID, Angle);                    break;
-                case 7:     Success = Spawn("Cacodemon", X, Y, Z, NewID, Angle);                break;
-                case 8:     Success = Spawn("HellKnight", X, Y, Z, NewID, Angle);               break;
-                case 9:     Success = Spawn("BaronOfHell", X, Y, Z, NewID, Angle);              break;
-                case 10:    Success = Spawn("LostSoul", X, Y, Z, NewID, Angle);                 break;
-                case 11:    Success = Spawn("PainElemental", X, Y, Z, NewID, Angle);            break;
-                case 12:    Success = Spawn("Revenant", X, Y, Z, NewID, Angle);                 break;
-                case 13:    Success = Spawn("Fatso", X, Y, Z, NewID, Angle);                    break;
-                case 14:    Success = Spawn("Arachnotron", X, Y, Z, NewID, Angle);              break;
-                case 15:    Success = Spawn("Archvile", X, Y, Z, NewID, Angle);                 break;
-                case 16:    Success = Spawn("Cyberdemon", X, Y, Z, NewID, Angle);               break;
-                case 17:    Success = Spawn("SpiderMastermind", X, Y, Z, NewID, Angle);         break;
-            };
-        };
-    };
-    
-    if (Success)
-    {
-        SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
-        SetActorAngle(NewID, Angle);
-        SetActorProperty(NewID, APROP_Friendly, 1);
-        GiveActorInventory(NewID, "DRPGFriendlyBooster", 1);
-        
-        // Add summon to your summon array
-        for (int i = 0; i < MAX_SUMMONS; i++)
-            if (Player.SummonTID[i] == 0)
-            {
-                Player.SummonTID[i] = NewID;
-                Player.Summons++;
-                return true;
-            };
-    }
-    else
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-};
-
-// Breaks down current Armor into Credits
-acscript bool BreakdownArmor()
-{
-    int Armor = CheckInventory("BasicArmor");
-    
-    // Kind of hackish to prevent breaking down Armors that use high values for indestructibleness
-    if (Armor > 1000)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    if (Armor > 0)
-    {
-        TakeInventory("BasicArmor", Armor);
-        GiveInventory("DRPGCredits", Armor);
-        
-        // DoomRL Compatibility
-        if (GetCVar("drpg_ext_doomrl"))
-        {
-            TakeInventory("RL100ArmorWorn", 1);
-            TakeInventory("RL150ArmorWorn", 1);
-            TakeInventory("RL200ArmorWorn", 1);
-            TakeInventory("RL100RegenArmorWorn", 1);
-            TakeInventory("RLIndestructibleArmorWorn", 1);
-        };
-        
-        ActivatorSound("skills/breakdown", 127);
-        return true;
-    }
-    else
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    return false;
-};
-
-// Drops a Force Field in front of you
-acscript bool ForceWall()
-{
-    fixed Angle = GetActorAngle(0);
-    fixed X = GetActorX(0) + Cos(Angle) * 96.0;
-    fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
-    fixed Z = GetActorZ(0);
-    int WallLevel = Skills[5][1].CurrentLevel;
-    
-    Thing_Remove(1998);
-    
-    switch (WallLevel)
-    {
-        case 1:
-            if (!Spawn("DRPGForceField", X, Y, Z, 1998, Angle) == 0) {return true;}
-            else
-            {
-                ActivatorSound("menu/error", 127);
-                return false;
-            };
-            break;
-        case 2:
-            if (!Spawn("DRPGForceField2", X, Y, Z, 1998, Angle) == 0) {return true;}
-            else
-            {
-                ActivatorSound("menu/error", 127);
-                return false;
-            };
-            break;
-    };
-
-    return false;
-};
-
-// Rallies (teleports) your summoned monster/marines around you
-acscript bool Rally()
-{
-    fixed X = GetActorX(0);
-    fixed Y = GetActorY(0);
-    fixed Z = GetActorZ(0);
-    fixed Angle = GetActorAngle(0);
-    
-    // Fail if you have no summons active
-    if (Player.Summons == 0)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
-    
-    for (int i = 0; i < MAX_SUMMONS; i++)
-        if (Player.SummonTID[i] > 0)
-            SetActorPosition(Player.SummonTID[i], X, Y, Z, 0);
-    
-    ActivatorSound("skills/rally", 127);
-    return true;
-};
-
-// Unsummon - Removes all actors under the player's control
-acscript bool Unsummon()
-{
-    int UnsummonLevel = Skills[5][3].CurrentLevel;
-    int EPAdd;
-    
-    // Fail if you have no summons active
-    if (Player.Summons == 0)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    for (int i = 0; i < MAX_SUMMONS; i++)
-    {
-        // Continue if there's no summon in this slot
-        if (Player.SummonTID[i] == 0) continue;
-        
-        if (UnsummonLevel == 2 && GetActorProperty(i, APROP_Health) > 0)
-            EPAdd += 25;
-        
-        // Overdrive - Remove summons (teleport out) instead of killing them
-        if (GetActorProperty(Player.SummonTID[i], APROP_Health) > 0)
-        {
-            SpawnForced("TeleportFog", GetActorX(Player.SummonTID[i]), GetActorY(Player.SummonTID[i]), GetActorZ(Player.SummonTID[i]), 0, 0);
-            Thing_Remove(Player.SummonTID[i]);
-        };
-        
-        // Remove the summon from the array
-        Player.SummonTID[i] = 0;
-    };
-    
-    
-    if (UnsummonLevel == 2)
-        Player.EP += EPAdd;
-
-    Player.Summons = 0;
-    
-    FadeRange(192, 0, 0, 0.5, 192, 0, 0, 0.0, 1.0);
-    ActivatorSound("skills/unsummon", 127);
-    return true;
-};
-
-// Recall - Return to the beginning of the map
-acscript bool Recall()
-{
-    // Fail if you're in the Arena or Marines are hostile
-    if (ArenaActive || MarinesHostile)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-        
-    SetInventory("ArtiTeleport", 1);
-    UseInventory("ArtiTeleport");
-    return true;
-};
-
-// Handles the Transportation system
-acscript void Transport()
-{
-    // If you're dead, terminate
-    if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
-    
-    // Don't allow Transport while the arena is active, if the Marines are hostile, or you're in an Outpost-related menu
-    if (ArenaActive || MarinesHostile || Player.OutpostMenu > 0)
-    {
-        ActivatorSound("menu/error", 127);
-        return;
-    };
-    
-    // Multiplayer
-    if (InMultiplayer && PlayerCount() > 1)
-    {
-        int Players = PlayerCount();
-        bool Ready;
-        bool[MAX_PLAYERS] Voted;
-        int PlayersApprove;
-        int PlayersDeny;
-        
-        for (int i = 0; i < MAX_PLAYERS; i++)
-            Voted[i] = false;
-        
-        while (!Ready)
-        {
-            // Freeze all players
-            SetPlayerProperty(true, 1, PROP_TOTALLYFROZEN);
-            
-            // Input
-            for (int i = 0; i < Players; i++)
-            {
-                // Skip input checks if you've already voted
-                if (Voted[i]) continue;
-                
-                int Buttons = GetPlayerInput(i, INPUT_BUTTONS);
-                int OldButtons = GetPlayerInput(i, INPUT_OLDBUTTONS);
-                
-                if (Buttons == BT_USE && OldButtons != BT_USE)
-                {
-                    ActivatorSound("menu/move", 127);
-                    PlayersApprove++;
-                    Voted[i] = true;
-                };
-                if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
-                {
-                    ActivatorSound("menu/move", 127);
-                    PlayersDeny++;
-                    Voted[i] = true;
-                };
-            };
-            
-            // Check that everyone has voted
-            Ready = true;
-            for (int i = 0; i < Players; i++)
-                if (!Voted[i]) Ready = false;
-            
-            // Drawing
-            SetFont("BIGFONT");
-            HudMessageBold("\cd%N has requested Transport\n\c-Players: %d (\cd%d\c-/\cg%d\c-)\n\n\cd%K\c- to Approve\n\cd%K\c- to Deny\n",
-                           PlayerNumber() + 1, Players, PlayersApprove, PlayersDeny, "+use", "+speed",
-                           HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.75, 1.0, 4.0);
-            
-            Delay(1);
-        };
-        
-        // Ready - tally votes and confirm/deny Transport
-        if (Ready)
-        {
-            SetPlayerProperty(true, 0, PROP_TOTALLYFROZEN);
-            
-            // Approved
-            if (PlayersApprove > PlayersDeny)
-            {
-                for (int i = 0; i < MAX_PLAYERS; i++)
-                    SetActorProperty(Players(i).TID, APROP_Invulnerable, true);
-                HudMessageBold("\cdTransport Approved!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 4.0);
-                Delay(35 * 2);
-                FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 3.0);
-                Delay(35 * 3);
-            };
-            
-            // Denied
-            if (PlayersDeny > PlayersApprove)
-            {
-                HudMessageBold("\cgTransport Denied!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
-                return;
-            };
-            
-            // Draw
-            if (PlayersApprove == PlayersDeny)
-            {
-                HudMessageBold("\cjDraw!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
-                return;
-            };
-        };
-    }
-    else // Single Player
-    {
-        // Fade Screen
-        FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 1.0);
-        
-        // Freeze Player
-        SetActorProperty(0, APROP_Invulnerable, true);
-        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-        
-        // Delay and unfreeze Player
-        Delay(35);
-        SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-        SetActorProperty(0, APROP_Invulnerable, false);
-    };
-    
-    // Transport
-    if (!InBase)
-    {
-        str LevelLump = StrParam("%N\n", PRINTNAME_LEVEL);
-        for (int i = 0; i < 8 && i < StrLen(LevelLump); i++)
-            LastVisited[i] = LevelLump[i];
-        
-        ChangeLevel("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, -1);
-        InBase = true;
-        Transported = true;
-    }
-    else
-    {
-        ChangeLevel(StrParam("%s\n", LastVisited), 0, CHANGELEVEL_NOINTERMISSION, -1);
-        InBase = false;
-        Transported = true;
-    };
-};
-
-// Removes a player's Aura
-acscript void RemoveAura()
-{
-    for (int i = 0; i < AURA_MAX; i++)
-        Player.Aura[i] = false;
-    
-    Player.AuraTimer = 0;
-};
-
 function void InitSkills()
 {
     int Index;
@@ -1754,6 +456,1422 @@ function int ScaleEPCost(int Cost)
     };
     
     return Cost;
+};
+
+// Skill Wheel
+script void SkillWheel() enter
+{
+    Start:
+    
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+    int Selected = -1;
+    int LastSelected = -1;
+    int Radius = 96;
+    int CurrentRadius = 0;
+    Skill *CurrentSkill;
+    
+    // Open the wheel
+    if (Buttons & BT_USER1 && !((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0))
+    {
+        ActivatorSound("menu/click", 127);
+        Player.SkillWheelOpen = true;
+    };
+    
+    // Wheel Loop
+    while (Player.SkillWheelOpen)
+    {
+        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        
+        // Check Input
+        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        
+        // Check for release
+        if (!(Buttons & BT_USER1) && !(Buttons & BT_SPEED))
+        {
+            if (Selected != -1)
+            {
+                if (Player.InMenu && Player.Menu == 3)
+                {
+                    Player.SkillCatagory[Selected] = Player.SkillPage;
+                    Player.SkillIndex[Selected] = Player.MenuIndex;
+                }
+                else
+                    Player.SkillSelected = Selected;
+            };
+            
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            CurrentRadius = Radius;
+            Player.SkillWheelOpen = false;
+        };
+        
+        // Selection
+        fixed MouseX = -GetPlayerInputFixed(PlayerNumber(), INPUT_YAW) * 1.2;
+        fixed MouseY = GetPlayerInputFixed(PlayerNumber(), INPUT_PITCH);
+        if (CurrentRadius >= Radius)
+        {
+            if (Buttons == (BT_USER1 | BT_FORWARD) && Selected != 0)
+                Selected = 0
+            else if (Buttons == (BT_USER1 | BT_FORWARD | BT_MOVERIGHT) && Selected != 1)
+            {
+                Selected = 1;
+                Delay(5);
+            }
+            else if (Buttons == (BT_USER1 | BT_MOVERIGHT) && Selected != 2)
+                Selected = 2
+            else if (Buttons == (BT_USER1 | BT_MOVERIGHT | BT_BACK) && Selected != 3)
+            {
+                Selected = 3;
+                Delay(5);
+            }
+            else if (Buttons == (BT_USER1 | BT_BACK) && Selected != 4)
+                Selected = 4
+            else if (Buttons == (BT_USER1 | BT_BACK | BT_MOVELEFT) && Selected != 5)
+            {
+                Selected = 5;
+                Delay(5);
+            }
+            else if (Buttons == (BT_USER1 | BT_MOVELEFT) && Selected != 6)
+                Selected = 6
+            else if (Buttons == (BT_USER1 | BT_MOVELEFT | BT_FORWARD) && Selected != 7)
+            {
+                Selected = 7;
+                Delay(5);
+            }
+            // There used to be non-working stuff here, but I fixed it to be working. -Kate
+            else if ((FixedSqrt(MouseX * MouseX + MouseY * MouseY)) > 0.02)
+            {
+                if (VectorAngle(MouseX, MouseY) > 0.1875 && VectorAngle(MouseX, MouseY) < 0.3125)
+                    Selected = 0
+                else if (VectorAngle(MouseX, MouseY) > 0.0625 && VectorAngle(MouseX, MouseY) < 0.1875)
+                    Selected = 1
+                else if (VectorAngle(MouseX, MouseY) >= 0 && VectorAngle(MouseX, MouseY) < 0.0625)
+                    Selected = 2
+                else if (VectorAngle(MouseX, MouseY) <= 1 && VectorAngle(MouseX, MouseY) > 0.9375)
+                    Selected = 2
+                else if (VectorAngle(MouseX, MouseY) > 0.8125 && VectorAngle(MouseX, MouseY) < 0.9375)
+                    Selected = 3
+                else if (VectorAngle(MouseX, MouseY) > 0.6875 && VectorAngle(MouseX, MouseY) < 0.8125)
+                    Selected = 4
+                else if (VectorAngle(MouseX, MouseY) > 0.5625 && VectorAngle(MouseX, MouseY) < 0.6875)
+                    Selected = 5
+                else if (VectorAngle(MouseX, MouseY) > 0.4375 && VectorAngle(MouseX, MouseY) < 0.5625)
+                    Selected = 6
+                else if (VectorAngle(MouseX, MouseY) > 0.3125 && VectorAngle(MouseX, MouseY) < 0.4375)
+                    Selected = 7;
+            };
+            // else
+               // Selected = -1;
+        };
+        
+        // Extra Input Handling
+        if (Buttons & BT_SPEED && Selected != -1)
+        {
+            Skill *CurrentSkill = &Skills[Player.SkillCatagory[Selected]][Player.SkillIndex[Selected]];
+            
+            // Decrease selected skill level
+            if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && CurrentSkill->CurrentLevel > 1)
+            {
+                CurrentSkill->CurrentLevel--;
+                AmbientSound("menu/move", 127);
+            };
+            
+            // Increase selected skill level
+            if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT) && CurrentSkill->CurrentLevel < CurrentSkill->Level)
+            {
+                CurrentSkill->CurrentLevel++;
+                AmbientSound("menu/move", 127);
+            };
+            
+            // Clear Skill
+            if (Buttons & BT_USE)
+            {
+                Player.SkillCatagory[Selected] = -1;
+                Player.SkillIndex[Selected] = -1;
+                AmbientSound("menu/move", 127);
+            };
+        };
+        
+        // Set Skill
+        if (Selected >= 0 && Player.SkillCatagory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
+            CurrentSkill = &Skills[Player.SkillCatagory[Selected]][Player.SkillIndex[Selected]]
+        else
+            CurrentSkill = nullptr;
+        
+        // Play sound
+        if (Selected != LastSelected && Selected >= 0)
+            ActivatorSound("menu/click", 127);
+        
+        LastSelected = Selected;
+        
+        // Draw Wheel
+        SetHudSize(640, 480, false);
+        for (int i = 0; i < MAX_SKILLKEYS; i++)
+        {
+            fixed Angle = -0.25 + ((1.0 / MAX_SKILLKEYS) * i);
+            fixed X = 320.0 + (CurrentRadius * Cos(Angle));
+            fixed Y = 240.0 + (CurrentRadius * Sin(Angle));
+            
+            // Cursor
+            if (i == Selected)
+                PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
+            
+            // Icon
+            if (Player.SkillCatagory[i] != -1 && Player.SkillIndex[i] != -1)
+            {
+                if (StrLen(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon) == 0)
+                    PrintSpriteFade("S_None", WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0)
+                else
+                    PrintSpriteFade(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0);
+            };
+            
+            // Box
+            PrintSpriteFade("ItemBox", WHEEL_ID + MAX_SKILLKEYS + i, (int)X, (int)Y, 0.05, 1.0);
+        };
+        
+        // Animate Wheel
+        if (CurrentRadius < Radius)
+            CurrentRadius += GetCVar("drpg_skill_wheelspeed");
+        
+        // Skill Info
+        if (CurrentSkill != nullptr)
+        {
+            int Cost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
+            str CostColor = (Player.EP < Cost ? "\cg" : "\cv");
+            str Info;
+            
+            // Build info string
+            Info = StrParam("\cd%s\n\n\n", CurrentSkill->Name);
+            Info = StrParam("%s\cjLevel: %d/%d\n\n", Info, CurrentSkill->CurrentLevel, CurrentSkill->Level);
+            Info = StrParam("%s%s%d EP\n", Info, CostColor, Cost);
+            
+            // Display
+            SetFont("SMALLFONT");
+            SetHudClipRect(0, 0, 0, 0, 128);
+            HudMessage("%s\n", Info, HUDMSG_FADEOUT, WHEEL_ID + (MAX_SKILLKEYS * 2), CR_WHITE, 320.4, 240.0, 0.05, 1.0);
+            SetHudClipRect(0, 0, 0, 0, 0);
+        };
+        
+        Delay(1);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
+// Use Skill Script
+acscript void UseSkill() net
+{
+    // Current Skill
+    int Index = (Player.InMenu && Player.Menu == 3 ? -1 : Player.SkillSelected);
+    Skill *CurrentSkill = &Skills[Player.SkillCatagory[Index]][Player.SkillIndex[Index]];
+    
+    // If you're dead, terminate
+    if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
+    
+    // If you have no current skill selected, terminate
+    if (Player.SkillSelected == -1 && !Player.InMenu) return;
+    
+    // If the key is unassigned, terminate
+    if (Index != -1)
+        if (Player.SkillCatagory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
+    
+    // Quickuse
+    if (Index == -1)
+        CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
+    
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+    int EPCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
+    bool Success;
+    
+    // Overdrive?
+    Overdrive = false;
+    if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop))
+        Overdrive = true;
+    
+    // Overdriving an unlearnt skill will learn it
+    if (Overdrive && CheckInventory("DRPGSkillToken") > 0 && CurrentSkill->Level == 0)
+    {
+        CurrentSkill->Level++;
+        CurrentSkill->CurrentLevel++;
+        TakeInventory("DRPGSkillToken", 1);
+        FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
+        return;
+    };
+    
+    // Check if the Skill has been learned yet
+    if (CurrentSkill->Level == 0)
+    {
+        SetFont("BIGFONT");
+        HudMessage("You don't know this skill yet\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+        ActivatorSound("skills/fail", 127);
+        return;
+    };
+
+    // Can't use skills while burned out
+    if (Player.EP < 0)
+    {
+        SetFont("BIGFONT");
+        HudMessage("You can't use skills while burned out\n", HUDMSG_FADEOUT, 0, CR_BLUE, 0.5, 0.5, 2.0, 1.0);
+        ActivatorSound("skills/fail", 127);
+        return;
+    };
+    
+    // Normal skills
+    if (Player.EP >= EPCost || Overdrive)
+    {
+        switch ((Index == -1 ? Player.SkillPage : Player.SkillCatagory[Index]))
+        {
+            case 0: // Healing
+                switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
+                {
+                    case 0:     Success = Heal(1);                                          break; // Heal
+                    case 1:     Success = Heal(2);                                          break; // Heal Summons
+                    case 2:     Success = Heal(3);                                          break; // Heal Team
+                    case 3:     Success = LifeLeech();                                      break; // Life Leech
+                    case 4:     Success = Decontaminate();                                  break; // Decontamination
+                    case 5:     Success = Repair();                                         break; // Repair Armor
+                    case 6:     Success = PlayerTeleport();                                 break; // Player Teleport
+                };
+                break;
+            
+            case 1: // Powerups
+                switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
+                {
+                    case 0:     Success = Powerup(1);                                       break; // Invulnerability
+                    case 1:     Success = Powerup(2);                                       break; // Invisibility
+                    case 2:     Success = Powerup(3);                                       break; // Time Freeze
+                    case 3:     Success = Powerup(4);                                       break; // Iron Feet
+                    case 4:     Success = Powerup(5);                                       break; // Night Vision
+                    case 5:     Success = Powerup(6);                                       break; // Berserk
+                    case 6:     Success = Powerup(7);                                       break; // Mind Mapping
+                    case 7:     Success = Powerup(8);                                       break; // Drop Rune
+                    case 8:     Success = Powerup(9);                                       break; // Drop Ammo
+                };
+                break;
+            
+            case 2: // Auras
+                ActivatorSound("skills/buff", 127);
+                if (Player.Perks[STAT_ENERGY])
+                    Player.AuraTimer += (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1)
+                else
+                {
+                    int Aura = (Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]);
+                    bool Stack = false;
+                    
+                    // Is the Aura you used the same as the one you already have active?
+                    if (Player.Aura[Aura])
+                        Stack = true;
+                    
+                    // Remove all other Auras first
+                    for (int i = 0; i < AURA_MAX; i++)
+                        Player.Aura[i] = false;
+                    
+                    // Should the timer be stacked because you used the same Aura?
+                    if (Stack)
+                        Player.AuraTimer += (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1)
+                    else
+                        Player.AuraTimer = (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1);
+                };
+                switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
+                {
+                    case 0:     Player.Aura[0] = true;                                      break; // Red Aura
+                    case 1:     Player.Aura[1] = true;                                      break; // Green Aura
+                    case 2:     Player.Aura[2] = true;                                      break; // White Aura
+                    case 3:     Player.Aura[3] = true;                                      break; // Pink Aura
+                    case 4:     Player.Aura[4] = true;                                      break; // Blue Aura
+                    case 5:     Player.Aura[5] = true;                                      break; // Purple Aura
+                    case 6:     Player.Aura[6] = true;                                      break; // Orange Aura
+                    case 7:     Player.Aura[7] = true;                                      break; // Dark Blue Aura
+                    case 8:     Player.Aura[8] = true;                                      break; // Yellow Aura
+                };
+                Success = true;
+                break;
+            
+            case 3: // Attacks
+                switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
+                {
+                    case 0:     Success = Weaken();                                         break; // Weaken
+                    case 1:     Success = FireProjectile("TranslocateBall");                break; // Translocate
+                    case 2:     Success = Repulse();                                        break; // Repulsion                
+                };
+                break;
+            
+            case 4: // Summoning
+                switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
+                {
+                    case 0:     Success = Summon(1);                                        break; // Summon Marine
+                    case 1:     Success = Summon(2);                                        break; // Summon Zombieman
+                    case 2:     Success = Summon(3);                                        break; // Summon Shotgun Guy
+                    case 3:     Success = Summon(4);                                        break; // Summon Chaingun Guy
+                    case 4:     Success = Summon(5);                                        break; // Summon Imp
+                    case 5:     Success = Summon(6);                                        break; // Summon Demon
+                    case 6:     Success = Summon(7);                                        break; // Summon Cacodemon
+                    case 7:     Success = Summon(8);                                        break; // Summon Hell Knight
+                    case 8:     Success = Summon(9);                                        break; // Summon Baron of Hell
+                    case 9:     Success = Summon(10);                                       break; // Summon Lost Soul
+                    case 10:    Success = Summon(11);                                       break; // Summon Pain Elemental
+                    case 11:    Success = Summon(12);                                       break; // Summon Revenant
+                    case 12:    Success = Summon(13);                                       break; // Summon Fatso
+                    case 13:    Success = Summon(14);                                       break; // Summon Arachnotron
+                    case 14:    Success = Summon(15);                                       break; // Summon Arch-Vile
+                    case 15:    Success = Summon(16);                                       break; // Summon Cyberdemon
+                    case 16:    Success = Summon(17);                                       break; // Summon Spider Mastermind
+                };
+                break;
+                
+            case 5: // Utility
+                switch ((Index == -1 ? Player.MenuIndex : Player.SkillIndex[Index]))
+                {
+                    case 0:     Success = BreakdownArmor();                                 break; // Breakdown Armor
+                    case 1:     Success = ForceWall();                                      break; // Force Wall
+                    case 2:     Success = Rally();                                          break; // Rally
+                    case 3:     Success = Unsummon();                                       break; // Unsummon
+                    case 4:     Success = Recall();                                         break; // Recall
+                    case 5:     Locker(true);                                               break; // Wireless Personal Locker
+                    case 6:     Transport();                                                break; // Transport
+                };
+                break;
+        };
+        
+        // Debugging
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: \c-EP Cost for %s (\cdLevel %d\c-): \cn%d\n", CurrentSkill->Name, CurrentSkill->CurrentLevel, EPCost);
+        
+        if (Success)
+            Player.EP -= EPCost;
+    }
+    else // Not enough EP
+    {
+        SetFont("BIGFONT");
+        HudMessage("Not enough EP to use this skill!\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+        ActivatorSound("skills/fail", 127);
+    };
+};
+
+// Heal
+function bool Heal(int Type)
+{
+    int HealLevel = Skills[0][0].CurrentLevel;
+    int HealTeamLevel = Skills[0][2].CurrentLevel;
+    int HealAmount;
+    
+    // Calculate healing amount based on level
+    switch (HealLevel)
+    {
+        case 1: HealAmount = Player.HealthMax / 4;      break; // 25%
+        case 2: HealAmount = Player.HealthMax / 2;      break; // 50%
+        case 3: HealAmount = Player.HealthMax / 1.33;   break; // 75%
+        case 4: HealAmount = Player.HealthMax;          break; // 100%
+    };
+    
+    // Refund - If your health is max or above
+    if (Type == 1 && GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If you have no summoned monsters
+    if (Type == 2 && Player.Summons == 0)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
+    
+    if (Type == 1) // Player
+    {
+        HealThing(HealAmount);
+        ActivatorSound("skills/heal", 127);
+    };
+    if (Type == 2) // Summons
+    {
+        for (int i = 0; i < MAX_SUMMONS; i++)
+            if (Player.SummonTID[i] > 0)
+            {
+                int Health = CalculateMonsterMaxHealth(Player.SummonTID[i]);
+                SetActorProperty(Player.SummonTID[i], APROP_Health, Health);
+            };
+        
+        ActivatorSound("skills/heal2", 127);
+    };
+    if (Type == 3) // Team
+    {
+        int PlayerTID = Player.TID;
+        
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            if (PlayerInGame(i))
+            {
+                // Calculate this player's max HP
+                switch (HealTeamLevel)
+                {
+                    case 1: HealAmount = Players(i).HealthMax / 4;      break; // 25%
+                    case 2: HealAmount = Players(i).HealthMax / 2;      break; // 50%
+                    case 3: HealAmount = Players(i).HealthMax / 1.33;   break; // 75%
+                    case 4: HealAmount = Players(i).HealthMax;          break; // 100%
+                };
+                
+                SetActivator(Players(i).TID);
+                FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
+                HealThing(HealAmount);
+                ActivatorSound("skills/heal", 127);
+            };
+         
+        SetActivator(PlayerTID);
+    };
+    
+    return true;
+};
+
+// Life Leech
+acscript bool LifeLeech()
+{
+    int PlayerNum = PlayerNumber();
+    int LeechLevel = Skills[0][3].CurrentLevel;
+    
+    SetActivatorToTarget(Players(PlayerNum).TID);
+    
+    // Refund - If the Player has no target
+    if (ActivatorTID() == Players(PlayerNum).TID)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target isn't actually a valid monster
+    if (!CheckInventory("DRPGMonsterInit"))
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    int LeechAmount = Round((fixed)GetActorProperty(0, APROP_Health) * ((fixed)LeechLevel / 10.0));
+    
+    // Refund -- If you leech 0 HP
+    if (LeechAmount == 0)
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    DamageThing(LeechAmount);
+    SetActivator(Players(PlayerNum).TID);
+    HealThing(LeechAmount);
+    
+    FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
+    ActivatorSound("skills/lifeleech", 127);
+    return true;
+};
+
+// Decontamination
+function bool Decontaminate()
+{
+    int DecontaminationLevel = Skills[0][4].CurrentLevel;
+    
+    if (Player.Toxicity <= 0)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    Player.Toxicity -= (25 * DecontaminationLevel);
+    Player.ToxicTimer = 0;
+    Player.ToxicOffset = 0;
+    Player.ToxicStage = 0;
+    
+    ActivatorSound("skills/decontaminate", 127);
+    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0 + (0.25 * DecontaminationLevel));
+    
+    return true;
+};
+
+// Repair Armor
+function bool Repair()
+{
+    int RepairLevel = Skills[0][5].CurrentLevel;
+    int RepairAmount;
+    
+    // Calculate repair amount based on level
+    switch (RepairLevel)
+    {
+        case 1: RepairAmount = Player.ArmorMax / 4;     break; // 25%
+        case 2: RepairAmount = Player.ArmorMax / 2;     break; // 50%
+        case 3: RepairAmount = Player.ArmorMax / 1.33;  break; // 75%
+        case 4: RepairAmount = Player.ArmorMax;         break; // 100%
+    };
+
+    if (CheckInventory("Armor") > 0 && CheckInventory("Armor") < Player.ArmorMax)
+    {
+        FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
+        GiveInventory("DRPGArmorBonus", RepairAmount);
+        
+        if (CheckInventory("Armor") > Player.ArmorMax)
+        {
+            int ArmorOverflow = CheckInventory("BasicArmor") - Player.ArmorMax;
+            TakeInventory("BasicArmor", ArmorOverflow);
+        };
+        
+        ActivatorSound("skills/repair", 127);
+        return true;
+    }
+    else
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    return false;
+};
+
+// Teleport to closest Player
+acscript bool PlayerTeleport()
+{
+    str[MAX_PLAYERS] Names;
+    int PlayerChoice;
+    
+    // Refund - If there is only one player or you aren't in multiplayer
+    if (PlayerCount() <= 1 || !InMultiplayer)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+
+    while (true)
+    {
+        fixed X = 48.1;
+        fixed Y = 50.0;
+        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        
+        // Prevent the menus from being opened
+        Player.InMenu = false;
+        Player.InShop = false;
+        
+        SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+        
+        // Set the HUD Size
+        SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+        
+        // Title
+        SetFont("BIGFONT");
+        HudMessage("Choose a Player\n", HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
+        
+        // Input
+        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
+        {
+            ActivatorSound("menu/move", 127);
+            PlayerChoice--;
+            if (PlayerChoice < 0) PlayerChoice = PlayerCount() - 1;
+        };
+        if (Buttons == BT_BACK && OldButtons != BT_BACK)
+        {
+            ActivatorSound("menu/move", 127);
+            PlayerChoice++;
+            if (PlayerChoice > PlayerCount() - 1) PlayerChoice = 0;
+        };
+        if (Buttons == BT_USE && OldButtons != BT_USE)
+        {
+            // You can't teleport to yourself
+            if (PlayerChoice == PlayerNumber())
+                ActivatorSound("menu/error", 127)
+            else
+            {
+                // Teleport
+                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+                GiveInventory("DRPGPlayerTeleportGhost", 1);
+                SetActorPosition(Player.TID, GetActorX(Players(PlayerChoice).TID), GetActorY(Players(PlayerChoice).TID), GetActorZ(Players(PlayerChoice).TID), true);
+                SetActorAngle(Player.TID, GetActorAngle(Players(PlayerChoice).TID));
+                
+                // Make sure you're not inside the other player before we solidify
+                while (Distance(Player.TID, Players(PlayerChoice).TID) <= GetActorPropertyFixed(Players(PlayerChoice).TID, APROP_Radius))
+                    Delay(35);
+                
+                // Solidify
+                GiveInventory("DRPGPlayerTeleportNormal", 1);
+                return true;
+            };
+        };
+        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+        {
+            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            ActivatorSound("menu/move", 127);
+            return false;
+        };
+        
+        // Drawing
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Skip over players that aren't in the game
+            if (!PlayerInGame(i))
+            {
+                // If you are highlighting someone who left, reset the cursor
+                if (PlayerChoice == i)
+                    PlayerChoice = 0;
+                
+                continue;
+            };
+            
+            // Get Player Names
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                Names[i] = StrParam("%N\n", i + 1);
+            
+            // Cursor
+            if (i == PlayerChoice)
+                HudMessage("-->\n", HUDMSG_PLAIN, 0, MenuCursorColor, X - 24.0, Y, 0.05);
+            
+            // Bonus String
+            if (i == PlayerNumber())
+                HudMessage("%s\n", Names[i], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
+            else
+                HudMessage("%s (%k)\n", Names[i], Distance(Player.TID, Players(i).TID), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+            
+            // Move down Y
+            Y += 16.0;
+        };
+        
+        Delay(1);
+    };
+};
+
+// Powerups
+function bool Powerup(int Type)
+{
+    // Levels
+    int InvulnLevel = Skills[1][0].CurrentLevel;
+    int InvisLevel = Skills[1][1].CurrentLevel;
+    int TimeLevel = Skills[1][2].CurrentLevel;
+    
+    switch (Type)
+    {
+        case 1: // Invulnerability
+            if (CheckInventory("PowerInvulnerable"))
+            {
+                ActivatorSound("menu/error", 127);
+                return false;
+            };
+            ActivatorSound("powerups/protect", 127);
+            GiveInventory(StrParam("DRPGSkillInvulnerability%d\n", InvulnLevel), 1);
+            break;
+        case 2: // Invisibility
+            if (CheckInventory("PowerShadow"))
+            {
+                ActivatorSound("menu/error", 127);
+                return false;
+            };
+            ActivatorSound("powerups/invis", 127);
+            GiveInventory(StrParam("DRPGSkillInvisibility%d\n", InvisLevel), 1);
+            break;
+        case 3: // Time Freeze
+            BulletTime(TimeLevel);
+            break;
+        case 4: // Iron Feet
+            if (CheckInventory("PowerIronFeet"))
+            {
+                ActivatorSound("menu/error", 127);
+                return false;
+            };
+            ActivatorSound("powerups/suit", 127);
+            GiveInventory("PowerIronFeet", 1);
+            break;
+        case 5: // Night Vision
+            if (CheckInventory("PowerLightAmp"))
+            {
+                ActivatorSound("menu/error", 127);
+                return false;
+            };
+            ActivatorSound("powerups/light", 127);
+            GiveInventory("PowerLightAmp", 1);
+            break;
+        case 6: // Berserk
+            ActivatorSound("powerups/berserk", 127);
+            GiveInventory("PowerStrength", 1);
+            break;
+        case 7: // Mind Mapping
+            ActivatorSound("powerups/map", 127);
+            GiveInventory("DRPGAllMapRevealer", 1);
+            GiveInventory("DRPGAllMapScanner", 1);
+            break;
+        case 8: // Drop Rune
+            return DropWeapon();
+            break;
+        case 9: // Drop Ammo
+            return DropAmmo();
+            break;
+    };
+    
+    return true;
+};
+
+// Abuse PowerTimeFreezer to create a bullet-time effect
+function void BulletTime(int Mode)
+{
+    BulletTimeMode = Mode;
+    BulletTimeTimer = 350;
+    
+    // Remove duplicate TimeFreezerSounds
+    Thing_Remove(1999);
+    
+    if (Mode == 1) // Stutter Time
+    {
+        SpawnForced("DRPGTimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
+        SetActorState(1999, "Spawn");
+        TakeInventory("PowerTimeFreezer", 1);
+        GiveInventory("DRPGTimeFreezerQuick", 1);
+    };
+    if (Mode == 2) // Freeze Time
+    {
+        SpawnForced("DRPGTimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
+        SetActorState(1999, "Spawn");
+        GiveInventory("DRPGTimeFreezer", 1);
+    };
+};
+
+// Drops a random Rune in front of you
+function bool DropWeapon()
+{
+    int DropWeaponLevel = Skills[1][7].CurrentLevel;
+    fixed Angle = GetActorAngle(0);
+    fixed X = GetActorX(0) + Cos(Angle) * 96.0;
+    fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+    fixed Z = GetActorZ(0) + 48.0;
+    str Weapon;
+    
+    switch (DropWeaponLevel)
+    {
+        case 1: Weapon = "Pistol";          break;
+        case 2: Weapon = "Shotgun";         break;
+        case 3: Weapon = "SuperShotgun";    break;
+        case 4: Weapon = "Chaingun";        break;
+        case 5: Weapon = "RocketLauncher";  break;
+        case 6: Weapon = "PlasmaRifle";     break;
+        case 7: Weapon = "BFG9000";         break;
+    };
+    
+    if (Spawn(Weapon, X, Y, Z, 0, Angle))
+    {
+        ActivatorSound("skills/drop", 127);
+        Spawn("TeleportFog", X, Y, Z, 0, Angle);
+        return true;
+    }
+    else
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    return false;
+};
+
+// Drops a backpack in front of you
+function bool DropAmmo()
+{
+    int AmmoDropLevel = Skills[1][8].CurrentLevel;
+    fixed Angle = GetActorAngle(0);
+    fixed X = GetActorX(0) + Cos(Angle) * 96.0;
+    fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+    fixed Z = GetActorZ(0) + 48.0;
+    str Ammo;
+    
+    switch (AmmoDropLevel)
+    {
+        case 1:         Ammo = "DRPGSmallBackpack"; break;
+        case 2:         Ammo = "DRPGBackpack";      break;
+        case 3: case 4: Ammo = "DRPGBigBackpack";   break;
+    };
+    
+    if (Spawn(Ammo, X, Y, Z, 0, Angle))
+    {
+        if (AmmoDropLevel == 4 && GetCVar("drpg_ext_doomrl"))
+            Spawn("RLSupplyCrate", X, Y, Z, 0, Angle);
+        
+        ActivatorSound("skills/drop", 127);
+        Spawn("TeleportFog", X, Y, Z, 0, Angle);
+        return true;
+    }
+    else
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+
+    return false;
+};
+
+// Weaken
+acscript bool Weaken()
+{
+    int PlayerNum = PlayerNumber();
+    int WeakenLevel = Skills[3][0].CurrentLevel;
+    int MonsterLevel;
+    int MonsterAura;
+    int MonsterStrength;
+    int MonsterDefense;
+    
+    SetActivatorToTarget(Players(PlayerNum).TID);
+    
+    // Refund - If the Player has no target
+    if (ActivatorTID() == Players(PlayerNum).TID)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target isn't actually a valid monster
+    if (!CheckInventory("DRPGMonsterInit"))
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Get Monster Stats
+    MonsterLevel = CheckInventory("DRPGMonsterLevel") / 2;
+    MonsterStrength = CheckInventory("DRPGMonsterStrength") / 2;
+    MonsterDefense = CheckInventory("DRPGMonsterDefense") / 2;
+    MonsterAura = CheckInventory("DRPGMonsterAura");
+    
+    // Destroy Aura
+    if (WeakenLevel == 2) 
+    {
+        if (GetActorProperty(0, APROP_Health) > GetActorProperty(0, APROP_SpawnHealth))
+            SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth));
+        
+        MonsterAura = 0;
+    };
+    
+    // Apply the stats to the monster
+    SetInventory("DRPGMonsterLevel", MonsterLevel);
+    SetInventory("DRPGMonsterStrength", MonsterStrength);
+    SetInventory("DRPGMonsterDefense", MonsterDefense);
+    SetInventory("DRPGMonsterAura", MonsterAura);
+    
+    // Re-run the Stats Script
+    MonsterStats(CheckInventory("DRPGMonsterFlags"), SF_PLAYERTARGET);
+    
+    // Reset Activator
+    SetActivator(Players(PlayerNum).TID);
+    
+    FadeRange(0, 0, 0, 0.25, 0, 0, 0, 0.0, 1.0);
+    ActivatorSound("skills/weaken", 127);
+    return true;
+};
+
+// Repulsion
+function bool Repulse()
+{
+    int RepulsionLevel = Skills[3][2].CurrentLevel;
+    
+    SetInventory(StrParam("DRPGSkillBlast%d\n", RepulsionLevel), 1);
+    UseInventory(StrParam("DRPGSkillBlast%d\n", RepulsionLevel));
+    
+    FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.5 + (0.25 * RepulsionLevel));
+    
+    return true;
+};
+
+// Summoning
+function bool Summon(int Type)
+{
+    fixed Angle = GetActorAngle(0);
+    fixed X = GetActorX(0) + Cos(Angle) * 96.0;
+    fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+    fixed Z = GetActorZ(0);
+    int MarineLevel = Skills[4][0].CurrentLevel;
+    int NewID = UniqueTID();
+    bool Success;
+    
+    str[][] DRLASummons =
+    {
+        // Former Human
+        {
+            "RLDRPGSummonedFormerHuman";
+            "RLDRPGSummonedEliteHuman";
+            "RLDRPGSummonedFormerCaptain";
+        };
+        
+        // Former Sergeant
+        {
+            "RLDRPGSummonedFormerSergeant";
+            "RLDRPGSummonedEliteSergeant";
+        };
+        
+        // Former Commando
+        {
+            "RLDRPGSummonedFormerCommando";
+            "RLDRPGSummonedEliteCommando";
+            "RLDRPGSummonedEliteCaptain2";
+        };
+        
+        // Imp
+        {
+            "RLDRPGSummonedImp";
+            "RLDRPGSummonedNightmareImp";
+            "RLDRPGSummonedCyberneticImp";
+        };
+        
+        // Demon
+        {
+            "RLDRPGSummonedDemon";
+            "RLDRPGSummonedSpectre";
+            "RLDRPGSummonedNightmareDemon";
+            "RLDRPGSummonedNightmareSpectre";
+            "RLDRPGSummonedCyberneticDemon";
+            "RLDRPGSummonedCyberneticSpectre";
+        };
+        
+        // Cacodemon
+        {
+            "RLDRPGSummonedCacodemon";
+            "RLDRPGSummonedNightmareCacodemon";
+        };
+        
+        // Hell Knight
+        {
+            "RLDRPGSummonedHellKnight";
+            "RLDRPGSummonedNightmareHellKnight";
+            "RLDRPGSummonedCyberneticHellKnight";
+        };
+        
+        // Baron of Hell
+        {
+            "RLDRPGSummonedBaronOfHell";
+            "RLDRPGSummonedNightmareBaronOfHell";
+            "RLDRPGSummonedCyberneticBaronOfHell";
+        };
+        
+        // Lost Soul
+        {
+            "RLDRPGSummonedLostSoul";
+            "RLDRPGSummonedNightmareLostSoul";
+            "RLDRPGSummonedCyberneticLostSoul";
+        };
+        
+        // Pain Elemental
+        {
+            "RLDRPGSummonedPainElemental";
+            "RLDRPGSummonedNightmarePainElemental";
+        };
+        
+        // Revenant
+        {
+            "RLDRPGSummonedRevenant";
+            "RLDRPGSummonedNightmareRevenant";
+            "RLDRPGSummonedCyberneticRevenant";
+        };
+        
+        // Mancubus
+        {
+            "RLDRPGSummonedMancubus";
+            "RLDRPGSummonedNightmareMancubus";
+            "RLDRPGSummonedCyberneticMancubus";
+        };
+        
+        // Arachnotron
+        {
+            "RLDRPGSummonedArachnotron";
+            "RLDRPGSummonedNightmareArachnotron";
+            "RLDRPGSummonedCyberneticArachnotron";
+        };
+        
+        // Arch-Vile
+        {
+            "RLDRPGSummonedArchVile";
+            "RLDRPGSummonedNightmareArchVile";
+        };
+        
+        // Cyberdemon
+        {
+            "RLDRPGSummonedCyberdemon";
+            "RLDRPGSummonedNightmareCyberdemon";
+        };
+        
+        // Spider Mastermind
+        {
+            "RLDRPGSummonedSpiderMastermind";
+            "RLDRPGSummonedCyberneticSpiderMastermind";
+        };
+    };
+    
+    // Stop if you already have the maximum amount of summons
+    if (Player.Summons >= MAX_SUMMONS)
+    {
+        SetFont("BIGFONT");
+        HudMessage("You cannot summon any more friendlies\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    if (Type == 1) // Marines
+    {
+        switch (MarineLevel)
+        {
+            case 1: Success = Spawn("MarinePistolRPG", X, Y, Z, NewID, Angle);                  break;
+            case 2: Success = Spawn("MarineShotgunRPG", X, Y, Z, NewID, Angle);                 break;
+            case 3: Success = Spawn("MarineSSGRPG", X, Y, Z, NewID, Angle);                     break;
+            case 4: Success = Spawn("MarineChaingunRPG", X, Y, Z, NewID, Angle);;               break;
+            case 5: Success = Spawn("MarineRocketRPG", X, Y, Z, NewID, Angle);                  break;
+            case 6: Success = Spawn("MarinePlasmaRPG", X, Y, Z, NewID, Angle);                  break;
+            case 7: Success = Spawn("MarineRailgunRPG", X, Y, Z, NewID, Angle);                 break;
+            case 8: Success = Spawn("MarineBFGRPG", X, Y, Z, NewID, Angle);                     break;
+        };
+    }
+    else // Monsters
+    {
+        if (GetCVar("drpg_ext_doomrl"))
+            Success = Spawn(DRLASummons[Type - 2][Skills[4][Type - 1].CurrentLevel - 1], X, Y, Z, NewID, Angle)
+        else
+        {
+            switch (Type)
+            {
+                case 2:     Success = Spawn("Zombieman", X, Y, Z, NewID, Angle);                break;
+                case 3:     Success = Spawn("ShotgunGuy", X, Y, Z, NewID, Angle);               break;
+                case 4:     Success = Spawn("ChaingunGuy", X, Y, Z, NewID, Angle);              break;
+                case 5:     Success = Spawn("DoomImp", X, Y, Z, NewID, Angle);                  break;
+                case 6:     Success = Spawn("Demon", X, Y, Z, NewID, Angle);                    break;
+                case 7:     Success = Spawn("Cacodemon", X, Y, Z, NewID, Angle);                break;
+                case 8:     Success = Spawn("HellKnight", X, Y, Z, NewID, Angle);               break;
+                case 9:     Success = Spawn("BaronOfHell", X, Y, Z, NewID, Angle);              break;
+                case 10:    Success = Spawn("LostSoul", X, Y, Z, NewID, Angle);                 break;
+                case 11:    Success = Spawn("PainElemental", X, Y, Z, NewID, Angle);            break;
+                case 12:    Success = Spawn("Revenant", X, Y, Z, NewID, Angle);                 break;
+                case 13:    Success = Spawn("Fatso", X, Y, Z, NewID, Angle);                    break;
+                case 14:    Success = Spawn("Arachnotron", X, Y, Z, NewID, Angle);              break;
+                case 15:    Success = Spawn("Archvile", X, Y, Z, NewID, Angle);                 break;
+                case 16:    Success = Spawn("Cyberdemon", X, Y, Z, NewID, Angle);               break;
+                case 17:    Success = Spawn("SpiderMastermind", X, Y, Z, NewID, Angle);         break;
+            };
+        };
+    };
+    
+    if (Success)
+    {
+        SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
+        SetActorAngle(NewID, Angle);
+        SetActorProperty(NewID, APROP_Friendly, 1);
+        GiveActorInventory(NewID, "DRPGFriendlyBooster", 1);
+        
+        // Add summon to your summon array
+        for (int i = 0; i < MAX_SUMMONS; i++)
+            if (Player.SummonTID[i] == 0)
+            {
+                Player.SummonTID[i] = NewID;
+                Player.Summons++;
+                return true;
+            };
+    }
+    else
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+};
+
+// Breaks down current Armor into Credits
+function bool BreakdownArmor()
+{
+    int Armor = CheckInventory("BasicArmor");
+    
+    // Kind of hackish to prevent breaking down Armors that use high values for indestructibleness
+    if (Armor > 1000)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    if (Armor > 0)
+    {
+        TakeInventory("BasicArmor", Armor);
+        GiveInventory("DRPGCredits", Armor);
+        
+        // DoomRL Compatibility
+        if (GetCVar("drpg_ext_doomrl"))
+        {
+            TakeInventory("RL100ArmorWorn", 1);
+            TakeInventory("RL150ArmorWorn", 1);
+            TakeInventory("RL200ArmorWorn", 1);
+            TakeInventory("RL100RegenArmorWorn", 1);
+            TakeInventory("RLIndestructibleArmorWorn", 1);
+        };
+        
+        ActivatorSound("skills/breakdown", 127);
+        return true;
+    }
+    else
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    return false;
+};
+
+// Drops a Force Field in front of you
+function bool ForceWall()
+{
+    fixed Angle = GetActorAngle(0);
+    fixed X = GetActorX(0) + Cos(Angle) * 96.0;
+    fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+    fixed Z = GetActorZ(0);
+    int WallLevel = Skills[5][1].CurrentLevel;
+    
+    Thing_Remove(1998);
+    
+    switch (WallLevel)
+    {
+        case 1:
+            if (!Spawn("DRPGForceField", X, Y, Z, 1998, Angle) == 0) {return true;}
+            else
+            {
+                ActivatorSound("menu/error", 127);
+                return false;
+            };
+            break;
+        case 2:
+            if (!Spawn("DRPGForceField2", X, Y, Z, 1998, Angle) == 0) {return true;}
+            else
+            {
+                ActivatorSound("menu/error", 127);
+                return false;
+            };
+            break;
+    };
+
+    return false;
+};
+
+// Rallies (teleports) your summoned monster/marines around you
+function bool Rally()
+{
+    fixed X = GetActorX(0);
+    fixed Y = GetActorY(0);
+    fixed Z = GetActorZ(0);
+    fixed Angle = GetActorAngle(0);
+    
+    // Fail if you have no summons active
+    if (Player.Summons == 0)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
+    
+    for (int i = 0; i < MAX_SUMMONS; i++)
+        if (Player.SummonTID[i] > 0)
+            SetActorPosition(Player.SummonTID[i], X, Y, Z, 0);
+    
+    ActivatorSound("skills/rally", 127);
+    return true;
+};
+
+// Unsummon - Removes all actors under the player's control
+function bool Unsummon()
+{
+    int UnsummonLevel = Skills[5][3].CurrentLevel;
+    int EPAdd;
+    
+    // Fail if you have no summons active
+    if (Player.Summons == 0)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    for (int i = 0; i < MAX_SUMMONS; i++)
+    {
+        // Continue if there's no summon in this slot
+        if (Player.SummonTID[i] == 0) continue;
+        
+        if (UnsummonLevel == 2 && GetActorProperty(i, APROP_Health) > 0)
+            EPAdd += 25;
+        
+        // Overdrive - Remove summons (teleport out) instead of killing them
+        if (GetActorProperty(Player.SummonTID[i], APROP_Health) > 0)
+        {
+            SpawnForced("TeleportFog", GetActorX(Player.SummonTID[i]), GetActorY(Player.SummonTID[i]), GetActorZ(Player.SummonTID[i]), 0, 0);
+            Thing_Remove(Player.SummonTID[i]);
+        };
+        
+        // Remove the summon from the array
+        Player.SummonTID[i] = 0;
+    };
+    
+    
+    if (UnsummonLevel == 2)
+        Player.EP += EPAdd;
+
+    Player.Summons = 0;
+    
+    FadeRange(192, 0, 0, 0.5, 192, 0, 0, 0.0, 1.0);
+    ActivatorSound("skills/unsummon", 127);
+    return true;
+};
+
+// Recall - Return to the beginning of the map
+function bool Recall()
+{
+    // Fail if you're in the Arena or Marines are hostile
+    if (ArenaActive || MarinesHostile)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+        
+    SetInventory("ArtiTeleport", 1);
+    UseInventory("ArtiTeleport");
+    return true;
+};
+
+// Handles the Transportation system
+acscript void Transport()
+{
+    // If you're dead, terminate
+    if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
+    
+    // Don't allow Transport while the arena is active, if the Marines are hostile, or you're in an Outpost-related menu
+    if (ArenaActive || MarinesHostile || Player.OutpostMenu > 0)
+    {
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    // Multiplayer
+    if (InMultiplayer && PlayerCount() > 1)
+    {
+        int Players = PlayerCount();
+        bool Ready;
+        bool[MAX_PLAYERS] Voted;
+        int PlayersApprove;
+        int PlayersDeny;
+        
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            Voted[i] = false;
+        
+        while (!Ready)
+        {
+            // Freeze all players
+            SetPlayerProperty(true, 1, PROP_TOTALLYFROZEN);
+            
+            // Input
+            for (int i = 0; i < Players; i++)
+            {
+                // Skip input checks if you've already voted
+                if (Voted[i]) continue;
+                
+                int Buttons = GetPlayerInput(i, INPUT_BUTTONS);
+                int OldButtons = GetPlayerInput(i, INPUT_OLDBUTTONS);
+                
+                if (Buttons == BT_USE && OldButtons != BT_USE)
+                {
+                    ActivatorSound("menu/move", 127);
+                    PlayersApprove++;
+                    Voted[i] = true;
+                };
+                if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+                {
+                    ActivatorSound("menu/move", 127);
+                    PlayersDeny++;
+                    Voted[i] = true;
+                };
+            };
+            
+            // Check that everyone has voted
+            Ready = true;
+            for (int i = 0; i < Players; i++)
+                if (!Voted[i]) Ready = false;
+            
+            // Drawing
+            SetFont("BIGFONT");
+            HudMessageBold("\cd%N has requested Transport\n\c-Players: %d (\cd%d\c-/\cg%d\c-)\n\n\cd%K\c- to Approve\n\cd%K\c- to Deny\n",
+                           PlayerNumber() + 1, Players, PlayersApprove, PlayersDeny, "+use", "+speed",
+                           HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.75, 1.0, 4.0);
+            
+            Delay(1);
+        };
+        
+        // Ready - tally votes and confirm/deny Transport
+        if (Ready)
+        {
+            SetPlayerProperty(true, 0, PROP_TOTALLYFROZEN);
+            
+            // Approved
+            if (PlayersApprove > PlayersDeny)
+            {
+                for (int i = 0; i < MAX_PLAYERS; i++)
+                    SetActorProperty(Players(i).TID, APROP_Invulnerable, true);
+                HudMessageBold("\cdTransport Approved!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 4.0);
+                Delay(35 * 2);
+                FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 3.0);
+                Delay(35 * 3);
+            };
+            
+            // Denied
+            if (PlayersDeny > PlayersApprove)
+            {
+                HudMessageBold("\cgTransport Denied!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
+                return;
+            };
+            
+            // Draw
+            if (PlayersApprove == PlayersDeny)
+            {
+                HudMessageBold("\cjDraw!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
+                return;
+            };
+        };
+    }
+    else // Single Player
+    {
+        // Fade Screen
+        FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 1.0);
+        
+        // Freeze Player
+        SetActorProperty(0, APROP_Invulnerable, true);
+        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        
+        // Delay and unfreeze Player
+        Delay(35);
+        SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+        SetActorProperty(0, APROP_Invulnerable, false);
+    };
+    
+    // Transport
+    if (!InBase)
+    {
+        str LevelLump = StrParam("%N\n", PRINTNAME_LEVEL);
+        for (int i = 0; i < 8 && i < StrLen(LevelLump); i++)
+            LastVisited[i] = LevelLump[i];
+        
+        ChangeLevel("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, -1);
+        InBase = true;
+        Transported = true;
+    }
+    else
+    {
+        ChangeLevel(StrParam("%s\n", LastVisited), 0, CHANGELEVEL_NOINTERMISSION, -1);
+        InBase = false;
+        Transported = true;
+    };
+};
+
+// Used from DECORATE to get dynamic projectile damage rates
+acscript void SetProjectileDamage(str Type)
+{
+    // For the FUTUUUUUUUURE
+    
+    return 0;
+};
+
+// Removes a player's Aura
+acscript void RemoveAura()
+{
+    for (int i = 0; i < AURA_MAX; i++)
+        Player.Aura[i] = false;
+    
+    Player.AuraTimer = 0;
 };
 
 function void CheckSkills()
