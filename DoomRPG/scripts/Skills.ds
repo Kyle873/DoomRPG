@@ -302,15 +302,12 @@ acscript void UseSkill() net
     };
 };
 
-// Heal
 acscript bool Heal(Skill *Self)
 {
-    int HealLevel = Skills[0][0].CurrentLevel;
-    int HealTeamLevel = Skills[0][2].CurrentLevel;
     int HealAmount;
     
     // Calculate healing amount based on level
-    switch (HealLevel)
+    switch (Self->CurrentLevel)
     {
         case 1: HealAmount = Player.HealthMax / 4;      break; // 25%
         case 2: HealAmount = Player.HealthMax / 2;      break; // 50%
@@ -319,14 +316,7 @@ acscript bool Heal(Skill *Self)
     };
     
     // Refund - If your health is max or above
-    if (Type == 1 && GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    // Refund - If you have no summoned monsters
-    if (Type == 2 && Player.Summons == 0)
+    if (GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
     {
         ActivatorSound("menu/error", 127);
         return false;
@@ -334,55 +324,75 @@ acscript bool Heal(Skill *Self)
     
     FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
     
-    if (Type == 1) // Player
-    {
-        HealThing(HealAmount);
-        ActivatorSound("skills/heal", 127);
-    };
-    if (Type == 2) // Summons
-    {
-        for (int i = 0; i < MAX_SUMMONS; i++)
-            if (Player.SummonTID[i] > 0)
-            {
-                int Health = CalculateMonsterMaxHealth(Player.SummonTID[i]);
-                SetActorProperty(Player.SummonTID[i], APROP_Health, Health);
-            };
-        
-        ActivatorSound("skills/heal2", 127);
-    };
-    if (Type == 3) // Team
-    {
-        int PlayerTID = Player.TID;
-        
-        for (int i = 0; i < MAX_PLAYERS; i++)
-            if (PlayerInGame(i))
-            {
-                // Calculate this player's max HP
-                switch (HealTeamLevel)
-                {
-                    case 1: HealAmount = Players(i).HealthMax / 4;      break; // 25%
-                    case 2: HealAmount = Players(i).HealthMax / 2;      break; // 50%
-                    case 3: HealAmount = Players(i).HealthMax / 1.33;   break; // 75%
-                    case 4: HealAmount = Players(i).HealthMax;          break; // 100%
-                };
-                
-                SetActivator(Players(i).TID);
-                FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
-                HealThing(HealAmount);
-                ActivatorSound("skills/heal", 127);
-            };
-         
-        SetActivator(PlayerTID);
-    };
+    HealThing(HealAmount);
+    ActivatorSound("skills/heal", 127);
     
     return true;
 };
 
-// Life Leech
-acscript bool LifeLeech()
+acscript bool HealSummons(Skill *Self)
+{
+    // Refund - If you have no summoned monsters
+    if (Player.Summons == 0)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
+    
+    for (int i = 0; i < MAX_SUMMONS; i++)
+        if (Player.SummonTID[i] > 0)
+        {
+            int Health = CalculateMonsterMaxHealth(Player.SummonTID[i]);
+            SetActorProperty(Player.SummonTID[i], APROP_Health, Health);
+        };
+    
+    ActivatorSound("skills/heal2", 127);
+    
+    return true;
+};
+
+acscript bool HealTeam(Skill *Self)
+{
+    int PlayerTID = Player.TID;
+    int HealAmount;
+    
+    // Calculate healing amount based on level
+    switch (Self->CurrentLevel)
+    {
+        case 1: HealAmount = Player.HealthMax / 4;      break; // 25%
+        case 2: HealAmount = Player.HealthMax / 2;      break; // 50%
+        case 3: HealAmount = Player.HealthMax / 1.33;   break; // 75%
+        case 4: HealAmount = Player.HealthMax;          break; // 100%
+    };
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+        if (PlayerInGame(i))
+        {
+            // Calculate this player's max HP
+            switch (HealTeamLevel)
+            {
+                case 1: HealAmount = Players(i).HealthMax / 4;      break; // 25%
+                case 2: HealAmount = Players(i).HealthMax / 2;      break; // 50%
+                case 3: HealAmount = Players(i).HealthMax / 1.33;   break; // 75%
+                case 4: HealAmount = Players(i).HealthMax;          break; // 100%
+            };
+            
+            SetActivator(Players(i).TID);
+            FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
+            HealThing(HealAmount);
+            ActivatorSound("skills/heal", 127);
+        };
+     
+    SetActivator(PlayerTID);
+    
+    return true;
+};
+
+acscript bool LifeLeech(Skill *Self)
 {
     int PlayerNum = PlayerNumber();
-    int LeechLevel = Skills[0][3].CurrentLevel;
     
     SetActivatorToTarget(Players(PlayerNum).TID);
     
@@ -400,7 +410,7 @@ acscript bool LifeLeech()
         return false;
     };
     
-    int LeechAmount = Round((fixed)GetActorProperty(0, APROP_Health) * ((fixed)LeechLevel / 10.0));
+    int LeechAmount = Round((fixed)GetActorProperty(0, APROP_Health) * ((fixed)Self->CurrentLevel / 10.0));
     
     // Refund -- If you leech 0 HP
     if (LeechAmount == 0)
@@ -418,18 +428,15 @@ acscript bool LifeLeech()
     return true;
 };
 
-// Decontamination
-acscript bool Decontaminate()
+acscript bool Decontaminate(Skill *Self)
 {
-    int DecontaminationLevel = Skills[0][4].CurrentLevel;
-    
     if (Player.Toxicity <= 0)
     {
         ActivatorSound("menu/error", 127);
         return false;
     };
     
-    Player.Toxicity -= (25 * DecontaminationLevel);
+    Player.Toxicity -= (25 * Self->CurrentLevel);
     Player.ToxicTimer = 0;
     Player.ToxicOffset = 0;
     Player.ToxicStage = 0;
@@ -440,14 +447,12 @@ acscript bool Decontaminate()
     return true;
 };
 
-// Repair Armor
-acscript bool Repair()
+acscript bool Repair(Skill *Self)
 {
-    int RepairLevel = Skills[0][5].CurrentLevel;
     int RepairAmount;
     
     // Calculate repair amount based on level
-    switch (RepairLevel)
+    switch (Self->CurrentLevel)
     {
         case 1: RepairAmount = Player.ArmorMax / 4;     break; // 25%
         case 2: RepairAmount = Player.ArmorMax / 2;     break; // 50%
@@ -478,8 +483,7 @@ acscript bool Repair()
     return false;
 };
 
-// Teleport to closest Player
-acscript bool PlayerTeleport()
+acscript bool PlayerTeleport(Skill *Self)
 {
     str[MAX_PLAYERS] Names;
     int PlayerChoice;
@@ -588,8 +592,7 @@ acscript bool PlayerTeleport()
     };
 };
 
-// Powerups
-acscript bool Powerup(int Type)
+acscript bool Powerup(Skill *Self)
 {
     // Levels
     int InvulnLevel = Skills[1][0].CurrentLevel;
@@ -646,21 +649,14 @@ acscript bool Powerup(int Type)
             GiveInventory("DRPGAllMapRevealer", 1);
             GiveInventory("DRPGAllMapScanner", 1);
             break;
-        case 8: // Drop Rune
-            return DropWeapon();
-            break;
-        case 9: // Drop Ammo
-            return DropAmmo();
-            break;
     };
     
     return true;
 };
 
-// Abuse PowerTimeFreezer to create a bullet-time effect
-acscript void BulletTime(int Mode)
+acscript void BulletTime(Skill *Self)
 {
-    BulletTimeMode = Mode;
+    BulletTimeMode = Self->CurrentLevel;
     BulletTimeTimer = 350;
     
     // Remove duplicate TimeFreezerSounds
@@ -681,17 +677,15 @@ acscript void BulletTime(int Mode)
     };
 };
 
-// Drops a random Rune in front of you
-acscript bool DropWeapon()
+acscript bool DropWeapon(Skill *Self)
 {
-    int DropWeaponLevel = Skills[1][7].CurrentLevel;
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
     fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
     fixed Z = GetActorZ(0) + 48.0;
     str Weapon;
     
-    switch (DropWeaponLevel)
+    switch (Self->CurrentLevel)
     {
         case 1: Weapon = "Pistol";          break;
         case 2: Weapon = "Shotgun";         break;
@@ -717,17 +711,15 @@ acscript bool DropWeapon()
     return false;
 };
 
-// Drops a backpack in front of you
-acscript bool DropAmmo()
+acscript bool DropAmmo(Skill *Self)
 {
-    int AmmoDropLevel = Skills[1][8].CurrentLevel;
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
     fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
     fixed Z = GetActorZ(0) + 48.0;
     str Ammo;
     
-    switch (AmmoDropLevel)
+    switch (Self->CurrentLevel)
     {
         case 1:         Ammo = "DRPGSmallBackpack"; break;
         case 2:         Ammo = "DRPGBackpack";      break;
@@ -753,10 +745,9 @@ acscript bool DropAmmo()
 };
 
 // Weaken
-acscript bool Weaken()
+acscript bool Weaken(Skill *Self)
 {
     int PlayerNum = PlayerNumber();
-    int WeakenLevel = Skills[3][0].CurrentLevel;
     int MonsterLevel;
     int MonsterAura;
     int MonsterStrength;
@@ -785,7 +776,7 @@ acscript bool Weaken()
     MonsterAura = CheckInventory("DRPGMonsterAura");
     
     // Destroy Aura
-    if (WeakenLevel == 2) 
+    if (Self->CurrentLevel == 2) 
     {
         if (GetActorProperty(0, APROP_Health) > GetActorProperty(0, APROP_SpawnHealth))
             SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth));
@@ -811,26 +802,22 @@ acscript bool Weaken()
 };
 
 // Repulsion
-acscript bool Repulse()
+acscript bool Repulse(Skill *Self)
 {
-    int RepulsionLevel = Skills[3][2].CurrentLevel;
-    
-    SetInventory(StrParam("DRPGSkillBlast%d\n", RepulsionLevel), 1);
-    UseInventory(StrParam("DRPGSkillBlast%d\n", RepulsionLevel));
+    SetInventory(StrParam("DRPGSkillBlast%d\n", Skill->CurrentLevel), 1);
+    UseInventory(StrParam("DRPGSkillBlast%d\n", Skill->CurrentLevel));
     
     FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.5 + (0.25 * RepulsionLevel));
     
     return true;
 };
 
-// Summoning
-acscript bool Summon(int Type)
+acscript bool Summon(Skill *Self)
 {
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
     fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
     fixed Z = GetActorZ(0);
-    int MarineLevel = Skills[4][0].CurrentLevel;
     int NewID = UniqueTID();
     bool Success;
     
@@ -957,7 +944,7 @@ acscript bool Summon(int Type)
     
     if (Type == 1) // Marines
     {
-        switch (MarineLevel)
+        switch (Self->CurrentLevel)
         {
             case 1: Success = Spawn("MarinePistolRPG", X, Y, Z, NewID, Angle);                  break;
             case 2: Success = Spawn("MarineShotgunRPG", X, Y, Z, NewID, Angle);                 break;
@@ -1021,7 +1008,7 @@ acscript bool Summon(int Type)
 };
 
 // Breaks down current Armor into Credits
-acscript bool BreakdownArmor()
+acscript bool BreakdownArmor(Skill *Self)
 {
     int Armor = CheckInventory("BasicArmor");
     
@@ -1060,17 +1047,16 @@ acscript bool BreakdownArmor()
 };
 
 // Drops a Force Field in front of you
-acscript bool ForceWall()
+acscript bool ForceWall(Skill *Self)
 {
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
     fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
     fixed Z = GetActorZ(0);
-    int WallLevel = Skills[5][1].CurrentLevel;
     
     Thing_Remove(1998);
     
-    switch (WallLevel)
+    switch (Skill->CurrentLevel)
     {
         case 1:
             if (!Spawn("DRPGForceField", X, Y, Z, 1998, Angle) == 0) {return true;}
@@ -1093,8 +1079,7 @@ acscript bool ForceWall()
     return false;
 };
 
-// Rallies (teleports) your summoned monster/marines around you
-acscript bool Rally()
+acscript bool Rally(Skill *Self)
 {
     fixed X = GetActorX(0);
     fixed Y = GetActorY(0);
@@ -1118,10 +1103,8 @@ acscript bool Rally()
     return true;
 };
 
-// Unsummon - Removes all actors under the player's control
-acscript bool Unsummon()
+acscript bool Unsummon(Skill *Self)
 {
-    int UnsummonLevel = Skills[5][3].CurrentLevel;
     int EPAdd;
     
     // Fail if you have no summons active
@@ -1136,7 +1119,7 @@ acscript bool Unsummon()
         // Continue if there's no summon in this slot
         if (Player.SummonTID[i] == 0) continue;
         
-        if (UnsummonLevel == 2 && GetActorProperty(i, APROP_Health) > 0)
+        if (Self->CurrentLevel == 2 && GetActorProperty(i, APROP_Health) > 0)
             EPAdd += 25;
         
         // Overdrive - Remove summons (teleport out) instead of killing them
@@ -1161,8 +1144,7 @@ acscript bool Unsummon()
     return true;
 };
 
-// Recall - Return to the beginning of the map
-acscript bool Recall()
+acscript bool Recall(Skill *Self)
 {
     // Fail if you're in the Arena or Marines are hostile
     if (ArenaActive || MarinesHostile)
@@ -1176,8 +1158,13 @@ acscript bool Recall()
     return true;
 };
 
-// Handles the Transportation system
-acscript void Transport()
+acscript bool WirelessLocker(Skill *Self)
+{
+    Locker(true, Self->CurrentLevel);
+    return true;
+}
+
+acscript void Transport(Skill *Self)
 {
     // If you're dead, terminate
     if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
