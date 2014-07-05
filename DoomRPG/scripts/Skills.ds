@@ -55,7 +55,7 @@ script void SkillWheel() enter
             {
                 if (Player.InMenu && Player.Menu == 3)
                 {
-                    Player.SkillCatagory[Selected] = Player.SkillPage;
+                    Player.SkillCategory[Selected] = Player.SkillPage;
                     Player.SkillIndex[Selected] = Player.MenuIndex;
                 }
                 else
@@ -129,7 +129,7 @@ script void SkillWheel() enter
         // Extra Input Handling
         if (Buttons & BT_SPEED && Selected != -1)
         {
-            Skill *CurrentSkill = &Skills[Player.SkillCatagory[Selected]][Player.SkillIndex[Selected]];
+            Skill *CurrentSkill = &Skills[Player.SkillCategory[Selected]][Player.SkillIndex[Selected]];
             
             // Decrease selected skill level
             if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && CurrentSkill->CurrentLevel > 1)
@@ -148,15 +148,15 @@ script void SkillWheel() enter
             // Clear Skill
             if (Buttons & BT_USE)
             {
-                Player.SkillCatagory[Selected] = -1;
+                Player.SkillCategory[Selected] = -1;
                 Player.SkillIndex[Selected] = -1;
                 AmbientSound("menu/move", 127);
             };
         };
         
         // Set Skill
-        if (Selected >= 0 && Player.SkillCatagory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
-            CurrentSkill = &Skills[Player.SkillCatagory[Selected]][Player.SkillIndex[Selected]]
+        if (Selected >= 0 && Player.SkillCategory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
+            CurrentSkill = &Skills[Player.SkillCategory[Selected]][Player.SkillIndex[Selected]]
         else
             CurrentSkill = nullptr;
         
@@ -179,12 +179,12 @@ script void SkillWheel() enter
                 PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
             
             // Icon
-            if (Player.SkillCatagory[i] != -1 && Player.SkillIndex[i] != -1)
+            if (Player.SkillCategory[i] != -1 && Player.SkillIndex[i] != -1)
             {
-                if (StrLen(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon) == 0)
+                if (StrLen(Skills[Player.SkillCategory[i]][Player.SkillIndex[i]].Icon) == 0)
                     PrintSpriteFade("S_None", WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0)
                 else
-                    PrintSpriteFade(Skills[Player.SkillCatagory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0);
+                    PrintSpriteFade(Skills[Player.SkillCategory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0);
             };
             
             // Box
@@ -225,7 +225,7 @@ acscript void UseSkill() net
 {
     // Current Skill
     int Index = (Player.InMenu && Player.Menu == 3 ? -1 : Player.SkillSelected);
-    Skill *CurrentSkill = &Skills[Player.SkillCatagory[Index]][Player.SkillIndex[Index]];
+    Skill *CurrentSkill = &Skills[Player.SkillCategory[Index]][Player.SkillIndex[Index]];
     
     // If you're dead, terminate
     if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
@@ -235,7 +235,7 @@ acscript void UseSkill() net
     
     // If the key is unassigned, terminate
     if (Index != -1)
-        if (Player.SkillCatagory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
+        if (Player.SkillCategory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
     
     // Quickuse
     if (Index == -1)
@@ -284,12 +284,12 @@ acscript void UseSkill() net
     {
         // Data to pass to the script pointer
         void *Data = nullptr;
-        int DataCategory = (Index == -1 ? Player.SkillPage : Player.SkillCatagory[Player.SkillSelected]);
+        int DataCategory = (Index == -1 ? Player.SkillPage : Player.SkillCategory[Player.SkillSelected]);
         int DataIndex = (Index == -1 ? Player.MenuIndex : Player.SkillIndex[Player.SkillSelected]);
         
         // Auras and Summons need their index passed
         if (DataCategory == 2 || DataCategory == 4)
-            Data = (void *)DataIndex;
+            Data = (int *)&DataIndex;
         
         // Debugging
         if (GetCVar("drpg_debug"))
