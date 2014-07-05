@@ -11,7 +11,6 @@
 #include "Utils.dh"
 
 bool Overdrive;
-int BulletTimeMode;
 int BulletTimeTimer;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
@@ -287,8 +286,8 @@ acscript void UseSkill() net
         auto int DataCategory = (Index == -1 ? Player.SkillPage : Player.SkillCategory[Player.SkillSelected]);
         auto int DataIndex = (Index == -1 ? Player.MenuIndex : Player.SkillIndex[Player.SkillSelected]);
         
-        // Auras and Summons need their index passed
-        if (DataCategory == 2 || DataCategory == 4)
+        // Powerups, Auras and Summons need their index passed
+        if (DataCategory == 1 || DataCategory == 2 || DataCategory == 4)
             Data = &DataIndex;
         
         // Debugging
@@ -610,7 +609,7 @@ acscript bool Powerup(Skill *Self, void *Data)
     
     switch (Index)
     {
-        case 1: // Invulnerability
+        case 0: // Invulnerability
             if (CheckInventory("PowerInvulnerable"))
             {
                 ActivatorSound("menu/error", 127);
@@ -619,7 +618,7 @@ acscript bool Powerup(Skill *Self, void *Data)
             ActivatorSound("powerups/protect", 127);
             GiveInventory(StrParam("DRPGSkillInvulnerability%d\n", Self->CurrentLevel), 1);
             break;
-        case 2: // Invisibility
+        case 1: // Invisibility
             if (CheckInventory("PowerShadow"))
             {
                 ActivatorSound("menu/error", 127);
@@ -628,7 +627,7 @@ acscript bool Powerup(Skill *Self, void *Data)
             ActivatorSound("powerups/invis", 127);
             GiveInventory(StrParam("DRPGSkillInvisibility%d\n", Self->CurrentLevel), 1);
             break;
-        case 4: // Iron Feet
+        case 3: // Iron Feet
             if (CheckInventory("PowerIronFeet"))
             {
                 ActivatorSound("menu/error", 127);
@@ -637,7 +636,7 @@ acscript bool Powerup(Skill *Self, void *Data)
             ActivatorSound("powerups/suit", 127);
             GiveInventory("PowerIronFeet", 1);
             break;
-        case 5: // Night Vision
+        case 4: // Night Vision
             if (CheckInventory("PowerLightAmp"))
             {
                 ActivatorSound("menu/error", 127);
@@ -646,11 +645,11 @@ acscript bool Powerup(Skill *Self, void *Data)
             ActivatorSound("powerups/light", 127);
             GiveInventory("PowerLightAmp", 1);
             break;
-        case 6: // Berserk
+        case 5: // Berserk
             ActivatorSound("powerups/berserk", 127);
             GiveInventory("PowerStrength", 1);
             break;
-        case 7: // Mind Mapping
+        case 6: // Mind Mapping
             ActivatorSound("powerups/map", 127);
             GiveInventory("DRPGAllMapRevealer", 1);
             GiveInventory("DRPGAllMapScanner", 1);
@@ -662,22 +661,17 @@ acscript bool Powerup(Skill *Self, void *Data)
 
 acscript bool BulletTime(Skill *Self, void *Data)
 {
-    BulletTimeTimer = 350;
-    
-    // Remove duplicate TimeFreezerSounds
-    Thing_Remove(1999);
     
     if (Self->CurrentLevel == 1) // Stutter Time
     {
-        SpawnForced("DRPGTimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
-        SetActorState(1999, "Spawn");
+        BulletTimeTimer = 350;
+        SpawnForced("DRPGTimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
         TakeInventory("PowerTimeFreezer", 1);
         GiveInventory("DRPGTimeFreezerQuick", 1);
     };
     if (Self->CurrentLevel == 2) // Freeze Time
     {
-        SpawnForced("DRPGTimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
-        SetActorState(1999, "Spawn");
+        SpawnForced("DRPGTimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
         GiveInventory("DRPGTimeFreezer", 1);
     };
     
@@ -842,7 +836,7 @@ acscript bool Weaken(Skill *Self, void *Data)
 
 acscript bool Translocate(Skill *Self, void *Data)
 {
-    FireProjectile("TranslocateBall");
+    FireProjectile("DRPGTranslocateBall");
     return true;
 };
 
@@ -987,7 +981,7 @@ acscript bool Summon(Skill *Self, void *Data)
         return false;
     };
     
-    if (Index == 1) // Marines
+    if (Index == 0) // Marines
     {
         switch (Self->CurrentLevel)
         {
@@ -1004,7 +998,7 @@ acscript bool Summon(Skill *Self, void *Data)
     else // Monsters
     {
         if (GetCVar("drpg_ext_doomrl"))
-            Success = Spawn(DRLASummons[Index - 2][Skills[4][Index - 1].CurrentLevel - 1], X, Y, Z, NewID, Angle)
+            Success = Spawn(DRLASummons[Index - 1][Self->CurrentLevel - 1], X, Y, Z, NewID, Angle)
         else
         {
             switch (Index)
@@ -1667,7 +1661,7 @@ function void CheckSkills()
     };
     
     // Bullet-Time timer handling
-    if (BulletTimeTimer >= 0)
+    if (BulletTimeTimer > 0)
     {
         if (BulletTimeTimer % 3)
             GiveInventory("DRPGTimeFreezerQuick", 1);
