@@ -282,14 +282,22 @@ acscript void UseSkill() net
     // Use the Skill
     if (Player.EP >= EPCost || Overdrive)
     {
+        // Data to pass to the script pointer
+        void *Data = nullptr;
+        int DataCategory = (Index == -1 ? Player.SkillPage : Player.SkillCatagory[Player.SkillSelected]);
+        int DataIndex = (Index == -1 ? Player.MenuIndex : Player.SkillIndex[Player.SkillSelected]);
+        
+        // Auras and Summons need their index passed
+        if (DataCategory == 2 || DataCategory == 4)
+            Data = (void *)DataIndex;
+        
         // Debugging
         if (GetCVar("drpg_debug"))
+        {
             Log("\cdDEBUG: \c-EP Cost for %s (\cdLevel %d\c-): \cn%d\n", CurrentSkill->Name, CurrentSkill->CurrentLevel, EPCost);
-        
-        // Determine the kind of data to pass to the script pointer
-        void *Data = nullptr;
-        if (Player.SkillCatagory[Index] == 2 || Player.SkillCatagory[Index] == 4) // Auras and Summons need the index passed
-            Data = &Player.SkillIndex[Index];
+            Log("\cdDEBUG: \c-Data Category/Index: \cd%d\c-, \cd%d\n", DataCategory, DataIndex);
+            Log("\cdDEBUG: \c-Skill Data passed: \cd%d\n", *(int *)Data);
+        };
         
         // Use Skill
         Success = CurrentSkill->Use(CurrentSkill, Data);
