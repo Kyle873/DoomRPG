@@ -286,8 +286,13 @@ acscript void UseSkill() net
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: \c-EP Cost for %s (\cdLevel %d\c-): \cn%d\n", CurrentSkill->Name, CurrentSkill->CurrentLevel, EPCost);
         
-        // TODO: Use Skill
-        // Success = CurrentSkill->Use(&CurrentSkill);
+        // Determine the kind of data to pass to the script pointer
+        void *Data = nullptr;
+        if (Player.SkillCatagory[Index] == 2 || Player.SkillCatagory[Index] == 4) // Auras and Summons need the index passed
+            Data = &Player.SkillIndex[Index];
+        
+        // Use Skill
+        Success = CurrentSkill->Use(CurrentSkill, Data);
         
         // Check if the skill use was successful
         if (Success)
@@ -301,7 +306,7 @@ acscript void UseSkill() net
     };
 };
 
-acscript bool Heal(Skill *Self)
+acscript bool Heal(Skill *Self, void *Data)
 {
     int HealAmount;
     
@@ -329,7 +334,7 @@ acscript bool Heal(Skill *Self)
     return true;
 };
 
-acscript bool HealSummons(Skill *Self)
+acscript bool HealSummons(Skill *Self, void *Data)
 {
     // Refund - If you have no summoned monsters
     if (Player.Summons == 0)
@@ -352,7 +357,7 @@ acscript bool HealSummons(Skill *Self)
     return true;
 };
 
-acscript bool HealTeam(Skill *Self)
+acscript bool HealTeam(Skill *Self, void *Data)
 {
     int PlayerTID = Player.TID;
     int HealAmount;
@@ -370,7 +375,7 @@ acscript bool HealTeam(Skill *Self)
         if (PlayerInGame(i))
         {
             // Calculate this player's max HP
-            switch (HealTeamLevel)
+            switch (Self->CurrentLevel)
             {
                 case 1: HealAmount = Players(i).HealthMax / 4;      break; // 25%
                 case 2: HealAmount = Players(i).HealthMax / 2;      break; // 50%
@@ -389,7 +394,7 @@ acscript bool HealTeam(Skill *Self)
     return true;
 };
 
-acscript bool LifeLeech(Skill *Self)
+acscript bool LifeLeech(Skill *Self, void *Data)
 {
     int PlayerNum = PlayerNumber();
     
@@ -427,7 +432,7 @@ acscript bool LifeLeech(Skill *Self)
     return true;
 };
 
-acscript bool Decontaminate(Skill *Self)
+acscript bool Decontaminate(Skill *Self, void *Data)
 {
     if (Player.Toxicity <= 0)
     {
@@ -441,12 +446,12 @@ acscript bool Decontaminate(Skill *Self)
     Player.ToxicStage = 0;
     
     ActivatorSound("skills/decontaminate", 127);
-    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0 + (0.25 * DecontaminationLevel));
+    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0 + (0.25 * Self->CurrentLevel));
     
     return true;
 };
 
-acscript bool Repair(Skill *Self)
+acscript bool Repair(Skill *Self, void *Data)
 {
     int RepairAmount;
     
@@ -482,7 +487,7 @@ acscript bool Repair(Skill *Self)
     return false;
 };
 
-acscript bool PlayerTeleport(Skill *Self)
+acscript bool PlayerTeleport(Skill *Self, void *Data)
 {
     str[MAX_PLAYERS] Names;
     int PlayerChoice;
@@ -591,14 +596,11 @@ acscript bool PlayerTeleport(Skill *Self)
     };
 };
 
-acscript bool Powerup(Skill *Self)
+acscript bool Powerup(Skill *Self, void *Data)
 {
-    // Levels
-    int InvulnLevel = Skills[1][0].CurrentLevel;
-    int InvisLevel = Skills[1][1].CurrentLevel;
-    int TimeLevel = Skills[1][2].CurrentLevel;
+    int Index = *(int *)Data;
     
-    switch (Type)
+    switch (Index)
     {
         case 1: // Invulnerability
             if (CheckInventory("PowerInvulnerable"))
@@ -607,7 +609,7 @@ acscript bool Powerup(Skill *Self)
                 return false;
             };
             ActivatorSound("powerups/protect", 127);
-            GiveInventory(StrParam("DRPGSkillInvulnerability%d\n", InvulnLevel), 1);
+            GiveInventory(StrParam("DRPGSkillInvulnerability%d\n", Self->CurrentLevel), 1);
             break;
         case 2: // Invisibility
             if (CheckInventory("PowerShadow"))
@@ -616,10 +618,7 @@ acscript bool Powerup(Skill *Self)
                 return false;
             };
             ActivatorSound("powerups/invis", 127);
-            GiveInventory(StrParam("DRPGSkillInvisibility%d\n", InvisLevel), 1);
-            break;
-        case 3: // Time Freeze
-            BulletTime(TimeLevel);
+            GiveInventory(StrParam("DRPGSkillInvisibility%d\n", Self->CurrentLevel), 1);
             break;
         case 4: // Iron Feet
             if (CheckInventory("PowerIronFeet"))
@@ -653,22 +652,21 @@ acscript bool Powerup(Skill *Self)
     return true;
 };
 
-acscript bool BulletTime(Skill *Self)
+acscript bool BulletTime(Skill *Self, void *Data)
 {
-    BulletTimeMode = Self->CurrentLevel;
     BulletTimeTimer = 350;
     
     // Remove duplicate TimeFreezerSounds
     Thing_Remove(1999);
     
-    if (Mode == 1) // Stutter Time
+    if (Self->CurrentLevel == 1) // Stutter Time
     {
         SpawnForced("DRPGTimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
         SetActorState(1999, "Spawn");
         TakeInventory("PowerTimeFreezer", 1);
         GiveInventory("DRPGTimeFreezerQuick", 1);
     };
-    if (Mode == 2) // Freeze Time
+    if (Self->CurrentLevel == 2) // Freeze Time
     {
         SpawnForced("DRPGTimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 1999, 0);
         SetActorState(1999, "Spawn");
@@ -678,7 +676,7 @@ acscript bool BulletTime(Skill *Self)
     return true;
 };
 
-acscript bool DropWeapon(Skill *Self)
+acscript bool DropWeapon(Skill *Self, void *Data)
 {
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
@@ -712,7 +710,7 @@ acscript bool DropWeapon(Skill *Self)
     return false;
 };
 
-acscript bool DropAmmo(Skill *Self)
+acscript bool DropAmmo(Skill *Self, void *Data)
 {
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
@@ -729,7 +727,7 @@ acscript bool DropAmmo(Skill *Self)
     
     if (Spawn(Ammo, X, Y, Z, 0, Angle))
     {
-        if (AmmoDropLevel == 4 && GetCVar("drpg_ext_doomrl"))
+        if (Self->CurrentLevel == 4 && GetCVar("drpg_ext_doomrl"))
             Spawn("RLSupplyCrate", X, Y, Z, 0, Angle);
         
         ActivatorSound("skills/drop", 127);
@@ -745,14 +743,40 @@ acscript bool DropAmmo(Skill *Self)
     return false;
 };
 
-acscript bool UseAura(Skill *Self)
+acscript bool UseAura(Skill *Self, void *Data)
 {
-    // TODO
+    int Index = *(int *)Data;
+    
+    ActivatorSound("skills/buff", 127);
+    
+    if (Player.Perks[STAT_ENERGY])
+        Player.AuraTimer += (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1)
+    else
+    {
+        bool Stack = false;
+        
+        // Is the Aura you used the same as the one you already have active?
+        if (Player.Aura[Index])
+            Stack = true;
+        
+        // Remove all other Auras first
+        for (int i = 0; i < AURA_MAX; i++)
+            Player.Aura[i] = false;
+        
+        // Should the timer be stacked because you used the same Aura?
+        if (Stack)
+            Player.AuraTimer += (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1)
+        else
+            Player.AuraTimer = (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1);
+    };
+    
+    // Apply Aura
+    Player.Aura[Index] = true;
     
     return true;
 };
 
-acscript bool Weaken(Skill *Self)
+acscript bool Weaken(Skill *Self, void *Data)
 {
     int PlayerNum = PlayerNumber();
     int MonsterLevel;
@@ -808,24 +832,25 @@ acscript bool Weaken(Skill *Self)
     return true;
 };
 
-acscript bool Translocate(Skill *Self)
+acscript bool Translocate(Skill *Self, void *Data)
 {
     FireProjectile("TranslocateBall");
     return true;
 };
 
-acscript bool Repulse(Skill *Self)
+acscript bool Repulse(Skill *Self, void *Data)
 {
-    SetInventory(StrParam("DRPGSkillBlast%d\n", Skill->CurrentLevel), 1);
-    UseInventory(StrParam("DRPGSkillBlast%d\n", Skill->CurrentLevel));
+    SetInventory(StrParam("DRPGSkillBlast%d\n", Self->CurrentLevel), 1);
+    UseInventory(StrParam("DRPGSkillBlast%d\n", Self->CurrentLevel));
     
-    FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.5 + (0.25 * RepulsionLevel));
+    FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.5 + (0.25 * Self->CurrentLevel));
     
     return true;
 };
 
-acscript bool Summon(Skill *Self)
+acscript bool Summon(Skill *Self, void *Data)
 {
+    int Index = *(int *)Data;
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
     fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
@@ -954,7 +979,7 @@ acscript bool Summon(Skill *Self)
         return false;
     };
     
-    if (Type == 1) // Marines
+    if (Index == 1) // Marines
     {
         switch (Self->CurrentLevel)
         {
@@ -971,10 +996,10 @@ acscript bool Summon(Skill *Self)
     else // Monsters
     {
         if (GetCVar("drpg_ext_doomrl"))
-            Success = Spawn(DRLASummons[Type - 2][Skills[4][Type - 1].CurrentLevel - 1], X, Y, Z, NewID, Angle)
+            Success = Spawn(DRLASummons[Index - 2][Skills[4][Index - 1].CurrentLevel - 1], X, Y, Z, NewID, Angle)
         else
         {
-            switch (Type)
+            switch (Index)
             {
                 case 2:     Success = Spawn("Zombieman", X, Y, Z, NewID, Angle);                break;
                 case 3:     Success = Spawn("ShotgunGuy", X, Y, Z, NewID, Angle);               break;
@@ -1019,7 +1044,7 @@ acscript bool Summon(Skill *Self)
     };
 };
 
-acscript bool BreakdownArmor(Skill *Self)
+acscript bool BreakdownArmor(Skill *Self, void *Data)
 {
     int Armor = CheckInventory("BasicArmor");
     
@@ -1057,7 +1082,7 @@ acscript bool BreakdownArmor(Skill *Self)
     return false;
 };
 
-acscript bool ForceWall(Skill *Self)
+acscript bool ForceWall(Skill *Self, void *Data)
 {
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
@@ -1066,7 +1091,7 @@ acscript bool ForceWall(Skill *Self)
     
     Thing_Remove(1998);
     
-    switch (Skill->CurrentLevel)
+    switch (Self->CurrentLevel)
     {
         case 1:
             if (!Spawn("DRPGForceField", X, Y, Z, 1998, Angle) == 0) {return true;}
@@ -1089,7 +1114,7 @@ acscript bool ForceWall(Skill *Self)
     return false;
 };
 
-acscript bool Rally(Skill *Self)
+acscript bool Rally(Skill *Self, void *Data)
 {
     fixed X = GetActorX(0);
     fixed Y = GetActorY(0);
@@ -1113,7 +1138,7 @@ acscript bool Rally(Skill *Self)
     return true;
 };
 
-acscript bool Unsummon(Skill *Self)
+acscript bool Unsummon(Skill *Self, void *Data)
 {
     int EPAdd;
     
@@ -1144,7 +1169,7 @@ acscript bool Unsummon(Skill *Self)
     };
     
     
-    if (UnsummonLevel == 2)
+    if (Self->CurrentLevel == 2)
         Player.EP += EPAdd;
 
     Player.Summons = 0;
@@ -1154,7 +1179,7 @@ acscript bool Unsummon(Skill *Self)
     return true;
 };
 
-acscript bool Recall(Skill *Self)
+acscript bool Recall(Skill *Self, void *Data)
 {
     // Fail if you're in the Arena or Marines are hostile
     if (ArenaActive || MarinesHostile)
@@ -1168,22 +1193,22 @@ acscript bool Recall(Skill *Self)
     return true;
 };
 
-acscript bool WirelessLocker(Skill *Self)
+acscript bool WirelessLocker(Skill *Self, void *Data)
 {
     Locker(true, Self->CurrentLevel);
     return true;
-}
+};
 
-acscript bool Transport(Skill *Self)
+acscript bool Transport(Skill *Self, void *Data)
 {
     // If you're dead, terminate
-    if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
+    if (GetActorProperty(Player.TID, APROP_Health) <= 0) return false;
     
     // Don't allow Transport while the arena is active, if the Marines are hostile, or you're in an Outpost-related menu
     if (ArenaActive || MarinesHostile || Player.OutpostMenu > 0)
     {
         ActivatorSound("menu/error", 127);
-        return;
+        return false;
     };
     
     // Multiplayer
