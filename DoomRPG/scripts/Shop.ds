@@ -83,17 +83,10 @@ function void ShopLoop()
 {
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
     int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-    fixed X = 24.1;
-    fixed Y = 50.0;
     int Cost = ItemData[Player.ShopPage][Player.ShopIndex].Price - ItemData[Player.ShopPage][Player.ShopIndex].Price * Player.ShopDiscount / 100;
     int SellPrice;
-    int Offset;
     int Color;
     int Available;
-    str Name;
-    str Item;
-    int Held;
-    int Rank;
     
     // Freeze the Player
     SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
@@ -136,56 +129,149 @@ function void ShopLoop()
                    HUDMSG_PLAIN, 0, CR_GOLD,
                    24.1, 38.0, 0.05);
     
-    // Determine Offset
-    if (Player.ShopIndex > MENU_SCROLL && Available > MENU_SCROLL)
-        Offset = Player.ShopIndex - MENU_SCROLL
-    else
-        Offset = 0;
-    
     // Draw Item List
-    for (int i = Offset; i < Offset + (MENU_SCROLL * 2) + 1; i++)
+    if (GetCVar("drpg_gridventory")) // Gridventory
     {
-        Name = ItemData[Player.ShopPage][i].Name;
-        Cost = ItemData[Player.ShopPage][i].Price;
-        Held = ItemData[Player.ShopPage][i].Held;
-        Rank = ItemData[Player.ShopPage][i].Rank;
+        // Coordinates
+        fixed BaseX;
+        fixed BaseY;
+        fixed X;
+        fixed Y;
+        fixed IconX;
+        fixed IconY;
         
-        // Stop if we're at the end of the list
-        if (i > ItemMax[Player.ShopPage] - 1) continue;
+        for (int i = 0; i < 6; i++)
+        {
+            // Reset base X
+            BaseX = 0.0;
+            
+            for (int j = 0; j < 9; j++)
+            {
+                int Index = j + (i * 9);
+                str Icon = ItemData[Player.ShopPage][Index].Sprite.Name;
+                int IconXOff = ItemData[Player.ShopPage][Index].Sprite.XOff;
+                int IconYOff = ItemData[Player.ShopPage][Index].Sprite.YOff;
+                int Held = CheckInventory(ItemData[Player.ShopPage][Index].Actor);
+                int Rank = ItemData[Player.ShopPage][Index].Rank;
+                
+                // Stop if we hit a hard stop in the list
+                // TODO: For some stupid goddamn reason, this doesn't work
+                if (ItemStop[Player.ShopPage] > 0 && Index >= ItemStop[Player.ShopPage]) break;
+                
+                // Stop if we're at the end of the list
+                if (Index > ItemMax[Player.ShopPage] - 1) break;
+                
+                // Placeholder Icon
+                // TODO: And this doesn't work either D:
+                if (StrLen(Icon) == 0)
+                    Icon == "SprNone";
+                
+                // Setup X and Y
+                X = 26.0 + BaseX;
+                Y = 50.0 + BaseY;
+                IconX = 48.0 + BaseX;
+                IconY = 72.0 + BaseY;
+                IconX += IconXOff;
+                IconY += IconYOff;
+                
+                // Amount
+                if (Held > 0)
+                {
+                    SetFont("BIGFONT");
+                    HudMessage("%d\n", Held, HUDMSG_PLAIN, 0, CR_GREEN, X + 44.2, Y + 44.2, 0.05);
+                };
+                
+                // Icon
+                SetHudClipRect(X, Y, 44, 44);
+                if ((Rank > 0 && Player.RankLevel < Rank) || Rank == -1)
+                {
+                    SetFont(Icon);
+                    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, 0, CR_UNTRANSLATED, IconX, IconY, 0.05, 0.5 + (Sin((fixed)Timer() / 64.0) * 0.25));
+                }
+                else
+                {
+                    if (Player.ShopIndex == Index)
+                    {
+                        SetFont(Icon);
+                        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_UNTRANSLATED, IconX, IconY, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+                    }
+                    else
+                        PrintSprite(Icon, 0, IconX, IconY, 0.05);
+                };
+                SetHudClipRect(0, 0, 0, 0);
+                
+                // Box
+                PrintSprite("ItemBoxB", 0, 48.0 + (j * 48.0), 72.0 + (i * 48.0), 0.05);
+                
+                // Item Name
+                if (Player.ShopIndex == Index)
+                {
+                    str Name = ItemData[Player.ShopPage][Player.ShopIndex].Name;
+                    SetFont("BIGFONT");
+                    HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 344.1, 0.05);
+                };
+                
+                // Increment X
+                BaseX += 48.0;
+            };
+            
+            // Increment Y
+            BaseY += 48.0;
+        };
+    }
+    else // List
+    {
+        fixed X = 24.1;
+        fixed Y = 50.0;
         
-        // Continue past this item if we don't have the rank to buy/sell it
-        if ((Rank > 0 && Player.RankLevel < Rank) || Rank == -1) continue;
-        
-        SetFont("SMALLFONT");
-        
-        // Set the Color
-        if (i == Player.ShopIndex)
-            Color = MenuCursorColor
-        else if (CheckInventory("DRPGCredits") >= Cost - Cost * Player.ShopDiscount / 100)
-            Color = CR_WHITE
+        // Determine Offset
+        int Offset;
+        if (Player.ShopIndex > MENU_SCROLL && Available > MENU_SCROLL)
+            Offset = Player.ShopIndex - MENU_SCROLL
         else
-            Color = CR_RED;
+            Offset = 0;
         
-        // Build the Item String
-        Item = StrParam("%s\n", Name);
-        if (Held > 0)
-            Item = StrParam("%s \cd[%d]\n", Item, Held);
-        if (Player.AutoSell[Player.ShopPage][i])
-            Item = StrParam("%s \ck[Sell]\n", Item);
-        
-        // Display the item string
-        HudMessage("%s\n", Item, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
-        
-        // Move down Y
-        Y += 8.0;
+        for (int i = Offset; i < Offset + (MENU_SCROLL * 2) + 1; i++)
+        {
+            str Name = ItemData[Player.ShopPage][i].Name;
+            int Held = CheckInventory(ItemData[Player.ShopPage][i].Actor);
+            int Rank = ItemData[Player.ShopPage][i].Rank;
+            
+            // Stop if we're at the end of the list
+            if (i > ItemMax[Player.ShopPage] - 1) continue;
+            
+            // Continue past this item if we don't have the rank to buy/sell it
+            if ((Rank > 0 && Player.RankLevel < Rank) || Rank == -1) continue;
+            
+            SetFont("SMALLFONT");
+            
+            // Set the Color
+            if (i == Player.ShopIndex)
+                Color = MenuCursorColor
+            else if (CheckInventory("DRPGCredits") >= Cost - Cost * Player.ShopDiscount / 100)
+                Color = CR_WHITE
+            else
+                Color = CR_RED;
+            
+            // Build the Item String
+            if (Held > 0)
+                Name = StrParam("%s \cd[%d]\n", Name, Held);
+            if (Player.AutoSell[Player.ShopPage][i])
+                Name = StrParam("%s \ck[Sell]\n", Name);
+            
+            // Display the item string
+            HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
+            
+            // Move down Y
+            Y += 8.0;
+        };
     };
     
     // Draw Shop Card
     if (Player.ShopCard > 0)
     {
         SetFont("BIGFONT");
-        HudMessage("UAC Shop Card\n", HUDMSG_PLAIN, 0, CR_YELLOW, 80.1, 320.0, 0.05);
-        HudMessage("+%d%% Discount\n", Player.ShopCard * 5, HUDMSG_PLAIN, 0, (InBase ? CR_YELLOW : CR_GREY), 80.1, 332.0, 0.05);
+        HudMessage("+%d%%\n", Player.ShopCard * 5, HUDMSG_PLAIN, 0, (InBase ? CR_YELLOW : CR_GREY), 436.4, 364.0, 0.05);
         
         if (Player.ShopCard == 1)
             SetFont("UCRDA0")
@@ -199,9 +285,9 @@ function void ShopLoop()
             SetFont("UCRDE0");
         
         if (InBase)
-            HudMessage("A\n", HUDMSG_PLAIN, 0, CR_UNTRANSLATED, 74.0, 352.0, 0.05)
+            HudMessage("A\n", HUDMSG_PLAIN, 0, CR_UNTRANSLATED, 458.0, 384.0, 0.05)
         else
-            HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_UNTRANSLATED, 74.0, 352.0, 0.05, 0.5 + (Sin((fixed)Timer() / 64.0) * 0.5));
+            HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_UNTRANSLATED, 458.0, 384.0, 0.05, 0.5 + (Sin((fixed)Timer() / 64.0) * 0.5));
     };
     
     // Check cursor movement for repeating
