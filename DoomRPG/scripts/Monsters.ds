@@ -665,6 +665,48 @@ script void MonsterDeath()
         DropItem(0, "DRPGShotSpawn", 1, 255);
 };
 
+acscript void MonsterTransport(int Difficulty, int Time, int Radius)
+{
+    while (true)
+    {
+        fixed X = GetActorX(0);
+        fixed Y = GetActorY(0);
+        fixed Z = GetActorZ(0);
+        fixed SpawnX;
+        fixed SpawnY;
+        int TID;
+        bool Success;
+        MonsterInfo Monster;
+        
+        if ((Timer() % (35 * Time)) == 0)
+            for (int i = Difficulty; i < (GetCVar("drpg_ext_doomrl") ? MAX_MONSTERS_DRLA : MAX_MONSTERS); i++)
+            {
+                SpawnX = RandomFixed(-(fixed)Radius, (fixed)Radius);
+                SpawnY = RandomFixed(-(fixed)Radius, (fixed)Radius);
+                TID = UniqueTID();
+                
+                if (GetCVar("drpg_ext_doomrl"))
+                    Monster = MonsterDataDRLA[i]
+                else
+                    Monster = MonsterData[i];
+                
+                if (Random(1, GameSkill() + Monster.Difficulty) == 1)
+                {
+                    Success = Spawn(Monster.Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
+                    
+                    if (Success)
+                    {
+                        SetActorState(TID, "See", false);
+                        Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
+                        break;
+                    };
+                };
+            };
+        
+        Delay(1);
+    };
+};
+
 script int WhoKilledMe()
 {
     SetActivatorToTarget(0);
