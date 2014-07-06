@@ -1100,7 +1100,6 @@ acscript void Locker(bool Wireless, int WirelessLevel)
         };
         
         // Calculate a total of how many of the items are actually storable
-        Available = 0;
         for (int i = 0; i < ItemMax[Player.LockerPage]; i++)
             if (!ItemData[Player.LockerPage][i].Unstorable)
                 Available++;
@@ -1129,25 +1128,39 @@ acscript void Locker(bool Wireless, int WirelessLevel)
             SetFont("SMALLFONT");
             if (Player.LockerGlobal)
             {
-                if (GlobalLocker[Player.LockerPage][i] > 0 && CheckInventory(ItemData[Player.LockerPage][i].Actor) > 0)
-                    HudMessage("%s \cd[%d] \ck[%d]\n", ItemData[Player.LockerPage][i].Name, CheckInventory(ItemData[Player.LockerPage][i].Actor), GlobalLocker[Player.LockerPage][i], HUDMSG_PLAIN, 0, Color, X, Y, 0.05)
-                else if (CheckInventory(ItemData[Player.LockerPage][i].Actor) > 0)
-                    HudMessage("%s \cd[%d]\n", ItemData[Player.LockerPage][i].Name, CheckInventory(ItemData[Player.LockerPage][i].Actor), HUDMSG_PLAIN, 0, Color, X, Y, 0.05)
-                else if (GlobalLocker[Player.LockerPage][i] > 0)
-                    HudMessage("%s \ck[%d]\n", ItemData[Player.LockerPage][i].Name, GlobalLocker[Player.LockerPage][i], HUDMSG_PLAIN, 0, Color, X, Y, 0.05)
+                str Name = ItemData[Player.LockerPage][i].Name;
+                int Held = CheckInventory(ItemData[Player.LockerPage][i].Actor);
+                int Stored = GlobalLocker[Player.LockerPage][i];
+                str Text = StrParam("%s\n", Name);
+                
+                if (Held > 0 && Stored > 0)
+                    Text = StrParam("%s \cd[%d] \ck[%d]\n", Text, Held, Stored)
+                else if (Held > 0)
+                    Text = StrParam("%s \cd[%d]\n", Text, Held)
+                else if (Stored > 0)
+                    Text = StrParam("%s \ck[%d]\n", Text, Stored)
                 else
-                    HudMessage("%s\n", ItemData[Player.LockerPage][i].Name, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
+                    Text = StrParam("%s\n", Text);
+                
+                HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
             }
             else
             {
-                if (Player.Locker[Player.LockerPage][i] > 0 && CheckInventory(ItemData[Player.LockerPage][i].Actor) > 0)
-                    HudMessage("%s \cd[%d] \ck[%d]\n", ItemData[Player.LockerPage][i].Name, CheckInventory(ItemData[Player.LockerPage][i].Actor), Player.Locker[Player.LockerPage][i], HUDMSG_PLAIN, 0, Color, X, Y, 0.05)
-                else if (CheckInventory(ItemData[Player.LockerPage][i].Actor) > 0)
-                    HudMessage("%s \cd[%d]\n", ItemData[Player.LockerPage][i].Name, CheckInventory(ItemData[Player.LockerPage][i].Actor), HUDMSG_PLAIN, 0, Color, X, Y, 0.05)
-                else if (Player.Locker[Player.LockerPage][i] > 0)
-                    HudMessage("%s \ck[%d]\n", ItemData[Player.LockerPage][i].Name, Player.Locker[Player.LockerPage][i], HUDMSG_PLAIN, 0, Color, X, Y, 0.05)
+                str Name = ItemData[Player.LockerPage][i].Name;
+                int Held = CheckInventory(ItemData[Player.LockerPage][i].Actor);
+                int Stored = Player.Locker[Player.LockerPage][i];
+                str Text = StrParam("%s\n", Name);
+                
+                if (Held > 0 && Stored > 0)
+                    Text = StrParam("%s \cd[%d] \ck[%d]\n", Text, Held, Stored)
+                else if (Held > 0)
+                    Text = StrParam("%s \cd[%d]\n", Text, Held)
+                else if (Stored > 0)
+                    Text = StrParam("%s \ck[%d]\n", Text, Stored)
                 else
-                    HudMessage("%s\n", ItemData[Player.LockerPage][i].Name, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
+                    Text = StrParam("%s\n", Text);
+                
+                HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
             };
             
             // Move down Y
