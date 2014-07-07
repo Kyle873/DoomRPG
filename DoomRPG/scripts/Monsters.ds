@@ -335,6 +335,9 @@ script MonsterStats(int Flags, int StatFlags)
     if (MonsterLuck > 1000)
         MonsterLuck = 1000;
     
+    // Calculate Threat Level
+    MonsterThreat = CalculateMonsterThreatLevel(0);
+    
     // We need to make sure we only pass the speed to the monster if it's being initially created
     if (!StatFlags)
         MonsterSpeed = (int)GetActorPropertyFixed(0, APROP_Speed);
@@ -352,9 +355,6 @@ script MonsterStats(int Flags, int StatFlags)
     SetInventory("DRPGMonsterAgility", MonsterAgility);
     SetInventory("DRPGMonsterCapacity", MonsterCapacity);
     SetInventory("DRPGMonsterLuck", MonsterLuck);
-    
-    // Calculate Threat Level
-    MonsterThreat = CalculateMonsterThreatLevel(0);
     
     // Calculate Health
     SetInventory("DRPGMonsterSpawnHealth", GetActorProperty(0, APROP_SpawnHealth));
@@ -743,6 +743,24 @@ function int CalculateMonsterThreatLevel(int TID)
     else if (Aura == 10) // Black Aura
         Threat += 2;
     
+    // DoomRL Compatibility
+    if (GetCVar("drpg_ext_doomrl"))
+    {
+        str Actor = GetActorClass(TID);
+        
+        // Nightmare Enemies - +1 Threat
+        if (StrCmp(Actor, "RLNightmare") == 0 || StrCmp(Actor, "RLElite") == 0)
+            Threat++;
+        
+        // Cybernetic Enemies - +1 Threat
+        if (StrCmp(Actor, "RLCybernetic") == 0)
+            Threat++;
+        
+        // Armageddon Enemies - +2 Threat
+        if (StrCmp(Actor, "RLArmageddon") == 0)
+            Threat += 2;
+    };
+    
     return Threat;
 };
 
@@ -751,8 +769,8 @@ function int CalculateMonsterMaxHealth(int TID)
     int Vitality = CheckInventoryTID(TID, "DRPGMonsterVitality");
     int HealthMax = GetActorProperty(TID, APROP_SpawnHealth);
     int Health = HealthMax;
-    
     int HealthAddition = HealthMax * 9;
+    
     HealthAddition *= Vitality;
     HealthAddition /= 1000;
     
