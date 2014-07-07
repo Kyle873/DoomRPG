@@ -12,6 +12,7 @@
 
 bool Overdrive;
 int BulletTimeTimer;
+int ForceFieldTID = 1998;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
@@ -1091,12 +1092,12 @@ acscript bool ForceWall(Skill *Self, void *Data)
     fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
     fixed Z = GetActorZ(0);
     
-    Thing_Remove(1998);
+    Thing_Remove(ForceFieldTID + PlayerNumber());
     
     switch (Self->CurrentLevel)
     {
         case 1:
-            if (!Spawn("DRPGForceField", X, Y, Z, 1998, Angle) == 0) {return true;}
+            if (!Spawn("DRPGForceField", X, Y, Z, ForceFieldTID + PlayerNumber(), Angle) == 0) {return true;}
             else
             {
                 ActivatorSound("menu/error", 127);
@@ -1104,7 +1105,7 @@ acscript bool ForceWall(Skill *Self, void *Data)
             };
             break;
         case 2:
-            if (!Spawn("DRPGForceField2", X, Y, Z, 1998, Angle) == 0) {return true;}
+            if (!Spawn("DRPGForceField2", X, Y, Z, ForceFieldTID + PlayerNumber(), Angle) == 0) {return true;}
             else
             {
                 ActivatorSound("menu/error", 127);
@@ -1403,76 +1404,6 @@ function void CheckSkills()
                 break;
             };
     
-    // DoomRL Compatibility
-    if (GetCVar("drpg_ext_doomrl"))
-    {
-        // Add an extra level to the Ammo Drop to drop Supply Crates
-        Skills[1][8].MaxLevel = 4;
-        Skills[1][8].Description[3] = "Drops a Large Backpack full of ammo at your location\nDrops a Supply Crate at your location";
-        
-        // DoomRL Marines use slightly different weapons (Whenever Yholl decides to do them :P)
-        // Skills[4][0].Description[2] = "Summons a Marine to fight with you\n\cjDouble Shotgun";
-        // Skills[4][0].Description[3] = "Summons a Marine to fight with you\n\cjBattle Rifle";
-        
-        // Summoning Skills - Names
-        Skills[4][1].Name = "Summon Former Human";
-        Skills[4][2].Name = "Summon Former Sergeant";
-        Skills[4][3].Name = "Summon Former Commando";
-        
-        // Summoning Skills - Levels
-        Skills[4][1].MaxLevel = 3;
-        Skills[4][2].MaxLevel = 2;
-        Skills[4][3].MaxLevel = 3;
-        Skills[4][4].MaxLevel = 3;
-        Skills[4][5].MaxLevel = 6;
-        Skills[4][6].MaxLevel = 2;
-        Skills[4][7].MaxLevel = 3;
-        Skills[4][8].MaxLevel = 3;
-        Skills[4][9].MaxLevel = 3;
-        Skills[4][10].MaxLevel = 2;
-        Skills[4][11].MaxLevel = 3;
-        Skills[4][12].MaxLevel = 3;
-        Skills[4][13].MaxLevel = 3;
-        Skills[4][14].MaxLevel = 2;
-        Skills[4][15].MaxLevel = 2;
-        Skills[4][16].MaxLevel = 2;
-        Skills[4][17].MaxLevel = 2;
-        
-        // Summoning Skills - Descriptions
-        Skills[4][1].Description[0] = "Summons a Former Human to fight with you";
-        Skills[4][1].Description[1] = "Summons an Elite Human to fight with you";
-        Skills[4][1].Description[2] = "Summons a Former Human Captain to fight with you";
-        Skills[4][2].Description[0] = "Summons a Former Sergeant to fight with you";
-        Skills[4][2].Description[1] = "Summons an Elite Sergeant to fight with you";
-        Skills[4][3].Description[0] = "Summons a Former Commando to fight with you";
-        Skills[4][3].Description[1] = "Summons an Elite Commando to fight with you";
-        Skills[4][3].Description[2] = "Summons an Elite Human Captain to fight with you";
-        Skills[4][4].Description[1] = "Summons a Nightmare Imp to fight with you";
-        Skills[4][4].Description[2] = "Summons a Cyber-Imp to fight with you";
-        Skills[4][5].Description[1] = "Summons a Spectre to fight with you";
-        Skills[4][5].Description[2] = "Summons a Nightmare Demon to fight with you";
-        Skills[4][5].Description[3] = "Summons a Nightmare Spectre to fight with you";
-        Skills[4][5].Description[4] = "Summons a Mech-Demon to fight with you";
-        Skills[4][5].Description[5] = "Summons a Mechtre to fight with you";
-        Skills[4][6].Description[1] = "Summons a Nightmare Cacodemon to fight with you";
-        Skills[4][7].Description[1] = "Summons a Nightmare Knight to fight with you";
-        Skills[4][7].Description[2] = "Summons a Cybruiser to fight with you";
-        Skills[4][8].Description[1] = "Summons a Baron of Nightmares to fight with you";
-        Skills[4][8].Description[2] = "Summons a Techno-Lord to fight with you";
-        Skills[4][9].Description[1] = "Summons a Nightmare Soul to fight with you";
-        Skills[4][9].Description[2] = "Summons a Hellmine to fight with you";
-        Skills[4][10].Description[1] = "Summons a Nightmare Elemental to fight with you";
-        Skills[4][11].Description[1] = "Summons a Nightmare Revenant to fight with you";
-        Skills[4][11].Description[2] = "Summons a Heavy Revenant to fight with you";
-        Skills[4][12].Description[1] = "Summons a Nightmare Mancubus to fight with you";
-        Skills[4][12].Description[2] = "Summons a Volacubus to fight with you";
-        Skills[4][13].Description[1] = "Summons a Nightmare Arachnotron to fight with you";
-        Skills[4][13].Description[2] = "Summons a Arachnsentinel to fight with you";
-        Skills[4][14].Description[1] = "Summons a Nightmare Arch-Vile to fight with you";
-        Skills[4][15].Description[1] = "Summons a Nightmare Cyberdemon to fight with you";
-        Skills[4][16].Description[1] = "Summons a Spider Overmind to fight with you";
-    };
-    
     // Aura handling
     if (Player.AuraTimer > 0)
     {
@@ -1649,15 +1580,15 @@ function void CheckSkills()
             Player.Summons--;
     
     // Force Wall Handling
-    if (GetActorProperty(1998, APROP_Alpha) > 0)
+    if (GetActorProperty(ForceFieldTID + PlayerNumber(), APROP_Alpha) > 0)
     {
         fixed WallAngle = GetActorAngle(0);
         fixed WallX = GetActorX(0) + Cos(WallAngle) * 48;
         fixed WallY = GetActorY(0) + Sin(WallAngle) * 48;
         fixed WallZ = GetActorZ(0);
         
-        SetActorPosition(1998, WallX, WallY, WallZ, false);
-        SetActorAngle(1998, WallAngle);
+        SetActorPosition(ForceFieldTID + PlayerNumber(), WallX, WallY, WallZ, false);
+        SetActorAngle(ForceFieldTID + PlayerNumber(), WallAngle);
     };
     
     // Bullet-Time timer handling
