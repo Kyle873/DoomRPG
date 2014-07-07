@@ -233,11 +233,8 @@ function void DrawMainMenu()
         HudMessage("\cdCharge: %d\n", Player.Shield.ChargeRate,                             HUDMSG_PLAIN, 0, CR_WHITE,          176.1, 246.0, 0.05);
         HudMessage("\caDelay: %k\n", Player.Shield.DelayRate,                               HUDMSG_PLAIN, 0, CR_WHITE,          176.1, 254.0, 0.05);
         
-        // Build Shield Model
-        if (Player.Shield.Capacitor > 0)    PrintSprite(ShieldData[2][Player.Shield.Capacitor - 1].Icon,    0, 158.1, 258.1, 0.05);
-        if (Player.Shield.Battery > 0)      PrintSprite(ShieldData[1][Player.Shield.Battery - 1].Icon,      0, 158.1, 258.1, 0.05);
-        if (Player.Shield.Body > 0)         PrintSprite(ShieldData[0][Player.Shield.Body - 1].Icon,         0, 158.1, 258.1, 0.05);
-        if (Player.Shield.Accessory > 0)    PrintSprite(ShieldData[3][Player.Shield.Accessory - 1].Icon,    0, 158.1, 258.1, 0.05);
+        // Draw Shield Model
+        DrawShieldModel(158, 258);
     };
     
     // Current Stim
@@ -579,7 +576,7 @@ function void DrawSkillMenu()
 
 function void DrawShieldMenu()
 {
-    str Description = "";
+    str Description;
     int Amount;
     
     // Title
@@ -593,7 +590,7 @@ function void DrawShieldMenu()
     if (Player.ShieldPage == 3) HudMessage("Accessories\n", HUDMSG_PLAIN, 0, CR_GREEN, 208.1, 10.0, 0.05);
     
     // Draw Components
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 5; i++)
     {
         for (int j = 0; j < 6; j++)
         {
@@ -672,23 +669,20 @@ function void DrawShieldMenu()
         if (Player.Shield.Body > 0)         ShieldName = StrParam("%s \c-%s\n", ShieldName, ShieldData[0][Player.Shield.Body - 1].Name);
         if (Player.Shield.Accessory > 0)    ShieldName = StrParam("%s \c-%s\n", ShieldName, ShieldData[3][Player.Shield.Accessory - 1].Name);
         ShieldName = StrParam("%s\c- Shield\n", ShieldName);
-        HudMessage("%s\n", ShieldName, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 124.1, 0.05);
+        HudMessage("%s\n", ShieldName, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 244.1, 0.05);
     };
     
     // Component Description
     SetFont("SMALLFONT");
-    HudMessage("%s\n", Description, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 144.1, 0.05);
+    HudMessage("%s\n", Description, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 264.1, 0.05);
 
     // Shield Stats
-    HudMessage("\cvCapacity: %d / %d\n", Player.Shield.Charge, Player.Shield.Capacity,  HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 98.0, 0.05);
-    HudMessage("\cdCharge: %d\n", Player.Shield.ChargeRate,                             HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 106.0, 0.05);
-    HudMessage("\caDelay: %k\n", Player.Shield.DelayRate,                               HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 114.0, 0.05);
+    HudMessage("\cvCapacity: %d / %d\n", Player.Shield.Charge, Player.Shield.Capacity,  HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 218.0, 0.05);
+    HudMessage("\cdCharge: %d\n", Player.Shield.ChargeRate,                             HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 226.0, 0.05);
+    HudMessage("\caDelay: %k\n", Player.Shield.DelayRate,                               HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 234.0, 0.05);
     
-    // Build Shield Model
-    if (Player.Shield.Capacitor > 0)    PrintSprite(ShieldData[2][Player.Shield.Capacitor - 1].Icon,    0, 18.1, 120.1, 0.05);
-    if (Player.Shield.Battery > 0)      PrintSprite(ShieldData[1][Player.Shield.Battery - 1].Icon,      0, 18.1, 120.1, 0.05);
-    if (Player.Shield.Body > 0)         PrintSprite(ShieldData[0][Player.Shield.Body - 1].Icon,         0, 18.1, 120.1, 0.05);
-    if (Player.Shield.Accessory > 0)    PrintSprite(ShieldData[3][Player.Shield.Accessory - 1].Icon,    0, 18.1, 120.1, 0.05);
+    // Draw Shield Model
+    DrawShieldModel(18, 240);
 };
 
 function void DrawStimsMenu()
@@ -951,11 +945,11 @@ function void MenuInput()
             Player.MenuIndex -= 6;
             if (Player.MenuIndex < 0) Player.MenuIndex = 0;
         };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && Player.MenuIndex < 12 - 1)
+        if (Buttons == BT_BACK && OldButtons != BT_BACK && Player.MenuIndex < MAX_PARTS - 1)
         {
             ActivatorSound("menu/move", 127);
             Player.MenuIndex += 6;
-            if (Player.MenuIndex > 12 - 1) Player.MenuIndex = 12 - 1;
+            if (Player.MenuIndex > MAX_PARTS - 1) Player.MenuIndex = MAX_PARTS - 1;
         };
         if ((Buttons & BT_LEFT && !(OldButtons & BT_LEFT)) ||
             (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT)))
@@ -972,7 +966,7 @@ function void MenuInput()
             {
                 ActivatorSound("menu/move", 127);
                 Player.MenuIndex--;
-                if (Player.MenuIndex < 0) Player.MenuIndex = 12 - 1;
+                if (Player.MenuIndex < 0) Player.MenuIndex = MAX_PARTS - 1;
             };
         };
         if ((Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT)) ||
@@ -991,7 +985,7 @@ function void MenuInput()
             {
                 ActivatorSound("menu/move", 127);
                 Player.MenuIndex++;
-                if (Player.MenuIndex > 12 - 1) Player.MenuIndex = 0;
+                if (Player.MenuIndex > MAX_PARTS - 1) Player.MenuIndex = 0;
             };
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
