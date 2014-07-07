@@ -1,24 +1,30 @@
 actor RandomGib
 {
+    +NOCLIP
+    +NOSECTOR
+    +NOBLOCKMAP
+    +NOINTERACTION
+    Radius 0
+    Height 0
     States
     {
     Spawn:
         TNT1 A 0 NoDelay A_Jump (256, 1,2,3,4,5)
         Stop
         TNT1 A 0 A_SpawnItemEx ("Gib1", 0,0,0, VelX,VelY,VelZ, 0,
-            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION)
+            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION | SXF_NOCHECKPOSITION)
         Stop
         TNT1 A 0 A_SpawnItemEx ("Gib2", 0,0,0, VelX,VelY,VelZ, 0,
-            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION)
+            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION | SXF_NOCHECKPOSITION)
         Stop
         TNT1 A 0 A_SpawnItemEx ("Gib3", 0,0,0, VelX,VelY,VelZ, 0,
-            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION)
+            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION | SXF_NOCHECKPOSITION)
         Stop
         TNT1 A 0 A_SpawnItemEx ("Gib4", 0,0,0, VelX,VelY,VelZ, 0,
-            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION)
+            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION | SXF_NOCHECKPOSITION)
         Stop
         TNT1 A 0 A_SpawnItemEx ("Gib5", 0,0,0, VelX,VelY,VelZ, 0,
-            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION)
+            SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION | SXF_NOCHECKPOSITION)
         Stop
     }
 }
@@ -34,21 +40,24 @@ actor Gibber
         TNT1 A 0 NoDelay A_SetUserVar ("user_maxcount", 20)
         TNT1 A 0 A_Jump (24, "Overload")
         TNT1 A 0 A_PlaySound ("gibbage/xsplat")
+        TNT1 A 0 A_CheckSight ("Underload")
         Goto MainLoop
     Overload:
         TNT1 A 0 A_SetUserVar ("user_maxcount", 50)
         Goto MainLoop
+    Underload:
+        TNT1 A 0 A_SetUserVar ("user_maxcount", 10)
+        Goto MainLoop
     MainLoop:
-        TNT1 A 0 A_CheckSight ("Death")
         TNT1 A 0 A_JumpIf (user_maxcount <= 0, "Death")
         TNT1 AAA 0 A_SpawnItemEx ("RandomGib",
             FRandom(-16,16),FRandom(-16,16),FRandom(0,56),
             VelX+FRandom(-3,3),VelY+FRandom(-3,3),VelZ+FRandom(-3,3),
-            FRandom(0,360), SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION, 64)
+            FRandom(0,360), SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION | SXF_NOCHECKPOSITION, 64)
         TNT1 A 1 A_SpawnItemEx ("RandomGib", 
             FRandom(-16,16),FRandom(-16,16),FRandom(0,56),
             VelX+FRandom(-3,3),VelY+FRandom(-3,3),VelZ+FRandom(-3,3),
-            FRandom(0,360), SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION, 64)
+            FRandom(0,360), SXF_ABSOLUTEMOMENTUM | SXF_TRANSFERTRANSLATION | SXF_NOCHECKPOSITION, 64)
         TNT1 A 0 A_SetUserVar ("user_maxcount", user_maxcount - 1)
         Loop
     Death:
@@ -66,7 +75,7 @@ actor Gibber2
     Spawn:
         TNT1 AAAAA 0 NoDelay A_SpawnItemEx ("RandomGib",
             FRandom(-16,16),FRandom(-16,16),FRandom(0,56),
-            VelX,VelY,VelZ, FRandom(0,360), SXF_ABSOLUTEMOMENTUM, 64)
+            VelX,VelY,VelZ, FRandom(0,360), SXF_ABSOLUTEMOMENTUM | SXF_NOCHECKPOSITION, 64)
         Stop
     }
 }
