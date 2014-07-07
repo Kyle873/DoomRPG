@@ -135,6 +135,8 @@ function void ShopLoop()
         // Coordinates
         fixed BaseX;
         fixed BaseY;
+        fixed BoxX;
+        fixed BoxY;
         fixed X;
         fixed Y;
         fixed IconX;
@@ -153,6 +155,9 @@ function void ShopLoop()
                 int IconYOff = ItemData[Player.ShopPage][Index].Sprite.YOff;
                 int Held = CheckInventory(ItemData[Player.ShopPage][Index].Actor);
                 int Rank = ItemData[Player.ShopPage][Index].Rank;
+                int Price = ItemData[Player.ShopPage][Index].Price;
+                bool CanAfford = (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100);
+                bool AutoSell = Player.AutoSell[Player.ShopPage][Index];
                 
                 // Stop if we hit a hard stop in the list
                 if (ItemStop[Player.ShopPage] > 0 && Index >= ItemStop[Player.ShopPage]) break;
@@ -167,6 +172,8 @@ function void ShopLoop()
                 // Setup X and Y
                 X = 26.0 + BaseX;
                 Y = 50.0 + BaseY;
+                BoxX = 48.0 + BaseX;
+                BoxY = 72.0 + BaseY;
                 IconX = 48.0 + BaseX;
                 IconY = 72.0 + BaseY;
                 IconX += IconXOff;
@@ -182,31 +189,23 @@ function void ShopLoop()
                 // Icon
                 SetHudClipRect(X, Y, 44, 44);
                 if ((Rank > 0 && Player.RankLevel < Rank) || Rank == -1)
-                {
-                    SetFont(Icon);
-                    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, 0, CR_UNTRANSLATED, IconX, IconY, 0.05, 0.5 + (Sin((fixed)Timer() / 64.0) * 0.25));
-                }
+                    PrintSpriteAlpha(Icon, 0, IconX, IconY, 0.05, 0.25)
                 else
-                {
                     if (Player.ShopIndex == Index)
-                    {
-                        SetFont(Icon);
-                        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_UNTRANSLATED, IconX, IconY, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-                    }
+                        PrintSpritePulse(Icon, 0, IconX, IconY, 0.75, 32.0, 0.25, false)
                     else
                         PrintSprite(Icon, 0, IconX, IconY, 0.05);
-                };
                 SetHudClipRect(0, 0, 0, 0);
                 
                 // Box
-                PrintSprite("ItemBoxB", 0, 48.0 + (j * 48.0), 72.0 + (i * 48.0), 0.05);
+                PrintSprite("ItemBoxB", 0, BoxX, BoxY, 0.05);
                 
                 // Item Name
                 if (Player.ShopIndex == Index)
                 {
                     str Name = ItemData[Player.ShopPage][Player.ShopIndex].Name;
                     SetFont("BIGFONT");
-                    HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 344.1, 0.05);
+                    HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, (CanAfford ? CR_WHITE : CR_RED), 24.1, 344.1, 0.05);
                 };
                 
                 // Increment X
