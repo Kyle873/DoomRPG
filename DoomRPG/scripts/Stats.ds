@@ -614,9 +614,7 @@ function void DoRegen()
         // Movement/Crouching/Idling mechanics
         if (GetCVar("drpg_regen_movement"))
         {
-            if (GetPlayerInput(PlayerNumber(), MODINPUT_FORWARDMOVE) || // Movement - 50% Regen Rate
-                GetPlayerInput(PlayerNumber(), MODINPUT_SIDEMOVE) ||
-                GetPlayerInput(PlayerNumber(), MODINPUT_UPMOVE))
+            if (!IsPlayerMoving()) // Movement - 50% Regen Rate
             {
                 Player.HPRate += HPAmount;
                 Player.EPRate += EPAmount;
@@ -693,6 +691,10 @@ function void CheckStatBounds()
         Player.Shield.Charge = 0;
     if (Player.Shield.Charge > Player.Shield.Capacity)
         Player.Shield.Charge = Player.Shield.Capacity;
+    
+    // Prevent Shield Delay Rate from going below 1 second
+    if (Player.Shield.DelayRate < 1.0)
+        Player.Shield.DelayRate = 1.0;
     
     // Cap Weapon Speed
     if (Player.WeaponSpeed > 100)
@@ -840,7 +842,7 @@ function void CheckToxicity()
         Player.Toxicity = 0;
     
     // Check Damage Type for Toxicity
-    if (Player.DamageType == DT_TOXIC && !CheckInventory("PowerIronFeet"))
+    if (Player.DamageType == DT_TOXIC && !CheckInventory("PowerIronFeet") && (Player.Shield.Accessory == SHIELD_ACC_TXBGONN && !Player.Shield.Active))
         AddToxicity(Random(1, GameSkill()));
     
     // Slowly decrease Toxicity

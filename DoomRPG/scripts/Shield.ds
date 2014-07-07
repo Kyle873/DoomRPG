@@ -9,7 +9,7 @@
 #include "Utils.dh"
 
 // Max Shield Parts per page
-int[4] ShieldPartsMax = { 7; 7; 5; 7; };
+int[4] ShieldPartsMax = { 22; 13; 15; 29; };
 
 script void ShieldScript()
 {
@@ -66,11 +66,32 @@ script void ShieldScript()
             {
                 Player.Shield.Charge += Player.Shield.ChargeRate;
                 Player.Shield.Timer = Player.Shield.Interval;
+                
+                if (Player.Shield.Accessory == SHIELD_ACC_PHD88 && Player.Shield.Charge >= Player.Shield.Capacity && Player.EP < Player.EPMax)
+                    Player.EP++;
+                if (Player.Shield.Accessory == SHIELD_ACC_BATTB && Player.Shield.Charge >= Player.Shield.Capacity && Player.Augs.Battery < Player.Augs.BatteryMax)
+                {
+                    Player.Augs.Battery++;
+                    DrawBattery();
+                };
+                if (Player.Shield.Accessory == SHIELD_ACC_SHVRZ7 && Player.Shield.Charge >= Player.Shield.Capacity)
+                {
+                    GiveInventory("Clip", 1);
+                    GiveInventory("Shell", 2);
+                };
             };
 
             // Shield Timer
-            if (Player.Shield.Timer > 0 && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
-                Player.Shield.Timer--;
+            if (Player.Shield.Timer > 0)
+            {
+                if (Player.Shield.Accessory == SHIELD_ACC_LZY200)
+                {
+                    if (!IsPlayerMoving())
+                        Player.Shield.Timer--;
+                }
+                else if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
+                    Player.Shield.Timer--;
+            };
         };
         
         Delay(1);
@@ -142,12 +163,23 @@ function void CheckShields()
     
     // EP -> Shield Charging
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-    if (Player.Shield.Active && (!Player.InMenu && !Player.InShop) && Buttons & BT_SPEED && Buttons & BT_USE && Player.Shield.Charge < Player.Shield.Capacity && Player.EP > 0)
+    
+    if (Player.Shield.Active && (!Player.InMenu && !Player.InShop) && Buttons & BT_SPEED && Buttons & BT_USE && Player.Shield.Charge < Player.Shield.Capacity)
     {
-        FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
-        ActivatorSound("regen/shield", 64);
-        Player.EP--;
-        Player.Shield.Charge++;
+        if (Player.Shield.Accessory == SHIELD_ACC_CNVRT99 && CheckInventory("Cell") > 0)
+        {
+            FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
+            ActivatorSound("regen/shield", 64);
+            TakeInventory("Cell", 1);
+            Player.Shield.Charge += 10;
+        }
+        else if (Player.EP > 0)
+        {
+            FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
+            ActivatorSound("regen/shield", 64);
+            Player.EP--;
+            Player.Shield.Charge++;
+        };
     };
     
     // If a part is sold/dropped/nuked from orbit/etc, unequip it
@@ -176,10 +208,18 @@ function void CheckShields()
 
 function void CheckShieldAccessory()
 {
-    fixed X, Y, Z;
-    fixed Angle;
+    // X-2
+    if (Player.Shield.Accessory == SHIELD_ACC_X7 && Player.Shield.Active)
+        if (CheckWeapon("Fist") || CheckWeapon("Knuckle") || CheckWeapon("RLFistRedux"))
+            Player.TotalDamage *= 2;
     
-    if (Player.Shield.Active && Player.Shield.Accessory == 1) // Amp
+    // SGENX-5b
+    if (Player.Shield.Accessory == SHIELD_ACC_SGENX5B && Player.Shield.Active)
+        if ((Timer() % (35 / 2)) == 0)
+            Player.Shield.Health++;
+    
+    // AMP-3000
+    if (Player.Shield.Accessory == SHIELD_ACC_AMP3000 && Player.Shield.Active)
         if (Player.Shield.Charge >= Player.Shield.Capacity)
         {
             int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -194,32 +234,96 @@ function void CheckShieldAccessory()
             Player.TotalDamage *= 2;
         };
     
-    if (Player.Shield.Active && Player.Shield.Accessory == 2) // Booster
+    // HRY-VP80
+    if (Player.Shield.Accessory == SHIELD_ACC_HRYVP80)
+    {
+        Player.Shield.Capacity /= 2;
+        Player.Shield.DelayRate /= 2;
+    };
+    
+    // DEF-2
+    if (Player.Shield.Accessory == SHIELD_ACC_DEF2)
+    {
+        Player.Shield.Capacity *= 2;
+        Player.Shield.DelayRate *= 2;
+    };
+    
+    // B1-ZUT3
+    if (Player.Shield.Accessory == SHIELD_ACC_B1ZUT3)
+    {
+        Player.Shield.ChargeRate *= 2;
+        Player.Shield.Capacity /= 2;
+    };
+    
+    // REK-T50
+    if (Player.Shield.Accessory == SHIELD_ACC_REKT50 && Player.Shield.Active)
+        Player.DamageFactor *= 2;
+    
+    // CU-256
+    if (Player.Shield.Accessory == SHIELD_ACC_CU256 && Player.Shield.Active)
+        if (Player.Shield.Charge >= Player.Shield.Capacity)
+        {
+            SetInventory("DRPGShieldLightAmp", 1);
+            UseInventory("DRPGShieldLightAmp");
+            Player.Shield.LightAmp = true;
+        };
+    if (!Player.Shield.Active && Player.Shield.LightAmp)
+    {
+        TakeInventory("PowerLightAmp", 1);
+        Player.Shield.LightAmp = false;
+    };
+    
+    // WRP30-LITE
+    if (Player.Shield.Accessory == SHIELD_ACC_WRP30LITE && Player.Shield.Active)
+        if (Player.Shield.Charge >= Player.Shield.Capacity)
+        {
+            SetInventory("DRPGShieldInvisibility", 1);
+            UseInventory("DRPGShieldInvisibility");
+            Player.Shield.Invisibility = true;
+        };
+    if (!Player.Shield.Active && Player.Shield.Invisibility)
+    {
+        TakeInventory("PowerInvisibility", 1);
+        Player.Shield.Invisibility = false;
+    };
+    
+    // LZ-Y200
+    if (Player.Shield.Accessory == SHIELD_ACC_LZY200)
+        Player.Shield.ChargeRate *= 2;
+    
+    // BST-700
+    if (Player.Shield.Accessory == SHIELD_ACC_BST700 && Player.Shield.Active)
         if (Player.HealthLoss > 0)
             if (Random(1, 4) <= 1)
             {
-                Angle = GetActorAngle(0);
-                X = GetActorX(0) + Cos(Angle) * 96.0;
-                Y = GetActorY(0) + Sin(Angle) * 96.0;
-                Z = GetActorZ(0) + 48.0;
+                fixed Angle = GetActorAngle(0);
+                fixed X = GetActorX(0) + Cos(Angle) * 96.0;
+                fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+                fixed Z = GetActorZ(0) + 48.0;
 
                 Spawn("DRPGShieldBooster", X, Y, Z, 0, Angle);
             };
     
-    if (Player.Shield.Active && Player.Shield.Accessory == 3) // Roid
-        if (CheckWeapon("Fist") || CheckWeapon("Knuckle") || CheckWeapon("Melee_Attacks") || CheckWeapon("RLFistRedux"))
-            Player.TotalDamage *= 2;
+    // MM-12
+    if (Player.Shield.Accessory == SHIELD_ACC_MM12 && Player.Shield.Active)
+        Player.Shield.ChargeRate *= (1.0 + ((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 3.0);
     
-    if (Player.Shield.Accessory == 4) // Turtle
+    // MRTE-KRAR
+    if (Player.Shield.Accessory == SHIELD_ACC_MRTEKRAR)
     {
-        Player.Shield.Capacity *= 2;
-        Player.HealthMax /= 2;
+        Player.Shield.Capacity /= 2;
+        Player.TotalDamage = Player.TotalDamage * 1.5;
     };
     
-    if (Player.Shield.Active && Player.Shield.Accessory == 6) // Reflective
-        GiveInventory("DRPGShieldReflection", 1);
+    // RR-G0
+    if (Player.Shield.Accessory == SHIELD_ACC_RRG0)
+    {
+        Player.Shield.ChargeRate += Timer() / (35 * 60);
+        Player.Shield.DelayRate = Player.Shield.DelayRate - ((Timer() / (35 * 60)) * 0.1);
+    };
     
-    if (Player.Shield.Active && Player.Shield.Accessory == 7) // Ghost
+    // SP-00k
+    if (Player.Shield.Accessory == SHIELD_ACC_SP00K && Player.Shield.Active)
     {
         // 1/8 chance of activating
         if (Player.HealthLoss > 0)
@@ -240,8 +344,59 @@ function void CheckShieldAccessory()
         };
         
         // Decrease the ghost timer
-        if (Player.Shield.Ghost) Player.Shield.GhostTimer--;
+        if (Player.Shield.Ghost)
+            Player.Shield.GhostTimer--;
     };
+    
+    // E1N-T31
+    if (Player.Shield.Accessory == SHIELD_ACC_E1NT31 && Player.Shield.Active)
+        if (Player.HealthLoss > 0)
+        {
+            GiveInventory("DRPGShieldTimeFreezer", 1);
+            UseInventory("DRPGShieldTimeFreezer");
+            Player.Shield.TimeFreezerTimer = 35;
+        };
+    
+    // E1N-T31 - Remove when timer ends
+    if (Player.Shield.TimeFreezerTimer <= 0)
+        TakeInventory("PowerTimeFreezer", 1);
+    
+    // E1N-T31 - Decrease Time Freeze timer
+    if (Player.Shield.TimeFreezerTimer > 0)
+        Player.Shield.TimeFreezerTimer--;
+    
+    // PATR-0T
+    if (Player.Shield.Accessory == SHIELD_ACC_PATR0T)
+        Player.Shield.Capacity = Player.Shield.Capacity * (1 + (Player.RankLevel * 0.125));
+    
+    // RNJSUS-2
+    if (Player.Shield.Accessory == SHIELD_ACC_RNJSUS2 && Player.Shield.Active)
+    {
+        int Luck = 50 - (Player.Luck / 2);
+        
+        Player.CreditChance += Luck * 0.9;
+        Player.HealthChance += Luck * 0.025;
+        Player.EPChance += Luck * 0.025;
+        Player.ArmorChance += Luck * 0.025;
+        Player.PowerupChance += Luck * 0.0125;
+        Player.WeaponChance += Luck * 0.0125;
+        Player.TokenChance += Luck * 0.01;
+        Player.AugChance += Luck * 0.0025;
+        Player.ShieldChance += Luck * 0.005;
+        Player.StimChance += Luck * 0.0125;
+    };
+    
+    // SCL-AR53
+    if (Player.Shield.Accessory == SHIELD_ACC_SCLAR53)
+    {
+        Player.Shield.Capacity = Player.Shield.Capacity * (1.0 + (Player.Capacity * 0.005)) + 1;
+        Player.Shield.ChargeRate += (Player.Energy / 10);
+        Player.Shield.DelayRate = Player.Shield.DelayRate - ((fixed)Player.Regeneration / 50.0);
+    };
+    
+    // RF-CT
+    if (Player.Shield.Accessory == SHIELD_ACC_RFCT && Player.Shield.Active)
+        GiveInventory("DRPGShieldReflection", 1);
 };
 
 function void DrawShieldModel(int X, int Y)

@@ -299,8 +299,16 @@ acscript void UseSkill() net
             Log("\cdDEBUG: \c-Skill Data passed: \cd%d\n", *(int *)Data);
         };
         
+        // PWAA-9001 Accessory Handling - Increase skill level intermittently
+        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && CurrentSkill->CurrentLevel < CurrentSkill->MaxLevel)
+                CurrentSkill->CurrentLevel++;
+        
         // Use Skill
         Success = CurrentSkill->Use(CurrentSkill, Data);
+        
+        // PWAA-9001 Accessory Handling - Change back to previous level
+        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && CurrentSkill->CurrentLevel < CurrentSkill->MaxLevel)
+            CurrentSkill->CurrentLevel--;
         
         // Check if the skill use was successful
         if (Success)
