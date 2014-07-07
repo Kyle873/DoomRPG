@@ -747,22 +747,19 @@ function int CalculateMonsterThreatLevel(int TID)
     if (CheckFlag(TID, "BOSS"))
         Threat++;
     
-    // DoomRL Compatibility
+    // Species Info
+    str Actor = GetActorClass(TID);
+    
     if (GetCVar("drpg_ext_doomrl"))
     {
-        str Actor = GetActorClass(TID);
-        
-        // Nightmare Enemies - +1 Threat
-        if (StartsWith(Actor, "RLNightmare") || StartsWith(Actor, "RLElite"))
-            Threat++;
-        
-        // Cybernetic Enemies - +1 Threat
-        if (StartsWith(Actor, "RLCybernetic"))
-            Threat++;
-        
-        // Armageddon Enemies - +2 Threat
-        if (StartsWith(Actor, "RLArmageddon"))
-            Threat += 2;
+        for (int i = 0; i < MAX_MONSTERS_DRLA; ++i)
+        {
+            if (StartsWith(Actor, MonsterDataDRLA[i].Actor))
+            {
+                Threat += MonsterDataDRLA[i].ThreatLevel;
+                break;
+            };
+        };
     };
     
     return Threat;
