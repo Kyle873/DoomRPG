@@ -596,6 +596,9 @@ function void DrawShieldMenu()
         {
             int Index = j + (i * 6);
             
+            // Break if we're at the end of the list
+            if (Index >= ShieldPartsMax[Player.ShieldPage]) break;
+            
             // Draw Available Components
             for (int k = 0; k < 4; k++)
             {
@@ -953,17 +956,19 @@ function void MenuInput()
     // Shield Menu
     if (Player.Menu == 4 && !Player.MenuBlock)
     {
+        int PartsMax = ShieldPartsMax[Player.ShieldPage];
+        
         if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && Player.MenuIndex > 0)
         {
             ActivatorSound("menu/move", 127);
             Player.MenuIndex -= 6;
             if (Player.MenuIndex < 0) Player.MenuIndex = 0;
         };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && Player.MenuIndex < MAX_PARTS - 1)
+        if (Buttons == BT_BACK && OldButtons != BT_BACK && Player.MenuIndex < PartsMax - 1)
         {
             ActivatorSound("menu/move", 127);
             Player.MenuIndex += 6;
-            if (Player.MenuIndex > MAX_PARTS - 1) Player.MenuIndex = MAX_PARTS - 1;
+            if (Player.MenuIndex > PartsMax - 1) Player.MenuIndex = PartsMax - 1;
         };
         if ((Buttons & BT_LEFT && !(OldButtons & BT_LEFT)) ||
             (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT)))
@@ -974,32 +979,33 @@ function void MenuInput()
                 {
                     ActivatorSound("menu/move", 127);
                     Player.ShieldPage--;
+                    Player.MenuIndex = 0;
                 };
             }
             else
             {
                 ActivatorSound("menu/move", 127);
                 Player.MenuIndex--;
-                if (Player.MenuIndex < 0) Player.MenuIndex = MAX_PARTS - 1;
+                if (Player.MenuIndex < 0) Player.MenuIndex = PartsMax - 1;
             };
         };
         if ((Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT)) ||
             (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT)))
         {
-            
             if (Buttons & BT_SPEED)
             {
                 if (Player.ShieldPage < 3)
                 {
                     ActivatorSound("menu/move", 127);
                     Player.ShieldPage++;
+                    Player.MenuIndex = 0;
                 };
             }
             else
             {
                 ActivatorSound("menu/move", 127);
                 Player.MenuIndex++;
-                if (Player.MenuIndex > MAX_PARTS - 1) Player.MenuIndex = 0;
+                if (Player.MenuIndex > PartsMax - 1) Player.MenuIndex = 0;
             };
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
