@@ -105,6 +105,13 @@ acscript void MonsterDump()
     Log(" \ckLuck: %d\n", CheckInventory("DRPGMonsterLuck"));
 };
 
+// Damage the target
+acscript void MonsterDamage(int Amount, int Type)
+{
+    SetActivatorToTarget(Player.TID);
+    DamageThing(Amount, Type);
+};
+
 // Apply stats to monsters
 script MonsterStats(int Flags, int StatFlags)
 {
@@ -401,13 +408,13 @@ script void MonsterLoop()
     };
     
     // Regeneration
-    if (GetActorProperty(0, APROP_Health) < GetActorProperty(0, APROP_SpawnHealth) && (Timer() % (35 * (30 - (AuraType == 6 ? 20 : 0)))) == 0 && !CheckInventory("PowerTimeFreezer"))
+    if (GetActorProperty(0, APROP_Health) < CalculateMonsterMaxHealth(0) && (Timer() % (35 * (30 - (AuraType == 6 ? 20 : 0)))) == 0 && !CheckInventory("PowerTimeFreezer"))
     {
-        HealThing((int)((fixed)GetActorProperty(0, APROP_SpawnHealth) * ((fixed)MonsterRegeneration / 1000.0)));
+        SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)CalculateMonsterMaxHealth(0) * ((fixed)MonsterRegeneration / 1000.0)));
         
         // Prevent going over 100%
-        if (GetActorProperty(0, APROP_Health) > GetActorProperty(0, APROP_SpawnHealth))
-            SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_SpawnHealth));
+        if (GetActorProperty(0, APROP_Health) > CalculateMonsterMaxHealth(0))
+            SetActorProperty(0, APROP_Health, CalculateMonsterMaxHealth(0));
     };
     
     // Blue Aura Level Increase
