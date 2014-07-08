@@ -1119,3 +1119,20 @@ function bool IsPlayerMoving()
             GetPlayerInput(PlayerNumber(), MODINPUT_SIDEMOVE) ||
             GetPlayerInput(PlayerNumber(), MODINPUT_UPMOVE));
 };
+
+function bool DropPlayerItem(str Item)
+{
+    fixed Angle = GetActorAngle(0);
+    fixed X = GetActorX(0) + Cos(Angle) * 64.0;
+    fixed Y = GetActorY(0) + Sin(Angle) * 64.0;
+    fixed Z = GetActorZ(0) + 16.0;
+    int TID = UniqueTID();
+    bool SpawnOK = Spawn(Item, X, Y, Z, TID, Angle);
+    bool SightOK = CheckSight(TID, 0, 0);
+    
+    // Remove the item if it fails the sight check
+    if (!SightOK)
+        Thing_Remove(TID);
+    
+    return (SpawnOK && SightOK);
+};
