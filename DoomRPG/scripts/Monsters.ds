@@ -22,9 +22,6 @@ acscript void MonsterInit(int Flags)
     // Start Damage Numbers Script
     DamageNumbers();
     
-    // Start Monster Loop Script
-    MonsterLoop();
-    
     // Give it a Health Bar
     if (!(Flags & MF_NOHEALTHBAR))
         SetInventory("DRPGHealthBar", 1);
@@ -35,6 +32,21 @@ acscript void MonsterInit(int Flags)
     // Apply Stats
     if (!(Flags & MF_NOSTATS))
         MonsterStats(Flags, false);
+    
+    // Blue Aura Handling
+    BlueAuraHandler();
+    
+    // Regeneration Stat Handling
+    RegenerationHandler();
+    
+    // Strength / Defense Handling
+    StatsHandler();
+    
+    // Death Handler
+    DeathCheck();
+    
+    // Aura Spawner
+    AuraDisplayHandler();
         
     // Save the Render Type
     SetInventory("DRPGMonsterRenderStyle", GetActorProperty(0, APROP_RenderStyle));
@@ -372,27 +384,142 @@ script MonsterStats(int Flags, int StatFlags)
     SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(0));
 };
 
-// Monster Loop
-script void MonsterLoop()
+script void BlueAuraHandler()
+{
+    int MonsterEnergy;
+    int MonsterLevel;
+    int MonsterFlags;
+    
+    if (CheckInventory("DRPGMonsterAura") != 5)
+        return;
+    
+    Start:
+    MonsterEnergy = CheckInventory("DRPGMonsterEnergy");
+    MonsterLevel = CheckInventory("DRPGMonsterLevel");
+    MonsterFlags = CheckInventory("DRPGMonsterFlags");
+    
+    if (CheckInventory("PowerTimeFreezer"))
+    {
+        Delay (35);
+        goto Start;
+    };
+    
+    Delay (35 * (60 - (MonsterEnergy / 20)));
+    
+    if (ClassifyActor (0) & ACTOR_DEAD)
+        return;
+    
+    SetInventory("DRPGMonsterLevel", MonsterLevel + 1);
+    MonsterStats(MonsterFlags, SF_LEVELUP);
+    SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
+    
+    goto Start;
+};
+
+script void RegenerationHandler()
+{
+    int MonsterRegeneration;
+    int AuraType;
+    
+    Start:
+    if (ClassifyActor (0) & ACTOR_DEAD)
+        return;
+    
+    MonsterRegeneration = CheckInventory("DRPGMonsterRegeneration");
+    AuraType = CheckInventory("DRPGMonsterAura");
+    
+    if (CheckInventory("PowerTimeFreezer"))
+    {
+        Delay (35);
+        goto Start;
+    };
+    
+    SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)CalculateMonsterMaxHealth(0) * ((fixed)MonsterRegeneration / 1000.0)));
+    
+    // Prevent going over 100%
+    if (GetActorProperty(0, APROP_Health) > CalculateMonsterMaxHealth(0))
+        SetActorProperty(0, APROP_Health, CalculateMonsterMaxHealth(0));
+    
+    Delay (35 * (30 - (AuraType == 6 ? 20 : 0)));
+    goto Start;
+};
+
+script void DeathCheck()
 {
     Start:
-    
-    int MonsterLevel = CheckInventory("DRPGMonsterLevel");
-    int MonsterFlags = CheckInventory("DRPGMonsterFlags");
-    int MonsterRenderStyle = CheckInventory("DRPGMonsterRenderStyle");
-    int MonsterStrength = CheckInventory("DRPGMonsterStrength");
-    int MonsterDefense = CheckInventory("DRPGMonsterDefense");
-    int MonsterEnergy = CheckInventory("DRPGMonsterEnergy");
-    int MonsterRegeneration = CheckInventory("DRPGMonsterRegeneration");
-    int MonsterAgility = CheckInventory("DRPGMonsterAgility");
-    int AuraType = CheckInventory("DRPGMonsterAura");
-    
     // Death
-    if (GetActorProperty(0, APROP_Health) <= 0)
+    if (ClassifyActor (0) & ACTOR_ALIVE)
     {
-        MonsterDeath();
-        return;
+        Delay (1);
+        goto Start;
     };
+    
+    MonsterDeath();
+};
+
+script void StatsHandler()
+{
+    int MonsterStrength;
+    int MonsterDefense;
+    int OldStrength;
+    int OldDefense;
+    
+    Start:
+    MonsterStrength = CheckInventory("DRPGMonsterStrength");
+    MonsterDefense = CheckInventory("DRPGMonsterDefense");
+    
+    // Strength
+    if (MonsterStrength != OldStrength)
+    {
+        if (OldStrength)
+        {
+            TakeInventory (StrParam("DRPGStrength%d\n", OldStrength * GameSkill()), 1);
+        };
+        SetInventory(StrParam("DRPGStrength%d\n", MonsterStrength * GameSkill()), 1);
+        OldStrength = MonsterStrength;
+    };
+    
+    // Defense
+    if (MonsterDefense != OldDefense)
+    {
+        SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (MonsterDefense / 100)));
+        OldDefense = MonsterDefense;
+    };
+    
+    Delay(4);
+    
+    goto Start;
+};
+
+script void AuraDisplayHandler()
+{
+    int MonsterRenderStyle = CheckInventory("DRPGMonsterRenderStyle");
+    int AuraType;
+    
+    bool VisibleToPlayers;
+    
+    Start:
+    VisibleToPlayers = false;
+    
+    for (int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        if (!PlayerInGame (i))
+            continue;
+        
+        if (CheckSight(Players(i).TID, 0, CSF_NOBLOCKALL))
+        {
+            VisibleToPlayers = true;
+            break;
+        };
+    };
+    
+    if (!VisibleToPlayers)
+    {
+        Delay (10);
+        goto Start;
+    };
+    
+    AuraType = CheckInventory("DRPGMonsterAura");
     
     // Friendly Monster Aura
     if (GetActorProperty(0, APROP_Friendly) && GetActorPropertyString(0, APROP_Nametag) != "Marine" && GetActorPropertyString(0, APROP_Nametag) != "Heavy Marine" && !CheckInventory("DRPGMonsterNamed"))
@@ -407,33 +534,9 @@ script void MonsterLoop()
             SetActorProperty(0, APROP_RenderStyle, MonsterRenderStyle);
     };
     
-    // Regeneration
-    if (GetActorProperty(0, APROP_Health) < CalculateMonsterMaxHealth(0) && (Timer() % (35 * (30 - (AuraType == 6 ? 20 : 0)))) == 0 && !CheckInventory("PowerTimeFreezer"))
-    {
-        SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)CalculateMonsterMaxHealth(0) * ((fixed)MonsterRegeneration / 1000.0)));
-        
-        // Prevent going over 100%
-        if (GetActorProperty(0, APROP_Health) > CalculateMonsterMaxHealth(0))
-            SetActorProperty(0, APROP_Health, CalculateMonsterMaxHealth(0));
-    };
-    
-    // Blue Aura Level Increase
-    if (AuraType == 5 && (Timer() % (35 * (60 - (MonsterEnergy / 20)))) == 0 && !CheckInventory("PowerTimeFreezer"))
-    {
-        SetInventory("DRPGMonsterLevel", MonsterLevel + 1);
-        MonsterStats(CheckInventory("DRPGMonsterFlags"), SF_LEVELUP);
-        SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
-    };
-    
     // Spawn Aura
     if (AuraType)
         SpawnAura(0, AuraType, false);
-    
-    // Strength
-    SetInventory(StrParam("DRPGStrength%d\n", MonsterStrength * GameSkill()), 1);
-    
-    // Defense
-    SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (MonsterDefense / 100)));
     
     Delay(1);
     goto Start;
