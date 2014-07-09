@@ -23,7 +23,7 @@
 str[2] Version =
 {
     "v0.9.10 Beta - Too Many Shields Edition";
-	"Wednesday, July 09, 2014 at 12:13:31 PM";
+	"Wednesday, July 09, 2014 at 12:30:59 PM";
 };
 
 // Init Script
@@ -70,6 +70,9 @@ script void Init() enter
         
         // Version Info
         if (Arbitrator) Log("\cnDoom RPG %s (%s) loaded!\n", Version[0], Version[1]);
+        
+        // Compatibility checking
+        if (Arbitrator) CheckCompatibility();
         
         // Set the default skill indices
         for (int i = 0; i < MAX_SKILLKEYS; i++)
@@ -691,4 +694,39 @@ function void DefaultLoadout()
     // DoomRL Compatibility
     if (GetCVar("drpg_ext_doomrl"))
         SetWeapon("RLPistol");
+};
+
+function void CheckCompatibility()
+{
+    bool Success = false;
+    int TID = UniqueTID();
+    
+    // Reset CVARs
+    SetCVar("drpg_ext_extras", 0);
+    SetCVar("drpg_ext_doomrl", 0);
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-Checking Compatibility...\n");
+    
+    // Extras
+    Success = SpawnForced("Pistol1", 0, 0, 0, TID, 0);
+    if (Success)
+    {
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: \caExtras\c- detected\n");
+        SetCVar("drpg_ext_extras", 1);
+        Thing_Remove(TID);
+        return;
+    };
+    
+    // DoomRL
+    Success = SpawnForced("RLPistolPickup", 0, 0, 0, TID, 0);
+    if (Success)
+    {
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: \cdDoomRL \c-detected\n");
+        SetCVar("drpg_ext_doomrl", 1);
+        Thing_Remove(TID);
+        return;
+    };
 };
