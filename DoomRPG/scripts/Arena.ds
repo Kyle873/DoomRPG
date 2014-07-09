@@ -2,6 +2,7 @@
 #include "Globals.dh"
 #include "RPG.dh"
 #include "Menu.dh"
+#include "Outpost.dh"
 #include "Shop.dh"
 #include "Stats.dh"
 #include "Utils.dh"
@@ -62,7 +63,7 @@ str[] Monsters =
 // Arena Script
 acscript void ArenaLoop()
 {
-    ArenaSetMusic();
+    SetOutpostMusic(OUTPOST_MUSIC_COMBAT);
     ArenaSetEnvironment(0);
     
     // Arena Loop
@@ -135,7 +136,7 @@ acscript void ArenaLoop()
             
             // Change the music every random amount of waves
             if (ArenaWave > 1 && (ArenaWave % 9) == 0)
-                ArenaSetMusic();
+                SetOutpostMusic(OUTPOST_MUSIC_COMBAT);
             
             ArenaWave++;
             ArenaMod = ModRandomizer;
@@ -175,7 +176,8 @@ acscript void ArenaStop()
     ArenaMod = -1;
     ArenaSetEnvironment(0);
     
-    SetMusic("Outpost");
+    ResetOutpostMusic();
+    
     Ceiling_RaiseByValue(ArenaSectorTag - 1, 64, 128);
     Thing_Remove(ArenaMonstersTID);
     
@@ -601,15 +603,4 @@ function void ArenaSetEnvironment(int ID)
     };
     
     ArenaEnvironment = ID;
-};
-
-function void ArenaSetMusic()
-{
-    int Music = Random(0, MAX_MUSIC);
-    
-    // Default Battle Music
-    if (Music == 0)
-        SetMusic("Outpost", 3)
-    else
-        SetMusic(StrParam("Arena%d\n", Music));
 };

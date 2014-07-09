@@ -61,7 +61,7 @@ acscript void EnterOutpost()
     
     // Use alternate music if you have a high Notoriety
     if (OutpostNotoriety >= 3)
-        SetMusic("Outpost2");
+        SetOutpostMusic(OUTPOST_MUSIC_NORMAL, false, 2);
     
     // Assign the current level to the level choice
     for (int i = 0; i < NumVisitedLevels; i++)
@@ -514,7 +514,7 @@ acscript void PissOffMarines(bool Steal)
     Delay(35 * 2);
     
     // Pick combat music from Arena selection
-    ArenaSetMusic();
+    SetOutpostMusic(OUTPOST_MUSIC_COMBAT);
     
     // Iterate Marines post-Delay
     for (int i = MarineTID; i <= MarineMaxTID; i++)
@@ -824,18 +824,9 @@ acscript void TokenConverter()
 acscript void CreditRoom(int ID)
 {
     if (ID == 1) // Enter
-        LocalSetMusic("Credits");
+        SetOutpostMusic(OUTPOST_MUSIC_CREDITS, true);
     if (ID == 2) // Exit
-        if (PowerOut)
-            if (OutpostNotoriety >= 3)
-                LocalSetMusic("Outpost2", 4)
-            else
-                LocalSetMusic("Outpost", 4)
-        else
-            if (OutpostNotoriety >= 3)
-                LocalSetMusic("Outpost")
-            else
-                LocalSetMusic("Outpost");
+        ResetOutpostMusic();
     
     if (ID == 3) // Kyle873 - That's me!
     {
@@ -1356,9 +1347,9 @@ acscript void PowerOutage()
     if (!MarinesHostile)
     {
         if (OutpostNotoriety >= 3)
-            SetMusic("Outpost2", 39)
+            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, false, 2, 39)
         else
-            SetMusic("Outpost", 4);
+            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, false, 1, 4);
         ActivatorSound("misc/poweron", 127);
         for (int i = 0; i < MAX_OUTPOST_ID; i++)
         {
@@ -1432,9 +1423,18 @@ acscript void SpawnBoss()
         };
         
         SetMusic("");
-        Delay(35 * 30);
+        if (OutpostNotoriety >= 4)
+        {
+            Delay(35);
+            SetOutpostMusic(OUTPOST_MUSIC_BOSS, false, 2);
+            Delay(35 * 19.25);
+        }
+        else
+        {
+            Delay(35 * 30);
+            SetOutpostMusic(OUTPOST_MUSIC_BOSS, false, 1);
+        };
         
-        SetMusic((OutpostNotoriety >= 4 ? "Boss2" : "Boss"));
         SpawnSpotForced("DRPGHugeTeleportFog", NotorietySpotTID + 1, 0, 0);
         SpawnSpotFacingForced((OutpostNotoriety >= 4 ? "DRPGSuperPowerSuit" : "DRPGHeavyPowerSuit"), NotorietySpotTID + 1, MarineBossTID);
     };
@@ -1545,4 +1545,53 @@ function void SpawnShopSpecialItem()
             Thing_SetSpecial(ShopSpecialTID, 80, 8);
         };
     };
+};
+
+function void ResetOutpostMusic()
+{
+    if (PowerOut)
+        if (OutpostNotoriety >= 3)
+            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, true, 2, 4)
+        else
+            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, true, 1, 4)
+    else
+        if (OutpostNotoriety >= 3)
+            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, true, 2)
+        else
+            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, true, 1);
+};
+
+function void SetOutpostMusic(int Type, bool Local, int Index, int Pattern)
+{
+    str Music;
+    
+    // Normal
+    if (Type == OUTPOST_MUSIC_NORMAL)
+        Music = StrParam("Outpost%d\n", (Index > 0 ? Index : Random(1, MAX_OUTPOST_MUSIC)));
+    
+    // Combat
+    if (Type == OUTPOST_MUSIC_COMBAT)
+    {
+        Index = (Index > 0 ? Index : Random(0, MAX_COMBAT_MUSIC));
+        Music = StrParam("Arena%d\n", Index);
+        
+        if (Index == 0)
+        {
+            Music = "Outpost1";
+            Pattern = 3;
+        };
+    };
+    
+    // Boss
+    if (Type == OUTPOST_MUSIC_BOSS)
+        Music = StrParam("Boss%d\n", (Index > 0 ? Index : Random(1, MAX_BOSS_MUSIC)));
+
+    // Credits
+    if (Type == OUTPOST_MUSIC_CREDITS)
+        Music = StrParam("Credits%d\n", (Index > 0 ? Index : Random(1, MAX_CREDITS_MUSIC)));
+    
+    if (Local)
+        LocalSetMusic(Music, Pattern)
+    else
+        SetMusic(Music, Pattern);
 };
