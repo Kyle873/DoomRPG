@@ -169,195 +169,59 @@ function void ShopLoop()
                    HUDMSG_PLAIN, 0, CR_GOLD,
                    24.1, 38.0, 0.05);
     
-    // Draw Item List
-    if (GetCVar("drpg_gridventory")) // Gridventory
-    {
-        // Coordinates
-        fixed BaseX;
-        fixed BaseY;
-        fixed BoxX;
-        fixed BoxY;
-        fixed X;
-        fixed Y;
-        fixed IconX;
-        fixed IconY;
-        
-        for (int i = 0; i < 6; i++)
-        {
-            // Reset base X
-            BaseX = 0.0;
-            
-            for (int j = 0; j < 9; j++)
-            {
-                int Index = j + (i * 9);
-                str Icon = ItemData[Player.ShopPage][Index].Sprite.Name;
-                int IconXOff = ItemData[Player.ShopPage][Index].Sprite.XOff;
-                int IconYOff = ItemData[Player.ShopPage][Index].Sprite.YOff;
-                int Held = CheckInventory(ItemData[Player.ShopPage][Index].Actor);
-                int Rank = ItemData[Player.ShopPage][Index].Rank;
-                int Price = ItemData[Player.ShopPage][Index].Price;
-                bool CanAfford = (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100);
-                bool AutoSell = Player.AutoSell[Player.ShopPage][Index];
-                
-                // Stop if we hit a hard stop in the list
-                if (ItemStop[Player.ShopPage] > 0 && Index >= ItemStop[Player.ShopPage]) break;
-                
-                // Stop if we're at the end of the list
-                if (Index > ItemMax[Player.ShopPage] - 1) break;
-                
-                // Placeholder Icon
-                if (StrLen(Icon) == 0)
-                    Icon = "SprNone";
-                
-                // Setup X and Y
-                X = 26.0 + BaseX;
-                Y = 50.0 + BaseY;
-                BoxX = 48.0 + BaseX;
-                BoxY = 72.0 + BaseY;
-                IconX = 48.0 + BaseX;
-                IconY = 72.0 + BaseY;
-                IconX += IconXOff;
-                IconY += IconYOff;
-                
-                // Amount
-                if (Held > 0)
-                {
-                    SetFont("BIGFONT");
-                    HudMessage("%d\n", Held, HUDMSG_PLAIN, 0, CR_GREEN, X + 44.2, Y + 44.2, 0.05);
-                };
-                
-                // Icon
-                SetHudClipRect(X, Y, 44, 44);
-                if ((Rank > 0 && Player.RankLevel < Rank) || Rank == -1)
-                    PrintSpriteAlpha(Icon, 0, IconX, IconY, 0.05, 0.25)
-                else
-                    if (Player.ShopIndex == Index)
-                        PrintSpritePulse(Icon, 0, IconX, IconY, 0.75, 32.0, 0.25, false)
-                    else
-                        PrintSprite(Icon, 0, IconX, IconY, 0.05);
-                SetHudClipRect(0, 0, 0, 0);
-                
-                // Box
-                PrintSprite("ItemBoxB", 0, BoxX, BoxY, 0.05);
-                
-                // Item Name
-                if (Player.ShopIndex == Index)
-                {
-                    str Name = ItemData[Player.ShopPage][Player.ShopIndex].Name;
-                    SetFont("BIGFONT");
-                    HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, (CanAfford ? CR_WHITE : CR_RED), 24.1, 344.1, 0.05);
-                };
-                
-                // Increment X
-                BaseX += 48.0;
-            };
-            
-            // Increment Y
-            BaseY += 48.0;
-        };
-    }
-    else // List
-    {
-        fixed X = 24.1;
-        fixed Y = 50.0;
-        
-        // Determine Offset
-        int Offset;
-        if (Player.ShopIndex > MENU_SCROLL && Available > MENU_SCROLL)
-            Offset = Player.ShopIndex - MENU_SCROLL
-        else
-            Offset = 0;
-        
-        for (int i = Offset; i < Offset + (MENU_SCROLL * 2) + 1; i++)
-        {
-            str Name = ItemData[Player.ShopPage][i].Name;
-            int Held = CheckInventory(ItemData[Player.ShopPage][i].Actor);
-            int Rank = ItemData[Player.ShopPage][i].Rank;
-            int Price = ItemData[Player.ShopPage][i].Price;
-            
-            // Stop if we're at the end of the list
-            if (i > ItemMax[Player.ShopPage] - 1) continue;
-            
-            // Continue past this item if we don't have the rank to buy/sell it
-            if ((Rank > 0 && Player.RankLevel < Rank) || Rank == -1) continue;
-            
-            SetFont("SMALLFONT");
-            
-            // Set the Color
-            if (i == Player.ShopIndex)
-                Color = MenuCursorColor
-            else if (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100)
-                Color = CR_WHITE
-            else
-                Color = CR_RED;
-            
-            // Build the Item String
-            if (Held > 0)
-                Name = StrParam("%s \cd[%d]\n", Name, Held);
-            if (Player.AutoSell[Player.ShopPage][i])
-                Name = StrParam("%s \ck[Sell]\n", Name);
-            
-            // Display the item string
-            HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
-            
-            // Move down Y
-            Y += 8.0;
-        };
-    };
-    
-    // Draw Shop Card
-    if (Player.ShopCard > 0)
-    {
-        SetFont("BIGFONT");
-        HudMessage("+%d%%\n", Player.ShopCard * 5, HUDMSG_PLAIN, 0, (InBase ? CR_YELLOW : CR_GREY), 436.4, 364.0, 0.05);
-        
-        if (Player.ShopCard == 1)
-            SetFont("UCRDA0")
-        else if (Player.ShopCard == 2)
-            SetFont("UCRDB0")
-        else if (Player.ShopCard == 3)
-            SetFont("UCRDC0")
-        else if (Player.ShopCard == 4)
-            SetFont("UCRDD0")
-        else if (Player.ShopCard == 5)
-            SetFont("UCRDE0");
-        
-        if (InBase)
-            HudMessage("A\n", HUDMSG_PLAIN, 0, CR_UNTRANSLATED, 458.0, 384.0, 0.05)
-        else
-            HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_UNTRANSLATED, 458.0, 384.0, 0.05, 0.5 + (Sin((fixed)Timer() / 64.0) * 0.5));
-    };
-    
-    // Check cursor movement for repeating
-    if (Buttons == BT_FORWARD)
-    {
-        Player.DelayTimer++;
-        if (Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat"))
-            MoveCursor(DIR_UP);
-    };
-    if (Buttons == BT_BACK)
-    {
-        Player.DelayTimer++;
-        if (Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat"))
-            MoveCursor(DIR_DOWN);
-    };
+    DrawItemGrid(IG_STORE);
     
     // Check Input
-    if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
-        MoveCursor(DIR_UP);
-    if (Buttons == BT_BACK && OldButtons != BT_BACK)
-        MoveCursor(DIR_DOWN);
-    if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
-        (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
-        MoveCursor(DIR_LEFT);
-    if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
-        (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
-        MoveCursor(DIR_RIGHT);
-    if (Buttons == BT_USE && OldButtons != BT_USE && !Player.MenuBlock)
-        BuyItem(ItemData[Player.ShopPage][Player.ShopIndex].Actor);
-    if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
-        SellItem(ItemData[Player.ShopPage][Player.ShopIndex].Actor, false, false);
-    if (Buttons & BT_SPEED)
+    if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD))
+    {
+        ActivatorSound("menu/move", 127);
+        Player.ShopIndex -= 9;
+        if (Player.ShopIndex < 0) Player.ShopIndex = 0;
+    };
+    if (Buttons & BT_BACK && !(OldButtons & BT_BACK))
+    {
+        ActivatorSound("menu/move", 127);
+        Player.ShopIndex += 9;
+        if (ItemStop[Player.ShopPage] > 0 && Player.ShopIndex > ItemStop[Player.ShopPage] - 1) Player.ShopIndex = ItemStop[Player.ShopPage] - 1;
+        if (Player.ShopIndex > ItemMax[Player.ShopPage] - 1) Player.ShopIndex = ItemMax[Player.ShopPage] - 1;
+    };
+    if ((Buttons & BT_LEFT && !(OldButtons & BT_LEFT)) ||
+        (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT)))
+        if (Buttons & BT_SPEED)
+        {
+            ActivatorSound("menu/move", 127);
+            Player.ShopPage--;
+            Player.ShopIndex = 0;
+            if (Player.ShopPage < 0) Player.ShopPage = ItemCategories - 1;
+        }
+        else
+        {
+            ActivatorSound("menu/move", 127);
+            Player.ShopIndex--;
+            if (Player.ShopIndex < 0) Player.ShopIndex = 0;
+        };
+    if ((Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT)) ||
+        (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT)))
+        if (Buttons & BT_SPEED)
+        {
+            ActivatorSound("menu/move", 127);
+            Player.ShopPage++;
+            Player.ShopIndex = 0;
+            if (Player.ShopPage > ItemCategories - 1) Player.ShopPage = 0;
+        }
+        else
+        {
+            ActivatorSound("menu/move", 127);
+            Player.ShopIndex++;
+            if (ItemStop[Player.ShopPage] > 0 && Player.ShopIndex > ItemStop[Player.ShopPage] - 1) Player.ShopIndex = ItemStop[Player.ShopPage] - 1;
+            if (Player.ShopIndex > ItemMax[Player.ShopPage] - 1) Player.ShopIndex = ItemMax[Player.ShopPage] - 1;
+        };
+    if (Buttons & BT_USE && !(OldButtons & BT_USE) && !Player.MenuBlock)
+        if (Buttons & BT_SPEED)
+            SellItem(ItemData[Player.ShopPage][Player.ShopIndex].Actor, false, false)
+        else
+            BuyItem(ItemData[Player.ShopPage][Player.ShopIndex].Actor);
+    if (Buttons & BT_USE && Buttons & BT_SPEED)
     {
         Player.DelayTimer++;
         
@@ -382,46 +246,6 @@ function void ShopLoop()
     
     // Reset the menu block
     Player.MenuBlock = false;   
-};
-
-function void MoveCursor(int Direction)
-{
-    if (Direction == DIR_UP)
-    {
-        if (Player.ShopIndex <= 0) Player.ShopIndex = ItemMax[Player.ShopPage];
-        ActivatorSound("menu/move", 127);
-        Player.ShopIndex--;
-        while (ItemData[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel || ItemData[Player.ShopPage][Player.ShopIndex].Rank == -1)
-            if (Player.ShopIndex <= 0)
-                Player.ShopIndex = ItemMax[Player.ShopPage]
-            else
-                Player.ShopIndex--;
-    }
-    else if (Direction == DIR_DOWN)
-    {
-        if (Player.ShopIndex >= ItemMax[Player.ShopPage] - 1) Player.ShopIndex = -1;
-        ActivatorSound("menu/move", 127);
-        Player.ShopIndex++;
-        while (ItemData[Player.ShopPage][Player.ShopIndex].Rank > Player.RankLevel || ItemData[Player.ShopPage][Player.ShopIndex].Rank == -1)
-            if (Player.ShopIndex >= ItemMax[Player.ShopPage] - 1)
-                Player.ShopIndex = 0
-            else
-                Player.ShopIndex++;
-    }
-    else if (Direction == DIR_LEFT)
-    {
-        if (Player.ShopPage <= 0) Player.ShopPage = ItemCategories;
-        ActivatorSound("menu/move", 127);
-        Player.ShopIndex = 0;
-        Player.ShopPage--;
-    }
-    else if (Direction == DIR_RIGHT)
-    {
-        if (Player.ShopPage >= ItemCategories - 1) Player.ShopPage = -1;
-        ActivatorSound("menu/move", 127);
-        Player.ShopIndex = 0;
-        Player.ShopPage++;
-    };
 };
 
 function void BuyItem(str Item)

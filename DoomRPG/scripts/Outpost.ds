@@ -1056,7 +1056,6 @@ acscript void Locker(bool Wireless, int WirelessLevel)
         int Efficiency = (WirelessLevel - 1) * 5;
         int WirelessCost = (int)((fixed)LockerWirelessCosts[Player.LockerPage] - ((fixed)LockerWirelessCosts[Player.LockerPage] * ((fixed)Efficiency / 100.0)));
         bool Success = false;
-        int Offset;
         int Available;
         int Color;
         
@@ -1105,290 +1104,210 @@ acscript void Locker(bool Wireless, int WirelessLevel)
             if (!ItemData[Player.LockerPage][i].Unstorable)
                 Available++;
         
-        // Determine Offset
-        if (Player.LockerIndex > MENU_SCROLL && Available > MENU_SCROLL)
-            Offset = Player.LockerIndex - MENU_SCROLL
-        else
-            Offset = 0;
+        DrawItemGrid(IG_LOCKER);
         
-        for (int i = Offset; i < Offset + (MENU_SCROLL * 2) + 1; i++)
+        // Check Input
+        if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD))
         {
-            // Skip this item if it's unstorable
-            if (ItemData[Player.LockerPage][i].Unstorable) continue;
-            
-            // Stop if we're at the end of the list
-            if (i > ItemMax[Player.LockerPage] - 1) break;
-            
-            // Set the Color
-            if (i == Player.LockerIndex)
-                Color = MenuCursorColor
-            else
-                Color = CR_WHITE;
-            
-            // Display the item string
-            SetFont("SMALLFONT");
-            if (Player.LockerGlobal)
+            ActivatorSound("menu/move", 127);
+            Player.LockerIndex -= 9;
+            if (Player.LockerIndex < 0) Player.LockerIndex = 0;
+        };
+        if (Buttons & BT_BACK && !(OldButtons & BT_BACK))
+        {
+            ActivatorSound("menu/move", 127);
+            Player.LockerIndex += 9;
+            if (Player.LockerIndex > ItemMax[Player.LockerPage] - 1) Player.LockerIndex = ItemMax[Player.LockerPage] - 1;
+        };
+        if ((Buttons & BT_LEFT && !(OldButtons & BT_LEFT)) ||
+            (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT)))
+            if (Buttons & BT_SPEED)
             {
-                str Name = ItemData[Player.LockerPage][i].Name;
-                int Held = CheckInventory(ItemData[Player.LockerPage][i].Actor);
-                int Stored = GlobalLocker[Player.LockerPage][i];
-                str Text = StrParam("%s\n", Name);
-                
-                if (Held > 0 && Stored > 0)
-                    Text = StrParam("%s \cd[%d] \ck[%d]\n", Text, Held, Stored)
-                else if (Held > 0)
-                    Text = StrParam("%s \cd[%d]\n", Text, Held)
-                else if (Stored > 0)
-                    Text = StrParam("%s \ck[%d]\n", Text, Stored)
-                else
-                    Text = StrParam("%s\n", Text);
-                
-                HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
+                ActivatorSound("menu/move", 127);
+                Player.LockerPage--;
+                Player.LockerIndex = 0;
+                if (Player.LockerPage < 0) Player.LockerPage = ItemCategories - 1;
             }
             else
             {
-                str Name = ItemData[Player.LockerPage][i].Name;
-                int Held = CheckInventory(ItemData[Player.LockerPage][i].Actor);
-                int Stored = Player.Locker[Player.LockerPage][i];
-                str Text = StrParam("%s\n", Name);
-                
-                if (Held > 0 && Stored > 0)
-                    Text = StrParam("%s \cd[%d] \ck[%d]\n", Text, Held, Stored)
-                else if (Held > 0)
-                    Text = StrParam("%s \cd[%d]\n", Text, Held)
-                else if (Stored > 0)
-                    Text = StrParam("%s \ck[%d]\n", Text, Stored)
-                else
-                    Text = StrParam("%s\n", Text);
-                
-                HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
+                ActivatorSound("menu/move", 127);
+                Player.LockerIndex--;
+                if (Player.LockerIndex < 0) Player.LockerIndex = 0;
             };
-            
-            // Move down Y
-            Y += 8.0;
-        };
-        
-        // Check cursor movement for repeating
-        if (Buttons == BT_FORWARD)
-            Player.DelayTimer++;
-        if (Buttons == BT_BACK)
-            Player.DelayTimer++;
-        if (Buttons == BT_USE)
-            Player.DelayTimer++;
-        if (Buttons == BT_SPEED)
-            Player.DelayTimer++;
-        
-        // Check Input
-        if (Buttons == BT_FORWARD && (OldButtons != BT_FORWARD || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
-        {
-            if (Player.LockerIndex <= 0) Player.LockerIndex = ItemMax[Player.LockerPage] - 1 + 1;
-            ActivatorSound("menu/move", 127);
-            Player.LockerIndex--;
-            
-            // Skip over items which are unstorable
-            while (ItemData[Player.LockerPage][Player.LockerIndex].Unstorable)
-                if (Player.LockerIndex <= 0)
-                    Player.LockerIndex = ItemMax[Player.LockerPage] - 1
-                else
-                    Player.LockerIndex--;
-        };
-        if (Buttons == BT_BACK && (OldButtons != BT_BACK || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
-        {
-            if (Player.LockerIndex >= ItemMax[Player.LockerPage] - 1) Player.LockerIndex = -1;
-            ActivatorSound("menu/move", 127);
-            Player.LockerIndex++;
-            
-            // Skip over items which are unstorable
-            while (ItemData[Player.LockerPage][Player.LockerIndex].Unstorable)
-                if (Player.LockerIndex >= ItemMax[Player.LockerPage] - 1)
-                    Player.LockerIndex = 0
-                else
-                    Player.LockerIndex++;
-        };
-        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
-            (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
-        {
-            if (Player.LockerPage <= 0) Player.LockerPage = ItemCategories;
-            ActivatorSound("menu/move", 127);
-            Player.LockerIndex = 0;
-            Player.LockerPage--;
-            
-            // If the first item in the list is unstorable, move to the next item
-            if (ItemData[Player.LockerPage][Player.LockerIndex].Unstorable)
-                Player.LockerIndex++;
-        };
-        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
-            (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
-        {
-            if (Player.LockerPage >= ItemCategories - 1) Player.LockerPage = -1;
-            ActivatorSound("menu/move", 127);
-            Player.LockerIndex = 0;
-            Player.LockerPage++;
-            
-            // If the first item in the list is unstorable, move to the next item
-            if (ItemData[Player.LockerPage][Player.LockerIndex].Unstorable)
-                Player.LockerIndex++;
-        };
-        if (Buttons == BT_USE && (OldButtons != BT_USE || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
-        {
-            // Deposit
-            if (CheckInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor) > 0)
+        if ((Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT)) ||
+            (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT)))
+            if (Buttons & BT_SPEED)
             {
-                if (!Wireless || InBase)
+                ActivatorSound("menu/move", 127);
+                Player.LockerPage++;
+                Player.LockerIndex = 0;
+                if (Player.LockerPage > ItemCategories - 1) Player.LockerPage = 0;
+            }
+            else
+            {
+                ActivatorSound("menu/move", 127);
+                Player.LockerIndex++;
+                if (Player.LockerIndex > ItemMax[Player.LockerPage] - 1) Player.LockerIndex = ItemMax[Player.LockerPage] - 1;
+            };
+        if (Buttons & BT_USE)
+            Player.DelayTimer++
+        else
+            Player.DelayTimer = 0;
+        if (Buttons & BT_USE && !(OldButtons & BT_USE) || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat"))
+            if (Buttons & BT_SPEED) // Withdraw
+            {
+                bool Check = (Player.LockerGlobal ? GlobalLocker[Player.LockerPage][Player.LockerIndex] : (Player.Locker[Player.LockerPage][Player.LockerIndex] > 0));
+                
+                if (Check)
                 {
-                    TakeInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1);
-                    if (Player.LockerGlobal)
-                        GlobalLocker[Player.LockerPage][Player.LockerIndex]++
+                    if (!Wireless || InBase)
+                        Success = true
                     else
-                        Player.Locker[Player.LockerPage][Player.LockerIndex]++;
-                    ActivatorSound("menu/move", 127);
-                    Success = true;
-                }
-                else
-                {
-                    if (Player.EP < WirelessCost)
                     {
-                        SetHudSize(0, 0, false);
-                        SetFont("BIGFONT");
-                        HudMessage("Not Enough EP to Deposit item\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 2.0);
-                        ActivatorSound("menu/error", 127);
-                        Success = false;
-                    }
-                    else
+                        if (Player.EP < WirelessCost)
+                        {
+                            SetHudSize(0, 0, false);
+                            SetFont("BIGFONT");
+                            HudMessage("Not Enough EP to Withdraw item\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 2.0);
+                            ActivatorSound("menu/error", 127);
+                            Success = false;
+                        }
+                        else
+                            Success = true;
+                    };
+                    
+                    // Checking
+                    if (Success)
+                    {
+                        if (Player.LockerPage == 0 && CheckInventory("RLWeaponLimit") >= 6) // Weapons
+                        {
+                            ActivatorSound("menu/error", 127);
+                            Success = false;
+                        }
+                        else if (Player.LockerPage == 1 && CheckInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor) >= GetAmmoCapacity(ItemData[Player.LockerPage][Player.LockerIndex].Actor)) // Ammo
+                        {
+                            ActivatorSound("menu/error", 127);
+                            Success = false;
+                        }
+                        else if (Player.LockerPage == 2 && CheckInventory("RLArmorInInventory") >= 1) // Armor
+                        {
+                            ActivatorSound("menu/error", 127);
+                            Success = false;
+                        }
+                        else if (Player.LockerPage == 3 && Player.LockerIndex == 8 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
+                        {
+                            ActivatorSound("menu/error", 127);
+                            Success = false;
+                        }
+                        else if (Player.LockerPage == 3 && ((PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4)) // Mod Packs
+                        {
+                            ActivatorSound("menu/error", 127);
+                            Success = false;
+                        }
+                        else if (Player.LockerPage == 4 && CheckInventory("RLBootsInInventory") >= 1) // Boots
+                        {
+                            ActivatorSound("menu/error", 127);
+                            Success = false;
+                        }
+                        else if (Player.LockerPage == 0) // Weapons
+                        {
+                            if (GetCVar("drpg_ext_doomrl"))
+                                SpawnForced(StrParam("%sPickup\n", ItemData[Player.LockerPage][Player.LockerIndex].Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0)
+                            else
+                                SpawnForced(ItemData[Player.LockerPage][Player.LockerIndex].Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+                        }
+                        else if (Player.LockerPage == 1) // Ammo
+                            GiveInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1)
+                        else // Everything else
+                            SpawnForced(ItemData[Player.LockerPage][Player.LockerIndex].Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+                        
+                        if (Success)
+                        {
+                            SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
+                            if (Player.LockerGlobal)
+                                GlobalLocker[Player.LockerPage][Player.LockerIndex]--
+                            else
+                                Player.Locker[Player.LockerPage][Player.LockerIndex]--;
+                            if (Wireless && !InBase)
+                                Player.EP -= WirelessCost;
+                            ActivatorSound("menu/move", 127);
+                        };
+                    };
+                }
+                else if (Player.DelayTimer < 35.0 * GetCVarFixed("drpg_menu_repeat"))
+                    ActivatorSound("menu/error", 127);
+            }
+            else // Deposit
+            {
+                if (CheckInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor) > 0)
+                {
+                    if (!Wireless || InBase)
                     {
                         TakeInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1);
                         if (Player.LockerGlobal)
                             GlobalLocker[Player.LockerPage][Player.LockerIndex]++
                         else
                             Player.Locker[Player.LockerPage][Player.LockerIndex]++;
-                        Player.EP -= WirelessCost;
                         ActivatorSound("menu/move", 127);
                         Success = true;
-                    };
-                };
-                
-                if (Success)
-                    if (Player.LockerPage == 0) // Weapons
-                    {
-                        TakeInventory("RLWeaponLimit", 1);
-                        
-                        // Weapon portion of Nuclear Set Bonus Checking
-                        if (!CheckInventory("RLNuclearPlasmaPistol") || !CheckInventory("RLHighPowerNuclearPlasmaPistol") || !CheckInventory("RLStormNuclearPlasmaPistol") || CheckInventory("RLSuperchargedNuclearPlasmaPistol") ||
-                            !CheckInventory("RLNuclearPlasmaRifle") || !CheckInventory("RLHighPowerNuclearPlasmaRifle") || !CheckInventory("RLAssaultRifleNuclearPlasmaRifle") || !CheckInventory("RLBurstCannonNuclearPlasmaRifle") ||
-                            !CheckInventory("RLNuclearBFG9000") || !CheckInventory("RLHighPowerNuclearBFG9000") || !CheckInventory("RLNuclearVBFG9000") || !CheckInventory("RLNuclearBiggestFuckingGun"))
-                        {
-                            TakeInventory("RLNuclearWeaponSetBonusWeapon", 1);
-                            TakeInventory("RLNuclearWeaponSetBonusActive", 1);
-                        };
-                        
-                        // Tristar blaster Set Bonus Checking
-                        if (!CheckInventory("RLTristarBlaster") || !CheckInventory("RLHighPowerTristarBlaster") || !CheckInventory("RLNanomanufactureAmmoTristarBlaster"))
-                            TakeInventory("RLCerberusSetBonusTristarBlaster", 1);
-                    }
-                    else if (Player.LockerPage == 3) // Armor
-                        TakeInventory("RLArmorInInventory", 1)
-                    else if (Player.LockerPage == 9) // Mod Packs
-                        if (Player.LockerIndex == 8) // Special handling case for Armor Modpack
-                            TakeInventory("RLArmorModItemInInventory", 1)
-                        else
-                            if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
-                                TakeInventory("RLScavengerModLimit", 1)
-                            else
-                                TakeInventory("RLModLimit", 1)
-                    else if (Player.LockerPage == 10) // Boots
-                        TakeInventory("RLBootsInInventory", 1);
-            }
-            else if (Player.DelayTimer < 35.0 * GetCVarFixed("drpg_menu_repeat"))
-                ActivatorSound("menu/error", 127);
-        };
-        if (Buttons == BT_SPEED && (OldButtons != BT_SPEED || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
-        {
-            bool Check = (Player.LockerGlobal ? GlobalLocker[Player.LockerPage][Player.LockerIndex] : (Player.Locker[Player.LockerPage][Player.LockerIndex] > 0));
-            
-            // Withdraw
-            if (Check)
-            {
-                if (!Wireless || InBase)
-                    Success = true
-                else
-                {
-                    if (Player.EP < WirelessCost)
-                    {
-                        SetHudSize(0, 0, false);
-                        SetFont("BIGFONT");
-                        HudMessage("Not Enough EP to Withdraw item\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 2.0);
-                        ActivatorSound("menu/error", 127);
-                        Success = false;
                     }
                     else
-                        Success = true;
-                };
-                
-                // Checking
-                if (Success)
-                {
-                    if (Player.LockerPage == 0 && CheckInventory("RLWeaponLimit") >= 6) // Weapons
                     {
-                        ActivatorSound("menu/error", 127);
-                        Success = false;
-                    }
-                    else if (Player.LockerPage == 1 && CheckInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor) >= GetAmmoCapacity(ItemData[Player.LockerPage][Player.LockerIndex].Actor)) // Ammo
-                    {
-                        ActivatorSound("menu/error", 127);
-                        Success = false;
-                    }
-                    else if (Player.LockerPage == 2 && CheckInventory("RLArmorInInventory") >= 1) // Armor
-                    {
-                        ActivatorSound("menu/error", 127);
-                        Success = false;
-                    }
-                    else if (Player.LockerPage == 3 && Player.LockerIndex == 8 && CheckInventory("RLArmorModItemInInventory") >= 1) // Armor Modpack
-                    {
-                        ActivatorSound("menu/error", 127);
-                        Success = false;
-                    }
-                    else if (Player.LockerPage == 3 && ((PlayerClass(PlayerNumber()) == 2) ? CheckInventory("RLScavengerModLimit") >= 8 : CheckInventory("RLModLimit") >= 4)) // Mod Packs
-                    {
-                        ActivatorSound("menu/error", 127);
-                        Success = false;
-                    }
-                    else if (Player.LockerPage == 4 && CheckInventory("RLBootsInInventory") >= 1) // Boots
-                    {
-                        ActivatorSound("menu/error", 127);
-                        Success = false;
-                    }
-                    else if (Player.LockerPage == 0) // Weapons
-                    {
-                        if (GetCVar("drpg_ext_doomrl"))
-                            SpawnForced(StrParam("%sPickup\n", ItemData[Player.LockerPage][Player.LockerIndex].Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0)
+                        if (Player.EP < WirelessCost)
+                        {
+                            SetHudSize(0, 0, false);
+                            SetFont("BIGFONT");
+                            HudMessage("Not Enough EP to Deposit item\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 2.0);
+                            ActivatorSound("menu/error", 127);
+                            Success = false;
+                        }
                         else
-                            SpawnForced(ItemData[Player.LockerPage][Player.LockerIndex].Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
-                    }
-                    else if (Player.LockerPage == 1) // Ammo
-                        GiveInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1)
-                    else // Everything else
-                        SpawnForced(ItemData[Player.LockerPage][Player.LockerIndex].Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+                        {
+                            TakeInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1);
+                            if (Player.LockerGlobal)
+                                GlobalLocker[Player.LockerPage][Player.LockerIndex]++
+                            else
+                                Player.Locker[Player.LockerPage][Player.LockerIndex]++;
+                            Player.EP -= WirelessCost;
+                            ActivatorSound("menu/move", 127);
+                            Success = true;
+                        };
+                    };
                     
                     if (Success)
-                    {
-                        SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
-                        if (Player.LockerGlobal)
-                            GlobalLocker[Player.LockerPage][Player.LockerIndex]--
-                        else
-                            Player.Locker[Player.LockerPage][Player.LockerIndex]--;
-                        if (Wireless && !InBase)
-                            Player.EP -= WirelessCost;
-                        ActivatorSound("menu/move", 127);
-                    };
-                };
-            }
-            else if (Player.DelayTimer < 35.0 * GetCVarFixed("drpg_menu_repeat"))
-                ActivatorSound("menu/error", 127);
-        };
-        
-        // Reset the Delay Timer if no buttons are pressed
-        if (Buttons == 0 && OldButtons == 0)
-            Player.DelayTimer = 0;
+                        if (Player.LockerPage == 0) // Weapons
+                        {
+                            TakeInventory("RLWeaponLimit", 1);
+                            
+                            // Weapon portion of Nuclear Set Bonus Checking
+                            if (!CheckInventory("RLNuclearPlasmaPistol") || !CheckInventory("RLHighPowerNuclearPlasmaPistol") || !CheckInventory("RLStormNuclearPlasmaPistol") || CheckInventory("RLSuperchargedNuclearPlasmaPistol") ||
+                                !CheckInventory("RLNuclearPlasmaRifle") || !CheckInventory("RLHighPowerNuclearPlasmaRifle") || !CheckInventory("RLAssaultRifleNuclearPlasmaRifle") || !CheckInventory("RLBurstCannonNuclearPlasmaRifle") ||
+                                !CheckInventory("RLNuclearBFG9000") || !CheckInventory("RLHighPowerNuclearBFG9000") || !CheckInventory("RLNuclearVBFG9000") || !CheckInventory("RLNuclearBiggestFuckingGun"))
+                            {
+                                TakeInventory("RLNuclearWeaponSetBonusWeapon", 1);
+                                TakeInventory("RLNuclearWeaponSetBonusActive", 1);
+                            };
+                            
+                            // Tristar blaster Set Bonus Checking
+                            if (!CheckInventory("RLTristarBlaster") || !CheckInventory("RLHighPowerTristarBlaster") || !CheckInventory("RLNanomanufactureAmmoTristarBlaster"))
+                                TakeInventory("RLCerberusSetBonusTristarBlaster", 1);
+                        }
+                        else if (Player.LockerPage == 3) // Armor
+                            TakeInventory("RLArmorInInventory", 1)
+                        else if (Player.LockerPage == 9) // Mod Packs
+                            if (Player.LockerIndex == 8) // Special handling case for Armor Modpack
+                                TakeInventory("RLArmorModItemInInventory", 1)
+                            else
+                                if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
+                                    TakeInventory("RLScavengerModLimit", 1)
+                                else
+                                    TakeInventory("RLModLimit", 1)
+                        else if (Player.LockerPage == 10) // Boots
+                            TakeInventory("RLBootsInInventory", 1);
+                }
+                else if (Player.DelayTimer < 35.0 * GetCVarFixed("drpg_menu_repeat"))
+                    ActivatorSound("menu/error", 127);
+            };
         
         Delay(1);
     };
