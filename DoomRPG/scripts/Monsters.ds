@@ -774,6 +774,11 @@ script void MonsterDeath()
             if (Match == 0)
                 Players(Killer).Mission.Current++;
         };
+        
+        // Kill Reinforcements Mission
+        if (Players(Killer).Mission.Type == MT_REINFORCEMENTS)
+            if (CheckInventory("DRPGMonsterReinforcement"))
+                Players(Killer).Mission.Current++;
     };
     
     // SHOTGUNS!
@@ -785,44 +790,63 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
 {
     while (true)
     {
+        bool Complete = true;
+        bool DRLA = GetCVar("drpg_ext_doomrl");
         fixed X = GetActorX(0);
         fixed Y = GetActorY(0);
         fixed Z = GetActorZ(0);
+        int Min = Difficulty;
+        int Max = Difficulty + ((DRLA ? MAX_MONSTERS_DRLA : MAX_MONSTERS) - MAX_DIFFICULTIES);
         fixed SpawnX;
         fixed SpawnY;
         int TID;
         bool Success;
         MonsterInfo Monster;
         
-        if ((Timer() % (Time > 0 ? (35 * Time) : -Time)) == 0)
-            for (int i = Difficulty; i < (GetCVar("drpg_ext_doomrl") ? MAX_MONSTERS_DRLA : MAX_MONSTERS); i++)
-            {
-                SpawnX = RandomFixed(-(fixed)Radius, (fixed)Radius);
-                SpawnY = RandomFixed(-(fixed)Radius, (fixed)Radius);
-                TID = UniqueTID();
-                
-                if (GetCVar("drpg_ext_doomrl"))
-                    Monster = MonsterDataDRLA[i]
-                else
-                    Monster = MonsterData[i];
-                
-                if (Random(1, GameSkill() + Monster.Difficulty) == 1)
-                {
-                    Success = Spawn(Monster.Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
-                    
-                    if (Success)
-                        if (CheckSight(TID, 0, 0))
-                        {
-                            SetActorState(TID, "See", false);
-                            Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
-                            break;
-                        }
-                        else
-                            Thing_Remove(TID);
-                };
-            };
+        // Cap the maximum
+        // TODO: DRLA
+        if (Max > MAX_MONSTERS - 3)
+            Max = MAX_MONSTERS - 3;
         
-        Delay(1);
+        for (int i = Min; i < Max; i++)
+        {
+            SpawnX = RandomFixed(-(fixed)Radius, (fixed)Radius);
+            SpawnY = RandomFixed(-(fixed)Radius, (fixed)Radius);
+            TID = UniqueTID();
+            
+            if (GetCVar("drpg_ext_doomrl"))
+                Monster = MonsterDataDRLA[i]
+            else
+                Monster = MonsterData[i];
+            
+            if (Random(1, 10 - Difficulty) == 1)
+            {
+                Success = Spawn(Monster.Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
+                
+                if (Success)
+                    if (CheckSight(TID, 0, 0))
+                    {
+                        SetActorState(TID, "See", false);
+                        GiveActorInventory(TID, "DRPGMonsterReinforcement", 1);
+                        Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
+                        if (GetCVar("drpg_debug"))
+                            Log("\cdDEBUG: \c-Reinforcements Spawning Index %d (\ca%s\c-)\n", i, Monster.Name);
+                        break;
+                    }
+                    else
+                        Thing_Remove(TID);
+            };
+        };
+        
+        // Check to see if the mission is complete
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            if (Players(i).Mission.Active && Players(i).Mission.Type == MT_REINFORCEMENTS)
+                Complete = false;
+        
+        // If the mission is complete, terminate
+        if (Complete) return;
+        
+        Delay((Time > 0 ? (35 * Time) : -Time));
     };
 };
 

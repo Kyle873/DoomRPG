@@ -8,6 +8,7 @@
 #include "ItemData.dh"
 #include "Menu.dh"
 #include "Mission.dh"
+#include "Monsters.dh"
 #include "Outpost.dh"
 #include "Popoffs.dh"
 #include "RPG.dh"
@@ -23,7 +24,7 @@
 str[2] Version =
 {
     "v0.9.10 Beta - Too Many Shields Edition";
-	"Thursday, July 10, 2014 at 7:52:55 AM";
+	"Thursday, July 10, 2014 at 10:34:31 AM";
 };
 
 // Init Script
@@ -147,6 +148,17 @@ script void Init() enter
     
     // Initial build of SkillData
     BuildSkillData();
+    
+    // Mission Handling
+    for (int i = 0; i < MAX_PLAYERS; i++)
+        if (Players(i).Mission.Active)
+        {
+            if (Players(i).Mission.Type == MT_REINFORCEMENTS && !InBase) // Kill Reinforcements
+            {
+                MonsterTransport(CalculateAverageDifficulty(), 10 - Players(i).Mission.Difficulty, 1024);
+                break;
+            };
+        };
     
     // Initial Lag Warning
     if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) >= DNUM_MONSTER_DIV * 2)

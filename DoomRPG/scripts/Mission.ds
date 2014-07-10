@@ -41,7 +41,7 @@ str[MAX_DIFFICULTIES] MissionDifficulties =
 
 acscript void GetMission(int ForceType, int ForceDifficulty)
 {
-    int Type = (ForceType > 0 ? ForceType - 1 : Random(0, 1));
+    int Type = (ForceType > 0 ? ForceType - 1 : Random(0, MAX_MISSION_TYPES - 1));
     int Difficulty = (ForceDifficulty > 0 ? ForceDifficulty - 1 : Random(0, MAX_DIFFICULTIES - 1));
     int RewardXP = (Difficulty + 2) * (XPTable[Player.Level] / 100);
     int RewardRank = (Difficulty + 2) * (RankTable[Player.RankLevel] / 100);
@@ -132,6 +132,20 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
         Player.Mission.Amount = Amount;
     };
     
+    // Kill Reinforcements Mission
+    if (Type == MT_REINFORCEMENTS)
+    {
+        int Amount = Random(10 * (Difficulty + 1), 10 * (Difficulty + 1) * 2);
+        
+        // Message
+        SetFont("BIGFONT");
+        SetHudSize(640, 480, false);
+        HudMessage("New Mission! (%s\c-)\n\n\caKill Reinforcements\n\n\ckKill %d Reinforcements\n", MissionDifficulties[Difficulty], Amount, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
+        FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
+        
+        Player.Mission.Amount = Amount;
+    };
+    
     // Mission Accepted
     ActivatorSound("mission/get", 127);
     Player.Mission.Active = true;
@@ -181,7 +195,7 @@ function void CheckMission()
     };
     
     // Kill Mission
-    if (Player.Mission.Type == MT_KILL)
+    if (Player.Mission.Type == MT_KILL || Player.Mission.Type == MT_REINFORCEMENTS)
         if (Player.Mission.Current >= Player.Mission.Amount)
             Complete = true;
     
@@ -296,4 +310,23 @@ function ItemInfo GetRewardItem(int Difficulty)
         Log("\cdDEBUG: \c-Mission Reward Item: Category %d (mapped to %d), Index %d\n", Category, Categories[Category], Index);
     
     return Item;
+};
+
+function int CalculateAverageDifficulty()
+{
+    int NumPlayers;
+    int AvgDifficulty;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (PlayerInGame(i))
+            NumPlayers++;
+        
+        if (Players(i).Mission.Active)
+            AvgDifficulty += Players(i).Mission.Difficulty;
+    };
+    
+    AvgDifficulty /= NumPlayers;
+    
+    return AvgDifficulty;
 };
