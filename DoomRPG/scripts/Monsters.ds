@@ -801,6 +801,7 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
         fixed SpawnY;
         int TID;
         bool Success;
+        int SpawnTries;
         MonsterInfo Monster;
         
         // Cap the maximum
@@ -810,31 +811,47 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
         
         for (int i = Min; i < Max; i++)
         {
-            SpawnX = RandomFixed(-(fixed)Radius, (fixed)Radius);
-            SpawnY = RandomFixed(-(fixed)Radius, (fixed)Radius);
-            TID = UniqueTID();
             
             if (GetCVar("drpg_ext_doomrl"))
                 Monster = MonsterDataDRLA[i]
             else
                 Monster = MonsterData[i];
             
-            if (Random(1, 10 - Difficulty) == 1)
+            if (!Random(0, 9 - Difficulty))
             {
-                Success = Spawn(Monster.Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
+                TID = UniqueTID();
+                Success = false;
+                SpawnTries = 0;
                 
+                while (!Success && SpawnTries < 3)
+                {
+                    SpawnX = RandomFixed(-(fixed)Radius, (fixed)Radius);
+                    SpawnY = RandomFixed(-(fixed)Radius, (fixed)Radius);
+                    
+                    // Get the floor Z position at this spot
+                    SpawnForced("MapSpot", X + SpawnX, Y + SpawnY, Z, TID, 0);
+                    Z = GetActorFloorZ(TID);
+                    Thing_Remove(TID);
+                    
+                    Success = Spawn(Monster.Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
+                    if (Success)
+                        Success = CheckSight(TID, 0, 0);
+                    
+                    if (!Success)
+                        // Try again, closer to the player each time, up to 3 times, before giving up.
+                        Radius /= 2;
+                    
+                    SpawnTries++;
+                };
                 if (Success)
-                    if (CheckSight(TID, 0, 0))
-                    {
-                        SetActorState(TID, "See", false);
-                        GiveActorInventory(TID, "DRPGMonsterReinforcement", 1);
-                        Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
-                        if (GetCVar("drpg_debug"))
-                            Log("\cdDEBUG: \c-Reinforcements Spawning Index %d (\ca%s\c-)\n", i, Monster.Name);
-                        break;
-                    }
-                    else
-                        Thing_Remove(TID);
+                {
+                    SetActorState(TID, "See", false);
+                    GiveActorInventory(TID, "DRPGMonsterReinforcement", 1);
+                    Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
+                    if (GetCVar("drpg_debug"))
+                        Log("\cdDEBUG: \c-Reinforcements Spawning Index %d (\ca%s\c-)\n", i, Monster.Name);
+                    break;
+                };
             };
         };
         
