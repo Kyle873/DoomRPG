@@ -790,6 +790,8 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
 {
     while (true)
     {
+        Delay((Time > 0 ? (35 * Time) : -Time));
+
         bool Complete = true;
         bool DRLA = GetCVar("drpg_ext_doomrl");
         fixed X = GetActorX(0);
@@ -802,6 +804,7 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
         int TID;
         bool Success;
         int SpawnTries;
+        int CurrentRadius;
         MonsterInfo Monster;
         
         // Cap the maximum
@@ -822,11 +825,12 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
                 TID = UniqueTID();
                 Success = false;
                 SpawnTries = 0;
+                CurrentRadius = Radius;
                 
                 while (!Success && SpawnTries < 3)
                 {
-                    SpawnX = RandomFixed(-(fixed)Radius, (fixed)Radius);
-                    SpawnY = RandomFixed(-(fixed)Radius, (fixed)Radius);
+                    SpawnX = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
+                    SpawnY = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
                     
                     // Get the floor Z position at this spot
                     SpawnForced("MapSpot", X + SpawnX, Y + SpawnY, Z, TID, 0);
@@ -839,7 +843,7 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
                     
                     if (!Success)
                         // Try again, closer to the player each time, up to 3 times, before giving up.
-                        Radius /= 2;
+                        CurrentRadius /= 2;
                     
                     SpawnTries++;
                 };
@@ -847,6 +851,7 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
                 {
                     SetActorState(TID, "See", false);
                     GiveActorInventory(TID, "DRPGMonsterReinforcement", 1);
+                    Thing_ChangeTID(TID, 0); // Get rid of the ID
                     Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
                     if (GetCVar("drpg_debug"))
                         Log("\cdDEBUG: \c-Reinforcements Spawning Index %d (\ca%s\c-)\n", i, Monster.Name);
@@ -862,8 +867,6 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
         
         // If the mission is complete, terminate
         if (Complete) return;
-        
-        Delay((Time > 0 ? (35 * Time) : -Time));
     };
 };
 
