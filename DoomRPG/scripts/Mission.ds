@@ -95,21 +95,21 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
         // Generate Item and Amount
         int ItemIndex = Random(0, MAX_LOOT - 1);
         int Amount = Random(5, 10);
-        LootItemPtr Item = &LootData[ItemIndex];
+        LootItemPtr ItemPtr = &LootData[ItemIndex];
         
         // Remove any of the selected loot item if you already have any
-        if (CheckInventory(Item->Actor) > 0)
-            SetInventory(Item->Actor, 0);
+        if (CheckInventory(ItemPtr->Actor) > 0)
+            SetInventory(ItemPtr->Actor, 0);
         
         // Message and Loot Icon
         SetFont("BIGFONT");
         SetHudSize(640, 480, false);
-        HudMessage("New Mission! (%s\c-)\n\n\cdCollection\n\n\ckFind %d %s\n", MissionDifficulties[Difficulty], Amount, Item->Name, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
-        PrintSpriteFade(Item->Icon, MISSION_ID + 1, 320.4, 300.4, 3.0, 2.0);
+        HudMessage("New Mission! (%s\c-)\n\n\cdCollection\n\n\ckFind %d %s\n", MissionDifficulties[Difficulty], Amount, ItemPtr->Name, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
+        PrintSpriteFade(ItemPtr->Icon, MISSION_ID + 1, 320.4, 300.4, 3.0, 2.0);
         FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
         
         // Pass data to the Mission struct
-        Player.Mission.Item = (LootItem *)Item;
+        Player.Mission.Item = (LootItem *)ItemPtr;
         Player.Mission.Amount = Amount;
     };
     
@@ -119,7 +119,7 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
         bool DRLA = GetCVar("drpg_ext_doomrl");
         int MonsterIndex;
         int Amount;
-        MonsterInfoPtr Monster;
+        MonsterInfoPtr MonsterPtr;
         
         while (true)
         {
@@ -127,27 +127,27 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
             
             // Do we lookup data from the Vanilla or DRLA table?
             if (DRLA)
-                Monster = &MonsterDataDRLA[MonsterIndex]
+                MonsterPtr = &MonsterDataDRLA[MonsterIndex]
             else
-                Monster = &MonsterData[MonsterIndex];
+                MonsterPtr = &MonsterData[MonsterIndex];
             
-            if (Monster->Difficulty <= 65 + (Difficulty * 10))
+            if (MonsterPtr->Difficulty <= 65 + (Difficulty * 10))
                 break;
         };
         
         // Now that we know the monster type, we can calculate an amount
-        int BaseAmount = (10 + (23 * Difficulty) * (101 - Monster->Difficulty)) / 100;
+        int BaseAmount = (10 + (23 * Difficulty) * (101 - MonsterPtr->Difficulty)) / 100;
         Amount = Random((BaseAmount / 4) * 3, BaseAmount);
         if (Amount < 2) Amount = 2;
         
         // Message
         SetFont("BIGFONT");
         SetHudSize(640, 480, false);
-        HudMessage("New Mission! (%s\c-)\n\n\caKill\n\n\ckKill %d %ss\n", MissionDifficulties[Difficulty], Amount, Monster->Name, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
+        HudMessage("New Mission! (%s\c-)\n\n\caKill\n\n\ckKill %d %ss\n", MissionDifficulties[Difficulty], Amount, MonsterPtr->Name, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
         FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
         
         // Pass data to the Mission struct
-        Player.Mission.Monster = (MonsterInfo *)Monster;
+        Player.Mission.Monster = (MonsterInfo *)MonsterPtr;
         Player.Mission.Amount = Amount;
     };
     
@@ -264,7 +264,7 @@ function void ClearMission()
     Player.Mission.Amount = 0;
 };
 
-// TODO: Difficulty effects which category it will pick items from
+// TODO: The return casting here could potentially be Very Bad(TM), investigate the proper way to do it
 function ItemInfo *GetRewardItem(int Difficulty)
 {
     // Category Mapping
@@ -318,17 +318,17 @@ function ItemInfo *GetRewardItem(int Difficulty)
     };
     if (Category == 5 && Index == 0) // Quick lolhax to skip Armor Bonus
         Index++;
-    ItemInfoPtr Item = &ItemData[Categories[Category]][Index];
+    ItemInfoPtr ItemPtr = &ItemData[Categories[Category]][Index];
     
     // DoomRL Compatibility
     if (GetCVar("drpg_ext_doomrl") && Category == 0) // Weapons
-        Item->Actor = StrParam("%sPickup\n", Item->Actor);
+        ItemPtr->Actor = StrParam("%sPickup\n", ItemPtr->Actor);
     
     // Debugging
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \c-Mission Reward Item: Category %d (mapped to %d), Index %d\n", Category, Categories[Category], Index);
     
-    return (ItemInfo *)Item;
+    return (ItemInfo *)ItemPtr;
 };
 
 function int CalculateAverageDifficulty()
