@@ -962,9 +962,9 @@ acscript void ShopSpecial()
     {
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-        str Name = ShopSpecialItem.Name;
+        str Name = ShopSpecialItem->Name;
         int Discount = (30 - (GameSkill() * 5)) + Player.ShopDiscount;
-        int Cost = ShopSpecialItem.Price - ShopSpecialItem.Price * Discount / 100;
+        int Cost = ShopSpecialItem->Price - ShopSpecialItem->Price * Discount / 100;
         
         // Cap the Shop Special Discount at 75%
         if (Discount > 75) Discount = 75;
@@ -994,7 +994,7 @@ acscript void ShopSpecial()
             if (CheckInventory("DRPGCredits") >= Cost)
             {
                 TakeInventory("DRPGCredits", Cost);
-                SpawnForced(ShopSpecialItem.Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+                SpawnForced(ShopSpecialItem->Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
                 SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
                 ShopSpecialBought = true;
                 
@@ -1503,8 +1503,8 @@ function void CheckShopSpecial(bool Force)
         };
         
         // Assign the item to the Shop Special item
-        ShopSpecialItem = ItemData[Category][Index];
-        ShopSpecialItem.Category = Category;
+        ShopSpecialItem = &ItemData[Category][Index];
+        ShopSpecialItem->Category = Category;
         
         // Spawn the item if you're in the Outpost
         SpawnShopSpecialItem();
@@ -1515,7 +1515,7 @@ function void CheckShopSpecial(bool Force)
         
         if (GetCVar("drpg_debug"))
             if (Arbitrator)
-                Log("\cdDEBUG: Shop Special expired! Now \cj%s\n", ShopSpecialItem.Name);
+                Log("\cdDEBUG: Shop Special expired! Now \cj%s\n", ShopSpecialItem->Name);
     };
     
     // Remove the item if it was bought
@@ -1532,11 +1532,11 @@ function void SpawnShopSpecialItem()
     {
         // DoomRL Compatibility
         if (GetCVar("drpg_ext_doomrl"))
-            if (ShopSpecialItem.Category == 0) // Weapons
-                ShopSpecialItem.Actor = StrParam("%sPickup\n", ShopSpecialItem.Actor);
+            if (ShopSpecialItem->Category == 0) // Weapons
+                ShopSpecialItem->Actor = StrParam("%sPickup\n", ShopSpecialItem->Actor);
         
         Thing_Remove(ShopSpecialTID + 1);
-        if (!SpawnSpotForced(ShopSpecialItem.Actor, ShopSpecialTID, ShopSpecialTID + 1, 0))
+        if (!SpawnSpotForced(ShopSpecialItem->Actor, ShopSpecialTID, ShopSpecialTID + 1, 0))
             CheckShopSpecial(true)
         else
         {

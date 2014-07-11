@@ -147,6 +147,11 @@ acscript void AddShieldHealth(int Amount)
 
 function void CheckShields()
 {
+    ShieldPart ShieldSpace *PartBody = &ShieldData[0][Player.Shield.Body - 1];
+    ShieldPart ShieldSpace *PartBattery = &ShieldData[1][Player.Shield.Battery - 1];
+    ShieldPart ShieldSpace *PartCapacitor = &ShieldData[2][Player.Shield.Capacitor - 1];
+    ShieldPart ShieldSpace *PartAccessory = &ShieldData[3][Player.Shield.Accessory - 1];
+    
     // Check to make sure the Shield has components
     if (Player.Shield.Active && (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0))
     {
@@ -183,15 +188,15 @@ function void CheckShields()
     };
     
     // If a part is sold/dropped/nuked from orbit/etc, unequip it
-    if (!CheckInventory(ShieldData[0][Player.Shield.Body - 1].Actor))       Player.Shield.Body = 0;
-    if (!CheckInventory(ShieldData[1][Player.Shield.Battery - 1].Actor))    Player.Shield.Battery = 0;
-    if (!CheckInventory(ShieldData[2][Player.Shield.Capacitor - 1].Actor))  Player.Shield.Capacitor = 0;
-    if (!CheckInventory(ShieldData[3][Player.Shield.Accessory - 1].Actor))  Player.Shield.Accessory = 0;
+    if (!CheckInventory(PartBody->Actor))       Player.Shield.Body = 0;
+    if (!CheckInventory(PartBattery->Actor))    Player.Shield.Battery = 0;
+    if (!CheckInventory(PartCapacitor->Actor))  Player.Shield.Capacitor = 0;
+    if (!CheckInventory(PartAccessory->Actor))  Player.Shield.Accessory = 0;
     
     // Apply Components stats to Shield
-    Player.Shield.Capacity = ShieldData[0][Player.Shield.Body - 1].Capacity + ShieldData[1][Player.Shield.Battery - 1].Capacity + ShieldData[2][Player.Shield.Capacitor - 1].Capacity;
-    Player.Shield.ChargeRate = ShieldData[0][Player.Shield.Body - 1].ChargeRate + ShieldData[1][Player.Shield.Battery- 1].ChargeRate + ShieldData[2][Player.Shield.Capacitor- 1].ChargeRate;
-    Player.Shield.DelayRate = 5.0 + ShieldData[0][Player.Shield.Body - 1].DelayRate + ShieldData[1][Player.Shield.Battery - 1].DelayRate + ShieldData[2][Player.Shield.Capacitor - 1].DelayRate;
+    Player.Shield.Capacity = PartBody->Capacity + PartBattery->Capacity + PartCapacitor->Capacity;
+    Player.Shield.ChargeRate = PartBody->ChargeRate + PartBattery->ChargeRate + PartCapacitor->ChargeRate;
+    Player.Shield.DelayRate = 5.0 + PartBody->DelayRate + PartBattery->DelayRate + PartCapacitor->DelayRate;
     Player.Shield.Interval = 35;
     
     // Aug Handling
@@ -410,19 +415,24 @@ function void CheckShieldAccessory()
 
 function void DrawShieldModel(int X, int Y)
 {
+    ShieldPart ShieldSpace *PartBody = &ShieldData[0][Player.Shield.Body - 1];
+    ShieldPart ShieldSpace *PartBattery = &ShieldData[1][Player.Shield.Battery - 1];
+    ShieldPart ShieldSpace *PartCapacitor = &ShieldData[2][Player.Shield.Capacitor - 1];
+    ShieldPart ShieldSpace *PartAccessory = &ShieldData[3][Player.Shield.Accessory - 1];
+    
     // Body
     if (Player.Shield.Capacitor > 0)
-        PrintSprite(ShieldData[2][Player.Shield.Capacitor - 1].Icon,    0, X + 0.1, Y + 0.1, 0.05);
+        PrintSprite(PartBody->Icon,         0, X + 0.1, Y + 0.1, 0.05);
     
     // Battery
     if (Player.Shield.Battery > 0)
-        PrintSprite(ShieldData[1][Player.Shield.Battery - 1].Icon,      0, X + 0.1, Y + 0.1, 0.05);
+        PrintSprite(PartBattery->Icon,      0, X + 0.1, Y + 0.1, 0.05);
     
     // Capacitor
     if (Player.Shield.Body > 0)
-        PrintSprite(ShieldData[0][Player.Shield.Body - 1].Icon,         0, X + 0.1, Y + 0.1, 0.05);
+        PrintSprite(PartCapacitor->Icon,    0, X + 0.1, Y + 0.1, 0.05);
     
     // Accessory
     if (Player.Shield.Accessory > 0)
-        PrintSprite(ShieldData[3][Player.Shield.Accessory - 1].Icon,    0, X + 0.1, Y + 0.1, 0.05);
+        PrintSprite(PartAccessory->Icon,    0, X + 0.1, Y + 0.1, 0.05);
 };
