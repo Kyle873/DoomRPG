@@ -1,12 +1,188 @@
 #ifndef _RPG_DH_
 #define _RPG_DH_
 
-#include "Defs.dh"
+#define ASAVE_SAFETIME          20 * 35
+#define ASAVE_RETRYTIME         5 * 35
 
 library("RPG");
 
-// Version and Timestamp
-extern variable map_array str[2] Version;
+struct PlayerData
+{
+    int TID;
+    
+    // Flags
+    bool FirstRun;
+    bool InMenu;
+    bool InShop;
+    bool InMinigame;
+    
+    // Primary Stats
+    int Strength;       // Increases Damage
+    int Defense;        // Reduces Damage taken
+    int Vitality;       // Increases max Health and HP regen rate
+    int Energy;         // Increases max EP and EP regen rate
+    int Regeneration;   // Increases both HP/EP regen rate
+    int Agility;        // Increases movement speed, jump height and survival bonus (and optionally weapon speed)
+    int Capacity;       // Increases max ammo capacities
+    int Luck;           // Increases drop chances
+    int HealthMax;      // Max player Health
+    int ArmorMax;       // Max Armor that the player's current armor can go up to
+    
+    // Stat Bonuses
+    int StrengthBonus;
+    int DefenseBonus;
+    int VitalityBonus;
+    int EnergyBonus;
+    int RegenerationBonus;
+    int AgilityBonus;
+    int CapacityBonus;
+    int LuckBonus;
+    
+    // Stat Perks
+    bool[STAT_MAX] Perks;
+    int AgilityTimer;
+    
+    // Secondary Stats
+    int LevelDamage;        // Damage dependent on the player's level
+    int BonusDamage;        // Damage bonus given by the Strength stat
+    int TotalDamage;        // Combined LevelDamage and BonusDamage
+    fixed DamageFactor;     // General damage the player will defend against
+    int Mass;               // Player mass, for preventing knockback
+    fixed Speed;            // Movement Speed
+    fixed JumpHeight;       // Jump Height
+    int WeaponSpeed;        // Weapon Speed Increase bsed on Agility
+    fixed SurvivalBonus;    // Chance that you will survive a fatal hit
+    int InvItems;           // How many inventory items you are currently carrying
+    int StatCap;            // Current Stat Cap
+    
+    // Energy Points (EP)
+    int EP;
+    int EPMax;
+    
+    // Level
+    int Level;
+    long int XP;
+    long int XPNext;
+    
+    // Rank
+    str RankString;
+    int RankLevel;
+    long int Rank;
+    long int RankNext;
+    int PayTimer;
+    int PayKills;
+    int PayBonus;
+    
+    // Combo System
+    int Combo;
+    int ComboTimer;
+    int BonusGained;
+    int XPGained;
+    int RankGained;
+
+    // HP/EP Regen Timers
+    int HPRate;
+    int HPTime;
+    int HPAmount;
+    int EPRate;
+    int EPTime;
+    int EPAmount;
+    int ToxicityRegenBonus;
+    int RegenBoostTimer;
+
+    // Luck Chance Percentages
+    fixed CreditChance;
+    fixed HealthChance;
+    fixed EPChance;
+    fixed ArmorChance;
+    fixed PowerupChance;
+    fixed WeaponChance;
+    fixed TokenChance;
+    fixed AugChance;
+    fixed ShieldChance;
+    fixed StimChance;
+    
+    // Menu Data
+    bool MenuBlock;
+    int Menu;
+    int OutpostMenu;
+    int MenuIndex;
+    int StatAmount;
+    int SkillPage;
+    int SkillMax;
+    int ShieldPage;
+    int StimSelected;
+    int ShopIndex;
+    int ShopPage;
+    
+    // Skill Info
+    bool[AURA_MAX] Aura;
+    int AuraTimer;
+    bool AuraBonus;
+    fixed SkillCostMult;
+    bool SkillWheelOpen;
+    int SkillSelected;
+    int[MAX_SKILLKEYS] SkillCategory;
+    int[MAX_SKILLKEYS] SkillIndex;
+    int Summons;
+    int[MAX_SUMMONS] SummonTID;
+    
+    // Status Effects
+    int StatusType;
+    int StatusTimer;
+    int Toxicity;
+
+    // Per-tic Checks
+    int BeforeHealth;
+    int AfterHealth;
+    int HealthLoss;
+    int BeforeShield;
+    int AfterShield;
+    int ShieldLoss;
+    
+    // Locker
+    int[ITEM_CATEGORIES][ITEM_MAX] Locker;
+    bool LockerGlobal;
+    int LockerPage;
+    int LockerIndex;
+    
+    // GUI
+    bool GUIOpen;
+    MouseInfo Mouse;
+    GUIWindow *[MAX_WINDOWS] Window;
+    
+    // Auto-Sell
+    bool[ITEM_CATEGORIES][ITEM_MAX] AutoSell;
+    int AutoSellTimer;
+    int AutoSellPay;
+    
+    // Toxic Meter
+    int ToxicTimer;
+    int ToxicOffset;
+    int ToxicStage;
+    
+    // Password System
+    int[PW_SIZE] PasswordData;
+    int PasswordChecksum;
+    
+    // Misc
+    int ShopDiscount;
+    int ShopCard;
+    int DelayTimer;
+    int DamageType;
+    
+    // Structception
+    Augmentations Augs;
+    ShieldInfo Shield;
+    StimData Stim;
+    MissionInfo Mission;
+};
+
+extern
+{
+    // Version and Timestamp
+    variable map_array str[2] Version;
+};
 
 extern "ACS"
 {
