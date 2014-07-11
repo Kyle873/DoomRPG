@@ -2,15 +2,16 @@
 #define _RPG_DH_
 
 #include "Defs.dh"
-#include "Augs.dh"
-#include "Shield.dh"
-#include "Stims.dh"
-#include "Mission.dh"
 
 #define ASAVE_SAFETIME          20 * 35
 #define ASAVE_RETRYTIME         5 * 35
 
 library("RPG");
+
+// Forward Declarations
+struct ItemInfo;
+struct MonsterInfo;
+struct LootItem;
 
 struct PlayerData
 {
@@ -178,14 +179,128 @@ struct PlayerData
     int DamageType;
     
     // Structception
-    Augmentations Augs;
-    ShieldInfo Shield;
-    StimData Stim;
-    MissionInfo Mission;
+    struct
+    {
+        int Battery;
+        int BatteryMax;
+        int Slots;
+        int SlotsUsed;
+        bool[MAX_AUGS] Active;
+        int[MAX_AUGS] Level;
+    } Augs;
+    
+    struct
+    {
+        // Current Parts
+        int Body;
+        int Battery;
+        int Capacitor;
+        int Accessory;
+        
+        // Flags
+        bool Active;
+        bool Full;
+
+        // Stats
+        int Charge;
+        int Capacity;
+        int Interval;
+        int ChargeRate;
+        fixed DelayRate;
+        int Timer;
+        int Health;
+        
+        // Accessories
+        bool LightAmp;
+        bool Invisibility;
+        bool Ghost;
+        bool TimeFreezer;
+        int GhostTimer;
+        int TimeFreezerTimer;
+    } Shield;
+    
+    struct
+    {
+        int[MAX_COMPOUNDS] Vials;
+        bool[MAX_COMPOUNDS] ActiveBonus;
+        int[MAX_COMPOUNDS] Current;
+        int[MAX_COMPOUNDS] Last;
+
+        int[MAX_COMPOUNDS] PowerupTimer;
+        int[MAX_COMPOUNDS] PowerupTimerMax;
+        
+        bool Active;
+        int Size;
+        int Amount;
+        int Capacity;
+        int VialMax;
+        int Timer;
+    } Stim;
+    
+    struct
+    {
+        // Basic
+        bool Active;
+        int Type;
+        int Difficulty;
+        
+        // Reward
+        int RewardXP;
+        int RewardRank;
+        int RewardCredits;
+        ItemInfo *RewardItem;
+        
+        // Mission Data
+        LootItem *Item;
+        MonsterInfo *Monster;
+        int Current;
+        int Amount;
+    } Mission;
 };
 
 extern
 {
+    // Flags
+    variable static bool InBase;
+    variable static bool Transported;
+
+    // Structs
+    variable static PlayerData[MAX_PLAYERS] _PlayerData;
+    //variable static MinigameData[MAX_PLAYERS] _MinigameData;
+
+    // --------------------------------------------------
+    // Multiplayer HUD
+    // 
+
+    // HUD Combo
+    variable global_array(20) int[MAX_PLAYERS] Combo @ 0;
+    variable global_array(22) int[MAX_PLAYERS] BonusGained @ 0;
+    variable global_array(23) int[MAX_PLAYERS] XPGained @ 0;
+    variable global_array(24) int[MAX_PLAYERS] RankGained @ 0;
+
+    // HUD Timers
+    variable global_array(25) int[MAX_PLAYERS] AuraTimerHUD @ 0;
+    variable global_array(26) int[MAX_PLAYERS] RegenBoostTimerHUD @ 0;
+    variable global_array(42) int[MAX_PLAYERS] StimTimerHUD @ 0;
+    variable global_array(7)  int[MAX_PLAYERS] StatusTimerHUD @ 0;
+
+    // HUD Item Counts
+    variable global_array(18) int[MAX_PLAYERS] Credits @ 0;
+    variable global_array(19) int[MAX_PLAYERS] Continues @ 0;
+
+    // Max Health and Armor
+    variable global_array(39) int[MAX_PLAYERS] HealthMax @ 0;
+    variable global_array(40) int[MAX_PLAYERS] ArmorMax @ 0;
+
+    // Energy Points (EP)
+    variable global_array(2)  int[MAX_PLAYERS] EP @ 0;
+    variable global_array(3)  int[MAX_PLAYERS] EPMax @ 0;
+
+    // Shield
+    variable global_array(50) int[MAX_PLAYERS] Shield @ 0;
+    variable global_array(51) int[MAX_PLAYERS] ShieldCapacity @ 0;
+    variable global_array(52) int[MAX_PLAYERS] ShieldHealth @ 0;
+
     // Version and Timestamp
     variable map_array str[2] Version;
 };

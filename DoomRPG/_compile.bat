@@ -25,16 +25,16 @@ echo Compiling Arena
 %ACC% -c %SRC%\Arena.ds -o %OBJ%\Arena.o
 echo Compiling Augs
 %ACC% -c %SRC%\Augs.ds -o %OBJ%\Augs.o
-echo Compiling GUI
-%ACC% -c %SRC%\GUI.ds -o %OBJ%\GUI.o
-echo Compiling GUIMenu
-%ACC% -c %SRC%\GUIMenu.ds -o %OBJ%\GUIMenu.o
+rem echo Compiling GUI
+rem %ACC% -c %SRC%\GUI.ds -o %OBJ%\GUI.o
+rem echo Compiling GUIMenu
+rem %ACC% -c %SRC%\GUIMenu.ds -o %OBJ%\GUIMenu.o
 echo Compiling HealthBars
 %ACC% -c %SRC%\HealthBars.ds -o %OBJ%\HealthBars.o
 echo Compiling HUD
 %ACC% -c %SRC%\HUD.ds -o %OBJ%\HUD.o
 echo Compiling ItemData
-%ACC% -c %SRC%\ItemData.ds -o %OBJ%\HUD.o
+%ACC% -c %SRC%\ItemData.ds -o %OBJ%\ItemData.o
 echo Compiling Map
 %ACC% -c %SRC%\Map.ds -o %OBJ%\Map.o
 echo Compiling Menu
@@ -58,7 +58,7 @@ echo Compiling RPG
 echo Compiling Shield
 %ACC% -c %SRC%\Shield.ds -o %OBJ%\Shield.o
 echo Compiling ShieldData
-%ACC% -c %SRC%\ShieldData.ds -o %OBJ%\Shield.o
+%ACC% -c %SRC%\ShieldData.ds -o %OBJ%\ShieldData.o
 echo Compiling Shop
 %ACC% -c %SRC%\Shop.ds -o %OBJ%\Shop.o
 echo Compiling Skills
@@ -70,7 +70,7 @@ echo Compiling Stims
 echo Compiling Utils
 %ACC% -c %SRC%\Utils.ds -o %OBJ%\Utils.o
 echo Linking RPG.lib
-%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\GUI.o %OBJ%\GUIMenu.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\ItemData.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\ShieldData.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
+%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\ItemData.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\ShieldData.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
 
 echo ----------------------------------------
 
