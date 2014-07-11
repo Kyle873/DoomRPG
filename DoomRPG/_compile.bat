@@ -33,12 +33,14 @@ echo Compiling HealthBars
 %ACC% -c %SRC%\HealthBars.ds -o %OBJ%\HealthBars.o
 echo Compiling HUD
 %ACC% -c %SRC%\HUD.ds -o %OBJ%\HUD.o
+echo Compiling ItemData
+%ACC% -c %SRC%\ItemData.ds -o %OBJ%\HUD.o
 echo Compiling Map
 %ACC% -c %SRC%\Map.ds -o %OBJ%\Map.o
 echo Compiling Menu
 %ACC% -c %SRC%\Menu.ds -o %OBJ%\Menu.o
-echo Compiling Minigame
-%ACC% -c %SRC%\Minigame.ds -o %OBJ%\Minigame.o
+rem echo Compiling Minigame
+rem %ACC% -c %SRC%\Minigame.ds -o %OBJ%\Minigame.o
 echo Compiling Mission
 %ACC% -c %SRC%\Mission.ds -o %OBJ%\Mission.o
 echo Compiling Monsters
@@ -55,6 +57,8 @@ echo Compiling RPG
 %ACC% -c %SRC%\RPG.ds -o %OBJ%\RPG.o
 echo Compiling Shield
 %ACC% -c %SRC%\Shield.ds -o %OBJ%\Shield.o
+echo Compiling ShieldData
+%ACC% -c %SRC%\ShieldData.ds -o %OBJ%\Shield.o
 echo Compiling Shop
 %ACC% -c %SRC%\Shop.ds -o %OBJ%\Shop.o
 echo Compiling Skills
@@ -66,7 +70,7 @@ echo Compiling Stims
 echo Compiling Utils
 %ACC% -c %SRC%\Utils.ds -o %OBJ%\Utils.o
 echo Linking RPG.lib
-%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\GUI.o %OBJ%\GUIMenu.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
+%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\GUI.o %OBJ%\GUIMenu.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\ItemData.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\ShieldData.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
 
 echo ----------------------------------------
 

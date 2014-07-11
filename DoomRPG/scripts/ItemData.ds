@@ -1,0 +1,711 @@
+#include "RPG.dh"
+#include "ItemData.dh"
+
+AddressSpace map_array ItemSpace;
+
+int ItemCategories = 9; // 9 vanilla, 7 reserved for compatibility
+
+str[ITEM_CATEGORIES] ItemCategoryNames =
+{
+    "Weapons";
+    "Ammo";
+    "Health";
+    "Armor";
+    "Powerups";
+    "Tokens";
+    "Shield Parts";
+    "Stims/Augs";
+    "Loot";
+};
+
+int[ITEM_CATEGORIES] CategoryFlags =
+{
+    CF_NONE;    // Weapons
+    CF_NOSELL;  // Ammo
+    CF_NONE;    // Health
+    CF_NONE;    // Armor
+    CF_NONE;    // Powerups
+    CF_NOSELL;  // Tokens
+    CF_NONE;    // Shield Parts
+    CF_NONE;    // Stims/Augs
+    CF_NOBUY;   // Loot
+};
+
+int[ITEM_CATEGORIES] ItemMax =
+{
+    8; 11; 8; 11; 13; 8; 1; 31; MAX_LOOT;
+};
+
+ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
+{
+    // Actor, Name, Price, Minimum Rank, Not Storable
+    
+    // Weapons
+    {
+        { "Chainsaw";                   "Chainsaw";                         300;        0;  { "CSAWA0"; 31; 23; };       };
+        { "Pistol";                     "Pistol";                           25;         0;  { "PISTA0"; 11; 15; };       };
+        { "Shotgun";                    "Shotgun";                          100;        0;  { "SHOTA0"; 31; 17; };       };
+        { "SuperShotgun";               "Super Shotgun";                    500;        1;  { "SGN2A0"; 27; 15; };       };
+        { "Chaingun";                   "Chaingun";                         750;        0;  { "MGUNA0"; 25; 18; };       };
+        { "RocketLauncher";             "Rocket Launcher";                  1000;       1;  { "LAUNA0"; 31; 18; };       };
+        { "PlasmaRifle";                "Plasma Rifle";                     2500;       1;  { "PLASA0"; 27; 19; };       };
+        { "BFG9000";                    "BFG9000";                          5000;       1;  { "BFUGA0"; 31; 38; };       };
+    };
+    
+    // Ammo
+    {
+        { "DRPGClip";                   "Clip";                             10;         0;  { "CLIPA0"; 2;  11; };       };
+        { "DRPGClipBox";                "Box of Bullets";                   50;         0;  { "AMMOA0"; 12; 16; }; true; };
+        { "DRPGShell";                  "Shells";                           25;         0;  { "SHELA0"; 5;  7;  };       };
+        { "DRPGShellBox";               "Box of Shells";                    125;        0;  { "SBOXA0"; 16; 12; }; true; };
+        { "DRPGRocketAmmo";             "Rockets";                          50;         1;  { "ROCKA0"; 6;  27; };       };
+        { "DRPGRocketBox";              "Box of Rockets";                   250;        1;  { "BROKA0"; 27; 20; }; true; };
+        { "DRPGCell";                   "Cells";                            200;        1;  { "CELLA0"; 8;  12; };       };
+        { "DRPGCellPack";               "Cell Pack";                        1000;       1;  { "CELPA0"; 15; 20; }; true; };
+        { "DRPGSmallBackpack";          "Ammo Satchel";                     285;        1;  { "ASCHA0"; 11; 27; }; true; };
+        { "DRPGBackpack";               "Backpack";                         1425;       1;  { "BPAKA0"; 8;  25; }; true; };
+        { "DRPGBigBackpack";            "Big Backpack";                     6325;       1;  { "GPAKA0"; 11; 29; }; true; };
+    };
+
+    // Health
+    {
+        { "DRPGStimpack";               "Stimpack";                         50;         0;  { "STIMA0"; 7;  15; };       };
+        { "DRPGMedikit";                "Medikit";                          100;        0;  { "MEDIA0"; 13; 19; };       };
+        { "DRPGLargeMedikit";           "Large Medikit";                    250;        1;  { "MEDLA0"; 12; 16; };       };
+        { "DRPGXLMedikit";              "Extra-Large Medikit";              500;        1;  { "MEDXA0"; 21; 30; };       };
+        { "DRPGMedPack";                "Med Pack";                         750;        1;  { "MEDPA0"; 10; 24; };       };
+        { "DRPGSurgeryKit";             "Surgery Kit";                      1000;       2;  { "MEDSA0"; 16; 24; };       };
+        { "DRPGSoulsphere";             "Soulsphere";                       2000;       2;  { "SOULA0"; 14; 39; }; true; };
+        { "DRPGContinue";               "Continue";                         50000;      4;  { "CONTA0"; 14; 48; };       };
+    };
+
+    // Armor
+    {
+        { "DRPGArmorBonus";             "Armor Bonus";                      1;          0;  { "BON2A0"; 7;  13; }; true; };
+        { "DRPGGreenArmor";             "Green Armor";                      100;        0;  { "ARM1A0"; 15; 17; };       };
+        { "DRPGUsedGreenArmor";         "Green Armor (Used)";               50;         0;  { "ARM1B0"; 15; 17; };       };
+        { "DRPGBlueArmor";              "Blue Armor";                       500;        0;  { "ARM2A0"; 15; 17; };       };
+        { "DRPGUsedBlueArmor";          "Blue Armor (Used)";                250;        0;  { "ARM2B0"; 15; 17; };       };
+        { "DRPGYellowArmor";            "Yellow Armor";                     1000;       1;  { "ARM3A0"; 15; 17; };       };
+        { "DRPGUsedYellowArmor";        "Yellow Armor (Used)";              500;        1;  { "ARM3B0"; 15; 17; };       };
+        { "DRPGRedArmor";               "Red Armor";                        5000;       2;  { "ARM4A0"; 15; 17; };       };
+        { "DRPGUsedRedArmor";           "Red Armor (Used)";                 2500;       2;  { "ARM4B0"; 15; 17; };       };
+        { "DRPGWhiteArmor";             "White Armor";                      10000;      4;  { "ARM5A0"; 15; 17; };       };
+        { "DRPGUsedWhiteArmor";         "White Armor (Used)";               5000;       4;  { "ARM5B0"; 15; 17; };       };
+    };
+    
+    // Powerups
+    {
+        { "DRPGInvulnerabilitySphere";  "Invulnerability Sphere";           5000;       0;  { "PINVA0"; 11; 23; };       };
+        { "DRPGInvulnerabilityCharge";  "Invulnerability Charge";           10000;      2;  { "CRG2A0"; 6;  22; };       };
+        { "DRPGBlurSphere";             "Invisibility Sphere";              1000;       0;  { "PINSA0"; 11; 39; };       };
+        { "DRPGInvisibilityCharge";     "Invisibility Charge";              2000;       2;  { "CRG1A0"; 6;  22; };       };
+        { "DRPGTimeSphere";             "Time Sphere";                      1000;       4;  { "TIMEA0"; 16; 45; };       };
+        { "DRPGRegenSphere";            "Regeneration Sphere";              1000;       2;  { "REGNA0"; 12; 38; };       };
+        { "DRPGRadSuit";                "Radiation Suit";                   250;        0;  { "SUITA0"; 11; 51; };       };
+        { "DRPGInfrared";               "IR Goggles";                       500;        0;  { "PVISA0"; 11; 9;  };       };
+        { "DRPGBerserk";                "Berserk Pack";                     1000;       1;  { "PSTRA0"; 12; 15; };       };
+        { "DRPGAllMap";                 "Computer Area Map";                1000;       1;  { "PMAPA0"; 13; 23; }; true; };
+        { "DRPGWings";                  "Wings";                            1000;       2;  { "WINGA0"; 13; 36; };       };
+        { "DRPGMegasphere";             "Megasphere";                       10000;      4;  { "MEGAA0"; 12; 32; }; true; };
+        { "DRPGImmunityCrystal";        "Immunity Crystal";                 100000;     8;  { "CRYS";   -7; -4; };       };
+    };
+    
+    // Tokens
+    {
+        { "DRPGStatToken";              "Stat Token";                       25000;      0;  { "TOKAA0"; 3;  21; };       };
+        { "DRPGBigStatToken";           "Big Stat Token";                   100000;     2;  { "TOKAA0"; 3;  21; }; true; };
+        { "DRPGStatCapToken";           "Stat Cap Token";                   25000;      0;  { "TOKBA0"; 3;  21; };       };
+        { "DRPGBigStatCapToken";        "Big Stat Cap Token";               100000;     2;  { "TOKBA0"; 3;  21; }; true; };
+        { "DRPGSkillToken";             "Skill Token";                      25000;      0;  { "TOKCA0"; 3;  21; };       };
+        { "DRPGBigSkillToken";          "Big Skill Token";                  100000;     2;  { "TOKCA0"; 3;  21; }; true; };
+        { "DRPGMegaToken";              "Mega Token";                       250000;     4;  { "TOKDA0"; 3;  21; }; true; };
+        { "DRPGBigMegaToken";           "Big Mega Token";                   500000;     4;  { "TOKDA0"; 3;  21; }; true; };
+    };
+    
+    // Shield Parts - Built Dynamically
+    {
+        { "DRPGBasicShieldPackage";     "Basic Shield Package";             5000;       0;  { "SHPAA0"; 16; 32; }; true; };
+    };
+
+    // Stims/Augmentations
+    {
+        { "DRPGStimSmall";              "Small Stim";                       1000;       0;  { "STIMB0"; 16; 29; };       };
+        { "DRPGStimMedium";             "Medium Stim";                      2500;       2;  { "STIMB0"; 16; 29; };       };
+        { "DRPGStimLarge";              "Large Stim";                       5000;       4;  { "STIMB0"; 16; 29; };       };
+        { "DRPGStimXL";                 "Extra-Large Stim";                 10000;      8;  { "STIMB0"; 16; 29; };       };
+        { "DRPGStimDetox";              "\cdDetox\c- Stim";                 1000;       1;  { "STIMC0"; 16; 29; };       };
+        { "DRPGVialStrength";           "\cgStrength\c- Vial";              500;        4;  { "STVLA0"; 4;  8;  }; true; };
+        { "DRPGVialDefense";            "\cdDefense\c- Vial";               500;        4;  { "STVLB0"; 4;  8;  }; true; };
+        { "DRPGVialVitality";           "\caVitality\c- Vial";              500;        4;  { "STVLC0"; 4;  8;  }; true; };
+        { "DRPGVialEnergy";             "\cnEnergy\c- Vial";                500;        4;  { "STVLD0"; 4;  8;  }; true; };
+        { "DRPGVialRegeneration";       "\ctRegeneration\c- Vial";          500;        4;  { "STVLE0"; 4;  8;  }; true; };
+        { "DRPGVialAgility";            "\ciAgility\c- Vial";               500;        4;  { "STVLF0"; 4;  8;  }; true; };
+        { "DRPGVialCapacity";           "\chCapacity\c- Vial";              500;        4;  { "STVLG0"; 4;  8;  }; true; };
+        { "DRPGVialLuck";               "\ckLuck\c- Vial";                  500;        4;  { "STVLH0"; 4;  8;  }; true; };
+        { "DRPGVialPurifier";           "\ccPurifier\c- Vial";              1000;       4;  { "STVLI0"; 4;  8;  }; true; };
+        { "DRPGVialPotency";            "\cjPotency\c- Vial";               100;        4;  { "STVLJ0"; 4;  8;  }; true; };
+        { "DRPGVialIndestructible";     "\cqIndestructible\c- Vial";        1000;       4;  { "STVLK0"; 4;  8;  }; true; };
+        { "DRPGVialShadow";             "\crShadow\c- Vial";                1000;       4;  { "STVLL0"; 4;  8;  }; true; };
+        { "DRPGVialInfinity";           "\ckInfinity\c- Vial";              1000;       4;  { "STVLM0"; 4;  8;  }; true; };
+        { "DRPGVialChrono";             "\cdChrono\c- Vial";                1000;       4;  { "STVLN0"; 4;  8;  }; true; };
+        { "DRPGVialAdrenaline";         "\ctAdrenaline\c- Vial";            1000;       4;  { "STVLO0"; 4;  8;  }; true; };
+        { "DRPGVialGravity";            "\ciInvisibility\c- Vial";          1000;       4;  { "STVLP0"; 4;  8;  }; true; };
+        { "DRPGVialVampire";            "\caVampire\c- Vial";               1000;       4;  { "STVLQ0"; 4;  8;  }; true; };
+        { "DRPGVialRage";               "\cmRage\c- Vial";                  1000;       4;  { "STVLR0"; 4;  8;  }; true; };
+        { "DRPGVialMagnetic";           "\ccMagnetic\c- Vial";              1000;       4;  { "STVLS0"; 4;  8;  }; true; };
+        { "DRPGStimPackageStat";        "Stat Stim Package";                2500;       4;  { "STPAA0"; 30; 0;  }; true; };
+        { "DRPGStimPackagePowerup";     "Powerup Stim Package";             2500;       4;  { "STPAB0"; 30; 0;  }; true; };
+        { "DRPGAugCanister";            "Augmentation Canister";            100000;     4;  { "AUGCA0"; 12; 24; };       };
+        { "DRPGAugUpgradeCanister";     "Augmentation Upgrade Canister";    100000;     4;  { "AUGUA0"; 12; 24; };       };
+        { "DRPGAugSlotUpgrade";         "Augmentation Slot Upgrade";        250000;     8;  { "AUGUB0"; 16; 25; };       };
+        { "DRPGBatterySmall";           "Small Battery";                    1000;       4;  { "BATTA0"; 5;  13; };       };
+        { "DRPGBatteryLarge";           "Large Battery";                    2500;       8;  { "BATTB0"; 14; 21; };       };
+    };
+    
+    // Generic Loot
+    {
+        { "DRPGLootMedicalSupplies";    "Medical Supplies";                 100;        0;  { "LT01"; 0;  0;  };         };
+        { "DRPGLootChemicals";          "Chemicals";                        250;        0;  { "LT02"; 0;  0;  };         };
+        { "DRPGLootHazardousMaterials"; "Hazardous Materials";              250;        0;  { "LT03"; 0;  0;  };         };
+     // { "DRPGLootAnomalousMaterials"; "Anomalous Materials";              250;        0;  { "LT04"; 0;  0;  };         };
+        { "DRPGLootBriefcase";          "Briefcase Data";                   500;        0;  { "LT05"; 0;  0;  };         };
+        { "DRPGLootComputerData";       "Computer Data";                    500;        0;  { "LT06"; 0;  0;  };         };
+        { "DRPGLootGunParts";           "Gun Parts";                        250;        0;  { "LT07"; 0;  0;  };         };
+     // { "DRPGLootAmmoCasings";        "Ammo Casings";                     50;         0;  { "LT08"; 0;  0;  };         };
+        { "DRPGLootFuelCapsule";        "Fuel Capsule";                     100;        0;  { "LT09"; 0;  0;  };         };
+     // { "DRPGLootScrapMetals";        "Scrap Metals";                     100;        0;  { "LT10"; 0;  0;  };         };
+        { "DRPGLootScrapElectronics";   "Scrap Electronics";                100;        0;  { "LT11"; 0;  0;  };         };
+        { "DRPGLootExperimentalParts";  "Experimental Parts";               500;        0;  { "LT12"; 0;  0;  };         };
+     // { "DRPGLootDemonArtifact";      "Demon Artifacts";                  500;        0;  { "LT13"; 0;  0;  };         };
+    };
+};
+
+function void BuildItemData()
+{
+    int Index = 1;
+    
+    // Shield Page
+    ItemMax[6] = 1;
+    for (int i = 0; i < 4; i++)
+    {
+        str ShieldActorName = "";
+        str ShieldName = "";
+        int ShieldCost = 0;
+        
+        ItemMax[6] += ShieldPartsMax[i];
+        
+        switch (i)
+        {
+            case 0: ShieldActorName = "DRPGShieldBody";         ShieldName = "Shield Body - ";      break;
+            case 1: ShieldActorName = "DRPGShieldBattery";      ShieldName = "Shield Battery - ";   break;
+            case 2: ShieldActorName = "DRPGShieldCapacitor";    ShieldName = "Shield Capacitor - "; break;
+            case 3: ShieldActorName = "DRPGShieldAccessory";    ShieldName = "Shield Accessory - "; break;
+        };
+        
+        for (int j = 0; j < ShieldPartsMax[i]; j++)
+        {
+            // Name
+            ItemData[6][Index].Actor = StrParam("%s%d\n", ShieldActorName, j + 1);
+            ItemData[6][Index].Name = StrParam("%s%s\c-\n", ShieldName, ShieldData[i][j].Name);
+            
+            // Price
+            if (i < 3) // Bodies, Batteries, Capacitors
+            {
+                int Capacity = ShieldData[i][j].Capacity;
+                int ChargeRate = ShieldData[i][j].ChargeRate;
+                int DelayRate = ShieldData[i][j].DelayRate;
+                
+                // Capacity
+                ShieldCost += Capacity * 100;
+                
+                // Charge Rate
+                if (ChargeRate < 0)
+                    ShieldCost -= ChargeRate * 1000
+                else
+                    ShieldCost += ChargeRate * 1000;
+                
+                // Delay
+                if (DelayRate < 0)
+                    ShieldCost -= DelayRate * 20000
+                else
+                    ShieldCost += DelayRate * 20000;
+                
+                // Don't go below 1000 Credits
+                if (ShieldCost < 1000)
+                    ShieldCost = 1000;
+            }
+            else // Accessories
+            {
+                if (j == 0)  ShieldCost = 10000;
+                if (j == 1)  ShieldCost = 15000;
+                if (j == 2)  ShieldCost = 40000;
+                if (j == 3)  ShieldCost = 20000;
+                if (j == 4)  ShieldCost = 20000;
+                if (j == 5)  ShieldCost = 20000;
+                if (j == 6)  ShieldCost = 12000;
+                if (j == 7)  ShieldCost = 15000;
+                if (j == 8)  ShieldCost = 50000;
+                if (j == 9)  ShieldCost = 12000;
+                if (j == 10) ShieldCost = 15000;
+                if (j == 11) ShieldCost = 12000;
+                if (j == 12) ShieldCost = 45000;
+                if (j == 13) ShieldCost = 20000;
+                if (j == 14) ShieldCost = 25000;
+                if (j == 15) ShieldCost = 75000;
+                if (j == 16) ShieldCost = 120000;
+                if (j == 17) ShieldCost = 35000;
+                if (j == 18) ShieldCost = 20000;
+                if (j == 19) ShieldCost = 50000;
+                if (j == 20) ShieldCost = 10000;
+                if (j == 21) ShieldCost = 70000;
+                if (j == 22) ShieldCost = 70000;
+                if (j == 23) ShieldCost = 45000;
+                if (j == 24) ShieldCost = 45000;
+                if (j == 25) ShieldCost = 40000;
+                if (j == 26) ShieldCost = 80000;
+                if (j == 27) ShieldCost = 200000;
+                if (j == 28) ShieldCost = 65000;
+            };
+            
+            ItemData[6][Index].Price = ShieldCost;
+            
+            // Rank
+            ItemData[6][Index].Rank = j / 1.5;
+            
+            // Sprite Info
+            ItemData[6][Index].Sprite.Name = ShieldData[i][j].Icon;
+            ItemData[6][Index].Sprite.XOff = 16;
+            ItemData[6][Index].Sprite.YOff = 32;
+            
+            Index++;
+        };
+    };
+    
+    // Compatibility handling - Extras
+    if (GetCVar("drpg_ext_extras"))
+    {
+        // Weapons
+        ItemData[0][0].Actor = "Chainsaw1";
+        ItemData[0][1].Actor = "Pistol1";
+        ItemData[0][2].Actor = "Shotgun1";
+        ItemData[0][3].Actor = "SSG";
+        ItemData[0][4].Actor = "Chaingun1";
+        ItemData[0][5].Actor = "RocketLauncher1";
+        ItemData[0][6].Actor = "Plasmagun";
+        ItemData[0][6].Sprite = { "PLASA0"; 27; 12; };
+        ItemData[0][7].Actor = "BFG9001";
+        
+        // Ammo
+        ItemData[1][2].Sprite = { "SHELA0"; 8; 8; };
+        ItemData[1][4].Sprite = { "ROCKA0"; 8; 36; };
+        ItemData[1][5].Sprite = { "BROKA0"; 27; 26; };
+    };
+        
+    // Compatibility Handling - DoomRL
+    if (GetCVar("drpg_ext_doomrl"))
+    {
+        // Categories
+        ItemCategories = 11;
+        ItemCategoryNames[9] = "Mod Packs";
+        ItemCategoryNames[10] = "Boots";
+        
+        // Maximums
+        ItemMax[0] = 151;   // Weapons
+        ItemMax[1] = 12;    // Ammo
+        ItemMax[3] = 91;    // Armor
+        ItemMax[4] = 15;    // Powerups
+        ItemMax[9] = 9;     // Mod Packs
+        ItemMax[10] = 33;   // Boots
+        
+        // Stops
+        ItemStop[0] = 26;   // Weapons
+        ItemStop[3] = 46;   // Armor
+        ItemStop[10] = 21;  // Boots
+        
+        // Weapons
+        ItemData[0] =
+        {
+            // Common Weapons
+            { "RLChainsaw"; "Chainsaw"; 																		300; 0; { "SAWGX0"; 31; 23; }; };
+            { "RLPistol"; "Pistol"; 																			25; 0; { "PISGX0"; 11; 13; }; };
+            { "RLShotgun"; "Shotgun"; 																			100; 0; { "PKSGX0"; 31; 17; }; };
+            { "RLCombatShotgun"; "Combat Shotgun"; 																100; 0; { "CSHPA0"; 25; 17; }; };
+            { "RLDoubleShotgun"; "Double Shotgun"; 																350; 1; { "DBLSP0"; 14; 8; }; };
+            { "RLChaingun"; "Chaingun"; 																		750; 0; { "MGUNA0"; 25; 18; }; };
+            { "RLBattleRifle"; "Battle Rifle"; 																	750; 1; { "UACRX0"; 23; 15; }; };
+            { "RLRocketLauncher"; "Rocket Launcher"; 															1000; 1; { "MISGX0"; 31; 18; }; };
+            { "RLPlasmaRifle"; "Plasma Rifle"; 																	2500; 1; { "PLASA0"; 27; 19; }; };
+            { "RLBFG9000"; "BFG9000"; 																			5000; 2; { "BFUGA0"; 31; 38; }; };
+            
+            // Exotic Weapons
+            { "RLBlaster"; "Blaster \ct[Exotic]\c-"; 															550; 2; { "BLASX0"; 12; 14; }; };
+            { "RLCombatPistol"; "Combat Pistol \ct[Exotic]\c-"; 												1350; 3; { "GLOIA0"; 10; 13; }; };
+            { "RLDesertEagle"; "Handcannon \ct[Exotic]\c-"; 													1800; 4; { "DEAPX0"; 6; 10; }; };
+            { "RLSuperShotgun"; "Super Shotgun \ct[Exotic]\c-"; 												2500; 4; { "NSSGX0"; 27; 9; }; };
+            { "RLAssaultShotgun"; "Assault Shotgun \ct[Exotic]\c-"; 											3000; 4; { "AA12A0"; 31; 27; }; };
+            { "RLUzi"; "Uzi \ct[Exotic]\c-"; 																	1900; 3; { "RUZIX0"; 20; 26; }; };
+            { "RLMinigun"; "Minigun \ct[Exotic]\c-"; 															15000; 6; { "ZGGPA0"; 30; 20; }; };
+            { "RLMissileLauncher"; "Missile Launcher \ct[Exotic]\c-"; 											5000; 5; { "CLUSA0"; 45; 24; }; };
+            { "RLNapalmLauncher"; "Napalm Launcher \ct[Exotic]\c-"; 											8500; 6; { "NAPAX0"; 22; 20; }; };
+            { "RLLaserRifle"; "Laser Rifle \ct[Exotic]\c-"; 													4500; 4; { "LASRX0"; 18; 11; }; };
+            { "RLPlasmaShotgun"; "Plasma Shotgun \ct[Exotic]\c-"; 												10000; 5; { "PSHOX0"; 22; 14; }; };
+            { "RLTristarBlaster"; "Tristar Blaster \ct[Exotic]\c-"; 											12500; 5; { "TRISX0"; 35; 35; }; };
+            { "RLCombatTranslocator"; "Combat Translocator \ct[Exotic]\c-"; 									7000; 5; { "CTLOX0"; 18; 11; }; };
+            { "RLNuclearPlasmaPistol"; "Nuclear Plasma Pistol \ct[Exotic]\c-"; 									20000; 7; { "NUPPX0"; 11; 14; }; };
+            { "RLNuclearPlasmaRifle"; "Nuclear Plasma Rifle \ct[Exotic]\c-"; 									30000; 9; { "NUK1A0"; 23; 14; }; };
+            { "RLNuclearBFG9000"; "Nuclear BFG9000 \ct[Exotic]\c-"; 											60000; 10; { "NUK2A0"; 28; 18; }; };
+            
+            // Unique Weapons
+            { "RLJackhammer"; "Jackhammer \cd[Unique]\c-"; 														32000; -1; { "SMAPA0"; 27; 14; }; };
+            { "RLRailgun"; "Railgun \cd[Unique]\c-"; 															28000; -1; { "RAILX0"; 23; 13; }; };
+            { "RLMysteriousMagnum"; "Mysterious Magnum \cd[Unique]\c-"; 										50000; -1; { "MMAGG0"; 15; 12; }; };
+            { "RLBFG10k"; "BFG10k \cd[Unique]\c-"; 																50000; -1; { "BFG4A0"; 34; 24; }; };
+            { "RLUnknownHerald"; "Unknown Herald \cd[Unique]\c-"; 												60000; -1; { "UNKHZ0"; 8; 10; }; };
+            { "RLFragShotgun"; "Frag Shotgun \cd[Unique]\c-"; 													24000; -1; { "FRSHZ0"; 28; 11; }; };
+            { "RLQuadShotgun"; "Quad Shotgun \cd[Unique]\c-"; 													44000; -1; { "SGN4A0"; 26; 16; }; };
+            { "RLLightweaver"; "Lightweaver \cd[Unique]\c-"; 													100000; -1; { "98PKA0"; 16; 10; }; };
+            { "RLTrigun"; "Trigun \cd[Unique]\c-"; 																28000; -1; { "TRIGX0"; 15; 12; }; };
+            { "RLGrammatonClericBeretta"; "Grammaton Cleric Beretta \cd[Unique]\c-"; 							33000; -1; { "GCBPX0"; 12; 13; }; };
+            { "RLAntiFreakJackal"; "Anti-Freak Jackal \cd[Unique]\c-"; 											36000; -1; { "AFJKX0"; 15; 14; }; };
+            { "RLTantrumCannon"; "Quantum Tantrum Cannon \cd[Unique]\c-"; 										42000; -1; { "QTCWX0"; 14; 13; }; };
+            { "RLRevenantsLauncher"; "Revenant's Launcher \cd[Unique]\c-"; 										29000; -1; { "REVLX0"; 22; 13; }; };
+            { "RLNullPointer"; "Charch's Null Pointer \cd[Unique]\c-"; 											50000; -1; { "NULPX0"; 23; 14; }; };
+            { "RLParticleBeamCannon"; "Particle Beam Cannon \cd[Unique]\c-"; 									75000; -1; { "PBCNX0"; 26; 16; }; };
+            { "RLSteelBeast"; "Steel Beast \cd[Unique]\c-"; 													26000; -1; { "STBEX0"; 36; 11; }; };
+            { "RLPlasmaRedirectionCannon"; "Plasma Redirection Cannon \cd[Unique]\c-"; 							35000; -1; { "PRDCX0"; 32; 24; }; };
+            { "RLHellsReign"; "Hell's Reign \cd[Unique]\c-"; 													45000; -1; { "HELRX0"; 37; 21; }; };
+            { "RLSussGun"; "Suss Gun \cd[Unique]\c-"; 															50000; -1; { "SUSSX0"; 38; 37; }; };
+                        
+            // Legendary Weapons
+            { "RLJudgeOfTheDead"; "Judge Of The Dead \cf[Legendary]\c-"; 										250000; -1; { "JOTDX0"; 19; 12; }; };
+            { "RLHurricaneCannon"; "Hurricane Cannon \cf[Legendary]\c-"; 										220000; -1; { "HURRX0"; 20; 18; }; };
+            { "RLNeuralStunner"; "Neural Stunner \cf[Legendary]\c-"; 											200000; -1; { "NEURB0"; 7; 13; }; };
+            { "RLBaronBlaster"; "Baron Blaster \cf[Legendary]\c-"; 												500000; -1; { "BABLX0"; 18; 16; }; };
+            { "RLRealityDistortionArray"; "Reality Distortion Array \cf[Legendary]\c-"; 						1000000; -1; { "RDABX0"; 25; 20; }; };
+            
+            // Basic Assembled Weapons
+            { "RLSpeedloaderPistol"; "Revolver \cv[Assembled]\c-"; 												800; -1; { "REVPA0"; 16; 20; }; };
+            { "RLSilencedPistol"; "Silenced Pistol \cv[Assembled]\c-"; 											500; -1; { "SILPX0"; 17; 15; }; };
+            { "RLShredderPistol"; "Shredder Pistol \cv[Assembled]\c-"; 											1200; -1; { "SHRPX0"; 10; 13; }; };
+            { "RLElephantGun"; "Elephant Gun \cv[Assembled]\c-"; 												1800; -1; { "MSSIA0"; 21; 13; }; };
+            { "RLGatlingGun"; "Gatling Gun \cv[Assembled]\c-"; 													2500; -1; { "DEGTA0"; 38; 19; }; };
+            { "RLMicroLauncher"; "Micro Launcher \cv[Assembled]\c-"; 											3000; -1; { "MICLA0"; 21; 8; }; };
+            { "RLTacticalShotgun"; "Tactical Shotgun \cv[Assembled]\c-"; 										2800; -1; { "AA12A0"; 31; 27; }; };
+            { "RLHeavyShotgun"; "Heavy Shotgun \cv[Assembled]\c-"; 												1800; -1; { "HSHOZ0"; 31; 15; }; };
+            { "RLHeavyDoubleShotgun"; "Heavy Double Shotgun \cv[Assembled]\c-"; 								2200; -1; { "HDSHX0"; 22; 13; }; };
+            
+            // High Power Assembled Weapons
+            { "RLHighPowerPistol"; "High Power Pistol \cv[Assembled]\c-"; 										700; -1; { "PISGX0"; 11; 13; }; };
+            { "RLHighPowerChaingun"; "High Power Chaingun \cv[Assembled]\c-"; 									2100; -1; { "QCHGX0"; 26; 20; }; };
+            { "RLHighPowerBattleRifle"; "High Power Battle Rifle \cv[Assembled]\c-"; 							2100; -1; { "UACRX0"; 23; 15; }; };
+            { "RLHighPowerPlasmaRifle"; "High Power Plasma Rifle \cv[Assembled]\c-"; 							7000; -1; { "QPLSX0"; 28; 22; }; };
+            { "RLHighPowerBFG9000"; "High Power BFG9000 \cv[Assembled]\c-"; 									11000; -1; { "BFUGA0"; 31; 38; }; };
+            { "RLHighPowerBlaster"; "High Power Blaster \cv[Assembled]\c-"; 									1600; -1; { "BLASX0"; 12; 14; }; };
+            { "RLHighPowerCombatPistol"; "High Power Combat Pistol \cv[Assembled]\c-"; 							2000; -1; { "GLOIA0"; 10; 13; }; };
+            { "RLHighPowerDesertEagle"; "High Power Handcannon \cv[Assembled]\c-"; 								4200; -1; { "DEAPX0"; 6; 10; }; };
+            { "RLHighPowerUzi"; "High Power Uzi \cv[Assembled]\c-"; 											3600; -1; { "RUZIX0"; 20; 26; }; };
+            { "RLHighPowerMinigun"; "High Power Minigun \cv[Assembled]\c-"; 									38000; -1; { "QMINX0"; 23; 20; }; };
+            { "RLHighPowerLaserRifle"; "High Power Laser Rifle \cv[Assembled]\c-"; 								6000; -1; { "LASRX0"; 18; 11; }; };
+            { "RLHighPowerTristarBlaster"; "High Power Tristar Blaster \cv[Assembled]\c-"; 						20000; -1; { "TRISX0"; 35; 35; }; };
+            { "RLHighPowerNuclearPlasmaPistol"; "High Power Nuclear Plasma Pistol \cv[Assembled]\c-"; 			40000; -1; { "NUPPX0"; 11; 14; }; };
+            { "RLHighPowerNuclearPlasmaRifle"; "High Power Nuclear Plasma Rifle \cv[Assembled]\c-"; 			80000; -1; { "QNPLX0"; 29; 19; }; };
+            { "RLHighPowerNuclearBFG9000"; "High Power Nuclear BFG9000 \cv[Assembled]\c-"; 						3000; -1; { "NUK2A0"; 28; 18; }; };
+            
+            // Plasmatic Shrapnel Assembled Weapons
+            { "RLPlasmaticShrapnelShotgun"; "Plasmatic Shotgun \cv[Assembled]\c-"; 								4000; -1; { "PKSGX0"; 31; 17; }; };
+            { "RLPlasmaticShrapnelCombatShotgun"; "Plasmatic Combat Shotgun \cv[Assembled]\c-"; 				4000; -1; { "CSHPA0"; 25; 17; }; };
+            { "RLPlasmaticShrapnelDoubleShotgun"; "Plasmatic Double Shotgun \cv[Assembled]\c-"; 				6500; -1; { "DBLSP0"; 14; 8; }; };
+            { "RLPlasmaticShrapnelSuperShotgun"; "Plasmatic Super Shotgun \cv[Assembled]\c-"; 					10000; -1; { "NSSGX0"; 27; 9; }; };
+            { "RLPlasmaticShrapnelAssaultShotgun"; "Plasmatic Assault Shotgun \cv[Assembled]\c-"; 				8000; -1; { "AA12A0"; 31; 27; }; };
+            { "RLPlasmaticShrapnelPlasmaShotgun"; "Overcharged Plasma Shotgun \cv[Assembled]\c-"; 				22000; -1; { "PSHOX0"; 22; 14; }; };
+            
+            // Advanced Assembled Weapons
+            { "RLDoubleChainsaw"; "Double Chainsaw \cv[Assembled]\c-"; 											4500; -1; { "2SAWA0"; 31; 23; }; };
+            { "RLTacticalRocketLauncher"; "Tactical Rocket Launcher \cv[Assembled]\c-"; 						12000; -1; { "TROKA0"; 27; 14; }; };
+            { "RLStormPistol"; "Storm Pistol \cv[Assembled]\c-"; 												2600; -1; { "SPIGA0"; 10; 12; }; };
+            { "RLStormCombatPistol"; "Storm Combat Pistol \cv[Assembled]\c-"; 									4500; -1; { "SPIGA0"; 10; 12; }; };
+            { "RLStormDesertEagle"; "Storm Handcannon \cv[Assembled]\c-"; 										9000; -1; { "SDEAX0"; 11; 16; }; };
+            { "RLStormUzi"; "Dual Uzis \cv[Assembled]\c-"; 														14000; -1; { "SUZIX0"; 22; 30; }; };
+            { "RLStormBlaster"; "Storm Blaster \cv[Assembled]\c-"; 												4200; -1; { "BLASX0"; 12; 14; }; };
+            { "RLStormNuclearPlasmaPistol"; "Nuclear Storm Plasma Pistol \cv[Assembled]\c-"; 					50000; -1; { "NUSPX0"; 13; 15; }; };
+            { "RLPlasmaPistol"; "Plasma Pistol \cv[Assembled]\c-"; 												3200; -1; { "CPPPA0"; 11; 15; }; };
+            { "RLPlasmaCombatPistol"; "Plasma Combat Pistol \cv[Assembled]\c-"; 								5800; -1; { "CPPPA0"; 11; 15; }; };
+            { "RLPlasmaDesertEagle"; "Plasma Handcannon \cv[Assembled]\c-"; 									15000; -1; { "PDEAX0"; 12; 14; }; };
+            { "RLPlasmaUzi"; "Plasma Uzi \cv[Assembled]\c-"; 													16000; -1; { "PUZIX0"; 21; 26; }; };
+            { "RLOverchargedBlaster"; "Overcharged Blaster \cv[Assembled]\c-"; 									7500; -1; { "BLASX0"; 12; 14; }; };
+            { "RLSuperchargedNuclearPlasmaPistol"; "Supercharged Nuclear Plasma Pistol \cv[Assembled]\c-"; 		80000; -1; { "NUPPX0"; 11; 14; }; };
+            { "RLVBFG9000"; "VBFG9000 \cv[Assembled]\c-"; 														30000; -1; { "DEBFA0"; 27; 24; }; };
+            { "RLNuclearVBFG9000"; "Nuclear VBFG9000 \cv[Assembled]\c-"; 										120000; -1; { "DEBFA0"; 27; 24; }; };
+            { "RLFocusedDoubleShotgun"; "Focused Double Shotgun \cv[Assembled]\c-"; 							7500; -1; { "FOCDP0"; 19; 9; }; };
+            { "RLHyperBlaster"; "Hyperblaster \cv[Assembled]\c-"; 												6500; -1; { "HYPGA0"; 28; 16; }; };
+            { "RLBulletstormChaingun"; "Bulletstorm Chaingun \cv[Assembled]\c-"; 								7500; -1; { "BSCHX0"; 33; 23; }; };
+            { "RLAutoshotgun"; "Auto Shotgun \cv[Assembled]\c-"; 												20000; -1; { "AUTSX0"; 31; 15; }; };
+            { "RLAutoDoubleShotgun"; "Auto Double Shotgun \cv[Assembled]\c-"; 									35000; -1; { "AUTDX0"; 27; 9; }; };
+            { "RLMiniMissilePistol"; "Mini-Missile Pistol \cv[Assembled]\c-"; 									14000; -1; { "FRGNX0"; 12; 11; }; };
+            { "RLPlasmaRifleMkII"; "Plasma Rifle Mk.II \cv[Assembled]\c-"; 										11000; -1; { "2PLAX0"; 24; 15; }; };
+            { "RLGrenadeLauncher"; "Grenade Launcher \cv[Assembled]\c-"; 										6000; -1; { "GRLAX0"; 27; 14; }; };
+            
+            // Assault Assembled Weapons
+            { "RLAssaultRifleChaingun"; "Assault Chaingun \cv[Assembled]\c-"; 									2250; -1; { "MGUNA0"; 25; 18; }; };
+            { "RLAssaultRifleBattleRifle"; "Assault Rifle \cv[Assembled]\c-"; 									2250; -1; { "UACRX0"; 23; 15; }; };
+            { "RLAssaultRiflePlasmaRifle"; "Assault Plasma Rifle \cv[Assembled]\c-"; 							7500; -1; { "PLASA0"; 27; 19; }; };
+            { "RLAssaultRifleUzi"; "Assault Uzi \cv[Assembled]\c-"; 											5700; -1; { "RUZIX0"; 20; 26; }; };
+            { "RLAssaultRifleMinigun"; "Assault Minigun \cv[Assembled]\c-"; 									45000; -1; { "ZGGPA0"; 30; 20; }; };
+            { "RLAssaultRifleLaserRifle"; "Assault Laser Rifle \cv[Assembled]\c-"; 								13500; -1; { "LASRX0"; 18; 11; }; };
+            { "RLAssaultRifleNuclearPlasmaRifle"; "Assault Nuclear Plasma Rifle \cv[Assembled]\c-"; 			90000; -1; { "NUK1A0"; 23; 14; }; };
+            
+            // Burst Assembled Weapons
+            { "RLBurstCannonChaingun"; "Burst Chaingun \cv[Assembled]\c-"; 										3000; -1; { "MGUNA0"; 25; 18; }; };
+            { "RLBurstCannonBattleRifle"; "Burst-Fire Rifle \cv[Assembled]\c-"; 								3000; -1; { "UACRX0"; 23; 15; }; };
+            { "RLBurstCannonPlasmaRifle"; "Burst Plasma Rifle \cv[Assembled]\c-"; 								10000; -1; { "PLASA0"; 27; 19; }; };
+            { "RLBurstCannonUzi"; "Burst Uzi \cv[Assembled]\c-"; 												7600; -1; { "RUZIX0"; 20; 26; }; };
+            { "RLBurstCannonMinigun"; "Burst Minigun \cv[Assembled]\c-"; 										60000; -1; { "ZGGPA0"; 30; 20; }; };
+            { "RLBurstCannonLaserRifle"; "Burst Laser Rifle \cv[Assembled]\c-"; 								18000; -1; { "LASRX0"; 18; 11; }; };
+            { "RLBurstCannonNuclearPlasmaRifle"; "Burst Nuclear Plasma Rifle \cv[Assembled]\c-"; 				120000; -1; { "NUK1A0"; 23; 14; }; };
+            
+            // Nano Shrapnel Assembled Weapons
+            { "RLNanoShrapnelShotgun"; "Nano Shotgun \cv[Assembled]\c-"; 										50000; -1; { "PKSGX0"; 31; 17; }; };
+            { "RLNanoShrapnelCombatShotgun"; "Nano Combat Shotgun \cv[Assembled]\c-"; 							47500; -1; { "CSHPA0"; 25; 17; }; };
+            { "RLNanoShrapnelDoubleShotgun"; "Nano Double Shotgun \cv[Assembled]\c-"; 							80000; -1; { "DBLSP0"; 14; 8; }; };
+            { "RLNanoShrapnelSuperShotgun"; "Nano Super Shotgun \cv[Assembled]\c-"; 							150000; -1; { "NSSGX0"; 27; 9; }; };
+            { "RLNanoShrapnelAssaultShotgun"; "Nano Assault Shotgun \cv[Assembled]\c-"; 						50000; -1; { "AA12A0"; 31; 27; }; };
+            { "RLNanoShrapnelPlasmaShotgun"; "Nano Plasma Shotgun \cv[Assembled]\c-"; 							120000; -1; { "PSHOX0"; 22; 14; }; };
+            
+            // Master Assembled Weapons
+            { "RLRipper"; "Ripper \cv[Assembled]\c-"; 															75000; -1; { "RIPPE0"; 43; 19; }; };
+            { "RLBiggestFuckingGun"; "Biggest Fucking Gun \cv[Assembled]\c-"; 									100000; -1; { "PRCWA0"; 26; 23; }; };
+            { "RLNuclearBiggestFuckingGun"; "Biggest Fucking Nuclear Gun \cv[Assembled]\c-"; 					500000; -1; { "PRCWA0"; 26; 23; }; };
+            { "RLMotherInLaw"; "Mother-In-Law \cv[Assembled]\c-"; 												300000; -1; { "MOTHX0"; 31; 18; }; };
+            { "RLAutocannon"; "Autocannon \cv[Assembled]\c-"; 													200000; -1; { "AUTOX0"; 36; 22; }; };
+            { "RLPlasmaRefractor"; "Plasma Refractor \cv[Assembled]\c-"; 										90000; -1; { "PLRFX0"; 26; 15; }; };
+            
+            // Nanomanufacture Assembled Weapons
+            { "RLNanoManufactureAmmoPistol"; "Nanomachic Pistol \cv[Assembled]\c-"; 							30000; -1; { "PISGX0"; 11; 13; }; };
+            { "RLNanoManufactureAmmoChaingun"; "Nanomachic Chaingun \cv[Assembled]\c-"; 						45000; -1; { "MGUNA0"; 25; 18; }; };
+            { "RLNanomanufactureAmmoBattleRifle"; "Nanomachic Battle Rifle \cv[Assembled]\c-"; 					48000; -1; { "UACRX0"; 23; 15; }; };
+            { "RLNanoManufactureAmmoRocketLauncher"; "Nanomachic Rocket Launcher \cv[Assembled]\c-"; 			100000; -1; { "MISGX0"; 31; 18; }; };
+            { "RLNanoManufactureAmmoPlasmaRifle"; "Nanomachic Plasma Rifle \cv[Assembled]\c-"; 					70000; -1; { "PLASA0"; 27; 19; }; };
+            { "RLNanoManufactureAmmoBlaster"; "Nanomachic Blaster \cv[Assembled]\c-"; 							35000; -1; { "BLASX0"; 12; 14; }; };
+            { "RLNanoManufactureAmmoCombatPistol"; "Nanomachic Combat Pistol \cv[Assembled]\c-"; 				35000; -1; { "GLOIA0"; 10; 13; }; };
+            { "RLNanoManufactureAmmoDesertEagle"; "Nanomachic Handcannon \cv[Assembled]\c-"; 					40000; -1; { "DEAPX0"; 6; 10; }; };
+            { "RLNanoManufactureAmmoUzi"; "Nanomachic Uzi \cv[Assembled]\c-"; 									60000; -1; { "RUZIX0"; 20; 26; }; };
+            { "RLNanoManufactureAmmoMinigun"; "Nanomachic Minigun \cv[Assembled]\c-"; 							150000; -1; { "ZGGPA0"; 30; 20; }; };
+            { "RLNanoManufactureAmmoLaserRifle"; "Nanomachic Laser Rifle \cv[Assembled]\c-"; 					80000; -1; { "LASRX0"; 18; 11; }; };
+            { "RLNanoManufactureAmmoTristarBlaster"; "Nanomachic Tristar Blaster \cv[Assembled]\c-"; 			110000; -1; { "TRISX0"; 35; 35; }; };
+            { "RLNanoManufactureAmmoMissileLauncher"; "Nanomachic Missile Launcher \cv[Assembled]\c-"; 			140000; -1; { "CLUSA0"; 45; 24; }; };
+            { "RLNanoManufactureAmmoNapalmLauncher"; "Nanomachic Napalm Launcher \cv[Assembled]\c-"; 			200000; -1; { "NAPAX0"; 22; 20; }; };
+            
+            // Demolition Ammo Assembled Weapons
+            { "RLDemolitionAmmoPistol"; "Demolition Ammo Pistol \cv[Assembled]\c-"; 							15000; -1; { "PISGX0"; 11; 13; }; };
+            { "RLDemolitionAmmoChaingun"; "Demolition Ammo Chaingun \cv[Assembled]\c-"; 						45000; -1; { "BCHGX0"; 27; 15; }; };
+            { "RLDemolitionAmmoBattleRifle"; "Demolition Ammo Battle Rifle \cv[Assembled]\c-"; 					45000; -1; { "UACRX0"; 23; 15; }; };
+            { "RLDemolitionAmmoCombatPistol"; "Demolition Ammo Combat Pistol \cv[Assembled]\c-"; 				28000; -1; { "GLOIA0"; 10; 13; }; };
+            { "RLDemolitionAmmoDesertEagle"; "Demolition Ammo Handcannon \cv[Assembled]\c-"; 					35000; -1; { "DEAPX0"; 6; 10; }; };
+            { "RLDemolitionAmmoUzi"; "Demolition Ammo Uzi \cv[Assembled]\c-"; 									65000; -1; { "RUZIX0"; 20; 26; }; };
+            { "RLDemolitionAmmoMinigun"; "Demolition Ammo Minigun \cv[Assembled]\c-"; 							175000; -1; { "ZGGPA0"; 30; 20; }; };
+        };
+        
+        // Ammo
+        ItemData[1][1].Actor = "RLClipBox2";
+        ItemData[1][3].Actor = "RLShellBox2";
+        ItemData[1][5].Actor = "RLRocketBox2";
+        ItemData[1][7].Actor = "RLCellPack2";
+        ItemData[1][ItemMax[1] - 1] = { "RLSupplyCrate"; "Supply Crate"; 5000; 4; { "SUPPA0"; 22; 16; }; true; };
+        
+        // Armors
+        ItemData[3] =
+        {
+            // Common Armors
+            { "RLArmorBonusPickup";                             "Armor Bonus"; 														100;    0;  { "BON2A0"; 7; 13; }; };
+            { "RLGreenArmorPickup";                             "Security Armor"; 													250;    0;  { "ARM1A0"; 15; 17; }; };
+            { "RLBlueArmorPickup";                              "Combat Armor"; 													500;    0;  { "ARM2A0"; 15; 17; }; };
+            { "RLRedArmorPickup";                               "Commando Armor"; 													1000;   0;  { "HEVAA0"; 16; 18; }; };
+            
+            // Assembled Armors
+            { "RLBallisticGreenArmorPickup";                    "Ballistic Security Armor \cv[Assembled]\c-"; 						1250;   1;  { "BLA1A0"; 15; 18; }; };
+            { "RLBallisticBlueArmorPickup";                     "Ballistic Combat Armor \cv[Assembled]\c-"; 						1500;   1;  { "BLA2A0"; 15; 18; }; };
+            { "RLBallisticRedArmorPickup";                      "Ballistic Commando Armor \cv[Assembled]\c-"; 						2000;   1;  { "BLA3A0"; 15; 18; }; };
+            { "RLCyberNanoGreenArmorPickup";                    "Cybernano Security Armor \cv[Assembled]\c-"; 						20000;  8;  { "CYN1A0"; 16; 30; }; };
+            { "RLCyberNanoBlueArmorPickup";                     "Cybernano Combat Armor \cv[Assembled]\c-"; 						25000;  8;  { "CYN2A0"; 16; 30; }; };
+            { "RLCyberNanoRedArmorPickup";                      "Cybernano Commando Armor \cv[Assembled]\c-"; 						40000;  8;  { "CYN3A0"; 16; 30; }; };
+            { "RLFireproofGreenArmorPickup";                    "Fireproof Security Armor \cv[Assembled]\c-"; 						2000;   2;  { "FPA1A0"; 15; 56; }; };
+            { "RLFireproofBlueArmorPickup";                     "Fireproof Combat Armor \cv[Assembled]\c-"; 						2500;   2;  { "FPA2A0"; 15; 56; }; };
+            { "RLFireproofRedArmorPickup";                      "Fireproof Commando Armor \cv[Assembled]\c-"; 						4000;   2;  { "FPA3A0"; 15; 56; }; };
+            { "RLNanofiberGreenArmorPickup";                    "Nanofiber Security Armor \cv[Assembled]\c-"; 						500;    1;  { "NFA1A0"; 15; 18; }; };
+            { "RLNanofiberBlueArmorPickup";                     "Nanofiber Combat Armor \cv[Assembled]\c-"; 						750;    1;  { "NFA2A0"; 15; 18; }; };
+            { "RLNanofiberRedArmorPickup";                      "Nanofiber Commando Armor \cv[Assembled]\c-"; 						1500;   1;  { "NFA3A0"; 15; 18; }; };
+            { "RLNanofiberSkinGreenArmorPickup";                "Nanofiber Skin Security Armor \cv[Assembled]\c-"; 			        15000;  6;  { "NFS1A0"; 12; 47; }; };
+            { "RLNanofiberSkinBlueArmorPickup";                 "Nanofiber Skin Combat Armor \cv[Assembled]\c-"; 				    20000;  6;  { "NFS2A0"; 12; 47; }; };
+            { "RLNanofiberSkinRedArmorPickup";                  "Nanofiber Skin Commando Armor \cv[Assembled]\c-"; 				    30000;  6;  { "NFS3A0"; 12; 47; }; };
+            { "RLPowerGreenArmorPickup";                        "Powered Security Armor \cv[Assembled]\c-"; 					    8000;   6;  { "PWR1A0"; 16; 22; }; };
+            { "RLPowerBlueArmorPickup";                         "Powered Combat Armor \cv[Assembled]\c-"; 							14000;  6;  { "PWR2A0"; 16; 22; }; };
+            { "RLPowerRedArmorPickup";                          "Powered Commando Armor \cv[Assembled]\c-"; 						22000;  6;  { "PWR3A0"; 16; 22; }; };
+            { "RLAblativeGreenArmorPickup";                     "Ablative Security Armor \cv[Assembled]\c-"; 						7000;   4;  { "ABL1A0"; 16; 19; }; };
+            { "RLAblativeBlueArmorPickup";                      "Ablative Combat Armor \cv[Assembled]\c-"; 							8000;   4;  { "ABL2A0"; 16; 19; }; };
+            { "RLAblativeRedArmorPickup";                       "Ablative Commando Armor \cv[Assembled]\c-"; 						9000;   4;  { "ABL3A0"; 16; 19; }; };
+            { "RLCerberusArmorPickup";                          "Cerberus Armor \cv[Assembled]\c-"; 								18000;  8;  { "CERAA0"; 15; 30; }; };
+            { "RLFireShieldArmorPickup";                        "Fire Shield \cv[Assembled]\c-"; 									10000;  7;  { "FSHDA0"; 15; 25; }; };
+            { "RLTacticalArmorPickup";                          "Tactical Armor \cv[Assembled]\c-"; 								14000;  8;  { "TACAA0"; 15; 21; }; };
+            { "RLTowerShieldArmorPickup";                       "Tower Shield \cv[Assembled]\c-"; 									10000;  5;  { "TSHDA0"; 14; 47; }; };
+            
+            // Exotic Armors
+            { "RLBallisticShieldArmorPickup";                   "Ballistic Shield \ct[Exotic]\c-"; 								    12500;  7;  { "BSHDA0"; 15; 21; }; };
+            { "RLBallisticVestArmorPickup";                     "Ballistic Vest \ct[Exotic]\c-"; 									4000;   2;  { "BALVA0"; 10; 18; }; };
+            { "RLBulletproofVestArmorPickup";                   "Bulletproof Vest \ct[Exotic]\c-"; 								    6500;   3;  { "BPFVA0"; 9; 18; }; };
+            { "RLDuelistArmorPickup";                           "Duelist Armor \ct[Exotic]\c-"; 								    4500;   2;  { "DUEAA0"; 12; 24; }; };
+            { "RLEnergyShieldedVestArmorPickup";                "Energy-Shielded Vest \ct[Exotic]\c-"; 						        10000;  5;  { "ESVAA0"; 10; 21; }; };
+            { "RLEnergyShieldArmorPickup";                      "Energy Shield \ct[Exotic]\c-"; 									12500;  7;  { "ESHDA0"; 10; 21; }; };
+            { "RLGothicArmorPickup";                            "Gothic Armor \ct[Exotic]\c-"; 										20000;  8;  { "GOTAA0"; 16; 32; }; };
+            { "RLMedicalArmorPickup";                           "Medical Armor \ct[Exotic]\c-"; 								    7000;   6;  { "MED1A0"; 10; 20; }; };
+            { "RLPhaseshiftArmorPickup";                        "Phaseshift Armor \ct[Exotic]\c-"; 									25000;  8;  { "PSHAA0"; 15; 29; }; };
+            { "RLPlasmaShieldArmorPickup";                      "Plasma Shield \ct[Exotic]\c-"; 									12500;  7;  { "PSHDA0"; 10; 21; }; };
+            { "RLOnyxArmorPickup";                              "Onyx Armor \ct[Exotic]\c-"; 										2200;   4;  { "ONXAA0"; 15; 18; }; };
+            { "RLOverchargeSystemArmorPickup";                  "Overcharge System \ct[Exotic]\c-"; 								4000;   6;  { "OVESA0"; 21; 16; }; };
+            { "RLRepulsionWaveSuitArmorPickup";                 "Repulsion Wave Suit \ct[Exotic]\c-"; 							    4500;   5;  { "REPWA0"; 11; 23; }; };
+            { "RLRechargeableEnergyShieldArmorPickup";          "Rechargeable Energy Shield \ct[Exotic]\c-"; 			            6500;   7;  { "RESHA0"; 11; 21; }; };
+            { "RLSurvivalMediArmorPickup";                      "Survival MediArmor \ct[Exotic]\c-"; 								10000;  6;  { "SURVA0"; 11; 14; }; };
+            { "RLCyberwarriorArmorPickup";                      "Cyberwarrior Armor \ct[Exotic]\c-"; 								12500;  6;  { "CYWAA0"; 16; 29; }; };
+            { "RLNuclearArmorPickup";                           "Nuclear Armor \ct[Exotic]\c-"; 									35000;  8;  { "NUKAA0"; 15; 18; }; };
+            
+            // Onyx-Modded Armors
+            { "RLOModGreenArmorPickup";                         "Security Armor \cc[Onyx]\c-"; 										375;    -1; { "ARM1A0"; 15; 17; }; };
+            { "RLOModBlueArmorPickup";                          "Combat Armor \cc[Onyx]\c-"; 										750;    -1; { "ARM2A0"; 15; 17; }; };
+            { "RLOModRedArmorPickup";                           "Commando Armor \cc[Onyx]\c-"; 										1500;   -1; { "HEVAA0"; 16; 18; }; };
+            { "RLOModBallisticVestArmorPickup";                 "Ballistic Vest \ct[Exotic] \cc[Onyx]\c-"; 						    6000;   -1; { "BALVA0"; 10; 18; }; };
+            { "RLOModBulletProofVestArmorPickup";               "Bulletproof Vest \ct[Exotic] \cc[Onyx]\c-"; 					    9750;   -1; { "BPFVA0"; 9; 18; }; };
+            { "RLOModDuelistArmorPickup";                       "Duelist Armor \ct[Exotic] \cc[Onyx]\c-"; 							6750;   -1; { "DUEAA0"; 12; 24; }; };
+            { "RLOModEnergyShieldedVestArmorPickup";            "Energy-Shielded Vest \ct[Exotic] \cc[Onyx]\c-"; 			        15000;  -1; { "ESVAA0"; 10; 21; }; };
+            { "RLOModGothicArmorPickup";                        "Gothic Armor \ct[Exotic] \cc[Onyx]\c-"; 							30000;  -1; { "GOTAA0"; 16; 32; }; };
+            { "RLOModMedicalArmorPickup";                       "Medical Armor \ct[Exotic] \cc[Onyx]\c-"; 							10500;  -1; { "MED1A0"; 10; 20; }; };
+            { "RLOModPhaseshiftArmorPickup";                    "Phaseshift Armor \ct[Exotic] \cc[Onyx]\c-"; 						37500;  -1; { "PSHAA0"; 15; 29; }; };
+            { "RLOModSurvivalMediArmorPickup";                  "Survival MediArmor \ct[Exotic] \cc[Onyx]\c-"; 					    15000;  -1; { "SURVA0"; 11; 14; }; };
+            { "RLOModRepulsionWaveSuitArmorPickup";             "Repulsion Wave Suit \ct[Exotic] \cc[Onyx]\c-"; 			        6750;   -1; { "REPWA0"; 11; 23; }; };
+            { "RLOModCyberWarriorArmorPickup";                  "Cyberwarrior Armor \ct[Exotic] \cc[Onyx]\c-"; 					    18750;  -1; { "CYWAA0"; 16; 29; }; };
+            
+            // Unique Armors
+            { "RLCyberneticArmorPickup";                        "Cybernetic Armor \cd[Unique]\c-"; 									30000;  -1; { "CYNAA0"; 15; 31; }; };
+            { "RLLavaArmorPickup";                              "Lava Armor \cd[Unique]\c-"; 										65000;  -1; { "LAVUA0"; 15; 18; }; };
+            { "RLMaleksArmorPickup";                            "Malek's Armor \cd[Unique]\c-"; 									50000;  -1; { "MALKA0"; 15; 31; }; };
+            { "RLMedicalPowerArmorPickup";                      "Medical Power Armor \cd[Unique]\c-"; 								17500;  -1; { "MED2A0"; 10; 24; }; };
+            { "RLNecroArmorPickup";                             "Necro Armor \cd[Unique]\c-"; 										15500;  -1; { "NECRA0"; 16; 28; }; };
+            { "RLShieldedArmorPickup";                          "Shielded Armor \cd[Unique]\c-"; 									40000;  -1; { "SSHDA0"; 16; 25; }; };
+            { "RLEnergyDischargeHarnessArmorPickup";            "Energy Discharge Harness \cd[Unique]\c-"; 				            27500;  -1; { "EDHXA0"; 11; 22; }; };
+            { "RLGeosGoldenGauntletArmorPickup";                "Geo's Golden Gauntlet \cd[Unique]\c-"; 						    30000;  -1; { "GGGXA0"; 8; 26; }; };
+            { "RLRoystensCommandArmorPickup";                   "Roysten's Command Armor \cd[Unique]\c-"; 						    31000;  -1; { "ROYAA0"; 16; 21; }; };
+            { "RLDemonicCarapaceArmorPickup";                   "Demonic Carapace \cd[Unique]\c-"; 								    32000;  -1; { "DEMAA0"; 22; 31; }; };
+            { "RLRyanCordellPsychicAmplifierSuitArmorPickup";   "R11-n Psychic Amplifier Suit \cd[Unique]\c-"; 	                    33000;  -1; { "RCPAA0"; 14; 23; }; };
+            { "RLSoulshatterArmorPickup";                       "Soulshatter Armor \cd[Unique]\c-"; 								34000;  -1; { "SOLSA0"; 17; 24; }; };
+            { "RLBerserkPowersuitArmorPickup";                  "Berserk Powersuit \cd[Unique]\c-"; 								35000;  -1; { "BEPSA0"; 16; 30; }; };
+            { "RLFrontlineEngineerSuitArmorPickup";             "Frontline Engineer Suit \cd[Unique]\c-"; 					        36000;  -1; { "BLUAA0"; 9; 39; }; };
+            { "RLTacticalAssemblerSuitArmorPickup";             "Tactical Assembler Suit \cd[Unique]\c-"; 					        36000;  -1; { "REDAA0"; 9; 39; }; };
+            { "RLNanoAblativeArmorPickup";                      "Nano Ablative Armor \cd[Unique]\c-"; 								38000;  -1; { "NABLA0"; 16; 19; }; };
+            { "RLBlazingPhoenixDeviceSuitArmorPickup";          "Phoenix-B Device Suit \cd[Unique]\c-"; 					        39000;  -1; { "BPHDA0"; 16; 21; }; };
+            { "RLKateMatterstormHarnessArmorPickup";            "K-8 Matterstorm Harness \cd[Unique]\c-"; 					        41000;  -1; { "K8MHA0"; 16; 18; }; };
+            { "RLTerminusEst13BattlesuitArmorPickup";           "Terminus Battlesuit \cd[Unique]\c-"; 					            41000;  -1; { "TEBSA0"; 17; 30; }; };
+            { "RLJetpackArmorPickup";                           "Jetpack \cd[Unique]\c-"; 											42000;  -1; { "JETPA0"; 14; 36; }; };
+            { "RLWildWeaselPeacekeeperArmorPickup";             "WW-41 Peacekeeper Armor \cd[Unique]\c-"; 					        42000;  -1; { "WWPKA0"; 16; 34; }; };
+            { "RLSoloOperativeSuitArmorPickup";                 "Solo Operative Suit \cd[Unique]\c-"; 							    44444;  -1; { "SSOSA0"; 11; 35; }; };
+            { "RLPrototypeAssaultShieldArmorPickup";            "Prototype Assault Shield \cd[Unique]\c-"; 				            45000;  -1; { "PASSA0"; 12; 18; }; };
+            { "RLZeroDiamondAssaultforceArmorPickup";           "0D-1a Assaultforce Armor \cd[Unique]\c-"; 				            47000;  -1; { "0DAFA0"; 15; 32; }; };
+            { "RLKyleTeslaboltArmorPickup";                     "K1-L3 Teslabolt Armor \cd[Unique]\c-"; 							56000;  -1; { "KTESA0"; 17; 30; }; };
+            { "RLTorgueBlastplateArmorPickup";                  "Torgue Blastplate Armor \cd[Unique]\c-"; 						    60000;  -1; { "TORAA0"; 17; 21; }; };
+            { "RLNuclearPowerarmorPickup";                      "Nuclear Powerarmor \cd[Unique]\c-"; 								65000;  -1; { "ENUKA0"; 16; 27; }; };
+            { "RLXaserPowerarmorPickup";                        "Xaser Inc. Powerarmor \cd[Unique]\c-"; 							85000;  -1; { "XASPA0"; 16; 26; }; };
+            
+            // Legendary Armors
+            { "RLChronotrooperArmorPickup";                     "Chronotrooper Armor \cf[Legendary]\c-"; 							140000; -1; { "CHROA0"; 11; 29; }; };
+            { "RLAngelicArmorPickup";                           "Angelic Armor \cf[Legendary]\c-"; 									200000; -1; { "ANGAA0"; 14; 27; }; };
+            { "RLReactiveShieldSystemArmorPickup";              "Reactive Shield System \cf[Legendary]\c-"; 					    220000; -1; { "RSSDA0"; 16; 22; }; };
+            { "RLTheBeeArmorPickup";                            "The Bee \cf[Legendary]\c-"; 										250000; -1; { "BEESA0"; 12; 21; }; };
+        };
+        
+        // Powerups
+        ItemData[4][0].Actor = "InvulnerabilitySphere2";
+        ItemData[4][1].Actor = "InvulnerabilityCharge2";
+        ItemData[4][2].Actor = "BlurSphere2";
+        ItemData[4][3].Actor = "InvisibilityCharge2";
+        ItemData[4][6].Actor = "RadSuit2";
+        ItemData[4][7].Actor = "Infrared2";
+        ItemData[4][8].Actor = "Berserk2";
+        ItemData[4][11].Actor = "Megasphere2";
+        ItemData[4][ItemMax[4] - 2] = { "RLTrackingMap"; "Tracking Map"; 2000; 4; { "MMAPA0"; 14; 23; }; true; };
+        ItemData[4][ItemMax[4] - 1] = { "RLBlueprintComputer"; "Blueprint Computer"; 3000; 4; { "BLUPA0"; 14; 23; }; true; };
+        
+        // Mod Packs
+        ItemData[9] =
+        {
+            // Normal Modpacks
+            { "RLPowerModItem";                         "Power Modpack";                                        2500;   0;  { "PMODA0"; 8;  17; }; };
+            { "RLBulkModItem";                          "Bulk Modpack";                                         2500;   0;  { "BMODA0"; 8;  17; }; };
+            { "RLAgilityModItem";                       "Agility Modpack";                                      2500;   0;  { "AMODA0"; 8;  17; }; };
+            { "RLTechnicalModItem";                     "Technical Modpack";                                    2500;   0;  { "TMODA0"; 8;  17; }; };
+            
+            // Exotic Modpacks
+            { "RLSniperModItem";                        "Sniper Modpack";                                       10000;  2;  { "SMODA0"; 8;  17; }; };
+            { "RLFirestormModItem";                     "Firestorm Modpack";                                    10000;  2;  { "FMODA0"; 8;  17; }; };
+            { "RLNanoModItem";                          "Nano Modpack";                                         10000;  2;  { "NMODA0"; 8;  17; }; };
+            { "RLOnyxModItem";                          "Onyx Modpack";                                         10000;  2;  { "OMODA0"; 8;  17; }; };
+            { "RLArmorModItem";                         "Armor Modpack";                                        5000;   2;  { "AMK1A0"; 10; 20; }; };
+        };
+        
+        // Boots
+        ItemData[10] =
+        {
+            // Common Boots
+            { "RLSteelBootsPickup";                     "Steel Boots";                                          250;    0;  { "BOOTS0"; 13; 26; }; };
+            { "RLProtectiveBootsPickup";                "Protective Boots";                                     500;    0;  { "BOOTG0"; 13; 26; }; };
+            { "RLPlasteelBootsPickup";                  "Plasteel Boots";                                       750;    0;  { "BOOTB0"; 13; 26; }; };
+            
+            // Assembled Boots
+            { "RLAntigravSteelBootsPickup";             "Anti-Grav Steel Boots \cv[Assembled]\c-";              2000;   1;  { "AGSBA0"; 14; 27; }; };
+            { "RLAntigravProtectiveBootsPickup";        "Anti-Grav Protective Boots \cv[Assembled]\c-";         3000;   1;  { "AGGBA0"; 14; 27; }; };
+            { "RLAntigravPlasteelBootsPickup";          "Anti-Grav Plasteel Boots \cv[Assembled]\c-";           4000;   1;  { "AGBBA0"; 14; 27; }; };
+            { "RLEnviromentalSteelBootsPickup";         "Environmental Steel Boots \cv[Assembled]\c-";          1000;   1;  { "ENVOS0"; 14; 18; }; };
+            { "RLEnviromentalProtectiveBootsPickup";    "Environmental Protective Boots \cv[Assembled]\c-";     2000;   1;  { "ENVOG0"; 14; 18; }; };
+            { "RLEnviromentalPlasteelBootsPickup";      "Environmental Plasteel Boots \cv[Assembled]\c-";       3000;   1;  { "ENVOB0"; 14; 18; }; };
+            { "RLFireproofSteelBootsPickup";            "Fireproof Steel Boots \cv[Assembled]\c-";              1000;   1;  { "FIRBS0"; 14; 23; }; };
+            { "RLFireproofProtectiveBootsPickup";       "Fireproof Protective Boots \cv[Assembled]\c-";         1500;   1;  { "FIRBG0"; 14; 23; }; };
+            { "RLFireproofPlasteelBootsPickup";         "Fireproof Plasteel Boots \cv[Assembled]\c-";           2000;   1;  { "FIRBB0"; 14; 23; }; };
+            { "RLGrapplingSteelBootsPickup";            "Grappling Steel Boots \cv[Assembled]\c-";              1000;   1;  { "GRAPS0"; 21; 23; }; };
+            { "RLGrapplingProtectiveBootsPickup";       "Grappling Protective Boots \cv[Assembled]\c-";         1500;   1;  { "GRAPG0"; 21; 23; }; };
+            { "RLGrapplingPlasteelBootsPickup";         "Grappling Plasteel Boots \cv[Assembled]\c-";           2000;   1;  { "GRAPB0"; 21; 23; }; };
+            { "RLCerberusBootsPickup";                  "Cerberus Boots \cv[Assembled]\c-";                     18000;  4;  { "CERBA0"; 13; 24; }; };
+            { "RLTacticalBootsPickup";                  "Tactical Boots \cv[Assembled]\c-";                     14000;  4;  { "TACBA0"; 14; 21; }; };
+            
+            // Exotic Boots
+            { "RLAcidProofBootsPickup";                 "Acid-Proof Boots \ct[Exotic]\c-";                      5000;   4;  { "ACPBA0"; 14; 23; }; };
+            { "RLGothicBootsPickup";                    "Gothic Boots \ct[Exotic]\c-";                          20000;  4;  { "GOTBA0"; 13; 26; }; };
+            { "RLPhaseshiftBootsPickup";                "Phaseshift Boots \ct[Exotic]\c-";                      25000;  4;  { "PSHBA0"; 13; 20; }; };
+            { "RLShockwaveBootsPickup";                 "Shockwave Boots \ct[Exotic]\c-";                       3500;   4;  { "SHKBA0"; 14; 27; }; };
+
+            // Unique Boots
+            { "RLEnviroBootsPickup";                    "Enviro Boots \cd[Unique]\c-";                          5000;   -1; { "ENVBA0"; 14; 27; }; };
+            { "RLNyarlaptotepsBootsPickup";             "Nyarlaptotep's Boots \cd[Unique]\c-";                  50000;  -1; { "NYABA0"; 14; 21; }; };
+            { "RLLavaBootsPickup";                      "Lava Boots \cd[Unique]\c-";                            65000;  -1; { "LAVBA0"; 13; 20; }; };
+            { "RLFrontlineEngineerBootsPickup";         "Frontline Engineer Boots \cd[Unique]\c-";              4500;   -1; { "FLEBA0"; 13; 19; }; };
+            { "RLTacticalAssemblerBootsPickup";         "Tactical Assembler Boots \cd[Unique]\c-";              4500;   -1; { "TCABA0"; 13; 19; }; };
+            { "RLRoystensCombatBootsPickup";            "Roysten's Combat Boots \cd[Unique]\c-";                31000;  -1; { "ROYBA0"; 13; 18; }; };
+            { "RLDemonicBootsPickup";                   "Demonic Boots \cd[Unique]\c-";                         32000;  -1; { "DEMBA0"; 15; 31; }; };
+            { "RLSoloOperativeBootsPickup";             "Solo Operative Boots \cd[Unique]\c-";                  44444;  -1; { "SSOBA0"; 13; 21; }; };
+            { "RLLeonidasBootsPickup";                  "Leonidas' Boots \cd[Unique]\c-";                       10000;  -1; { "SPARA0"; 13; 26; }; };
+            { "RLTorgueBlastBootsPickup";               "Torgue Blastboots \cd[Unique]\c-";                     60000;  -1; { "TORBA0"; 14; 26; }; };
+            { "RLNuclearPowerBootsPickup";              "Nuclear Powerboots \cd[Unique]\c-";                    65000;  -1; { "ENUKC0"; 13; 24; }; };
+            
+            // Legendary Boots
+            { "RLAngelicBootsPickup";                   "Angelic Boots \cf[Legendary]\c-";                      200000; -1; { "ANGBA0"; 15; 25; }; };
+        };
+    };
+    
+    // Remove rank limitations in Debug Mode
+    if (Player.ShopCard == 5 || GetCVar("drpg_debug"))
+        for (int i = 0; i < ItemCategories; i++)
+            for (int j = 0; j < ItemMax[i]; j++)
+                if (ItemData[i][j].Price > 0)
+                    ItemData[i][j].Rank = 0;
+    
+    // Remove stops in Debug Mode
+    if (GetCVar("drpg_debug"))
+        for (int i = 0; i < ITEM_CATEGORIES; i++)
+            ItemStop[i] = 0;
+};
