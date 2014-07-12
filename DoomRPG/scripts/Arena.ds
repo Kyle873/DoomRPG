@@ -286,22 +286,25 @@ function void ArenaGetBonus(int Bonus)
             break;
         case 1: // Full Health
             if (InMultiplayer)
+            {
                 for (int i = 0; i < MAX_PLAYERS; i++)
                     if (Players(i).Shield.Active)
                         Players(i).Shield.Health = Players(i).HealthMax
                     else
-                        SetActorProperty(Players(i).TID, APROP_Health, GetActorProperty(Players(i).TID, APROP_SpawnHealth))
+                        SetActorProperty(Players(i).TID, APROP_Health, Players(i).HealthMax);
+            }
             else
-                if (GetActorProperty(0, APROP_Health) >= Player.HealthMax && !Player.Shield.Active)
+            {
+                if (Player.Shield.Active)
+                    Player.Shield.Health = Player.HealthMax
+                else if (GetActorProperty(0, APROP_Health) >= Player.HealthMax)
                 {
                     ArenaGetBonus(Random(0, MAX_BONUS - 1));
                     return;
                 }
                 else
-                    if (Player.Shield.Active)
-                        Player.Shield.Health = Player.HealthMax
-                    else
-                        HealThing(1000000);
+                    HealThing(Player.HealthMax);
+            };
             break;
         case 2: // Full EP
             if (InMultiplayer)
