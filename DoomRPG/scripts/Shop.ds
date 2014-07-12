@@ -100,21 +100,13 @@ function void ShopLoop()
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
     int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
     int Cost = ItemPtr->Price - ItemPtr->Price * Player.ShopDiscount / 100;
+    int Rank = ItemPtr->Rank;
     int SellPrice;
     int Color;
-    int Available;
     
     // Freeze the Player
     SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
 
-    // Certain pages are built dynamically or require modifications depending on extension CVARs
-    BuildItemData();
-    
-    // Calculate a total of how many of the items are actually available for buying or selling depending on your Rank
-    for (int i = 0; i < ItemMax[Player.ShopPage]; i++)
-        if (ItemPtr->Rank <= Player.RankLevel)
-            Available++;
-    
     // Get the sell price
     SellPrice = GetSellPrice("", 1);
     
@@ -134,7 +126,7 @@ function void ShopLoop()
                    Cost, Player.ShopDiscount,
                    HUDMSG_PLAIN, 0, CR_GOLD,
                    24.1, 38.0, 0.05)
-    else if (CategoryFlags[Player.ShopPage] & CF_NOBUY) // No Buying
+    else if (CategoryFlags[Player.ShopPage] & CF_NOBUY || Rank == -1) // No Buying
         HudMessage("\ci%d C \ck(Discount: %d%%)\n",
                    SellPrice, Player.ShopDiscount,
                    HUDMSG_PLAIN, 0, CR_GOLD,
@@ -183,7 +175,6 @@ function void ShopLoop()
     {
         ActivatorSound("menu/move", 127);
         Player.ShopIndex += 9;
-        if (ItemStop[Player.ShopPage] > 0 && Player.ShopIndex > ItemStop[Player.ShopPage] - 1) Player.ShopIndex = ItemStop[Player.ShopPage] - 1;
         if (Player.ShopIndex > ItemMax[Player.ShopPage] - 1) Player.ShopIndex = ItemMax[Player.ShopPage] - 1;
     };
     if ((Buttons & BT_LEFT && !(OldButtons & BT_LEFT)) ||
@@ -214,7 +205,6 @@ function void ShopLoop()
         {
             ActivatorSound("menu/move", 127);
             Player.ShopIndex++;
-            if (ItemStop[Player.ShopPage] > 0 && Player.ShopIndex > ItemStop[Player.ShopPage] - 1) Player.ShopIndex = ItemStop[Player.ShopPage] - 1;
             if (Player.ShopIndex > ItemMax[Player.ShopPage] - 1) Player.ShopIndex = ItemMax[Player.ShopPage] - 1;
         };
     if (Buttons & BT_USE && !(OldButtons & BT_USE) && !Player.MenuBlock)
@@ -255,11 +245,38 @@ function void BuyItem(str Item)
     int Cost = ItemPtr->Price - ItemPtr->Price * Player.ShopDiscount / 100;
     int Spawned;
     
-    // If you aren't the required rank, are on a page that doesn't allow buying, don't have enough money, or the item has no cost, fail
-    if (ItemPtr->Rank > Player.RankLevel ||
-        CategoryFlags[Player.ShopPage] & CF_NOBUY ||
-        CheckInventory("DRPGCredits") < ItemPtr->Price - ItemPtr->Price * Player.ShopDiscount / 100 ||
-        Cost == 0)
+    // If you're not the required rank, return
+    if (ItemPtr->Rank > Player.RankLevel)
+    {
+        SetHudSize(0, 0, false);
+        SetFont("BIGFONT");
+        HudMessage("You are not a high enough Rank to buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    // If the item (or category) is flagged to never be buyable, return
+    if (ItemPtr->Rank == -1 || CategoryFlags[Player.ShopPage] & CF_NOBUY)
+    {
+        SetHudSize(0, 0, false);
+        SetFont("BIGFONT");
+        HudMessage("You cannot buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    // If you don't have enough Credits, return
+    if (CheckInventory("DRPGCredits") < ItemPtr->Price - ItemPtr->Price * Player.ShopDiscount / 100)
+    {
+        SetHudSize(0, 0, false);
+        SetFont("BIGFONT");
+        HudMessage("You don't have enough Credits to buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    // If the item has no cost, return
+    if (Cost == 0)
     {
         ActivatorSound("menu/error", 127);
         return;
