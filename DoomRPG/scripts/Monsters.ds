@@ -12,23 +12,23 @@ AddressSpace map_array MonsterSpace;
 
 MonsterSpace MonsterInfo[MAX_MONSTERS] MonsterData =
 {
-    { "ZombieMan";          "Former Human";         1;      };
-    { "ShotgunGuy";         "Former Sergeant";      2;      };
-    { "ChaingunGuy";        "Former Commando";      5;      };
-    { "DoomImp";            "Imp";                  4;      };
-    { "Demon";              "Demon";                3;      };
-    { "Spectre";            "Spectre";              3;      };
-    { "Cacodemon";          "Cacodemon";            10;     };
-    { "HellKnight";         "Hell Knight";          20;     };
-    { "BaronOfHell";        "Baron of Hell";        30;     };
-    { "LostSoul";           "Lost Soul";            3;      };
-    { "PainElemental";      "Pain Elemental";       40;     };
-    { "Revenant";           "Revenant";             50;     };
-    { "Fatso";              "Mancubu";              60;     };
-    { "Arachnotron";        "Arachnotron";          60;     };
-    { "ArchVile";           "Arch-Vile";            70;     };
-    { "Cyberdemon";         "Cyberdemon";           85;     };
-    { "SpiderMastermind";   "Spider Mastermind";    95;     };
+    { "ZombieMan";                          "Former Human";             1;      };
+    { "ShotgunGuy";                         "Former Sergeant";          2;      };
+    { "ChaingunGuy";                        "Former Commando";          5;      };
+    { "DoomImp";                            "Imp";                      4;      };
+    { "Demon";                              "Demon";                    3;      };
+    { "Spectre";                            "Spectre";                  3;      };
+    { "Cacodemon";                          "Cacodemon";                10;     };
+    { "HellKnight";                         "Hell Knight";              20;     };
+    { "BaronOfHell";                        "Baron of Hell";            30;     };
+    { "LostSoul";                           "Lost Soul";                3;      };
+    { "PainElemental";                      "Pain Elemental";           40;     };
+    { "Revenant";                           "Revenant";                 50;     };
+    { "Fatso";                              "Mancubu";                  60;     };
+    { "Arachnotron";                        "Arachnotron";              60;     };
+    { "ArchVile";                           "Arch-Vile";                70;     };
+    { "Cyberdemon";                         "Cyberdemon";               85;     };
+    { "SpiderMastermind";                   "Spider Mastermind";        95;     };
 };
 
 MonsterSpace MonsterInfo[MAX_MONSTERS_DRLA] MonsterDataDRLA =
@@ -470,9 +470,6 @@ script void MonsterStats(int Flags, int StatFlags)
     if (MonsterLuck > 1000)
         MonsterLuck = 1000;
     
-    // Calculate Threat Level
-    MonsterThreat = CalculateMonsterThreatLevel(0);
-    
     // We need to make sure we only pass the speed to the monster if it's being initially created
     if (!StatFlags)
         MonsterSpeed = (int)GetActorPropertyFixed(0, APROP_Speed);
@@ -480,7 +477,6 @@ script void MonsterStats(int Flags, int StatFlags)
     // Apply the stats to the monster
     SetInventory("DRPGMonsterLevel", MonsterLevel);
     SetInventory("DRPGMonsterAura", MonsterAura);
-    SetInventory("DRPGMonsterThreat", MonsterThreat);
     SetInventory("DRPGMonsterSpeed", MonsterSpeed);
     SetInventory("DRPGMonsterStrength", MonsterStrength);
     SetInventory("DRPGMonsterDefense", MonsterDefense);
@@ -490,6 +486,10 @@ script void MonsterStats(int Flags, int StatFlags)
     SetInventory("DRPGMonsterAgility", MonsterAgility);
     SetInventory("DRPGMonsterCapacity", MonsterCapacity);
     SetInventory("DRPGMonsterLuck", MonsterLuck);
+    
+    // Calculate Threat Level
+    MonsterThreat = CalculateMonsterThreatLevel(0);
+    SetInventory("DRPGMonsterThreat", MonsterThreat);
     
     // Calculate Health
     SetInventory("DRPGMonsterSpawnHealth", GetActorProperty(0, APROP_SpawnHealth));
@@ -1008,6 +1008,7 @@ function int CalculateMonsterThreatLevel(int TID)
     int Luck = CheckInventoryTID(TID, "DRPGMonsterLuck");
     int Threat;
     
+    // Stats
     Threat += Strength;
     Threat += Defense;
     Threat += Vitality;
@@ -1016,7 +1017,9 @@ function int CalculateMonsterThreatLevel(int TID)
     Threat += Agility;
     Threat += Capacity;
     Threat += Luck;
-    Threat /= 1000;
+    Threat /= 800;
+    
+    // Auras
     if (Aura > 0 && Aura < 9) // Normal Auras
         Threat++
     else if (Aura == 10) // Black Aura
@@ -1026,16 +1029,18 @@ function int CalculateMonsterThreatLevel(int TID)
     if (CheckFlag(TID, "BOSS"))
         Threat++;
     
-    // Species Info
-    str Actor = GetActorClass(TID);
-    
+    // DRLA
     if (GetCVar("drpg_ext_doomrl"))
     {
-        for (int i = 0; i < MAX_MONSTERS_DRLA; ++i)
+        str Actor = GetActorClass(TID);
+        
+        for (int i = 0; i < MAX_MONSTERS_DRLA; i++)
         {
-            if (StartsWith(Actor, MonsterDataDRLA[i].Actor))
+            MonsterInfoPtr MonsterIterPtr = &MonsterDataDRLA[i];
+            
+            if (StartsWith(Actor, MonsterIterPtr->Actor))
             {
-                Threat += MonsterDataDRLA[i].ThreatLevel;
+                Threat += MonsterIterPtr->ThreatLevel;
                 break;
             };
         };
