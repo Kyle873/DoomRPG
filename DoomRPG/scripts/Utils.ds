@@ -277,6 +277,13 @@ acscript int GetHealthMax()
     return Player.HealthMax;
 };
 
+// Used by DECORATE in UseShield state to cap healing items to only heal to maximum Health
+acscript void CapHealthItem()
+{
+    if (Player.Shield.Health > Player.HealthMax)
+        Player.Shield.Health = Player.HealthMax;
+};
+
 // Returns the capacity of your current Shield (for DECORATE)
 acscript int GetShieldMax()
 {
@@ -289,10 +296,16 @@ acscript int GetSpeed(int Tics)
     return Tics - ((Tics - 1) / 100) * Player.Agility;
 };
 
+// Used by DECORATE to check if your Shield's stored Health is at max
+acscript bool ShieldHealthMax()
+{
+    return (Player.Shield.Health >= Player.HealthMax);
+};
+
 // Used by DECORATE to check if both your Health and EP are at max
 acscript bool HPEPMax()
 {
-    return (GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth) && Player.EP >= Player.EPMax);
+    return (GetActorProperty(Player.TID, APROP_Health) >= Player.HealthMax && Player.EP >= Player.EPMax);
 };
 
 // Used by the RegenSphere to temporarily increase regen rates
