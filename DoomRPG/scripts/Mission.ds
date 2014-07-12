@@ -65,7 +65,7 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
     int RewardXP = (Difficulty + 2) * (XPTable[Player.Level] / 100);
     int RewardRank = (Difficulty + 2) * (RankTable[Player.RankLevel] / 100);
     int RewardCredits = Random((Difficulty + 2), (Difficulty + 2) * 100) * (Player.RankLevel + 1);
-    ItemInfo *RewardItem = GetRewardItem(Difficulty);
+    ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
     
     // If Marines are hostile, terminate
     if (MarinesHostile) return;
@@ -109,7 +109,7 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
         FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
         
         // Pass data to the Mission struct
-        Player.Mission.Item = (LootItem *)ItemPtr;
+        Player.Mission.Item = ItemPtr;
         Player.Mission.Amount = Amount;
     };
     
@@ -147,7 +147,7 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
         FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
         
         // Pass data to the Mission struct
-        Player.Mission.Monster = (MonsterInfo *)MonsterPtr;
+        Player.Mission.Monster = MonsterPtr;
         Player.Mission.Amount = Amount;
     };
     
@@ -175,7 +175,7 @@ acscript void GetMission(int ForceType, int ForceDifficulty)
     Player.Mission.RewardXP = RewardXP;
     Player.Mission.RewardRank = RewardRank;
     Player.Mission.RewardCredits = RewardCredits;
-    Player.Mission.RewardItem = (ItemInfo *)RewardItem;
+    Player.Mission.RewardItem = RewardItem;
 };
 
 acscript void AbortMission()
@@ -264,8 +264,7 @@ function void ClearMission()
     Player.Mission.Amount = 0;
 };
 
-// TODO: The return casting here could potentially be Very Bad(TM), investigate the proper way to do it
-function ItemInfo *GetRewardItem(int Difficulty)
+function ItemInfoPtr GetRewardItem(int Difficulty)
 {
     // Category Mapping
     int[ITEM_CATEGORIES] Categories = 
@@ -328,7 +327,7 @@ function ItemInfo *GetRewardItem(int Difficulty)
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \c-Mission Reward Item: Category %d (mapped to %d), Index %d\n", Category, Categories[Category], Index);
     
-    return (ItemInfo *)ItemPtr;
+    return ItemPtr;
 };
 
 function int CalculateAverageDifficulty()
