@@ -206,6 +206,8 @@ function void BuildItemData()
         
         for (int j = 0; j < ShieldPartsMax[i]; j++)
         {
+	    ShieldCost = 0;
+
             // Name
             ItemData[6][Index].Actor = StrParam("%s%d\n", ShieldActorName, j + 1);
             ItemData[6][Index].Name = StrParam("%s%s\c-\n", ShieldName, ShieldData[i][j].Name);
@@ -217,20 +219,22 @@ function void BuildItemData()
                 int ChargeRate = ShieldData[i][j].ChargeRate;
                 int DelayRate = ShieldData[i][j].DelayRate;
                 
-                // Capacity
-                ShieldCost += Capacity * 100;
-                
-                // Charge Rate
-                if (ChargeRate < 0)
-                    ShieldCost -= ChargeRate * 1000
-                else
-                    ShieldCost += ChargeRate * 1000;
-                
-                // Delay
-                if (DelayRate < 0)
-                    ShieldCost -= DelayRate * 20000
-                else
-                    ShieldCost += DelayRate * 20000;
+		// New Pricing Code, not perfect but...
+                ChargeRate += 1; // Shifts range to 0 - 31
+		DelayRate = (DelayRate - 15) * -1; // Shifts range to 0 - 20
+
+		ShieldCost += Capacity * 50;
+		ShieldCost += ChargeRate * 650;
+		ShieldCost += DelayRate * 40;
+		
+		ShieldCost *= (Capacity / 500) + 1;
+		ShieldCost *= (ChargeRate / 10) + 1;
+		DelayRate -= 15;
+		if (DelayRate > 0)
+			ShieldCost *= DelayRate;
+		if (i == 0) ShieldCost += (j*10/21)*j*950;	//21 max index
+		if (i == 1) ShieldCost += (j*10/12)*j*5000;	//12 max index
+		if (i == 2) ShieldCost += (j*10/14)*j*4285;	//14 max index
                 
                 // Don't go below 1000 Credits
                 if (ShieldCost < 1000)
