@@ -142,5 +142,5 @@ vec4 Process(vec4 color)
 
 	texCoord += offset;
 
-	return (getTexel(texCoord) * (1.0 - ((0.05 - abs (offset.x)) * 5))) * color;
+	return (getTexel(texCoord) * (1.0 - ((0.05 - abs (offset.x)) * 5.0))) * color;
 }
