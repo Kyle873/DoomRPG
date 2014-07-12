@@ -429,6 +429,7 @@ function void DrawAugsMenu()
         for (int j = 0; j < 5; j++)
         {
             int Index = j + (i * 5);
+            AugInfoPtr AugPtr = &AugData[Index];
             
             // Catch to make sure unimplemented stuff isn't drawn
             if (Index > MAX_AUGS - 1) continue;
@@ -441,7 +442,7 @@ function void DrawAugsMenu()
                 HudMessage("E\n", HUDMSG_PLAIN, 0, CR_GREEN, 0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
             
             // Draw the level and max level
-            HudMessage("%d/%d\n", Player.Augs.Level[Index], AugData[Index].MaxLevel, HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+            HudMessage("%d/%d\n", Player.Augs.Level[Index], AugPtr->MaxLevel, HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
             
             // Icon
             if (Player.Augs.Active[Index])
@@ -455,16 +456,20 @@ function void DrawAugsMenu()
             SetFont("SMALLFONT");
             if (Player.MenuIndex == Index)
             {
-                HudMessage("\ca%s\n", AugData[Player.MenuIndex].Name,
+                HudMessage("\ca%s\n", AugPtr->Name,
                            HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 128.1, 0.05);
                 
-                for (int k = 0; k < AugData[Index].MaxLevel; k++)
+                for (int k = 0; k < AugPtr->MaxLevel; k++)
+                {
+                    AugInfoPtr AugIterPtr = &AugData[Player.MenuIndex];
+                    
                     if (Player.Augs.Level[Index] <= k)
-                        HudMessage("\cu%s\n", AugData[Player.MenuIndex].Description[k],
+                        HudMessage("\cu%s\n", AugIterPtr->Description[k],
                                    HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 136.1 + (k * 8.0), 0.05)
                     else
-                        HudMessage("\cd%s\n", AugData[Player.MenuIndex].Description[k],
+                        HudMessage("\cd%s\n", AugIterPtr->Description[k],
                                    HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 136.1 + (k * 8.0), 0.05);
+                };
             };
 
             // Draw the cursor
