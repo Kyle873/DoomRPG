@@ -468,8 +468,6 @@ script void MonsterStats(int Flags, int StatFlags)
         MonsterLevel = 1;
     if (MonsterLevel > 1000)
         MonsterLevel = 1000;
-    if (MonsterThreat > 10)
-        MonsterThreat = 10;
     if (MonsterStrength > 1000)
         MonsterStrength = 1000;
     if (MonsterDefense > 1000)
@@ -610,31 +608,56 @@ script void MonsterAuraDisplayHandler()
 
 script void MonsterLevelupHandler()
 {
-    int MonsterEnergy;
     int MonsterLevel;
     int MonsterFlags;
+    int MonsterStrength;
+    int MonsterDefense;
+    int MonsterVitality;
+    int MonsterEnergy;
+    int MonsterRegeneration;
+    int MonsterAgility;
+    int MonsterCapacity;
+    int MonsterLuck;
     
     Start:
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    MonsterEnergy = CheckInventory("DRPGMonsterEnergy");
-    MonsterLevel = CheckInventory("DRPGMonsterLevel");
-    MonsterFlags = CheckInventory("DRPGMonsterFlags");
-    
-    if (CheckInventory("PowerTimeFreezer"))
+    if (CheckActorInventory(0, "PowerTimeFreezer"))
     {
         Delay(35);
-        goto Start;
+        return;
     };
     
-    Delay (35 * (60 - (MonsterEnergy / 20)));
+    Delay(35 * (60 - (MonsterEnergy / 20)));
     
-    if (ClassifyActor(0) & ACTOR_DEAD)
-        return;
+    // Get Monster Stats
+    MonsterLevel = CheckInventory("DRPGMonsterLevel");
+    MonsterFlags = CheckInventory("DRPGMonsterFlags");
+    MonsterStrength = CheckInventory("DRPGMonsterStrength");
+    MonsterDefense = CheckInventory("DRPGMonsterDefense");
+    MonsterVitality = CheckInventory("DRPGMonsterVitality");
+    MonsterEnergy = CheckInventory("DRPGMonsterEnergy");
+    MonsterRegeneration = CheckInventory("DRPGMonsterRegeneration");
+    MonsterAgility = CheckInventory("DRPGMonsterAgility");
+    MonsterCapacity = CheckInventory("DRPGMonsterCapacity");
+    MonsterLuck = CheckInventory("DRPGMonsterLuck");
     
+    // Apply the stats to the monster
     SetInventory("DRPGMonsterLevel", MonsterLevel + 1);
-    MonsterStats(MonsterFlags, (int)SF_LEVELUP);
+    SetInventory("DRPGMonsterStrength", MonsterStrength + Random(1, GameSkill()));
+    SetInventory("DRPGMonsterDefense", MonsterDefense + Random(1, GameSkill()));
+    SetInventory("DRPGMonsterVitality", MonsterVitality + Random(1, GameSkill()));
+    SetInventory("DRPGMonsterEnergy", MonsterEnergy + Random(1, GameSkill()));
+    SetInventory("DRPGMonsterRegeneration", MonsterRegeneration + Random(1, GameSkill()));
+    SetInventory("DRPGMonsterAgility", MonsterAgility + Random(1, GameSkill()));
+    SetInventory("DRPGMonsterCapacity", MonsterCapacity + Random(1, GameSkill()));
+    SetInventory("DRPGMonsterLuck", MonsterLuck + Random(1, GameSkill()));
+    
+    // Re-calculate the monster's threat level
+    SetInventory("DRPGMonsterThreat", CalculateMonsterThreatLevel(0));
+    
+    // Spawn Level-up Arrow
     SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
     
     goto Start;
@@ -648,6 +671,12 @@ script void MonsterEPDrainHandler()
     Start:
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
+    
+    if (CheckActorInventory(0, "PowerTimeFreezer"))
+    {
+        Delay(35);
+        return;
+    };
     
     Energy = CheckInventory("DRPGMonsterEnergy");
     Radius = GetActorPropertyFixed(0, APROP_Radius);
@@ -684,14 +713,14 @@ script void MonsterRegenerationHandler()
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    Regeneration = CheckInventory("DRPGMonsterRegeneration");
-    AuraType = CheckInventory("DRPGMonsterAura");
-    
-    if (CheckInventory("PowerTimeFreezer"))
+    if (CheckActorInventory(0, "PowerTimeFreezer"))
     {
         Delay(35);
-        goto Start;
+        return;
     };
+    
+    Regeneration = CheckInventory("DRPGMonsterRegeneration");
+    AuraType = CheckInventory("DRPGMonsterAura");
     
     SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)CalculateMonsterMaxHealth(0) * ((fixed)Regeneration / 1000.0)));
     
@@ -711,6 +740,12 @@ script void MonsterMoneyDrainHandler()
     Start:
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
+    
+    if (CheckActorInventory(0, "PowerTimeFreezer"))
+    {
+        Delay(35);
+        return;
+    };
     
     Luck = CheckInventory("DRPGMonsterLuck");
     Radius = GetActorPropertyFixed(0, APROP_Radius);
