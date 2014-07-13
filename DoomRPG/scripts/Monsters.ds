@@ -658,11 +658,15 @@ script void MonsterEPDrainHandler()
         
         if (Distance(0, Players(i).TID) < Radius * GameSkill() * 4 && CheckSight(0, Players(i).TID, 0) && Players(i).EP > 0)
         {
+            int Previous = Players(i).EP;
+            
             Players(i).EP -= Energy;
-            Popoff(0, Energy, DNUM_EPGAIN);
             
             if (Players(i).EP < 0)
                 Players(i).EP = 0;
+            
+            if (Players(i).EP < Previous)
+                Popoff(0, Previous - Players(i).EP, DNUM_EPGAIN);
         };
     };
     
@@ -717,9 +721,13 @@ script void MonsterMoneyDrainHandler()
         
         if (Distance(0, Players(i).TID) < Radius * GameSkill() * 4 && CheckSight(0, Players(i).TID, 0))
         {
+            int Previous = CheckActorInventory(Players(i).TID, "DRPGCredits");
+            
             TakeActorInventory(Players(i).TID, "DRPGCredits", Luck);
             GiveInventory("DRPGCredits", Luck);
-            Popoff(0, Luck, DNUM_CREDGAIN);
+            
+            if (CheckActorInventory(Players(i).TID, "DRPGCredits") < Previous)
+                Popoff(0, Previous - CheckActorInventory(Players(i).TID, "DRPGCredits"), DNUM_CREDGAIN);
         };
     };
     
