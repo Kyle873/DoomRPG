@@ -659,6 +659,7 @@ script void MonsterEPDrainHandler()
         if (Distance(0, Players(i).TID) < Radius * GameSkill() * 4 && CheckSight(0, Players(i).TID, 0) && Players(i).EP > 0)
         {
             Players(i).EP -= Energy;
+            Popoff(0, Energy, DNUM_EPGAIN);
             
             if (Players(i).EP < 0)
                 Players(i).EP = 0;
@@ -715,7 +716,11 @@ script void MonsterMoneyDrainHandler()
         if (!PlayerInGame(i)) continue;
         
         if (Distance(0, Players(i).TID) < Radius * GameSkill() * 4 && CheckSight(0, Players(i).TID, 0))
+        {
             TakeActorInventory(Players(i).TID, "DRPGCredits", Luck);
+            GiveInventory("DRPGCredits", Luck);
+            Popoff(0, Luck, DNUM_CREDGAIN);
+        };
     };
     
     Delay(35);
@@ -893,6 +898,10 @@ script void MonsterDeath()
                     DropItem(DropTID, "DRPGImmunityCrystal", 1, DropMod / 8);
             };
     };
+    
+    // Drop Credits
+    if (CheckInventory("DRPGCredits") > 0)
+        DropMoney(0, CheckInventory("DRPGCredits"));
     
     // Add XP/Rank
     if (!(MonsterFlags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
