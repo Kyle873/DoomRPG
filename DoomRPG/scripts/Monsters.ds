@@ -150,9 +150,6 @@ acscript void MonsterInit(int Flags)
     // Aura Spawner
     MonsterAuraDisplayHandler();
     
-    // Levelup Handling
-    MonsterLevelupHandler();
-    
     // Regeneration Stat Handling
     MonsterRegenerationHandler();
     
@@ -406,31 +403,40 @@ script void MonsterStats(int Flags, int StatFlags)
     {
         case 1: // Red Aura - Strength
             MonsterStrength *= 2;
+            GiveInventory("DRPGRedAuraGiver", 1);
             break;
         case 2: // Green Aura - Defense
             MonsterDefense *= 2;
+            GiveInventory("DRPGGreenAuraGiver", 1);
             break;
         case 3: // White Aura - XP
             MonsterLevel *= 2;
+            GiveInventory("DRPGWhiteAuraGiver", 1);
             break;
         case 4: // Pink Aura - Vitality
             MonsterVitality *= 2;
+            GiveInventory("DRPGPinkAuraGiver", 1);
             break;
         case 5: // Blue Aura - Energy
             MonsterEnergy *= 2;
+            GiveInventory("DRPGBlueAuraGiver", 1);
+            MonsterLevelupHandler();
+            MonsterEPDrainHandler();
             break;
         case 6: // Purple Aura - Regeneration
             MonsterRegeneration *= 2;
             break;
         case 7: // Orange Aura - Agility
             MonsterAgility *= 2;
+            GiveInventory("DRPGOrangeAuraGiver", 1);
             break;
         case 8: // Dark Blue Aura - Capacity
             MonsterCapacity *= 2;
-            GiveInventory("DRPGAggressionBooster", 1);
+            GiveInventory("DRPGDarkBlueAuraGiver", 1);
             break;
         case 9: // Yellow Aura - Luck
             MonsterLuck *= 2;
+            MonsterMoneyDrainHandler();
             break;
         case 10: // Black Aura - Miniboss
             MonsterLevel *= 2;
@@ -441,8 +447,17 @@ script void MonsterStats(int Flags, int StatFlags)
             MonsterRegeneration *= 2;
             MonsterAgility *= 2;
             MonsterCapacity *= 2;
-            GiveInventory("DRPGAggressionBooster", 1);
             MonsterLuck *= 2;
+            GiveInventory("DRPGRedAuraGiver", 1);
+            GiveInventory("DRPGGreenAuraGiver", 1);
+            GiveInventory("DRPGWhiteAuraGiver", 1);
+            GiveInventory("DRPGPinkAuraGiver", 1);
+            GiveInventory("DRPGBlueAuraGiver", 1);
+            GiveInventory("DRPGOrangeAuraGiver", 1);
+            GiveInventory("DRPGDarkBlueAuraGiver", 1);
+            MonsterLevelupHandler();
+            MonsterEPDrainHandler();
+            MonsterMoneyDrainHandler();
             break;
     };
     
@@ -508,6 +523,9 @@ script void MonsterStatsHandler()
     int OldDefense;
     
     Start:
+    if (ClassifyActor(0) & ACTOR_DEAD)
+        return;
+    
     MonsterStrength = CheckInventory("DRPGMonsterStrength");
     MonsterDefense = CheckInventory("DRPGMonsterDefense");
     
@@ -539,6 +557,9 @@ script void MonsterAuraDisplayHandler()
     bool VisibleToPlayers;
     
     Start:
+    if (ClassifyActor(0) & ACTOR_DEAD)
+        return;
+    
     VisibleToPlayers = false;
     
     for (int i = 0; i < MAX_PLAYERS; i++)
@@ -591,10 +612,10 @@ script void MonsterLevelupHandler()
     int MonsterLevel;
     int MonsterFlags;
     
-    if (CheckInventory("DRPGMonsterAura") != 5)
+    Start:
+    if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    Start:
     MonsterEnergy = CheckInventory("DRPGMonsterEnergy");
     MonsterLevel = CheckInventory("DRPGMonsterLevel");
     MonsterFlags = CheckInventory("DRPGMonsterFlags");
@@ -617,16 +638,46 @@ script void MonsterLevelupHandler()
     goto Start;
 };
 
+script void MonsterEPDrainHandler()
+{
+    int Energy;
+    fixed Radius;
+    
+    Start:
+    if (ClassifyActor(0) & ACTOR_DEAD)
+        return;
+    
+    Energy = CheckInventory("DRPGMonsterEnergy");
+    Radius = GetActorPropertyFixed(0, APROP_Radius);
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i)) continue;
+        
+        if (Distance(0, Players(i).TID) < Radius * GameSkill() && Players(i).EP > 0)
+        {
+            Players(i).EP -= Energy;
+            
+            if (Players(i).EP < 0)
+                Players(i).EP = 0;
+        };
+    };
+    
+    Delay(35);
+    
+    goto Start;
+};
+
 script void MonsterRegenerationHandler()
 {
-    int MonsterRegeneration;
+    int Regeneration;
     int AuraType;
     
     Start:
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    MonsterRegeneration = CheckInventory("DRPGMonsterRegeneration");
+    Regeneration = CheckInventory("DRPGMonsterRegeneration");
     AuraType = CheckInventory("DRPGMonsterAura");
     
     if (CheckInventory("PowerTimeFreezer"))
@@ -635,13 +686,38 @@ script void MonsterRegenerationHandler()
         goto Start;
     };
     
-    SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)CalculateMonsterMaxHealth(0) * ((fixed)MonsterRegeneration / 1000.0)));
+    SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)CalculateMonsterMaxHealth(0) * ((fixed)Regeneration / 1000.0)));
     
     // Prevent going over 100%
     if (GetActorProperty(0, APROP_Health) > CalculateMonsterMaxHealth(0))
         SetActorProperty(0, APROP_Health, CalculateMonsterMaxHealth(0));
     
     Delay(35 * (30 - (AuraType == 6 ? 20 : 0)));
+    goto Start;
+};
+
+script void MonsterMoneyDrainHandler()
+{
+    int Luck;
+    fixed Radius;
+    
+    Start:
+    if (ClassifyActor(0) & ACTOR_DEAD)
+        return;
+    
+    Luck = CheckInventory("DRPGMonsterLuck");
+    Radius = GetActorPropertyFixed(0, APROP_Radius);
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i)) continue;
+        
+        if (Distance(0, Players(i).TID) < Radius * GameSkill())
+            TakeActorInventory(Players(i).TID, "DRPGCredits", Luck);
+    };
+    
+    Delay(35);
+    
     goto Start;
 };
 
