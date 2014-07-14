@@ -690,37 +690,37 @@ function void DropInventory()
         };
 };
 
-function void DropMoney(int TID, int Amount)
+function void DropMoney(int Killer, int TID, int Amount)
 {
     int Total = Amount;
     int Drops;
     
     Drops = Total / 1000;
-    while (Drops--) DropItem(TID, "DRPGCredits1000", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1000", 1, 256);
     Total %= 1000;
 
     Drops = Total / 100;
-    while (Drops--) DropItem(TID, "DRPGCredits100", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits100", 1, 256);
     Total %= 100;
 
     Drops = Total / 50;
-    while (Drops--) DropItem(TID, "DRPGCredits50", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits50", 1, 256);
     Total %= 50;
 
     Drops = Total / 20;
-    while (Drops--) DropItem(TID, "DRPGCredits20", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits20", 1, 256);
     Total %= 20;
 
     Drops = Total / 10;
-    while (Drops--) DropItem(TID, "DRPGCredits10", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits10", 1, 256);
     Total %= 10;
 
     Drops = Total / 5;
-    while (Drops--) DropItem(TID, "DRPGCredits5", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits5", 1, 256);
     Total %= 5;
     
     Drops = Total;
-    while (Drops--) DropItem(TID, "DRPGCredits1", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1", 1, 256);
 };
 
 // Fires a projectile from the Player
@@ -1330,4 +1330,44 @@ function bool DropPlayerItem(str Item)
         Thing_Remove(TID);
     
     return (SpawnOK && SightOK);
+};
+
+function void DropMonsterItem(int Killer, int TID, str Item, int Amount, int Chance)
+{
+    // if this is an invalid killer, return
+    if (Killer < 0 || Killer >= MAX_PLAYERS) return;
+    
+    for (int i = 1; i <= Amount; i++)
+    {
+        // Chance
+        if (!(Random(1, 256) <= Chance)) continue;
+        
+        fixed Angle = GetActorAngle(TID);
+        fixed X = GetActorX(TID);
+        fixed Y = GetActorY(TID);
+        fixed Z = GetActorZ(TID) + (GetActorPropertyFixed(0, APROP_Height) / 2.0);
+        fixed XSpeed = 4.0;
+        fixed YSpeed = 4.0;
+        fixed ZSpeed = 8.0;
+        int ItemTID = UniqueTID();
+        bool Success = false;
+        
+        // Spawn the Item
+        Success = SpawnForced(Item, X, Y, Z, ItemTID, Angle);
+        
+        // Spawn successful
+        if (Success)
+        {
+            // Set Velocity
+            SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
+            
+            // Now iterate the DropTID array and insert the ItemTID into the next available entry
+            for (int i = 0; i < MAX_DROPS; i++)
+                if (Players(Killer).DropTID[i] == -1)
+                {
+                    Players(Killer).DropTID[i] = ItemTID;
+                    break;
+                };
+        };
+    };
 };

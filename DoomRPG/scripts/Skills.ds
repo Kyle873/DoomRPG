@@ -18,7 +18,7 @@ int ForceFieldTID = 1998;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
-    7; 9; 9; 3; 17; 7;
+    7; 9; 9; 3; 17; 8;
 };
 
 AddressSpace map_array SkillSpace;
@@ -410,6 +410,12 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
             "Recall"; 25; 1; Recall;
             {
                 "Brings you to the beginning of the level";
+            };
+        };
+        {
+            "Magnetize"; 100; 1; Magnetize;
+            {
+                "Pulls dropped items to you";
             };
         };
         {
@@ -1746,6 +1752,52 @@ acscript bool Recall(Skill *Self, void *Data)
         
     SetInventory("ArtiTeleport", 1);
     UseInventory("ArtiTeleport");
+    return true;
+};
+
+acscript bool Magnetize(Skill *Self, void *Data)
+{
+    fixed Angle = GetActorAngle(0);
+    fixed X = GetActorX(0);
+    fixed Y = GetActorY(0);
+    fixed Z = GetActorZ(0) + (GetActorProperty(0, APROP_Height) / 2);
+    fixed AngleAdd;
+    int ItemCount;
+    
+    // Count all the items in the DropTID array
+    for (int i = 0; i < MAX_DROPS; i++)
+        if (Player.DropTID[i] != -1)
+            ItemCount++;
+    
+    // Refund - If there are no items in the array
+    if (ItemCount == 0)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    // Overdrive - Pull the items on top of you and pick them all up
+    if (Overdrive)
+    {
+        for (int i = 0; i < ItemCount; i++)
+            SetActorPosition(Player.DropTID[i], X, Y, Z, 0);
+        SetActorVelocity(0, 0.01, 0.01, 0, true, false);
+        ActivatorSound("skills/magnet", 127);
+        return true;
+    };
+    
+    AngleAdd = 1.0 / ItemCount;
+    
+    for (int i = 0; i < ItemCount; i++)
+    {
+        X = GetActorX(0) + Cos(Angle) * 64.0;
+        Y = GetActorY(0) + Sin(Angle) * 64.0;
+        SetActorPosition(Player.DropTID[i], X, Y, Z, 0);
+        Angle += AngleAdd;
+    };
+    
+    FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 1.0);
+    ActivatorSound("skills/magnet", 127);
     return true;
 };
 
