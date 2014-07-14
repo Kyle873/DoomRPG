@@ -13,7 +13,6 @@ static LevelBonusInfo[256] LevelBonus;
 static int                 RandomizedStartTokens;
 static int                 XPCurve;
 
-
 // Stat Caps
 int SoftStatCap = 100;
 int HardStatCap = 1000;
@@ -446,8 +445,11 @@ function void CheckLevelInfo()
 
 function void CheckHealth()
 {
+    // If you're dead, return
+    if (ClassifyActor(0) & ACTOR_DEAD) return;
+    
     // < 10% Health
-    if (GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10 && GetActorProperty(Player.TID, APROP_Health) > 0 && !Player.Perks[STAT_VITALITY])
+    if (GetActorProperty(Player.TID, APROP_Health) <= GetActorProperty(Player.TID, APROP_SpawnHealth) / 10 && !Player.Perks[STAT_VITALITY])
     {
         // Fade Effect
         FadeRange(255, 0, 0, 0.15 + (Sin(Timer() / 64.0) * 0.1), 255, 0, 0, 0.0, 1.0);
@@ -466,7 +468,7 @@ function void CheckArmorMax()
 {
     int PlayerNum = PlayerNumber();
     
-    if (!GetArmorType("none", PlayerNum))                   Player.ArmorMax = 0;
+    if (!GetArmorType("none", PlayerNum))                       Player.ArmorMax = 0;
     if (GetArmorType("DRPGArmorBonus", PlayerNum) > 0)          Player.ArmorMax = 100;
     if (GetArmorType("DRPGUsedGreenArmor", PlayerNum) > 0)      Player.ArmorMax = 50;
     if (GetArmorType("DRPGGreenArmor", PlayerNum) > 0)          Player.ArmorMax = 100;
@@ -556,6 +558,9 @@ function void CheckRegen()
 // Regeneration
 function void DoRegen()
 {
+    // If you're dead, return
+    if (ClassifyActor(0) & ACTOR_DEAD) return;
+    
     int HPAmount = 1;
     int EPAmount = 1;
     
@@ -640,8 +645,8 @@ function void DoRegen()
         }
         else
         {
-                Player.HPRate += HPAmount;
-                Player.EPRate += EPAmount;
+            Player.HPRate += HPAmount;
+            Player.EPRate += EPAmount;
         };
     };
 };
@@ -781,6 +786,9 @@ function void CheckBurnout()
 
 function void CheckPerks()
 {
+    // If you're dead, return
+    if (ClassifyActor(0) & ACTOR_DEAD) return;
+    
     if (Player.Strength >= 100)     Player.Perks[STAT_STRENGTH] = true      else Player.Perks[STAT_STRENGTH] = false;
     if (Player.Defense >= 100)      Player.Perks[STAT_DEFENSE] = true       else Player.Perks[STAT_DEFENSE] = false;
     if (Player.Vitality >= 100)     Player.Perks[STAT_VITALITY] = true      else Player.Perks[STAT_VITALITY] = false;
