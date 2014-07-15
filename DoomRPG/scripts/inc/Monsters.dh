@@ -5,6 +5,39 @@
 #define MAX_MONSTERS_DRLA       46
 #define MAX_HUMANS              19
 
+struct MonsterStats
+{
+    // Basic
+    int Flags;
+    int RenderStyle;
+    int SpawnHealth;
+    int HealthMax;
+    
+    // Properties
+    fixed Speed;
+    fixed Height;
+    fixed Radius;
+    
+    // Flags
+    bool Init;
+    bool HealthBar;
+    bool Named;
+    bool Reinforcement;
+    
+    // Stats
+    int Level;
+    int Aura;
+    int Threat;
+    int Strength;
+    int Defense;
+    int Vitality;
+    int Energy;
+    int Regeneration;
+    int Agility;
+    int Capacity;
+    int Luck;
+};
+
 struct MonsterInfo
 {
     str Actor;
@@ -18,8 +51,13 @@ struct MonsterInfo
 AddressSpaceDecl map_array MonsterSpace;
 typedef MonsterInfo MonsterSpace *MonsterInfoPtr;
 
+AddressSpaceDecl GlobalArray MonsterStatsSpace;
+MonsterStatsSpace MonsterStats[] Monsters;
+typedef MonsterStats MonsterStatsSpace *MonsterStatsPtr;
+
 extern
 {
+    variable map_register int MonsterID;
     variable MonsterSpace MonsterInfo[MAX_MONSTERS] MonsterData;
     variable MonsterSpace MonsterInfo[MAX_MONSTERS_DRLA] MonsterDataDRLA;
     variable MonsterSpace str[MAX_HUMANS][2] MonsterHumanData;
@@ -36,7 +74,7 @@ extern "ACS"
 
 extern
 {
-    script void MonsterStats(int, int);
+    script void MonsterInitStats(int = 0);
     script void MonsterStatsHandler();
     script void MonsterAuraDisplayHandler();
     script void MonsterLevelupHandler();
@@ -50,9 +88,9 @@ extern
 
 extern
 {
-    function int CalculateMonsterThreatLevel(int);
-    function int CalculateMonsterMaxHealth(int);
-    function fixed CalculateMonsterSpeed(int);
+    function int CalculateMonsterThreatLevel(MonsterStatsPtr);
+    function int CalculateMonsterMaxHealth(MonsterStatsPtr);
+    function fixed CalculateMonsterSpeed(MonsterStatsPtr);
 };
 
 #endif

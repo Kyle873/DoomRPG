@@ -9,6 +9,10 @@
 #include "Utils.dh"
 
 AddressSpace map_array MonsterSpace;
+AddressSpace GlobalArray MonsterStatsSpace;
+
+int MonsterID;
+MonsterStatsSpace MonsterStats[] Monsters;
 
 MonsterSpace MonsterInfo[MAX_MONSTERS] MonsterData =
 {
@@ -118,34 +122,42 @@ MonsterSpace str[MAX_HUMANS][2] MonsterHumanData =
 // Monster Init Script
 acscript void MonsterInit(int Flags)
 {
+    // Get a new ID for the monster
+    if (GetMonsterID(0) == 0)
+        SetMonsterID(0, MonsterID++);
+    
+    // Monster Stats Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
     // If initialization has already occurred on this monster, terminate
-    if (CheckInventory("DRPGMonsterInit")) return;
+    if (Stats->Init) return;
     
     // Set as initialized
-    SetInventory("DRPGMonsterInit", 1);
+    Stats->Init = true;
     
-    // Set the Height
-    SetInventory("DRPGHeightCheck", (int)GetActorPropertyFixed(0, APROP_Height));
+    // Store Monster Flags
+    Stats->Flags = Flags;
+    
+    // Set the Height and Radius
+    Stats->Height = GetActorPropertyFixed(0, APROP_Height);
+    Stats->Radius = GetActorPropertyFixed(0, APROP_Radius);
     
     // Start Damage Numbers Script
     DamageNumbers();
     
     // Give it a Health Bar
     if (!(Flags & MF_NOHEALTHBAR))
-        SetInventory("DRPGHealthBar", 1);
-    
-    // Apply Monster Flags
-    SetInventory("DRPGMonsterFlags", Flags);
+        Stats->HealthBar = true;
     
     // Apply Stats
     if (!(Flags & MF_NOSTATS))
-        MonsterStats(Flags, false);
+        MonsterInitStats();
+    
+    // Save the Render Type
+    Stats->RenderStyle = GetActorProperty(0, APROP_RenderStyle);
     
     // Strength / Defense Handling
     MonsterStatsHandler();
-    
-    // Save the Render Type
-    SetInventory("DRPGMonsterRenderStyle", GetActorProperty(0, APROP_RenderStyle));
     
     // Aura Spawner
     MonsterAuraDisplayHandler();
@@ -160,19 +172,22 @@ acscript void MonsterInit(int Flags)
 // Modify the targeted monster (mainly for debugging)
 acscript void MonsterSet(int Level, int Aura, int Flags)
 {
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
     // Move script to the targeted monster
     SetActivatorToTarget(Player.TID);
     
     // Set Stats/Flags
     if (Level > 0)
-        SetInventory("DRPGMonsterLevel", Level);
+        Stats->Level = Level;
     if (Aura > 0)
-        SetInventory("DRPGMonsterAura", Aura);
+        Stats->Aura = Aura;
     if (Flags > 0)
-        SetInventory("DRPGMonsterFlags", Flags);
+        Stats->Flags = Flags;
     
     // Re-run the Stats Script
-    MonsterStats(Flags, true);
+    MonsterInitStats(SF_RECREATE);
 };
 
 // Dump the targeted monster's stats to the console
@@ -182,6 +197,9 @@ acscript void MonsterDump()
     
     // Move script to the targeted monster
     SetActivatorToTarget(Player.TID);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     // If you have no target, terminate
     if (ActivatorTID() == Players(PlayerNum).TID)
@@ -197,29 +215,30 @@ acscript void MonsterDump()
     Log(" Radius: %k\n", GetActorPropertyFixed(0, APROP_Radius));
     Log(" Speed: %k\n", GetActorPropertyFixed(0, APROP_Speed));
     Log(" TID: %d\n", ActivatorTID());
+    Log(" ID: %d\n", GetMonsterID(0));
     
     Log("\cf===== MONSTER FLAGS =====\n");
-    Log(" Init: %d\n", CheckInventory("DRPGMonsterInit"));
-    Log(" Named: %d\n", CheckInventory("DRPGMonsterNamed"));
-    Log(" HealthBar: %d\n", CheckInventory("DRPGHealthBar"));
-    Log(" RenderStyle: %d\n", CheckInventory("DRPGMonsterRenderStyle"));
-    Log(" Flags: %d\n", CheckInventory("DRPGMonsterFlags"));
+    Log(" Init: %d\n", Stats->Init);
+    Log(" Named: %d\n", Stats->Named);
+    Log(" HealthBar: %d\n", Stats->HealthBar);
+    Log(" RenderStyle: %d\n", Stats->RenderStyle);
+    Log(" DRPG Flags: %d\n", Stats->Flags);
     
     Log("\cd===== MONSTER STATS =====\n");
-    Log(" Level: %d\n", CheckInventory("DRPGMonsterLevel"));
-    Log(" Aura: %d\n", CheckInventory("DRPGMonsterAura"));
-    Log(" Threat: %d\n", CheckInventory("DRPGMonsterThreat"));
-    Log(" Spawn Health: %d\n", CheckInventory("DRPGMonsterSpawnHealth"));
-    Log(" Health Max %d\n", CheckInventory("DRPGMonsterHealthMax"));
-    Log(" Current Speed: %d\n", CheckInventory("DRPGMonsterSpeed"));
-    Log(" \cgStrength: %d\n", CheckInventory("DRPGMonsterStrength"));
-    Log(" \cdDefense: %d\n", CheckInventory("DRPGMonsterDefense"));
-    Log(" \caVitality: %d\n", CheckInventory("DRPGMonsterVitality"));
-    Log(" \cnEnergy: %d\n", CheckInventory("DRPGMonsterEnergy"));
-    Log(" \ctRegeneration: %d\n", CheckInventory("DRPGMonsterRegeneration"));
-    Log(" \ciAgility: %d\n", CheckInventory("DRPGMonsterAgility"));
-    Log(" \chCapacity: %d\n", CheckInventory("DRPGMonsterCapacity"));
-    Log(" \ckLuck: %d\n", CheckInventory("DRPGMonsterLuck"));
+    Log(" Level: %d\n", Stats->Level);
+    Log(" Aura: %d\n", Stats->Aura);
+    Log(" Threat: %d\n", Stats->Threat);
+    Log(" Spawn Health: %d\n", Stats->SpawnHealth);
+    Log(" Health Max %d\n", Stats->HealthMax);
+    Log(" Current Speed: %d\n", Stats->Speed);
+    Log(" \cgStrength: %d\n", Stats->Strength);
+    Log(" \cdDefense: %d\n", Stats->Defense);
+    Log(" \caVitality: %d\n", Stats->Vitality);
+    Log(" \cnEnergy: %d\n", Stats->Energy);
+    Log(" \ctRegeneration: %d\n", Stats->Regeneration);
+    Log(" \ciAgility: %d\n", Stats->Agility);
+    Log(" \chCapacity: %d\n", Stats->Capacity);
+    Log(" \ckLuck: %d\n", Stats->Luck);
 };
 
 // Damage the target
@@ -234,24 +253,27 @@ acscript void MonsterDamage(int Amount, int Type)
 };
 
 // Apply stats to monsters
-script void MonsterStats(int Flags, int StatFlags)
+script void MonsterInitStats(int StatFlags)
 {
     // Move Activator to whoever the player is targeting
     if (StatFlags & SF_PLAYERTARGET)
         SetActivatorToTarget(Player.TID);
     
-    int MonsterLevel = CheckInventory("DRPGMonsterLevel");
-    int MonsterAura = CheckInventory("DRPGMonsterAura");
-    int MonsterThreat = CheckInventory("DRPGMonsterThreat");
-    int MonsterSpeed = CheckInventory("DRPGMonsterSpeed");
-    int MonsterStrength = CheckInventory("DRPGMonsterStrength");
-    int MonsterDefense = CheckInventory("DRPGMonsterDefense");
-    int MonsterVitality = CheckInventory("DRPGMonsterVitality");
-    int MonsterEnergy = CheckInventory("DRPGMonsterEnergy");
-    int MonsterRegeneration = CheckInventory("DRPGMonsterRegeneration");
-    int MonsterAgility = CheckInventory("DRPGMonsterAgility");
-    int MonsterCapacity = CheckInventory("DRPGMonsterCapacity");
-    int MonsterLuck = CheckInventory("DRPGMonsterLuck");
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    int MonsterLevel = Stats->Level;
+    int MonsterAura = Stats->Aura;
+    int MonsterThreat = Stats->Threat;
+    fixed MonsterSpeed = Stats->Speed;
+    int MonsterStrength = Stats->Strength;
+    int MonsterDefense = Stats->Defense;
+    int MonsterVitality = Stats->Vitality;
+    int MonsterEnergy = Stats->Energy;
+    int MonsterRegeneration = Stats->Regeneration;
+    int MonsterAgility = Stats->Agility;
+    int MonsterCapacity = Stats->Capacity;
+    int MonsterLuck = Stats->Luck;
     int NumPlayers;
     int PlayerAvgLevel;
     int AuraRandomizer;
@@ -388,7 +410,7 @@ script void MonsterStats(int Flags, int StatFlags)
     };
     
     // Apply Aura
-    if (!GetActorProperty(0, APROP_Friendly) && !(Flags & MF_NOAURA) && !StatFlags)
+    if (!GetActorProperty(0, APROP_Friendly) && !(Stats->Flags & MF_NOAURA) && !StatFlags)
     {
         int AuraCurve = GetCVar("drpg_aura_curve");
         int AuraMin = -1000 + MonsterEnergy + AuraCurve;
@@ -487,38 +509,39 @@ script void MonsterStats(int Flags, int StatFlags)
     
     // We need to make sure we only pass the speed to the monster if it's being initially created
     if (!StatFlags)
-        MonsterSpeed = (int)GetActorPropertyFixed(0, APROP_Speed);
+        MonsterSpeed = GetActorPropertyFixed(0, APROP_Speed);
     
     // Apply the stats to the monster
-    SetInventory("DRPGMonsterLevel", MonsterLevel);
-    SetInventory("DRPGMonsterAura", MonsterAura);
-    SetInventory("DRPGMonsterSpeed", MonsterSpeed);
-    SetInventory("DRPGMonsterStrength", MonsterStrength);
-    SetInventory("DRPGMonsterDefense", MonsterDefense);
-    SetInventory("DRPGMonsterVitality", MonsterVitality);
-    SetInventory("DRPGMonsterEnergy", MonsterEnergy);
-    SetInventory("DRPGMonsterRegeneration", MonsterRegeneration);
-    SetInventory("DRPGMonsterAgility", MonsterAgility);
-    SetInventory("DRPGMonsterCapacity", MonsterCapacity);
-    SetInventory("DRPGMonsterLuck", MonsterLuck);
+    Stats->Level = MonsterLevel;
+    Stats->Aura = MonsterAura;
+    Stats->Speed = MonsterSpeed;
+    Stats->Strength = MonsterStrength;
+    Stats->Defense = MonsterDefense;
+    Stats->Vitality = MonsterVitality;
+    Stats->Energy = MonsterEnergy;
+    Stats->Regeneration = MonsterRegeneration;
+    Stats->Agility = MonsterAgility;
+    Stats->Capacity = MonsterCapacity;
+    Stats->Luck = MonsterLuck;
     
     // Calculate Threat Level
-    MonsterThreat = CalculateMonsterThreatLevel(0);
-    SetInventory("DRPGMonsterThreat", MonsterThreat);
+    MonsterThreat = CalculateMonsterThreatLevel(Stats);
+    Stats->Threat = MonsterThreat;
     
     // Calculate Health
-    SetInventory("DRPGMonsterSpawnHealth", GetActorProperty(0, APROP_SpawnHealth));
-    SetInventory("DRPGMonsterHealthMax", CalculateMonsterMaxHealth(0));
-    SetActorProperty(0, APROP_Health, CalculateMonsterMaxHealth(0));
+    Stats->SpawnHealth = GetActorProperty(0, APROP_SpawnHealth);
+    Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
+    SetActorProperty(0, APROP_Health, Stats->HealthMax);
     
     // Calculate Speed
-    SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(0));
+    SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(Stats));
 };
 
 script void MonsterStatsHandler()
 {
-    int MonsterStrength;
-    int MonsterDefense;
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
     int OldStrength;
     int OldDefense;
     
@@ -526,23 +549,20 @@ script void MonsterStatsHandler()
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    MonsterStrength = CheckInventory("DRPGMonsterStrength");
-    MonsterDefense = CheckInventory("DRPGMonsterDefense");
-    
     // Strength
-    if (MonsterStrength != OldStrength)
+    if (Stats->Strength != OldStrength)
     {
         if (OldStrength)
             TakeInventory(StrParam("DRPGStrength%d\n", OldStrength * GameSkill()), 1);
-        SetInventory(StrParam("DRPGStrength%d\n", MonsterStrength * GameSkill()), 1);
-        OldStrength = MonsterStrength;
+        SetInventory(StrParam("DRPGStrength%d\n", Stats->Strength * GameSkill()), 1);
+        OldStrength = Stats->Strength;
     };
     
     // Defense
-    if (MonsterDefense != OldDefense)
+    if (Stats->Defense != OldDefense)
     {
-        SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (MonsterDefense / 100)));
-        OldDefense = MonsterDefense;
+        SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (Stats->Defense / 100)));
+        OldDefense = Stats->Defense;
     };
     
     Delay(4);
@@ -552,8 +572,9 @@ script void MonsterStatsHandler()
 
 script void MonsterAuraDisplayHandler()
 {
-    int MonsterRenderStyle = CheckInventory("DRPGMonsterRenderStyle");
-    int AuraType;
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
     bool VisibleToPlayers;
     
     Start:
@@ -580,24 +601,23 @@ script void MonsterAuraDisplayHandler()
         goto Start;
     };
     
-    AuraType = CheckInventory("DRPGMonsterAura");
-    
     // Friendly Monster Aura
-    if (GetActorProperty(0, APROP_Friendly) && GetActorPropertyString(0, APROP_Nametag) != "Marine" && GetActorPropertyString(0, APROP_Nametag) != "Heavy Marine" && !CheckInventory("DRPGMonsterNamed"))
+    // TODO: GROSS HACKS, DO IT BETTER
+    if (GetActorProperty(0, APROP_Friendly) && GetActorPropertyString(0, APROP_Nametag) != "Marine" && GetActorPropertyString(0, APROP_Nametag) != "Heavy Marine" && !Stats->Named)
         SpawnAura(0, 0, false);
     
     // Black Aura Effects
-    if (AuraType == 10)
+    if (Stats->Aura == 10)
     {
         if (GetActorLightLevel(0) < 128)
             SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy)
         else
-            SetActorProperty(0, APROP_RenderStyle, MonsterRenderStyle);
+            SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle);
     };
     
     // Spawn Aura
-    if (AuraType)
-        SpawnAura(0, AuraType, false);
+    if (Stats->Aura)
+        SpawnAura(0, Stats->Aura, false);
     
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
@@ -608,49 +628,29 @@ script void MonsterAuraDisplayHandler()
 
 script void MonsterLevelupHandler()
 {
-    int MonsterLevel;
-    int MonsterFlags;
-    int MonsterStrength;
-    int MonsterDefense;
-    int MonsterVitality;
-    int MonsterEnergy;
-    int MonsterRegeneration;
-    int MonsterAgility;
-    int MonsterCapacity;
-    int MonsterLuck;
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     Start:
     
-    // Get Monster Stats
-    MonsterLevel = CheckInventory("DRPGMonsterLevel");
-    MonsterFlags = CheckInventory("DRPGMonsterFlags");
-    MonsterStrength = CheckInventory("DRPGMonsterStrength");
-    MonsterDefense = CheckInventory("DRPGMonsterDefense");
-    MonsterVitality = CheckInventory("DRPGMonsterVitality");
-    MonsterEnergy = CheckInventory("DRPGMonsterEnergy");
-    MonsterRegeneration = CheckInventory("DRPGMonsterRegeneration");
-    MonsterAgility = CheckInventory("DRPGMonsterAgility");
-    MonsterCapacity = CheckInventory("DRPGMonsterCapacity");
-    MonsterLuck = CheckInventory("DRPGMonsterLuck");
-    
-    Delay(35 * (60 - (MonsterEnergy / 20)));
+    Delay(35 * (60 - (Stats->Energy / 20)));
     
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
     // Apply the stats to the monster
-    SetInventory("DRPGMonsterLevel", MonsterLevel + 1);
-    SetInventory("DRPGMonsterStrength", MonsterStrength + Random(1, GameSkill()));
-    SetInventory("DRPGMonsterDefense", MonsterDefense + Random(1, GameSkill()));
-    SetInventory("DRPGMonsterVitality", MonsterVitality + Random(1, GameSkill()));
-    SetInventory("DRPGMonsterEnergy", MonsterEnergy + Random(1, GameSkill()));
-    SetInventory("DRPGMonsterRegeneration", MonsterRegeneration + Random(1, GameSkill()));
-    SetInventory("DRPGMonsterAgility", MonsterAgility + Random(1, GameSkill()));
-    SetInventory("DRPGMonsterCapacity", MonsterCapacity + Random(1, GameSkill()));
-    SetInventory("DRPGMonsterLuck", MonsterLuck + Random(1, GameSkill()));
+    Stats->Level++;
+    Stats->Strength += Random(1, GameSkill());
+    Stats->Defense += Random(1, GameSkill());
+    Stats->Vitality += Random(1, GameSkill());
+    Stats->Energy += Random(1, GameSkill());
+    Stats->Regeneration += Random(1, GameSkill());
+    Stats->Agility += Random(1, GameSkill());
+    Stats->Capacity += Random(1, GameSkill());
+    Stats->Luck += Random(1, GameSkill());
     
     // Re-calculate the monster's threat level
-    SetInventory("DRPGMonsterThreat", CalculateMonsterThreatLevel(0));
+    Stats->Threat = CalculateMonsterThreatLevel(Stats);
     
     // Spawn Level-up Arrow
     SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
@@ -660,25 +660,22 @@ script void MonsterLevelupHandler()
 
 script void MonsterEPDrainHandler()
 {
-    int Energy;
-    fixed Radius;
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     Start:
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    Energy = CheckInventory("DRPGMonsterEnergy");
-    Radius = GetActorPropertyFixed(0, APROP_Radius);
-    
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
         if (!PlayerInGame(i)) continue;
         
-        if (Distance(0, Players(i).TID) < Radius * GameSkill() * 4 && CheckSight(0, Players(i).TID, 0) && Players(i).EP > 0)
+        if (Distance(0, Players(i).TID) < Stats->Radius * GameSkill() * 4 && CheckSight(0, Players(i).TID, 0) && Players(i).EP > 0)
         {
             int Previous = Players(i).EP;
             
-            Players(i).EP -= Energy;
+            Players(i).EP -= Stats->Energy;
             
             if (Players(i).EP < 0)
                 Players(i).EP = 0;
@@ -695,48 +692,42 @@ script void MonsterEPDrainHandler()
 
 script void MonsterRegenerationHandler()
 {
-    int Regeneration;
-    int AuraType;
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     Start:
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    Regeneration = CheckInventory("DRPGMonsterRegeneration");
-    AuraType = CheckInventory("DRPGMonsterAura");
-    
-    SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)CalculateMonsterMaxHealth(0) * ((fixed)Regeneration / 1000.0)));
+    SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)CalculateMonsterMaxHealth(Stats) * ((fixed)Stats->Regeneration / 1000.0)));
     
     // Prevent going over 100%
-    if (GetActorProperty(0, APROP_Health) > CalculateMonsterMaxHealth(0))
-        SetActorProperty(0, APROP_Health, CalculateMonsterMaxHealth(0));
+    if (GetActorProperty(0, APROP_Health) > CalculateMonsterMaxHealth(Stats))
+        SetActorProperty(0, APROP_Health, CalculateMonsterMaxHealth(Stats));
     
-    Delay(35 * (30 - (AuraType == 6 ? 20 : 0)));
+    Delay(35 * (30 - (Stats->Aura == 6 ? 20 : 0)));
     goto Start;
 };
 
 script void MonsterMoneyDrainHandler()
 {
-    int Luck;
-    fixed Radius;
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     Start:
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    Luck = CheckInventory("DRPGMonsterLuck");
-    Radius = GetActorPropertyFixed(0, APROP_Radius);
-    
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
         if (!PlayerInGame(i)) continue;
         
-        if (Distance(0, Players(i).TID) < Radius * GameSkill() * 4 && CheckSight(0, Players(i).TID, 0))
+        if (Distance(0, Players(i).TID) < Stats->Radius * GameSkill() * 4 && CheckSight(0, Players(i).TID, 0))
         {
             int Previous = CheckActorInventory(Players(i).TID, "DRPGCredits");
             
-            TakeActorInventory(Players(i).TID, "DRPGCredits", Luck);
-            GiveInventory("DRPGCredits", Luck);
+            TakeActorInventory(Players(i).TID, "DRPGCredits", Stats->Luck);
+            GiveInventory("DRPGCredits", Stats->Luck);
             
             if (CheckActorInventory(Players(i).TID, "DRPGCredits") < Previous)
                 Popoff(0, Previous - CheckActorInventory(Players(i).TID, "DRPGCredits"), DNUM_CREDGAIN);
@@ -764,17 +755,14 @@ script void MonsterDeathCheck()
 
 script void MonsterDeath()
 {
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
     int Killer = WhoKilledMe();
-    int MonsterLevel = CheckInventory("DRPGMonsterLevel");
-    int MonsterThreat = CheckInventory("DRPGMonsterThreat");
-    int MonsterFlags = CheckInventory("DRPGMonsterFlags");
-    int MonsterCapacity = CheckInventory("DRPGMonsterCapacity");
-    int MonsterLuck = CheckInventory("DRPGMonsterLuck");
-    int AuraType = CheckInventory("DRPGMonsterAura");
-    fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2.0, GetActorProperty(0, APROP_SpawnHealth)) * (1.0 + (fixed)MonsterThreat * 0.3);
-    int RankAmount = GetActorProperty(0, APROP_SpawnHealth) * (1 + (MonsterThreat - (MonsterThreat > 0 ? 1 : 0)));
-    int DropMod = MonsterLuck * 0.256;
-    int DropAmount = (int)(1.0 + ((fixed)MonsterLuck / 500.0));
+    fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2.0, GetActorProperty(0, APROP_SpawnHealth)) * (1.0 + (fixed)Stats->Threat * 0.3);
+    int RankAmount = GetActorProperty(0, APROP_SpawnHealth) * (1 + (Stats->Threat - (Stats->Threat > 0 ? 1 : 0)));
+    int DropMod = Stats->Luck * 0.256;
+    int DropAmount = (int)(1.0 + ((fixed)Stats->Luck / 500.0));
     int DropTID = (Players(Killer).Stim.PowerupTimer[STIM_MAGNETIC] > 0 ? Players(Killer).TID : 0);
     
     // Always drop at least one item
@@ -786,21 +774,21 @@ script void MonsterDeath()
         DropMod = 256;
     
     // Aura-Based XP/Rank Modifiers
-    if (AuraType > 0 && AuraType < 10) // All Auras except Black
+    if (Stats->Aura > 0 && Stats->Aura < 10) // All Auras except Black
         RankAmount *= 2;
-    if (AuraType == 3) // White
+    if (Stats->Aura == 3) // White
         XPAmount *= 2;
-    if (AuraType == 10) // Black
+    if (Stats->Aura == 10) // Black
     {
         XPAmount *= 2;
         RankAmount *= 4;
     };
     
     // Drops
-    if (!(MonsterFlags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly))
+    if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly))
     {
         // Aura Drops
-        switch (AuraType)
+        switch (Stats->Aura)
         {
             case 1: // Red Aura - Strength
                 DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", DropAmount, 128 + DropMod);
@@ -893,7 +881,7 @@ script void MonsterDeath()
         };
             
         // Boss Drops
-        if (MonsterFlags & MF_BOSS)
+        if (Stats->Flags & MF_BOSS)
         {
             DropMonsterItem(Killer, DropTID, "DRPGCredits1000", 1, 255);
             DropMonsterItem(Killer, DropTID, "DRPGSoulsphereRandomizer", 1, 255);
@@ -941,15 +929,15 @@ script void MonsterDeath()
     };
     
     // Add XP/Rank
-    if (!(MonsterFlags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
+    if (!(Stats->Flags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
     {
         // XP modifications based on level and skill
-        if (GetCVar("drpg_xp_monsterlevel")) XPAmount *= 1.0 + ((fixed)MonsterLevel / 100.0);
+        if (GetCVar("drpg_xp_monsterlevel")) XPAmount *= 1.0 + ((fixed)Stats->Level / 100.0);
         if (GetCVar("drpg_xp_skilllevel")) XPAmount *= 1.0 - (0.15 * (fixed)GameSkill());
         
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            if (MonsterFlags & MF_NEGATIVEXP)
+            if (Stats->Flags & MF_NEGATIVEXP)
                 AddXP(i, (int)XPAmount, -RankAmount, false)
             else
             {
@@ -962,7 +950,7 @@ script void MonsterDeath()
     };
     
     // Add a kill to the pay kills
-    if (!(MonsterFlags & MF_NOPAYKILL) && Killer > -1)
+    if (!(Stats->Flags & MF_NOPAYKILL) && Killer > -1)
     {
         if (Players(Killer).Shield.Accessory == SHIELD_ACC_REKT50 && Players(Killer).Shield.Active)
             Players(Killer).PayKills += 3
@@ -1119,44 +1107,35 @@ script int WhoKilledMe()
     return PlayerNumber();
 };
 
-function int CalculateMonsterThreatLevel(int TID)
+function int CalculateMonsterThreatLevel(MonsterStatsPtr Stats)
 {
-    int Aura = CheckInventoryTID(TID, "DRPGMonsterAura");
-    int Strength = CheckInventoryTID(TID, "DRPGMonsterStrength");
-    int Defense = CheckInventoryTID(TID, "DRPGMonsterDefense");
-    int Vitality = CheckInventoryTID(TID, "DRPGMonsterVitality");
-    int Energy = CheckInventoryTID(TID, "DRPGMonsterEnergy");
-    int Regeneration = CheckInventoryTID(TID, "DRPGMonsterRegeneration");
-    int Agility = CheckInventoryTID(TID, "DRPGMonsterAgility");
-    int Capacity = CheckInventoryTID(TID, "DRPGMonsterCapacity");
-    int Luck = CheckInventoryTID(TID, "DRPGMonsterLuck");
     int Threat;
     
     // Stats
-    Threat += Strength;
-    Threat += Defense;
-    Threat += Vitality;
-    Threat += Energy;
-    Threat += Regeneration;
-    Threat += Agility;
-    Threat += Capacity;
-    Threat += Luck;
+    Threat += Stats->Strength;
+    Threat += Stats->Defense;
+    Threat += Stats->Vitality;
+    Threat += Stats->Energy;
+    Threat += Stats->Regeneration;
+    Threat += Stats->Agility;
+    Threat += Stats->Capacity;
+    Threat += Stats->Luck;
     Threat /= 800;
     
     // Auras
-    if (Aura > 0 && Aura < 9) // Normal Auras
+    if (Stats->Aura > 0 && Stats->Aura < 9) // Normal Auras
         Threat++
-    else if (Aura == 10) // Black Aura
+    else if (Stats->Aura == 10) // Black Aura
         Threat += 2;
     
     // Bosses
-    if (CheckFlag(TID, "BOSS"))
+    if (CheckFlag(0, "BOSS"))
         Threat++;
     
     // DRLA
     if (GetCVar("drpg_ext_doomrl"))
     {
-        str Actor = GetActorClass(TID);
+        str Actor = GetActorClass(0);
         
         for (int i = 0; i < MAX_MONSTERS_DRLA; i++)
         {
@@ -1177,14 +1156,12 @@ function int CalculateMonsterThreatLevel(int TID)
     return Threat;
 };
 
-function int CalculateMonsterMaxHealth(int TID)
+function int CalculateMonsterMaxHealth(MonsterStatsPtr Stats)
 {
-    int Vitality = CheckInventoryTID(TID, "DRPGMonsterVitality");
-    int HealthMax = GetActorProperty(TID, APROP_SpawnHealth);
-    long int Health = HealthMax;
-    long int HealthAddition = HealthMax * 9;
+    long int Health = Stats->SpawnHealth;
+    long int HealthAddition = Stats->SpawnHealth * 9;
     
-    HealthAddition *= Vitality;
+    HealthAddition *= Stats->Vitality;
     HealthAddition /= 1000;
     
     Health += HealthAddition;
@@ -1192,13 +1169,21 @@ function int CalculateMonsterMaxHealth(int TID)
     return Health;
 };
 
-function fixed CalculateMonsterSpeed(int TID)
+function fixed CalculateMonsterSpeed(MonsterStatsPtr Stats)
 {
-    int Agility = CheckInventoryTID(TID, "DRPGMonsterAgility");
-    int BaseSpeed = CheckInventoryTID(TID, "DRPGMonsterSpeed");
-    fixed Speed = (fixed)BaseSpeed;
+    fixed Speed = (fixed)Stats->Speed;
     
-    Speed *= 1.0 + ((fixed)Agility / 1000.0);
+    Speed *= 1.0 + ((fixed)Stats->Agility / 1000.0);
     
     return Speed;
+};
+
+// For Debugging
+acscript void OutputMonsters()
+{
+    for (int i = 0; i < MonsterID; i++)
+    {
+        Log("\cdMonster %d:\n", i);
+        output Monsters[i];
+    };
 };

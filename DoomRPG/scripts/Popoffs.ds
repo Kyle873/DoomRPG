@@ -1,5 +1,6 @@
 #include "RPG.dh"
 
+#include "Monsters.dh"
 #include "Popoffs.dh"
 #include "Shield.dh"
 #include "Utils.dh"
@@ -11,11 +12,15 @@ script void DamageNumbers()
     
     while (GetCVar("drpg_damagenumbers"))
     {
+        // Pointer
+        MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+        
         int Monsters = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
         int TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
         int OldTID;
         int TID = UniqueTID();
         int Health = GetActorProperty(0, APROP_Health);
+        bool ShieldActive = CheckInventory("DRPGShield");
         int Shield = Player.Shield.Charge;
         int Color;
         
@@ -45,9 +50,9 @@ script void DamageNumbers()
                 Color = DNUM_HEAL
             else if (Health == 1) // Scratch
                 Color = DNUM_SCRATCH
-            else if (CheckInventory("DRPGShield") && Shield > 0) // Shield Loss
+            else if (ShieldActive && Shield > 0) // Shield Loss
                 Color = DNUM_SHIELDLOSS
-            else if (CheckInventory("DRPGShield") && Shield < 0) // Shield Gain
+            else if (ShieldActive && Shield < 0) // Shield Gain
                 Color = DNUM_SHIELDGAIN
             else // Normal
                 Color = DNUM_NORMAL;
@@ -130,7 +135,7 @@ function Popoff(int TID, int Value, int Color)
     int DigitBase = 1;
     fixed X = GetActorX(TID);
     fixed Y = GetActorY(TID);
-    fixed Z = GetActorZ(TID) + CheckInventory("DRPGHeightCheck") - 4;
+    fixed Z = GetActorZ(TID) + Monsters[GetMonsterID(TID)].Height;
     
     // Prevent digit overflow
     if (Value > 9999999)
