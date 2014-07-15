@@ -911,6 +911,35 @@ script void MonsterDeath()
     if (CheckInventory("DRPGCredits") > 0)
         DropMoney(Killer, 0, CheckInventory("DRPGCredits"));
     
+    // Credit Fountain
+    if (Killer > -1 && Players(Killer).Luck >= 100 && Random(1, 256) == 1)
+    {
+        fixed Z = GetActorCeilingZ(Players(Killer).TID) - GetActorPropertyFixed(Players(Killer).TID, APROP_Height);
+        fixed Radius = GetActorPropertyFixed(Players(Killer).TID, APROP_Radius);
+        
+        ThingSound(Players(Killer).TID, "credits/payout", 127);
+        Log("\cdLUDICROUS CREDITS!\n");
+        
+        for (int i = 0; i < 100; i++)
+        {
+            int CreditType = Random(1, 6);
+            str CreditName;
+            
+            switch (CreditType)
+            {
+                case 1: CreditName = "DRPGCredits1";    break;
+                case 2: CreditName = "DRPGCredits5";    break;
+                case 3: CreditName = "DRPGCredits10";   break;
+                case 4: CreditName = "DRPGCredits20";   break;
+                case 5: CreditName = "DRPGCredits50";   break;
+                case 6: CreditName = "DRPGCredits100";  break;
+            };
+            
+            DropMonsterItem(Killer, Players(Killer).TID, CreditName, 1, 256, RandomFixed(-Radius, Radius), RandomFixed(-Radius, Radius), Z);
+            Delay(1);
+        };
+    };
+    
     // Add XP/Rank
     if (!(MonsterFlags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
     {

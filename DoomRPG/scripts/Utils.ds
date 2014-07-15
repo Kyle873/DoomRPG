@@ -1332,10 +1332,10 @@ function bool DropPlayerItem(str Item)
     return (SpawnOK && SightOK);
 };
 
-function void DropMonsterItem(int Killer, int TID, str Item, int Amount, int Chance)
+function void DropMonsterItem(int Killer, int TID, str Item, int Amount, int Chance, fixed XAdd, fixed YAdd, fixed ZAdd)
 {
     // if this is an invalid killer, return
-    if (Killer < 0 || Killer >= MAX_PLAYERS) return;
+    if (!(Killer > -1)) return;
     
     for (int i = 1; i <= Amount; i++)
     {
@@ -1343,9 +1343,9 @@ function void DropMonsterItem(int Killer, int TID, str Item, int Amount, int Cha
         if (!(Random(1, 256) <= Chance)) continue;
         
         fixed Angle = GetActorAngle(TID);
-        fixed X = GetActorX(TID);
-        fixed Y = GetActorY(TID);
-        fixed Z = GetActorZ(TID) + (GetActorPropertyFixed(0, APROP_Height) / 2.0);
+        fixed X = GetActorX(TID) + XAdd;
+        fixed Y = GetActorY(TID) + YAdd;
+        fixed Z = GetActorZ(TID) + (GetActorPropertyFixed(0, APROP_Height) / 2.0) + ZAdd;
         fixed XSpeed = 4.0;
         fixed YSpeed = 4.0;
         fixed ZSpeed = 8.0;
@@ -1362,10 +1362,10 @@ function void DropMonsterItem(int Killer, int TID, str Item, int Amount, int Cha
             SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
             
             // Now iterate the DropTID array and insert the ItemTID into the next available entry
-            for (int i = 0; i < MAX_DROPS; i++)
-                if (Players(Killer).DropTID[i] == -1)
+            for (int j = 0; j < MAX_DROPS; j++)
+                if (Players(Killer).DropTID[j] == -1)
                 {
-                    Players(Killer).DropTID[i] = ItemTID;
+                    Players(Killer).DropTID[j] = ItemTID;
                     break;
                 };
         };
