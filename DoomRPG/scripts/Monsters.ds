@@ -1026,8 +1026,13 @@ script void MonsterDeath()
         
         // Kill Reinforcements Mission
         if (Players(Killer).Mission.Type == MT_REINFORCEMENTS)
-            if (CheckInventory("DRPGMonsterReinforcement"))
+        {
+            // Pointer
+            MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+            
+            if (Stats->Reinforcement)
                 Players(Killer).Mission.Current++;
+        };
     };
     
     // SHOTGUNS!
@@ -1108,12 +1113,21 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
                 };
                 if (Success)
                 {
+                    // Delay here to make sure the init script has time to run
+                    Delay(1);
+                    
+                    // Pointer
+                    MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
+                    
                     SetActorState(TID, "See", false);
-                    GiveActorInventory(TID, "DRPGMonsterReinforcement", 1);
+                    Stats->Reinforcement = true;
                     Thing_ChangeTID(TID, 0); // Get rid of the ID
+
                     Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
+                    
                     if (GetCVar("drpg_debug"))
                         Log("\cdDEBUG: \c-Reinforcements Spawning Index %d (\ca%s\c-)\n", i, Monster.Name);
+                    
                     break;
                 };
             };
