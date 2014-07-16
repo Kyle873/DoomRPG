@@ -1324,18 +1324,11 @@ acscript bool UseAura(Skill *Self, void *Data)
 acscript bool Weaken(Skill *Self, void *Data)
 {
     int PlayerNum = PlayerNumber();
-    int MonsterLevel;
-    int MonsterAura;
-    int MonsterStrength;
-    int MonsterDefense;
-    int MonsterVitality;
-    int MonsterEnergy;
-    int MonsterRegeneration;
-    int MonsterAgility;
-    int MonsterCapacity;
-    int MonsterLuck;
     
     SetActivatorToTarget(Players(PlayerNum).TID);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     // Refund - If the Player has no target
     if (ActivatorTID() == Players(PlayerNum).TID)
@@ -1345,47 +1338,33 @@ acscript bool Weaken(Skill *Self, void *Data)
     };
     
     // Refund - If the target isn't actually a valid monster
-    if (!CheckInventory("DRPGMonsterInit"))
+    if (!Stats->Init || !CheckFlag(0, "ISMONSTER"))
     {
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
     
-    // Get Monster Stats
-    MonsterLevel = CheckInventory("DRPGMonsterLevel") / 2;
-    MonsterAura = CheckInventory("DRPGMonsterAura");
-    MonsterLevel = CheckInventory("DRPGMonsterLevel") / 2;
-    MonsterStrength = CheckInventory("DRPGMonsterStrength") / 2;
-    MonsterDefense = CheckInventory("DRPGMonsterDefense") / 2;
-    MonsterVitality = CheckInventory("DRPGMonsterVitality") / 2;
-    MonsterEnergy = CheckInventory("DRPGMonsterEnergy") / 2;
-    MonsterRegeneration = CheckInventory("DRPGMonsterRegeneration") / 2;
-    MonsterAgility = CheckInventory("DRPGMonsterAgility") / 2;
-    MonsterCapacity = CheckInventory("DRPGMonsterCapacity") / 2;
-    MonsterLuck = CheckInventory("DRPGMonsterLuck") / 2;
+    // Halve the monster's level and stats
+    Stats->Level /= 2;
+    Stats->Strength /= 2;
+    Stats->Defense /= 2;
+    Stats->Vitality /= 2;
+    Stats->Energy /= 2;
+    Stats->Regeneration /= 2;
+    Stats->Agility /= 2;
+    Stats->Capacity /= 2;
+    Stats->Luck /= 2;
     
     // Destroy Aura
     if (Self->CurrentLevel == 2) 
-        MonsterAura = 0;
+        Stats->Aura = 0;
     
     // Cap Level
-    if (MonsterLevel < 1)
-        MonsterLevel = 1;
-    
-    // Apply the stats to the monster
-    SetInventory("DRPGMonsterLevel", MonsterLevel);
-    SetInventory("DRPGMonsterAura", MonsterAura);
-    SetInventory("DRPGMonsterStrength", MonsterStrength);
-    SetInventory("DRPGMonsterDefense", MonsterDefense);
-    SetInventory("DRPGMonsterVitality", MonsterVitality);
-    SetInventory("DRPGMonsterEnergy", MonsterEnergy);
-    SetInventory("DRPGMonsterRegeneration", MonsterRegeneration);
-    SetInventory("DRPGMonsterAgility", MonsterAgility);
-    SetInventory("DRPGMonsterCapacity", MonsterCapacity);
-    SetInventory("DRPGMonsterLuck", MonsterLuck);
+    if (Stats->Level < 1)
+        Stats->Level = 1;
     
     // Re-calculate the monster's threat level
-    SetInventory("DRPGMonsterThreat", CalculateMonsterThreatLevel(0));
+    Stats->Threat = CalculateMonsterThreatLevel(0);
     
     // Reset Activator
     SetActivator(Players(PlayerNum).TID);
