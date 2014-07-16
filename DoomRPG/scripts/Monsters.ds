@@ -9,12 +9,12 @@
 #include "Utils.dh"
 
 AddressSpace map_array MonsterSpace;
-AddressSpace GlobalArray MonsterStatsSpace;
+AddressSpace map_array MonsterStatsSpace;
 
 int MonsterID;
 MonsterStatsSpace MonsterStats[] Monsters;
 
-MonsterSpace MonsterInfo[MAX_MONSTERS] MonsterData =
+MonsterSpace MonsterInfo[MAX_DEF_MONSTERS] MonsterData =
 {
     { "ZombieMan";                          "Former Human";             1;      };
     { "ShotgunGuy";                         "Former Sergeant";          2;      };
@@ -35,7 +35,7 @@ MonsterSpace MonsterInfo[MAX_MONSTERS] MonsterData =
     { "SpiderMastermind";                   "Spider Mastermind";        95;     };
 };
 
-MonsterSpace MonsterInfo[MAX_MONSTERS_DRLA] MonsterDataDRLA =
+MonsterSpace MonsterInfo[MAX_DEF_MONSTERS_DRLA] MonsterDataDRLA =
 {
     // Normal
     { "RLFormerHuman";                      "Former Human";             1;      };
@@ -142,6 +142,10 @@ acscript void MonsterInit(int Flags)
     Stats->Height = GetActorPropertyFixed(0, APROP_Height);
     Stats->Radius = GetActorPropertyFixed(0, APROP_Radius);
     
+    // Apply base Spawn Health to HealthMax property
+    Stats->SpawnHealth = GetActorProperty(0, APROP_SpawnHealth);
+    Stats->HealthMax = Stats->SpawnHealth;
+    
     // Start Damage Numbers Script
     DamageNumbers();
     
@@ -163,7 +167,8 @@ acscript void MonsterInit(int Flags)
     MonsterAuraDisplayHandler();
     
     // Regeneration Stat Handling
-    MonsterRegenerationHandler();
+    if (!(Flags & MF_NOSTATS))
+        MonsterRegenerationHandler();
     
     // Death Handler
     MonsterDeathCheck();
@@ -529,7 +534,6 @@ script void MonsterInitStats(int StatFlags)
     Stats->Threat = MonsterThreat;
     
     // Calculate Health
-    Stats->SpawnHealth = GetActorProperty(0, APROP_SpawnHealth);
     Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
     SetActorProperty(0, APROP_Health, Stats->HealthMax);
     
@@ -1027,7 +1031,7 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
         fixed Y = GetActorY(0);
         fixed Z = GetActorZ(0);
         int Min = Difficulty;
-        int Max = Difficulty + ((DRLA ? MAX_MONSTERS_DRLA : MAX_MONSTERS) - MAX_DIFFICULTIES);
+        int Max = Difficulty + ((DRLA ? MAX_DEF_MONSTERS_DRLA : MAX_DEF_MONSTERS) - MAX_DIFFICULTIES);
         fixed SpawnX;
         fixed SpawnY;
         int TID;
@@ -1137,7 +1141,7 @@ function int CalculateMonsterThreatLevel(MonsterStatsPtr Stats)
     {
         str Actor = GetActorClass(0);
         
-        for (int i = 0; i < MAX_MONSTERS_DRLA; i++)
+        for (int i = 0; i < MAX_DEF_MONSTERS_DRLA; i++)
         {
             MonsterInfoPtr MonsterIterPtr = &MonsterDataDRLA[i];
             
