@@ -75,7 +75,7 @@ script void HealthBars()
             PlayerStats[9] = Players(ID).Luck;
             PlayerStats[10] = CheckInventory("Armor");
             PlayerStats[11] = Players(ID).ArmorMax;
-            PlayerStats[12] = Player.HealthMax;
+            PlayerStats[12] = Players(ID).HealthMax;
             
             // Indestructible Armor check
             if (GetCVar("drpg_ext_doomrl"))
@@ -98,7 +98,7 @@ script void HealthBars()
             fixed X = GetUserCVar(PlayerNum, "drpg_healthbars_x");
             fixed Y = GetUserCVar(PlayerNum, "drpg_healthbars_y");
             
-            if (Stats->HealthBar && (Shield || CurrentHealth > 0) && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
+            if ((Stats->HealthBar || IsPlayer) && (Shield || CurrentHealth > 0) && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
             {
                 // Divide-by-zero check
                 if (Stats->SpawnHealth > 0)
@@ -145,19 +145,19 @@ script void HealthBars()
                 if (Shield)
                     if (IsPlayer && PlayerStats[10] > 0)
                         if (PlayerStats[11] >= 10000) // Indestructible Armor
-                            HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, PlayerStats[12], HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
+                            HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, (IsPlayer ? PlayerStats[12] : Stats->HealthMax), HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
                         else
-                            HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, PlayerStats[12], PlayerStats[10], PlayerStats[11], HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
+                            HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, (IsPlayer ? PlayerStats[12] : Stats->HealthMax), PlayerStats[10], PlayerStats[11], HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
                     else
-                        HudMessage("%d/%d\n", CurrentHealth, Stats->HealthMax, HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
+                        HudMessage("%d/%d\n", CurrentHealth, (IsPlayer ? PlayerStats[12] : Stats->HealthMax), HUDMSG_PLAIN, 0, CR_CYAN, X, Y, 0.05)
                 else
                     if (IsPlayer && PlayerStats[10] > 0)
                         if (PlayerStats[11] >= 10000) // Indestructible Armor
-                            HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, PlayerStats[12], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
+                            HudMessage("%d/%d \ca[Indestructible]\n", CurrentHealth, (IsPlayer ? PlayerStats[12] : Stats->HealthMax), HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
                         else
-                            HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, PlayerStats[12], PlayerStats[10], PlayerStats[11], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
+                            HudMessage("%d/%d \cd[%d/%d]\n", CurrentHealth, (IsPlayer ? PlayerStats[12] : Stats->HealthMax), PlayerStats[10], PlayerStats[11], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
                     else
-                        HudMessage("%d/%d\n", CurrentHealth, Stats->HealthMax, HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
+                        HudMessage("%d/%d\n", CurrentHealth, (IsPlayer ? PlayerStats[12] : Stats->HealthMax), HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
                 
                 // Monster Stats
                 if (GetCVar("drpg_monster_levels") > 0 && Stats->Level > 0 && !IsPlayer)
