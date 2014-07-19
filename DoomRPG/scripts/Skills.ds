@@ -1394,11 +1394,13 @@ acscript bool Summon(Skill *Self, void *Data)
 {
     int Index = *(int *)Data;
     fixed Angle = GetActorAngle(0);
-    fixed X = GetActorX(0) + Cos(Angle) * 96.0;
-    fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
+    fixed X = GetActorX(0);
+    fixed Y = GetActorY(0);
     fixed Z = GetActorZ(0);
     int NewID = UniqueTID();
     bool Success;
+    fixed Radius;
+    str Name;
     
     str[][] DRLASummons =
     {
@@ -1525,43 +1527,53 @@ acscript bool Summon(Skill *Self, void *Data)
     {
         switch (Self->CurrentLevel)
         {
-            case 1: Success = Spawn("MarinePistolRPG", X, Y, Z, NewID, Angle);                  break;
-            case 2: Success = Spawn("MarineShotgunRPG", X, Y, Z, NewID, Angle);                 break;
-            case 3: Success = Spawn("MarineSSGRPG", X, Y, Z, NewID, Angle);                     break;
-            case 4: Success = Spawn("MarineChaingunRPG", X, Y, Z, NewID, Angle);;               break;
-            case 5: Success = Spawn("MarineRocketRPG", X, Y, Z, NewID, Angle);                  break;
-            case 6: Success = Spawn("MarinePlasmaRPG", X, Y, Z, NewID, Angle);                  break;
-            case 7: Success = Spawn("MarineRailgunRPG", X, Y, Z, NewID, Angle);                 break;
-            case 8: Success = Spawn("MarineBFGRPG", X, Y, Z, NewID, Angle);                     break;
+            case 1: Name = "MarinePistolRPG";                  break;
+            case 2: Name = "MarineShotgunRPG";                 break;
+            case 3: Name = "MarineSSGRPG";                     break;
+            case 4: Name = "MarineChaingunRPG";;               break;
+            case 5: Name = "MarineRocketRPG";                  break;
+            case 6: Name = "MarinePlasmaRPG";                  break;
+            case 7: Name = "MarineRailgunRPG";                 break;
+            case 8: Name = "MarineBFGRPG";                     break;
         };
     }
     else // Monsters
     {
         if (GetCVar("drpg_ext_doomrl"))
-            Success = Spawn(DRLASummons[Index - 1][Self->CurrentLevel - 1], X, Y, Z, NewID, Angle)
+            Name = DRLASummons[Index - 1][Self->CurrentLevel - 1]
         else
         {
             switch (Index)
             {
-                case 1:     Success = Spawn("Zombieman", X, Y, Z, NewID, Angle);                break;
-                case 2:     Success = Spawn("ShotgunGuy", X, Y, Z, NewID, Angle);               break;
-                case 3:     Success = Spawn("ChaingunGuy", X, Y, Z, NewID, Angle);              break;
-                case 4:     Success = Spawn("DoomImp", X, Y, Z, NewID, Angle);                  break;
-                case 5:     Success = Spawn("Demon", X, Y, Z, NewID, Angle);                    break;
-                case 6:     Success = Spawn("Cacodemon", X, Y, Z, NewID, Angle);                break;
-                case 7:     Success = Spawn("HellKnight", X, Y, Z, NewID, Angle);               break;
-                case 8:     Success = Spawn("BaronOfHell", X, Y, Z, NewID, Angle);              break;
-                case 9:     Success = Spawn("LostSoul", X, Y, Z, NewID, Angle);                 break;
-                case 10:    Success = Spawn("PainElemental", X, Y, Z, NewID, Angle);            break;
-                case 11:    Success = Spawn("Revenant", X, Y, Z, NewID, Angle);                 break;
-                case 12:    Success = Spawn("Fatso", X, Y, Z, NewID, Angle);                    break;
-                case 13:    Success = Spawn("Arachnotron", X, Y, Z, NewID, Angle);              break;
-                case 14:    Success = Spawn("Archvile", X, Y, Z, NewID, Angle);                 break;
-                case 15:    Success = Spawn("Cyberdemon", X, Y, Z, NewID, Angle);               break;
-                case 16:    Success = Spawn("SpiderMastermind", X, Y, Z, NewID, Angle);         break;
+                case 1:     Name = "Zombieman";                break;
+                case 2:     Name = "ShotgunGuy";               break;
+                case 3:     Name = "ChaingunGuy";              break;
+                case 4:     Name = "DoomImp";                  break;
+                case 5:     Name = "Demon";                    break;
+                case 6:     Name = "Cacodemon";                break;
+                case 7:     Name = "HellKnight";               break;
+                case 8:     Name = "BaronOfHell";              break;
+                case 9:     Name = "LostSoul";                 break;
+                case 10:    Name = "PainElemental";            break;
+                case 11:    Name = "Revenant";                 break;
+                case 12:    Name = "Fatso";                    break;
+                case 13:    Name = "Arachnotron";              break;
+                case 14:    Name = "Archvile";                 break;
+                case 15:    Name = "Cyberdemon";               break;
+                case 16:    Name = "SpiderMastermind";         break;
             };
         };
     };
+    
+    // Perform a dummy summon to get the Radius and add it to X and Y
+    SpawnForced(Name, 0, 0, 0, NewID, 0);
+    Radius = GetActorPropertyFixed(NewID, APROP_Radius);
+    X += Cos(Angle) * Radius;
+    Y += Sin(Angle) * Radius;
+    Thing_Remove(NewID);
+    
+    // With the new radius, try and summon the actual monster
+    Success = Spawn(Name, X, Y, Z, NewID, Angle);
     
     if (Success)
     {
