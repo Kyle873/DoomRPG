@@ -815,92 +815,97 @@ script void MonsterDeath()
     // Drops
     if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && !GetCVar("drpg_monster_shadows"))
     {
-        // Aura Drops
-        switch (Stats->Aura)
+        for (int i = 1; i <= DropAmount; i++)
         {
-            case 1: // Red Aura - Strength
-                DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialStrength", DropAmount, 255);
-                break;
-            case 2: // Green Aura - Defense
-                DropMonsterItem(Killer, DropTID, "DRPGUsedArmorDropper", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialDefense", DropAmount, 255);
-                break;
-            case 3: // White Aura - XP
-                DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", DropAmount, 96 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialPotency", DropAmount, 255);
-                break;
-            case 4: // Pink Aura - Vitality
-                DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialVitality", DropAmount, 255);
-                break;
-            case 5: // Blue Aura - Energy
-                DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGBigEPCapsule", DropAmount, 64 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialEnergy", DropAmount, 255);
-                break;
-            case 6: // Purple Aura - Regeneration
-                DropMonsterItem(Killer, DropTID, "DRPGRegenSphere", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialRegeneration", DropAmount, 255);
-                break;
-            case 7: // Orange Aura - Agility
-                DropMonsterItem(Killer, DropTID, "DRPGTimeSphere", DropAmount, 64 + (DropMod / 2));
-                DropMonsterItem(Killer, DropTID, "DRPGVialAgility", DropAmount, 255);
-                break;
-            case 8: // Dark Blue Aura - Capacity
-                DropMonsterItem(Killer, DropTID, "DRPGAmmoDropper", DropAmount, 128 + DropMod);
-                if (GetCVar("drpg_ext_doomrl"))
-                    DropMonsterItem(Killer, DropTID, "RLModpackSpawner", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialCapacity", DropAmount, 255);
-                break;
-            case 9: // Yellow Aura - Luck
-                DropMonsterItem(Killer, DropTID, "DRPGVialLuck", DropAmount, 255);
-                break;
-            case 10: // Black Aura - Miniboss
-                DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGUsedArmorDropper", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", DropAmount, 96 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGBigEPCapsule", DropAmount, 64 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGRegenSphere", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGTimeSphere", DropAmount, 64 + (DropMod / 2));
-                DropMonsterItem(Killer, DropTID, "DRPGAmmoDropper", DropAmount, 128 + DropMod);
-                if (GetCVar("drpg_ext_doomrl"))
-                    DropMonsterItem(Killer, DropTID, "RLModpackSpawner", DropAmount, 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialStrength", DropAmount, 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialDefense", DropAmount, 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialAgility", DropAmount, 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialVitality", DropAmount, 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialEnergy", DropAmount, 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialRegeneration", DropAmount, 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialCapacity", DropAmount, 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialLuck", DropAmount, 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialPurifier", DropAmount, 255);
-                DropMonsterItem(Killer, DropTID, "DRPGVialPotency", DropAmount, 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", DropAmount, 256);
-                break;
-        };
-        
-        // Rare Vials
-        DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", DropAmount, 8);
-        
-        // Luck-based Drops
-        if (Killer > -1)
-        {
-                if (RandomFixed(0.0, 100.0) < Players(Killer).CreditChance) DropMonsterItem(Killer, DropTID, "DRPGMoneyDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).HealthChance) DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).EPChance)     DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).ArmorChance)  DropMonsterItem(Killer, DropTID, "DRPGArmorDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).PowerupChance)DropMonsterItem(Killer, DropTID, "DRPGPowerupDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance) DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance) DropMonsterItem(Killer, DropTID, "RLModpackSpawner", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).TokenChance)  DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).AugChance)    DropMonsterItem(Killer, DropTID, "DRPGAugDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).ShieldChance) DropMonsterItem(Killer, DropTID, "DRPGShieldDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)   DropMonsterItem(Killer, DropTID, "DRPGStimDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)   DropMonsterItem(Killer, DropTID, "DRPGVialDropper", DropAmount, 256);
-                if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)   DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", DropAmount, 256);
+            // Aura Drops
+            switch (Stats->Aura)
+            {
+                case 1: // Red Aura - Strength
+                    DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialStrength", 255);
+                    break;
+                case 2: // Green Aura - Defense
+                    DropMonsterItem(Killer, DropTID, "DRPGUsedArmorDropper", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialDefense", 255);
+                    break;
+                case 3: // White Aura - XP
+                    DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", 96 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialPotency", 255);
+                    break;
+                case 4: // Pink Aura - Vitality
+                    DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialVitality", 255);
+                    break;
+                case 5: // Blue Aura - Energy
+                    DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGBigEPCapsule", 64 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialEnergy", 255);
+                    break;
+                case 6: // Purple Aura - Regeneration
+                    DropMonsterItem(Killer, DropTID, "DRPGRegenSphere", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialRegeneration", 255);
+                    break;
+                case 7: // Orange Aura - Agility
+                    DropMonsterItem(Killer, DropTID, "DRPGTimeSphere", 64 + (DropMod / 2));
+                    DropMonsterItem(Killer, DropTID, "DRPGVialAgility", 255);
+                    break;
+                case 8: // Dark Blue Aura - Capacity
+                    DropMonsterItem(Killer, DropTID, "DRPGAmmoDropper", 128 + DropMod);
+                    if (GetCVar("drpg_ext_doomrl"))
+                        DropMonsterItem(Killer, DropTID, "RLModpackSpawner", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialCapacity", 255);
+                    break;
+                case 9: // Yellow Aura - Luck
+                    DropMonsterItem(Killer, DropTID, "DRPGVialLuck", 255);
+                    break;
+                case 10: // Black Aura - Miniboss
+                    DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGUsedArmorDropper", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", 96 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGBigEPCapsule", 64 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGRegenSphere", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGTimeSphere", 64 + (DropMod / 2));
+                    DropMonsterItem(Killer, DropTID, "DRPGAmmoDropper", 128 + DropMod);
+                    if (GetCVar("drpg_ext_doomrl"))
+                        DropMonsterItem(Killer, DropTID, "RLModpackSpawner", 128 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialStrength", 192 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialDefense", 192 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialAgility", 192 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialVitality", 192 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialEnergy", 192 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialRegeneration", 192 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialCapacity", 192 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialLuck", 192 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialPurifier", 255);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialPotency", 192 + DropMod);
+                    DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", 256);
+                    break;
+            };
+            
+            // Rare Vials
+            DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", 8);
+            
+            // Luck-based Drops
+            if (Killer > -1)
+            {
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).CreditChance) DropMonsterItem(Killer, DropTID, "DRPGMoneyDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).HealthChance) DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).EPChance)     DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).ArmorChance)  DropMonsterItem(Killer, DropTID, "DRPGArmorDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).PowerupChance)DropMonsterItem(Killer, DropTID, "DRPGPowerupDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance) DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance) DropMonsterItem(Killer, DropTID, "RLModpackSpawner", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).TokenChance)  DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).AugChance)    DropMonsterItem(Killer, DropTID, "DRPGAugDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).ShieldChance) DropMonsterItem(Killer, DropTID, "DRPGShieldDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)   DropMonsterItem(Killer, DropTID, "DRPGStimDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)   DropMonsterItem(Killer, DropTID, "DRPGVialDropper", 256);
+                    if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)   DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", 256);
+            };
+            
+            Delay(1);
         };
         
         // Boss Drops
@@ -946,7 +951,7 @@ script void MonsterDeath()
                 case 6: CreditName = "DRPGCredits100";  break;
             };
             
-            DropMonsterItem(Killer, Players(Killer).TID, CreditName, 1, 256, RandomFixed(-Radius, Radius), RandomFixed(-Radius, Radius), Z);
+            DropMonsterItem(Killer, Players(Killer).TID, CreditName, 256, RandomFixed(-Radius, Radius), RandomFixed(-Radius, Radius), Z);
             Delay(1);
         };
     };

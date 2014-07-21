@@ -696,31 +696,31 @@ function void DropMoney(int Killer, int TID, int Amount)
     int Drops;
     
     Drops = Total / 1000;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1000", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1000", 256);
     Total %= 1000;
 
     Drops = Total / 100;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits100", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits100", 256);
     Total %= 100;
 
     Drops = Total / 50;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits50", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits50", 256);
     Total %= 50;
 
     Drops = Total / 20;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits20", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits20", 256);
     Total %= 20;
 
     Drops = Total / 10;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits10", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits10", 256);
     Total %= 10;
 
     Drops = Total / 5;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits5", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits5", 256);
     Total %= 5;
     
     Drops = Total;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1", 1, 256);
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1", 256);
 };
 
 // Fires a projectile from the Player
@@ -1332,50 +1332,39 @@ function bool DropPlayerItem(str Item)
     return (SpawnOK && SightOK);
 };
 
-script void _DropMonsterItem(int Killer, int TID, str Item, int Amount, int Chance, fixed XAdd, fixed YAdd, fixed ZAdd)
+function void DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XAdd, fixed YAdd, fixed ZAdd)
 {
     // if this is an invalid killer, return
     if (!(Killer > -1)) return;
     
-    for (int i = 1; i <= Amount; i++)
+    // Chance
+    if (!(Random(1, 256) <= Chance)) return;
+    
+    fixed Angle = GetActorAngle(TID);
+    fixed X = GetActorX(TID) + XAdd;
+    fixed Y = GetActorY(TID) + YAdd;
+    fixed Z = GetActorZ(TID) + (GetActorPropertyFixed(0, APROP_Height) / 2.0) + ZAdd;
+    fixed XSpeed = 4.0;
+    fixed YSpeed = 4.0;
+    fixed ZSpeed = 8.0;
+    int ItemTID = UniqueTID();
+    bool Success = false;
+    
+    // Spawn the Item
+    Success = SpawnForced(Item, X, Y, Z, ItemTID, Angle);
+    
+    // Spawn successful
+    if (Success)
     {
-        // Chance
-        if (!(Random(1, 256) <= Chance)) continue;
+        // Set Velocity
+        SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
         
-        fixed Angle = GetActorAngle(TID);
-        fixed X = GetActorX(TID) + XAdd;
-        fixed Y = GetActorY(TID) + YAdd;
-        fixed Z = GetActorZ(TID) + (GetActorPropertyFixed(0, APROP_Height) / 2.0) + ZAdd;
-        fixed XSpeed = 4.0;
-        fixed YSpeed = 4.0;
-        fixed ZSpeed = 8.0;
-        int ItemTID = UniqueTID();
-        bool Success = false;
-        
-        // Spawn the Item
-        Success = SpawnForced(Item, X, Y, Z, ItemTID, Angle);
-        
-        // Spawn successful
-        if (Success)
-        {
-            // Set Velocity
-            SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
-            
-            // Now iterate the DropTID array and insert the ItemTID into the next available entry
-            for (int j = 0; j < MAX_DROPS; j++)
-                if (Players(Killer).DropTID[j] == -1)
-                {
-                    Players(Killer).DropTID[j] = ItemTID;
-                    break;
-                };
-        };
+        // Now iterate the DropTID array and insert the ItemTID into the next available entry
+        for (int j = 0; j < MAX_DROPS; j++)
+            if (Players(Killer).DropTID[j] == -1)
+            {
+                Players(Killer).DropTID[j] = ItemTID;
+                break;
+            };
     };
-};
-
-static str _dmi_temp1;
-
-function void DropMonsterItem(int Killer, int TID, str Item, int Amount, int Chance, fixed XAdd, fixed YAdd, fixed ZAdd)
-{
-    _dmi_temp1 = Item;
-    _DropMonsterItem(Killer, TID, _dmi_temp1, Amount, Chance, XAdd, YAdd, ZAdd);
 };
