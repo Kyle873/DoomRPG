@@ -21,7 +21,7 @@ namespace DoomRPG
         public string demo = string.Empty;
         public bool enableCheats = false;
         public bool enableLogging = false;
-        public bool[] patches = new bool[6];
+        public List<String> patches = new List<string>();
         public List<string> mods = new List<string>();
         public string customCommands = string.Empty;
 
@@ -108,15 +108,6 @@ namespace DoomRPG
                                 field.SetValue(this, float.Parse(s[1]));
                             if (field.GetValue(this).GetType() == typeof(string))
                                 field.SetValue(this, s[1]);
-
-                            // Patches Array
-                            if (field.Name == "patches")
-                            {
-                                bool[] bools = new bool[patches.Length];
-                                for (int i = 0; i < patches.Length; i++)
-                                    bools[i] = bool.Parse(s[1].Split(',')[i]);
-                                field.SetValue(this, bools);
-                            }
 
                             // String List
                             if (field.GetValue(this).GetType() == typeof(List<string>))

@@ -32,6 +32,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.tabControlMain = new System.Windows.Forms.TabControl();
             this.tabPageBasic = new System.Windows.Forms.TabPage();
+            this.comboBoxBranch = new System.Windows.Forms.ComboBox();
+            this.labelBranch = new System.Windows.Forms.Label();
             this.buttonCopyCommandClipboard = new System.Windows.Forms.Button();
             this.textBoxDemo = new System.Windows.Forms.TextBox();
             this.labelRecordDemo = new System.Windows.Forms.Label();
@@ -72,6 +74,7 @@
             this.radioButtonJoining = new System.Windows.Forms.RadioButton();
             this.checkBoxMultiplayer = new System.Windows.Forms.CheckBox();
             this.tabPageModsPatches = new System.Windows.Forms.TabPage();
+            this.buttonRefresh = new System.Windows.Forms.Button();
             this.checkedListBoxMods = new System.Windows.Forms.CheckedListBox();
             this.labelMods = new System.Windows.Forms.Label();
             this.checkedListBoxPatches = new System.Windows.Forms.CheckedListBox();
@@ -86,8 +89,7 @@
             this.toolStripProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.buttonCheckUpdates = new System.Windows.Forms.Button();
             this.timer = new System.Windows.Forms.Timer(this.components);
-            this.comboBoxBranch = new System.Windows.Forms.ComboBox();
-            this.labelBranch = new System.Windows.Forms.Label();
+            this.timerPulse = new System.Windows.Forms.Timer(this.components);
             this.tabControlMain.SuspendLayout();
             this.tabPageBasic.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMapNumber)).BeginInit();
@@ -150,6 +152,26 @@
             this.tabPageBasic.TabIndex = 0;
             this.tabPageBasic.Text = "Basic";
             this.tabPageBasic.UseVisualStyleBackColor = true;
+            // 
+            // comboBoxBranch
+            // 
+            this.comboBoxBranch.Enabled = false;
+            this.comboBoxBranch.FormattingEnabled = true;
+            this.comboBoxBranch.Location = new System.Drawing.Point(294, 216);
+            this.comboBoxBranch.Name = "comboBoxBranch";
+            this.comboBoxBranch.Size = new System.Drawing.Size(118, 21);
+            this.comboBoxBranch.TabIndex = 27;
+            this.comboBoxBranch.Text = "Checking...";
+            this.comboBoxBranch.SelectedIndexChanged += new System.EventHandler(this.comboBoxBranch_SelectedIndexChanged);
+            // 
+            // labelBranch
+            // 
+            this.labelBranch.AutoSize = true;
+            this.labelBranch.Location = new System.Drawing.Point(291, 200);
+            this.labelBranch.Name = "labelBranch";
+            this.labelBranch.Size = new System.Drawing.Size(41, 13);
+            this.labelBranch.TabIndex = 26;
+            this.labelBranch.Text = "Branch";
             // 
             // buttonCopyCommandClipboard
             // 
@@ -553,6 +575,7 @@
             // 
             // tabPageModsPatches
             // 
+            this.tabPageModsPatches.Controls.Add(this.buttonRefresh);
             this.tabPageModsPatches.Controls.Add(this.checkedListBoxMods);
             this.tabPageModsPatches.Controls.Add(this.labelMods);
             this.tabPageModsPatches.Controls.Add(this.checkedListBoxPatches);
@@ -564,12 +587,22 @@
             this.tabPageModsPatches.Text = "Mods/Patches";
             this.tabPageModsPatches.UseVisualStyleBackColor = true;
             // 
+            // buttonRefresh
+            // 
+            this.buttonRefresh.Location = new System.Drawing.Point(11, 266);
+            this.buttonRefresh.Name = "buttonRefresh";
+            this.buttonRefresh.Size = new System.Drawing.Size(400, 29);
+            this.buttonRefresh.TabIndex = 21;
+            this.buttonRefresh.Text = "Reload Patches and Mods";
+            this.buttonRefresh.UseVisualStyleBackColor = true;
+            this.buttonRefresh.Click += new System.EventHandler(this.buttonRefresh_Click);
+            // 
             // checkedListBoxMods
             // 
             this.checkedListBoxMods.FormattingEnabled = true;
             this.checkedListBoxMods.Location = new System.Drawing.Point(201, 16);
             this.checkedListBoxMods.Name = "checkedListBoxMods";
-            this.checkedListBoxMods.Size = new System.Drawing.Size(210, 274);
+            this.checkedListBoxMods.Size = new System.Drawing.Size(210, 244);
             this.checkedListBoxMods.TabIndex = 20;
             // 
             // labelMods
@@ -584,16 +617,9 @@
             // checkedListBoxPatches
             // 
             this.checkedListBoxPatches.FormattingEnabled = true;
-            this.checkedListBoxPatches.Items.AddRange(new object[] {
-            "Doom 1",
-            "Brightmaps",
-            "Extras",
-            "DoomRL Arsenal",
-            "DoomRL Monster Pack",
-            "TUTNT"});
             this.checkedListBoxPatches.Location = new System.Drawing.Point(10, 16);
             this.checkedListBoxPatches.Name = "checkedListBoxPatches";
-            this.checkedListBoxPatches.Size = new System.Drawing.Size(185, 274);
+            this.checkedListBoxPatches.Size = new System.Drawing.Size(185, 244);
             this.checkedListBoxPatches.TabIndex = 18;
             // 
             // labelPatches
@@ -696,25 +722,11 @@
             this.timer.Enabled = true;
             this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
-            // comboBoxBranch
+            // timerPulse
             // 
-            this.comboBoxBranch.Enabled = false;
-            this.comboBoxBranch.FormattingEnabled = true;
-            this.comboBoxBranch.Location = new System.Drawing.Point(294, 216);
-            this.comboBoxBranch.Name = "comboBoxBranch";
-            this.comboBoxBranch.Size = new System.Drawing.Size(118, 21);
-            this.comboBoxBranch.TabIndex = 27;
-            this.comboBoxBranch.Text = "Checking...";
-            this.comboBoxBranch.SelectedIndexChanged += new System.EventHandler(this.comboBoxBranch_SelectedIndexChanged);
-            // 
-            // labelBranch
-            // 
-            this.labelBranch.AutoSize = true;
-            this.labelBranch.Location = new System.Drawing.Point(291, 200);
-            this.labelBranch.Name = "labelBranch";
-            this.labelBranch.Size = new System.Drawing.Size(41, 13);
-            this.labelBranch.TabIndex = 26;
-            this.labelBranch.Text = "Branch";
+            this.timerPulse.Enabled = true;
+            this.timerPulse.Interval = 10;
+            this.timerPulse.Tick += new System.EventHandler(this.timerPulse_Tick);
             // 
             // FormMain
             // 
@@ -817,6 +829,8 @@
         private System.Windows.Forms.Button buttonCopyCommandClipboard;
         private System.Windows.Forms.ComboBox comboBoxBranch;
         private System.Windows.Forms.Label labelBranch;
+        private System.Windows.Forms.Button buttonRefresh;
+        private System.Windows.Forms.Timer timerPulse;
     }
 }
 

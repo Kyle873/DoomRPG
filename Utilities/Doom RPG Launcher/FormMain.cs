@@ -18,9 +18,10 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 8, 5);
+        Version version = new Version(0, 9);
         Config config = new Config();
         string currentBranch = string.Empty;
+        List<PatchInfo> patches = new List<PatchInfo>();
 
         // Extensions of known mod filetypes
         string[] fileTypes =
@@ -43,12 +44,15 @@ namespace DoomRPG
             // Populate dynamic controls
             PopulateComboBoxes();
 
+            // Patches
+            PopulatePatches();
+
             // Mods
             PopulateMods();
 
             // Load Controls
             LoadControls();
-            
+
             // send initial events to specific controls to refresh their states
             richTextBoxCredits_TextChanged(null, null);
         }
@@ -59,7 +63,7 @@ namespace DoomRPG
             for (int i = 0; i < Enum.GetNames(typeof(IWAD)).Length; i++)
                 comboBoxIWAD.Items.Add(Enum.GetName(typeof(IWAD), i));
             comboBoxIWAD.SelectedIndex = (int)config.iwad;
-            
+
             // Difficulty
             for (int i = 0; i < Enum.GetNames(typeof(Difficulty)).Length; i++)
                 comboBoxDifficulty.Items.Add(Enum.GetName(typeof(Difficulty), i));
@@ -74,7 +78,7 @@ namespace DoomRPG
             if (config.portPath != string.Empty)
             {
                 List<string> files = Directory.EnumerateFiles(Path.GetDirectoryName(config.portPath)).ToList<string>();
-                
+
                 foreach (string file in files)
                     if (file.EndsWith(".zds"))
                         comboBoxSaveGame.Items.Add(Path.GetFileName(file));
@@ -88,15 +92,55 @@ namespace DoomRPG
             comboBoxBranch.Enabled = true;
         }
 
+        private void PopulatePatches()
+        {
+            patches.Clear();
+            checkedListBoxPatches.Items.Clear();
+
+            // Populate the patches list
+            if (config.DRPGPath != string.Empty)
+                if (Directory.Exists(config.DRPGPath))
+                {
+                    List<string> folders = Directory.EnumerateDirectories(config.DRPGPath).ToList<string>();
+
+                    foreach (string folder in folders)
+                    {
+                        List<string> files = Directory.EnumerateFiles(folder).ToList<string>();
+                        bool isValid = false;
+
+                        foreach (string file in files)
+                            if (file.Contains("DRPGINFO.txt"))
+                            {
+                                isValid = true;
+                                break;
+                            }
+
+                        if (isValid)
+                        {
+                            PatchInfo info = PatchInfo.ReadPatch(folder + "\\DRPGINFO.txt");
+                            patches.Add(info);
+                        }
+                        else
+                            continue;
+                    }
+                }
+
+            // Populate the Patches checklist box
+            foreach (PatchInfo patch in patches)
+            {
+                checkedListBoxPatches.Items.Add(patch);
+            }
+        }
+
         private void PopulateMods()
         {
             checkedListBoxMods.Items.Clear();
 
-            if (textBoxModsPath.Text != string.Empty)
-                if (Directory.Exists(textBoxModsPath.Text))
+            if (config.modsPath != string.Empty)
+                if (Directory.Exists(config.modsPath))
                 {
-                    List<string> folders = Directory.EnumerateDirectories(textBoxModsPath.Text).ToList<string>();
-                    folders.Add(textBoxModsPath.Text);
+                    List<string> folders = Directory.EnumerateDirectories(config.modsPath).ToList<string>();
+                    folders.Add(config.modsPath);
 
                     foreach (string folder in folders)
                     {
@@ -128,12 +172,6 @@ namespace DoomRPG
                 return false;
             }
 
-            if (config.modsPath == string.Empty && (config.patches[3] == true || config.patches[4] == true || config.patches[5] == true))
-            {
-                Utils.ShowError("You must specify a WAD/PK3 path for the selected patches!");
-                return false;
-            }
-
             if (Path.GetDirectoryName(config.portPath) == config.DRPGPath)
             {
                 Utils.ShowError("The Port Path and Doom RPG path cannot be the same!");
@@ -143,12 +181,6 @@ namespace DoomRPG
             if (config.DRPGPath == Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
             {
                 Utils.ShowError("You cannot keep the launcher within the Doom RPG folder! Please move it to a different location.");
-                return false;
-            }
-
-            if (checkedListBoxPatches.GetItemChecked(2) && (checkedListBoxPatches.GetItemChecked(3) || checkedListBoxPatches.GetItemChecked(4)))
-            {
-                Utils.ShowError("You cannot use the Extras patch with DoomRL!");
                 return false;
             }
 
@@ -162,10 +194,10 @@ namespace DoomRPG
                 {
                     List<string> files = Directory.EnumerateFiles(textBoxDRPGPath.Text).ToList<string>();
 
-                        foreach (string file in files)
-                            for (int i = 0; i < fileTypes.Length; i++)
-                                if (file.ToLower().EndsWith(fileTypes[i]))
-                                    return true;
+                    foreach (string file in files)
+                        for (int i = 0; i < fileTypes.Length; i++)
+                            if (file.ToLower().EndsWith(fileTypes[i]))
+                                return true;
                 }
 
             return false;
@@ -180,8 +212,10 @@ namespace DoomRPG
             textBoxDemo.Text = config.demo;
             checkBoxEnableCheats.Checked = config.enableCheats;
             checkBoxLogging.Checked = config.enableLogging;
-            for (int i = 0; i < config.patches.Length; i++)
-                checkedListBoxPatches.SetItemChecked(i, config.patches[i]);
+            for (int i = 0; i < patches.Count; i++)
+                foreach (string patch in config.patches)
+                    if (patches[i].Name.ToLower() == patch.ToLower())
+                        checkedListBoxPatches.SetItemChecked(i, true);
             checkBoxMultiplayer.Checked = config.multiplayer;
             for (int i = 0; i < config.mods.Count; i++)
                 if (checkedListBoxMods.FindStringExact(config.mods[i]) != -1)
@@ -213,11 +247,10 @@ namespace DoomRPG
             config.demo = textBoxDemo.Text;
             config.enableCheats = checkBoxEnableCheats.Checked;
             config.enableLogging = checkBoxLogging.Checked;
-            for (int i = 0; i < config.patches.Length; i++)
+            config.patches.Clear();
+            for (int i = 0; i < patches.Count; i++)
                 if (checkedListBoxPatches.GetItemChecked(i))
-                    config.patches[i] = true;
-                else
-                    config.patches[i] = false;
+                    config.patches.Add(patches[i].Name);
             config.mods.Clear();
             for (int i = 0; i < checkedListBoxMods.Items.Count; i++)
                 if (checkedListBoxMods.GetItemChecked(i))
@@ -252,7 +285,7 @@ namespace DoomRPG
             IReadOnlyList<Branch> branches = await client.Repository.GetAllBranches("Kyle873", "DoomRPG");
 
             foreach (Branch branch in branches)
-                    branchNames.Add(branch.Name);
+                branchNames.Add(branch.Name);
 
             return branchNames;
         }
@@ -442,7 +475,7 @@ namespace DoomRPG
                 cmdline += " -warp " + config.mapNumber;
 
                 // DRLA Class
-                if (checkedListBoxPatches.GetItemChecked(4))
+                if (IsDRLAActive())
                     cmdline += " +playerclass " + config.rlClass.ToString();
             }
 
@@ -498,30 +531,27 @@ namespace DoomRPG
 
             // Doom RPG
             cmdline += " \"" + config.DRPGPath + "\\DoomRPG\"";
-            // Doom 1
-            if (checkedListBoxPatches.GetItemChecked(0))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Doom1\"";
-            // Brightmaps
-            if (checkedListBoxPatches.GetItemChecked(1))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Brightmaps\"";
-            // Extras
-            if (checkedListBoxPatches.GetItemChecked(2))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-Extras\"";
-            // DoomRL Arsenal
-            if (checkedListBoxPatches.GetItemChecked(3))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLArsenal\"";
-            // Brutal Doom
-            if (checkedListBoxPatches.GetItemChecked(4))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-RLMonsters\"";
-            // TUTNT
-            if (checkedListBoxPatches.GetItemChecked(5))
-                cmdline += " \"" + config.DRPGPath + "\\DoomRPG-TUTNT\"";
+
+            // Doom RPG Patches
+            for (int i = 0; i < patches.Count; i++)
+                if (checkedListBoxPatches.GetItemChecked(i))
+                    cmdline += " \"" + patches[i].Path + "\"";
 
             // Custom Commands
             if (config.customCommands != string.Empty)
                 cmdline += " " + config.customCommands;
 
             return cmdline;
+        }
+
+        private bool IsDRLAActive()
+        {
+            for (int i = 0; i < patches.Count; i++)
+                if (patches[i].Name.ToLower().Contains("doomrl"))
+                    if (checkedListBoxPatches.GetItemChecked(i))
+                        return true;
+
+            return false;
         }
 
         private void buttonBrowsePortPath_Click(object sender, EventArgs e)
@@ -560,6 +590,13 @@ namespace DoomRPG
 
         private async void buttonCheckUpdates_Click(object sender, EventArgs e)
         {
+            // Check the current branch
+            if (currentBranch == string.Empty)
+            {
+                Utils.ShowError("No branch has been selected");
+                return;
+            }
+            
             // Save config
             SaveControls();
             config.Save();
@@ -577,6 +614,14 @@ namespace DoomRPG
         {
             try
             {
+                // Check for patch requirements
+                if (!PatchInfo.CheckForRequirements(patches))
+                    return;
+
+                // Check for patch conflicts
+                if (!PatchInfo.CheckForConflicts(patches))
+                    return;
+
                 // Save config
                 SaveControls();
                 config.Save();
@@ -631,24 +676,9 @@ namespace DoomRPG
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            /* Automatically check relevent WAD/PK3 files associated with patches
-             * The search algorithm of CheckedListBox is pretty shit, just let the user do it manually, let the cfg handle it from there
-            try
-            {
-                // DoomRL Arsenal
-                if (checkedListBoxPatches.GetItemChecked(3))
-                {
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Arsenal Beta"), true);
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL HUD"), true);
-                }
-                // DoomRL monster Pack
-                if (checkedListBoxPatches.GetItemChecked(4))
-                    checkedListBoxMods.SetItemChecked(checkedListBoxMods.FindString("DoomRL Monsters"), true);
-            }
-            catch
-            {
-            }
-            */
+            // Check loaded patches
+            for (int i = 0; i < patches.Count; i++)
+                patches[i].Enabled = checkedListBoxPatches.GetItemChecked(i);
 
             // If Map Number is 0, skill is irrelevent
             if (numericUpDownMapNumber.Value == 0)
@@ -657,7 +687,7 @@ namespace DoomRPG
                 comboBoxDifficulty.Enabled = true;
 
             // Player Class
-            if (numericUpDownMapNumber.Value > 0 && checkedListBoxPatches.GetItemChecked(4))
+            if (numericUpDownMapNumber.Value > 0 && IsDRLAActive())
                 comboBoxClass.Enabled = true;
             else
                 comboBoxClass.Enabled = false;
@@ -694,11 +724,27 @@ namespace DoomRPG
             }
         }
 
+        private void timerPulse_Tick(object sender, EventArgs e)
+        {
+            // Launch button pulse
+            int red = 160 + (int)(Math.Sin((double)DateTime.Now.Millisecond / 256) * 64);
+            buttonLaunch.ForeColor = Color.FromArgb(255, red, 0, 0);
+        }
+        
         private void buttonCopyCommandClipboard_Click(object sender, EventArgs e)
         {
+            PatchInfo.CheckForRequirements(patches);
+            PatchInfo.CheckForConflicts(patches);
             SaveControls();
             config.Save();
             Clipboard.SetText(BuildCommandLine());
+        }
+
+        private void buttonRefresh_Click(object sender, EventArgs e)
+        {
+            PopulatePatches();
+            PopulateMods();
+            LoadControls();
         }
 
         private void comboBoxBranch_SelectedIndexChanged(object sender, EventArgs e)
