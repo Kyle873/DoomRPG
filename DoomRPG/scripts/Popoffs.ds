@@ -10,22 +10,23 @@ script void DamageNumbers()
 {
     Start:
     
+    // Initial delay so we don't show max health being calculated or other nonsense
+    Delay(4);
+    
     while (GetCVar("drpg_damagenumbers"))
     {
         // Pointer
         MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
         
-        int Monsters = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
-        int TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
-        int OldTID;
         int TID = UniqueTID();
         int Health = GetActorProperty(0, APROP_Health);
         bool ShieldActive = CheckInventory("DRPGShield");
         int Shield = Player.Shield.Charge;
         int Color;
+        int OldTID;
         
         // Lag handling
-        Delay(1 + ((TotalMonsters - Monsters) / DNUM_MONSTER_DIV));
+        Delay(1 + GetDamageNumbersDelay());
         
         // Check Health
         Health = Health - GetActorProperty(0, APROP_Health);
@@ -187,8 +188,15 @@ function Popoff(int TID, int Value, int Color)
     SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), 0.5, 0, 0);
 };
 
-// For Damage Digits
 function int GetDigit(int Num, int Digit)
 {
     return (Num / Pow(10, Digit)) % 10;
+};
+
+function int GetDamageNumbersDelay()
+{
+    int Monsters = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+    int TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+    
+    return (TotalMonsters - Monsters) / DNUM_MONSTER_DIV;
 };
