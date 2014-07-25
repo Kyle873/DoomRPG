@@ -23,7 +23,7 @@
 str[2] Version =
 {
     "v0.9.11 Beta - Gotta Go Fast Edition";
-	"Thursday, July 24, 2014 at 6:49:41 PM";
+	"Thursday, July 24, 2014 at 9:56:06 PM";
 };
 
 // Define the globals for SBARINFO/etc.
@@ -72,17 +72,11 @@ global_array(52) int[MAX_PLAYERS] ShieldHealth @ 0;
 // Init Script
 script void Init() enter
 {
-    if (!ActivatorTID())
+    // [KS] This needs to be done on its' own, so death exits don't rob you of your TID and break EVERYTHING EVER FFS
+    if (ActivatorTID() == 0)
     {
-        // [KS] This needs to be done on its' own, so death exits don't rob you of your TID and break EVERYTHING EVER FFS
+        AssignTIDs();
         
-        // Player TID
-        Player.TID = PLAYER_TID + PlayerNumber();
-        Thing_ChangeTID(0, Player.TID);
-        
-        if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: Player TID: %d\n", Player.TID);
-
         // Give the default loadout based on compatibility switches
         DefaultLoadout();
     };
@@ -165,6 +159,13 @@ script void Init() enter
     
     // Create Translations
     CreateTranslations();
+    
+    // Small delay before initializing the scripts for mod compatibility
+    Delay(4);
+    
+    // Some mods will require TID reassignment
+    if (GetCVar("drpg_ext_brutal"))
+        AssignTIDs();
     
     // Execute Game Loops
     Loop();
@@ -766,6 +767,10 @@ function void DefaultLoadout()
     // DoomRL Compatibility
     if (GetCVar("drpg_ext_doomrl"))
         SetWeapon("RLPistol");
+    
+    // Brutal Doom Compatibility
+    if (GetCVar("drpg_ext_brutal"))
+        GiveInventory("BrutalPistol", 1);
 };
 
 function void CheckCompatibility()
@@ -776,6 +781,7 @@ function void CheckCompatibility()
     // Reset CVARs
     SetCVar("drpg_ext_extras", 0);
     SetCVar("drpg_ext_doomrl", 0);
+    SetCVar("drpg_ext_brutal", 0);
     
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \c-Checking Compatibility...\n");
@@ -801,4 +807,24 @@ function void CheckCompatibility()
         Thing_Remove(TID);
         return;
     };
+    
+    // Brutal Doom
+    Success = SpawnForced("Rifle", 0, 0, 0, TID, 0);
+    if (Success)
+    {
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: \cgBrutal Doom \c-detected\n");
+        SetCVar("drpg_ext_brutal", 1);
+        Thing_Remove(TID);
+        return;
+    };
+};
+
+function void AssignTIDs()
+{
+    Player.TID = PLAYER_TID + PlayerNumber();
+    Thing_ChangeTID(0, Player.TID);
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: Player TID: %d\n", Player.TID);
 };
