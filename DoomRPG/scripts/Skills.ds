@@ -18,7 +18,7 @@ int ForceFieldTID = 1998;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
-    7; 9; 9; 3; 17; 8;
+    6; 9; 9; 3; 17; 8;
 };
 
 AddressSpace map_array SkillSpace;
@@ -77,12 +77,6 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
                 "Repair 50% of your Armor";
                 "Repair 75% of your Armor";
                 "Repair all of your Armor";
-            };
-        };
-        {
-            "Player Teleport"; 50; 1; PlayerTeleport;
-            {
-                "Teleport to another Player";
             };
         };
     };
@@ -1035,115 +1029,6 @@ acscript bool Repair(Skill *Self, void *Data)
     };
     
     return false;
-};
-
-acscript bool PlayerTeleport(Skill *Self, void *Data)
-{
-    str[MAX_PLAYERS] Names;
-    int PlayerChoice;
-    
-    // Refund - If there is only one player or you aren't in multiplayer
-    if (PlayerCount() <= 1 || !InMultiplayer)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-
-    while (true)
-    {
-        fixed X = 48.1;
-        fixed Y = 50.0;
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-        
-        // Prevent the menus from being opened
-        Player.InMenu = false;
-        Player.InShop = false;
-        
-        SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
-        
-        // Set the HUD Size
-        SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
-        
-        // Title
-        SetFont("BIGFONT");
-        HudMessage("Choose a Player\n", HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
-        
-        // Input
-        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
-        {
-            ActivatorSound("menu/move", 127);
-            PlayerChoice--;
-            if (PlayerChoice < 0) PlayerChoice = PlayerCount() - 1;
-        };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK)
-        {
-            ActivatorSound("menu/move", 127);
-            PlayerChoice++;
-            if (PlayerChoice > PlayerCount() - 1) PlayerChoice = 0;
-        };
-        if (Buttons == BT_USE && OldButtons != BT_USE)
-        {
-            // You can't teleport to yourself
-            if (PlayerChoice == PlayerNumber())
-                ActivatorSound("menu/error", 127)
-            else
-            {
-                // Teleport
-                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-                GiveInventory("DRPGPlayerTeleportGhost", 1);
-                SetActorPosition(Player.TID, GetActorX(Players(PlayerChoice).TID), GetActorY(Players(PlayerChoice).TID), GetActorZ(Players(PlayerChoice).TID), true);
-                SetActorAngle(Player.TID, GetActorAngle(Players(PlayerChoice).TID));
-                
-                // Make sure you're not inside the other player before we solidify
-                while (Distance(Player.TID, Players(PlayerChoice).TID) <= GetActorPropertyFixed(Players(PlayerChoice).TID, APROP_Radius))
-                    Delay(35);
-                
-                // Solidify
-                GiveInventory("DRPGPlayerTeleportNormal", 1);
-                return true;
-            };
-        };
-        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
-        {
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-            ActivatorSound("menu/move", 127);
-            return false;
-        };
-        
-        // Get Player Names
-        for (int i = 0; i < MAX_PLAYERS; i++)
-            Names[i] = StrParam("%N\n", i + 1);
-        
-        // Drawing
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            // Skip over players that aren't in the game
-            if (!PlayerInGame(i))
-            {
-                // If you are highlighting someone who left, reset the cursor
-                if (PlayerChoice == i)
-                    PlayerChoice = 0;
-                
-                continue;
-            };
-            
-            // Cursor
-            if (i == PlayerChoice)
-                HudMessage("-->\n", HUDMSG_PLAIN, 0, MenuCursorColor, X - 24.0, Y, 0.05);
-            
-            // Name and Distance
-            if (i == PlayerNumber())
-                HudMessage("%s\n", Names[i], HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05)
-            else
-                HudMessage("%s (\ci%d\c-)\n", Names[i], Distance(Player.TID, Players(i).TID), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
-            
-            // Move down Y
-            Y += 16.0;
-        };
-        
-        Delay(1);
-    };
 };
 
 acscript bool Powerup(Skill *Self, void *Data)

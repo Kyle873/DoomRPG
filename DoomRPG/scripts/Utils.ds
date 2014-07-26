@@ -23,6 +23,53 @@ str[6] SkillLevels =
     "Hell";
 };
 
+acscript void PlayerTeleport(int PlayerNum)
+{
+    bool NearPlayers = true;
+    
+    if (PlayerNum == PlayerNumber() || !PlayerInGame(PlayerNum))
+    {
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    // Teleport
+    GiveInventory("DRPGPlayerTeleportGhost", 1);
+    SetActorPosition(Player.TID, GetActorX(Players(PlayerNum).TID), GetActorY(Players(PlayerNum).TID), GetActorZ(Players(PlayerNum).TID), true);
+    SetActorAngle(Player.TID, GetActorAngle(Players(PlayerNum).TID));
+    SetActorProperty(Player.TID, APROP_RenderStyle, STYLE_Translucent);
+    
+    while (NearPlayers)
+    {
+        // Reset the flag
+        NearPlayers = false;
+        
+        // Make sure you're not inside or near any other players before we solidify
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (i == PlayerNumber() || !PlayerInGame(i)) continue;
+            if (Distance(Player.TID, Players(i).TID) <= GetActorPropertyFixed(Players(i).TID, APROP_Radius) + 16.0)
+            {
+                NearPlayers = true;
+                break;
+            };
+        };
+        
+        // Player Flashyness
+        SetActorPropertyFixed(Player.TID, APROP_Alpha, 0.75 + (Sin(Timer() / 32.0) * 0.25));
+        
+        // Solidify
+        if (!NearPlayers)
+        {
+            GiveInventory("DRPGPlayerTeleportNormal", 1);
+            SetActorProperty(Player.TID, APROP_RenderStyle, STYLE_Normal);
+            SetActorPropertyFixed(Player.TID, APROP_Alpha, 1.0);
+        };
+        
+        Delay(1);
+    };
+};
+
 // Used by DECORATE and the Immunity Crystals plus Anti-Demon Field
 acscript void DestroyImmunity()
 {
