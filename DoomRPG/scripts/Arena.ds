@@ -42,7 +42,6 @@ str[MAX_ENVIRONMENTS] ArenaEnvironments =
 str[MAX_BONUS] ArenaBonus =
 {
     "\cjSelect Your Own!";
-    "\cgFull Health";
     "\cvFull EP";
     "\cfMoney Drop";
     "\cuAmmo Drop";
@@ -284,29 +283,7 @@ function void ArenaGetBonus(int Bonus)
             ActivatorSound("misc/secret", 127);
             ArenaChooseBonus();
             break;
-        case 1: // Full Health
-            if (InMultiplayer)
-            {
-                for (int i = 0; i < MAX_PLAYERS; i++)
-                    if (Players(i).Shield.Active)
-                        Players(i).Shield.Health = Players(i).HealthMax
-                    else
-                        SetActorProperty(Players(i).TID, APROP_Health, Players(i).HealthMax);
-            }
-            else
-            {
-                if (Player.Shield.Active)
-                    Player.Shield.Health = Player.HealthMax
-                else if (GetActorProperty(0, APROP_Health) >= Player.HealthMax)
-                {
-                    ArenaGetBonus(Random(0, MAX_BONUS - 1));
-                    return;
-                }
-                else
-                    HealThing(Player.HealthMax);
-            };
-            break;
-        case 2: // Full EP
+        case 1: // Full EP
             if (InMultiplayer)
                 for (int i = 0; i < MAX_PLAYERS; i++)
                     Players(i).EP = Players(i).EPMax
@@ -321,7 +298,7 @@ function void ArenaGetBonus(int Bonus)
                     Player.EP = Player.EPMax;
             };
             break;
-        case 3: // Money Drop
+        case 2: // Money Drop
             SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             for (int i = 0; i < ArenaWave * PlayerCount(); i++)
             {
@@ -330,7 +307,7 @@ function void ArenaGetBonus(int Bonus)
                 Thing_ChangeTID(ArenaItemTID, 0);
             };
             break;
-        case 4: // Ammo Drop
+        case 3: // Ammo Drop
             SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             for (int i = 0; i < PlayerCount(); i++)
             {
@@ -339,16 +316,22 @@ function void ArenaGetBonus(int Bonus)
                 Thing_ChangeTID(ArenaItemTID, 0);
             };
             break;
-        case 5: // Health Drop
+        case 4: // Health Drop
             SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             for (int i = 0; i < PlayerCount(); i++)
             {
-                SpawnSpot("DRPGHealthDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+                if (Random(1, 4) == 1)
+                    SpawnItem = "Megasphere"
+                else if (Random(1, 2) == 1)
+                    SpawnItem = "Soulsphere"
+                else
+                    SpawnItem = "DRPGHealthDropper";
+                SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
                 SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
                 Thing_ChangeTID(ArenaItemTID, 0);
             };
             break;
-        case 6: // Armor Drop
+        case 5: // Armor Drop
             SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             for (int i = 0; i < PlayerCount(); i++)
             {
@@ -361,7 +344,7 @@ function void ArenaGetBonus(int Bonus)
                 Thing_ChangeTID(ArenaItemTID, 0);
             };
             break;
-        case 7: // Weapon Drop
+        case 6: // Weapon Drop
             SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             for (int i = 0; i < PlayerCount(); i++)
             {
@@ -370,7 +353,7 @@ function void ArenaGetBonus(int Bonus)
                 Thing_ChangeTID(ArenaItemTID, 0);
             };
             break;
-        case 8: // Powerup Drop
+        case 7: // Powerup Drop
             SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             for (int i = 0; i < PlayerCount(); i++)
             {
@@ -379,7 +362,7 @@ function void ArenaGetBonus(int Bonus)
                 Thing_ChangeTID(ArenaItemTID, 0);
             };
             break;
-        case 9: // Stim Drop
+        case 8: // Stim Drop
             SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             if (Random(1, 10) == 1)
             {
@@ -398,7 +381,7 @@ function void ArenaGetBonus(int Bonus)
                     Thing_ChangeTID(ArenaItemTID, 0);
                 };
             break;
-        case 10: // Mod Drop (DRLA Only)
+        case 9: // Mod Drop (DRLA Only)
             if (GetCVar("drpg_ext_doomrl"))
             {
                 SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
@@ -415,7 +398,7 @@ function void ArenaGetBonus(int Bonus)
                 return;
             };
             break;
-        case 11: // Key Drop
+        case 10: // Key Drop
             SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             if (ArenaKey == 0) SpawnItem = "DRPGRedCard";
             if (ArenaKey == 1) SpawnItem = "DRPGYellowCard";
