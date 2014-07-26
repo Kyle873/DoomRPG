@@ -356,6 +356,7 @@
             this.textBoxDRPGPath.Name = "textBoxDRPGPath";
             this.textBoxDRPGPath.Size = new System.Drawing.Size(329, 20);
             this.textBoxDRPGPath.TabIndex = 4;
+            this.textBoxDRPGPath.TextChanged += new System.EventHandler(this.textBoxDRPGPath_TextChanged);
             // 
             // labelDoomRPGFolderLocation
             // 
@@ -651,7 +652,7 @@
             this.richTextBoxCredits.ReadOnly = true;
             this.richTextBoxCredits.Size = new System.Drawing.Size(420, 298);
             this.richTextBoxCredits.TabIndex = 0;
-            this.richTextBoxCredits.Text = resources.GetString("richTextBoxCredits.Text");
+            this.richTextBoxCredits.Text = "";
             this.richTextBoxCredits.TextChanged += new System.EventHandler(this.richTextBoxCredits_TextChanged);
             // 
             // buttonLaunch

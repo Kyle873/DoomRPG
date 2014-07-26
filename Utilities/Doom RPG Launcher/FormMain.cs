@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 9);
+        Version version = new Version(0, 9, 1);
         Config config = new Config();
         string currentBranch = string.Empty;
         List<PatchInfo> patches = new List<PatchInfo>();
@@ -53,8 +53,21 @@ namespace DoomRPG
             // Load Controls
             LoadControls();
 
-            // send initial events to specific controls to refresh their states
-            richTextBoxCredits_TextChanged(null, null);
+            // Load Credits
+            LoadCredits();
+        }
+
+        private void LoadCredits()
+        {
+            string creditsPath = textBoxDRPGPath.Text + "\\CREDITS.txt";
+
+            if (File.Exists(creditsPath))
+            {
+                string credits = File.ReadAllText(creditsPath);
+
+                richTextBoxCredits.Text = credits;
+                richTextBoxCredits_TextChanged(null, null);
+            }
         }
 
         private async Task PopulateComboBoxes()
@@ -569,6 +582,8 @@ namespace DoomRPG
             dialog.ShowDialog();
 
             textBoxDRPGPath.Text = dialog.SelectedPath;
+
+            LoadCredits();
         }
 
         private void buttonBrowseModsPath_Click(object sender, EventArgs e)
@@ -747,6 +762,11 @@ namespace DoomRPG
             LoadControls();
         }
 
+        private void textBoxDRPGPath_TextChanged(object sender, EventArgs e)
+        {
+            LoadCredits();
+        }
+        
         private void comboBoxBranch_SelectedIndexChanged(object sender, EventArgs e)
         {
             currentBranch = comboBoxBranch.Text;
