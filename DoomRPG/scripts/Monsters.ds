@@ -198,11 +198,11 @@ acscript void MonsterInit(int Flags)
 // Modify the targeted monster (mainly for debugging)
 acscript void MonsterSet(int Level, int Aura, int Flags)
 {
-    // Pointer
-    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
-    
     // Move script to the targeted monster
     SetActivatorToTarget(Player.TID);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     // Set Stats/Flags
     if (Level > 0)
@@ -560,6 +560,9 @@ script void MonsterInitStats(int StatFlags)
     
     // Calculate Speed
     SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(Stats));
+    
+    // Give Credits
+    SetInventory("DRPGCredits", Stats->Capacity);
 };
 
 script void MonsterStatsHandler()
@@ -911,7 +914,6 @@ script void MonsterDeath()
             // Luck-based Drops
             if (Killer > -1)
             {
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).CreditChance) DropMonsterItem(Killer, DropTID, "DRPGMoneyDropper", 256);
                     if (RandomFixed(0.0, 100.0) < Players(Killer).HealthChance) DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", 256);
                     if (RandomFixed(0.0, 100.0) < Players(Killer).EPChance)     DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", 256);
                     if (RandomFixed(0.0, 100.0) < Players(Killer).ArmorChance)  DropMonsterItem(Killer, DropTID, "DRPGArmorDropper", 256);
@@ -946,7 +948,7 @@ script void MonsterDeath()
     
     // Drop Credits
     if (CheckInventory("DRPGCredits") > 0)
-        DropMoney(Killer, 0, CheckInventory("DRPGCredits"));
+        DropMoney(Killer, 0, Random(CheckInventory("DRPGCredits") / 2, CheckInventory("DRPGCredits")));
     
     // Credit Fountain
     if (Killer > -1 && Players(Killer).Luck >= 100 && Random(1, 256) == 1)
