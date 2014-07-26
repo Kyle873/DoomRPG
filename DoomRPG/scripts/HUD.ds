@@ -3,7 +3,13 @@
 #include "HUD.dh"
 #include "Shield.dh"
 #include "Skills.dh"
+#include "Stats.dh"
 #include "Utils.dh"
+
+// Status Effect HUD script
+script void DrawStatusEffectHUD() enter
+{
+};
 
 // Stat HUD Script
 script void DrawStatHUD() enter
@@ -95,7 +101,20 @@ script void DrawSkillHUD() enter
 // Psuedo Damage Numbers on the HUD
 script void DamageNumbersHUD()
 {
+    str[SE_MAX] StatusEffects =
+    {
+        "\ccBlind";
+        "\cfConfusion";
+        "\cqPoison";
+        "\cdCorrosion";
+        "\ciFatigue";
+        "\ctVirus";
+        "\cnSilence";
+        "\cvEMP";
+    };
+    
     int Color = CR_WHITE;
+    str Text = "";
     int Loss;
     
     // Shield or Health?
@@ -126,9 +145,20 @@ script void DamageNumbersHUD()
     
     if (Loss > 0 && Loss < SHIELD_HEALTH - Player.HealthMax - Loss)
     {
-        if (Loss > Player.HealthMax / 2)
-            HudMessage("\cgCRITICAL!\n\c-%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 1.0, 1.0)
-        else
-            HudMessage("%d\n", Loss, HUDMSG_FADEOUT, 0, Color, 0.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0);
+        if (Loss >= Player.HealthMax / 2) // Critical
+            Text = StrParam("%s\cgCRITICAL\n\n", Text);
+        
+        // Status Effect
+        if (Player.StatusType != Player.StatusTypeTemp)
+        {
+            Text = StrParam("%s%s\n\n", Text, StatusEffects[Player.StatusType - 1]);
+            Player.StatusTypeTemp = Player.StatusType;
+        };
+        
+        // Loss
+        Text = StrParam("%s%d\n", Text, Loss);
+        
+        // Display
+        HudMessage("%s\n", Text, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0);
     };
 };

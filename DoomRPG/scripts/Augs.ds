@@ -98,7 +98,7 @@ AugSpace AugInfo[MAX_AUGS] AugData =
     };
 };
 
-acscript void DisableAugs()
+acscript void DisableAugs(bool NoDrain)
 {
     str[MAX_AUGS] AugTokens =
     {
@@ -134,7 +134,8 @@ acscript void DisableAugs()
     Player.Augs.SlotsUsed = 0;
     
     // Halve your current battery amount
-    Player.Augs.Battery /= 2;
+    if (!NoDrain)
+        Player.Augs.Battery /= 2;
     
     // Disabled sound
     ActivatorSound("aug/disable", 127);
@@ -191,10 +192,6 @@ function void CheckAugs()
     else
         Player.Augs.BatteryMax = 100;
     
-    // Sanity check to prevent Battery from exceeding max amount
-    if (Player.Augs.Battery > Player.Augs.BatteryMax)
-        Player.Augs.Battery = Player.Augs.BatteryMax;
-    
     // Play energy drained sound
     if (Player.Augs.Battery <= 0 && Player.Augs.SlotsUsed > 0)
         ActivatorSound("aug/dead", 127);
@@ -236,14 +233,18 @@ function void CheckAugs()
             DrawBattery();
         };
         
-        // Sanity check to prevent battery from going negative
-        if (Player.Augs.Battery < 0)
-            Player.Augs.Battery = 0;
-        
         // Permanently Display battery amount on the HUD if CVAR is set
         if (Player.Augs.SlotsUsed > 0 && GetCVar("drpg_aug_showbattery"))
             DrawBattery();
     };
+    
+    // Sanity check to prevent battery from going negative
+    if (Player.Augs.Battery < 0)
+        Player.Augs.Battery = 0;
+
+    // Sanity check to prevent Battery from exceeding max amount
+    if (Player.Augs.Battery > Player.Augs.BatteryMax)
+        Player.Augs.Battery = Player.Augs.BatteryMax;
     
     // Battery Management Recharging
     if (Player.Augs.Active[AUG_BATTERY] && Player.Augs.Level[AUG_BATTERY] >= 5 && ((Timer() % (35 * 10)) == 0) && Player.Augs.Battery < Player.Augs.BatteryMax)

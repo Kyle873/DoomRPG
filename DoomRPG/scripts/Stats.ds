@@ -1,5 +1,6 @@
 #include "RPG.dh"
 
+#include "Augs.dh"
 #include "ItemData.dh"
 #include "Map.dh"
 #include "Shield.dh"
@@ -54,6 +55,66 @@ str[25] LongRanks =
     "Master Gunnery Sergeant"; "Master Gunnery Sergeant +";
     "Sergeant Major"; "Sergeant Major +";
     "Sergeant Major of the Marine Corps"; "Master Sergeant Major of the Marine Corps";
+};
+
+acscript void StatusEffect(int Type, int Time, int Intensity)
+{
+    Player.StatusType = Type;
+    Player.StatusIntensity = Intensity;
+    Player.StatusTimer = Time * 35;
+    Player.StatusTimerMax = Player.StatusTimer;
+    
+    if (Intensity <= 0)
+        Intensity = 1;
+    
+    while (Player.StatusTimer > 0)
+    {
+        if (Type == SE_BLIND) // Blind
+            FadeRange(0, 0, 0, (0.5 + (Intensity * 0.1)) - (Sin(Timer() / 128.0) * 0.25), 0, 0, 0, 0.0, 0.5);
+        
+        if (Type == SE_CONFUSION) // Confusion
+        {
+            SetActorAngle(0, GetActorAngle(0) + (Cos(Timer() / 128.0) * (Intensity * 0.01)));
+            SetActorPitch(0, Cos(Timer() / 128.0) * (Intensity * 0.025));
+        };
+        
+        if (Type == SE_POISON) // Poisoned
+            if ((Timer() % 35) == 0 && (GetActorProperty(Player.TID, APROP_Health) - Intensity) > 1)
+            {
+                SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) - Intensity);
+                FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0.0, Intensity * 0.25);
+            };
+        
+        if (Type == SE_CORROSION) // Corrosion
+            if ((Timer() % 35) == 0 && CheckInventory("Armor") > 0)
+            {
+                TakeInventory("BasicArmor", Intensity);
+                FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, Intensity * 0.25);
+            };
+        
+        
+        if (Type == SE_VIRUS) // Virus
+        {
+            Player.HPRate = 0;
+            Player.EPRate = 0;
+        };
+        
+        if (Type == SE_EMP) // EMP
+        {
+            if (Player.Shield.Active)
+                ToggleShield(false);
+            if (Player.Augs.SlotsUsed > 0)
+                DisableAugs(true);
+            if ((Timer() % 35) == 0)
+                Player.Augs.Battery -= Intensity;
+        };
+        
+        // Decrease timer
+        if (Player.StatusTimer > 0)
+            Player.StatusTimer--;
+        
+        Delay(1);
+    };
 };
 
 // Add XP
@@ -524,6 +585,13 @@ function void CheckStats()
     Player.Stim.VialMax = Player.Capacity * 10;
     Player.SurvivalBonus = (fixed)Player.Agility / 10.0;
     
+    // Status Effect Checking
+    if (Player.StatusTimer > 0 && Player.StatusType == SE_FATIGUE) // Fatigue
+    {
+        Player.Speed = Player.Speed * (1.0 / ((fixed)Player.StatusIntensity + 1));
+        Player.JumpHeight = Player.JumpHeight * (1.0 / ((fixed)Player.StatusIntensity + 1));
+    };
+    
     // Brutal Doom Compatibility
     if (GetCVar("drpg_ext_brutal"))
     {
@@ -910,5 +978,83 @@ function void CheckToxicity()
         Thing_Damage2(Player.TID, 1000000000, "Toxicity");
         SetActorState(Player.TID, "Death.Toxicity");
         Player.Toxicity = 0;
+    };
+};
+
+function void CheckStatusDamage()
+{
+    int Type;
+    int Time;
+    int Intensity;
+    int Count;
+    
+    if (Player.StatusTimer <= 0 && Player.HealthLoss > 0)
+    {
+        // Damage Types
+        if (Player.DamageType == DT_TOXIC)
+        {
+            if (Random(1, 4) == 1) // Poison
+            {
+                Type = SE_POISON;
+                Time = Random(1, 5);
+                Intensity = Random(1, 5);
+            }
+            else if (Random(1, 4) == 1) // Corrosion
+            {
+                Type == SE_CORROSION;
+                Time = Random(1, 5);
+                Intensity = Random(1, 5);
+            };
+        };
+        
+        // Critical Hits
+        if (Player.HealthLoss >= Player.HealthMax / 2)
+            while (Type == 0)
+            {
+                if (Random(1, 4) == 1) // Blind
+                {
+                    Type = SE_BLIND;
+                    Time = Random(1, 10);
+                    Intensity = Random(1, 5);
+                    break;
+                };
+                if (Random(1, 8) == 1) // Confusion
+                {
+                    Type = SE_CONFUSION;
+                    Time = Random(1, 10);
+                    Intensity = Random(1, 5);
+                    break;
+                };
+                if (Random(1, 8) == 1) // Fatigue
+                {
+                    Type = SE_FATIGUE;
+                    Time = Random(5, 30);
+                    Intensity = Random(1, 5);
+                    break;
+                };
+                if (Random(1, 4) == 1) // Virus
+                {
+                    Type = SE_VIRUS;
+                    Time = Random(30, 120);
+                    Intensity = 1;
+                    break;
+                };
+                if (Random(1, 16) == 1) // EMP
+                {
+                    Type = SE_EMP;
+                    Time = Random(5, 30);
+                    Intensity = Random(1, 2);
+                    break;
+                };
+                
+                Count++;
+                if (Count > 3) break;
+            };
+        
+        if (Type > 0)
+        {
+            ActivatorSound("health/statuseffect", 127);
+            StatusEffect(Type, Time, Intensity);
+        };
     };
 };

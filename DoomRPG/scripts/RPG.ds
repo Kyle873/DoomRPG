@@ -23,7 +23,7 @@
 str[2] Version =
 {
     "v0.9.11 Beta - Gotta Go Fast Edition";
-	"Saturday, July 26, 2014 at 7:13:13 AM";
+	"Saturday, July 26, 2014 at 11:15:20 AM";
 };
 
 // Define the globals for SBARINFO/etc.
@@ -53,7 +53,6 @@ global_array(24) int[MAX_PLAYERS] RankGained @ 0;
 global_array(25) int[MAX_PLAYERS] AuraTimerHUD @ 0;
 global_array(26) int[MAX_PLAYERS] RegenBoostTimerHUD @ 0;
 global_array(42) int[MAX_PLAYERS] StimTimerHUD @ 0;
-global_array(7)  int[MAX_PLAYERS] StatusTimerHUD @ 0;
 
 // HUD Item Counts
 global_array(18) int[MAX_PLAYERS] Credits @ 0;
@@ -262,6 +261,7 @@ script void Loop()
     CheckPerks();
     CheckStatBounds();
     CheckToxicity();
+    CheckStatusDamage();
     CheckLevelInfo();
     CheckCapacity();
     CheckShopCard();
@@ -396,10 +396,6 @@ script void Loop()
     SetActorPropertyFixed(Player.TID, APROP_Speed, Player.Speed);
     SetActorPropertyFixed(Player.TID, APROP_JumpZ, Player.JumpHeight);
     
-    // Clear your Status Effect if the timer is empty
-    if (Player.StatusTimer <= 0)
-        Player.StatusType = 0;
-    
     // Make you invincible while in the Menus and if menu freezing is enabled
     if ((Player.InMenu || Player.InShop) && GetCVar("drpg_menufreeze"))
         SetActorProperty(Player.TID, APROP_DamageFactor, 0);
@@ -499,40 +495,6 @@ script void AutosaveHandler()
         }
         else
             --SaveTimer;
-        
-        Delay(1);
-    };
-};
-
-// Handles Status Effects
-acscript void StatusEffect(int Type, int Time, int Intensity)
-{
-    Player.StatusType = Type;
-    Player.StatusTimer = Time * 35;
-    
-    if (Intensity == 0)
-        Intensity = 1;
-    
-    while (Player.StatusTimer > 0)
-    {
-        if (Type == 1) // Confusion
-        {
-            SetActorAngle(0, GetActorAngle(0) + 1024 * Cos(Timer() * (Intensity * 0.01)));
-            SetActorPitch(0, 1024 * 8, Cos(Timer() * (Intensity * 0.01)));
-        };
-        
-        if (Type == 2) // Blind
-            FadeRange(0, 0, 0, (0.75 + (Intensity / 400)) - ((1024 * 8) * Sin(Timer() * 0.01)), 0, 0, 0, 0.0, 0.5);
-        
-        if (Type == 3) // Poisoned
-            if ((Timer() % 35) == 1 && (GetActorProperty(Player.TID, APROP_Health) - Intensity) > 1)
-            {
-                DamageThing(Intensity);
-                FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, (0.25 + Intensity / 100));
-            };
-        
-        if (Player.StatusTimer > 0)
-            Player.StatusTimer--;
         
         Delay(1);
     };
@@ -748,12 +710,6 @@ function void CheckHUD()
         SetInventory("DRPGShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
         SetInventory("DRPGShield", Player.Shield.Active);
     };
-    
-    // Status Timer
-    if (Player.StatusTimer > 0)
-        StatusTimerHUD[PlayerNum] = Player.StatusTimer / 35 + 1
-    else
-        StatusTimerHUD[PlayerNum] = 0;
     
     // Items
     Credits[PlayerNum] = CheckInventory("DRPGCredits");
