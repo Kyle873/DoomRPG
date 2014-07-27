@@ -18,6 +18,16 @@ str[SE_MAX] StatusEffects =
     "\cvEMP";
 };
 
+str[] StatusNumerals =
+{
+    "";
+    "I";
+    "II";
+    "III";
+    "IV";
+    "V";
+};
+
 // Status Effect HUD script
 script void DrawStatusEffectHUD() enter
 {
@@ -52,7 +62,7 @@ script void DrawStatusEffectHUD() enter
             
             // Text
             SetFont("SMALLFONT");
-            HudMessage("%s\n", StatusEffects[i], HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_WHITE, X + 50.0, Y, 0.05, 0.75);
+            HudMessage("%s %s\n", StatusEffects[i], StatusNumerals[Player.StatusIntensity[i]], HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_WHITE, X + 50.0, Y, 0.05, 0.75);
             
             // Bar
             SetHudClipRect((int)X, (int)(Y - 6), TimerPercent, (int)(Y + 6));
@@ -161,6 +171,7 @@ script void DamageNumbersHUD()
     int Color = CR_WHITE;
     str Text = "";
     int Loss;
+    fixed Time;
     
     // Shield or Health?
     if (Player.Shield.Active)
@@ -190,21 +201,24 @@ script void DamageNumbersHUD()
     
     if (Loss > 0 && Loss < SHIELD_HEALTH - Player.HealthMax - Loss)
     {
-        if (Loss >= Player.HealthMax / 2) // Critical
+        if (Loss >= Player.HealthMax / 2) // Critical Hit
+        {
             Text = StrParam("%s\cgCRITICAL\n\n", Text);
+            Time += 1.0;
+        };
         
         // Status Effect
-        for (int i = 0; i < SE_MAX; i++)
-            if (Player.StatusType[i] != Player.StatusTypeTemp[i])
-            {
-                Text = StrParam("%s%s\n\n", Text, StatusEffects[i]);
-                Player.StatusTypeTemp[i] = Player.StatusType[i];
-            };
+        if (Player.StatusTypeHUD > 0)
+        {
+            Text = StrParam("%s%s %s\n\n", Text, StatusEffects[Player.StatusTypeHUD], StatusNumerals[Player.StatusIntensity[Player.StatusTypeHUD]]);
+            Player.StatusTypeHUD = 0;
+            Time += 1.0;
+        };
         
         // Loss
         Text = StrParam("%s%d\n", Text, Loss);
         
         // Display
-        HudMessage("%s\n", Text, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0);
+        HudMessage("%s\n", Text, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0 + Time);
     };
 };

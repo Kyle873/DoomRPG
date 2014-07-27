@@ -62,10 +62,23 @@ acscript void StatusEffect(int Type, int Time, int Intensity)
     if (Intensity <= 0)
         Intensity = 1;
     
-    Player.StatusType[Type] = true;
-    Player.StatusIntensity[Type] = Intensity;
-    Player.StatusTimer[Type] = Time * 35;
-    Player.StatusTimerMax[Type] = Player.StatusTimer[Type];
+    if (Player.StatusType[Type])
+    {
+        if (Intensity > Player.StatusIntensity[Type])
+            Player.StatusIntensity[Type] = Intensity;
+        
+        Player.StatusTimer[Type] += Time * 35;
+        
+        if (Player.StatusTimer[Type] > Player.StatusTimerMax[Type])
+            Player.StatusTimerMax[Type] = Player.StatusTimer[Type];
+    }
+    else
+    {
+        Player.StatusType[Type] = true;
+        Player.StatusIntensity[Type] = Intensity;
+        Player.StatusTimer[Type] = Time * 35;
+        Player.StatusTimerMax[Type] = Player.StatusTimer[Type];
+    };
 };
 
 // Add XP
@@ -959,8 +972,8 @@ function void CheckStatusEffects()
     
     if (Player.StatusType[SE_VIRUS]) // Virus
     {
-        Player.HPRate = 0;
-        Player.EPRate = 0;
+        Player.HPRate -= 3 + Player.StatusIntensity[SE_VIRUS];
+        Player.EPRate -= 3 + Player.StatusIntensity[SE_VIRUS];
     };
     
     if (Player.StatusType[SE_EMP]) // EMP
@@ -983,7 +996,6 @@ function void CheckStatusEffects()
         if (Player.StatusTimer[i] <= 0)
         {
             Player.StatusType[i] = false;
-            Player.StatusTypeTemp[i] = false;
             Player.StatusIntensity[i] = 0;
             Player.StatusTimer[i] = 0;
             Player.StatusTimerMax[i] = 0;
@@ -998,7 +1010,7 @@ function void CheckStatusDamage()
     int Intensity;
     int Count;
     
-    if (Player.StatusTimer <= 0 && Player.HealthLoss > 0)
+    if (Player.HealthLoss > 0)
     {
         // Damage Types
         if (Player.DamageType == DT_TOXIC)
@@ -1006,14 +1018,14 @@ function void CheckStatusDamage()
             if (Random(1, 4) == 1) // Poison
             {
                 Type = SE_POISON;
-                Time = Random(1, 5);
                 Intensity = Random(1, 5);
+                Time = Random(1, 5);
             }
             else if (Random(1, 4) == 1) // Corrosion
             {
                 Type == SE_CORROSION;
-                Time = Random(1, 5);
                 Intensity = Random(1, 5);
+                Time = Random(1, 5);
             };
         };
         if (Player.DamageType == DT_MELEE)
@@ -1021,14 +1033,14 @@ function void CheckStatusDamage()
             if (Random(1, 32) == 1) // Blind
             {
                 Type = SE_BLIND;
-                Time = Random(1, 10);
                 Intensity = Random(1, 5);
+                Time = Random(5, 10);
             }
             else if (Random(1, 32) == 1) // Confusion
             {
                 Type = SE_CONFUSION;
-                Time = Random(1, 10);
                 Intensity = Random(1, 5);
+                Time = Random(5, 10);
             };
         };
         if (Player.DamageType == DT_PLASMA || Player.DamageType == DT_LIGHTNING)
@@ -1036,20 +1048,26 @@ function void CheckStatusDamage()
             if (Random(1, 16) == 1) // Poison
             {
                 Type = SE_POISON;
-                Time = Random(1, 5);
                 Intensity = Random(1, 5);
+                Time = Random(5, 20);
             }
             else if (Random(1, 16) == 1) // Corrosion
             {
                 Type == SE_CORROSION;
-                Time = Random(1, 5);
                 Intensity = Random(1, 5);
+                Time = Random(1, 5);
+            }
+            else if (Random(1, 16) == 1) // Silence
+            {
+                Type == SE_SILENCE;
+                Intensity = Random(1, 5);
+                Time = Random(10 * Intensity, 30 * Intensity);
             }
             else if (Random(1, 32) == 1) // EMP
             {
                 Type = SE_EMP;
+                Intensity = Random(1, 5);
                 Time = Random(5, 30);
-                Intensity = Random(1, 2);
             };
         };
         
@@ -1060,21 +1078,22 @@ function void CheckStatusDamage()
                 if (Random(1, 8) == 1) // Blind
                 {
                     Type = SE_BLIND;
-                    Time = Random(1, 10);
                     Intensity = Random(1, 5);
-                };
-                if (Random(1, 8) == 1) // Fatigue
+                    Time = Random(1, 10);
+                    break;
+                }
+                else if (Random(1, 8) == 1) // Fatigue
                 {
                     Type = SE_FATIGUE;
-                    Time = Random(5, 30);
                     Intensity = Random(1, 5);
+                    Time = Random(5, 30);
                     break;
-                };
-                if (Random(1, 8) == 1) // Virus
+                }
+                else if (Random(1, 8) == 1) // Virus
                 {
                     Type = SE_VIRUS;
+                    Intensity = Random(1, 5);
                     Time = Random(30, 120);
-                    Intensity = 1;
                     break;
                 };
                 
@@ -1085,6 +1104,7 @@ function void CheckStatusDamage()
         if (Type > 0)
         {
             ActivatorSound("health/statuseffect", 127);
+            Player.StatusTypeHUD = Type;
             StatusEffect(Type, Time, Intensity);
         };
     };
