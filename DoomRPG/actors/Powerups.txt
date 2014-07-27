@@ -1,13 +1,22 @@
 // Invulnerability Sphere
-ACTOR DRPGInvulnerabilitySphere : InvulnerabilitySphere Replaces InvulnerabilitySphere
+Actor DRPGInvulnerabilityPower : PowerupGiver
+{
+    Inventory.MaxAmount 0
+    
+    -INVBAR
+    +INVENTORY.AUTOACTIVATE
+    +INVENTORY.ADDITIVETIME
+    +INVENTORY.PERSISTENTPOWER
+
+    Powerup.Type Invulnerable
+    Powerup.Color GoldMap
+}
+
+ACTOR DRPGInvulnerabilitySphere : CustomInventory Replaces InvulnerabilitySphere
 {
     Tag "Invulnerability Sphere - Invulnerability for 30 seconds"
     
     +INVBAR
-    +INVENTORY.ADDITIVETIME
-    +INVENTORY.PERSISTENTPOWER
-    -INVENTORY.AUTOACTIVATE
-    -INVENTORY.ALWAYSPICKUP
     
     Inventory.DefMaxAmount
     Inventory.InterHubAmount 1000
@@ -16,23 +25,38 @@ ACTOR DRPGInvulnerabilitySphere : InvulnerabilitySphere Replaces Invulnerability
     Inventory.UseSound "powerups/protect"
     Inventory.Icon "PINV"
     
-    Powerup.Type Invulnerable
-    Powerup.Color GoldMap
-
     States
     {
+    Spawn:
+        PINV ABCD 6 Bright
+        Loop
     Pickup:
         TNT1 A 0 ACS_NamedExecuteWithResult("CheckCapacity")
+        Stop
+    Use:
+        TNT1 A 0 A_GiveInventory("DRPGInvulnerabilityPower", 1)
         Stop
     }
 }
 
 // Invulnerability Charge
-actor DRPGInvulnerabilityCharge : PowerupGiver 20050
+Actor DRPGInvulnerabilityChargePower : PowerupGiver
 {
-    +INVBAR
+    Inventory.MaxAmount 0
+    
+    -INVBAR
+    +INVENTORY.AUTOACTIVATE
     +INVENTORY.ADDITIVETIME
     +INVENTORY.PERSISTENTPOWER
+
+    Powerup.Type Invulnerable
+    Powerup.Mode Reflective
+    Powerup.Color GoldMap
+}
+
+actor DRPGInvulnerabilityCharge : CustomInventory 20050
+{
+    +INVBAR
 
     Tag "Invulnerability Charge - Reflective Invulnerability for 30 seconds"
 
@@ -43,10 +67,6 @@ actor DRPGInvulnerabilityCharge : PowerupGiver 20050
     Inventory.UseSound "powerups/protect"
     Inventory.Icon "CRG2"
 
-    Powerup.Type Invulnerable
-    Powerup.Mode Reflective
-    Powerup.Color GoldMap
-
     States
     {
     Spawn:
@@ -55,17 +75,30 @@ actor DRPGInvulnerabilityCharge : PowerupGiver 20050
     Pickup:
         TNT1 A 0 ACS_NamedExecuteWithResult("CheckCapacity")
         Stop
+    Use:
+        TNT1 A 0 A_GiveInventory("DRPGInvulnerabilityChargePower", 1)
+        Stop
     } 
-} 
+}
 
 // Invisibility Sphere
-ACTOR DRPGBlurSphere : BlurSphere
+Actor DRPGInvisibilityPower : PowerupGiver
+{
+    Inventory.MaxAmount 0
+    
+    -INVBAR
+    +INVENTORY.AUTOACTIVATE
+    +INVENTORY.ADDITIVETIME
+    +INVENTORY.PERSISTENTPOWER
+
+    Powerup.Type Invisibility
+}
+
+ACTOR DRPGBlurSphere : CustomInventory
 {
     Tag "Blur Sphere - Partial Invisibility for 60 seconds"
     
     +INVBAR
-    +INVENTORY.ADDITIVETIME
-    +INVENTORY.PERSISTENTPOWER
     +VISIBILITYPULSE
     +FLOATBOB
     -INVENTORY.AUTOACTIVATE
@@ -78,24 +111,42 @@ ACTOR DRPGBlurSphere : BlurSphere
     Inventory.UseSound "powerups/invis"
     Inventory.Icon "PINS"
 
-    Powerup.Type Invisibility
-
     RenderStyle Translucent
 
     States
     {
+    Spawn:
+        PINS ABCD 6 Bright
+        Loop
     Pickup:
         TNT1 A 0 ACS_NamedExecuteWithResult("CheckCapacity")
+        Stop
+    Use:
+        TNT1 A 0 A_GiveInventory("DRPGInvisibilityPower", 1)
         Stop
     }
 }   
 
 // Invisibility Charge
-actor DRPGInvisibilityCharge : PowerupGiver 20051
+Actor DRPGInvisibilityChargePower : PowerupGiver
 {
-    +INVBAR
+    Inventory.MaxAmount 0
+    
+    -INVBAR
+    +INVENTORY.AUTOACTIVATE
     +INVENTORY.ADDITIVETIME
     +INVENTORY.PERSISTENTPOWER
+
+    Powerup.Type Invisibility
+    Powerup.Mode Translucent
+    Powerup.Duration -30
+    Powerup.Strength 100
+    +GHOST
+}
+
+actor DRPGInvisibilityCharge : CustomInventory 20051
+{
+    +INVBAR
 
     Tag "Invisibility Charge - Complete Invisibility for 30 seconds"
 
@@ -106,11 +157,6 @@ actor DRPGInvisibilityCharge : PowerupGiver 20051
     Inventory.UseSound "powerups/invis"
     Inventory.Icon "CRG1"
 
-    Powerup.Type Shadow
-//  Powerup.Mode Stencil
-    Powerup.Duration -30
-    Powerup.Strength 100
-    
     States
     {
     Spawn:
@@ -118,6 +164,9 @@ actor DRPGInvisibilityCharge : PowerupGiver 20051
         Loop
     Pickup:
         TNT1 A 0 ACS_NamedExecuteWithResult("CheckCapacity")
+        Stop
+    Use:
+        TNT1 A 0 A_GiveInventory("DRPGInvisibilityChargePower", 1)
         Stop
     }
 } 
@@ -189,22 +238,33 @@ actor DRPGRegenSphere : CustomInventory 20053
         TNT1 A 0 ACS_NamedExecuteWithResult("CheckCapacity")
         Stop
     Use:
-        TNT1 A 0 A_JumpIf(ACS_NamedExecuteWithResult("HPEPMax"), "Spawn")
+        TNT1 A 0 A_JumpIf(ACS_NamedExecuteWithResult("HPEPMax"), "UseFail")
         TNT1 A 0 ACS_NamedExecute("RegenBoost", 0)
         Stop
+    UseFail:
+        TNT1 A 0
+        Fail
     }
 }
 
 // Radiation Suit
-ACTOR DRPGRadSuit : RadSuit Replaces Radsuit
+Actor DRPGRadSuitPower : PowerupGiver
 {
-    Tag "Radiation Suit - Protects against Damage Floors"
-
-    +INVBAR
+    Inventory.MaxAmount 0
+    
+    -INVBAR
+    +INVENTORY.AUTOACTIVATE
     +INVENTORY.ADDITIVETIME
     +INVENTORY.PERSISTENTPOWER
-    -INVENTORY.AUTOACTIVATE
-    -INVENTORY.ALWAYSPICKUP
+
+    Powerup.Type IronFeet
+}
+
+ACTOR DRPGRadSuit : CustomInventory Replaces Radsuit
+{
+    Tag "Radiation Suit - Protects against Damaging Environments"
+
+    +INVBAR
     
     Inventory.DefMaxAmount
     Inventory.InterHubAmount 1000
@@ -213,26 +273,38 @@ ACTOR DRPGRadSuit : RadSuit Replaces Radsuit
     Inventory.UseSound "powerups/suit"
     Inventory.Icon "SUIT"
     
-    Powerup.Type IronFeet
-    
     States
     {
+    Spawn:
+        SUIT A -1 Bright
+        Stop
     Pickup:
         TNT1 A 0 ACS_NamedExecuteWithResult("CheckCapacity")
+        Stop
+    Use:
+        TNT1 A 0 A_GiveInventory("DRPGRadSuitPower", 1)
         Stop
     }
 }   
 
 // IR Goggles
-ACTOR DRPGInfrared : Infrared Replaces Infrared
+Actor DRPGInfraredPower : PowerupGiver
+{
+    Inventory.MaxAmount 0
+    
+    -INVBAR
+    +INVENTORY.AUTOACTIVATE
+    +INVENTORY.ADDITIVETIME
+    +INVENTORY.PERSISTENTPOWER
+
+    Powerup.Type LightAmp
+}
+
+ACTOR DRPGInfrared : CustomInventory Replaces Infrared
 {
     Tag "Night-Vision Goggles - See in the Dark"
     
     +INVBAR
-    +INVENTORY.ADDITIVETIME
-    +INVENTORY.PERSISTENTPOWER
-    -INVENTORY.AUTOACTIVATE
-    -INVENTORY.ALWAYSPICKUP
     
     Inventory.DefMaxAmount
     Inventory.InterHubAmount 1000
@@ -241,12 +313,17 @@ ACTOR DRPGInfrared : Infrared Replaces Infrared
     Inventory.UseSound "powerups/light" 
     Inventory.Icon "PVIS"
     
-    Powerup.Type LightAmp
-    
     States
     {
+    Spawn:
+        PVIS A 6 Bright
+        PVIS B 6
+        Loop
     Pickup:
         TNT1 A 0 ACS_NamedExecuteWithResult("CheckCapacity")
+        Stop
+    Use:
+        TNT1 A 0 A_GiveInventory("DRPGInfraredPower", 1)
         Stop
     }
 }
