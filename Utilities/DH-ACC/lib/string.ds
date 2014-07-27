@@ -1,0 +1,468 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright(C) 2011, 2012 David Hill
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, see <http://www.gnu.org/licenses/>.
+//
+//-----------------------------------------------------------------------------
+//
+// String handling.
+//
+//-----------------------------------------------------------------------------
+
+#include <string.h>
+
+#include <stdlib.h>
+
+
+//----------------------------------------------------------------------------|
+// Global Functions                                                           |
+//
+
+//===================================================================
+// Copying functions.
+//
+
+//
+// memcpy
+//
+__extfunc "C" void *memcpy(void *restrict s1, void const *restrict s2, size_t n)
+{
+   char const *end = (char const *)s2 + n;
+
+   char       *i1 = (char       *)s1;
+   char const *i2 = (char const *)s2;
+
+   while(i2 != end)
+      *i1++ = *i2++;
+
+   return s1;
+};
+
+//
+// memcpy_near
+//
+__extfunc "C" void __near *memcpy_near(void __near *restrict s1,
+   void const __near *restrict s2, size_t n)
+{
+   char const __near *end = (char const __near *)s2 + n;
+
+   char       __near *i1 = (char       __near *)s1;
+   char const __near *i2 = (char const __near *)s2;
+
+   while(i2 != end)
+      *i1++ = *i2++;
+
+   return s1;
+};
+
+//
+// memmove
+//
+__extfunc "C" void *memmove(void *s1, void const *s2, size_t n)
+{
+   if((void const *)s1 < s2)
+   {
+      char const *end = (char const *)s2 + n;
+
+      char       *i1 = (char       *)s1;
+      char const *i2 = (char const *)s2;
+
+      while(i2 != end) *i1++ = *i2++;
+   }
+   else
+   {
+      char const *end = (char const *)s2;
+
+      char       *i1 = (char       *)s1 + n;
+      char const *i2 = (char const *)s2 + n;
+
+      while(i2 != end) *--i1 = *--i2;
+   };
+
+   return s1;
+};
+
+//
+// memswp
+//
+__extfunc "C" void *memswp(void *restrict s1, void *restrict s2, size_t n)
+{
+   char const *end = (char const *)s2 + n;
+
+   char *i1 = (char *)s1;
+   char *i2 = (char *)s2;
+
+   char tmp;
+
+   while(i2 != end)
+   {
+      tmp = *i1;
+      *i1++ = *i2;
+      *i2++ = tmp;
+   };
+
+   return s1;
+};
+
+//
+// strcpy
+//
+__extfunc "C" char *strcpy(char *restrict s1, char const *restrict s2)
+{
+   char *i = s1;
+
+   while(*s2) *i++ = *s2++;
+
+   *i = 0;
+
+   return s1;
+};
+
+//
+// strncpy
+//
+__extfunc "C" char *strncpy(char *restrict s1, char const *restrict s2, size_t n)
+{
+   char *i = s1;
+
+   for(; *s2 && n; --n) *i++ = *s2++;
+
+   for(; n; --n) *i++ = 0;
+
+   return s1;
+};
+
+//===================================================================
+// Concatenation functions.
+//
+
+//
+// strcat
+//
+__extfunc "C" char *strcat(char *restrict s1, char const *restrict s2)
+{
+   char *i = s1;
+
+   while(*i) ++i;
+
+   while(*s2) *i++ = *s2++;
+
+   *i = 0;
+
+   return s1;
+};
+
+//
+// strncat
+//
+__extfunc "C" char *strncat(char *restrict s1, char const *restrict s2, size_t n)
+{
+   char *i = s1;
+
+   while(*i) ++i;
+
+   char *end = i + n;
+
+   while(*s2 && n--) *i++ = *s2++;
+
+   *i = 0;
+
+   return s1;
+};
+
+//===================================================================
+// Comparison functions.
+//
+
+//
+// memcmp
+//
+__extfunc "C" int memcmp(void const *s1, void const *s2, size_t n)
+{
+   char const *end = (char const *)s1 + n;
+
+   char const *i1 = (char const *)s1;
+   char const *i2 = (char const *)s2;
+
+   while(i1 != end)
+   {
+      if(*i1 != *i2)
+         return *i1 - *i2;
+
+      ++i1; ++i2;
+   };
+
+   return 0;
+};
+
+//
+// strcmp
+//
+__extfunc "C" int strcmp(char const *s1, char const *s2)
+{
+   while(*s1 && *s2)
+   {
+      if(*s1 != *s2)
+         return *s1 - *s2;
+
+      ++s1; ++s2;
+   };
+
+   return *s1 - *s2;
+};
+
+//
+// strcoll
+//
+__extfunc "C" int strcoll(char const *s1, char const *s2)
+{
+   return strcmp(s1, s2);
+};
+
+//
+// strncmp
+//
+__extfunc "C" int strncmp(char const *s1, char const *s2, size_t n)
+{
+   while(*s1 && *s2 && n--)
+   {
+      if(*s1 != *s2)
+         return *s1 - *s2;
+
+      ++s1; ++s2;
+   };
+
+   return *s1 - *s2;
+};
+
+//
+// strxfrm
+//
+__extfunc "C" void strxfrm(char *restrict s1, char const *restrict s2, size_t n)
+{
+   strncpy(s1, s2, n);
+};
+
+//===================================================================
+// Search functions.
+//
+
+//
+// memchr
+//
+__extfunc "C" void *memchr(void const *s, int c, size_t n)
+{
+   char const *end = (char const *)s + n;
+
+   for(char const *i = (char const *)s; i != end; ++i)
+   {
+      if(*i == (char)c)
+         return (void *)i;
+   };
+
+   return NULL;
+};
+
+//
+// strchr
+//
+__extfunc "C" char *strchr(char const *s, int c)
+{
+   while(true)
+   {
+      if(*s == (char)c)
+         return (char *)s;
+
+      if(!*s++) break;
+   };
+
+   return NULL;
+};
+
+//
+// strcspn
+//
+__extfunc "C" size_t strcspn(char const *s1, char const *s2)
+{
+   char const *i = s1;
+
+   while(*i && strchr(s2, *i)) ++i;
+
+   return i - s1;
+};
+
+//
+// strpbrk
+//
+__extfunc "C" char *strpbrk(char const *s1, char const *s2)
+{
+   while(*s1)
+   {
+      if(strchr(s2, *s1))
+         return (char *)s1;
+
+      ++s1;
+   };
+
+   return NULL;
+};
+
+//
+// strrchr
+//
+__extfunc "C" char *strrchr(char const *s, int c)
+{
+   char const *found = NULL;
+
+   while(true)
+   {
+      if (*s == (char)c)
+         found = s;
+
+      if(!*s++) break;
+   };
+
+   return (char *)found;
+};
+
+//
+// strspn
+//
+__extfunc "C" size_t strspn(char const *s1, char const *s2)
+{
+   size_t n = 0;
+
+   while(*s1 && strchr(s2, *s1++)) ++n;
+
+   return n;
+};
+
+//
+// strstr
+//
+__extfunc "C" char *strstr(char const *s1, char const *s2)
+{
+   if(!*s2) return (char *)s1;
+
+   while(s1 = strchr(s1, *s2))
+   {
+      char const *i1 = s1;
+      char const *i2 = s2;
+
+      while(*i1 && *i2)
+      {
+         if(*i1 != *i2) break;
+
+         if(!*i2) return (char *)s1;
+
+         ++i1; ++i2;
+      };
+
+      ++s1;
+   };
+
+   return NULL;
+};
+
+//
+// strtok
+//
+__extfunc "C" char *strtok(char *restrict s1, char const *restrict s2)
+{
+   static char *tok;
+
+   char *tmp;
+
+   if(s1) tok = s1;
+
+   if(!tok) return NULL;
+
+   // Skip any separators.
+   tok += strcspn(tok, s2);
+
+   // If tok points to the null-terminator, there are no more tokens.
+   if(!*tok) return NULL;
+
+   // Store the pointer to the token in a temporary.
+   tmp = tok;
+
+   // Look for the end of the token.
+   tok = strpbrk(tok, s2);
+
+   // If no end is found, then we're at the last token.
+   if(!tok) return tmp;
+
+   // Null-terminate the token and point to the start of the next.
+   *tok++ = 0;
+
+   return tmp;
+};
+
+//===================================================================
+// Miscellaneous functions.
+//
+
+//
+// memset
+//
+__extfunc "C" void *memset(void *s, int c, size_t n)
+{
+   char *end = (char *)s + n;
+
+   for(char *i = (char *)s; i != end; ++i)
+   {
+      *i = (char)c;
+   };
+
+   return s;
+};
+
+//
+// memset_near
+//
+__extfunc "C" void __near *memset_near(void __near *s, int c, size_t n)
+{
+   char __near *end = (char __near *)s + n;
+
+   for(char __near *i = (char __near *)s; i != end; ++i)
+      *i = (char)c;
+
+   return s;
+};
+
+//
+// strerror
+//
+__extfunc "C" char *strerror(int errnum)
+{
+   static char c = 0;
+
+   return &c; // :v
+};
+
+//
+// strlen
+//
+__extfunc "C" size_t strlen(char const *s)
+{
+   size_t n = 0;
+
+   while(*s++) ++n;
+
+   return n;
+};
+
+// EOF
+
