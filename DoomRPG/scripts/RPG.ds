@@ -23,7 +23,7 @@
 str[2] Version =
 {
     "v0.9.11 Beta - Gotta Go Fast Edition";
-	"Sunday, July 27, 2014 at 4:14:28 AM";
+	"Sunday, July 27, 2014 at 9:18:05 AM";
 };
 
 // Define the globals for SBARINFO/etc.
@@ -212,9 +212,6 @@ script void Init() enter
     for (int i = 0; i < MAX_DROPS; i++)
         Player.DropTID[i] = -1;
     
-    // Clear your Status Effect
-    Player.StatusTimer = 0;
-    
     // Initial build of ItemData
     BuildItemData();
     
@@ -264,6 +261,7 @@ script void Loop()
     CheckPerks();
     CheckStatBounds();
     CheckToxicity();
+    CheckStatusEffects();
     CheckStatusDamage();
     CheckLevelInfo();
     CheckCapacity();
@@ -294,7 +292,7 @@ script void Loop()
     {
         if (GetCVar("drpg_menufreeze") && !InMultiplayer)
             GiveInventory("DRPGMenuFreezer", 1);
-        if (GetCVar("drpg_menudim") && !(Player.StatusTimer > 0 && Player.StatusType == SE_BLIND))
+        if (GetCVar("drpg_menudim") && !Player.StatusType[SE_BLIND])
             FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
     };
     
@@ -581,7 +579,8 @@ script void Dead() death
         ToggleShield(true);
     
     // Remove Status Effect
-    Player.StatusTimer = 0;
+    for (int i = 0; i < SE_MAX; i++)
+        Player.StatusTimer[i] = 0;
     
     // Drop Credits
     if (GetCVar("drpg_multi_dropcredits") && CheckInventory("DRPGCredits") > 0)

@@ -23,40 +23,45 @@ script void DrawStatusEffectHUD() enter
 {
     Start:
     
-    str Icon;
-    str Fill;
-    int TimerPercent;
-    fixed X;
-    fixed Y;
+    fixed X = GetCVarFixed("drpg_stateffect_x");
+    fixed Y = GetCVarFixed("drpg_stateffect_y");
     
-    switch (Player.StatusType)
+    for (int i = 0; i < SE_MAX; i++)
     {
-        case SE_BLIND:      Icon = "SE_Blnd";   Fill = "BarSBlnd";    break;
-        case SE_CONFUSION:  Icon = "SE_Conf";   Fill = "BarSConf";    break;
-        case SE_POISON:     Icon = "SE_Pois";   Fill = "BarSPois";    break;
-        case SE_CORROSION:  Icon = "SE_Corr";   Fill = "BarSCorr";    break;
-        case SE_FATIGUE:    Icon = "SE_Fati";   Fill = "BarSFati";    break;
-        case SE_VIRUS:      Icon = "SE_Viru";   Fill = "BarSViru";    break;
-        case SE_SILENCE:    Icon = "SE_Sile";   Fill = "BarSSile";    break;
-        case SE_EMP:        Icon = "SE_EMP";    Fill = "BARSEmp";     break;
-    };
-    
-    if (Player.StatusTimer > 0 && Player.StatusType > 0)
-    {
-        TimerPercent = (int)(((fixed)Player.StatusTimer / (fixed)Player.StatusTimerMax) * 100.0);
-        X = 326.0;
-        Y = 424.0;
+        str Icon;
+        str Fill;
+        int TimerPercent;
         
-        SetHudSize(640, 480, false);
+        switch (i)
+        {
+            case SE_BLIND:      Icon = "SE_Blnd";   Fill = "BarSBlnd";    break;
+            case SE_CONFUSION:  Icon = "SE_Conf";   Fill = "BarSConf";    break;
+            case SE_POISON:     Icon = "SE_Pois";   Fill = "BarSPois";    break;
+            case SE_CORROSION:  Icon = "SE_Corr";   Fill = "BarSCorr";    break;
+            case SE_FATIGUE:    Icon = "SE_Fati";   Fill = "BarSFati";    break;
+            case SE_VIRUS:      Icon = "SE_Viru";   Fill = "BarSViru";    break;
+            case SE_SILENCE:    Icon = "SE_Sile";   Fill = "BarSSile";    break;
+            case SE_EMP:        Icon = "SE_EMP";    Fill = "BARSEmp";     break;
+        };
         
-        // Text
-        SetFont("SMALLFONT");
-        HudMessage("%s\n", StatusEffects[Player.StatusType - 1], HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_WHITE, X + 50.0, Y, 0.05, 0.75);
-        
-        // Bar
-        SetHudClipRect((int)X, (int)(Y - 6), TimerPercent, (int)(Y + 6));
-        PrintSpriteAlpha(Fill, 0, X + 0.1, Y, 0.05, 0.75);
-        SetHudClipRect(0, 0, 0, 0);
+        if (Player.StatusType[i])
+        {
+            TimerPercent = (int)(((fixed)Player.StatusTimer[i] / (fixed)Player.StatusTimerMax[i]) * 100.0);
+            
+            SetHudSize(640, 480, false);
+            
+            // Text
+            SetFont("SMALLFONT");
+            HudMessage("%s\n", StatusEffects[i], HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_WHITE, X + 50.0, Y, 0.05, 0.75);
+            
+            // Bar
+            SetHudClipRect((int)X, (int)(Y - 6), TimerPercent, (int)(Y + 6));
+            PrintSpriteAlpha(Fill, 0, X + 0.1, Y, 0.05, 0.75);
+            SetHudClipRect(0, 0, 0, 0);
+            
+            // Increment Y
+            Y += 16.0;
+        };
     };
     
     Delay(1);
@@ -189,11 +194,12 @@ script void DamageNumbersHUD()
             Text = StrParam("%s\cgCRITICAL\n\n", Text);
         
         // Status Effect
-        if (Player.StatusType != Player.StatusTypeTemp)
-        {
-            Text = StrParam("%s%s\n\n", Text, StatusEffects[Player.StatusType - 1]);
-            Player.StatusTypeTemp = Player.StatusType;
-        };
+        for (int i = 0; i < SE_MAX; i++)
+            if (Player.StatusType[i] != Player.StatusTypeTemp[i])
+            {
+                Text = StrParam("%s%s\n\n", Text, StatusEffects[i]);
+                Player.StatusTypeTemp[i] = Player.StatusType[i];
+            };
         
         // Loss
         Text = StrParam("%s%d\n", Text, Loss);

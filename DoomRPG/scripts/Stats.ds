@@ -59,62 +59,13 @@ str[25] LongRanks =
 
 acscript void StatusEffect(int Type, int Time, int Intensity)
 {
-    Player.StatusType = Type;
-    Player.StatusIntensity = Intensity;
-    Player.StatusTimer = Time * 35;
-    Player.StatusTimerMax = Player.StatusTimer;
-    
     if (Intensity <= 0)
         Intensity = 1;
     
-    while (Player.StatusTimer > 0)
-    {
-        if (Type == SE_BLIND) // Blind
-            FadeRange(0, 0, 0, (0.5 + (Intensity * 0.1)) - (Sin(Timer() / 128.0) * 0.25), 0, 0, 0, 0.0, 0.5);
-        
-        if (Type == SE_CONFUSION) // Confusion
-        {
-            SetActorAngle(0, GetActorAngle(0) + (Cos(Timer() / 128.0) * (Intensity * 0.01)));
-            SetActorPitch(0, Cos(Timer() / 128.0) * (Intensity * 0.025));
-        };
-        
-        if (Type == SE_POISON) // Poisoned
-            if ((Timer() % 35) == 0 && (GetActorProperty(Player.TID, APROP_Health) - Intensity) > 1)
-            {
-                SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) - Intensity);
-                FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0.0, Intensity * 0.25);
-            };
-        
-        if (Type == SE_CORROSION) // Corrosion
-            if ((Timer() % 35) == 0 && CheckInventory("Armor") > 0)
-            {
-                TakeInventory("BasicArmor", Intensity);
-                FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, Intensity * 0.25);
-            };
-        
-        
-        if (Type == SE_VIRUS) // Virus
-        {
-            Player.HPRate = 0;
-            Player.EPRate = 0;
-        };
-        
-        if (Type == SE_EMP) // EMP
-        {
-            if (Player.Shield.Active)
-                ToggleShield(false);
-            if (Player.Augs.SlotsUsed > 0)
-                DisableAugs(true);
-            if ((Timer() % 35) == 0)
-                Player.Augs.Battery -= Intensity;
-        };
-        
-        // Decrease timer
-        if (Player.StatusTimer > 0)
-            Player.StatusTimer--;
-        
-        Delay(1);
-    };
+    Player.StatusType[Type] = true;
+    Player.StatusIntensity[Type] = Intensity;
+    Player.StatusTimer[Type] = Time * 35;
+    Player.StatusTimerMax[Type] = Player.StatusTimer[Type];
 };
 
 // Add XP
@@ -586,10 +537,10 @@ function void CheckStats()
     Player.SurvivalBonus = (fixed)Player.Agility / 10.0;
     
     // Status Effect Checking
-    if (Player.StatusTimer > 0 && Player.StatusType == SE_FATIGUE) // Fatigue
+    if (Player.StatusType[SE_FATIGUE]) // Fatigue
     {
-        Player.Speed = Player.Speed * (1.0 / ((fixed)Player.StatusIntensity + 1));
-        Player.JumpHeight = Player.JumpHeight * (1.0 / ((fixed)Player.StatusIntensity + 1));
+        Player.Speed = Player.Speed * (1.0 / ((fixed)Player.StatusIntensity[SE_FATIGUE] + 1));
+        Player.JumpHeight = Player.JumpHeight * (1.0 / ((fixed)Player.StatusIntensity[SE_FATIGUE] + 1));
     };
     
     // Brutal Doom Compatibility
@@ -978,6 +929,65 @@ function void CheckToxicity()
         Thing_Damage2(Player.TID, 1000000000, "Toxicity");
         SetActorState(Player.TID, "Death.Toxicity");
         Player.Toxicity = 0;
+    };
+};
+
+function void CheckStatusEffects()
+{
+    if (Player.StatusType[SE_BLIND]) // Blind
+        FadeRange(0, 0, 0, (0.5 + (Player.StatusIntensity[SE_BLIND] * 0.1)) - (Sin(Timer() / 128.0) * 0.25), 0, 0, 0, 0.0, 0.5);
+    
+    if (Player.StatusType[SE_CONFUSION]) // Confusion
+    {
+        SetActorAngle(0, GetActorAngle(0) + (Cos(Timer() / 128.0) * (Player.StatusIntensity[SE_CONFUSION] * 0.01)));
+        SetActorPitch(0, Cos(Timer() / 128.0) * (Player.StatusIntensity[SE_CONFUSION] * 0.025));
+    };
+    
+    if (Player.StatusType[SE_POISON]) // Poison
+        if ((Timer() % 35) == 0 && (GetActorProperty(Player.TID, APROP_Health) - Player.StatusIntensity[SE_POISON]) > 1)
+        {
+            SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) - Player.StatusIntensity[SE_POISON]);
+            FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0.0, Player.StatusIntensity[SE_POISON] * 0.25);
+        };
+    
+    if (Player.StatusType[SE_CORROSION]) // Corrosion
+        if ((Timer() % 35) == 0 && CheckInventory("Armor") > 0)
+        {
+            TakeInventory("BasicArmor", Player.StatusIntensity[SE_CORROSION]);
+            FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, Player.StatusIntensity[SE_CORROSION] * 0.25);
+        };
+    
+    if (Player.StatusType[SE_VIRUS]) // Virus
+    {
+        Player.HPRate = 0;
+        Player.EPRate = 0;
+    };
+    
+    if (Player.StatusType[SE_EMP]) // EMP
+    {
+        if (Player.Shield.Active)
+            ToggleShield(false);
+        if (Player.Augs.SlotsUsed > 0)
+            DisableAugs(true);
+        if ((Timer() % 35) == 0)
+            Player.Augs.Battery -= Player.StatusIntensity[SE_EMP];
+    };
+    
+    for (int i = 0; i < SE_MAX; i++)
+    {
+        // Decrease timers
+        if (Player.StatusTimer[i] > 0)
+            Player.StatusTimer[i]--;
+        
+        // Disable an effect if the timer is 0
+        if (Player.StatusTimer[i] <= 0)
+        {
+            Player.StatusType[i] = false;
+            Player.StatusTypeTemp[i] = false;
+            Player.StatusIntensity[i] = 0;
+            Player.StatusTimer[i] = 0;
+            Player.StatusTimerMax[i] = 0;
+        };
     };
 };
 
