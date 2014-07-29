@@ -18,7 +18,7 @@ int ForceFieldTID = 1998;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
-    7; 9; 9; 3; 17; 8;
+    7; 9; 9; 4; 17; 8;
 };
 
 AddressSpace map_array SkillSpace;
@@ -261,6 +261,12 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
                 "A blast which pushes enemies away";
                 "A large blast which greatly pushes enemies away";
                 "A huge blast which launches enemies away";
+            };
+        };
+        {
+            "Soul Steal"; 200; 1; SoulSteal;
+            {
+                "Steal an enemies soul, killing them in the process\nDoes not work on Shadow enemies";
             };
         };
     };
@@ -1332,6 +1338,66 @@ acscript bool Repulse(Skill *Self, void *Data)
     return true;
 };
 
+acscript bool SoulSteal(Skill *Self, void *Data)
+{
+    str[] SoulTypes =
+    {
+        "DRPGSoulRed";
+        "DRPGSoulGreen";
+        "DRPGSoulWhite";
+        "DRPGSoulPink";
+        "DRPGSoulBlue";
+        "DRPGSoulPurple";
+        "DRPGSoulOrange";
+        "DRPGSoulDarkBlue";
+        "DRPGSoulYellow";
+        "DRPGSoulBlack";
+    };
+    
+    int PlayerNum = PlayerNumber();
+    int SoulTID;
+    
+    SetActivatorToTarget(Players(PlayerNum).TID);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    // Refund - If the Player has no target
+    if (ActivatorTID() == Players(PlayerNum).TID)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target isn't actually a valid monster
+    if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target has a Shadow Aura
+    if (Stats->Aura == 10)
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Don't gain XP from this
+    Stats->Flags += MF_NOXP;
+    
+    // Kill the enemy
+    SetActorProperty(0, APROP_Health, 0);
+    
+    // Drop the Soul and apply the stat to the uservar
+    SoulTID = DropMonsterItem(PlayerNum, 0, SoulTypes[Random(0, SOUL_MAX - 1)], 256);
+    
+    SetActivator(Players(PlayerNum).TID);
+    
+    ActivatorSound("skills/soulsteal", 127);
+    return true;
+};
+
 acscript bool Summon(Skill *Self, void *Data)
 {
     int Index = *(int *)Data;
@@ -1942,7 +2008,7 @@ function void CheckSkills()
                 GiveInventory("DRPGRedAura2x", 1);
             if (RedAuraLevel >= 2)
                 GiveInventory("DRPGRedAura4x", 1);
-            if (RedAuraLevel >= 3)
+            if (RedAuraLevel >= 3 || Player.SoulActive[SOUL_RED])
                 GiveInventory("DRPGRedAuraInfiniteAmmo", 1);
         };
         
@@ -1954,7 +2020,7 @@ function void CheckSkills()
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
             if (GreenAuraLevel == 2)
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.5;
-            if (GreenAuraLevel == 3)
+            if (GreenAuraLevel == 3 || Player.SoulActive[SOUL_GREEN])
             {
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
                 GiveInventory("DRPGGreenAuraIronFeet", 1);
@@ -1965,7 +2031,7 @@ function void CheckSkills()
         if (Player.Aura[AURA_WHITE])
         {
             SpawnAura(0, AURA_WHITE + 1, false);
-            if (WhiteAuraLevel >= 2)
+            if (WhiteAuraLevel >= 2 || Player.SoulActive[SOUL_WHITE])
             {
                 if (Player.Combo == 0) Player.Combo++;
                 Player.ComboTimer = COMBO_MAX - 1;
@@ -1973,7 +2039,7 @@ function void CheckSkills()
             if (WhiteAuraLevel == 3)
                 if ((Timer() % (35 * 4)) == 1)
                     Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
-            if (WhiteAuraLevel >= 4)
+            if (WhiteAuraLevel >= 4 || Player.SoulActive[SOUL_WHITE])
                 if ((Timer() % (35 * 2)) == 1)
                     Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
         };
@@ -1982,7 +2048,7 @@ function void CheckSkills()
         if (Player.Aura[AURA_PINK])
         {
             SpawnAura(0, AURA_PINK + 1, false);
-            if (PinkAuraLevel >= 2)
+            if (PinkAuraLevel >= 2 || Player.SoulActive[SOUL_PINK])
                 GiveInventory("DRPGPinkAuraDrain", 1);
         };
         
@@ -1994,7 +2060,7 @@ function void CheckSkills()
                 Player.SkillCostMult /= 1.33;
             if (BlueAuraLevel == 2)
                 Player.SkillCostMult /= 2;
-            if (BlueAuraLevel == 3)
+            if (BlueAuraLevel == 3 || Player.SoulActive[SOUL_BLUE])
                 Player.SkillCostMult /= 4;
         };
         
@@ -2017,7 +2083,7 @@ function void CheckSkills()
                 Player.HPAmount *= 4;
                 Player.EPAmount *= 4;
             };
-            if (PurpleAuraLevel == 4)
+            if (PurpleAuraLevel == 4 || Player.SoulActive[SOUL_PURPLE])
             {
                 Player.HPAmount *= 4;
                 Player.EPAmount *= 4;
@@ -2030,11 +2096,11 @@ function void CheckSkills()
         if (Player.Aura[AURA_ORANGE])
         {
             SpawnAura(0, AURA_ORANGE + 1, false);
-            if (OrangeAuraLevel >= 1)
+            if (OrangeAuraLevel >= 1 || Player.SoulActive[SOUL_ORANGE])
                 Player.Speed *= 2;
-            if (OrangeAuraLevel >= 2)
+            if (OrangeAuraLevel >= 2 || Player.SoulActive[SOUL_ORANGE])
                 Player.JumpHeight *= 2;
-            if (OrangeAuraLevel >= 3)
+            if (OrangeAuraLevel >= 3 || Player.SoulActive[SOUL_ORANGE])
                 Player.WeaponSpeed = 100;
         };
 
@@ -2044,18 +2110,18 @@ function void CheckSkills()
             SpawnAura(0, AURA_DARKBLUE + 1, false);
             if (DarkBlueAuraLevel == 5)
                 AmmoRegenMult = 2;
-            if (DarkBlueAuraLevel == 6)
+            if (DarkBlueAuraLevel == 6 || Player.SoulActive[SOUL_DARKBLUE])
                 AmmoRegenMult = 4;
-            if (DarkBlueAuraLevel >= 1)
+            if (DarkBlueAuraLevel >= 1 || Player.SoulActive[SOUL_DARKBLUE])
                 if ((Timer() % (35 / 2)) == 1)
                     GiveInventory("Clip", AmmoRegenMult);
-            if (DarkBlueAuraLevel >= 2)
+            if (DarkBlueAuraLevel >= 2 || Player.SoulActive[SOUL_DARKBLUE])
                 if ((Timer() % 35) == 1)
                     GiveInventory("Shell", AmmoRegenMult);
-            if (DarkBlueAuraLevel >= 3)
+            if (DarkBlueAuraLevel >= 3 || Player.SoulActive[SOUL_DARKBLUE])
                 if ((Timer() % (35 * 2)) == 1)
                     GiveInventory("RocketAmmo", AmmoRegenMult);
-            if (DarkBlueAuraLevel >= 4)
+            if (DarkBlueAuraLevel >= 4 || Player.SoulActive[SOUL_DARKBLUE])
                 if ((Timer() % (35 / 2)) == 1)
                     GiveInventory("Cell", AmmoRegenMult);
         };
@@ -2074,7 +2140,7 @@ function void CheckSkills()
                 LuckMult = 2;
             if (YellowAuraLevel == 4)
                 LuckMult = 4;
-            if (YellowAuraLevel == 5)
+            if (YellowAuraLevel == 5 || Player.SoulActive[SOUL_YELLOW])
                 LuckMult = 8;
             
             Player.HealthChance *= LuckMult;
@@ -2097,6 +2163,11 @@ function void CheckSkills()
                 Player.AuraTimer--;
                 break;
             };
+    
+    // Reset Soul state
+    for (int i = 0; i < SOUL_MAX - 1; i++)
+        if (!Player.Aura[i])
+            Player.SoulActive[i] = false;
     
     // Summoned Monsters Handling
     for (int i = 0; i < MAX_SUMMONS; i++)
