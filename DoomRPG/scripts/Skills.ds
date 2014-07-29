@@ -18,7 +18,7 @@ int ForceFieldTID = 1998;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
-    6; 9; 9; 3; 17; 8;
+    7; 9; 9; 3; 17; 8;
 };
 
 AddressSpace map_array SkillSpace;
@@ -77,6 +77,12 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
                 "Repair 50% of your Armor";
                 "Repair 75% of your Armor";
                 "Repair all of your Armor";
+            };
+        };
+        {
+            "Aura Steal"; 200; 1; AuraSteal;
+            {
+                "Steals an enemies Aura, taking it from them and giving it to you\nTime based on their Level";
             };
         };
     };
@@ -1034,6 +1040,55 @@ acscript bool Repair(Skill *Self, void *Data)
     return false;
 };
 
+acscript bool AuraSteal(Skill *Self, void *Data)
+{
+    int PlayerNum = PlayerNumber();
+    int AuraType;
+    int AuraTime;
+    
+    SetActivatorToTarget(Players(PlayerNum).TID);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    // Refund - If the Player has no target
+    if (ActivatorTID() == Players(PlayerNum).TID)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target isn't actually a valid monster
+    if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target doesn't have an Aura or has a Shadow Aura
+    if (Stats->Aura == 0 || Stats->Aura == 10)
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Get Aura info
+    AuraType = Stats->Aura - 1;
+    AuraTime = (Stats->Level < 30 ? 30 : Stats->Level) * 35;
+    
+    // Remove Aura from monster
+    Stats->Aura = 0;
+    
+    SetActivator(Players(PlayerNum).TID);
+    
+    // Apply Aura to player
+    Player.Aura[AuraType] = true;
+    Player.AuraTimer += AuraTime;
+    
+    ActivatorSound("skills/aurasteal", 127);
+    return true;
+};
+
 acscript bool Powerup(Skill *Self, void *Data)
 {
     int Index = *(int *)Data;
@@ -1092,7 +1147,6 @@ acscript bool Powerup(Skill *Self, void *Data)
 
 acscript bool BulletTime(Skill *Self, void *Data)
 {
-    
     if (Self->CurrentLevel == 1) // Stutter Time
     {
         BulletTimeTimer = 350;
@@ -1226,7 +1280,7 @@ acscript bool Weaken(Skill *Self, void *Data)
     };
     
     // Refund - If the target isn't actually a valid monster
-    if (!Stats->Init || !CheckFlag(0, "ISMONSTER"))
+    if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
     {
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
