@@ -257,7 +257,7 @@ acscript void MonsterDump()
     Log(" Threat: %d\n", Stats->Threat);
     Log(" Spawn Health: %d\n", Stats->SpawnHealth);
     Log(" Health Max: %d\n", Stats->HealthMax);
-    Log(" Current Speed: %d\n", Stats->Speed);
+    Log(" Base Speed: %d\n", Stats->Speed);
     Log(" \cgStrength: %d\n", Stats->Strength);
     Log(" \cdDefense: %d\n", Stats->Defense);
     Log(" \caVitality: %d\n", Stats->Vitality);
@@ -463,6 +463,7 @@ script void MonsterInitStats(int StatFlags)
         case 3: // White Aura - XP
             MonsterLevel *= 2;
             GiveInventory("DRPGWhiteAuraGiver", 1);
+            MonsterLevelupHandler();
             break;
         case 4: // Pink Aura - Vitality
             MonsterVitality *= 2;
@@ -471,7 +472,6 @@ script void MonsterInitStats(int StatFlags)
         case 5: // Blue Aura - Energy
             MonsterEnergy *= 2;
             GiveInventory("DRPGBlueAuraGiver", 1);
-            MonsterLevelupHandler();
             MonsterEPDrainHandler();
             break;
         case 6: // Purple Aura - Regeneration
@@ -597,6 +597,10 @@ script void MonsterStatsHandler()
         OldDefense = Stats->Defense;
     };
     
+    // Levelup handling via White Aura radius
+    if (CheckInventory("DRPGMonsterLevelup"))
+        MonsterLevelupHandler();
+    
     Delay(4);
     
     goto Start;
@@ -671,13 +675,18 @@ script void MonsterLevelupHandler()
     
     Start:
     
-    Delay(35 * (60 - (Stats->Energy / 20)));
+    if (!CheckInventory("DRPGMonsterLevelup"))
+        Delay((Stats->Level >= 1000 ? 4 : 35) * (int)((60.0 - ((fixed)Stats->Energy / 20.0))));
     
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
+    // White Aura monsters levelup monsters near them
+    if (Stats->Aura == 3)
+        GiveInventory("DRPGMonsterLevelupGiver", 1);
+    
     if (Stats->Level >= 1000)
-        return;
+        goto Start;
     
     // Apply the stats to the monster
     Stats->Level++;
@@ -693,10 +702,19 @@ script void MonsterLevelupHandler()
     // Re-calculate the monster's threat level
     Stats->Threat = CalculateMonsterThreatLevel(Stats);
     
+    // Calculate Health
+    Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
+    
+    // Calculate Speed
+    SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(Stats));
+    
     // Spawn Level-up Arrow
     SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
     
-    goto Start;
+    if (CheckInventory("DRPGMonsterLevelup"))
+        TakeInventory("DRPGMonsterLevelup", 1)
+    else
+        goto Start;
 };
 
 script void MonsterEPDrainHandler()
