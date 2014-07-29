@@ -1370,9 +1370,11 @@ function bool IsPlayerMoving()
 function bool DropPlayerItem(str Item)
 {
     fixed Angle = GetActorAngle(0);
-    fixed X = GetActorX(0) + Cos(Angle) * 64.0;
-    fixed Y = GetActorY(0) + Sin(Angle) * 64.0;
+    fixed X = GetActorX(0) + Cos(Angle);
+    fixed Y = GetActorY(0) + Sin(Angle);
     fixed Z = GetActorZ(0) + 16.0;
+    fixed XSpeed = Cos(Angle) * 4.0;
+    fixed YSpeed = Sin(Angle) * 4.0;
     int TID = UniqueTID();
     bool SpawnOK = Spawn(Item, X, Y, Z, TID, Angle);
     bool SightOK = CheckSight(TID, 0, 0);
@@ -1380,6 +1382,10 @@ function bool DropPlayerItem(str Item)
     // Remove the item if it fails the sight check
     if (!SightOK)
         Thing_Remove(TID);
+    
+    // Apply Velocity
+    if (SpawnOK && SightOK)
+        SetActorVelocity(TID, XSpeed, YSpeed, 0, false, false);
     
     return (SpawnOK && SightOK);
 };
