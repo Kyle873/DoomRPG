@@ -151,7 +151,7 @@ script void ShieldScript()
                 if (Player.Shield.Charge == 0)
                 {
                     Player.Shield.Health -= Player.HealthLoss;
-                    ToggleShield(false);
+                    ToggleShield();
                 }
                 else if (Player.HealthLoss > Player.Shield.Charge)
                 {
@@ -159,7 +159,7 @@ script void ShieldScript()
                     Player.Shield.Charge = 0;
                     if (Player.Shield.Accessory == SHIELD_ACC_NOVA2 && Random(1, 4) == 1) // NOV-A2
                         Nova("BFGBall", Random(4, 16));
-                    ToggleShield(true);
+                    ToggleShield();
                 }
                 else
                 {
@@ -208,10 +208,10 @@ script void ShieldScript()
     };
 };
 
-acscript void ToggleShield(bool Destroyed) net
+acscript void ToggleShield() net
 {
     // If you're dead, terminate
-    if (ClassifyActor(Player.TID) & ACTOR_DEAD && !Destroyed) return;
+    if (ClassifyActor(Player.TID) & ACTOR_DEAD) return;
     
     // If you have no Shield parts equipped or are missing a part, terminate
     if (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0)
@@ -235,7 +235,7 @@ acscript void ToggleShield(bool Destroyed) net
     {
         GiveInventory("DRPGShieldOff", 1);
         ActivatorSound("shield/off", 127);
-        if (!Destroyed) SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);
+        SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);
         Player.Shield.Active = false;
         if (GetCVar("drpg_shield_reset"))
             Player.Shield.Charge = 0;
