@@ -1376,8 +1376,8 @@ acscript bool SoulSteal(Skill *Self, void *Data)
         return false;
     };
     
-    // Refund - If the target has a Shadow Aura
-    if (Stats->Aura == 10)
+    // Refund - If the target has a Shadow Aura or is a boss
+    if (Stats->Aura == 10 || Stats->Flags & MF_BOSS || CheckFlag(0, "BOSS"))
     {
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
@@ -2155,7 +2155,7 @@ function void CheckSkills()
         };
     };
     
-    // Decrease timer this tic and calculate HUD timer amount
+    // Decrease Aura Timer
     for (int i = 0; i < AURA_MAX; i++)
         if (Player.AuraTimer > 0 && Player.Aura[i])
             if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
@@ -2164,10 +2164,13 @@ function void CheckSkills()
                 break;
             };
     
-    // Reset Soul state
-    for (int i = 0; i < SOUL_MAX - 1; i++)
-        if (!Player.Aura[i])
+    // Reset Aura and Soul States
+    for (int i = 0; i < AURA_MAX - 1; i++)
+        if (Player.AuraTimer <= 0)
+        {
+            Player.Aura[i] = false;
             Player.SoulActive[i] = false;
+        };
     
     // Summoned Monsters Handling
     for (int i = 0; i < MAX_SUMMONS; i++)
