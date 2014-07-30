@@ -1,6 +1,7 @@
 #include "RPG.dh"
 
 #include "HUD.dh"
+#include "Mission.dh"
 #include "Shield.dh"
 #include "Skills.dh"
 #include "Stats.dh"
@@ -29,8 +30,7 @@ str[] StatusNumerals =
     "V";
 };
 
-// Stat HUD Script
-script void DrawStatHUD() enter
+script void StatHUD() enter
 {
     Start:
     
@@ -69,8 +69,7 @@ script void DrawStatHUD() enter
     goto Start;
 };
 
-// Status Effect HUD script
-script void DrawStatusEffectHUD() enter
+script void StatusEffectHUD() enter
 {
     Start:
     
@@ -120,11 +119,10 @@ script void DrawStatusEffectHUD() enter
     goto Start;
 };
 
-// Skill HUD Script
-script void DrawSkillHUD() enter
+script void SkillHUD() enter
 {
     Start:
-    
+
     while (true)
     {
         // Don't draw if the hide skills while menu is open option is enabled
@@ -157,69 +155,109 @@ script void DrawSkillHUD() enter
             HudMessage("%d/%d\n", CurrentSkill->CurrentLevel, CurrentSkill->Level, HUDMSG_PLAIN, 0, CR_GREEN, X, Y + 16.0, 0.05);
             
             // Icon
-            if (StrLen(CurrentSkill->Icon) == 0)
-                PrintSprite("S_None", 0, X, Y, 0.05)
-            else
-                PrintSprite(CurrentSkill->Icon, 0, X, Y, 0.05);
+            PrintSprite(CurrentSkill->Icon, 0, X, Y, 0.05);
         };
         
         Delay(1);
     };
+    
+    Delay(1);
+    goto Start;
 };
 
-// Psuedo Damage Numbers on the HUD
-script void DamageNumbersHUD()
+script void MissionHUD() enter
 {
-    int Color = CR_WHITE;
-    str Text = "";
-    int Loss;
-    fixed Time;
+    Start:
     
-    // Shield or Health?
-    if (Player.Shield.Active)
-        Loss = Player.ShieldLoss
-    else
-        Loss = Player.HealthLoss;
+    int OldAmount = Player.Mission.Current;
+    fixed X = GetCVarFixed("drpg_mission_x");
+    fixed Y = GetCVarFixed("drpg_mission_y");
     
-    // Return if a hit breaks the Shield, we don't want to show the ludicrous loss this would incur
-    if (Loss > 0 && Player.BeforeShield >= 0 && Player.AfterShield <= 0 && Player.Shield.Active) return;
+    Delay(1);
     
-    // Size
-    if (Loss == 1)
-        SetFont("SMALLFONT")
-    else
+    if (Player.Mission.Active && Player.Mission.Current != OldAmount)
+    {
+        SetHudSize(640, 480, false);
         SetFont("BIGFONT");
-    
-    // Color
-    switch (Player.DamageType)
-    {
-        case DT_NORMAL:                     Color = CR_WHITE;       break;
-        case DT_TOXIC:                      Color = CR_GREEN;       break;
-        case DT_MELEE:                      Color = CR_GREY;        break;
-        case DT_FIRE:                       Color = CR_RED;         break;
-        case DT_PLASMA: case DT_LIGHTNING:  Color = CR_LIGHTBLUE;   break;
+        
+        switch (Player.Mission.Type)
+        {
+            case MT_COLLECT:
+                HudMessage("%d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_GREEN, X + 0.1, Y, 2.0, 1.0);
+                PrintSpriteFade(Player.Mission.Item->Icon, MISSION_ID + 1, X - 40.0 + 0.4, Y + 0.4, 2.0, 1.0);
+                break;
+            case MT_KILL:
+                HudMessage("\cg%ss\n\c-%d / %d\n", Player.Mission.Monster->Name, Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_BRICK, X + 0.4, Y, 2.0, 1.0);
+                break;
+            case MT_REINFORCEMENTS:
+                HudMessage("Reinforcements: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_BRICK, X, Y, 2.0, 1.0);
+                break;
+        };
     };
     
-    if (Loss > 0 && Loss < SHIELD_HEALTH - Player.HealthMax - Loss)
+    goto Start;
+};
+
+script void DamageHUD() enter
+{
+    Start:
+    
+    if (GetCVar("drpg_damagenumbers_hud"))
     {
-        if (Loss >= Player.HealthMax / 2) // Critical Hit
+        int Color = CR_WHITE;
+        str Text = "";
+        int Loss;
+        fixed Time;
+        
+        // Shield or Health?
+        if (Player.Shield.Active)
+            Loss = Player.ShieldLoss
+        else
+            Loss = Player.HealthLoss;
+        
+        // Return if a hit breaks the Shield, we don't want to show the ludicrous loss this would incur
+        if (Loss > 0 && Player.BeforeShield >= 0 && Player.AfterShield <= 0 && Player.Shield.Active) return;
+        
+        // Size
+        if (Loss == 1)
+            SetFont("SMALLFONT")
+        else
+            SetFont("BIGFONT");
+        
+        // Color
+        switch (Player.DamageType)
         {
-            Text = StrParam("%s\cgCRITICAL\n\n", Text);
-            Time += 1.0;
+            case DT_NORMAL:                     Color = CR_WHITE;       break;
+            case DT_TOXIC:                      Color = CR_GREEN;       break;
+            case DT_MELEE:                      Color = CR_GREY;        break;
+            case DT_FIRE:                       Color = CR_RED;         break;
+            case DT_PLASMA: case DT_LIGHTNING:  Color = CR_LIGHTBLUE;   break;
         };
         
-        // Status Effect
-        if (Player.StatusTypeHUD > 0)
+        if (Loss > 0 && Loss < SHIELD_HEALTH - Player.HealthMax - Loss)
         {
-            Text = StrParam("%s%s %s\n\n", Text, StatusEffects[Player.StatusTypeHUD], StatusNumerals[Player.StatusIntensity[Player.StatusTypeHUD]]);
-            Player.StatusTypeHUD = 0;
-            Time += 1.0;
+            if (Loss >= Player.HealthMax / 2) // Critical Hit
+            {
+                Text = StrParam("%s\cgCRITICAL\n\n", Text);
+                Time += 1.0;
+            };
+            
+            // Status Effect
+            if (Player.StatusTypeHUD > 0)
+            {
+                Text = StrParam("%s%s %s\n\n", Text, StatusEffects[Player.StatusTypeHUD], StatusNumerals[Player.StatusIntensity[Player.StatusTypeHUD]]);
+                Player.StatusTypeHUD = 0;
+                Time += 1.0;
+            };
+            
+            // Loss
+            Text = StrParam("%s%d\n", Text, Loss);
+            
+            // Display
+            HudMessage("%s\n", Text, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0 + Time);
         };
-        
-        // Loss
-        Text = StrParam("%s%d\n", Text, Loss);
-        
-        // Display
-        HudMessage("%s\n", Text, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0 + Time);
     };
+    
+    Delay(1);
+    goto Start;
 };
