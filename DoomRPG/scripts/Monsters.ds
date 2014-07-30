@@ -157,6 +157,9 @@ acscript void MonsterInit(int Flags)
     Stats->Init = true;
     SetInventory("DRPGMonsterInit", 1);
     
+    // Store Actor Name
+    Stats->Actor = GetActorClass(0);
+    
     // Store Monster Flags
     Stats->Flags = Flags;
     
@@ -1048,66 +1051,7 @@ script void MonsterDeath()
     };
     
     // Mission Handling
-    if (Killer > -1 && Players(Killer).Mission.Active && !InBase && !GetActorProperty(0, APROP_Friendly))
-    {
-        // Collection Mission
-        if (Players(Killer).Mission.Type == MT_COLLECT)
-            if (Random(1, 1 << ((Players(Killer).Mission.Difficulty + 1))) == 1)
-                DropMonsterItem(Killer, 0, Players(Killer).Mission.Item->Actor, 256);
-        
-        // Kill Mission
-        if (Players(Killer).Mission.Type == MT_KILL)
-        {
-            str Actor = GetActorClass(0);
-            str NeededActor = StrParam("DRPG%s\n", Players(Killer).Mission.Monster->Actor);
-            int Match = StrCmp(Actor, NeededActor);
-            
-            // DoomRL Compatibility
-            if (GetCVar("drpg_ext_doomrl"))
-            {
-                NeededActor = StrParam("%sRPG\n", Players(Killer).Mission.Monster->Actor);
-                
-                // Special handling for Humans
-                for (int i = 0; i < MAX_HUMANS; i++)
-                    if (StrCmp(StrLeft(Actor, StrLen(Actor) - 3), MonsterHumanData[i][0]) == 0)
-                    {
-                        Actor = StrParam("%sRPG\n", MonsterHumanData[i][1]);
-                        break;
-                    };
-                
-                // Re-check the match
-                Match = StrCmp(Actor, NeededActor);
-            }
-            // Extras Compatibility
-            else if (GetCVar("drpg_ext_extras"))
-            {
-                NeededActor = StrParam("DRPG%sExtras\n", Players(Killer).Mission.Monster->Actor);
-                Match = StrCmp(Actor, NeededActor);
-            }
-            // Brutal Doom Compatibility
-            else if (GetCVar("drpg_ext_brutal"))
-            {
-                NeededActor = StrParam("%sBD\n", Players(Killer).Mission.Monster->Actor);
-                Match = StrCmp(Actor, NeededActor);
-            };
-            
-            if (GetUserCVar(Killer, "drpg_debug"))
-                Log("\cdDEBUG: \caKilled %s, need %s, match was %d\n", Actor, NeededActor, Match);
-            
-            if (Match == 0)
-                Players(Killer).Mission.Current++;
-        };
-        
-        // Kill Reinforcements Mission
-        if (Players(Killer).Mission.Type == MT_REINFORCEMENTS)
-        {
-            // Pointer
-            MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
-            
-            if (Stats->Reinforcement)
-                Players(Killer).Mission.Current++;
-        };
-    };
+    MissionDeathCheck(Killer, Stats);
     
     // SHOTGUNS!
     if (GetCVar("drpg_shotguns"))

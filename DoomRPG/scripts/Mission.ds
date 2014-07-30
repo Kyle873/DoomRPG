@@ -2,6 +2,7 @@
 
 #include "ItemData.dh"
 #include "Mission.dh"
+#include "Map.dh"
 #include "Monsters.dh"
 #include "Outpost.dh"
 #include "Stats.dh"
@@ -42,7 +43,12 @@ str[MAX_MISSION_TYPES] MissionTypes =
 {
     "\cdCollection";
     "\caKill";
+    "\caKill Uniques";
     "\caKill Reinforcements";
+    "\cgAssassination";
+    "\cfFind Secrets";
+    "\cnFind Items";
+    "\ctAchieve Combo";
 };
 
 script void PopulateMissions(int Index)
@@ -89,48 +95,145 @@ script void PopulateMissions(int Index)
         
         // Kill Mission
         if (Type == MT_KILL)
-        {
-            bool DRLA = GetCVar("drpg_ext_doomrl");
-            bool Brutal = GetCVar("drpg_ext_Brutal");
-            int MonsterIndex;
-            int Amount;
-            MonsterInfoPtr MonsterPtr;
-            
-            while (true)
-            {
-                MonsterIndex = (DRLA ? Random((GameSkill() >= 5 ? 20 : 0), MAX_DEF_MONSTERS_DRLA - ((GameSkill() >= 5 ? 8 - Difficulty : 36 - (Difficulty * 4))) - 1) : Random(0, MAX_DEF_MONSTERS - 1));
-                
-                // Do we lookup data from the Vanilla or DRLA table?
-                if (DRLA)
-                    MonsterPtr = &MonsterDataDRLA[MonsterIndex]
-                else if (Brutal)
-                    MonsterPtr = &MonsterDataBrutal[MonsterIndex]
-                else
-                    MonsterPtr = &MonsterData[MonsterIndex];
-                
-                if (MonsterPtr->Difficulty <= 65 + (Difficulty * 10))
-                    break;
-            };
-            
-            // Now that we know the monster type, we can calculate an amount
-            int BaseAmount = (10 + (23 * Difficulty) * (101 - MonsterPtr->Difficulty)) / 100;
-            Amount = Random((BaseAmount / 4) * 3, BaseAmount);
-            if (Amount < 2) Amount = 2;
-            
-            // Pass data to the Mission struct
-            Missions[i].Monster = MonsterPtr;
-            Missions[i].Amount = Amount;
-        };
+            GetTargetMonster(&Missions[i]);
+        
+        // Kill Uniques Mission
+        if (Type == MT_KILLUNIQUES)
+            Missions[i].Amount = Random(5 * (Difficulty + 1), 5 * (Difficulty + 1) * 2);
         
         // Kill Reinforcements Mission
         if (Type == MT_REINFORCEMENTS)
-        {
-            int Amount = Random(10 * (Difficulty + 1), 10 * (Difficulty + 1) * 2);
-            
-            Missions[i].Amount = Amount;
-        };
+            Missions[i].Amount = Random(10 * (Difficulty + 1), 10 * (Difficulty + 1) * 2);
+        
+        // Assassination Mission
+        if (Type == MT_ASSASSINATION)
+            GetTargetMonster(&Missions[i]);
+        
+        // Find Secrets Mission
+        if (Type == MT_SECRETS)
+            Missions[i].Amount = Random((Difficulty + 1), (Difficulty + 1) * 2) * 5;
+        
+        // Find Items Mission
+        if (Type == MT_ITEMS)
+            Missions[i].Amount = Random((Difficulty + 1), (Difficulty + 1) * 2) * 50;
+        
+        // Combo Mission
+        if (Type == MT_COMBO)
+            Missions[i].Amount = (Difficulty + 1) * 100;
         
         if (Index >= 0) break;
+    };
+};
+
+script void InitMission()
+{
+    // If you aren't on a mission or you're in the Outpost, return
+    if (!Player.Mission.Active || InBase) return;
+    
+    // Kill Reinforcements Mission
+    if (Player.Mission.Type == MT_REINFORCEMENTS)
+        MonsterTransport(CalculateAverageDifficulty(), 10 - Player.Mission.Difficulty, 1024);
+    
+    // Assassination Mission
+    if (Player.Mission.Type == MT_ASSASSINATION)
+    {
+        // Need to wait until all monsters have been initialized
+        Delay(35);
+        
+        for (int i = 0; i < MonsterID; i++)
+        {
+            if (Random(1, 4) && Monsters[i].Actor == StrParam("DRPG%s\n", Player.Mission.Monster->Actor))
+            {
+                Monsters[i].Target = true;
+                Monsters[i].Aura = 10;
+                
+                Monsters[i].Level += Player.Mission.Difficulty * 10;
+                Monsters[i].Strength += Player.Mission.Difficulty * 10;
+                Monsters[i].Defense += Player.Mission.Difficulty * 10;
+                Monsters[i].Vitality += Player.Mission.Difficulty * 10;
+                Monsters[i].Energy += Player.Mission.Difficulty * 10;
+                Monsters[i].Regeneration += Player.Mission.Difficulty * 10;
+                Monsters[i].Agility += Player.Mission.Difficulty * 10;
+                Monsters[i].Capacity += Player.Mission.Difficulty * 10;
+                Monsters[i].Luck += Player.Mission.Difficulty * 10;
+                
+                if (GetCVar("drpg_debug"))
+                    Log("\cdDEBUG: \c-Mission Target Chosen: \ca%d\n", i);
+                
+                break;
+            };
+            
+            Delay(1);
+        };
+    };
+};
+
+script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
+{
+    if (Killer > -1 && Players(Killer).Mission.Active && !InBase && !GetActorProperty(0, APROP_Friendly))
+    {
+        // Collection Mission
+        if (Players(Killer).Mission.Type == MT_COLLECT)
+            if (Random(1, 1 << ((Players(Killer).Mission.Difficulty + 1))) == 1)
+                DropMonsterItem(Killer, 0, Players(Killer).Mission.Item->Actor, 256);
+        
+        // Kill Mission
+        if (Players(Killer).Mission.Type == MT_KILL)
+        {
+            str Actor = GetActorClass(0);
+            str NeededActor = StrParam("DRPG%s\n", Players(Killer).Mission.Monster->Actor);
+            int Match = StrCmp(Actor, NeededActor);
+            
+            // DoomRL Compatibility
+            if (GetCVar("drpg_ext_doomrl"))
+            {
+                NeededActor = StrParam("%sRPG\n", Players(Killer).Mission.Monster->Actor);
+                
+                // Special handling for Humans
+                for (int i = 0; i < MAX_HUMANS; i++)
+                    if (StrCmp(StrLeft(Actor, StrLen(Actor) - 3), MonsterHumanData[i][0]) == 0)
+                    {
+                        Actor = StrParam("%sRPG\n", MonsterHumanData[i][1]);
+                        break;
+                    };
+                
+                // Re-check the match
+                Match = StrCmp(Actor, NeededActor);
+            }
+            // Extras Compatibility
+            else if (GetCVar("drpg_ext_extras"))
+            {
+                NeededActor = StrParam("DRPG%sExtras\n", Players(Killer).Mission.Monster->Actor);
+                Match = StrCmp(Actor, NeededActor);
+            }
+            // Brutal Doom Compatibility
+            else if (GetCVar("drpg_ext_brutal"))
+            {
+                NeededActor = StrParam("%sBD\n", Players(Killer).Mission.Monster->Actor);
+                Match = StrCmp(Actor, NeededActor);
+            };
+            
+            if (GetUserCVar(Killer, "drpg_debug"))
+                Log("\cdDEBUG: \caKilled %s, need %s, match was %d\n", Actor, NeededActor, Match);
+            
+            if (Match == 0)
+                Players(Killer).Mission.Current++;
+        };
+        
+        // Kill Uniques Mission
+        if (Players(Killer).Mission.Type == MT_KILLUNIQUES)
+            if (Stats->Aura > 0)
+                Players(Killer).Mission.Current++;
+        
+        // Kill Reinforcements Mission
+        if (Players(Killer).Mission.Type == MT_REINFORCEMENTS)
+            if (Stats->Reinforcement)
+                Players(Killer).Mission.Current++;
+        
+        // Assassination Mission
+        if (Players(Killer).Mission.Type == MT_ASSASSINATION)
+            if (Stats->Target)
+                Players(Killer).Mission.Current++;
     };
 };
 
@@ -154,10 +257,29 @@ function void CheckMission()
         };
     };
     
-    // Kill Mission
-    if (Player.Mission.Type == MT_KILL || Player.Mission.Type == MT_REINFORCEMENTS)
+    // Generic Checking
+    if (Player.Mission.Type == MT_KILL || Player.Mission.Type == MT_KILLUNIQUES ||
+        Player.Mission.Type == MT_REINFORCEMENTS || Player.Mission.Type == MT_SECRETS ||
+        Player.Mission.Type == MT_ITEMS)
         if (Player.Mission.Current >= Player.Mission.Amount)
             Complete = true;
+    
+    // Assassination Mission
+    if (Player.Mission.Type == MT_ASSASSINATION)
+        if (Player.Mission.Current >= 1)
+            Complete = true;
+    
+    // Combo Mission
+    if (Player.Mission.Type == MT_COMBO)
+    {
+        if (Player.ComboTimer == COMBO_STOP)
+            if (Player.Combo > Player.Mission.Current)
+                Player.Mission.Current = Player.Combo;
+        
+        // Complete
+        if (Player.Mission.Current >= Player.Mission.Amount)
+            Complete = true;
+    };
     
     // Mission Complete!
     if (Complete)
@@ -178,13 +300,13 @@ function void CheckMission()
         GiveInventory("DRPGCredits", Player.Mission.RewardCredits);
         
         // Item
-        str rewardactor = Player.Mission.RewardItem->Actor;
+        str RewardActor = Player.Mission.RewardItem->Actor;
         
         // DoomRL Compatibility for weapons
         if (GetCVar("drpg_ext_doomrl") && Player.Mission.RewardItem->Category == 0) // Weapons
-            rewardactor = StrParam("%sPickup\n", rewardactor);
+            RewardActor = StrParam("%sPickup\n", RewardActor);
         
-        SpawnForced(rewardactor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+        SpawnForced(RewardActor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
         SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
         
         // Clear the Mission
@@ -221,6 +343,32 @@ function ItemInfoPtr GetRewardItem(int Difficulty)
         SliceLength += MaxRewards % MAX_DIFFICULTIES;
     
     return RewardList[Random(SliceStart, (SliceStart + SliceLength) - 1)];
+};
+
+function void GetTargetMonster(MissionInfo *Mission)
+{
+    bool DRLA = GetCVar("drpg_ext_doomrl");
+    bool Brutal = GetCVar("drpg_ext_Brutal");
+    int MonsterIndex = MonsterIndex = (DRLA ? Random((GameSkill() >= 5 ? 20 : 0), MAX_DEF_MONSTERS_DRLA - ((GameSkill() >= 5 ? 8 - Mission->Difficulty : 36 - (Mission->Difficulty * 4))) - 1) : Random(0, MAX_DEF_MONSTERS - 1));
+    int Amount;
+    MonsterInfoPtr MonsterPtr;
+    
+    // Do we lookup data from the Vanilla or DRLA table?
+    if (DRLA)
+        MonsterPtr = &MonsterDataDRLA[MonsterIndex]
+    else if (Brutal)
+        MonsterPtr = &MonsterDataBrutal[MonsterIndex]
+    else
+        MonsterPtr = &MonsterData[MonsterIndex];
+    
+    // Now that we know the monster type, we can calculate an amount
+    int BaseAmount = (10 + (23 * Mission->Difficulty) * (101 - MonsterPtr->Difficulty)) / 100;
+    Amount = Random((BaseAmount / 4) * 3, BaseAmount);
+    if (Amount < 2) Amount = 2;
+    
+    // Insert info into the passed struct
+    Mission->Monster = MonsterPtr;
+    Mission->Amount = Amount;
 };
 
 function int CalculateAverageDifficulty()
