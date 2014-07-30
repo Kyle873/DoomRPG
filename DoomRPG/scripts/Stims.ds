@@ -1,5 +1,6 @@
 #include "RPG.dh"
 
+#include "Menu.dh"
 #include "Stats.dh"
 #include "Stims.dh"
 #include "Utils.dh"
@@ -106,7 +107,8 @@ acscript void UseStim() net
         Player.Stim.Current[i] = 0;
     
     // FX
-    ActivatorSound("misc/stim", 127);
+    ClearToxicityMeter();
+    ActivatorSound("items/stim", 127);
     FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
 };
 
@@ -121,7 +123,7 @@ acscript void AddCompound(int Type, int Amount)
 function void CheckStim()
 {
     // Saves typing and lets me iterate the powerup timers way easier
-    str[] StimPowerupHUDActors =
+    str[] StimPowerupActors =
     {
         "StimIndestructible";
         "StimShadow";
@@ -162,11 +164,11 @@ function void CheckStim()
         for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
             if (Player.Stim.PowerupTimer[i] > 0)
             {
-                GiveInventory(StrParam("DRPGPower%s\n", StimPowerupHUDActors[i - StimPowerupStart]), 1);
-                SetInventory(StrParam("DRPG%s\n", StimPowerupHUDActors[i - StimPowerupStart]), Player.Stim.PowerupTimer[i] * 100 / (Player.Stim.PowerupTimerMax[i] + 1));
+                GiveInventory(StrParam("DRPGPower%s\n", StimPowerupActors[i - StimPowerupStart]), 1);
+                SetInventory(StrParam("DRPG%s\n", StimPowerupActors[i - StimPowerupStart]), Player.Stim.PowerupTimer[i] * 100 / (Player.Stim.PowerupTimerMax[i] + 1));
                 Player.Stim.PowerupTimer[i]--;
             };
-
+    
     // Remove bonuses and active flags when Stim has expired
     if (Player.Stim.Timer <= 0 && Player.Stim.Active)
     {
@@ -183,7 +185,7 @@ function void CheckStim()
         for (int i = 0; i < MAX_COMPOUNDS; i++)
             Player.Stim.ActiveBonus[i] = false;
     };
-
+    
     // Stim FX
     if (GetCVar("drpg_stim_effect"))
     {
