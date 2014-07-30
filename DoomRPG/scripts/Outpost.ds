@@ -3,26 +3,21 @@
 #include "Arena.dh"
 #include "ItemData.dh"
 #include "Menu.dh"
+#include "Mission.dh"
 #include "Outpost.dh"
 #include "Shop.dh"
 #include "Stats.dh"
 #include "Utils.dh"
 
-// Global Stuff
-
-// Shop Special
-static bool                 ShopSpecialBought;
-static int                  ShopSpecialTimer;
-static ItemInfo ItemSpace * ShopSpecialItem;
-
-// Miscellaneous
-static int[ITEM_CATEGORIES][ITEM_MAX] GlobalLocker;
-static int OutpostNotoriety;
-
-// Teleporter Info
-static char[9]                  LastVisited;
-static LevelTeleporterInfo[256] VisitedLevels;
-static int                      NumVisitedLevels;
+// Globals
+static int[ITEM_CATEGORIES][ITEM_MAX]   GlobalLocker;
+static char[9]                          LastVisited;
+static LevelTeleporterInfo[256]         VisitedLevels;
+static int                              NumVisitedLevels;
+static bool                             ShopSpecialBought;
+static int                              ShopSpecialTimer;
+static ItemInfo ItemSpace *             ShopSpecialItem;
+static int                              OutpostNotoriety;
 
 // Spawn Spots and TIDs
 int ShopSpecialTID = 1001;
@@ -100,6 +95,9 @@ acscript void EnterOutpost()
     
     // Boss Placement
     PlaceBoss();
+    
+    // Get new Missions
+    PopulateMissions();
     
     // Setup scrolling for the Rift
     Scroll_Floor(RiftSectorID, 256, 256, 0);
@@ -195,15 +193,11 @@ acscript void LevelTransport()
         return;
     };
     
-    SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     Player.OutpostMenu = OMENU_LEVELTRANSPORT;
     
     while (true)
     {
-        // Prevent the menus from being opened
-        Player.InMenu = false;
-        Player.InShop = false;
-        
         // Stop Underflow
         if (LevelChoice < 0)
             LevelChoice = 0;
@@ -250,8 +244,8 @@ acscript void LevelTransport()
                 int TransportTimer = TransportTimerMax;
                 
                 // Setup power transfer
-                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-                SetPlayerProperty(false, 1, PROP_FROZEN);
+                SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+                SetPlayerProperty(0, 1, PROP_FROZEN);
                 Player.OutpostMenu = 0;
                 PlaySound(0, "transfer/loop", CHAN_BODY, 1.0, true, ATTN_NONE);
                 
@@ -266,7 +260,7 @@ acscript void LevelTransport()
                     if (ClassifyActor(Player.TID) & ACTOR_DEAD || Buttons & BT_SPEED)
                     {
                         PlaySound(0, "transfer/fail", CHAN_BODY, 1.0, false, ATTN_NONE);
-                        SetPlayerProperty(false, 0, PROP_FROZEN);
+                        SetPlayerProperty(0, 0, PROP_FROZEN);
                         return;
                     };
                     
@@ -290,8 +284,8 @@ acscript void LevelTransport()
             Player.OutpostMenu = 0;
             FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 2.0);
             Delay(35 * 2.5);
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
-            SetPlayerProperty(false, 0, PROP_FROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_FROZEN);
             InBase = false;
             Transported = true;
             if (BossDead) OutpostNotoriety++;
@@ -300,7 +294,7 @@ acscript void LevelTransport()
         };
         if (Buttons == BT_SPEED)
         {
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.OutpostMenu = 0;
             return;
         };
@@ -327,17 +321,13 @@ acscript void SkillComputer()
     ActivatorSound("misc/edgar", 127);
     
     Player.OutpostMenu = OMENU_SKILLCOMPUTER;
-    SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     
     while (true)
     {
         // Draw the background
         if (GetCVar("drpg_menudim"))
             FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
-        
-        // Prevent the menus from being opened
-        Player.InMenu = false;
-        Player.InShop = false;
 
         // Text
         SetFont("BIGFONT");
@@ -361,13 +351,13 @@ acscript void SkillComputer()
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
             SetSkill(SkillChoice);
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.OutpostMenu = 0;
             return;
         };
         if (Buttons == BT_SPEED)
         {
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.OutpostMenu = 0;
             return;
         };
@@ -435,15 +425,11 @@ acscript void SelectArenaWave()
 
     while (true)
     {
-        SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
         
         // Draw the background
         if (GetCVar("drpg_menudim"))
             FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
-        
-        // Prevent the menus from being opened
-        Player.InMenu = false;
-        Player.InShop = false;
         
         // Text
         SetFont("BIGFONT");
@@ -486,13 +472,13 @@ acscript void SelectArenaWave()
                 ArenaWave = 1;
             
             ActivatorSound("menu/move", 127);
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.OutpostMenu = 0;
             return;
         };
         if (Buttons == BT_SPEED)
         {
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.OutpostMenu = 0;
             return;
         };
@@ -669,7 +655,7 @@ acscript void TokenConverter()
         return;
     };
     
-    SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     ActivatorSound("menu/move", 127);
     Player.OutpostMenu = OMENU_TOKENCONVERTER;
 
@@ -684,10 +670,6 @@ acscript void TokenConverter()
         // Draw the background
         if (GetCVar("drpg_menudim"))
             FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
-        
-        // Prevent the menus from being opened
-        Player.InMenu = false;
-        Player.InShop = false;
         
         switch (Type)
         {
@@ -815,7 +797,7 @@ acscript void TokenConverter()
         if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
         {
             ActivatorSound("menu/move", 127);
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.OutpostMenu = 0;
             return;
         };
@@ -971,7 +953,7 @@ acscript void ShopSpecial()
     };
     
     ActivatorSound("menu/move", 127);
-    SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     Player.OutpostMenu = OMENU_SHOPSPECIAL;
     
     while (true)
@@ -999,10 +981,6 @@ acscript void ShopSpecial()
         if (GetCVar("drpg_menudim"))
             FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
         
-        // Prevent the menus from being opened
-        Player.InMenu = false;
-        Player.InShop = false;
-
         // Input
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
@@ -1016,7 +994,7 @@ acscript void ShopSpecial()
                 
                 ActivatorSound("credits/payout", 127);
                 Delay(1);
-                SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+                SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
                 Player.OutpostMenu = 0;
                 return;
             }
@@ -1026,7 +1004,7 @@ acscript void ShopSpecial()
         if (Buttons == BT_SPEED)
         {
             ActivatorSound("menu/move", 127);
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.OutpostMenu = 0;
             return;
         };
@@ -1044,9 +1022,6 @@ acscript void ShopSpecial()
 // Player Locker
 acscript void Locker(bool Wireless, int WirelessLevel)
 {
-    // if you're already in a menu, terminate
-    if (Player.OutpostMenu == OMENU_LOCKER) return;
-
     // Freeze the Player
     SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     
@@ -1067,13 +1042,6 @@ acscript void Locker(bool Wireless, int WirelessLevel)
         
         // Set the HUD Size
         SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
-        
-        // Prevent the menus from being opened
-        Player.InMenu = false;
-        Player.InShop = false;
-        
-        // Build item data
-        BuildItemData();
         
         // Title and Page
         SetFont("BIGFONT");
@@ -1309,6 +1277,122 @@ acscript void Locker(bool Wireless, int WirelessLevel)
                 else if (Player.DelayTimer < 35.0 * GetCVarFixed("drpg_menu_repeat"))
                     ActivatorSound("menu/error", 127);
             };
+        
+        Delay(1);
+    };
+};
+
+// Mission BBS
+acscript void MissionBBS()
+{
+    int Index;
+    
+    // If Marines are hostile, terminate
+    if (MarinesHostile) return;
+    
+    // if you're already in a menu, terminate
+    if (Player.OutpostMenu == OMENU_BBS) return;
+
+    // Freeze the Player
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+    
+    Player.OutpostMenu = OMENU_BBS;
+    
+    ActivatorSound("menu/move", 127);
+    
+    while (true)
+    {
+        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        MissionInfo *Mission = &Missions[Index];
+        
+        // Set the HUD Size
+        SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+        
+        // Mission Labels
+        for (int i = 0; i < MAX_MISSIONS; i++)
+        {
+            MissionInfo *MissionIter = &Missions[i];
+            
+            SetFont("SMALLFONT");
+            
+            // Cursor
+            if (i == Index)
+                HudMessage("-->\n", HUDMSG_PLAIN, 0, MenuCursorColor, 8.1, 160.0 + (i * 8.0), 0.05);
+            
+            // Type
+            HudMessage("%s\n", MissionTypes[MissionIter->Type], HUDMSG_PLAIN, 0, CR_WHITE, 32.1, 160.0 + (i * 8.0), 0.05);
+        };
+        
+        // Currently selected Mission
+        SetFont("BIGFONT");
+        HudMessage("Type: %s\n", MissionTypes[Mission->Type], HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 160.0, 0.05);
+        HudMessage("Difficulty: %s\n", MissionDifficulties[Mission->Type], HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 176.0, 0.05);
+        HudMessage("XP: %d\n", Mission->RewardXP, HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 192.0, 0.05);
+        HudMessage("Rank: %d\n", Mission->RewardRank, HUDMSG_PLAIN, 0, CR_YELLOW, 200.1, 208.0, 0.05);
+        HudMessage("Credits: %d\n", Mission->RewardCredits, HUDMSG_PLAIN, 0, CR_GOLD, 200.1, 224.0, 0.05);
+        HudMessage("Item: %s\n", Mission->RewardItem->Name, HUDMSG_PLAIN, 0, CR_ORANGE, 200.1, 240.0, 0.05);
+        
+        // Currently Selected Mission Objective
+        switch (Mission->Type)
+        {
+            case MT_COLLECT:
+                HudMessage("Amount: \cd%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 272.0, 0.05);
+                HudMessage("Type: \ci%s\n", Mission->Item->Name, HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 288.0, 0.05);
+                break;
+            case MT_KILL:
+                HudMessage("Amount: \ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 272.0, 0.05);
+                HudMessage("Type: \cg%ss\n", Mission->Monster->Name, HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 288.0, 0.05);
+                break;
+            case MT_REINFORCEMENTS:
+                HudMessage("Amount: \ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 272.0, 0.05);
+                break;
+        };
+        
+        // Input
+        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
+        {
+            ActivatorSound("menu/move", 127);
+            Index--;
+            if (Index < 0) Index = MAX_MISSIONS - 1;
+        };
+        if (Buttons == BT_BACK && OldButtons != BT_BACK)
+        {
+            ActivatorSound("menu/move", 127);
+            Index++;
+            if (Index > MAX_MISSIONS - 1) Index = 0;
+        };
+        if (Buttons == BT_USE && OldButtons != BT_USE)
+        {
+            if (Mission->Active)
+            {
+                SetFont("BIGFONT");
+                SetHudSize(640, 480, false);
+                ActivatorSound("menu/error", 127);
+                HudMessage("You've already accepted this mission!\n", HUDMSG_FADEOUT, MISSION_ID, CR_RED, 320.4, 400.0, 3.0, 2.0);
+            }
+            else
+            {
+                ActivatorSound("mission/get", 127);
+                Mission->Active = true;
+                Player.Mission = *Mission;
+                PopulateMissions(Index);
+            };
+        };
+        if (Buttons == BT_SPEED)
+        {
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            Player.OutpostMenu = 0;
+            return;
+        };
+        if (Buttons == BT_ATTACK && OldButtons != BT_ATTACK && Player.Mission.Active)
+        {
+            ActivatorSound("mission/fail", 127);
+            SetFont("BIGFONT");
+            SetHudSize(640, 480, false);
+            HudMessage("Mission Aborted!\n", HUDMSG_FADEOUT, MISSION_ID, CR_RED, 320.4, 400.0, 3.0, 2.0);
+            ClearMission();
+        };
         
         Delay(1);
     };

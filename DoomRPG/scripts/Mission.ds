@@ -7,27 +7,7 @@
 #include "Stats.dh"
 #include "Utils.dh"
 
-/*
-    -- Generic Loot Types ---
-    
-    * Medical Supplies
-    * Chemicals
-    * Hazardous Materials
-    * Anomalous Materials
-    * Briefcase Data
-    * Computer Data
-    * Gun Parts
-    * Ammo Casings
-    * Fuel Capsule
-    * Scrap Metals
-    * Scrap Electronics
-    * Experimental Parts
-    * Demon Artifacts
-    
-*/
-
 AddressSpace map_array LootSpace;
-
 LootSpace LootItem[MAX_LOOT] LootData =
 {
     { "DRPGLootMedicalSupplies";    "Medical Supplies";     "LT01"; };
@@ -58,142 +38,97 @@ str[MAX_DIFFICULTIES] MissionDifficulties =
     "\cgSuicide";
 };
 
-acscript void GetMission(int ForceType, int ForceDifficulty)
+str[MAX_MISSION_TYPES] MissionTypes =
 {
-    int Type = (ForceType > 0 ? ForceType - 1 : Random(0, MAX_MISSION_TYPES - 1));
-    int Difficulty = (ForceDifficulty > 0 ? ForceDifficulty - 1 : Random(0, MAX_DIFFICULTIES - 1));
-    int RewardXP = (Difficulty + 2) * (XPTable[Player.Level] / 100);
-    int RewardRank = (Difficulty + 2) * (RankTable[Player.RankLevel] / 100);
-    int RewardCredits = Random((Difficulty + 2), (Difficulty + 2) * 100) * (Player.RankLevel + 1);
-    ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
-    
-    // If Marines are hostile, terminate
-    if (MarinesHostile) return;
-    
-    // Clear extended message portions
-    ClearMessage(MISSION_ID + 1);
-    
-    // Abort Mission
-    if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
-    {
-        AbortMission();
-        return;
-    };
-    
-    // You already have a mission
-    if (Player.Mission.Active)
-    {
-        ActivatorSound("menu/error", 127);
-        SetFont("BIGFONT");
-        HudMessage("You are already on a mission!\n", HUDMSG_FADEOUT, MISSION_ID, CR_RED, 1.5, 0.5, 3.0, 2.0);
-        return;
-    };
-    
-    // Collection Mission
-    if (Type == MT_COLLECT)
-    {
-        // Generate Item and Amount
-        int ItemIndex = Random(0, MAX_LOOT - 1);
-        int Amount = Random(5, 10);
-        LootItemPtr ItemPtr = &LootData[ItemIndex];
-        
-        // Remove any of the selected loot item if you already have any
-        if (CheckInventory(ItemPtr->Actor) > 0)
-            SetInventory(ItemPtr->Actor, 0);
-        
-        // Message and Loot Icon
-        SetFont("BIGFONT");
-        SetHudSize(640, 480, false);
-        HudMessage("New Mission! (%s\c-)\n\n\cdCollection\n\n\ckFind %d %s\n", MissionDifficulties[Difficulty], Amount, ItemPtr->Name, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
-        PrintSpriteFade(ItemPtr->Icon, MISSION_ID + 1, 320.4, 300.4, 3.0, 2.0);
-        FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
-        
-        // Pass data to the Mission struct
-        Player.Mission.Item = ItemPtr;
-        Player.Mission.Amount = Amount;
-    };
-    
-    // Kill Mission
-    if (Type == MT_KILL)
-    {
-        bool DRLA = GetCVar("drpg_ext_doomrl");
-        bool Brutal = GetCVar("drpg_ext_Brutal");
-        int MonsterIndex;
-        int Amount;
-        MonsterInfoPtr MonsterPtr;
-        
-        while (true)
-        {
-            MonsterIndex = (DRLA ? Random((GameSkill() >= 5 ? 20 : 0), MAX_DEF_MONSTERS_DRLA - ((GameSkill() >= 5 ? 8 - Difficulty : 36 - (Difficulty * 4))) - 1) : Random(0, MAX_DEF_MONSTERS - 1));
-            
-            // Do we lookup data from the Vanilla or DRLA table?
-            if (DRLA)
-                MonsterPtr = &MonsterDataDRLA[MonsterIndex]
-            else if (Brutal)
-                MonsterPtr = &MonsterDataBrutal[MonsterIndex]
-            else
-                MonsterPtr = &MonsterData[MonsterIndex];
-            
-            if (MonsterPtr->Difficulty <= 65 + (Difficulty * 10))
-                break;
-        };
-        
-        // Now that we know the monster type, we can calculate an amount
-        int BaseAmount = (10 + (23 * Difficulty) * (101 - MonsterPtr->Difficulty)) / 100;
-        Amount = Random((BaseAmount / 4) * 3, BaseAmount);
-        if (Amount < 2) Amount = 2;
-        
-        // Message
-        SetFont("BIGFONT");
-        SetHudSize(640, 480, false);
-        HudMessage("New Mission! (%s\c-)\n\n\caKill\n\n\ckKill %d %ss\n", MissionDifficulties[Difficulty], Amount, MonsterPtr->Name, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
-        FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
-        
-        // Pass data to the Mission struct
-        Player.Mission.Monster = MonsterPtr;
-        Player.Mission.Amount = Amount;
-    };
-    
-    // Kill Reinforcements Mission
-    if (Type == MT_REINFORCEMENTS)
-    {
-        int Amount = Random(10 * (Difficulty + 1), 10 * (Difficulty + 1) * 2);
-        
-        // Message
-        SetFont("BIGFONT");
-        SetHudSize(640, 480, false);
-        HudMessage("New Mission! (%s\c-)\n\n\caKill Reinforcements\n\n\ckKill %d Reinforcements\n", MissionDifficulties[Difficulty], Amount, HUDMSG_FADEOUT, MISSION_ID, CR_WHITE, 320.4, 240.0, 3.0, 2.0);
-        FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 5.0);
-        
-        Player.Mission.Amount = Amount;
-    };
-    
-    // Mission Accepted
-    ActivatorSound("mission/get", 127);
-    Player.Mission.Active = true;
-    Player.Mission.Type = Type;
-    Player.Mission.Difficulty = Difficulty;
-    
-    // Assign Rewards to Mission struct
-    Player.Mission.RewardXP = RewardXP;
-    Player.Mission.RewardRank = RewardRank;
-    Player.Mission.RewardCredits = RewardCredits;
-    Player.Mission.RewardItem = RewardItem;
+    "\cdCollection";
+    "\caKill";
+    "\caKill Reinforcements";
 };
 
-acscript void AbortMission()
+function void PopulateMissions(int Index)
 {
-    // If you don't have a mission, terminate
-    if (!Player.Mission.Active) return;
-    
-    // Message
-    ActivatorSound("mission/fail", 127);
-    SetFont("BIGFONT");
-    SetHudSize(640, 480, false);
-    HudMessage("Mission Aborted!\n", HUDMSG_FADEOUT, MISSION_ID, CR_ORANGE, 320.4, 240.0, 3.0, 2.0);
-    
-    // Clear the Mission
-    ClearMission();
+    for (int i = 0; i < MAX_MISSIONS; i++)
+    {
+        if (Index >= 0) i = Index;
+        
+        int Type = Random(0, MAX_MISSION_TYPES - 1);
+        int Difficulty = Random(0, MAX_DIFFICULTIES - 1);
+        int RewardXP = (Difficulty + 2) * (XPTable[Player.Level] / 100);
+        int RewardRank = (Difficulty + 2) * (RankTable[Player.RankLevel] / 100);
+        int RewardCredits = Random((Difficulty + 2), (Difficulty + 2) * 100) * (Player.RankLevel + 1);
+        ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
+        
+        // Assign info to the struct
+        Missions[i].Active = false;
+        Missions[i].Type = Type;
+        Missions[i].Difficulty = Difficulty;
+        Missions[i].RewardXP = RewardXP;
+        Missions[i].RewardRank = RewardRank;
+        Missions[i].RewardCredits = RewardCredits;
+        Missions[i].RewardItem = RewardItem;
+        
+        // Collection Mission
+        if (Type == MT_COLLECT)
+        {
+            // Generate Item and Amount
+            int ItemIndex = Random(0, MAX_LOOT - 1);
+            int Amount = Random(5, 10);
+            LootItemPtr ItemPtr = &LootData[ItemIndex];
+            
+            // Remove any of the selected loot item if you already have any
+            if (CheckInventory(ItemPtr->Actor) > 0)
+                SetInventory(ItemPtr->Actor, 0);
+            
+            // Pass data to the Mission struct
+            Missions[i].Item = ItemPtr;
+            Missions[i].Amount = Amount;
+        };
+        
+        // Kill Mission
+        if (Type == MT_KILL)
+        {
+            bool DRLA = GetCVar("drpg_ext_doomrl");
+            bool Brutal = GetCVar("drpg_ext_Brutal");
+            int MonsterIndex;
+            int Amount;
+            MonsterInfoPtr MonsterPtr;
+            
+            while (true)
+            {
+                MonsterIndex = (DRLA ? Random((GameSkill() >= 5 ? 20 : 0), MAX_DEF_MONSTERS_DRLA - ((GameSkill() >= 5 ? 8 - Difficulty : 36 - (Difficulty * 4))) - 1) : Random(0, MAX_DEF_MONSTERS - 1));
+                
+                // Do we lookup data from the Vanilla or DRLA table?
+                if (DRLA)
+                    MonsterPtr = &MonsterDataDRLA[MonsterIndex]
+                else if (Brutal)
+                    MonsterPtr = &MonsterDataBrutal[MonsterIndex]
+                else
+                    MonsterPtr = &MonsterData[MonsterIndex];
+                
+                if (MonsterPtr->Difficulty <= 65 + (Difficulty * 10))
+                    break;
+            };
+            
+            // Now that we know the monster type, we can calculate an amount
+            int BaseAmount = (10 + (23 * Difficulty) * (101 - MonsterPtr->Difficulty)) / 100;
+            Amount = Random((BaseAmount / 4) * 3, BaseAmount);
+            if (Amount < 2) Amount = 2;
+            
+            // Pass data to the Mission struct
+            Missions[i].Monster = MonsterPtr;
+            Missions[i].Amount = Amount;
+        };
+        
+        // Kill Reinforcements Mission
+        if (Type == MT_REINFORCEMENTS)
+        {
+            int Amount = Random(10 * (Difficulty + 1), 10 * (Difficulty + 1) * 2);
+            
+            Missions[i].Amount = Amount;
+        };
+        
+        if (Index >= 0) break;
+    };
 };
 
 function void CheckMission()
@@ -325,10 +260,6 @@ function ItemInfoPtr GetRewardItem(int Difficulty)
     // DoomRL Compatibility
     if (GetCVar("drpg_ext_doomrl") && Category == 0) // Weapons
         ItemPtr->Actor = StrParam("%sPickup\n", ItemPtr->Actor);
-    
-    // Debugging
-    if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \c-Mission Reward Item: Category %d (mapped to %d), Index %d\n", Category, Categories[Category], Index);
     
     return ItemPtr;
 };
