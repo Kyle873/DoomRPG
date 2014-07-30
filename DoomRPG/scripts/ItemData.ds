@@ -180,7 +180,7 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
 ItemSpace ItemInfoPtr[ITEM_CATEGORIES * ITEM_MAX] rewardlist;
 ItemSpace int maxrewards;
 
-function void BuildItemData()
+script void BuildItemData()
 {
     int Index = 1;
     
@@ -745,7 +745,15 @@ function void BuildItemData()
             for (int j = 0; j < ItemMax[i]; j++)
                 if (ItemData[i][j].Price > 0)
                     ItemData[i][j].Rank = 0;
+     Delay (1);
 
+    // We need this here now because DRLA is special
+    for (int i = 0; i < ItemCategories; ++i)
+    {
+        for (int j = 0; j < ItemMax[i]; ++j)
+            ItemData[i][j].Category = i;
+    };
+    
     // Populate the reward list
     maxrewards = 0;
     
@@ -763,17 +771,16 @@ function void BuildItemData()
             
             rewardlist[maxrewards] = &ItemData[i][j];
 
-            // [KS] This is dumb and why are we doing it and why was it in the reward code and this makes no sense
-            // DoomRL Compatibility
-            if (GetCVar("drpg_ext_doomrl") && i == 0) // Weapons
-                rewardlist[maxrewards]->Actor = StrParam("%sPickup\n", rewardlist[maxrewards]->Actor);
-
             ++maxrewards;
         };
     };
     
+    Delay (1);
+    
     // Borrow the gnome sort method from the standard library because it's nice
     int rw_cur_index = 0;
+    
+    int instructions = 0;
     
     while (rw_cur_index < maxrewards - 1)
     {
@@ -790,6 +797,10 @@ function void BuildItemData()
         }
         else
             ++rw_cur_index;
+        
+        // Because DRLA has a million weapons to sort and this will crash if we don't delay here
+        if (!(instructions % 1000)) Delay (1);
+        ++instructions;
     };
     
     /*
