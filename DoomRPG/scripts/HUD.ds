@@ -5,6 +5,7 @@
 #include "Shield.dh"
 #include "Skills.dh"
 #include "Stats.dh"
+#include "Stims.dh"
 #include "Utils.dh"
 
 str[SE_MAX] StatusEffects =
@@ -35,8 +36,8 @@ script void StatHUD() enter
     Start:
     
     int StatTokens = CheckInventory("DRPGStatToken");
-    fixed X = 640.0;
-    fixed Y = 280.0;
+    fixed X = GetCVarFixed("drpg_stats_x");
+    fixed Y = GetCVarFixed("drpg_stats_y");
     fixed Offset = 11.0;
     
     SetHudSize(640, 480, false);
@@ -55,14 +56,14 @@ script void StatHUD() enter
         HudMessage("%d\n", Player.Luck, HUDMSG_FADEOUT, STAT_ID + 7, CR_YELLOW, X - 0.0 - Offset, Y + 58.0, 5.0, 5.0);
         
         // Stat Icons
-        PrintSpriteFade("STAT1S", STAT_ID + 8, X - 96.0, Y + 56.0, 5.0, 5.0);
+        PrintSpriteFade("STAT1S", STAT_ID + 8, X - 96.0, Y + 54.0, 5.0, 5.0);
         PrintSpriteFade("STAT2S", STAT_ID + 9, X - 64.0, Y + 54.0, 5.0, 5.0);
         PrintSpriteFade("STAT3S", STAT_ID + 10, X - 32.0, Y + 54.0, 5.0, 5.0);
-        PrintSpriteFade("STAT4S", STAT_ID + 11, X - 0.0, Y + 56.0, 5.0, 5.0);
+        PrintSpriteFade("STAT4S", STAT_ID + 11, X - 0.0, Y + 54.0, 5.0, 5.0);
         PrintSpriteFade("STAT5S", STAT_ID + 12, X - 96.0, Y + 74.0, 5.0, 5.0);
-        PrintSpriteFade("STAT6S", STAT_ID + 13, X - 64.0, Y + 75.0, 5.0, 5.0);
+        PrintSpriteFade("STAT6S", STAT_ID + 13, X - 64.0, Y + 74.0, 5.0, 5.0);
         PrintSpriteFade("STAT7S", STAT_ID + 14, X - 32.0, Y + 74.0, 5.0, 5.0);
-        PrintSpriteFade("STAT8S", STAT_ID + 15, X - 0.0, Y + 73.0, 5.0, 5.0);
+        PrintSpriteFade("STAT8S", STAT_ID + 15, X - 0.0, Y + 74.0, 5.0, 5.0);
     };
     
     Delay(1);
@@ -159,6 +160,61 @@ script void SkillHUD() enter
         };
         
         Delay(1);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
+script void StimHUD() enter
+{
+    int[] StatColors =
+    {
+        CR_RED; CR_GREEN; CR_BRICK; CR_LIGHTBLUE;
+        CR_PURPLE; CR_ORANGE; CR_BLUE; CR_GOLD;
+    };
+    
+    Start:
+    
+    fixed X = GetCVarFixed("drpg_stim_x");
+    fixed Y = GetCVarFixed("drpg_stim_y");
+    
+    SetHudSize(640, 480, false);
+    
+    if (Player.Stim.Active)
+    {
+        // Stat Boosts
+        if (Player.Stim.Timer > 0)
+        {
+            int TimerPercent = (int)(((fixed)Player.Stim.Timer / (fixed)Player.Stim.TimerMax) * 100.0);
+            
+            // Time Bar
+            DrawBar("Stim10", X, Y, TimerPercent, true);
+            
+            // Time
+            SetFont("BIGFONT");
+            HudMessage("%d\n", Player.Stim.Timer / 35 + 1, HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_WHITE, X + 110.1, Y, 0.05, 0.75);
+            
+            // Icons
+            for (int i = 0; i < StimStatsEnd; i++)
+                if (Player.Stim.ActiveBonus[i])
+                {
+                    SetFont("BIGFONT");
+                    HudMessage("+%d\n", Player.Stim.Last[i], HUDMSG_PLAIN | HUDMSG_ALPHA, 0, StatColors[i], X + 8.0 + ((i % 4) * 36.0), Y + 16.0 + ((i / 4) * 24.0), 0.05, 0.75);
+                    PrintSpritePulse(StrParam("STAT%dS\n", i + 1), 0, X + 20.0 + ((i % 4) * 36.0), Y + 32.0 + ((i / 4) * 24.0), 0.75, 32.0, 0.25);
+                };
+        };
+        
+        // Powerups
+        for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
+            if (Player.Stim.ActiveBonus[i] && Player.Stim.PowerupTimer[i] > 0)
+            {
+                int TimerPercent = (int)(((fixed)Player.Stim.PowerupTimer[i] / (fixed)Player.Stim.PowerupTimerMax[i]) * 100.0);
+                SetFont("SMALLFONT");
+                HudMessage("%d\n", Player.Stim.PowerupTimer[i] / 35 + 1, HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CompoundColors[i], X + 112.1, Y + 56.0, 0.05, 0.75);
+                DrawBar(StrParam("Stim%d\n", i + 1), X, Y + 56.0, TimerPercent, true);
+                Y += 8.0;
+            };
     };
     
     Delay(1);
