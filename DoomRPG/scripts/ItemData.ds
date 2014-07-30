@@ -177,8 +177,8 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
     };
 };
 
-ItemSpace ItemInfoPtr[ITEM_CATEGORIES * ITEM_MAX] rewardlist;
-ItemSpace int maxrewards;
+ItemSpace ItemInfoPtr[ITEM_CATEGORIES * ITEM_MAX] RewardList;
+ItemSpace int MaxRewards;
 
 script void BuildItemData()
 {
@@ -745,71 +745,62 @@ script void BuildItemData()
             for (int j = 0; j < ItemMax[i]; j++)
                 if (ItemData[i][j].Price > 0)
                     ItemData[i][j].Rank = 0;
-     Delay (1);
+    Delay(1);
 
     // We need this here now because DRLA is special
-    for (int i = 0; i < ItemCategories; ++i)
-    {
-        for (int j = 0; j < ItemMax[i]; ++j)
+    for (int i = 0; i < ItemCategories; i++)
+        for (int j = 0; j < ItemMax[i]; j++)
             ItemData[i][j].Category = i;
-    };
     
     // Populate the reward list
-    maxrewards = 0;
-    
-    for (int i = 0; i < ItemCategories; ++i)
+    MaxRewards = 0;
+    for (int i = 0; i < ItemCategories; i++)
     {
         // Don't pick worthless ammo or loot
         if (i == 1 || i == 8)
             continue;
         
-        for (int j = 0; j < ItemMax[i]; ++j)
+        for (int j = 0; j < ItemMax[i]; j++)
         {
             // Don't pick cheap stuff like a Pistol or Armor Bonus
             if (ItemData[i][j].Price < 100)
                 continue;
             
-            rewardlist[maxrewards] = &ItemData[i][j];
-
-            ++maxrewards;
+            RewardList[MaxRewards] = &ItemData[i][j];
+            
+            ++MaxRewards;
         };
     };
     
-    Delay (1);
+    Delay(1);
     
     // Borrow the gnome sort method from the standard library because it's nice
-    int rw_cur_index = 0;
-    
-    int instructions = 0;
-    
-    while (rw_cur_index < maxrewards - 1)
+    int RewardIndex = 0;
+    int Instructions = 0;
+    while (RewardIndex < MaxRewards - 1)
     {
-        if (rewardlist[rw_cur_index] == NULL ||
-            rewardlist[rw_cur_index]->Price > rewardlist[rw_cur_index + 1]->Price)
+        if (RewardList[RewardIndex] == NULL ||
+            RewardList[RewardIndex]->Price > RewardList[RewardIndex + 1]->Price)
         {
-            ItemInfoPtr temp = rewardlist[rw_cur_index];
-            rewardlist[rw_cur_index] = rewardlist[rw_cur_index + 1];
-            rewardlist[rw_cur_index + 1] = temp;
+            ItemInfoPtr Temp = RewardList[RewardIndex];
+            RewardList[RewardIndex] = RewardList[RewardIndex + 1];
+            RewardList[RewardIndex + 1] = Temp;
             
-            rw_cur_index -= 2;
+            RewardIndex -= 2;
             
-            if (rw_cur_index < 0) rw_cur_index = 0;
+            if (RewardIndex < 0) RewardIndex = 0;
         }
         else
-            ++rw_cur_index;
+            ++RewardIndex;
         
         // Because DRLA has a million weapons to sort and this will crash if we don't delay here
-        if (!(instructions % 1000)) Delay (1);
-        ++instructions;
+        if (!(Instructions % 1000)) Delay(1);
+        ++Instructions;
     };
     
     /*
     if (GetCVar("drpg_debug"))
-    {
         for (int i = 0; i < maxrewards; ++i)
-        {
             Log("Reward Item: %s - Credits: %d\n", rewardlist[i]->Name, rewardlist[i]->Price);
-        };
-    };
     */
 };

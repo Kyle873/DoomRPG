@@ -55,7 +55,7 @@ function void PopulateMissions(int Index)
         int Difficulty = Random(0, MAX_DIFFICULTIES - 1);
         int RewardXP = (Difficulty + 2) * (XPTable[Player.Level] / 100);
         int RewardRank = (Difficulty + 2) * (RankTable[Player.RankLevel] / 100);
-        int RewardCredits = Random((Difficulty + 2), (Difficulty + 2) * 100) * (Player.RankLevel + 1);
+        int RewardCredits = (Difficulty + Player.RankLevel + 1) * 100 * Random(1, 4);
         ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
         
         // Assign info to the struct
@@ -210,13 +210,14 @@ function void ClearMission()
 
 function ItemInfoPtr GetRewardItem(int Difficulty)
 {
-    // [KS] I redid all of it.
-    int slicestart = (maxrewards / MAX_DIFFICULTIES) * Difficulty;
-    int slicelength = maxrewards / MAX_DIFFICULTIES;
+    // [KS] I redid all of it
+    // [K873] The rest of it is done via sorting into a separate RewardList array in BuildItemData()
+    int SliceStart = (MaxRewards / MAX_DIFFICULTIES) * Difficulty;
+    int SliceLength = MaxRewards / MAX_DIFFICULTIES;
     if (Difficulty == MAX_DIFFICULTIES - 1)
-        slicelength += maxrewards % MAX_DIFFICULTIES;
+        SliceLength += MaxRewards % MAX_DIFFICULTIES;
     
-    return rewardlist[Random(slicestart, (slicestart + slicelength) - 1)];
+    return RewardList[Random(SliceStart, (SliceStart + SliceLength) - 1)];
 };
 
 function int CalculateAverageDifficulty()
