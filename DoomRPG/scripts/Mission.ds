@@ -204,64 +204,13 @@ function void ClearMission()
 
 function ItemInfoPtr GetRewardItem(int Difficulty)
 {
-    // Category Mapping
-    int[ITEM_CATEGORIES] Categories = 
-    {
-        0;  // Weapons
-        1;  // Ammo
-        2;  // Health
-        10; // Boots
-        0;  // Loot (Mapped to Weapons)
-        3;  // Armor
-        4;  // Powerups
-        9;  // Mod Packs
-        7;  // Stims/Augs
-        5;  // Tokens
-        6;  // Shield Parts
-    };
-    
-    // DoomRL Compatibility
-    if (!GetCVar("drpg_ext_doomrl"))
-    {
-        Categories[3] = 3; // Map Boots to Armor
-        Categories[7] = 7; // Map Mod Packs to Stims/Augs
-    };
-    
-    /* We calculate an offset to make the highest reward scope larger if the category is not evenly divisible by
-       MAX_DIFFICULTIES. The ScopeLength is calculated based on an evenly divisible measurement of the category.
-       ScopeStart is a simple multiplier according to Difficulty. This creates evenly sized reward scopes within
-       a category of items. Much better than what we've been doing.
-       
-       Thanks to SidDoyle for the super math
-    */
-    
-    int RewardCategories = MAX_DIFFICULTIES;
-    int Category = Random(0, Difficulty + 2);
-    if (Category > 2)
-        RewardCategories -= Category - 2;
-    int RewardOffset = ItemMax[Categories[Category]] % RewardCategories;
-    int ScopeLength = (ItemMax[Categories[Category]] - RewardOffset) / RewardCategories;
-    int ScopeStart = Difficulty * ScopeLength;
-    if (Category > 2)
-        ScopeStart = (Difficulty - (Category - 2)) * ScopeLength;
+    // [KS] I redid all of it.
+    int slicestart = (maxrewards / MAX_DIFFICULTIES) * Difficulty;
+    int slicelength = maxrewards / MAX_DIFFICULTIES;
     if (Difficulty == MAX_DIFFICULTIES - 1)
-        ScopeLength += RewardOffset;
-    int Index = Random(ScopeStart, ScopeStart + ScopeLength - 1);
-    if (RewardCategories > ItemMax[Categories[Category]])
-    {
-        Index = Random(Difficulty, Difficulty + 1);
-        if (Index >= ItemMax[Categories[Category]])
-            Index = ItemMax[Categories[Category]] - 1;
-    };
-    if (Category == 5 && Index == 0) // Quick lolhax to skip Armor Bonus
-        Index++;
-    ItemInfoPtr ItemPtr = &ItemData[Categories[Category]][Index];
+        slicelength += maxrewards % MAX_DIFFICULTIES;
     
-    // DoomRL Compatibility
-    if (GetCVar("drpg_ext_doomrl") && Category == 0) // Weapons
-        ItemPtr->Actor = StrParam("%sPickup\n", ItemPtr->Actor);
-    
-    return ItemPtr;
+    return rewardlist[Random(slicestart, (slicestart + slicelength) - 1)];
 };
 
 function int CalculateAverageDifficulty()
