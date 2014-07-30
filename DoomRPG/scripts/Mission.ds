@@ -62,10 +62,27 @@ script void PopulateMissions(int Index)
         
         int Type = Random(0, MAX_MISSION_TYPES - 1);
         int Difficulty = Random(0, MAX_DIFFICULTIES - 1);
-        int RewardXP = (Difficulty + 2) * (XPTable[Player.Level] / 100);
-        int RewardRank = (Difficulty + 2) * (RankTable[Player.RankLevel] / 100);
-        int RewardCredits = (Difficulty + Player.RankLevel + 1) * 100 * Random(1, 4);
-        ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
+        int NumPlayers;
+        int RewardXP;
+        int RewardRank;
+        int RewardCredits;
+        
+        // Calculate the rewards based on all Player's average Level and Rank
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i)) continue;
+            
+            RewardXP += (Difficulty + 2) * (XPTable[Players(i).Level] / 100);
+            RewardRank += (Difficulty + 2) * (RankTable[Players(i).RankLevel] / 100);
+            RewardCredits += (Difficulty + Players(i).RankLevel + 1) * 100 * Random(1, 4);
+            
+            NumPlayers++;
+        };
+        
+        // Average the rewards
+        RewardXP /= NumPlayers;
+        RewardRank /= NumPlayers;
+        RewardCredits /= NumPlayers;
         
         // Assign info to the struct
         Missions[i].Active = false;
@@ -74,7 +91,7 @@ script void PopulateMissions(int Index)
         Missions[i].RewardXP = RewardXP;
         Missions[i].RewardRank = RewardRank;
         Missions[i].RewardCredits = RewardCredits;
-        Missions[i].RewardItem = RewardItem;
+        Missions[i].RewardItem = GetRewardItem(Difficulty);
         
         // Collection Mission
         if (Type == MT_COLLECT)
@@ -383,11 +400,12 @@ function int CalculateAverageDifficulty()
     
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
-        if (PlayerInGame(i))
-            NumPlayers++;
+        if (!PlayerInGame(i)) continue;
         
         if (Players(i).Mission.Active)
             AvgDifficulty += Players(i).Mission.Difficulty;
+            
+        NumPlayers++;
     };
     
     AvgDifficulty /= NumPlayers;
