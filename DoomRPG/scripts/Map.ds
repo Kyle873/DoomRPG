@@ -85,11 +85,13 @@ script void MapInit() open
         CurrentLevel->MaxMonstersKilled = 0;
         CurrentLevel->MaxItemsFound = 0;
         CurrentLevel->MaxSecretsFound = 0;
-        CurrentLevel->ShortestTime = 0;
+        CurrentLevel->ShortestTime = 0x7FFFFFFF;
         
         CurrentLevel->TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
         CurrentLevel->TotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
         CurrentLevel->TotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        
+        // These never change so we don't need to update them
         CurrentLevel->Par = GetLevelInfo(LEVELINFO_PAR_TIME);
         CurrentLevel->Sucks = GetLevelInfo(LEVELINFO_SUCK_TIME);
         
@@ -110,16 +112,22 @@ script void MapLoop()
     int XPBonus;
     int RankBonus;
     
+    int MonstersKilled;
+    int ItemsFound;
+    int SecretsFound;
+    
     int MonstersLastKilled = 0;
     int ItemsLastFound = 0;
     int SecretsLastFound = 0;
     
     Start:
-    int MonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
-    int ItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
-    int SecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+    // These need to be updated on a constant basis because they can change due
+    // to scripting and mission spawns
+    CurrentLevel->TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+    CurrentLevel->TotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+    CurrentLevel->TotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
     
-    // Check to see if these are unobtainable first
+    // Check to see if these are unobtainable
     if (CurrentLevel->TotalMonsters == 0)
         CurrentLevel->KillBonus = true;
     if (CurrentLevel->TotalItems == 0)
@@ -128,6 +136,10 @@ script void MapLoop()
         CurrentLevel->SecretsBonus = true;
     if (CurrentLevel->TotalMonsters == 0 && CurrentLevel->TotalItems == 0 && CurrentLevel->TotalSecrets == 0)
         CurrentLevel->AllBonus = true;
+    
+    MonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+    ItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+    SecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
     
     // MAX KILL / ITEM / SECRET TRACKERS
     
@@ -318,8 +330,13 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
             Delay(35 * 3);
         };
     
+    // How long it took to reach the exit
+    int ExitTime = Timer() / 35;
+    if (CurrentLevel->ShortestTime > ExitTime)
+        CurrentLevel->ShortestTime = ExitTime;
+    
     // Check par time and give bonus if you beat it
-    if (ParTime > 0 && (Timer() / 35) < ParTime && (CurrentLevel && !CurrentLevel->ParBonus))
+    if (ParTime > 0 && ExitTime < ParTime && (CurrentLevel && !CurrentLevel->ParBonus))
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
