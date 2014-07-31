@@ -589,7 +589,7 @@ script void MonsterStatsHandler()
     
     // Levelup handling via White Aura radius
     if (CheckInventory("DRPGMonsterLevelup"))
-        MonsterLevelupHandler();
+        MonsterLevelup(Stats);
     
     Delay(4);
     
@@ -690,39 +690,10 @@ script void MonsterLevelupHandler()
     if (Stats->Level >= 1000)
         goto Start;
     
-    // Apply the stats to the monster
-    Stats->Level++;
-    Stats->Strength += Random(1, GameSkill());
-    Stats->Defense += Random(1, GameSkill());
-    Stats->Vitality += Random(1, GameSkill());
-    Stats->Energy += Random(1, GameSkill());
-    Stats->Regeneration += Random(1, GameSkill());
-    Stats->Agility += Random(1, GameSkill());
-    Stats->Capacity += Random(1, GameSkill());
-    Stats->Luck += Random(1, GameSkill());
+    // Levelup
+    MonsterLevelup(Stats);
     
-    // Cap Level and Stats
-    CapMonsterStats(Stats);
-    
-    // Re-calculate the monster's threat level
-    Stats->Threat = CalculateMonsterThreatLevel(Stats);
-    
-    // Calculate Health
-    Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
-    
-    // Calculate Speed
-    SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(Stats));
-    
-    // Give Credits
-    SetInventory("DRPGCredits", Stats->Capacity);
-    
-    // Spawn Level-up Arrow
-    SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
-    
-    if (CheckInventory("DRPGMonsterLevelup"))
-        TakeInventory("DRPGMonsterLevelup", 1)
-    else
-        goto Start;
+    goto Start;
 };
 
 script void MonsterEPDrainHandler()
@@ -1149,6 +1120,41 @@ script int WhoKilledMe()
 {
     SetActivatorToTarget(0);
     return PlayerNumber();
+};
+
+function void MonsterLevelup(MonsterStatsPtr Stats)
+{
+    // Apply the stats to the monster
+    Stats->Level++;
+    Stats->Strength += Random(1, GameSkill());
+    Stats->Defense += Random(1, GameSkill());
+    Stats->Vitality += Random(1, GameSkill());
+    Stats->Energy += Random(1, GameSkill());
+    Stats->Regeneration += Random(1, GameSkill());
+    Stats->Agility += Random(1, GameSkill());
+    Stats->Capacity += Random(1, GameSkill());
+    Stats->Luck += Random(1, GameSkill());
+    
+    // Cap Level and Stats
+    CapMonsterStats(Stats);
+    
+    // Re-calculate the monster's threat level
+    Stats->Threat = CalculateMonsterThreatLevel(Stats);
+    
+    // Calculate Health
+    Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
+    
+    // Calculate Speed
+    SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(Stats));
+    
+    // Give Credits
+    SetInventory("DRPGCredits", Stats->Capacity);
+    
+    // Spawn Level-up Arrow
+    SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
+    
+    if (CheckInventory("DRPGMonsterLevelup"))
+        TakeInventory("DRPGMonsterLevelup", 1);
 };
 
 function void CapMonsterStats(MonsterStatsPtr Stats)
