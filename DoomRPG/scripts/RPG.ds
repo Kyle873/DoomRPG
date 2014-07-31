@@ -23,10 +23,8 @@
 str[2] Version =
 {
     "v0.9.11 Beta - Gotta Go Fast Edition";
-	"Thursday, July 31, 2014 at 3:43:37 AM";
+	"Thursday, July 31, 2014 at 4:17:48 AM";
 };
-
-// Define the globals for SBARINFO/etc.
 
 // Flags
 static bool InBase;
@@ -45,32 +43,32 @@ static PlayerData[MAX_PLAYERS] _PlayerData;
 // 
 
 // HUD Combo
-global_array(20) int[MAX_PLAYERS] Combo @ 0;
-global_array(22) int[MAX_PLAYERS] BonusGained @ 0;
-global_array(23) int[MAX_PLAYERS] XPGained @ 0;
-global_array(24) int[MAX_PLAYERS] RankGained @ 0;
+GlobalArray(20) int[MAX_PLAYERS] Combo @ 0;
+GlobalArray(22) int[MAX_PLAYERS] BonusGained @ 0;
+GlobalArray(23) int[MAX_PLAYERS] XPGained @ 0;
+GlobalArray(24) int[MAX_PLAYERS] RankGained @ 0;
 
 // HUD Timers
-global_array(25) int[MAX_PLAYERS] AuraTimerHUD @ 0;
-global_array(26) int[MAX_PLAYERS] RegenBoostTimerHUD @ 0;
-global_array(42) int[MAX_PLAYERS] StimTimerHUD @ 0;
+GlobalArray(25) int[MAX_PLAYERS] AuraTimerHUD @ 0;
+GlobalArray(26) int[MAX_PLAYERS] RegenBoostTimerHUD @ 0;
+GlobalArray(42) int[MAX_PLAYERS] StimTimerHUD @ 0;
 
 // HUD Item Counts
-global_array(18) int[MAX_PLAYERS] Credits @ 0;
-global_array(19) int[MAX_PLAYERS] Continues @ 0;
+GlobalArray(18) int[MAX_PLAYERS] Credits @ 0;
+GlobalArray(19) int[MAX_PLAYERS] Continues @ 0;
 
 // Max Health and Armor
-global_array(39) int[MAX_PLAYERS] HealthMax @ 0;
-global_array(40) int[MAX_PLAYERS] ArmorMax @ 0;
+GlobalArray(39) int[MAX_PLAYERS] HealthMax @ 0;
+GlobalArray(40) int[MAX_PLAYERS] ArmorMax @ 0;
 
 // Energy Points (EP)
-global_array(2)  int[MAX_PLAYERS] EP @ 0;
-global_array(3)  int[MAX_PLAYERS] EPMax @ 0;
+GlobalArray(2)  int[MAX_PLAYERS] EP @ 0;
+GlobalArray(3)  int[MAX_PLAYERS] EPMax @ 0;
 
 // Shield
-global_array(50) int[MAX_PLAYERS] Shield @ 0;
-global_array(51) int[MAX_PLAYERS] ShieldCapacity @ 0;
-global_array(52) int[MAX_PLAYERS] ShieldHealth @ 0;
+GlobalArray(50) int[MAX_PLAYERS] Shield @ 0;
+GlobalArray(51) int[MAX_PLAYERS] ShieldCapacity @ 0;
+GlobalArray(52) int[MAX_PLAYERS] ShieldHealth @ 0;
 
 script void GlobalInit() open
 {
@@ -94,8 +92,6 @@ script void GlobalInit() open
     // Create Translations
     CreateTranslations();
     
-    Delay (4);
-    
     // Initial build of ItemData
     BuildItemData();
 };
@@ -103,13 +99,13 @@ script void GlobalInit() open
 // Init Script
 script void Init() enter
 {
-    Delay (1);
+    // Wait until globals are initialized
+    while (!GlobalsInitialized) Delay(1);
+    
     // [KS] This needs to be done on its' own, so death exits don't rob you of your TID and break EVERYTHING EVER FFS
     if (ActivatorTID() == 0)
     {
         AssignTIDs();
-        
-        // Give the default loadout based on compatibility switches
         DefaultLoadout();
     };
     
@@ -156,10 +152,10 @@ script void Init() enter
             SetActorProperty(0, APROP_Health, Player.Vitality * 10);
             Player.EP = Player.Energy * 10;
         };
-        
-        // Initialize skill array
-        InitSkills();
     
+        // Initial build of SkillData
+        BuildSkillData();
+        
         // Set the default skill indices
         for (int i = 0; i < MAX_SKILLKEYS; i++)
         {
@@ -176,29 +172,6 @@ script void Init() enter
         // Done first run
         Player.FirstRun = true;
     };
-    
-    // Small delay before initializing the scripts for mod compatibility
-    Delay(4);
-    
-    // Some mods will require TID reassignment
-    if (GetCVar("drpg_ext_brutal"))
-        AssignTIDs();
-    
-    // Execute Game Loops
-    Loop();
-    ShieldScript();
-    WeaponSpeed();
-    StatRandomizer();
-    AutosaveHandler();
-    DamageNumbers();
-    InfoPopoffs();
-    HealthBars();
-    AutoSellHandler();
-    
-    // GUI
-	// CheckCursor();
-	// CheckGUI();
-	// MenuUpdate();
     
     // Remove Aura if the keep Aura CVAR is off
     if (!GetCVar("drpg_skill_keepauras"))
@@ -223,11 +196,34 @@ script void Init() enter
     for (int i = 0; i < MAX_DROPS; i++)
         Player.DropTID[i] = -1;
     
-    // Initial build of SkillData
-    BuildSkillData();
+    // Initialize skill array
+    InitSkills();
     
     // Mission Initialization
     InitMission();
+
+    // Small delay before initializing the scripts for mod compatibility
+    Delay(4);
+    
+    // Some mods will require TID reassignment
+    if (GetCVar("drpg_ext_brutal"))
+        AssignTIDs();
+    
+    // Execute Game Loops
+    Loop();
+    ShieldScript();
+    WeaponSpeed();
+    StatRandomizer();
+    AutosaveHandler();
+    DamageNumbers();
+    InfoPopoffs();
+    HealthBars();
+    AutoSellHandler();
+    
+    // GUI
+	// CheckCursor();
+	// CheckGUI();
+	// MenuUpdate();
 };
 
 // Loop Script
