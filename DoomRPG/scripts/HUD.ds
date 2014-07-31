@@ -40,7 +40,7 @@ script void StatHUD() enter
     fixed Y = GetCVarFixed("drpg_stats_y");
     fixed Offset = 11.0;
     
-    SetHudSize(640, 480, false);
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
     
     if ((GetCVar("drpg_auto_spend") && StatTokens > 0) || GetCVar("drpg_stats_alwaysshow"))
     {
@@ -100,7 +100,7 @@ script void StatusEffectHUD() enter
         {
             TimerPercent = (int)(((fixed)Player.StatusTimer[i] / (fixed)Player.StatusTimerMax[i]) * 100.0);
             
-            SetHudSize(640, 480, false);
+            SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
             
             // Text
             SetFont("SMALLFONT");
@@ -120,23 +120,50 @@ script void StatusEffectHUD() enter
     goto Start;
 };
 
+script void ComboHUD() enter
+{
+    Start:
+    
+    fixed X = GetCVarFixed("drpg_combo_x");
+    fixed Y = GetCVarFixed("drpg_combo_y");
+    int TimerMax = COMBO_MAX; // Note to self: Mention to DavidPH that casting a constant fucks shit up royally
+    
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+    
+    if (GetCVar("drpg_combo") && Player.Combo > 0)
+    {
+        int TimerPercent = (int)(((fixed)Player.ComboTimer / (fixed)TimerMax) * 100.0);
+        
+        // Bar
+        DrawBar("Stim1", X, Y, (TimerPercent > 50 ? 50 : TimerPercent), true);
+        DrawBar("Stim2", X + 50, Y, TimerPercent - 50, true);
+        
+        // Combo Info
+        SetFont("BIGFONT");
+        HudMessage("%d\n", Player.Combo, HUDMSG_PLAIN, 0, CR_PURPLE, X + 0.1, Y + 10.0, 0.05);
+        if (Player.XPGained > 0)
+            HudMessage("%d\n", Player.XPGained, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 22.0, 0.05);
+        if (Player.RankGained > 0)
+            HudMessage("%d\n", Player.RankGained, HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y + 34.0, 0.05);
+        if (Player.BonusGained > 0)
+            HudMessage("%d\n", Player.BonusGained, HUDMSG_PLAIN, 0, CR_GREEN, X + 0.1, Y + 46.0, 0.05);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
 script void SkillHUD() enter
 {
     Start:
-
-    while (true)
+    
+    fixed X = GetCVarFixed("drpg_skill_x");
+    fixed Y = GetCVarFixed("drpg_skill_y");
+    
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+    
+    if (GetCVar("drpg_menu_hideskills") && (Player.InMenu || Player.InShop || Player.OutpostMenu > 0))
     {
-        // Don't draw if the hide skills while menu is open option is enabled
-        if (GetCVar("drpg_menu_hideskills") && (Player.InMenu || Player.InShop || Player.OutpostMenu > 0))
-        {
-            Delay(1);
-            goto Start;
-        };
-        
-        SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
-        fixed X = GetCVarFixed("drpg_skill_x");
-        fixed Y = GetCVarFixed("drpg_skill_y");
-        
         // Current Skill
         if (Player.SkillCategory[Player.SkillSelected] != -1 && Player.SkillIndex[Player.SkillSelected] != -1)
         {
@@ -158,8 +185,6 @@ script void SkillHUD() enter
             // Icon
             PrintSprite(CurrentSkill->Icon, 0, X, Y, 0.05);
         };
-        
-        Delay(1);
     };
     
     Delay(1);
@@ -179,7 +204,7 @@ script void StimHUD() enter
     fixed X = GetCVarFixed("drpg_stim_x");
     fixed Y = GetCVarFixed("drpg_stim_y");
     
-    SetHudSize(640, 480, false);
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
     
     // Stat Boosts
     if (Player.Stim.Timer > 0)
@@ -230,7 +255,7 @@ script void MissionHUD() enter
     
     if (Player.Mission.Active && Player.Mission.Current != OldAmount)
     {
-        SetHudSize(640, 480, false);
+        SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
         SetFont("BIGFONT");
         
         switch (Player.Mission.Type)
