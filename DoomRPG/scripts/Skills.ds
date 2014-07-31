@@ -1,6 +1,7 @@
 #include "RPG.dh"
 
 #include "Arena.dh"
+#include "Map.dh"
 #include "Menu.dh"
 #include "Monsters.dh"
 #include "Outpost.dh"
@@ -1917,9 +1918,7 @@ acscript bool Transport(Skill *Self, void *Data)
     // Transport
     if (!InBase)
     {
-        str LevelLump = StrParam("%N\n", PRINTNAME_LEVEL);
-        for (int i = 0; i < 8 && i < StrLen(LevelLump); i++)
-            LastVisited[i] = LevelLump[i];
+        LastVisitedLevel = FindLevelInfoIndex();
         
         ChangeLevel("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, -1);
         InBase = true;
@@ -1928,7 +1927,7 @@ acscript bool Transport(Skill *Self, void *Data)
     }
     else
     {
-        ChangeLevel(StrParam("%s\n", LastVisited), 0, CHANGELEVEL_NOINTERMISSION, -1);
+        ChangeLevel(KnownLevels[LastVisitedLevel].LumpName, 0, CHANGELEVEL_NOINTERMISSION, -1);
         InBase = false;
         Transported = true;
         return true;

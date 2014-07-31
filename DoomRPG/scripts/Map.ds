@@ -4,48 +4,325 @@
 #include "Stats.dh"
 #include "Outpost.dh"
 
-int Kills;
-int Items;
-int SecretsFound;
-bool ParBonus;
+// Level Info
+static LevelInfo * CurrentLevel;
+static LevelInfo * KnownLevels;
+static int NumKnownLevels;
+static int LastVisitedLevel;
+
+function int FindLevelInfoIndex(int levelnum)
+{
+    if (!levelnum)
+        levelnum = GetLevelInfo(LEVELINFO_LEVELNUM);
+
+    if (levelnum == 999)
+        return -2; // Special value to mean the Outpost.
+    if (levelnum == 0)
+        return -3; // The map has a bogus level number, so we just don't know.
+    
+    for (int i = 0; i < NumKnownLevels; ++i)
+    {
+        if (KnownLevels[i].LevelNum == levelnum)
+            return i;
+    };
+    return -1;
+};
+
+extern script void MapLoop();
 
 // Map Init Script
 script void MapInit() open
 {
-    int MapEntryNum;
-    
-    if (!StrICmp(StrParam("%N\n", PRINTNAME_LEVEL), "Outpost"))
+    if (!KnownLevels)
     {
-        if (!NumVisitedLevels)
+        // Running the game for the first time
+        
+        KnownLevels = malloc (sizeof (LevelInfo));
+        CurrentLevel = NULL;
+        NumKnownLevels = 1;
+        
+        if (!KnownLevels)
         {
-            Log("\c[White]WARNING: \c[Brick]Do not start a game on the Outpost unless testing, or else the Level Teleporter will not function.\n");
-            Log("\c[Red]The Level Teleporter has been disabled.\n");
+            Log("\cgWARNING: \caCould not allocate \cd%d\ca bytes for level info!\n", sizeof (LevelInfo));
+            return;
         };
         
-        return;
+        if (GetLevelInfo(LEVELINFO_LEVELNUM) == 999)
+        {
+            // Special case for starting in the Outpost: Add MAP01 with some bogus info
+            
+            KnownLevels[0].LevelNum = 1;
+            KnownLevels[0].LumpName = "MAP01";
+            KnownLevels[0].NiceName = "Unknown Map";
+            KnownLevels[0].NeedsRealInfo = true;
+            
+            return;
+        }
+        else
+        {
+            CurrentLevel = &KnownLevels[0];
+            // So that FindCurrentLevelInfoIndex can pick it up immediately
+            CurrentLevel->LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+            CurrentLevel->NeedsRealInfo = true;
+        };
     };
     
-    if (CheckVisited(StrParam("%N\n", PRINTNAME_LEVEL)))
+    int index = FindLevelInfoIndex();
+    
+    if (index == -2 || index == -3)
+    {
+        // Outpost, or the map has no level number
+        CurrentLevel = NULL;
         return;
+    }
+    else if (index == -1)
+    {
+        // New map - We need to create new info for it
+        index = NumKnownLevels;
+        int newsize = sizeof(LevelInfo) * (NumKnownLevels + 1);
+        
+        register LevelInfo * TempArray = realloc (KnownLevels, newsize);
+        
+        if (!TempArray)
+        {
+            Log("\cgWARNING: \caCould not allocate \cd%d\ca bytes for level info!\n", newsize);
+            CurrentLevel = NULL;
+            return;
+        };
+        
+        KnownLevels = TempArray;
+        ++NumKnownLevels;
+        
+        CurrentLevel = &KnownLevels[index];
+        CurrentLevel->NeedsRealInfo = true;
+    }
+    else
+        CurrentLevel = &KnownLevels[index];
     
-    MapEntryNum = NumVisitedLevels;
-    ++NumVisitedLevels;
+    if (CurrentLevel->NeedsRealInfo)
+    {
+        CurrentLevel->LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+        
+        CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
+        CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
+        
+        CurrentLevel->MaxMonstersKilled = 0;
+        CurrentLevel->MaxItemsFound = 0;
+        CurrentLevel->MaxSecretsFound = 0;
+        CurrentLevel->ShortestTime = 0;
+        
+        CurrentLevel->TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+        CurrentLevel->TotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+        CurrentLevel->TotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        CurrentLevel->Par = GetLevelInfo(LEVELINFO_PAR_TIME);
+        CurrentLevel->Sucks = GetLevelInfo(LEVELINFO_SUCK_TIME);
+        
+        CurrentLevel->KillBonus = false;
+        CurrentLevel->ItemsBonus = false;
+        CurrentLevel->SecretsBonus = false;
+        CurrentLevel->AllBonus = false;
+        
+        CurrentLevel->NeedsRealInfo = false;
+    };
     
-    // Gotta do this the old-fashioned way
-    str LevelLump = StrParam("%N\n", PRINTNAME_LEVEL);
-    str LevelName = StrParam("%N\n", PRINTNAME_LEVELNAME);
-    for (int i = 0; i < 8 && i < StrLen(LevelLump); i++)
-        VisitedLevels[MapEntryNum].LumpName[i] = LevelLump[i];
-    for (int i = 0; i < 47 && i < StrLen(LevelName); i++)
-        VisitedLevels[MapEntryNum].NiceName[i] = LevelName[i];
+    if (CurrentLevel)
+        MapLoop();
+};
+
+script void MapLoop()
+{
+    int XPBonus;
+    int RankBonus;
+    
+    int MonstersLastKilled = 0;
+    int ItemsLastFound = 0;
+    int SecretsLastFound = 0;
+    Start:
+    int MonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+    int ItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+    int SecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+    
+    // Check to see if these are unobtainable first
+    if (!CurrentLevel->TotalMonsters) 
+        CurrentLevel->KillBonus = true;
+    if (!CurrentLevel->TotalItems) 
+        CurrentLevel->ItemsBonus = true;
+    if (!CurrentLevel->TotalSecrets) 
+        CurrentLevel->SecretsBonus = true;
+    if (!CurrentLevel->TotalMonsters && !CurrentLevel->TotalItems && !CurrentLevel->TotalSecrets) 
+        CurrentLevel->AllBonus = true;
+    
+    // MAX KILL / ITEM / SECRET TRACKERS
+    
+    if (MonstersKilled > CurrentLevel->MaxMonstersKilled)
+    {
+        CurrentLevel->MaxMonstersKilled = MonstersKilled;
+    };
+    
+    if (ItemsFound > CurrentLevel->MaxItemsFound)
+    {
+        // This counts only unique items
+        /*
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i) ||  Players(i).Mission.Type != MT_ITEMS)
+                continue;
+            
+            Players(i).Mission.Current += ItemsFound - CurrentLevel->MaxItemsFound;
+        };
+        */
+        
+        CurrentLevel->MaxItemsFound = ItemsFound;
+    };
+    
+    // This counts ALL items (Current behavior)
+    if (ItemsFound > ItemsLastFound)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i) || Players(i).Mission.Type != MT_ITEMS)
+                continue;
+            
+            Players(i).Mission.Current += ItemsFound - ItemsLastFound;
+        };
+    };
+    
+    // Ditto, with secrets. These SHOULD be unique-only, because they're not
+    // secrets anymore once you know about them.
+    
+    if (SecretsFound > CurrentLevel->MaxSecretsFound)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
+            
+            RankBonus = RankTable[Players(i).RankLevel] / 100;
+            Players(i).Rank += RankBonus;
+            
+            if (Players(i).Mission.Type != MT_SECRETS)
+                continue;
+
+            Players(i).Mission.Current += SecretsFound - CurrentLevel->MaxSecretsFound;
+        };
+        
+        CurrentLevel->MaxSecretsFound = SecretsFound;
+    };
+    
+    // KILL / ITEM / SECRET SPECIAL BONUSES
+    
+    if (MonstersKilled >= CurrentLevel->TotalMonsters && !CurrentLevel->KillBonus)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            SetActivator(Players(i).TID);
+            
+            FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
+            
+            XPBonus = XPTable[Players(i).Level] / 100;
+            Player.XP += XPBonus;
+            
+            HudMessage("100%% Monsters Killed!\n%d XP Bonus\n", XPBonus,
+                       HUDMSG_FADEOUT, 0, CR_BRICK, 1.5, 0.4, 3.0, 3.0);
+        };
+        SetActivator(0, AAPTR_NULL);
+        
+        CurrentLevel->KillBonus = true;
+    };
+
+    if (ItemsFound >= CurrentLevel->TotalItems && !CurrentLevel->ItemsBonus)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            SetActivator(Players(i).TID);
+            
+            FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
+            
+            Players(i).EP = Players(i).EPMax;
+            HealThing(1000000);
+            
+            HudMessage("100%% Items Found!\nFull HP/EP Restore\n",
+                       HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 3.0);
+        };
+        SetActivator(0, AAPTR_NULL);
+        
+        CurrentLevel->ItemsBonus = true;
+    };
+
+    if (SecretsFound >= CurrentLevel->TotalSecrets && !CurrentLevel->SecretsBonus)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            SetActivator(Players(i).TID);
+            
+            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
+            
+            RankBonus = RankTable[Players(i).RankLevel] / 20;
+            Players(i).Rank += RankBonus;
+
+            HudMessage("100%% Secrets Found!\n%d Rank Bonus\n", RankBonus,
+                       HUDMSG_FADEOUT, 0, CR_YELLOW, 1.5, 0.8, 3.0, 3.0);
+        };
+        SetActivator(0, AAPTR_NULL);
+        
+        CurrentLevel->SecretsBonus = true;
+    };
+    
+    if (CurrentLevel->KillBonus && CurrentLevel->ItemsBonus && CurrentLevel->SecretsBonus && !CurrentLevel->AllBonus)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            SetActivator(Players(i).TID);
+            
+            FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
+            
+            XPBonus = XPTable[Players(i).Level] / 100;
+            RankBonus = RankTable[Players(i).RankLevel] / 20;
+            
+            Players(i).XP += XPBonus;
+            Players(i).Rank += RankBonus;
+            
+            Players(i).EP = Players(i).EPMax;
+            HealThing(1000000);
+            
+            HudMessage("\ca100%% Monsters killed!\n\cn100%% Items Found!\n\ck100%% Secrets Found!\n\n\cj%d XP Bonus\n\ck%d Rank Bonus\n\cnFull HP/EP Restore\n",
+                       XPBonus, RankBonus,
+                       HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.2, 5.0, 5.0);
+            
+            // Payout Bonus Increase
+            Players(i).PayBonus++;
+        };
+        SetActivator(0, AAPTR_NULL);
+        
+        CurrentLevel->AllBonus = true;
+    };
+
+    Delay (1);
+    
+    MonstersLastKilled = MonstersKilled;
+    ItemsLastFound = ItemsFound;
+    SecretsLastFound = SecretsFound;
+    goto Start;
 };
 
 // Level exit script
 // Can't use NamedExecute in xlat, lame
 acscript void Exit(bool Secret) @ 30000
 {
-    NEEDVALIDPLAYER;
-    
     int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
     bool Waiting = true;
     
@@ -63,20 +340,27 @@ acscript void Exit(bool Secret) @ 30000
         };
     
     // Check par time and give bonus if you beat it
-    if ((Timer() / 35) <= ParTime && !(ParTime <= 0 || ParBonus))
+    if (ParTime > 0 && (Timer() / 35) < ParTime && (CurrentLevel && !CurrentLevel->ParBonus))
     {
-        int RankBonus = RankTable[Player.RankLevel] / 20;
-        
-        FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
-        ActivatorSound("misc/secret", 127);
-        
-        Player.Rank += RankBonus;
-        
-        HudMessageBold("Par Time Beaten!\n%d Rank Bonus\n",
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            SetActivator(Players(i).TID);
+            int RankBonus = RankTable[Players(i).RankLevel] / 20;
+            
+            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
+            HudMessage("Par Time Beaten!\n%d Rank Bonus\n",
                        RankBonus,
                        HUDMSG_FADEOUT, 0, CR_GOLD, 1.5, 0.5, 3.0, 2.0);
         
-        ParBonus = true;
+            
+            Players(i).Rank += RankBonus;
+        };
+        
+        AmbientSound("misc/secret", 127);
+        
+        if (CurrentLevel)
+            CurrentLevel->ParBonus = true;
+        
         Delay(35 * 5);
     };
     
@@ -85,18 +369,4 @@ acscript void Exit(bool Secret) @ 30000
         Exit_Secret(0)
     else
         Exit_Normal(0);
-};
-
-function bool CheckVisited(str Name)
-{
-    if (!NumVisitedLevels)
-        return false;
-    
-    for (int i = 0; i < NumVisitedLevels; i++)
-    {
-        if (StrICmp(StrParam("%s\n", VisitedLevels[i].LumpName), Name) == 0)
-            return true;
-    };
-    
-    return false;
 };

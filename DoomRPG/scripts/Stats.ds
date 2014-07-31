@@ -10,20 +10,19 @@
 #include "Utils.dh"
 
 // Globals
-static LevelBonusInfo[256] LevelBonus;
-static int                 RandomizedStartTokens;
-static int                 XPCurve;
+static int RandomizedStartTokens;
+static int XPCurve;
 
 // Stat Caps
 int SoftStatCap = 100;
 int HardStatCap = 1000;
 
 // XP & Rank Tables
-long int[MAX_LEVEL] XPTable;
-long int[MAX_RANK] RankTable;
+static long int[MAX_LEVEL] XPTable;
+static long int[MAX_RANK] RankTable;
 
 // Rank strings
-str[25] Ranks =
+static str[25] Ranks =
 {
     "None";
     "Pvt"; "Pvt +";
@@ -40,7 +39,7 @@ str[25] Ranks =
     "SgtMajMarCor"; "MSgtMarCor";
 };
 
-str[25] LongRanks =
+static str[25] LongRanks =
 {
     "None";
     "Private"; "Private +";
@@ -362,126 +361,6 @@ function void CheckRank()
         if (Player.PayBonus > 1000)
             Player.PayBonus = 1000;
     };
-};
-
-// Gives rewards for finding a secret and 100% Kills/Items/Secrets
-function void CheckLevelInfo()
-{
-    int LevelNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
-    int CurrentKills = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
-    int CurrentItems = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
-    int CurrentSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
-    
-    int XPBonus;
-    int RankBonus;
-    
-    // Skip these checks if we're in the Outpost
-    if (GetLevelInfo(LEVELINFO_LEVELNUM) == 999) return;
-    
-    // Set HUD Size and Font
-    SetHudSize(0, 0, false);
-    SetFont("SMALLFONT");
-    
-    // Check to see if any total stats are 0, if they are, silently flag them as received already
-    if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
-        LevelBonus[LevelNumber].KillBonus = true;
-    if (GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0)
-        LevelBonus[LevelNumber].ItemsBonus = true;
-    if (GetLevelInfo(LEVELINFO_TOTAL_SECRETS) == 0)
-        LevelBonus[LevelNumber].SecretsBonus = true;
-    
-    // If all the total stats are 0, no bonuses at all
-    if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0 && GetLevelInfo(LEVELINFO_TOTAL_ITEMS) == 0 && GetLevelInfo(LEVELINFO_TOTAL_SECRETS) == 0)
-        LevelBonus[LevelNumber].AllBonus = true;
-    
-    // 100% Kills
-    if (CurrentKills >= GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) && !LevelBonus[LevelNumber].KillBonus)
-    {
-        FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
-        
-        XPBonus = XPTable[Player.Level] / 100;
-        Player.XP += XPBonus;
-        
-        HudMessageBold("100%% Monsters Killed!\n%d XP Bonus\n", XPBonus,
-                       HUDMSG_FADEOUT, 0, CR_BRICK, 1.5, 0.4, 3.0, 3.0);
-        
-        LevelBonus[LevelNumber].KillBonus = true;
-    };
-    
-    // Find Items Mission Handling
-    if (CurrentItems > Items)
-        if (Player.Mission.Type == MT_ITEMS)
-            Player.Mission.Current++;
-    
-    // 100% Items
-    if (CurrentItems >= GetLevelInfo(LEVELINFO_TOTAL_ITEMS) && !LevelBonus[LevelNumber].ItemsBonus)
-    {
-        FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
-        
-        Player.EP = Player.EPMax;
-        HealThing(1000000);
-        
-        HudMessageBold("100%% Items Found!\nFull HP/EP Restore\n",
-                       HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 3.0);
-        
-        LevelBonus[LevelNumber].ItemsBonus = true;
-    };
-
-    // Secrets
-    if (CurrentSecretsFound > SecretsFound)
-    {
-        FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
-        
-        RankBonus = RankTable[Player.RankLevel] / 100;
-        Player.Rank += RankBonus;
-        
-        // Find Secrets Mission Handling
-        if (Player.Mission.Type == MT_SECRETS)
-            Player.Mission.Current++;
-        
-        // 100% Secrets
-        if (CurrentSecretsFound >= GetLevelInfo(LEVELINFO_TOTAL_SECRETS) && !LevelBonus[LevelNumber].SecretsBonus)
-        {
-            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
-            
-            RankBonus = RankTable[Player.RankLevel] / 20;
-            Player.Rank += RankBonus;
-
-            HudMessageBold("100%% Secrets Found!\n%d Rank Bonus\n", RankBonus,
-                           HUDMSG_FADEOUT, 0, CR_YELLOW, 1.5, 0.8, 3.0, 3.0);
-            
-            LevelBonus[LevelNumber].SecretsBonus = true;
-        };
-    };
-    
-    // All Kills/Items/Secrets 100%
-    if ((LevelBonus[LevelNumber].KillBonus && LevelBonus[LevelNumber].ItemsBonus && LevelBonus[LevelNumber].SecretsBonus) && !LevelBonus[LevelNumber].AllBonus)
-    {
-        FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
-        
-        XPBonus = XPTable[Player.Level] / 100;
-        RankBonus = RankTable[Player.RankLevel] / 20;
-        
-        Player.XP += XPBonus;
-        Player.Rank += RankBonus;
-        
-        Player.EP = Player.EPMax;
-        HealThing(1000000);
-        
-        HudMessageBold("\ca100%% Monsters killed!\n\cn100%% Items Found!\n\ck100%% Secrets Found!\n\n\cj%d XP Bonus\n\ck%d Rank Bonus\n\cnFull HP/EP Restore\n",
-                       XPBonus, RankBonus,
-                       HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.2, 5.0, 5.0);
-        
-        LevelBonus[LevelNumber].AllBonus = true;
-        
-        // Payout Bonus Increase
-        for (int i = 0; i < MAX_PLAYERS; i++)
-            Players(i).PayBonus++;
-    };
-    
-    Kills = CurrentKills;
-    Items = CurrentItems;
-    SecretsFound = CurrentSecretsFound;
 };
 
 function void CheckHealth()

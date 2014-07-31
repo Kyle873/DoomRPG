@@ -23,7 +23,7 @@
 str[2] Version =
 {
     "v0.9.11 Beta - Gotta Go Fast Edition";
-	"Thursday, July 31, 2014 at 2:25:52 AM";
+	"Thursday, July 31, 2014 at 02:46:20";
 };
 
 // Define the globals for SBARINFO/etc.
@@ -31,6 +31,7 @@ str[2] Version =
 // Flags
 static bool InBase;
 static bool Transported;
+static bool GlobalsInitialized;
     
 // Arrays
 static str[MAX_PLAYERS] PlayerWeapon;
@@ -71,9 +72,38 @@ global_array(50) int[MAX_PLAYERS] Shield @ 0;
 global_array(51) int[MAX_PLAYERS] ShieldCapacity @ 0;
 global_array(52) int[MAX_PLAYERS] ShieldHealth @ 0;
 
+script void GlobalInit() open
+{
+    if (!GlobalsInitialized)
+    {
+        // Version Info
+        Log("\cnDoom RPG %s (%s) loaded!\n", Version[0], Version[1]);
+    
+        // Compatibility checking
+        CheckCompatibility();
+
+        // Get the XP Curve from the CVAR
+        XPCurve = GetCVar("drpg_xp_curve");
+    
+        // Initialize XP & Rank Tables
+        InitTables();
+
+        GlobalsInitialized = true;
+    };
+    
+    // Create Translations
+    CreateTranslations();
+    
+    Delay (4);
+    
+    // Initial build of ItemData
+    BuildItemData();
+};
+
 // Init Script
 script void Init() enter
 {
+    Delay (1);
     // [KS] This needs to be done on its' own, so death exits don't rob you of your TID and break EVERYTHING EVER FFS
     if (ActivatorTID() == 0)
     {
@@ -127,21 +157,15 @@ script void Init() enter
             Player.EP = Player.Energy * 10;
         };
         
-        // Version Info
-        if (Arbitrator) Log("\cnDoom RPG %s (%s) loaded!\n", Version[0], Version[1]);
-        
-        // Compatibility checking
-        if (Arbitrator) CheckCompatibility();
-        
+        // Initialize skill array
+        InitSkills();
+    
         // Set the default skill indices
         for (int i = 0; i < MAX_SKILLKEYS; i++)
         {
             Player.SkillCategory[i] = -1;
             Player.SkillIndex[i] = -1;
         };
-        
-        // Get the XP Curve from the CVAR
-        XPCurve = GetCVar("drpg_xp_curve");
         
         // Set default selected skill to nothing
         Player.SkillSelected = -1;
@@ -152,15 +176,6 @@ script void Init() enter
         // Done first run
         Player.FirstRun = true;
     };
-    
-    // Initialize XP & Rank Tables
-    InitTables();
-    
-    // Initialize skill array
-    InitSkills();
-    
-    // Create Translations
-    CreateTranslations();
     
     // Small delay before initializing the scripts for mod compatibility
     Delay(4);
@@ -199,10 +214,6 @@ script void Init() enter
         Transported = false;
     };
     
-    // Store the current map number
-    MapNumber = GetLevelInfo(LEVELINFO_LEVELNUM);
-    if (MapNumber > 39) MapNumber = 39;
-    
     // Clear the Player's summons
     for (int i = 0; i < MAX_SUMMONS; i++)
         Player.SummonTID[i] = 0;
@@ -211,9 +222,6 @@ script void Init() enter
     // Clear the DropTID array
     for (int i = 0; i < MAX_DROPS; i++)
         Player.DropTID[i] = -1;
-    
-    // Initial build of ItemData
-    BuildItemData();
     
     // Initial build of SkillData
     BuildSkillData();
@@ -255,7 +263,6 @@ script void Loop()
     CheckToxicity();
     CheckStatusEffects();
     CheckStatusDamage();
-    CheckLevelInfo();
     CheckCapacity();
     CheckShopCard();
     CheckMission();

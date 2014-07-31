@@ -2,6 +2,7 @@
 
 #include "Arena.dh"
 #include "ItemData.dh"
+#include "Map.dh"
 #include "Menu.dh"
 #include "Mission.dh"
 #include "Outpost.dh"
@@ -11,9 +12,6 @@
 
 // Globals
 static int[ITEM_CATEGORIES][ITEM_MAX]   GlobalLocker;
-static char[9]                          LastVisited;
-static LevelTeleporterInfo[256]         VisitedLevels;
-static int                              NumVisitedLevels;
 static bool                             ShopSpecialBought;
 static int                              ShopSpecialTimer;
 static ItemInfo ItemSpace *             ShopSpecialItem;
@@ -71,14 +69,7 @@ acscript void EnterOutpost()
     InBase = true;
     
     // Assign the current level to the level choice
-    for (int i = 0; i < NumVisitedLevels; i++)
-    {
-        if (!StrICmp(StrParam("%s\n", LastVisited), StrParam("%s\n", VisitedLevels[i].LumpName)))
-        {
-            LevelChoice = i;
-            break;
-        };
-    };
+    LevelChoice = LastVisitedLevel;
     
     // Use alternate music if you have a high Notoriety
     if (OutpostNotoriety >= 3)
@@ -186,13 +177,6 @@ acscript void LevelTransport()
     // If the Marines are hostile and the bosses aren't dead, terminate
     if (MarinesHostile && ThingCount(0, MarineBossTID) > 0) return;
     
-    if (NumVisitedLevels == 0)
-    {
-        SetFont("BIGFONT");
-        HudMessage("The teleporter has been disabled.\n", HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 0.5);
-        return;
-    };
-    
     SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     Player.OutpostMenu = OMENU_LEVELTRANSPORT;
     
@@ -203,12 +187,14 @@ acscript void LevelTransport()
             LevelChoice = 0;
         
         // And Overflow
-        if (LevelChoice >= NumVisitedLevels)
-            LevelChoice = NumVisitedLevels - 1;
+        if (LevelChoice >= NumKnownLevels)
+            LevelChoice = NumKnownLevels - 1;
+        
+        LevelInfo * TeleDest = &KnownLevels[LevelChoice];
         
         // Text
         SetFont("BIGFONT");
-        HudMessage("Choose Level:\n\cf%s: %s\n", VisitedLevels[LevelChoice].LumpName, VisitedLevels[LevelChoice].NiceName, HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 1.5, 0.5, 0.05, 0.5);
+        HudMessage("Choose Level:\n\cf%s: %s\n", TeleDest->LumpName, TeleDest->NiceName, HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 1.5, 0.5, 0.05, 0.5);
         
         // Input
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -224,12 +210,12 @@ acscript void LevelTransport()
             ActivatorSound("menu/move", 127);
             LevelChoice -= 10;
         };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && LevelChoice < NumVisitedLevels - 1)
+        if (Buttons == BT_BACK && OldButtons != BT_BACK && LevelChoice < NumKnownLevels - 1)
         {
             ActivatorSound("menu/move", 127);
             LevelChoice++;
         };
-        if (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && LevelChoice < NumVisitedLevels - 1)
+        if (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && LevelChoice < NumKnownLevels - 1)
         {
             ActivatorSound("menu/move", 127);
             LevelChoice += 10;
@@ -289,7 +275,7 @@ acscript void LevelTransport()
             InBase = false;
             Transported = true;
             if (BossDead) OutpostNotoriety++;
-            ChangeLevel(StrParam("%s\n", VisitedLevels[LevelChoice].LumpName), 0, CHANGELEVEL_NOINTERMISSION, -1);
+            ChangeLevel(TeleDest->LumpName, 0, CHANGELEVEL_NOINTERMISSION, -1);
             break;
         };
         if (Buttons == BT_SPEED)
