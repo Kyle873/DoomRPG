@@ -6,8 +6,6 @@ set SRC=.\scripts
 set OBJ=.\acs
 set ACC=DH-acc --named-scripts --near-pointers --use-chunk-ATAG --debug-error-pos -D__LIBDS_NOLIB --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc -i %SRC%\lib
 
-_timestamp
-
 rem Standard Libraries
 echo Compiling Standard Libraries
 echo    - stdlib
