@@ -253,6 +253,8 @@ acscript void MonsterDump()
     Log(" HealthBar: %d\n", Stats->HealthBar);
     Log(" RenderStyle: %d\n", Stats->RenderStyle);
     Log(" DRPG Flags: %d\n", Stats->Flags);
+    Log(" Reinforcement: %d\n", Stats->Reinforcement);
+    Log(" Assassination Target: %d\n", Stats->Target);
     
     Log("\cd===== MONSTER STATS =====\n");
     Log(" Level: %d\n", Stats->Level);
@@ -516,26 +518,7 @@ script void MonsterInitStats(int StatFlags)
     };
     
     // Cap Level and Stats
-    if (MonsterLevel <= 0)
-        MonsterLevel = 1;
-    if (MonsterLevel > 1000)
-        MonsterLevel = 1000;
-    if (MonsterStrength > 1000)
-        MonsterStrength = 1000;
-    if (MonsterDefense > 1000)
-        MonsterDefense = 1000;
-    if (MonsterVitality > 1000)
-        MonsterVitality = 1000;
-    if (MonsterEnergy > 1000)
-        MonsterEnergy = 1000;
-    if (MonsterRegeneration > 1000)
-        MonsterRegeneration = 1000;
-    if (MonsterAgility > 1000)
-        MonsterAgility = 1000;
-    if (MonsterCapacity > 1000)
-        MonsterCapacity = 1000;
-    if (MonsterLuck > 1000)
-        MonsterLuck = 1000;
+    CapMonsterStats(Stats);
     
     // We need to make sure we only pass the speed to the monster if it's being initially created
     if (!StatFlags)
@@ -599,6 +582,9 @@ script void MonsterStatsHandler()
         SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (Stats->Defense / 100)));
         OldDefense = Stats->Defense;
     };
+    
+    // Cap Level and Stats
+    CapMonsterStats(Stats);
     
     // Levelup handling via White Aura radius
     if (CheckInventory("DRPGMonsterLevelup"))
@@ -673,6 +659,7 @@ script void MonsterLevelupHandler()
     // Delay Stagger
     Delay(GetMonsterID(0) % 4);
     
+    int Energy;
     int DelayTime;
     
     // Pointer
@@ -681,7 +668,9 @@ script void MonsterLevelupHandler()
     Start:
     
     // Calculate the Delay Time
-    DelayTime = (Stats->Level >= 1000 ? 4 : 35) * (int)((60.0 - ((fixed)Stats->Energy / 20.0)));
+    Energy = Stats->Energy;
+    if (Energy > 1000) Energy = 1000; // Double fucking check, just to be 100% sure that we don't cause a runaway
+    DelayTime = 35 * (int)((60.0 - ((fixed)Energy / 16.75)));
     if (DelayTime < 35)
         DelayTime = 35;
     
@@ -694,8 +683,8 @@ script void MonsterLevelupHandler()
     if (Stats->Aura != 3 && Stats->Aura != 10)
         return;
     
-    // White Aura monsters levelup monsters near them
-    if (Stats->Aura == 3)
+    // White and Shadow Aura monsters levelup monsters near them
+    if (Stats->Aura == 3 || Stats->Aura == 10)
         GiveInventory("DRPGMonsterLevelupGiver", 1);
     
     if (Stats->Level >= 1000)
@@ -711,6 +700,9 @@ script void MonsterLevelupHandler()
     Stats->Agility += Random(1, GameSkill());
     Stats->Capacity += Random(1, GameSkill());
     Stats->Luck += Random(1, GameSkill());
+    
+    // Cap Level and Stats
+    CapMonsterStats(Stats);
     
     // Re-calculate the monster's threat level
     Stats->Threat = CalculateMonsterThreatLevel(Stats);
@@ -1157,6 +1149,30 @@ script int WhoKilledMe()
 {
     SetActivatorToTarget(0);
     return PlayerNumber();
+};
+
+function void CapMonsterStats(MonsterStatsPtr Stats)
+{
+    if (Stats->Level <= 0)
+        Stats->Level = 1;
+    if (Stats->Level > 1000)
+        Stats->Level = 1000;
+    if (Stats->Strength > 1000)
+        Stats->Strength = 1000;
+    if (Stats->Defense > 1000)
+        Stats->Defense = 1000;
+    if (Stats->Vitality > 1000)
+        Stats->Vitality = 1000;
+    if (Stats->Energy > 1000)
+        Stats->Energy = 1000;
+    if (Stats->Regeneration > 1000)
+        Stats->Regeneration = 1000;
+    if (Stats->Agility > 1000)
+        Stats->Agility = 1000;
+    if (Stats->Capacity > 1000)
+        Stats->Capacity = 1000;
+    if (Stats->Luck > 1000)
+        Stats->Luck = 1000;
 };
 
 function int CalculateMonsterThreatLevel(MonsterStatsPtr Stats)
