@@ -5,57 +5,51 @@
 #include "Outpost.dh"
 
 // Level Info
-static LevelInfo * CurrentLevel;
-static LevelInfo * KnownLevels;
+static LevelInfo *CurrentLevel;
+static LevelInfo *KnownLevels;
 static int NumKnownLevels;
 static int LastVisitedLevel;
 
-function int FindLevelInfoIndex(int levelnum)
+function int FindLevelInfoIndex(int LevelNum)
 {
-    if (!levelnum)
-        levelnum = GetLevelInfo(LEVELINFO_LEVELNUM);
+    if (!LevelNum)
+        LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
 
-    if (levelnum == 999)
+    if (LevelNum == 999)
         return -2; // Special value to mean the Outpost.
-    if (levelnum == 0)
+    if (LevelNum == 0)
         return -3; // The map has a bogus level number, so we just don't know.
     
-    for (int i = 0; i < NumKnownLevels; ++i)
-    {
-        if (KnownLevels[i].LevelNum == levelnum)
+    for (int i = 0; i < NumKnownLevels; i++)
+        if (KnownLevels[i].LevelNum == LevelNum)
             return i;
-    };
+    
     return -1;
 };
-
-extern script void MapLoop();
 
 // Map Init Script
 script void MapInit() open
 {
+    // Running the game for the first time
     if (!KnownLevels)
     {
-        // Running the game for the first time
-        
-        KnownLevels = malloc (sizeof (LevelInfo));
+        KnownLevels = malloc(sizeof(LevelInfo));
         CurrentLevel = NULL;
         NumKnownLevels = 1;
         
         if (!KnownLevels)
         {
-            Log("\cgWARNING: \caCould not allocate \cd%d\ca bytes for level info!\n", sizeof (LevelInfo));
+            Log("\cgWARNING: \caCould not allocate \cd%d\ca bytes for level info!\n", sizeof(LevelInfo));
             return;
         };
         
+        // Special case for starting in the Outpost: Add MAP01 with some bogus info
         if (GetLevelInfo(LEVELINFO_LEVELNUM) == 999)
         {
-            // Special case for starting in the Outpost: Add MAP01 with some bogus info
-            
             KnownLevels[0].LevelNum = 1;
             KnownLevels[0].LumpName = "MAP01";
             KnownLevels[0].NiceName = "Unknown Map";
             KnownLevels[0].NeedsRealInfo = true;
-            
             return;
         }
         else
@@ -67,37 +61,36 @@ script void MapInit() open
         };
     };
     
-    int index = FindLevelInfoIndex();
+    int Index = FindLevelInfoIndex();
     
-    if (index == -2 || index == -3)
+    // Outpost, or the map has no level number
+    if (Index == -2 || Index == -3)
     {
-        // Outpost, or the map has no level number
         CurrentLevel = NULL;
         return;
     }
-    else if (index == -1)
+    else if (Index == -1) // New map - We need to create new info for it
     {
-        // New map - We need to create new info for it
-        index = NumKnownLevels;
-        int newsize = sizeof(LevelInfo) * (NumKnownLevels + 1);
+        Index = NumKnownLevels;
+        int NewSize = sizeof(LevelInfo) * (NumKnownLevels + 1);
         
-        register LevelInfo * TempArray = realloc (KnownLevels, newsize);
+        register LevelInfo *TempArray = realloc(KnownLevels, NewSize);
         
         if (!TempArray)
         {
-            Log("\cgWARNING: \caCould not allocate \cd%d\ca bytes for level info!\n", newsize);
+            Log("\cgWARNING: \caCould not allocate \cd%d\ca bytes for level info!\n", NewSize);
             CurrentLevel = NULL;
             return;
         };
         
         KnownLevels = TempArray;
-        ++NumKnownLevels;
+        NumKnownLevels++;
         
-        CurrentLevel = &KnownLevels[index];
+        CurrentLevel = &KnownLevels[Index];
         CurrentLevel->NeedsRealInfo = true;
     }
     else
-        CurrentLevel = &KnownLevels[index];
+        CurrentLevel = &KnownLevels[Index];
     
     if (CurrentLevel->NeedsRealInfo)
     {
@@ -137,27 +130,26 @@ script void MapLoop()
     int MonstersLastKilled = 0;
     int ItemsLastFound = 0;
     int SecretsLastFound = 0;
+    
     Start:
     int MonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
     int ItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
     int SecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
     
     // Check to see if these are unobtainable first
-    if (!CurrentLevel->TotalMonsters) 
+    if (CurrentLevel->TotalMonsters == 0)
         CurrentLevel->KillBonus = true;
-    if (!CurrentLevel->TotalItems) 
+    if (CurrentLevel->TotalItems == 0)
         CurrentLevel->ItemsBonus = true;
-    if (!CurrentLevel->TotalSecrets) 
+    if (CurrentLevel->TotalSecrets == 0)
         CurrentLevel->SecretsBonus = true;
-    if (!CurrentLevel->TotalMonsters && !CurrentLevel->TotalItems && !CurrentLevel->TotalSecrets) 
+    if (CurrentLevel->TotalMonsters == 0 && CurrentLevel->TotalItems == 0 && CurrentLevel->TotalSecrets == 0)
         CurrentLevel->AllBonus = true;
     
     // MAX KILL / ITEM / SECRET TRACKERS
     
     if (MonstersKilled > CurrentLevel->MaxMonstersKilled)
-    {
         CurrentLevel->MaxMonstersKilled = MonstersKilled;
-    };
     
     if (ItemsFound > CurrentLevel->MaxItemsFound)
     {
@@ -189,7 +181,6 @@ script void MapLoop()
     
     // Ditto, with secrets. These SHOULD be unique-only, because they're not
     // secrets anymore once you know about them.
-    
     if (SecretsFound > CurrentLevel->MaxSecretsFound)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
@@ -230,6 +221,7 @@ script void MapLoop()
             HudMessage("100%% Monsters Killed!\n%d XP Bonus\n", XPBonus,
                        HUDMSG_FADEOUT, 0, CR_BRICK, 1.5, 0.4, 3.0, 3.0);
         };
+        
         SetActivator(0, AAPTR_NULL);
         
         CurrentLevel->KillBonus = true;
@@ -252,6 +244,7 @@ script void MapLoop()
             HudMessage("100%% Items Found!\nFull HP/EP Restore\n",
                        HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 3.0);
         };
+        
         SetActivator(0, AAPTR_NULL);
         
         CurrentLevel->ItemsBonus = true;
@@ -274,6 +267,7 @@ script void MapLoop()
             HudMessage("100%% Secrets Found!\n%d Rank Bonus\n", RankBonus,
                        HUDMSG_FADEOUT, 0, CR_YELLOW, 1.5, 0.8, 3.0, 3.0);
         };
+        
         SetActivator(0, AAPTR_NULL);
         
         CurrentLevel->SecretsBonus = true;
@@ -306,16 +300,18 @@ script void MapLoop()
             // Payout Bonus Increase
             Players(i).PayBonus++;
         };
+        
         SetActivator(0, AAPTR_NULL);
         
         CurrentLevel->AllBonus = true;
     };
 
-    Delay (1);
+    Delay(1);
     
     MonstersLastKilled = MonstersKilled;
     ItemsLastFound = ItemsFound;
     SecretsLastFound = SecretsFound;
+    
     goto Start;
 };
 

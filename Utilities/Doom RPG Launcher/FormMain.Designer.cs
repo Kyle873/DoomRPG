@@ -90,6 +90,8 @@
             this.buttonCheckUpdates = new System.Windows.Forms.Button();
             this.timer = new System.Windows.Forms.Timer(this.components);
             this.timerPulse = new System.Windows.Forms.Timer(this.components);
+            this.tabPageLoadOrder = new System.Windows.Forms.TabPage();
+            this.listViewLoadOrder = new System.Windows.Forms.ListView();
             this.tabControlMain.SuspendLayout();
             this.tabPageBasic.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMapNumber)).BeginInit();
@@ -102,6 +104,7 @@
             this.tabPageModsPatches.SuspendLayout();
             this.tabPageCredits.SuspendLayout();
             this.statusStrip.SuspendLayout();
+            this.tabPageLoadOrder.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControlMain
@@ -109,6 +112,7 @@
             this.tabControlMain.Controls.Add(this.tabPageBasic);
             this.tabControlMain.Controls.Add(this.tabPageMultiplayer);
             this.tabControlMain.Controls.Add(this.tabPageModsPatches);
+            this.tabControlMain.Controls.Add(this.tabPageLoadOrder);
             this.tabControlMain.Controls.Add(this.tabPageCredits);
             this.tabControlMain.Dock = System.Windows.Forms.DockStyle.Top;
             this.tabControlMain.Location = new System.Drawing.Point(0, 0);
@@ -438,6 +442,11 @@
             0,
             0,
             0});
+            this.numericUpDownDuplex.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             this.numericUpDownDuplex.Name = "numericUpDownDuplex";
             this.numericUpDownDuplex.Size = new System.Drawing.Size(120, 20);
             this.numericUpDownDuplex.TabIndex = 6;
@@ -729,6 +738,25 @@
             this.timerPulse.Interval = 10;
             this.timerPulse.Tick += new System.EventHandler(this.timerPulse_Tick);
             // 
+            // tabPageLoadOrder
+            // 
+            this.tabPageLoadOrder.Controls.Add(this.listViewLoadOrder);
+            this.tabPageLoadOrder.Location = new System.Drawing.Point(4, 22);
+            this.tabPageLoadOrder.Name = "tabPageLoadOrder";
+            this.tabPageLoadOrder.Size = new System.Drawing.Size(420, 298);
+            this.tabPageLoadOrder.TabIndex = 4;
+            this.tabPageLoadOrder.Text = "Load Order";
+            this.tabPageLoadOrder.UseVisualStyleBackColor = true;
+            // 
+            // listViewLoadOrder
+            // 
+            this.listViewLoadOrder.Dock = System.Windows.Forms.DockStyle.Left;
+            this.listViewLoadOrder.Location = new System.Drawing.Point(0, 0);
+            this.listViewLoadOrder.Name = "listViewLoadOrder";
+            this.listViewLoadOrder.Size = new System.Drawing.Size(293, 298);
+            this.listViewLoadOrder.TabIndex = 0;
+            this.listViewLoadOrder.UseCompatibleStateImageBehavior = false;
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -765,6 +793,7 @@
             this.tabPageCredits.ResumeLayout(false);
             this.statusStrip.ResumeLayout(false);
             this.statusStrip.PerformLayout();
+            this.tabPageLoadOrder.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -832,6 +861,8 @@
         private System.Windows.Forms.Label labelBranch;
         private System.Windows.Forms.Button buttonRefresh;
         private System.Windows.Forms.Timer timerPulse;
+        private System.Windows.Forms.TabPage tabPageLoadOrder;
+        private System.Windows.Forms.ListView listViewLoadOrder;
     }
 }
 

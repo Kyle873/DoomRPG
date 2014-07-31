@@ -18,10 +18,11 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 9, 1);
+        Version version = new Version(0, 9, 2);
         Config config = new Config();
         string currentBranch = string.Empty;
         List<PatchInfo> patches = new List<PatchInfo>();
+        Dictionary<int, string> loadOrder = new Dictionary<int, string>();
 
         // Extensions of known mod filetypes
         string[] fileTypes =
@@ -55,6 +56,10 @@ namespace DoomRPG
 
             // Load Credits
             LoadCredits();
+        }
+
+        private void ProcessLoadOrder()
+        {
         }
 
         private void LoadCredits()
