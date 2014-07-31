@@ -676,17 +676,13 @@ script void MonsterLevelupHandler()
     DelayTime = 35 * (int)((60.0 - ((fixed)Energy / 16.75)));
     if (DelayTime < 35)
         DelayTime = 35;
-    
-    if (!CheckInventory("DRPGMonsterLevelup"))
-        Delay(DelayTime);
-    
-    if (!CheckInventory("DRPGMonsterLevelup") && Stats->Aura != 3 && Stats->Aura != 10)
-        return;
+    Delay(DelayTime);
     
     // White and Shadow Aura monsters levelup monsters near them
     if (Stats->Aura == 3 || Stats->Aura == 10)
         GiveInventory("DRPGMonsterLevelupGiver", 1);
     
+    // Loop back to the top if the monster is max level
     if (Stats->Level >= 1000)
         goto Start;
     
@@ -1124,6 +1120,9 @@ script int WhoKilledMe()
 
 function void MonsterLevelup(MonsterStatsPtr Stats)
 {
+    // If the monster is max level, return
+    if (Stats->Level >= 1000) return;
+    
     // Apply the stats to the monster
     Stats->Level++;
     Stats->Strength += Random(1, GameSkill());
