@@ -442,6 +442,9 @@ function void CheckStats()
     {
         Player.Speed = Player.Speed * (1.0 / ((fixed)Player.StatusIntensity[SE_FATIGUE] + 1));
         Player.JumpHeight = Player.JumpHeight * (1.0 / ((fixed)Player.StatusIntensity[SE_FATIGUE] + 1));
+        
+        if (Player.StatusIntensity[SE_FATIGUE] > 3)
+            SetMugShotState("Rampage");
     };
     
     // Brutal Doom Compatibility
@@ -849,11 +852,17 @@ function void CheckStatusEffects()
     };
     
     if (Player.StatusType[SE_POISON]) // Poison
-        if ((Timer() % 35) == 0 && (GetActorProperty(Player.TID, APROP_Health) - Player.StatusIntensity[SE_POISON]) > 1)
-        {
-            SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) - Player.StatusIntensity[SE_POISON]);
-            FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0.0, Player.StatusIntensity[SE_POISON] * 0.25);
-        };
+        if ((Timer() % 35) == 0)
+            if (Player.Shield.Active && Player.Shield.Health - Player.StatusIntensity[SE_POISON] > 0)
+            {
+                Player.Shield.Health -= Player.StatusIntensity[SE_POISON];
+                FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0.0, Player.StatusIntensity[SE_POISON] * 0.25);
+            }
+            else if (GetActorProperty(Player.TID, APROP_Health) - Player.StatusIntensity[SE_POISON] > 0)
+            {
+                SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) - Player.StatusIntensity[SE_POISON]);
+                FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0.0, Player.StatusIntensity[SE_POISON] * 0.25);
+            };
     
     if (Player.StatusType[SE_CORROSION]) // Corrosion
         if ((Timer() % 35) == 0 && CheckInventory("Armor") > 0)
