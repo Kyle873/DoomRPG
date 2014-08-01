@@ -196,18 +196,29 @@ script void InitMission()
         {
             int chosen = PotentialTargets[Random(0, NumPTs - 1)];
             
-            Monsters[chosen].Target = true;
+            Monsters[chosen].Target = PlayerNumber() + 1;
             Monsters[chosen].Aura = 10;
             
-            Monsters[chosen].Level += Player.Mission.Difficulty * 10;
-            Monsters[chosen].Strength += Player.Mission.Difficulty * 10;
-            Monsters[chosen].Defense += Player.Mission.Difficulty * 10;
-            Monsters[chosen].Vitality += Player.Mission.Difficulty * 10;
-            Monsters[chosen].Energy += Player.Mission.Difficulty * 10;
-            Monsters[chosen].Regeneration += Player.Mission.Difficulty * 10;
-            Monsters[chosen].Agility += Player.Mission.Difficulty * 10;
-            Monsters[chosen].Capacity += Player.Mission.Difficulty * 10;
-            Monsters[chosen].Luck += Player.Mission.Difficulty * 10;
+            int LevelMod = Player.Mission.Difficulty * Player.Level + Random(0, 100);
+            
+            Monsters[chosen].Level += LevelMod;
+            
+            Monsters[chosen].Strength += Random(LevelMod, LevelMod * GameSkill());
+            Monsters[chosen].Defense += Random(LevelMod, LevelMod * GameSkill());
+            Monsters[chosen].Vitality += Random(LevelMod, LevelMod * GameSkill());
+            Monsters[chosen].Energy += Random(LevelMod, LevelMod * GameSkill());
+            Monsters[chosen].Regeneration += Random(LevelMod, LevelMod * GameSkill());
+            Monsters[chosen].Agility += Random(LevelMod, LevelMod * GameSkill());
+            Monsters[chosen].Capacity += Random(LevelMod, LevelMod * GameSkill());
+            Monsters[chosen].Luck += Random(LevelMod, LevelMod * GameSkill());
+            
+            CapMonsterStats(&Monsters[chosen]);
+            
+            Monsters[chosen].Threat = CalculateMonsterThreatLevel(&Monsters[chosen]);
+            Monsters[chosen].HealthMax = CalculateMonsterMaxHealth(&Monsters[chosen]);
+            SetActorProperty (0, APROP_Health, Monsters[chosen].HealthMax);
+            SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(&Monsters[chosen]));
+            SetInventory("DRPGCredits", Monsters[chosen].Capacity);
             
             if (GetCVar("drpg_debug"))
                 Log("\cdDEBUG: \c-Mission Target Chosen: \ca%d\n", chosen);
@@ -280,9 +291,8 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
                 Players(Killer).Mission.Current++;
         
         // Assassination Mission
-        if (Players(Killer).Mission.Type == MT_ASSASSINATION)
-            if (Stats->Target)
-                Players(Killer).Mission.Current++;
+        if (Stats->Target)
+            Players(Stats->Target - 1).Mission.Current++;
     };
 };
 
