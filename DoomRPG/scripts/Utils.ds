@@ -1443,3 +1443,37 @@ function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XA
     
     return ItemTID;
 };
+
+function bool CheckInput(int Key, int State)
+{
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+    
+    if (State == KEY_PRESSED)
+        return (Buttons & Key && !(Buttons & Key));
+    if (State == KEY_ONLYPRESSED)
+        return (Buttons == Key && Buttons != Key);
+    if (State == KEY_DOWN)
+        return (Buttons & Key);
+    if (State == KEY_UP)
+        return (OldButtons & Key);
+};
+
+// This shit doesn't work at all because ZDoom is fucking stupid or something, fuck if I know
+function void LogMessage(str Message, int Level)
+{
+    bool DebugMode = (ActivatorTID() == Player.TID ? GetCVar("drpg_debug") : GetUserCVar(PlayerNumber(), "drpg_debug"));
+    
+    if (Level == LOG_DEBUG)
+        Message = StrParam("\cdDEBUG: \c-%s\n", Message);
+    if (Level == LOG_WARNING)
+        Message = StrParam("\ciWARNING: \c-%s\n", Message);
+    if (Level == LOG_ERROR)
+        Message = StrParam("\cgERROR: \c-%s\n", Message);
+    
+    // Don't log the message if the caller isn't in Debug Mode
+    if (Level == LOG_DEBUG && !DebugMode)
+        return;
+    
+    Log("%s\n", Message);
+};
