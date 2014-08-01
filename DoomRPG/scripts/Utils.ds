@@ -664,6 +664,79 @@ function void CreateTranslations()
     CreateTranslationEnd();
 };
 
+// PrintSprite Utility Function
+function void PrintSprite(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime)
+{
+    SetFont(Sprite);
+    HudMessage("A\n", HUDMSG_PLAIN, ID, CR_UNTRANSLATED, X, Y, DelayTime);
+};
+
+function void PrintSpriteFade(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime, fixed HoldTime)
+{
+    SetFont(Sprite);
+    HudMessage("A\n", HUDMSG_FADEOUT, ID, CR_UNTRANSLATED, X, Y, DelayTime, HoldTime);
+};
+
+function void PrintSpriteAlpha(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime, fixed Alpha)
+{
+    SetFont(Sprite);
+    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, DelayTime, Alpha);
+};
+
+function void PrintSpritePulse(str Sprite, int ID, fixed X, fixed Y, fixed Alpha, fixed Speed, fixed Radius, bool AddBlend)
+{
+    SetFont(Sprite);
+    
+    if (AddBlend)
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius))
+    else
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
+};
+
+function void PrintTextWiggle(str Text, int ID, int Color, fixed X, fixed Y, fixed DelayTime, fixed Speed, fixed Spacing, fixed Radius)
+{
+    for (int i = 0; i < StrLen(Text); i++)
+    {
+        fixed XOff = X + (Spacing * i);
+        fixed YOff = Y + Sin((Timer() + i) / Speed) * Radius;
+        HudMessage("%c\n", Text[i], HUDMSG_PLAIN, ID, Color, XOff, YOff, DelayTime);
+    };
+};
+
+function void ClearMessage(int ID)
+{
+    HudMessage("\n", HUDMSG_PLAIN, ID, CR_WHITE, 0, 0, 0.05);
+};
+
+function int CheckInventoryTID(int TID, str Item)
+{
+    return (TID == 0 ? CheckInventory(Item) : CheckActorInventory(TID, Item));
+};
+
+function int SetInventory(str Item, int Count)
+{
+    int n = Count - CheckInventory(Item);
+    
+    if (n > 0)
+        GiveInventory(Item, n)
+    else if (n < 0)
+        TakeInventory(Item, -n);
+    
+    return n;
+};
+
+function int SetActorInventory(int tid, str item, int count)
+{
+    int n = count - CheckActorInventory (tid, item);
+    
+    if (n > 0)
+        GiveActorInventory(tid, item, n)
+    else if (n < 0)
+        TakeActorInventory(tid, item, -1 * n);
+    
+    return n;
+};
+
 // Drop your entire inventory on the ground
 function void DropInventory()
 {
@@ -836,6 +909,22 @@ function bool Nova(str Type, int Projectiles)
     return true;
 };
 
+// Formats time into MM:SS for display with Print or HudMessage
+function str FormatTime(int t)
+{
+    int Minutes = t / 35 / 60;
+    int Seconds = t / 35 % 60;
+    str Time;
+    
+    // Calculate Minutes and Seconds
+    if (Seconds < 10)
+        Time = StrParam("%d:0%d\n", Minutes, Seconds)
+    else
+        Time = StrParam("%d:%d\n", Minutes, Seconds);
+        
+    return Time;
+};
+
 // Spawn an Aura on the given TID
 function void SpawnAura(int TID, int Type, bool ForceFancy)
 {
@@ -846,14 +935,10 @@ function void SpawnAura(int TID, int Type, bool ForceFancy)
     fixed Height = GetActorPropertyFixed(TID, APROP_Height);
     int Angle = GetActorAngle(TID) * 256;
     bool SpawnOK = false;
-    bool IsPlayer = (ActivatorTID() == Player.TID);
+    bool IsPlayer = (ClassifyActor(TID) & ACTOR_PLAYER);
     int SimpleType = GetCVar("drpg_simple_auras");
-    bool Simple = (GetCVar("drpg_simple_auras") > 0 && !ForceFancy);
+    bool Simple = (IsPlayer ? (SimpleType == 1 || SimpleType == 3) : (SimpleType == 2 || SimpleType == 3));
     int AuraCount;
-    
-    // Check for simple Auras - Broken because I have no idea, IsPlayer always returns true regardless so this will never work
-    // Log("IsPlayer: %d (TID %d, Activator %d)\n", IsPlayer, TID, ActivatorTID());
-    // Simple = (IsPlayer ? (SimpleType == 1 || SimpleType == 3) : (SimpleType == 2 || SimpleType == 3));
     
     // Calculate number of active Auras
     if (IsPlayer)
@@ -864,10 +949,15 @@ function void SpawnAura(int TID, int Type, bool ForceFancy)
     // Create rotation for simple Aura icons
     if (IsPlayer && Simple && AuraCount > 1)
     {
-        fixed Time = (fixed)Timer() + ((fixed)Type * 14.5);
-        X += Sin(Time / 128.0) * 32.0;
-        Y += Cos(Time / 128.0) * 32.0;
-        Z += 4.0 + Sin(Timer() / 64.0) * 4.0;
+        if (Type == 10) // Shadow
+            Z += 4.0 + Sin(Timer() / 64.0) * 4.0
+        else
+        {
+            fixed Time = (fixed)Timer() + ((fixed)Type * 14.5);
+            X += Sin(Time / 128.0) * 32.0;
+            Y += Cos(Time / 128.0) * 32.0;
+            Z += 4.0 + Sin(Timer() / 64.0) * 4.0;
+        };
     };
     
     if (Type != 0 && Type != 10 && IsStealth(TID))
@@ -900,8 +990,9 @@ function void SpawnAura(int TID, int Type, bool ForceFancy)
     {
         case 0: // Friendly Monster
             if (!Simple)
-                SpawnForced("DRPGFriendlyAura", X, Y, Z + 32.0, 0, Angle);
-            SpawnForced("DRPGFriendlyIndicator", X, Y, Z + Height + 8.0, 0, Angle);
+                SpawnForced("DRPGFriendlyAura", X, Y, Z + 32.0, 0, Angle)
+            else
+                SpawnForced("DRPGFriendlyIndicator", X, Y, Z + Height + 8.0, 0, Angle);
             break;
         case 1: // Red Aura - Strength
             if (!Simple)
@@ -970,97 +1061,10 @@ function void SpawnAura(int TID, int Type, bool ForceFancy)
     {
         SetUserVariable(AuraTID, "user_radius", (int)Radius);
         SetUserVariable(AuraTID, "user_height", (int)Height);
-        Thing_ChangeTID(AuraTID, 0);
     };
-};
-
-// PrintSprite Utility Function
-function void PrintSprite(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime)
-{
-    SetFont(Sprite);
-    HudMessage("A\n", HUDMSG_PLAIN, ID, CR_UNTRANSLATED, X, Y, DelayTime);
-};
-
-function void PrintSpriteFade(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime, fixed HoldTime)
-{
-    SetFont(Sprite);
-    HudMessage("A\n", HUDMSG_FADEOUT, ID, CR_UNTRANSLATED, X, Y, DelayTime, HoldTime);
-};
-
-function void PrintSpriteAlpha(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime, fixed Alpha)
-{
-    SetFont(Sprite);
-    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, DelayTime, Alpha);
-};
-
-function void PrintSpritePulse(str Sprite, int ID, fixed X, fixed Y, fixed Alpha, fixed Speed, fixed Radius, bool AddBlend)
-{
-    SetFont(Sprite);
     
-    if (AddBlend)
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius))
-    else
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
-};
-
-function void PrintTextWiggle(str Text, int ID, int Color, fixed X, fixed Y, fixed DelayTime, fixed Speed, fixed Spacing, fixed Radius)
-{
-    for (int i = 0; i < StrLen(Text); i++)
-    {
-        fixed XOff = X + (Spacing * i);
-        fixed YOff = Y + Sin((Timer() + i) / Speed) * Radius;
-        HudMessage("%c\n", Text[i], HUDMSG_PLAIN, ID, Color, XOff, YOff, DelayTime);
-    };
-};
-
-function void ClearMessage(int ID)
-{
-    HudMessage("\n", HUDMSG_PLAIN, ID, CR_WHITE, 0, 0, 0.05);
-};
-
-function int CheckInventoryTID(int TID, str Item)
-{
-    return (TID == 0 ? CheckInventory(Item) : CheckActorInventory(TID, Item));
-};
-
-function int SetInventory(str Item, int Count)
-{
-    int n = Count - CheckInventory(Item);
-    
-    if (n > 0)
-        GiveInventory(Item, n)
-    else if (n < 0)
-        TakeInventory(Item, -n);
-    
-    return n;
-};
-
-function int SetActorInventory(int tid, str item, int count)
-{
-    int n = count - CheckActorInventory (tid, item);
-    
-    if (n > 0)
-        GiveActorInventory(tid, item, n)
-    else if (n < 0)
-        TakeActorInventory(tid, item, -1 * n);
-    
-    return n;
-};
-
-// Formats time into MM:SS for display with Print or HudMessage
-function str FormatTime(int t)
-{
-    int Minutes = t / 35 / 60;
-    int Seconds = t / 35 % 60;
-    str Time;
-    
-    // Calculate Minutes and Seconds
-    if (Seconds < 10)
-        Time = StrParam("%d:0%d\n", Minutes, Seconds)
-    else
-        Time = StrParam("%d:%d\n", Minutes, Seconds);
-        
-    return Time;
+    // Remove the TID
+    Thing_ChangeTID(AuraTID, 0);
 };
 
 // Returns whether a monster is in some form of stealth or not

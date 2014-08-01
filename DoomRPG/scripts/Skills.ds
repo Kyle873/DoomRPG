@@ -1964,6 +1964,9 @@ function void CheckSkills()
     fixed Z = GetActorZ(0);
     int Angle = GetActorAngle(0) * 256;
     int AmmoRegenMult = 1;
+    bool Shadow = (Player.Aura[AURA_RED] && Player.Aura[AURA_GREEN] && Player.Aura[AURA_WHITE] &&
+                   Player.Aura[AURA_PINK] && Player.Aura[AURA_BLUE] && Player.Aura[AURA_PURPLE] &&
+                   Player.Aura[AURA_ORANGE] && Player.Aura[AURA_DARKBLUE] && Player.Aura[AURA_YELLOW]);
     
     // Reset the Skill multiplier from the Blue Aura and Energy Augmentation
     Player.SkillCostMult = 1.0;
@@ -1996,7 +1999,6 @@ function void CheckSkills()
         // Red Aura
         if (Player.Aura[AURA_RED])
         {
-            SpawnAura(0, AURA_RED + 1, false);
             if (RedAuraLevel == 1)
                 GiveInventory("DRPGRedAura2x", 1);
             if (RedAuraLevel >= 2)
@@ -2008,7 +2010,6 @@ function void CheckSkills()
         // Green Aura
         if (Player.Aura[AURA_GREEN])
         {
-            SpawnAura(0, AURA_GREEN + 1, false);
             if (GreenAuraLevel == 1)
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
             if (GreenAuraLevel == 2)
@@ -2023,7 +2024,6 @@ function void CheckSkills()
         // White Aura
         if (Player.Aura[AURA_WHITE])
         {
-            SpawnAura(0, AURA_WHITE + 1, false);
             if (WhiteAuraLevel >= 2 || Player.SoulActive[SOUL_WHITE])
             {
                 if (Player.Combo == 0) Player.Combo++;
@@ -2039,16 +2039,12 @@ function void CheckSkills()
         
         // Pink Aura
         if (Player.Aura[AURA_PINK])
-        {
-            SpawnAura(0, AURA_PINK + 1, false);
             if (PinkAuraLevel >= 2 || Player.SoulActive[SOUL_PINK])
                 GiveInventory("DRPGPinkAuraDrain", 1);
-        };
         
         // Blue Aura
         if (Player.Aura[AURA_BLUE])
         {
-            SpawnAura(0, AURA_BLUE + 1, false);
             if (BlueAuraLevel == 1)
                 Player.SkillCostMult /= 1.33;
             if (BlueAuraLevel == 2)
@@ -2060,7 +2056,6 @@ function void CheckSkills()
         // Purple Aura
         if (Player.Aura[AURA_PURPLE])
         {
-            SpawnAura(0, AURA_PURPLE + 1, false);
             if (PurpleAuraLevel == 1)
             {
                 Player.HPAmount *= 2;
@@ -2088,7 +2083,6 @@ function void CheckSkills()
         // Orange Aura
         if (Player.Aura[AURA_ORANGE])
         {
-            SpawnAura(0, AURA_ORANGE + 1, false);
             if (OrangeAuraLevel >= 1 || Player.SoulActive[SOUL_ORANGE])
                 Player.Speed *= 2;
             if (OrangeAuraLevel >= 2 || Player.SoulActive[SOUL_ORANGE])
@@ -2100,7 +2094,6 @@ function void CheckSkills()
         // Dark Blue Aura
         if (Player.Aura[AURA_DARKBLUE])
         {
-            SpawnAura(0, AURA_DARKBLUE + 1, false);
             if (DarkBlueAuraLevel == 5)
                 AmmoRegenMult = 2;
             if (DarkBlueAuraLevel == 6 || Player.SoulActive[SOUL_DARKBLUE])
@@ -2122,7 +2115,6 @@ function void CheckSkills()
         // Yellow Aura
         if (Player.Aura[AURA_YELLOW])
         {
-            SpawnAura(0, AURA_YELLOW + 1, false);
             if ((Timer() % (35 * (6 - YellowAuraLevel))) == 1)
                 GiveInventory("DRPGCredits", (Player.RankLevel + 1));
             if (YellowAuraLevel == 1)
@@ -2146,6 +2138,28 @@ function void CheckSkills()
             Player.ShieldChance *= LuckMult;
             Player.StimChance *= LuckMult;
         };
+        
+        // Spawn Aura FX
+        if (Player.Aura[AURA_RED] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_RED + 1, false);
+        if (Player.Aura[AURA_GREEN] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_GREEN + 1, false);
+        if (Player.Aura[AURA_WHITE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_WHITE + 1, false);
+        if (Player.Aura[AURA_PINK] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_PINK + 1, false);
+        if (Player.Aura[AURA_BLUE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_BLUE + 1, false);
+        if (Player.Aura[AURA_PURPLE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_PURPLE + 1, false);
+        if (Player.Aura[AURA_ORANGE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_ORANGE + 1, false);
+        if (Player.Aura[AURA_DARKBLUE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_DARKBLUE + 1, false);
+        if (Player.Aura[AURA_YELLOW] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_YELLOW + 1, false);
+        if (Shadow)
+            SpawnAura(Player.TID, AURA_MAX + 1, false);
     };
     
     // Decrease Aura Timer
