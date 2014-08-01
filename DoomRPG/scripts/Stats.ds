@@ -424,6 +424,7 @@ function void CheckStats()
     Player.DamageFactor = 1.0 - 0.25 * ((fixed)Player.Defense / 100);
     Player.Mass = 100 + (Player.Defense * 10);
     Player.HealthMax = Player.Vitality * 10;
+    Player.StatusEffectResist = Player.Vitality / 4.0;
     Player.EPMax = Player.Energy * 10;
     Player.ToxicityRegenBonus = Player.Regeneration / 10;
     Player.Speed = 1.0 + 0.25 * ((fixed)Player.Agility / 100);
@@ -628,6 +629,10 @@ function void CheckStatBounds()
         Player.HPTime = 35;
     if (Player.EPTime < 35)
         Player.EPTime = 35;
+    
+    // Cap Status Effect Resistance
+    if (Player.StatusEffectResist > 100.0)
+        Player.StatusEffectResist = 100.0;
     
     // Cap Toxicity Regen Bonus
     if (Player.ToxicityRegenBonus > 20)
@@ -1009,9 +1014,15 @@ function void CheckStatusDamage()
         
         if (Type > 0)
         {
-            ActivatorSound("health/statuseffect", 127);
-            Player.StatusTypeHUD = Type;
-            StatusEffect(Type, Time, Intensity);
+            // Status Effect Resist check
+            if (RandomFixed(0.0, 100.0) <= Player.StatusEffectResist)
+                ActivatorSound("health/statuseffect2", 127)
+            else // Apply status effect
+            {
+                ActivatorSound("health/statuseffect", 127);
+                Player.StatusTypeHUD = Type;
+                StatusEffect(Type, Time, Intensity);
+            };
         };
     };
 };
