@@ -177,6 +177,7 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
     };
 };
 
+ItemSpace bool ItemRanksRemoved;
 ItemSpace ItemInfoPtr[ITEM_CATEGORIES * ITEM_MAX] RewardList;
 ItemSpace int MaxRewards;
 ItemSpace bool RewardsInit;
@@ -568,7 +569,7 @@ script void BuildItemData()
             { "RLDemonicCarapaceArmorPickup";                   "Demonic Carapace \cd[Unique]\c-"; 								    32000;  -1; { "DEMAA0"; 22; 31; }; };
             { "RLRyanCordellPsychicAmplifierSuitArmorPickup";   "R11-n Psychic Amplifier Suit \cd[Unique]\c-"; 	                    33000;  -1; { "RCPAA0"; 14; 23; }; };
             { "RLSoulshatterArmorPickup";                       "Soulshatter Armor \cd[Unique]\c-"; 								34000;  -1; { "SOLSA0"; 17; 24; }; };
-            { "RLBerserkPowersuitArmorPickup";                  "Berserk Powersuit \cd[Unique]\c-"; 								35000;  -1; { "BEPSA0"; 16; 30; }; };
+            { "RLBerserkPowersuitArmorPickup1";                 "Berserk Powersuit \cd[Unique]\c-"; 								35000;  -1; { "BEPSB0"; 16; 30; }; };
             { "RLFrontlineEngineerSuitArmorPickup";             "Frontline Engineer Suit \cd[Unique]\c-"; 					        36000;  -1; { "BLUAA0"; 9; 39; }; };
             { "RLTacticalAssemblerSuitArmorPickup";             "Tactical Assembler Suit \cd[Unique]\c-"; 					        36000;  -1; { "REDAA0"; 9; 39; }; };
             { "RLNanoAblativeArmorPickup";                      "Nano Ablative Armor \cd[Unique]\c-"; 								38000;  -1; { "NABLA0"; 16; 19; }; };
@@ -712,11 +713,9 @@ script void BuildItemData()
     };
     
     // Remove rank limitations in Debug Mode
-    if (Player.ShopCard == 5 || GetCVar("drpg_debug"))
-        for (int i = 0; i < ItemCategories; i++)
-            for (int j = 0; j < ItemMax[i]; j++)
-                if (ItemData[i][j].Price > 0)
-                    ItemData[i][j].Rank = 0;
+    if (GetUserCVar(0, "drpg_debug"))
+        RemoveItemRanks();
+    
     Delay(1);
 
     // We need this here now because DRLA is special
@@ -774,4 +773,14 @@ script void BuildItemData()
     RewardsInit = true;
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \c-Finished Processing Rewards List (%d Tics Taken)\n", Timer());
+};
+
+function void RemoveItemRanks()
+{
+    for (int i = 0; i < ItemCategories; i++)
+        for (int j = 0; j < ItemMax[i]; j++)
+            if (ItemData[i][j].Price > 0)
+                ItemData[i][j].Rank = 0;
+    
+    ItemRanksRemoved = true;
 };
