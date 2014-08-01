@@ -158,36 +158,62 @@ script void InitMission()
         // Need to wait until all monsters have been initialized
         Delay(35);
         
-        for (int i = 0; i < MonsterID; i++)
+        if (MonsterID <= 1) return; // No monsters, no assassination.
+        
+        int * PotentialTargets;
+        int NumPTs = 0;
+        int SizePTs = 64;
+        
+        PotentialTargets = malloc(sizeof(int) * SizePTs);
+        
+        for (int i = 1; i < MonsterID; i++)
         {
             str ActorToCheck = StrParam("DRPG%s\n", Player.Mission.Monster->Actor);
             
             if (GetCVar("drpg_ext_doomrl"))
                 ActorToCheck = Player.Mission.Monster->Actor;
             
-            if (Random(1, 4) && StartsWith(Monsters[i].Actor, ActorToCheck))
+            if (StartsWith(Monsters[i].Actor, ActorToCheck))
             {
-                Monsters[i].Target = true;
-                Monsters[i].Aura = 10;
+                if (NumPTs == SizePTs)
+                {
+                    SizePTs *= 2;
+                    void *tmp = realloc(PotentialTargets, sizeof(int) * SizePTs);
+                    if (!tmp)
+                    {
+                        free(PotentialTargets);
+                        return;
+                    };
+                };
                 
-                Monsters[i].Level += Player.Mission.Difficulty * 10;
-                Monsters[i].Strength += Player.Mission.Difficulty * 10;
-                Monsters[i].Defense += Player.Mission.Difficulty * 10;
-                Monsters[i].Vitality += Player.Mission.Difficulty * 10;
-                Monsters[i].Energy += Player.Mission.Difficulty * 10;
-                Monsters[i].Regeneration += Player.Mission.Difficulty * 10;
-                Monsters[i].Agility += Player.Mission.Difficulty * 10;
-                Monsters[i].Capacity += Player.Mission.Difficulty * 10;
-                Monsters[i].Luck += Player.Mission.Difficulty * 10;
-                
-                if (GetCVar("drpg_debug"))
-                    Log("\cdDEBUG: \c-Mission Target Chosen: \ca%d\n", i);
-                
-                break;
+                PotentialTargets[NumPTs++] = i;
             };
             
-            Delay(1);
+            if (!(i % 1000)) Delay(1);
         };
+        
+        if (NumPTs)
+        {
+            int chosen = PotentialTargets[Random(0, NumPTs - 1)];
+            
+            Monsters[chosen].Target = true;
+            Monsters[chosen].Aura = 10;
+            
+            Monsters[chosen].Level += Player.Mission.Difficulty * 10;
+            Monsters[chosen].Strength += Player.Mission.Difficulty * 10;
+            Monsters[chosen].Defense += Player.Mission.Difficulty * 10;
+            Monsters[chosen].Vitality += Player.Mission.Difficulty * 10;
+            Monsters[chosen].Energy += Player.Mission.Difficulty * 10;
+            Monsters[chosen].Regeneration += Player.Mission.Difficulty * 10;
+            Monsters[chosen].Agility += Player.Mission.Difficulty * 10;
+            Monsters[chosen].Capacity += Player.Mission.Difficulty * 10;
+            Monsters[chosen].Luck += Player.Mission.Difficulty * 10;
+            
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \c-Mission Target Chosen: \ca%d\n", chosen);
+        };
+        
+        free(PotentialTargets);
     };
 };
 
