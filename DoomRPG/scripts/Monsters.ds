@@ -562,6 +562,8 @@ script void MonsterStatsHandler()
     
     int OldStrength;
     int OldDefense;
+    int OldCapacity;
+    int OldVitality;
     
     Start:
     
@@ -582,6 +584,28 @@ script void MonsterStatsHandler()
     {
         SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (Stats->Defense / 100)));
         OldDefense = Stats->Defense;
+    };
+    
+    // Capacity
+    if (Stats->Capacity != OldCapacity)
+    {
+        SetInventory("DRPGCredits", Stats->Capacity);
+        OldCapacity = Stats->Capacity;
+    };
+    
+    if (Stats->Vitality != OldVitality)
+    {
+        // Different effect depending on up or down
+        Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
+        
+        if (Stats->Vitality > OldVitality)
+            SetActorProperty (0, APROP_Health, Stats->HealthMax) // Heal to new
+        else
+             // Cap to new only if it's lower than current, so Weaken doesn't accidentally heal enemies
+            if (GetActorProperty (0, APROP_Health) > Stats->HealthMax)
+                SetActorProperty (0, APROP_Health, Stats->HealthMax);
+        
+        OldVitality = Stats->Vitality;
     };
     
     // Cap Level and Stats
