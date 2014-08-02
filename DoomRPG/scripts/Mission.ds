@@ -408,17 +408,32 @@ function void GetTargetMonster(MissionInfo *Mission)
 {
     bool DRLA = GetCVar("drpg_ext_doomrl");
     bool Brutal = GetCVar("drpg_ext_Brutal");
-    int MonsterIndex = MonsterIndex = (DRLA ? Random((GameSkill() >= 5 ? 20 : 0), MAX_DEF_MONSTERS_DRLA - ((GameSkill() >= 5 ? 8 - Mission->Difficulty : 36 - (Mission->Difficulty * 4))) - 1) : Random(0, MAX_DEF_MONSTERS - 1));
     int Amount;
-    MonsterInfoPtr MonsterPtr;
+    MonsterInfoPtr[64] PotentialMonsters;
+    int NumPotentialMonsters;
+    int MonsterDataAmt;
     
-    // Determine which table to lookup the monster data from
     if (DRLA)
-        MonsterPtr = &MonsterDataDRLA[MonsterIndex]
-    else if (Brutal)
-        MonsterPtr = &MonsterDataBrutal[MonsterIndex]
+        MonsterDataAmt = MAX_DEF_MONSTERS_DRLA
     else
-        MonsterPtr = &MonsterData[MonsterIndex];
+        MonsterDataAmt = MAX_DEF_MONSTERS;
+    // Generate a list based on monsters' threat levels.
+    for (int i = 0; i < MonsterDataAmt; i++)
+    {
+        MonsterInfoPtr TmpMonster;
+        if (DRLA)
+            TmpMonster = &MonsterDataDRLA[i]
+        else if (Brutal)
+            TmpMonster = &MonsterDataBrutal[i]
+        else
+            TmpMonster = &MonsterData[i];
+    
+        if (TmpMonster->Difficulty > ((Mission->Difficulty + 1) * 10) - 15 &&
+            TmpMonster->Difficulty < ((Mission->Difficulty + 1) * 10) + 15)
+            PotentialMonsters[NumPotentialMonsters++] = TmpMonster;
+    };
+    
+    MonsterInfoPtr MonsterPtr = PotentialMonsters[Random(0, NumPotentialMonsters - 1)];
     
     // Now that we know the monster type, we can calculate an amount
     int BaseAmount = (10 + (23 * Mission->Difficulty) * (101 - MonsterPtr->Difficulty)) / 100;
