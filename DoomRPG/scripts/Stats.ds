@@ -79,6 +79,14 @@ acscript void StatusEffect(int Type, int Time, int Intensity)
     };
 };
 
+acscript void TestStatusEffect(int Effect, int Length, int Intensity)
+{
+    Player.StatusType[Effect] = true;
+    Player.StatusIntensity[Effect] = Intensity;
+    Player.StatusTimer[Effect] = Length;
+    Player.StatusTimerMax[Effect] = Length;
+};
+
 // Add XP
 acscript void AddXP(int PlayerNum, long int XP, long int Rank, bool Reduced)
 {
@@ -846,30 +854,97 @@ function void CheckStatusEffects()
     
     if (Player.StatusType[SE_CONFUSION]) // Confusion
     {
-        /*
-        SetActorAngle(0, GetActorAngle(0) + (Cos(Timer() / 128.0) * (Player.StatusIntensity[SE_CONFUSION] * 0.01)));
-        SetActorPitch(0, Cos(Timer() / 128.0) * (Player.StatusIntensity[SE_CONFUSION] * 0.025));
-        */
-        
         SetHudSize(640, 480, true);
-        SetFont (StrParam("P%iVIEW\n", PlayerNumber() + 1));
+        SetFont(StrParam("P%iVIEW\n", PlayerNumber() + 1));
         
-        fixed viewcycle = Timer() / (120.0 - (10.0 * Player.StatusIntensity[SE_CONFUSION]));
-        fixed viewdist = 9.6 * Player.StatusIntensity[SE_CONFUSION] * ((fixed)Player.StatusTimer[SE_CONFUSION] / (fixed)Player.StatusTimerMax[SE_CONFUSION]);
+        fixed ViewCycle = Timer() / (120.0 - (10.0 * Player.StatusIntensity[SE_CONFUSION]));
+        fixed ViewDist = 9.6 * Player.StatusIntensity[SE_CONFUSION] * ((fixed)Player.StatusTimer[SE_CONFUSION] / (fixed)Player.StatusTimerMax[SE_CONFUSION]);
         
-        HudMessage ("A\n", HUDMSG_PLAIN | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, 75213, CR_UNTRANSLATED, 320, 240, 0.029);
-        HudMessage ("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, 75210, CR_UNTRANSLATED,
-            320 + (int)(Cos(viewcycle) * viewdist),
-            240 + (int)(Sin(viewcycle) * viewdist),
-            0.029, 0.3);
-        HudMessage ("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, 75211, CR_UNTRANSLATED,
-            320 + (int)(Cos(viewcycle + 0.333) * viewdist),
-            240 + (int)(Sin(viewcycle + 0.333) * viewdist),
-            0.029, 0.6);
-        HudMessage ("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, 75212, CR_UNTRANSLATED,
-            320 + (int)(Cos(viewcycle + 0.667) * viewdist),
-            240 + (int)(Sin(viewcycle + 0.667) * viewdist),
-            0.029, 0.9);
+        // View Spinning
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 3, CR_UNTRANSLATED, 320, 240, 0.029);
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
+                   320 + (int)(Cos(ViewCycle) * ViewDist),
+                   240 + (int)(Sin(ViewCycle) * ViewDist),
+                   0.029, 0.3);
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, CR_UNTRANSLATED,
+                   320 + (int)(Cos(ViewCycle + 0.333) * ViewDist),
+                   240 + (int)(Sin(ViewCycle + 0.333) * ViewDist),
+                   0.029, 0.6);
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 2, CR_UNTRANSLATED,
+                   320 + (int)(Cos(ViewCycle + 0.667) * ViewDist),
+                   240 + (int)(Sin(ViewCycle + 0.667) * ViewDist),
+                   0.029, 0.9);
+        
+        // Text Nonsense
+        if (Random(1, 100 - (int)(((fixed)Player.StatusTimer[SE_CONFUSION] / (fixed)Player.StatusTimerMax[SE_CONFUSION]) * (10.0 * (fixed)Player.StatusIntensity[SE_CONFUSION]))) == 1)
+        {
+            char[26] Letters =
+            {
+                'A'; 'B'; 'C'; 'D'; 'E'; 'F';
+                'G'; 'H'; 'I'; 'J'; 'K'; 'L';
+                'M'; 'N'; 'O'; 'P'; 'Q'; 'R';
+                'S'; 'T'; 'U'; 'V'; 'W'; 'X';
+                'Y'; 'Z';
+            };
+            
+            // Build a jibberish string
+            int Length = Random(5, 30);
+            char *Nonsense;
+            
+            // Fill the char array with garbage
+            for (int i = 0; i < Length - 1; i++) 
+                Nonsense[i] = Letters[Random(0, 25)];
+            Nonsense[Length] = '\0';
+            
+            SetFont((Random(1, 4) == 1 ? "BIGFONT" : "SMALLFONT"));
+            PrintTextWiggle(Nonsense, CONFUSION_NONSENSE_ID + Random(0, 10000), Random(0, 21), Random(160, 480), Random(120, 360), RandomFixed(1.0, 5.0), RandomFixed(32.0, 64.0), Random(8, 12), RandomFixed(16.0, 64.0));
+        };
+        
+        // Sprite Nonsense
+        if (Random(1, 100 - (int)(((fixed)Player.StatusTimer[SE_CONFUSION] / (fixed)Player.StatusTimerMax[SE_CONFUSION]) * (10.0 * (fixed)Player.StatusIntensity[SE_CONFUSION]))) == 1)
+        {
+            str[86] Sprites =
+            {
+                "TOKAA0"; "TOKBA0"; "TOKCA0";
+                "AUGCA0"; "AUGUA0"; "AUGUB0"; "AUGBATT";
+                "STIMB0";
+                
+                "PINVA0"; "PINSA0"; "PVISA0";
+                "SOULA0"; "MEGAA0"; "CONTA0";
+                
+                "Stim1"; "Stim2"; "Stim3"; "Stim4";
+                "Stim5"; "Stim6"; "Stim7"; "Stim8";
+                "Stim9"; "Stim10"; "Stim11"; "Stim12";
+                "Stim13"; "Stim14"; "Stim15"; "Stim16";
+                "Stim17"; "Stim18"; "Stim19";
+                
+                "BarSBlnd"; "BarSConf"; "BarSPois"; "BarSCorr";
+                "BarSViru"; "BarSFati"; "BarSSile"; "BarSEMP";
+                "BarSCurs";
+                
+                "Fill1"; "Fill2"; "Fill3"; "Fill4";
+                "Fill5"; "Fill6"; "Fill7"; "Fill8";
+                "Fill9"; "Fill10"; "FillBar"; "FillShld";
+                
+                "MonLevel";
+                "RankEmb"; "RankEmb1"; "RankEmb2"; "RankEmb3";
+                "RankEmb4"; "RankEmb5"; "RankEmb6";
+                
+                "DamNum0"; "DamNum1"; "DamNum2"; "DamNum3";
+                "DamNum4"; "DamNum5"; "DamNum6"; "DamNum7";
+                "DamNum8"; "DamNum9";
+                
+                "STAT1S"; "STAT2S"; "STAT3S"; "STAT4S";
+                "STAT5S"; "STAT6S"; "STAT7S"; "STAT8S";
+                "STATP";
+                
+                "PRed"; "POrange"; "PYellow"; "PGreen";
+                
+                "M_DOOM";
+            };
+            
+            PrintSpriteFade(Sprites[Random(0, 85)], CONFUSION_NONSENSE_ID + Random(0, 10000), Random(160, 480), Random(120, 360), RandomFixed(1.0, 3.0), RandomFixed(1.0, 2.0));
+        };
         
         SetHudSize(0, 0, false);
     };
@@ -929,14 +1004,6 @@ function void CheckStatusEffects()
             Player.StatusTimerMax[i] = 0;
         };
     };
-};
-
-acscript TestStatusEffect (int effect, int length, int intensity)
-{
-    Player.StatusType[effect] = true;
-    Player.StatusIntensity[effect] = intensity;
-    Player.StatusTimer[effect] = length;
-    Player.StatusTimerMax[effect] = length;
 };
 
 function void CheckStatusDamage()
@@ -1065,10 +1132,4 @@ function void CheckStatusDamage()
             };
         };
     };
-};
-
-acscript void OutputRanks()
-{
-    for (int i = 0; i < MAX_RANK; i++)
-        Log("\ck%s\n", Ranks[i]);
 };

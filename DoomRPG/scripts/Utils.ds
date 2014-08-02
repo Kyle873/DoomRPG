@@ -606,6 +606,27 @@ acscript void ThrustMomentum()
     Delay(3);
 };
 
+script void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fixed HoldTime, fixed Speed, fixed Spacing, fixed Radius)
+{
+    int Time = (int)(HoldTime * 35.0);
+    int TimeMax = Time;
+    
+    SetHudSize(640, 480, false);
+    
+    while (Time > 0)
+    {
+        for (int i = 0; Text[i] != NULL; i++)
+        {
+            fixed XOff = (fixed)X + (Spacing * i);
+            fixed YOff = (fixed)Y + Sin((Timer() + i) / Speed) * Radius;
+            HudMessage("%c\n", Text[i], HUDMSG_PLAIN | HUDMSG_ALPHA, ID + i, Color, (int)XOff, (int)YOff, 0.05, ((fixed)Time / (fixed)TimeMax));
+        };
+        
+        Time--;
+        Delay(1);
+    };
+};
+
 function void CreateTranslations()
 {
     // Damage Numbers - Critical
@@ -681,16 +702,6 @@ function void PrintSpritePulse(str Sprite, int ID, fixed X, fixed Y, fixed Alpha
         HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius))
     else
         HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
-};
-
-function void PrintTextWiggle(str Text, int ID, int Color, fixed X, fixed Y, fixed DelayTime, fixed Speed, fixed Spacing, fixed Radius)
-{
-    for (int i = 0; i < StrLen(Text); i++)
-    {
-        fixed XOff = X + (Spacing * i);
-        fixed YOff = Y + Sin((Timer() + i) / Speed) * Radius;
-        HudMessage("%c\n", Text[i], HUDMSG_PLAIN, ID, Color, XOff, YOff, DelayTime);
-    };
 };
 
 function void ClearMessage(int ID)
