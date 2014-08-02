@@ -1012,6 +1012,7 @@ function void CheckStatusDamage()
     int Time;
     int Intensity;
     int Count;
+    int Chance;
     
     // Can't get Status Effects if Pink Aura is active
     if (Player.Aura[AURA_PINK] || Player.SoulActive[SOUL_PINK]) return;
@@ -1021,103 +1022,109 @@ function void CheckStatusDamage()
     
     if (Player.HealthLoss > 0)
     {
-        // Damage Types
-        if (Player.DamageType == DT_TOXIC)
-        {
-            if (Random(1, 4) == 1) // Poison
-            {
-                Type = SE_POISON;
-                Intensity = Random(1, 5);
-                Time = Random(1, 5);
-            }
-            else if (Random(1, 4) == 1) // Corrosion
-            {
-                Type == SE_CORROSION;
-                Intensity = Random(1, 5);
-                Time = Random(1, 5);
-            };
-        };
-        if (Player.DamageType == DT_MELEE)
-        {
-            if (Random(1, 16) == 1) // Blind
-            {
-                Type = SE_BLIND;
-                Intensity = Random(1, 5);
-                Time = Random(5, 10);
-            }
-            else if (Random(1, 16) == 1) // Confusion
-            {
-                Type = SE_CONFUSION;
-                Intensity = Random(1, 5);
-                Time = Random(5, 10);
-            };
-        };
-        if (Player.DamageType == DT_PLASMA)
-        {
-            if (Random(1, 16) == 1) // Poison
-            {
-                Type = SE_POISON;
-                Intensity = Random(1, 5);
-                Time = Random(5, 20);
-            }
-            else if (Random(1, 16) == 1) // Corrosion
-            {
-                Type == SE_CORROSION;
-                Intensity = Random(1, 5);
-                Time = Random(1, 5);
-            }
-            else if (Random(1, 16) == 1) // Silence
-            {
-                Type == SE_SILENCE;
-                Intensity = Random(1, 5);
-                Time = Random(10 * Intensity, 30 * Intensity);
-            }
-            else if (Random(1, 16) == 1) // Curse
-            {
-                Type == SE_CURSE;
-                Intensity = Random(1, 5);
-                Time = Random(10, 60);
-            };
-        };
-        if (Player.DamageType == DT_LIGHTNING)
-        {
-            if (Random(1, 16) == 1) // EMP
-            {
-                Type = SE_EMP;
-                Intensity = Random(1, 5);
-                Time = Random(5, 30);
-            };
-        };
+        // Calculate the chance
+        Chance = Random(0.0, 100.0);
         
-        // Critical Hits
+        // Criticals boost 2.5x
         if (Player.HealthLoss >= Player.HealthMax / 2)
-            while (Type == 0)
+            Chance *= 2.5;
+        
+        // Damage Types
+        switch (Player.DamageType)
+        {
+        case DT_TOXIC:
+            if (Chance <= 25.0) // 1 in 4
             {
-                if (Random(1, 8) == 1) // Blind
+                switch (Random(1, 2))
                 {
+                case 1:
+                    Type = SE_POISON;
+                    Intensity = Random(1, 5);
+                    Time = Random(1, 5);
+                    break;
+                case 2:
+                    Type == SE_CORROSION;
+                    Intensity = Random(1, 5);
+                    Time = Random(1, 5);
+                    break;
+                };
+            };
+            break;
+        case DT_MELEE:
+            if (Chance <= 6.25) // 1 in 16
+            {
+                switch (Random(1, 3))
+                {
+                case 1:
                     Type = SE_BLIND;
                     Intensity = Random(1, 5);
-                    Time = Random(1, 10);
+                    Time = Random(5, 10);
                     break;
-                }
-                else if (Random(1, 8) == 1) // Fatigue
-                {
+                case 2:
+                    Type = SE_CONFUSION;
+                    Intensity = Random(1, 5);
+                    Time = Random(5, 10);
+                    break;
+                case 3:
                     Type = SE_FATIGUE;
                     Intensity = Random(1, 5);
                     Time = Random(5, 30);
                     break;
-                }
-                else if (Random(1, 8) == 1) // Virus
+                };
+            };
+            break;
+        case DT_PLASMA:
+            if (Chance <= 6.25) // 1 in 16
+            {
+                switch (Random(1, 4))
                 {
+                case 1:
+                    Type = SE_POISON;
+                    Intensity = Random(1, 5);
+                    Time = Random(5, 20);
+                    break;
+                case 2:
+                    Type == SE_CORROSION;
+                    Intensity = Random(1, 5);
+                    Time = Random(1, 5);
+                    break;
+                case 3:
+                    Type == SE_CURSE;
+                    Intensity = Random(1, 5);
+                    Time = Random(10, 60);
+                    break;
+                case 4:
                     Type = SE_VIRUS;
                     Intensity = Random(1, 5);
                     Time = Random(30, 120);
                     break;
                 };
-                
-                Count++;
-                if (Count > 3) break;
             };
+            break;
+        case DT_LIGHTNING:
+            if (Chance <= 12.5) // 1 in 8
+            {
+                switch (Random(1, 3))
+                {
+                case 1:
+                    Type = SE_EMP;
+                    Intensity = Random(1, 5);
+                    Time = Random(5, 30);
+                    break;
+                case 2:
+                    Type = SE_BLIND;
+                    Intensity = Random(1, 5);
+                    Time = Random(1, 10);
+                    break;
+                case 3:
+                    Type == SE_SILENCE;
+                    Intensity = Random(1, 5);
+                    Time = Random(10 * Intensity, 30 * Intensity);
+                    break;
+                };
+            };
+            break;
+        };
         
         if (Type > 0)
         {
