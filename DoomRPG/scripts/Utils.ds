@@ -141,7 +141,7 @@ acscript int CheckCapacity()
     // Don't do checks if you have the system disabled
     if (!GetCVar("drpg_inv_capacity")) return false;
     
-    str[] ItemList =
+    static str[] ItemList =
     {
         // Health
         "DRPGStimpack";
@@ -486,14 +486,14 @@ acscript void ModStat(int Stat, int Value)
 {
     switch (Stat)
     {
-    case 1: Player.Strength = Value;        break;
-    case 2: Player.Defense = Value;         break;
-    case 3: Player.Vitality = Value;        break;
-    case 4: Player.Energy = Value;          break;
-    case 5: Player.Regeneration = Value;    break;
-    case 6: Player.Agility = Value;         break;
-    case 7: Player.Capacity = Value;        break;
-    case 8: Player.Luck = Value;            break;
+    case STAT_STRENGTH + 1:     Player.Strength = Value;        break;
+    case STAT_DEFENSE + 1:      Player.Defense = Value;         break;
+    case STAT_VITALITY + 1:     Player.Vitality = Value;        break;
+    case STAT_ENERGY + 1:       Player.Energy = Value;          break;
+    case STAT_REGENERATION + 1: Player.Regeneration = Value;    break;
+    case STAT_AGILITY + 1:      Player.Agility = Value;         break;
+    case STAT_CAPACITY + 1:     Player.Capacity = Value;        break;
+    case STAT_LUCK + 1:         Player.Luck = Value;            break;
     };
 };
 
@@ -603,7 +603,7 @@ acscript void ThrustMomentum()
     ThrustThing(Angle * 256, Force * 3, 0, 0);
     ThrustThingZ(0, Force * 4, 0, 1);
    
-    Delay(3);
+    Delay(4);
 };
 
 script void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fixed HoldTime, fixed Speed, fixed Spacing, fixed Radius)
@@ -741,7 +741,7 @@ function int SetActorInventory(int tid, str item, int count)
 // Drop your entire inventory on the ground
 function void DropInventory()
 {
-    DroppedItem[] ItemList =
+    static DroppedItem[] ItemList =
     {
         // Health
         { "Stimpack"; };
@@ -1098,7 +1098,6 @@ function int GetAmmoAmount(str Item)
 {
     int Amount = 1;
     
-    // If it's ammo, we need to get the real amounts to give if you're using the Give buy mode
     if (Item == "Clip")         Amount = 10;
     if (Item == "ClipBox")      Amount = 50;
     if (Item == "Shell")        Amount = 4;
@@ -1107,17 +1106,6 @@ function int GetAmmoAmount(str Item)
     if (Item == "RocketBox")    Amount = 5;
     if (Item == "Cell")         Amount = 20;
     if (Item == "CellPack")     Amount = 100;
-    
-    // If it's ammo and it's the large version, just change it down to the base type
-    if (Item == "ClipBox")      Item = "Clip";
-    if (Item == "ShellBox")     Item = "Shell";
-    if (Item == "RocketBox")    Item = "RocketAmmo";
-    if (Item == "CellPack")     Item = "Cell";
-    
-    // Now apply difficulty-based multipliers to the amount if it's ammo
-    if (Item == "Clip" || Item == "Shell" || Item == "RocketAmmo" || Item == "Cell")
-        if (GameSkill() == 1 || GameSkill() >= 5)
-            Amount *= 2;
     
     return Amount;
 };
@@ -1343,46 +1331,47 @@ function int Round(fixed fixedNumber)
 };
 
 // Gets the distance between two TIDs
-function fixed Distance(int tid1, int tid2)
+function fixed Distance(int TID1, int TID2)
 {
-    fixed y = GetActorY(tid1) - GetActorY(tid2);
-    fixed x = GetActorX(tid1) - GetActorX(tid2);
-    fixed z = GetActorZ(tid1) - GetActorZ(tid2);
+    fixed X = GetActorX(TID1) - GetActorX(TID2);
+    fixed Y = GetActorY(TID1) - GetActorY(TID2);
+    fixed Z = GetActorZ(TID1) - GetActorZ(TID2);
     
-    return VectorLength(VectorLength(x, y), z);
+    return VectorLength(VectorLength(X, Y), Z);
 };
 
-function bool StartsWith(str instring, str prefix, bool nocase)
+function bool StartsWith(str InString, str Prefix, bool NoCase)
 {
-    if (nocase)
-        return !StrICmp(instring, prefix, StrLen(prefix));
-    return !StrCmp(instring, prefix, StrLen(prefix));
+    if (NoCase)
+        return !StrICmp(InString, Prefix, StrLen(Prefix));
+    return !StrCmp(InString, Prefix, StrLen(Prefix));
 };
 
-function bool EndsWith(str instring, str suffix, bool nocase)
+function bool EndsWith(str InString, str Suffix, bool NoCase)
 {
-    if (StrLen(instring) < StrLen(suffix))
+    if (StrLen(InString) < StrLen(Suffix))
         return false;
     
-    if (nocase)
-        return !StrICmp(StrRight (instring, StrLen(suffix)), suffix);
-    return !StrCmp(StrRight (instring, StrLen(suffix)), suffix);
+    if (NoCase)
+        return !StrICmp(StrRight(InString, StrLen(Suffix)), Suffix);
+    return !StrCmp(StrRight(InString, StrLen(Suffix)), Suffix);
 };
 
-function bool Contains(str instring, str substring, bool nocase)
+function bool Contains(str InString, str SubString, bool NoCase)
 {
-    int targlen = StrLen(instring);
-    int sublen = StrLen(substring);
+    int TargLen = StrLen(InString);
+    int SubLen = StrLen(SubString);
     
-    if (targlen < sublen)
+    if (TargLen < SubLen)
         return false;
     
-    for (int i = 0; i < targlen - sublen; ++i)
+    for (int i = 0; i < TargLen - SubLen; i++)
     {
-        str part = StrMid (instring, i, sublen);
-        if ((!nocase && !StrCmp (part, substring)) || (nocase && !StrICmp (part, substring)))
+        str Part = StrMid(InString, i, SubLen);
+        if ((!NoCase && !StrCmp(Part, SubString)) || (NoCase && !StrICmp(Part, SubString)))
             return true;
     };
+    
     return false;
 };
 
