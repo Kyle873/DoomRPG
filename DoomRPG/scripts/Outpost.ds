@@ -1124,6 +1124,17 @@ acscript void Locker(bool Wireless, int WirelessLevel)
             if (Buttons & BT_SPEED) // Withdraw
             {
                 bool Check = (Player.LockerGlobal ? GlobalLocker[Player.LockerPage][Player.LockerIndex] : (Player.Locker[Player.LockerPage][Player.LockerIndex] > 0));
+                str Item = ItemData[Player.LockerPage][Player.LockerIndex].Actor;
+                
+                // Strip the DRPG prefix off and possible number off the ammo actor names
+                if (Player.LockerPage == 1) // Ammo
+                {
+                    Item = StrMid(Item, 4, StrLen(Item));
+                    
+                    // DoomRL Compatibility
+                    if (GetCVar("drpg_ext_doomrl"))
+                        Item = StrLeft(Item, StrLen(Item) - 1);
+                };
                 
                 if (Check)
                 {
@@ -1151,7 +1162,7 @@ acscript void Locker(bool Wireless, int WirelessLevel)
                             ActivatorSound("menu/error", 127);
                             Success = false;
                         }
-                        else if (Player.LockerPage == 1 && CheckInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor) >= GetAmmoCapacity(ItemData[Player.LockerPage][Player.LockerIndex].Actor)) // Ammo
+                        else if (Player.LockerPage == 1 && CheckInventory(Item) >= GetAmmoCapacity(Item)) // Ammo
                         {
                             ActivatorSound("menu/error", 127);
                             Success = false;
@@ -1179,14 +1190,14 @@ acscript void Locker(bool Wireless, int WirelessLevel)
                         else if (Player.LockerPage == 0) // Weapons
                         {
                             if (GetCVar("drpg_ext_doomrl"))
-                                SpawnForced(StrParam("%sPickup\n", ItemData[Player.LockerPage][Player.LockerIndex].Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0)
+                                SpawnForced(StrParam("%sPickup\n", Item), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0)
                             else
-                                SpawnForced(ItemData[Player.LockerPage][Player.LockerIndex].Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+                                SpawnForced(Item, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
                         }
                         else if (Player.LockerPage == 1) // Ammo
-                            GiveInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1)
+                            GiveInventory(Item, 1)
                         else // Everything else
-                            SpawnForced(ItemData[Player.LockerPage][Player.LockerIndex].Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+                            SpawnForced(Item, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
                         
                         if (Success)
                         {
@@ -1206,11 +1217,23 @@ acscript void Locker(bool Wireless, int WirelessLevel)
             }
             else // Deposit
             {
-                if (CheckInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor) > 0)
+                str Item = ItemData[Player.LockerPage][Player.LockerIndex].Actor;
+                
+                // Strip the DRPG prefix off and possible number off the ammo actor names
+                if (Player.LockerPage == 1) // Ammo
+                {
+                    Item = StrMid(Item, 4, StrLen(Item));
+                    
+                    // DoomRL Compatibility
+                    if (GetCVar("drpg_ext_doomrl"))
+                        Item = StrLeft(Item, StrLen(Item) - 1);
+                };
+                
+                if (CheckInventory(Item) > 0)
                 {
                     if (!Wireless || InBase)
                     {
-                        TakeInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1);
+                        TakeInventory(Item, 1);
                         if (Player.LockerGlobal)
                             GlobalLocker[Player.LockerPage][Player.LockerIndex]++
                         else
@@ -1230,7 +1253,7 @@ acscript void Locker(bool Wireless, int WirelessLevel)
                         }
                         else
                         {
-                            TakeInventory(ItemData[Player.LockerPage][Player.LockerIndex].Actor, 1);
+                            TakeInventory(Item, 1);
                             if (Player.LockerGlobal)
                                 GlobalLocker[Player.LockerPage][Player.LockerIndex]++
                             else
