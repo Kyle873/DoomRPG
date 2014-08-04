@@ -1183,14 +1183,27 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
             Thing_Remove(TID);
             
             Success = Spawn(MonsterList[MonsterIndex]->Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
-            if (Success)
-                Success = CheckSight(0, TID, 0) && (!CheckFlag(TID, "BOSS") || (!Random(0, 3) && (BossesSpawned < 3)));
             
+            bool IsBoss = CheckFlag(TID, "BOSS");
+            
+            if (Success)
+                Success = CheckSight(0, TID, 0);
+
+            if (Success)
+                Success = !IsBoss || (!Random (0, 3) && BossesSpawned < 3);
+                
             if (!Success)
             {
                 // Try again, closer to the player each time, up to 3 times, before giving up.
                 Thing_Remove(TID);
                 CurrentRadius /= 2;
+            }
+            else
+            {
+                if (IsBoss)
+                    BossesSpawned++;
+                
+                Log ("Bosses spawned: %d", BossesSpawned);
             };
             
             SpawnTries++;
@@ -1198,9 +1211,6 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
         
         if (Success)
         {
-            if (CheckFlag(TID, "BOSS"))
-                BossesSpawned++;
-            
             // Delay here to make sure the init script has time to run
             Delay(4);
             
