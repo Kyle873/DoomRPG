@@ -185,7 +185,7 @@ acscript void MonsterInit(int Flags)
     // Save the Render Type
     Stats->RenderStyle = GetActorProperty(0, APROP_RenderStyle);
     
-    // Strength / Defense Handling
+    // Stat-Change Handling
     MonsterStatsHandler();
     
     // Aura Spawner
@@ -564,19 +564,36 @@ script void MonsterStatsHandler()
     int OldDefense;
     int OldCapacity;
     int OldVitality;
+    int OldAgility;
+    int OldRegeneration;
+    int OldEnergy;
+    int OldLuck;
+    bool StatsChanged;
     
     Start:
     
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
+    if (Stats->NeedReinit)
+    {
+        MonsterInitStats(SF_RECREATE);
+        Stats->NeedReinit = false;
+        return;
+    };
+    
     // Levelup handling via White Aura radius
     if (CheckInventory("DRPGMonsterLevelup"))
         MonsterLevelup(Stats);
     
+    // Cap Level and Stats
+    CapMonsterStats(Stats);
+    
     // Strength
     if (Stats->Strength != OldStrength)
     {
+        StatsChanged = true;
+        
         if (OldStrength)
             TakeInventory(StrParam("DRPGStrength%d\n", OldStrength * GameSkill()), 1);
         SetInventory(StrParam("DRPGStrength%d\n", Stats->Strength * GameSkill()), 1);
@@ -586,6 +603,8 @@ script void MonsterStatsHandler()
     // Defense
     if (Stats->Defense != OldDefense)
     {
+        StatsChanged = true;
+        
         SetActorPropertyFixed(0, APROP_DamageFactor, 1.0 - (0.09 * (Stats->Defense / 100)));
         OldDefense = Stats->Defense;
     };
@@ -593,17 +612,35 @@ script void MonsterStatsHandler()
     // Capacity
     if (Stats->Capacity != OldCapacity)
     {
+        StatsChanged = true;
+        
         SetInventory("DRPGCredits", Stats->Capacity);
         OldCapacity = Stats->Capacity;
     };
     
+    // Agility
+    if (Stats->Agility != OldAgility)
+    {
+        StatsChanged = true;
+        
+        SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(Stats));
+        OldAgility = Stats->Agility;
+    };
+    
+    // Vitality
     if (Stats->Vitality != OldVitality)
     {
+        StatsChanged = true;
+        
         // Different effect depending on up or down
         Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
         
         if (Stats->Vitality > OldVitality)
-            SetActorProperty (0, APROP_Health, Stats->HealthMax) // Heal to new
+        {
+            int healthcurr = GetActorProperty (0, APROP_Health);
+            int healthdiff = Stats->HealthMax - healthcurr;
+            SetActorProperty (0, APROP_Health, healthcurr + healthdiff / 2); // Heal half of the difference
+        }
         else
              // Cap to new only if it's lower than current, so Weaken doesn't accidentally heal enemies
             if (GetActorProperty (0, APROP_Health) > Stats->HealthMax)
@@ -612,8 +649,36 @@ script void MonsterStatsHandler()
         OldVitality = Stats->Vitality;
     };
     
-    // Cap Level and Stats
-    CapMonsterStats(Stats);
+    // Nothing much to do for these
+    
+    // Regeneration
+    if (Stats->Regeneration != OldRegeneration)
+    {
+        StatsChanged = true;
+        OldRegeneration = Stats->Regeneration;
+    };
+    
+    // Energy
+    if (Stats->Energy != OldEnergy)
+    {
+        StatsChanged = true;
+        OldEnergy = Stats->Energy;
+    };
+    
+    // Luck
+    if (Stats->Luck != OldLuck)
+    {
+        StatsChanged = true;
+        OldLuck = Stats->Luck;
+    };
+    
+    if (StatsChanged)
+    {
+        // Re-calculate the monster's threat level
+        Stats->Threat = CalculateMonsterThreatLevel(Stats);
+        
+        StatsChanged = false;
+    };
     
     Delay(4);
     
@@ -656,8 +721,7 @@ script void MonsterAuraDisplayHandler()
     };
     
     // Friendly Monster Aura
-    // TODO: GROSS HACKS, DO IT BETTER
-    if (GetActorProperty(0, APROP_Friendly) && GetActorPropertyString(0, APROP_Nametag) != "Marine" && GetActorPropertyString(0, APROP_Nametag) != "Heavy Marine" && !Stats->Named)
+    if (GetActorProperty(0, APROP_Friendly) && GetActorProperty(0, APROP_MasterTID) > 0)
         SpawnAura(0, 0, false);
     
     // Black Aura Effects
@@ -693,7 +757,6 @@ script void MonsterLevelupHandler()
     
     // Calculate the Delay Time
     Energy = Stats->Energy;
-    if (Energy > 1000) Energy = 1000; // Double fucking check, just to be 100% sure that we don't cause a runaway
     DelayTime = 35 * (int)((60.0 - ((fixed)Energy / 16.75)));
     if (DelayTime < 35)
         DelayTime = 35;
@@ -766,11 +829,11 @@ script void MonsterRegenerationHandler()
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)CalculateMonsterMaxHealth(Stats) * ((fixed)Stats->Regeneration / 1000.0)));
+    SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + (int)((fixed)Stats->HealthMax * ((fixed)Stats->Regeneration / 1000.0)));
     
     // Prevent going over 100%
-    if (GetActorProperty(0, APROP_Health) > CalculateMonsterMaxHealth(Stats))
-        SetActorProperty(0, APROP_Health, CalculateMonsterMaxHealth(Stats));
+    if (GetActorProperty(0, APROP_Health) > Stats->HealthMax)
+        SetActorProperty(0, APROP_Health, Stats->HealthMax);
     
     Delay(35 * (30 - (Stats->Aura == 6 ? 20 : 0)));
     goto Start;
@@ -1159,18 +1222,6 @@ function void MonsterLevelup(MonsterStatsPtr Stats)
     Stats->Capacity += Random(1, GameSkill());
     Stats->Luck += Random(1, GameSkill());
     
-    // Cap Level and Stats
-    CapMonsterStats(Stats);
-    
-    // Re-calculate the monster's threat level
-    Stats->Threat = CalculateMonsterThreatLevel(Stats);
-    
-    // Calculate Speed
-    SetActorPropertyFixed(0, APROP_Speed, CalculateMonsterSpeed(Stats));
-    
-    // Give Credits
-    SetInventory("DRPGCredits", Stats->Capacity);
-    
     // Spawn Level-up Arrow
     SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
     
@@ -1182,6 +1233,8 @@ function void CapMonsterStats(MonsterStatsPtr Stats)
 {
     if (Stats->Level <= 0)
         Stats->Level = 1;
+    if (Stats->Level > 1000)
+        Stats->Level = 1000;
     if (Stats->Level > 1000)
         Stats->Level = 1000;
     if (Stats->Strength > 1000)
