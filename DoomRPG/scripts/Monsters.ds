@@ -90,12 +90,12 @@ MonsterSpace MonsterInfo[MAX_DEF_MONSTERS_DRLA] MonsterDataDRLA =
     { "RLNightmareLostSoul";                "Nightmare Soul";           6;      1;  };
     { "RLNightmareCacodemon";               "Nightmare Cacodemon";      14;     1;  };
     { "RLNightmareHellKnight";              "Nightmare Knight";         25;     1;  };
-    { "RLNightmareBaronOfHell";             "Baron of Nightmares";      36;     1;  };
-    { "RLNightmareArachnotron";             "Nightmare Arachnotron";    67;     1;  };
-    { "RLNightmarePainElemental";           "Nightmare Elemental";      43;     1;  };
-    { "RLNightmareRevenant";                "Nightmare Revenant";       52;     1;  };
-    { "RLNightmareMancubus";                "Nightmare Mancubus";       64;     1;  };
-    { "RLNightmareArchvile";                "Nightmare Vile";           85;     1;  };
+    { "RLNightmareBaronOfHell";             "Baron of Nightmares";      45;     1;  };
+    { "RLNightmareArachnotron";             "Nightmare Arachnotron";    65;     1;  };
+    { "RLNightmarePainElemental";           "Nightmare Elemental";      60;     1;  };
+    { "RLNightmareRevenant";                "Nightmare Revenant";       70;     1;  };
+    { "RLNightmareMancubus";                "Nightmare Mancubus";       85;     1;  };
+    { "RLNightmareArchvile";                "Nightmare Vile";           90;     1;  };
     { "RLNightmareCyberdemon";              "Nightmare Cyberdemon";     100;    1;  };
     
     // Cybernetic
@@ -103,12 +103,12 @@ MonsterSpace MonsterInfo[MAX_DEF_MONSTERS_DRLA] MonsterDataDRLA =
     { "RLCyberneticDemon";                  "Mech-Demon";               5;      1;  };
     { "RLCyberneticSpectre";                "Mechtre";                  5;      1;  };
     { "RLCyberneticLostSoul";               "Hellmine";                 1;      1;  };
-    { "RLCyberneticHellKnight";             "Cybruiser";                35;     1;  };
-    { "RLCyberneticBaronOfHell";            "Techno-Lord";              40;     1;  };
-    { "RLCyberneticArachnotron";            "Arachnosentinel";          64;     1;  };
-    { "RLCyberneticRevenant";               "Heavy Revenant";           57;     1;  };
-    { "RLCyberneticMancubus";               "Volacubus";                68;     1;  };
-    { "RLCyberneticSpiderMastermind";       "Spider Overmind";          100;    1;  };
+    { "RLCyberneticHellKnight";             "Cybruiser";                43;     1;  };
+    { "RLCyberneticBaronOfHell";            "Techno-Lord";              45;     1;  };
+    { "RLCyberneticArachnotron";            "Arachnosentinel";          62;     1;  };
+    { "RLCyberneticMancubus";               "Volacubus";                65;     1;  };
+    { "RLCyberneticRevenant";               "Heavy Revenant";           70;     1;  };
+    { "RLCyberneticSpiderMastermind";       "Spider Overmind";          97;     1;  };
     
     // Armageddon
     // ...
@@ -1107,95 +1107,114 @@ script void MonsterDeath()
 
 acscript void MonsterTransport(int Difficulty, int Time, int Radius)
 {
+    bool DRLA = GetCVar("drpg_ext_doomrl");
+    bool Brutal = GetCVar("drpg_ext_Brutal");
+    int MonsterDataAmt;
+    MonsterInfoPtr[64] MonsterList;
+    int MonsterListLen;
+    int BossesSpawned = 0;
+    
+    // Build a list of monsters
+    if (DRLA)
+        MonsterDataAmt = MAX_DEF_MONSTERS_DRLA
+    else
+        MonsterDataAmt = MAX_DEF_MONSTERS;
+    
+    for (int i = 0; i < MonsterDataAmt && MonsterListLen < 64; i++)
+    {
+        MonsterInfoPtr TmpMonster;
+        if (DRLA)
+            TmpMonster = &MonsterDataDRLA[i]
+        else if (Brutal)
+            TmpMonster = &MonsterDataBrutal[i]
+        else
+            TmpMonster = &MonsterData[i];
+    
+        if (TmpMonster->Difficulty > ((Difficulty + 1) * 10) - 40 &&
+            TmpMonster->Difficulty < ((Difficulty + 1) * 10))
+            MonsterList[MonsterListLen++] = TmpMonster;
+    };
+    
+    if (!MonsterListLen)
+    {
+        Log ("\cgWARNING: \caReinforcement Mission on %s\ca has no monsters!\n", MissionDifficulties[Difficulty]);
+        return;
+    };
+    
     while (true)
     {
         Delay((Time > 0 ? (35 * Time) : -Time));
-
+        
         bool Complete = true;
-        bool DRLA = GetCVar("drpg_ext_doomrl");
         fixed X = GetActorX(0);
         fixed Y = GetActorY(0);
         fixed Z = GetActorZ(0);
-        int Min = Difficulty;
-        int Max = Difficulty + ((DRLA ? MAX_DEF_MONSTERS_DRLA : MAX_DEF_MONSTERS) - MAX_DIFFICULTIES);
+        int MonsterIndex;
         fixed SpawnX;
         fixed SpawnY;
         int TID;
         bool Success;
         int SpawnTries;
         int CurrentRadius;
-        MonsterInfo Monster;
         
         // Check to see if the mission is complete
         for (int i = 0; i < MAX_PLAYERS; i++)
-            if (Players(i).Mission.Active && Players(i).Mission.Type == MT_REINFORCEMENTS)
+            if (PlayerInGame(i) && Players(i).Mission.Active && Players(i).Mission.Type == MT_REINFORCEMENTS)
                 Complete = false;
         
         // If the mission is complete, terminate
         if (Complete) return;
         
-        // Cap the maximum
-        // TODO: DRLA
-        if (Max > MAX_MONSTERS - 3)
-            Max = MAX_MONSTERS - 3;
+        TID = UniqueTID();
+        Success = false;
+        SpawnTries = 0;
+        CurrentRadius = Radius;
         
-        for (int i = Min; i < Max; i++)
+        while (!Success && SpawnTries < 3)
         {
-            if (GetCVar("drpg_ext_doomrl"))
-                Monster = MonsterDataDRLA[i]
-            else
-                Monster = MonsterData[i];
+            MonsterIndex = Random (0, MonsterListLen - 1);
             
-            if (!Random(0, 9 - Difficulty))
+            SpawnX = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
+            SpawnY = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
+            
+            // Get the floor Z position at this spot
+            SpawnForced("MapSpot", X + SpawnX, Y + SpawnY, Z, TID, 0);
+            Z = GetActorFloorZ(TID);
+            Thing_Remove(TID);
+            
+            Success = Spawn(MonsterList[MonsterIndex]->Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
+            if (Success)
+                Success = CheckSight(0, TID, 0) && (!CheckFlag(TID, "BOSS") || (!Random(0, 5) && (BossesSpawned >= 3)));
+            
+            if (!Success)
             {
-                TID = UniqueTID();
-                Success = false;
-                SpawnTries = 0;
-                CurrentRadius = Radius;
-                
-                while (!Success && SpawnTries < 3)
-                {
-                    SpawnX = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
-                    SpawnY = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
-                    
-                    // Get the floor Z position at this spot
-                    SpawnForced("MapSpot", X + SpawnX, Y + SpawnY, Z, TID, 0);
-                    Z = GetActorFloorZ(TID);
-                    Thing_Remove(TID);
-                    
-                    Success = Spawn(Monster.Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
-                    if (Success)
-                        Success = CheckSight(0, TID, 0);
-                    
-                    if (!Success)
-                    {
-                        // Try again, closer to the player each time, up to 3 times, before giving up.
-                        Thing_Remove(TID);
-                        CurrentRadius /= 2;
-                    };
-                    
-                    SpawnTries++;
-                };
-                if (Success)
-                {
-                    // Delay here to make sure the init script has time to run
-                    Delay(4);
-                    
-                    // Pointer
-                    MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
-                    
-                    Thing_Hate(TID, Player.TID);
-                    Stats->Reinforcement = true;
-                    Thing_ChangeTID(TID, 0); // Get rid of the ID
-
-                    Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
-                    
-                    if (GetCVar("drpg_debug"))
-                        Log("\cdDEBUG: \c-Reinforcements Spawning Index %d (\ca%s\c-)\n", i, Monster.Name);
-                    
-                    break;
-                };
+                // Try again, closer to the player each time, up to 3 times, before giving up.
+                Thing_Remove(TID);
+                CurrentRadius /= 2;
             };
+            
+            SpawnTries++;
+        };
+        
+        if (Success)
+        {
+            if (CheckFlag(TID, "BOSS"))
+                BossesSpawned++;
+            
+            // Delay here to make sure the init script has time to run
+            Delay(4);
+            
+            // Pointer
+            MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
+            
+            Thing_Hate(TID, Player.TID);
+            Stats->Reinforcement = true;
+            Thing_ChangeTID(TID, 0); // Get rid of the ID
+
+            Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
+            
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \c-Reinforcements Spawning Index %d (\ca%s\c-)\n", MonsterIndex, MonsterList[MonsterIndex]->Name);
         };
     };
 };
