@@ -11,7 +11,7 @@
 AddressSpace MapArray MonsterSpace;
 AddressSpace MapArray MonsterStatsSpace;
 
-int MonsterID = 1;
+MapRegister int MonsterID = 1;
 MonsterStatsSpace MonsterStats[MAX_MONSTERS] Monsters;
 
 MonsterSpace MonsterInfo[MAX_DEF_MONSTERS] MonsterData =
@@ -140,12 +140,66 @@ MonsterSpace str[MAX_HUMANS][2] MonsterHumanData =
     { "RLEliteCaptainTristarBlaster";   "RLEliteCaptain";   };
 };
 
+function int NewMonsterID()
+{
+    int currentid = MonsterID;
+    int checkcount = 0;
+    while (Monsters[currentid].Init && checkcount < MAX_MONSTERS)
+    {
+        currentid = ++MonsterID;
+        if (MonsterID >= MAX_MONSTERS)
+            MonsterID = 1;
+        checkcount++;
+    };
+    
+    if (checkcount >= MAX_MONSTERS)
+    {
+        //Log("\cgWARNING: \caToo many monsters! Some of them couldn't be given stats.\n");
+        return 0;
+    };
+    
+    // When re-using an existing ID, all of these need to be reset so Init knows what to do with them
+    Monsters[currentid].Actor = nullptr;
+    Monsters[currentid].Flags = 0;
+    Monsters[currentid].RenderStyle = 0;
+    Monsters[currentid].SpawnHealth = 0;
+    Monsters[currentid].HealthMax = 0;
+    Monsters[currentid].Speed = 0;
+    Monsters[currentid].Height = 0;
+    Monsters[currentid].Radius = 0;
+    Monsters[currentid].NeedReinit = false;
+    Monsters[currentid].HealthBar = false;
+    Monsters[currentid].Named = false;
+    Monsters[currentid].Reinforcement = false;
+    Monsters[currentid].Target = 0;
+    Monsters[currentid].Level = 0;
+    Monsters[currentid].Aura = 0;
+    Monsters[currentid].Threat = 0;
+    Monsters[currentid].Strength = 0;
+    Monsters[currentid].Defense = 0;
+    Monsters[currentid].Vitality = 0;
+    Monsters[currentid].Energy = 0;
+    Monsters[currentid].Regeneration = 0;
+    Monsters[currentid].Agility = 0;
+    Monsters[currentid].Capacity = 0;
+    Monsters[currentid].Luck = 0;
+    
+    return currentid;
+};
+
 // Monster Init Script
 acscript void MonsterInit(int Flags)
 {
     // Get a new ID for the monster
     if (GetMonsterID(0) == 0)
-        SetMonsterID(0, MonsterID++);
+        SetMonsterID(0, NewMonsterID());
+    
+    if (GetMonsterID(0) == 0)
+    {
+        // The monster couldn't be given stats, so there's nothing more we can do here.
+        DamageNumbers();
+        return;
+    };
     
     // Monster Stats Pointer
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
@@ -1103,6 +1157,11 @@ script void MonsterDeath()
     // SHOTGUNS!
     if (GetCVar("drpg_shotguns"))
         DropMonsterItem(Killer, 0, "DRPGShotSpawn", 1, 255);
+    
+    // Free up our Stats slot so that another monster can use it
+    Stats->Init = false;
+    SetMonsterID(0, 0);
+    SetInventory("DRPGMonsterInit", 0);
 };
 
 acscript void MonsterTransport(int Difficulty, int Time, int Radius)

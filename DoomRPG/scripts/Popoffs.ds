@@ -15,10 +15,6 @@ script void DamageNumbers()
     
     while (GetCVar("drpg_damagenumbers"))
     {
-        // Pointer
-        MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
-        
-        int TID = UniqueTID();
         int Health = GetActorProperty(0, APROP_Health);
         bool ShieldActive = CheckInventory("DRPGShield");
         int Shield = Player.Shield.Charge;
@@ -32,11 +28,11 @@ script void DamageNumbers()
         Health = Health - GetActorProperty(0, APROP_Health);
         
         // Nullify Health if a Shield is active
-        if (CheckInventory("DRPGShield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH - GetActorProperty(0, APROP_SpawnHealth))
+        if (PlayerNumber() > -1 && CheckInventory("DRPGShield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH - GetActorProperty(0, APROP_SpawnHealth))
             Health = 0;
         
         // Shield breaking hits will cause a major health drop, don't show this
-        if (Health >= (SHIELD_HEALTH / 1000) - GetActorProperty(0, APROP_SpawnHealth))
+        if (PlayerNumber() > -1 && Health >= (SHIELD_HEALTH / 1000) - GetActorProperty(0, APROP_SpawnHealth))
             Health = 0;
         
         // Shield checks
@@ -58,24 +54,11 @@ script void DamageNumbers()
             else // Normal
                 Color = DNUM_NORMAL;
             
-            // Store the old TID if it has one
-            if (ActivatorTID() > 0)
-                OldTID = ActivatorTID();
-            
-            // Give the activator a TID
-            Thing_ChangeTID(0, TID);
-            
             // Damage Popoff
             if (CheckInventory("DRPGShield"))
-                Popoff(TID, Shield, Color)
+                Popoff(0, Shield, Color)
             else
-                Popoff(TID, Health, Color);
-            
-            // Change the TID back
-            if (OldTID > 0)
-                Thing_ChangeTID(TID, OldTID)
-            else
-                Thing_ChangeTID(TID, 0);
+                Popoff(0, Health, Color);
         };
             
         // Terminate if the Actor is dead
@@ -136,15 +119,7 @@ function Popoff(int TID, int Value, int Color)
     int DigitBase = 1;
     fixed X = GetActorX(TID);
     fixed Y = GetActorY(TID);
-    fixed Z = GetActorZ(TID) + Monsters[GetMonsterID(TID)].Height;
-    
-    // Re-check Z if it's a Player TID
-    for (int i = PLAYER_TID; i <= PLAYER_TID + MAX_PLAYERS; i++)
-        if (TID == i)
-        {
-            Z = GetActorZ(TID) + GetActorPropertyFixed(TID, APROP_Height);
-            break;
-        };
+    fixed Z = GetActorZ(TID) + (GetMonsterID(TID) > 0? Monsters[GetMonsterID(TID)].Height : GetActorPropertyFixed(TID, APROP_Height));
     
     // Prevent digit overflow
     if (Value > 9999999)
