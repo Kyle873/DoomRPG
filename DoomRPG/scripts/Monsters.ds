@@ -142,49 +142,49 @@ MonsterSpace str[MAX_HUMANS][2] MonsterHumanData =
 
 function int NewMonsterID()
 {
-    int currentid = MonsterID;
-    int checkcount = 0;
-    while (Monsters[currentid].Init && checkcount < MAX_MONSTERS)
+    int CurrentID = MonsterID;
+    int CheckCount = 0;
+    while (Monsters[CurrentID].Init && CheckCount < MAX_MONSTERS)
     {
-        currentid = ++MonsterID;
+        CurrentID = ++MonsterID;
         if (MonsterID >= MAX_MONSTERS)
             MonsterID = 1;
-        checkcount++;
+        CheckCount++;
     };
     
-    if (checkcount >= MAX_MONSTERS)
+    if (CheckCount >= MAX_MONSTERS)
     {
-        //Log("\cgWARNING: \caToo many monsters! Some of them couldn't be given stats.\n");
+        Log("\cgWARNING: \caToo many monsters! Some of them couldn't be given stats.\n");
         return 0;
     };
     
     // When re-using an existing ID, all of these need to be reset so Init knows what to do with them
-    Monsters[currentid].Actor = nullptr;
-    Monsters[currentid].Flags = 0;
-    Monsters[currentid].RenderStyle = 0;
-    Monsters[currentid].SpawnHealth = 0;
-    Monsters[currentid].HealthMax = 0;
-    Monsters[currentid].Speed = 0;
-    Monsters[currentid].Height = 0;
-    Monsters[currentid].Radius = 0;
-    Monsters[currentid].NeedReinit = false;
-    Monsters[currentid].HealthBar = false;
-    Monsters[currentid].Named = false;
-    Monsters[currentid].Reinforcement = false;
-    Monsters[currentid].Target = 0;
-    Monsters[currentid].Level = 0;
-    Monsters[currentid].Aura = 0;
-    Monsters[currentid].Threat = 0;
-    Monsters[currentid].Strength = 0;
-    Monsters[currentid].Defense = 0;
-    Monsters[currentid].Vitality = 0;
-    Monsters[currentid].Energy = 0;
-    Monsters[currentid].Regeneration = 0;
-    Monsters[currentid].Agility = 0;
-    Monsters[currentid].Capacity = 0;
-    Monsters[currentid].Luck = 0;
+    Monsters[CurrentID].Actor = nullptr;
+    Monsters[CurrentID].Flags = 0;
+    Monsters[CurrentID].RenderStyle = 0;
+    Monsters[CurrentID].SpawnHealth = 0;
+    Monsters[CurrentID].HealthMax = 0;
+    Monsters[CurrentID].Speed = 0;
+    Monsters[CurrentID].Height = 0;
+    Monsters[CurrentID].Radius = 0;
+    Monsters[CurrentID].NeedReinit = false;
+    Monsters[CurrentID].HealthBar = false;
+    Monsters[CurrentID].Named = false;
+    Monsters[CurrentID].Reinforcement = false;
+    Monsters[CurrentID].Target = 0;
+    Monsters[CurrentID].Level = 0;
+    Monsters[CurrentID].Aura = 0;
+    Monsters[CurrentID].Threat = 0;
+    Monsters[CurrentID].Strength = 0;
+    Monsters[CurrentID].Defense = 0;
+    Monsters[CurrentID].Vitality = 0;
+    Monsters[CurrentID].Energy = 0;
+    Monsters[CurrentID].Regeneration = 0;
+    Monsters[CurrentID].Agility = 0;
+    Monsters[CurrentID].Capacity = 0;
+    Monsters[CurrentID].Luck = 0;
     
-    return currentid;
+    return CurrentID;
 };
 
 // Monster Init Script
@@ -1168,35 +1168,35 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
 {
     bool DRLA = GetCVar("drpg_ext_doomrl");
     bool Brutal = GetCVar("drpg_ext_Brutal");
-    int MonsterDataAmt;
+    int MonsterDataAmount;
     MonsterInfoPtr[64] MonsterList;
-    int MonsterListLen;
+    int MonsterListLength;
     int BossesSpawned = 0;
     
     // Build a list of monsters
     if (DRLA)
-        MonsterDataAmt = MAX_DEF_MONSTERS_DRLA
+        MonsterDataAmount = MAX_DEF_MONSTERS_DRLA
     else
-        MonsterDataAmt = MAX_DEF_MONSTERS;
+        MonsterDataAmount = MAX_DEF_MONSTERS;
     
-    for (int i = 0; i < MonsterDataAmt && MonsterListLen < 64; i++)
+    for (int i = 0; i < MonsterDataAmount && MonsterListLength < 64; i++)
     {
-        MonsterInfoPtr TmpMonster;
+        MonsterInfoPtr TempMonster;
         if (DRLA)
-            TmpMonster = &MonsterDataDRLA[i]
+            TempMonster = &MonsterDataDRLA[i]
         else if (Brutal)
-            TmpMonster = &MonsterDataBrutal[i]
+            TempMonster = &MonsterDataBrutal[i]
         else
-            TmpMonster = &MonsterData[i];
+            TempMonster = &MonsterData[i];
     
-        if (TmpMonster->Difficulty >= ((Difficulty + 1) * 10) - 40 &&
-            TmpMonster->Difficulty <= ((Difficulty + 1) * 10) + 10)
-            MonsterList[MonsterListLen++] = TmpMonster;
+        if (TempMonster->Difficulty >= ((Difficulty + 1) * 10) - 40 &&
+            TempMonster->Difficulty <= ((Difficulty + 1) * 10) + 10)
+            MonsterList[MonsterListLength++] = TempMonster;
     };
     
-    if (!MonsterListLen)
+    if (!MonsterListLength)
     {
-        Log ("\cgWARNING: \caReinforcement Mission on %s\ca has no monsters!\n", MissionDifficulties[Difficulty]);
+        Log("\cgWARNING: \caReinforcement Mission on %s\ca has no monsters!\n", MissionDifficulties[Difficulty]);
         return;
     };
     
@@ -1231,7 +1231,7 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
         
         while (!Success && SpawnTries < 3)
         {
-            MonsterIndex = Random (0, MonsterListLen - 1);
+            MonsterIndex = Random(0, MonsterListLength - 1);
             
             SpawnX = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
             SpawnY = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
@@ -1247,10 +1247,9 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
             
             if (Success)
                 Success = CheckSight(0, TID, 0);
-
             if (Success)
                 Success = !IsBoss || (!Random (0, 3) && BossesSpawned < 3);
-                
+            
             if (!Success)
             {
                 // Try again, closer to the player each time, up to 3 times, before giving up.
