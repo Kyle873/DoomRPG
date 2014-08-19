@@ -473,10 +473,7 @@ namespace DoomRPG
 
         private string BuildCommandLine()
         {
-            string cmdline;
-
-            // Build the command line
-            cmdline = "\"" + config.portPath + "\"";
+            string cmdline = string.Empty;
 
             // IWAD
             if (config.iwad == IWAD.Doom1)
@@ -757,7 +754,7 @@ namespace DoomRPG
             PatchInfo.CheckForConflicts(patches);
             SaveControls();
             config.Save();
-            Clipboard.SetText(BuildCommandLine());
+            Clipboard.SetText("\"" + config.portPath + "\"" + BuildCommandLine());
         }
 
         private void buttonRefresh_Click(object sender, EventArgs e)
