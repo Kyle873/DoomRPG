@@ -32,7 +32,7 @@ namespace DoomRPG
         public int players = 2;
         public string hostname = string.Empty;
         public bool extraTics = false;
-        public int duplex = 0;
+        public int duplicate = 1;
 
         // Warnings
         public bool wipeWarning = false;

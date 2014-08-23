@@ -60,8 +60,8 @@
             this.labelPortLocation = new System.Windows.Forms.Label();
             this.tabPageMultiplayer = new System.Windows.Forms.TabPage();
             this.groupBoxServerOptions = new System.Windows.Forms.GroupBox();
-            this.labelDuplex = new System.Windows.Forms.Label();
-            this.numericUpDownDuplex = new System.Windows.Forms.NumericUpDown();
+            this.labelDuplicate = new System.Windows.Forms.Label();
+            this.numericUpDownDuplicate = new System.Windows.Forms.NumericUpDown();
             this.checkBoxExtraTics = new System.Windows.Forms.CheckBox();
             this.groupBoxServerMode = new System.Windows.Forms.GroupBox();
             this.radioButtonPacketServer = new System.Windows.Forms.RadioButton();
@@ -95,7 +95,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMapNumber)).BeginInit();
             this.tabPageMultiplayer.SuspendLayout();
             this.groupBoxServerOptions.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownDuplex)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownDuplicate)).BeginInit();
             this.groupBoxServerMode.SuspendLayout();
             this.groupBoxMode.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownPlayers)).BeginInit();
@@ -411,8 +411,8 @@
             // 
             // groupBoxServerOptions
             // 
-            this.groupBoxServerOptions.Controls.Add(this.labelDuplex);
-            this.groupBoxServerOptions.Controls.Add(this.numericUpDownDuplex);
+            this.groupBoxServerOptions.Controls.Add(this.labelDuplicate);
+            this.groupBoxServerOptions.Controls.Add(this.numericUpDownDuplicate);
             this.groupBoxServerOptions.Controls.Add(this.checkBoxExtraTics);
             this.groupBoxServerOptions.Location = new System.Drawing.Point(175, 29);
             this.groupBoxServerOptions.Name = "groupBoxServerOptions";
@@ -421,32 +421,32 @@
             this.groupBoxServerOptions.TabStop = false;
             this.groupBoxServerOptions.Text = "Server Options";
             // 
-            // labelDuplex
+            // labelDuplicate
             // 
-            this.labelDuplex.Location = new System.Drawing.Point(6, 39);
-            this.labelDuplex.Name = "labelDuplex";
-            this.labelDuplex.Size = new System.Drawing.Size(70, 20);
-            this.labelDuplex.TabIndex = 6;
-            this.labelDuplex.Text = "Duplex";
-            this.labelDuplex.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.labelDuplicate.Location = new System.Drawing.Point(6, 39);
+            this.labelDuplicate.Name = "labelDuplicate";
+            this.labelDuplicate.Size = new System.Drawing.Size(70, 20);
+            this.labelDuplicate.TabIndex = 6;
+            this.labelDuplicate.Text = "Duplicate";
+            this.labelDuplicate.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // numericUpDownDuplex
             // 
-            this.numericUpDownDuplex.Location = new System.Drawing.Point(82, 39);
-            this.numericUpDownDuplex.Maximum = new decimal(new int[] {
+            this.numericUpDownDuplicate.Location = new System.Drawing.Point(82, 39);
+            this.numericUpDownDuplicate.Maximum = new decimal(new int[] {
             5,
             0,
             0,
             0});
-            this.numericUpDownDuplex.Minimum = new decimal(new int[] {
+            this.numericUpDownDuplicate.Minimum = new decimal(new int[] {
             1,
             0,
             0,
             0});
-            this.numericUpDownDuplex.Name = "numericUpDownDuplex";
-            this.numericUpDownDuplex.Size = new System.Drawing.Size(120, 20);
-            this.numericUpDownDuplex.TabIndex = 6;
-            this.numericUpDownDuplex.Value = new decimal(new int[] {
+            this.numericUpDownDuplicate.Name = "numericUpDownDuplex";
+            this.numericUpDownDuplicate.Size = new System.Drawing.Size(120, 20);
+            this.numericUpDownDuplicate.TabIndex = 6;
+            this.numericUpDownDuplicate.Value = new decimal(new int[] {
             1,
             0,
             0,
@@ -759,7 +759,7 @@
             this.tabPageMultiplayer.PerformLayout();
             this.groupBoxServerOptions.ResumeLayout(false);
             this.groupBoxServerOptions.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownDuplex)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownDuplicate)).EndInit();
             this.groupBoxServerMode.ResumeLayout(false);
             this.groupBoxServerMode.PerformLayout();
             this.groupBoxMode.ResumeLayout(false);
@@ -799,8 +799,8 @@
         private System.Windows.Forms.RadioButton radioButtonPeerToPeer;
         private System.Windows.Forms.GroupBox groupBoxMode;
         private System.Windows.Forms.GroupBox groupBoxServerOptions;
-        private System.Windows.Forms.Label labelDuplex;
-        private System.Windows.Forms.NumericUpDown numericUpDownDuplex;
+        private System.Windows.Forms.Label labelDuplicate;
+        private System.Windows.Forms.NumericUpDown numericUpDownDuplicate;
         private System.Windows.Forms.CheckBox checkBoxExtraTics;
         private System.Windows.Forms.TextBox textBoxHostname;
         private System.Windows.Forms.NumericUpDown numericUpDownPlayers;

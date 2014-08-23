@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 9, 2);
+        Version version = new Version(0, 9, 3);
         Config config = new Config();
         string currentBranch = string.Empty;
         List<PatchInfo> patches = new List<PatchInfo>();
@@ -249,7 +249,7 @@ namespace DoomRPG
             numericUpDownPlayers.Value = config.players;
             textBoxHostname.Text = config.hostname;
             checkBoxExtraTics.Checked = config.extraTics;
-            numericUpDownDuplex.Value = config.duplex;
+            numericUpDownDuplicate.Value = config.duplicate;
             textBoxCustomCommands.Text = config.customCommands;
         }
 
@@ -285,7 +285,7 @@ namespace DoomRPG
             config.players = (int)numericUpDownPlayers.Value;
             config.hostname = textBoxHostname.Text;
             config.extraTics = checkBoxExtraTics.Checked;
-            config.duplex = (int)numericUpDownDuplex.Value;
+            config.duplicate = (int)numericUpDownDuplicate.Value;
             config.customCommands = textBoxCustomCommands.Text;
         }
 
@@ -515,8 +515,8 @@ namespace DoomRPG
                     // Server Options
                     if (config.extraTics)
                         cmdline += " -extratic";
-                    if (config.duplex > 0)
-                        cmdline += " -dup " + config.duplex;
+                    if (config.duplicate > 0)
+                        cmdline += " -dup " + config.duplicate;
                 }
             }
 
