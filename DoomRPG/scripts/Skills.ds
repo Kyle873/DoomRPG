@@ -1749,6 +1749,13 @@ acscript bool Recall(Skill *Self, void *Data)
     return true;
 };
 
+script CleanDropTIDArray ()
+{
+    for (int i = 0; i < MAX_DROPS; i++)
+        if (Player.DropTID[i] != -1 && ClassifyActor (Player.DropTID[i]) == ACTOR_NONE)
+            Player.DropTID[i] = -1;
+};
+
 acscript bool Magnetize(Skill *Self, void *Data)
 {
     fixed Angle = GetActorAngle(0);
@@ -1757,11 +1764,19 @@ acscript bool Magnetize(Skill *Self, void *Data)
     fixed Z = GetActorZ(0) + (GetActorProperty(0, APROP_Height) / 2);
     fixed AngleAdd;
     int ItemCount;
+    auto int[MAX_DROPS] ItemTIDs;
+    
+    CleanDropTIDArray ();
     
     // Count all the items in the DropTID array
     for (int i = 0; i < MAX_DROPS; i++)
+    {
         if (Player.DropTID[i] != -1)
+        {
+            ItemTIDs[ItemCount] = Player.DropTID[i];
             ItemCount++;
+        };
+    };
     
     // Refund - If there are no items in the array
     if (ItemCount == 0)
@@ -1774,7 +1789,7 @@ acscript bool Magnetize(Skill *Self, void *Data)
     if (Overdrive)
     {
         for (int i = 0; i < ItemCount; i++)
-            SetActorPosition(Player.DropTID[i], X, Y, Z, 0);
+            SetActorPosition(ItemTIDs[i], X, Y, Z, 0);
         SetActorVelocity(0, 0.01, 0.01, 0, true, false);
         ActivatorSound("skills/magnet", 127);
         return true;
@@ -1786,7 +1801,7 @@ acscript bool Magnetize(Skill *Self, void *Data)
     {
         X = GetActorX(0) + Cos(Angle) * 64.0;
         Y = GetActorY(0) + Sin(Angle) * 64.0;
-        SetActorPosition(Player.DropTID[i], X, Y, Z, 0);
+        SetActorPosition(ItemTIDs[i], X, Y, Z, 0);
         Angle += AngleAdd;
     };
     
