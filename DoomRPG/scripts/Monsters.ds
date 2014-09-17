@@ -542,7 +542,7 @@ script void MonsterInitStats(int StatFlags)
         break;
     case 8: // Dark Blue Aura - Capacity
         MonsterCapacity *= 2;
-        GiveInventory("DRPGDarkBlueAuraGiver", 1);
+        MonsterAmmoDrainHandler();
         break;
     case 9: // Yellow Aura - Luck
         MonsterLuck *= 2;
@@ -917,6 +917,39 @@ script void MonsterMoneyDrainHandler()
             
             if (CheckActorInventory(Players(i).TID, "DRPGCredits") < Previous)
                 Popoff(0, Previous - CheckActorInventory(Players(i).TID, "DRPGCredits"), DNUM_CREDGAIN);
+        };
+    };
+    
+    Delay(35);
+    
+    goto Start;
+};
+
+script void MonsterAmmoDrainHandler()
+{
+    // Delay Stagger
+    Delay(GetMonsterID(0) % 4);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    Start:
+    if (ClassifyActor(0) & ACTOR_DEAD)
+        return;
+    
+    if (Stats->Aura != 8 && Stats->Aura != 10)
+        return;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i)) continue;
+        
+        if (Distance(0, Players(i).TID) < Stats->Radius * GameSkill() * 4 && CheckSight(0, Players(i).TID, 0))
+        {
+            TakeActorInventory(Players(i).TID, "Clip",       Stats->Capacity / 2);
+            TakeActorInventory(Players(i).TID, "Shell",      Stats->Capacity / 3);
+            TakeActorInventory(Players(i).TID, "RocketAmmo", Stats->Capacity / 4);
+            TakeActorInventory(Players(i).TID, "Cell",       Stats->Capacity / 3);
         };
     };
     
