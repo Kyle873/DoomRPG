@@ -3,3 +3,617 @@ actor RLStandardArmorSpawner3 : RLAdvancedArmorSpawner replaces DRPGBlueArmor {}
 actor RLAdvancedArmorSpawner4 : RLAdvancedArmorSpawner replaces DRPGYellowArmor {}
 actor RLAdvancedArmorSpawner5 : RLAdvancedArmorSpawner replaces DRPGRedArmor {}
 actor RLAdvancedArmorSpawner6 : RLAdvancedArmorSpawner replaces DRPGWhiteArmor {}
+
+// Some funny stuff for armor specials
+ACTOR RLArmorSpecial : CustomInventory
+{
+	Radius 20
+	Height 16
+    -COUNTITEM
+    +INVENTORY.UNTOSSABLE
+    +INVENTORY.UNDROPPABLE
+	+INVENTORY.KEEPDEPLETED
+    Tag "Armor Special"
+    Inventory.InterHubAmount 1
+    Inventory.MaxAmount 1
+    Inventory.Icon "TNT1A0"
+    Inventory.Pickupmessage "stop doing things."
+	Inventory.PickupSound "misc/armor_pkup"
+	Inventory.UseSound "misc/armor_pkup"
+	States
+	{
+	Spawn:
+		TNT1 A -1
+		Loop
+	Use:
+		TNT1 A 0
+		TNT1 A 0 A_JumpIfInventory("RLCyberneticArmorToken",1,"CyberneticArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLRechargeableEnergyShieldArmorToken",1,"RechargeableEnergyShieldArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLOverchargeSystemArmorToken",1,"OverchargeSystemArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLRepulsionWaveSuitArmorToken",1,"RepulsionWaveSuitArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLOModRepulsionWaveSuitArmorToken",1,"RepulsionWaveSuitArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessArmorToken",1,"EnergyDischargeHarnessArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLPrototypeAssaultShieldArmorToken",1,"PrototypeAssaultShieldArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLJetpackArmorToken",1,"JetpackArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLBerserkPowersuitArmorToken",1,"BerserkPowersuitArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLSoulshatterArmorToken",1,"SoulshatterArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLDemonicSetBonusActive",1,"DemonicCarapaceArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLBlazingPhoenixDeviceSuitArmorToken",1,"BlazingPhoenixDeviceSuitArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLKateMatterstormHarnessArmorToken",1,"KateMatterstormHarnessArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLZeroDiamondAssaultforceArmorToken",1,"ZeroDiamondAssaultforceArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLKyleTeslaboltArmorToken",1,"KyleTeslaboltArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLRyanCordellPsychicAmplifierSuitArmorToken",1,"RyanCordellPsychicAmplifierSuitArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLTerminusEst13BattlesuitArmorToken",1,"TerminusEst13BattlesuitArmorSpecial")// Not done
+		TNT1 A 0 A_JumpIfInventory("RLRoystenSetBonusActive",1,"RoystensCommandArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLArchitectSetBonusActive",1,"SoloOperativeSuitArmorSpecial")// Not done
+		TNT1 A 0 A_JumpIfInventory("RLTorgueSetBonusActive",1,"TorgueBlastplateArmorSpecial")
+		TNT1 A 0 A_JumpIfInventory("RLFrontlineEngineerSuitArmorToken",1,"FrontlineEngineerSuitArmorSpecial")// Not done
+		TNT1 A 0 A_JumpIfInventory("RLTacticalAssemblerSuitArmorToken",1,"TacticalAssemblerSuitArmorSpecial")// Not done
+		TNT1 A 0 A_JumpIfInventory("RLChronotrooperArmorToken",1,"ChronotrooperArmorSpecial")
+		Fail
+	Cooldown:
+		TNT1 A 0 A_Print("Armor Special cooldown has not yet expired.", 10)
+		Fail
+	CooldownLevel:
+		TNT1 A 0 A_Print("You may only use this Armor Special once per level.", 10)
+		Fail
+	SentryLimit1:
+		TNT1 A 0 A_Print("You already have a sentry deployed.", 10)
+		Fail
+	SentryLimit2:
+		TNT1 A 0 A_Print("You already have two sentries deployed.", 10)
+		Fail
+	RestorerLimit:
+		TNT1 A 0 A_Print("You already have a restorer deployed.", 10)
+		Fail
+	ArmorDamaged:
+		TNT1 A 0 A_Print("This armor is currently too damaged\nto activate it's armor special.", 10)
+		Fail
+	NoArmorSpecial:
+		TNT1 A 0
+		Fail
+	CyberneticArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("RLCyberneticArmorModdedToken",1,"CyberneticArmorSpecialModded")
+		TNT1 A 0 A_GiveInventory("RLCyberneticArmorModdingConfirm", 1)
+		TNT1 A 0 A_Print("Use a modpack to apply it to the Cybernetic Armor.\nSwitch weapons to cancel.", 10)
+		Fail
+	CyberneticArmorSpecialModded:
+		TNT1 A 0 A_Print("Your Cybernetic Armor is already modded.", 10)
+		Fail
+	RechargeableEnergyShieldArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("BasicArmor",100,"RechargeableEnergyShieldCharged")
+		TNT1 A 0 A_JumpIfInventory("RLArmorSpecialConfirm",1,"RechargeableEnergyShieldConfirm")
+		TNT1 A 0 A_GiveInventory("RLArmorSpecialConfirm", 1)
+		TNT1 A 0 A_JumpIfInventory("Cell",50,1)
+		Goto RechargeableEnergyShieldCells
+		TNT1 A 0 A_Print("Use this again to recharge your shield by 20%.\nSwitch weapons to cancel.", 10)
+		Fail
+	RechargeableEnergyShieldCells:
+		TNT1 A 0 A_TakeInventory("RLArmorSpecialConfirm", 1)
+		TNT1 A 0 A_Print("You need 50 cells to recharge the shield.", 10)
+		Fail
+	RechargeableEnergyShieldConfirm:
+		TNT1 A 0 A_JumpIfInventory("Cell",50,1)
+		Goto RechargeableEnergyShieldCells
+		TNT1 A 0 A_TakeInventory("RLArmorSpecialConfirm", 1)
+		TNT1 A 0 A_TakeInventory("Cell",50, TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_PlaySound("misc/rlshield", CHAN_WEAPON)
+		TNT1 AAAAAAAAAAAAAAAAAAAA 0 A_GiveInventory("RLArmorRestorer100", 1)
+		TNT1 A 0 A_Print("Shield recharged 20%.", 10)
+		Fail
+	RechargeableEnergyShieldCharged:
+		TNT1 A 0 A_Print("This shield is fully charged already.", 10)
+		Fail
+	OverchargeSystemArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_GiveInventory("PowerRLOverchargeSystemDamage", 1)
+		TNT1 A 0 A_GiveInventory("PowerRLOverchargeSystemProtection", 1)
+		TNT1 A 0 A_GiveInventory("PowerRL180Cooldown", 1)
+		TNT1 A 0 A_Print("Plasma weapons overcharged temporarily.", 3)
+		Fail
+	RepulsionWaveSuitArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_PlaySound("misc/repulsionwave", CHAN_WEAPON)
+		TNT1 A 0 A_RadiusThrust(50000, 512, RTF_NOTMISSILE, 320)
+		TNT1 A 0 Radius_Quake(3, 10, 0, 16, 0)
+		TNT1 A 0 A_GiveInventory("PowerRL10Cooldown", 1)
+		TNT1 A 0 A_Print("Repulsion Wave activated.", 3)
+		Fail
+	EnergyDischargeHarnessArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessCounter",5,"EnergyDischargeHarnessCounter5")
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessCounter",4,"EnergyDischargeHarnessCounter4")
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessCounter",3,"EnergyDischargeHarnessCounter3")
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessCounter",2,"EnergyDischargeHarnessCounter2")
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessCounter",1,"EnergyDischargeHarnessCounter1")
+		Fail
+	EnergyDischargeHarnessCounter1:
+		TNT1 A 0 A_TakeInventory("RLEnergyDischargeHarnessCounter", 5)
+		TNT1 A 0 A_GiveInventory("PowerRL10Cooldown", 1)
+		TNT1 A 0 A_Recoil(10)
+		TNT1 A 0 Radius_Quake(2, 18, 0, 16, 0)
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessPlasmaType",1,3)
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 1 Fire Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast1Fire", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 1 Plasma Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast1Plasma", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+	EnergyDischargeHarnessCounter2:
+		TNT1 A 0 A_TakeInventory("RLEnergyDischargeHarnessCounter", 5)
+		TNT1 A 0 A_GiveInventory("PowerRL10Cooldown", 1)
+		TNT1 A 0 A_Recoil(15)
+		TNT1 A 0 Radius_Quake(3, 18, 0, 16, 0)
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessPlasmaType",1,3)
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 2 Fire Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast2Fire", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 2 Plasma Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast2Plasma", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+	EnergyDischargeHarnessCounter3:
+		TNT1 A 0 A_TakeInventory("RLEnergyDischargeHarnessCounter", 5)
+		TNT1 A 0 A_GiveInventory("PowerRL10Cooldown", 1)
+		TNT1 A 0 A_Recoil(20)
+		TNT1 A 0 Radius_Quake(4, 18, 0, 16, 0)
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessPlasmaType",1,3)
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 3 Fire Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast3Fire", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 3 Plasma Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast3Plasma", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+	EnergyDischargeHarnessCounter4:
+		TNT1 A 0 A_TakeInventory("RLEnergyDischargeHarnessCounter", 5)
+		TNT1 A 0 A_GiveInventory("PowerRL10Cooldown", 1)
+		TNT1 A 0 A_Recoil(25)
+		TNT1 A 0 Radius_Quake(5, 18, 0, 16, 0)
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessPlasmaType",1,3)
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 4 Fire Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast4Fire", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 4 Plasma Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast4Plasma", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+	EnergyDischargeHarnessCounter5:
+		TNT1 A 0 A_TakeInventory("RLEnergyDischargeHarnessCounter", 5)
+		TNT1 A 0 A_GiveInventory("PowerRL10Cooldown", 1)
+		TNT1 A 0 A_Recoil(50)
+		TNT1 A 0 Radius_Quake(8, 18, 0, 32, 0)
+		TNT1 A 0 A_JumpIfInventory("RLEnergyDischargeHarnessPlasmaType",1,3)
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 5 Fire Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast5Fire", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+		TNT1 A 0 A_Print("Energy Discharge Harness activated.\nLevel 5 Plasma Explosion", 5)
+		TNT1 A 0 A_SpawnItemEx ("RLEnergyDischargeHarnessBlast5Plasma", 5, 0, 20, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+		Fail
+	PrototypeAssaultShieldArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRLPrototypeAssaultShieldProtection",1,"PrototypeAssaultShieldCharged")
+		TNT1 A 0 A_JumpIfInventory("RLArmorSpecialConfirm",1,"PrototypeAssaultShieldConfirm")
+		TNT1 A 0 A_GiveInventory("RLArmorSpecialConfirm", 1)
+		TNT1 A 0 A_JumpIfInventory("Cell",100,1)
+		Goto PrototypeAssaultShieldCells
+		TNT1 A 0 A_Print("Use this again to activate the \ctPrototype Assault Shield.\nSwitch weapons to cancel.", 10)
+		Fail
+	PrototypeAssaultShieldCells:
+		TNT1 A 0 A_TakeInventory("RLArmorSpecialConfirm", 1)
+		TNT1 A 0 A_GiveInventory("PowerRLPrototypeAssaultShieldNoCells", 1)
+		TNT1 A 0 A_Print("You need 100 cells to activate the Prototype Assault Shield.", 10)
+		Fail
+	PrototypeAssaultShieldConfirm:
+		TNT1 A 0 A_JumpIfInventory("Cell",100,1)
+		Goto PrototypeAssaultShieldCells
+		TNT1 A 0 A_TakeInventory("RLArmorSpecialConfirm", 1)
+		TNT1 A 0 A_TakeInventory("Cell",100, TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_GiveInventory("PowerRLPrototypeAssaultShieldProtection", 1)
+		TNT1 A 0 A_Print("The Prototype Assault Shield is now active.", 10)
+		Fail
+	PrototypeAssaultShieldCharged:
+		TNT1 A 0 A_Print("This shield is already active.", 10)
+		Fail
+	JetpackArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("RLDeathFromAboveSetBonusActive",1,"JetpackPermanent")
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_PlaySound("misc/jetpackon", 7)
+		TNT1 A 0 A_GiveInventory("PowerRLJetpackFlight", 1)
+		TNT1 A 0 A_GiveInventory("PowerRL180Cooldown", 1)
+		TNT1 A 0 A_Print("Jetpack activated.", 3)
+		Fail
+	JetpackPermanent:
+		TNT1 A 0 A_JumpIfInventory("PowerRLJetpackFlightPermanent",1,"JetpackPermanentOff")
+		TNT1 A 0 A_PlaySound("misc/jetpackon", 7)
+		TNT1 A 0 A_GiveInventory("PowerRLJetpackFlightPermanent", 1)
+		Fail
+	JetpackPermanentOff:
+		TNT1 A 0 A_PlaySound("misc/jetpackoff", 7)
+		TNT1 A 0 A_TakeInventory("PowerRLJetpackFlightPermanent", 1)
+		Fail
+	BerserkPowersuitArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerStrength",1,"BerserkPowersuitBerserk")
+		TNT1 A 0 A_JumpIfInventory("RLBerserkPowersuitBerserkCounter",1,1)
+		Goto BerserkPowersuitNoCharges
+		TNT1 A 0 A_PlaySound("misc/berserkpowersuit", CHAN_VOICE)
+		TNT1 A 0 A_TakeInventory("RLBerserkPowersuitBerserkCounter", 1)
+		TNT1 A 0 A_GiveInventory("PowerStrength", 1)
+		TNT1 A 0 HealThing(100, 0)
+		TNT1 A 0 A_JumpIfInventory ("RLAmmoChainPerk", 1, 2)
+		TNT1 A 0 A_GiveInventory("PowerBerserkResistance")
+		Goto BerserkPowersuitFinish
+		TNT1 A 0 A_GiveInventory("PowerBerserkResistanceMarine")
+	BerserkPowersuitFinish:
+		TNT1 A 0 A_Print("Berserk stimulants injected into bloodstream.", 3)
+		Fail
+	BerserkPowersuitNoCharges:
+		TNT1 A 0 A_Print("The Berserk Powersuit has no berserk stimulants left.\nCollect a Berserk pack to get more.", 10)
+		Fail
+	BerserkPowersuitBerserk:
+		TNT1 A 0 A_Print("You are already berserk.\nAdditional berserk stimulants would likely be fatal.", 10)
+		Fail
+	SoulshatterArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfHealthLower(2,"SoulshatterArmorLowHealth")
+		TNT1 A 0 A_PlaySound("misc/soulshatter", CHAN_VOICE)
+		TNT1 A 0 A_FireCustomMissile ("RLSoulshatterArmorAnimator", 0, 0)
+		TNT1 A 0 A_FireCustomMissile ("RLSoulshatterArmorWave", 0, 0)
+		TNT1 A 0 A_RadiusGive("RLSoulshatterHealthDrain", 512, RGF_MONSTERS, 1)
+		TNT1 A 0 A_TakeInventory("BasicArmor", 99999)
+		TNT1 A 0 DamageThing(health / 2, "MOD_WATER")
+		TNT1 A 0 Radius_Quake(6, 30, 0, 16, 0)
+		TNT1 A 0 A_GiveInventory("PowerRL300Cooldown", 1)
+		TNT1 A 0 A_Print("Part of your soul is twisted into a deadly shockwave.\nYou and all nearby enemies lose half their current health.", 10)
+		TNT1 A 0 A_JumpIfInventory ("RLShellshockPerk", 1, 2)
+		TNT1 A 0 A_GiveInventory("RLSoulshatterArmor")
+		Fail
+		TNT1 A 0 A_GiveInventory("RLSoulshatterArmorRenegade")
+		Fail
+	SoulshatterArmorLowHealth:
+		TNT1 A 0 A_Print("Your health is too low to use this armor.", 10)
+		Fail
+	DemonicCarapaceArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("RLDemonicSetBonusActive",1,1)
+		Fail
+		TNT1 A 0 A_JumpIfInventory("RLDemonicCarapaceSupercharge",1,"DemonicCarapaceSupercharge")
+		TNT1 A 0 A_FireCustomMissile("RLDemonicCarapacePlasmaSkull", 0, 0)
+		TNT1 A 0 A_GiveInventory("PowerRLDemonicCarapaceAttack", 1)
+		TNT1 A 0 A_GiveInventory("PowerRL10Cooldown", 1)
+		Fail
+	DemonicCarapaceSupercharge:
+		TNT1 A 0 A_FireCustomMissile ("RLDemonicCarapaceAnimator", 0, 0)
+		TNT1 A 0 A_TakeInventory("RLDemonicCarapaceSupercharge", 1)
+		TNT1 A 0 A_GiveInventory("PowerRL10Cooldown", 1)
+		Fail
+	BlazingPhoenixDeviceSuitArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("BasicArmor",26,1)
+		Goto ArmorDamaged
+		TNT1 A 0 A_JumpIfInventory("Cell",50,1)
+		Goto BlazingPhoenixDeviceSuitCells
+		TNT1 A 0 A_TakeInventory("Cell",50, TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_FireCustomMissile ("RLBlazingPhoenixDeviceSuitAnimator", 0, 0)
+		TNT1 A 0 A_GiveInventory("PowerRL120Cooldown", 1)
+		Fail
+	BlazingPhoenixDeviceSuitCells:
+		TNT1 A 0 A_Print("You need 50 cells to activate the Phoenix-B Device.", 10)
+		Fail
+	KateMatterstormHarnessArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 AAAAAAAAAAAA 0 A_FireCustomMissile ("RLKateMatterstormHarnessPlasmaball", random(0,359), 0, 0, 0, 0, random(30,-30))
+		TNT1 A 0 A_GiveInventory("PowerRL120KateCooldown", 1)
+		Fail
+	ZeroDiamondAssaultforceArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory ("RLZeroDiamondAssaultforceArmorCounter", 1, "ZeroDiamondAssaultforceArmorAlreadyFiring")
+		TNT1 A 0 A_JumpIfInventory ("RLAmmoChainPerk", 1, 2)
+		TNT1 A 0 A_JumpIfInventory("Clip",80,"ZeroDiamondAssaultforceFiringSequence")
+		Goto ZeroDiamondAssaultforceArmorNoAmmo
+		TNT1 A 0 A_JumpIfInventory("Clip",20,"ZeroDiamondAssaultforceFiringSequence")
+		Goto ZeroDiamondAssaultforceArmorNoAmmoMarine
+	ZeroDiamondAssaultforceFiringSequence:
+		TNT1 A 0 A_JumpIfInventory ("RLAmmoChainPerk", 1, 3)
+		TNT1 A 0 A_TakeInventory("Clip",80, TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_FireCustomMissile ("RLZeroDiamondAssaultforceArmorAnimator", 0, 0)
+		Fail
+		TNT1 A 0 A_TakeInventory("Clip",20, TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_FireCustomMissile ("RLZeroDiamondAssaultforceArmorAnimator", 0, 0)
+		Fail
+	ZeroDiamondAssaultforceArmorNoAmmo:
+		TNT1 A 0 A_Print("You need 80 bullets to fire the armor's minigun.", 10)
+		Fail
+	ZeroDiamondAssaultforceArmorNoAmmoMarine:
+		TNT1 A 0 A_Print("You need 20 bullets to fire the armor's minigun.", 10)
+		Fail
+	ZeroDiamondAssaultforceArmorAlreadyFiring:
+		TNT1 A 0 A_Print("You are already firing the minigun.", 5)
+		Fail
+	KyleTeslaboltArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_FireCustomMissile ("RLKyleTeslaboltArmorAnimator", 0, 0)
+		TNT1 A 0 A_GiveInventory("PowerRL120Cooldown", 1)
+		Fail
+	RyanCordellPsychicAmplifierSuitArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLRyanCordellPsychicAttack",1,"Cooldown")
+		TNT1 A 0 A_PlaySound("misc/psychicamplifier", CHAN_VOICE)
+		TNT1 A 0 A_GiveInventory("PowerRLRyanCordellPsychicAttack", 1)
+		TNT1 A 0 A_RadiusGive("RLRyanCordellPsychicConversion", 256, RGF_MONSTERS, 1)
+		TNT1 A 0 A_GiveInventory("PowerRL120Cooldown", 1)
+		Fail
+	TerminusEst13BattlesuitArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_FireCustomMissile ("RLTerminusMissile", -4, 0, 8, 8)
+		TNT1 A 0 A_FireCustomMissile ("RLTerminusMissile", -2, 0, 4, 8)
+		TNT1 A 0 A_FireCustomMissile ("RLTerminusMissile", 2, 0, -4, 8)
+		TNT1 A 0 A_FireCustomMissile ("RLTerminusMissile", 4, 0, -8, 8)
+		TNT1 A 0 A_GiveInventory("PowerRLTerminusAttack", 1)
+		TNT1 A 0 A_GiveInventory("PowerRL60Cooldown", 1)
+		Fail
+	RoystensCommandArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("RLRoystenLevelCooldown",1,"CooldownLevel")
+		TNT1 A 0 A_JumpIfInventory("RLRoystenSetBonusActive",1,1)
+		Fail
+		TNT1 A 0 A_SpawnItemEx ("RLSupplyCrate", 32, 0, 30, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION) 
+		TNT1 A 0 A_SpawnItemEx ("TeleportFog", 32, 0, 30, 0, 0, 0, 0, SXF_NOCHECKPOSITION) 
+		TNT1 A 0 A_GiveInventory("PowerRL180Cooldown", 1)
+		TNT1 A 0 A_GiveInventory("RLRoystenLevelCooldown", 1)
+		Fail
+	SoloOperativeSuitArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("RLArchitectSetBonusActive",1,1)
+		Fail
+		TNT1 A 0 A_PlaySound("misc/solooperativesuit", CHAN_BODY)
+		TNT1 A 0 A_GiveInventory("PowerRLSoloInvisibility", 1)
+		TNT1 A 0 A_GiveInventory("PowerRLSoloDamage", 1)
+		TNT1 A 0 A_RadiusGive("RLSoloTargetClearer", 2056, RGF_MONSTERS, 1)
+		TNT1 A 0 A_GiveInventory("PowerRL180Cooldown", 1)
+		Fail
+	TorgueBlastplateArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("RLTorgueSetBonusActive",1,1)
+		Fail
+		TNT1 A 0 A_Jump(50, 2)
+		TNT1 A 0 A_PlaySound("misc/torgue", CHAN_BODY, 5)
+		Goto TorgueBlastplateArmorContinue
+		TNT1 A 0 A_PlaySound("misc/torguemore", CHAN_BODY, 5)
+		Goto TorgueBlastplateArmorContinue
+	TorgueBlastplateArmorContinue:
+		TNT1 A 0 A_GiveInventory("PowerRLTorgueExplosionProtection", 1)
+		TNT1 A 0 A_FireCustomMissile ("RLTorgueExplosionMaker", 0, 0)
+		TNT1 A 0 A_GiveInventory("PowerRL120Cooldown", 1)
+		Fail
+	FrontlineEngineerSuitArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("RLSentrySentinelSetBonusActive",1,2)
+		TNT1 A 0 A_JumpIfInventory("RLSentryLimit",1,"SentryLimit1")
+		TNT1 A 0 A_JumpIfInventory ("RLSharpshooterPerk", 1, "FrontlineEngineerSuitScout")
+		TNT1 A 0 A_JumpIfInventory ("RLShellshockPerk", 1, "FrontlineEngineerSuitRenegade")
+		TNT1 A 0 A_JumpIfInventory ("RLScavengerPerk", 1, "FrontlineEngineerSuitTechnician")
+	FrontlineEngineerSuitMarine:
+		TNT1 A 0 A_JumpIfInventory("RLSentryLimit",2,"SentryLimit2")
+		TNT1 A 0 A_SpawnItemEx ("RLFrontlineEngineerSentryMarineRPG", 60, 0, 5, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION | SXF_SETMASTER)
+		Fail
+	FrontlineEngineerSuitScout:
+		TNT1 A 0 A_JumpIfInventory("RLSentryLimit",2,"SentryLimit2")
+		TNT1 A 0 A_SpawnItemEx ("RLFrontlineEngineerSentryScoutRPG", 60, 0, 5, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION | SXF_SETMASTER) 
+		Fail
+	FrontlineEngineerSuitRenegade:
+		TNT1 A 0 A_JumpIfInventory("RLSentryLimit",2,"SentryLimit2")
+		TNT1 A 0 A_SpawnItemEx ("RLFrontlineEngineerSentryRenegadeRPG", 60, 0, 5, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION | SXF_SETMASTER) 
+		Fail
+	FrontlineEngineerSuitTechnician:
+		TNT1 A 0 A_JumpIfInventory("RLSentryLimit",2,"SentryLimit2")
+		TNT1 A 0 A_SpawnItemEx ("RLFrontlineEngineerSentryTechnicianRPG", 60, 0, 5, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION | SXF_SETMASTER) 
+		Fail
+	TacticalAssemblerSuitArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("RLRestorerLimit",1,"RestorerLimit")
+		TNT1 A 0 A_JumpIfInventory ("RLScavengerPerk", 1, "TacticalAssemblerSuitTechnician")
+		TNT1 A 0 A_JumpIfInventory("RLSensibleStrategistSetBonusActive",1,2)
+		TNT1 A 0 A_SpawnItemEx ("RLTacticalAssemblerRestorerRPG", 60, 0, 5, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION | SXF_SETMASTER) 
+		Fail
+		TNT1 A 0 A_SpawnItemEx ("RLTacticalAssemblerRestorer2RPG", 60, 0, 5, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION | SXF_SETMASTER) 
+		Fail
+	TacticalAssemblerSuitTechnician:
+		TNT1 A 0 A_JumpIfInventory("RLSensibleStrategistSetBonusActive",1,2)
+		TNT1 A 0 A_SpawnItemEx ("RLTacticalAssemblerRestorerTechnicianRPG", 60, 0, 5, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION | SXF_SETMASTER) 
+		Fail
+		TNT1 A 0 A_SpawnItemEx ("RLTacticalAssemblerRestorer2TechnicianRPG", 60, 0, 5, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION | SXF_SETMASTER) 
+		Fail
+	ChronotrooperArmorSpecial:
+		TNT1 A 0 A_JumpIfInventory("PowerRL300Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL180Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120KateCooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL120Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL60Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRL10Cooldown",1,"Cooldown")
+		TNT1 A 0 A_JumpIfInventory("PowerRLSentryCooldown",1,"Cooldown")
+		TNT1 A 0 A_FireCustomMissile ("RLChronotrooperArmorAnimator", 0, 0)
+		TNT1 A 0 A_GiveInventory("PowerRLChronotrooperFreeze", 1)
+		TNT1 A 0 A_GiveInventory("PowerRL300Cooldown", 1)
+		Fail
+	}
+}
+
+actor RLFrontlineEngineerSentryMarineRPG : RLFrontlineEngineerSentryMarine
+{
+    Tag "Frontline Engineer Sentry"
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOPAYKILL | MF_NODROPS | MF_NOSTATS)
+        Goto Super::Spawn
+    }
+}
+
+actor RLFrontlineEngineerSentryScoutRPG : RLFrontlineEngineerSentryScout
+{
+    Tag "Frontline Engineer Sentry"
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOPAYKILL | MF_NODROPS | MF_NOSTATS)
+        Goto Super::Spawn
+    }
+}
+
+actor RLFrontlineEngineerSentryRenegadeRPG : RLFrontlineEngineerSentryRenegade
+{
+    Tag "Frontline Engineer Sentry"
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOPAYKILL | MF_NODROPS | MF_NOSTATS)
+        Goto Super::Spawn
+    }
+}
+
+actor RLFrontlineEngineerSentryTechnicianRPG : RLFrontlineEngineerSentryTechnician
+{
+    Tag "Frontline Engineer Sentry"
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOPAYKILL | MF_NODROPS | MF_NOSTATS)
+        Goto Super::Spawn
+    }
+}
+
+actor RLTacticalAssemblerRestorerRPG : RLTacticalAssemblerRestorer
+{
+    Tag "Tactical Assembly Restorer Unit"
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOPAYKILL | MF_NODROPS | MF_NOSTATS)
+        Goto Super::Spawn
+    }
+}
+
+actor RLTacticalAssemblerRestorer2RPG : RLTacticalAssemblerRestorer2
+{
+    Tag "Tactical Assembly Restorer Unit"
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOPAYKILL | MF_NODROPS | MF_NOSTATS)
+        Goto Super::Spawn
+    }
+}
+
+actor RLTacticalAssemblerRestorerTechnicianRPG : RLTacticalAssemblerRestorerTechnician
+{
+    Tag "Tactical Assembly Restorer Unit"
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOPAYKILL | MF_NODROPS | MF_NOSTATS)
+        Goto Super::Spawn
+    }
+}
+
+actor RLTacticalAssemblerRestorer2TechnicianRPG : RLTacticalAssemblerRestorer2Technician
+{
+    Tag "Tactical Assembly Restorer Unit"
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOPAYKILL | MF_NODROPS | MF_NOSTATS)
+        Goto Super::Spawn
+    }
+}
