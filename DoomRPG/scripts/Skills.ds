@@ -893,9 +893,8 @@ acscript bool HealSummons(Skill *Self, void *Data)
     for (int i = 0; i < MAX_SUMMONS; i++)
         if (Player.SummonTID[i] > 0)
         {
-            MonsterStatsPtr Stats = &Monsters[GetMonsterID(i)];
-            int Health = CalculateMonsterMaxHealth(Stats);
-            SetActorProperty(Player.SummonTID[i], APROP_Health, Health);
+            MonsterStatsPtr Stats = &Monsters[GetMonsterID(Player.SummonTID[i])];
+            SetActorProperty(Player.SummonTID[i], APROP_Health, Stats->HealthMax);
         };
     
     ActivatorSound("skills/heal2", 127);
@@ -1562,15 +1561,17 @@ acscript bool Summon(Skill *Self, void *Data)
     {
         if (GetCVar("drpg_ext_doomrl"))
             Name = DRLASummons[Index - 1][Self->CurrentLevel - 1]
+        else if (GetCVar("drpg_ext_extras"))
+            Name = StrParam ("DRPG%sExtras\n", Summons[Index - 1])
         else
-            Name = Summons[Index - 1];
+            Name = StrParam ("DRPG%s\n", Summons[Index - 1]);
     };
     
     // Perform a dummy summon to get the Radius and add it to X and Y
     SpawnForced(Name, 0, 0, 0, NewID, 0);
     Radius = GetActorPropertyFixed(NewID, APROP_Radius);
-    X += Cos(Angle) * Radius;
-    Y += Sin(Angle) * Radius;
+    X += Cos(Angle) * (Radius * 2);
+    Y += Sin(Angle) * (Radius * 2);
     Thing_Remove(NewID);
     
     // With the new radius, try and summon the actual monster
