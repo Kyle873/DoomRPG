@@ -241,11 +241,7 @@ function void DrawMainMenu()
     
     // Toxicity
     if (Player.Toxicity > 0 || Player.Stim.Size > 0)
-    {
-        SetFont("BIGFONT");
-        HudMessage("Toxicity: %d%%\n", Player.Toxicity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 320.0, 0.05);
-        DrawToxicity(176, 336);
-    };
+        DrawToxicityBar(176, 320);
     
     // Mission Information
     DrawMissionInfo();
@@ -581,11 +577,7 @@ function void DrawStatsMenu()
         
         // Toxicity
         if (PlayerPtr->Toxicity > 0 || PlayerPtr->Stim.Size > 0)
-        {
-            SetFont("BIGFONT");
-            HudMessage("Toxicity: %d%%\n", PlayerPtr->Toxicity, HUDMSG_PLAIN, 0, CR_GREEN, 240.1, 316.0, 0.05);
-            DrawToxicity(241, 334);
-        };
+            DrawToxicityBar(241, 318);
         
         // Health/Armor
         int Health = (CheckActorInventory(PlayerPtr->TID, "DRPGShield") ? PlayerPtr->Shield.Health : GetActorProperty(PlayerPtr->TID, APROP_Health));
@@ -1025,9 +1017,7 @@ function void DrawStimsMenu()
     };
     
     // Toxicity
-    SetFont("BIGFONT");
-    HudMessage("Toxicity: %d%%\n", Player.Toxicity, HUDMSG_PLAIN, 0, CR_GREEN, 30.1, 224.0, 0.05);
-    DrawToxicity(32, 240);
+    DrawToxicityBar(32, 224);
 };
 
 function void MenuInput()
@@ -1688,6 +1678,67 @@ function void DrawMissionInfo()
         };
 };
 
+function void DrawToxicityBar(int X, int Y)
+{
+    // Title
+    SetFont("BIGFONT");
+    HudMessage("Toxicity: %d%%\n", Player.Toxicity, HUDMSG_PLAIN, 0, CR_GREEN, X + 0.1, Y, 0.05);
+    
+    // Pixel Color
+    str Color;
+    if (Player.Toxicity >= 0 && Player.Toxicity <= 24)
+        Color = "PGreen";
+    if (Player.Toxicity >= 25 && Player.Toxicity <= 49)
+        Color = "PYellow";
+    if (Player.Toxicity >= 50 && Player.Toxicity <= 74)
+        Color = "POrange";
+    if (Player.Toxicity >= 75)
+        Color = "PRed";
+    
+    // Beat
+    int[] BeatTics = { 8 / (1 + (Player.Toxicity >= 75)); 16 / (1 + (Player.Toxicity >= 50)); 8 / (1 + (Player.Toxicity >= 25)); };
+    int TotalTics;
+    for (int i = 0; i < 3; i++)
+        TotalTics += BeatTics[i];
+    if ((Player.ToxicTimer % (35 * (3 - (Player.Toxicity * 0.0275)))) < TotalTics)
+    {
+        if (Player.ToxicOffset >= -8 && Player.ToxicStage == 0)
+            Player.ToxicOffset -= 1 + (Player.Toxicity >= 75);
+        if (Player.ToxicOffset <= 8 && Player.ToxicStage == 1)
+            Player.ToxicOffset += 1 + (Player.Toxicity >= 50);
+        if (Player.ToxicOffset >= 0 && Player.ToxicStage == 2)
+            Player.ToxicOffset -= 1 + (Player.Toxicity >= 25);
+        
+        if (Player.ToxicOffset == -8)
+            Player.ToxicStage = 1;
+        if (Player.ToxicOffset == 8)
+            Player.ToxicStage = 2;
+        if (Player.ToxicOffset == 0 && Player.ToxicStage == 2)
+            Player.ToxicStage = 0;
+    };
+    
+    // Increase Timer
+    Player.ToxicTimer++;
+    
+    // Draw Pixel
+    if (Player.Toxicity >= 100)
+        PrintSpriteFade(Color, TOXMETER_ID + (Player.ToxicTimer % 100), X + (Player.ToxicTimer % 100), Y + 16, 0.05, 1.0)
+    else
+        PrintSpriteFade(Color, TOXMETER_ID + (Player.ToxicTimer % 100), X + (Player.ToxicTimer % 100), Y + 16 + Player.ToxicOffset, 0.05, 1.0);
+    
+    // Toxicity Penalties
+    if (GetCVar("drpg_menuhelp"))
+    {
+        SetFont("SMALLFONT");
+        if (Player.Toxicity > 25)
+            HudMessage("- No Regeneration\n", HUDMSG_PLAIN, 0, CR_BRICK, X + 0.1, Y + 32, 0.05);
+        if (Player.Toxicity > 50)
+            HudMessage("- Energy Loss\n", HUDMSG_PLAIN, 0, CR_BRICK, X + 0.1, Y + 40, 0.05);
+        if (Player.Toxicity > 75)
+            HudMessage("- Reduced Movement Speed\n", HUDMSG_PLAIN, 0, CR_BRICK, X + 0.1, Y + 48, 0.05);
+    };
+};
+
 function void ClearToxicityMeter()
 {
     Player.ToxicTimer = 0;
@@ -1697,3 +1748,4 @@ function void ClearToxicityMeter()
     for (int i = TOXMETER_ID; i < TOXMETER_ID + 100; i++)
         ClearMessage(i);
 };
+
