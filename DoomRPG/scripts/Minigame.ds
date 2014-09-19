@@ -1,327 +1,141 @@
 #include "RPG.dh"
 
+#include "ItemData.dh"
 #include "Minigame.dh"
+#include "Mission.dh"
 #include "Utils.dh"
 
-// Global Minigame vars
-bool InMinigame;
-int Bet;
-
-// Blackjack vars
-bool BlackjackOver;
-bool BlackjackStay;
-
-// Blackjack Hands
-int[MAX_HAND] Hand1;
-int[MAX_HAND] Hand2;
-
-acscript void Blackjack()
+acscript void ItemRoulette(int Difficulty, int Speed, int Size)
 {
-    int Buttons;
-    int OldButtons;
+    ItemInfoPtr[MAX_ROULETTE_ITEMS] WheelItems;
+    ItemInfoPtr ItemNone;
+    bool Finished = false;
+    bool Spinning = true;
+    int Amount = (Size > 0 ? Amount = Size : 8 + (4 * Random(0, 3)));
+    int Radius = 128 + (Amount * 3);
+    int Selection = 0;
+    fixed Offset;
     
-    Player.InMinigame = true;
-    BlackjackOver = false;
-    BlackjackStay = false;
-    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+    // Prevent under/overflow
+    if (Difficulty <= 0)
+        Difficulty = Random(1, 7);
+    if (Difficulty > 7)
+        Difficulty = 7;
+    if (Speed <= 0)
+        Speed = Random(1, 9);
+    if (Speed > 9)
+        Speed = 9;
     
-    // Bet Loop
-    Start:
-    while (true)
+    // Setup blank item
+    ItemNone->Name = "\caNothing";
+    ItemNone->Sprite.Name = "SprNone";
+    ItemNone->Sprite.XOff = 0;
+    ItemNone->Sprite.YOff = 0;
+    
+    // Populate Wheel Items
+    for (int i = 0; i < Amount; i++)
     {
-        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        WheelItems[i] = GetRewardItem(Difficulty + 1);
         
-        SetHudSize(320, 240, false);
-        
-        // Draw bet
-        PrintSprite("CREDA0", 0, 160.1, 200.0, 0.05);
-        SetFont("BIGFONT");
-        HudMessage("%d\n", Bet, HUDMSG_PLAIN, 0, CR_GOLD, 186.1, 192.0, 0.05);
-        
-        // Draw Help
-        SetFont("SMALLFONT");
-        HudMessage("\cd%K\cj Place Bet\n\cd%K/%K\cj Change Bet\n\cd%K\cj Exit Game\n",
-                   "+use", "+forward", "+back", "+speed",
-                   HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05);
-        
-        // Delayed Input
-        if (Buttons == BT_FORWARD)
-        {
-            Player.DelayTimer++;
-            if (Player.DelayTimer > 35)
-            {
-                Bet += 100;
-                ActivatorSound("menu/move", 127);
-            };
-        };
-        if (Buttons == BT_BACK && Bet > 0)
-        {
-            Player.DelayTimer++;
-            if (Player.DelayTimer > 35)
-            {
-                Bet -= 100;
-                ActivatorSound("menu/move", 127);
-            };
-        };
-        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
-            (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
-        {
-            Bet = 0;
-            ActivatorSound("menu/move", 127);
-        };
-        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
-            (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
-        {
-            Bet = CheckInventory("DRPGCredits");
-            ActivatorSound("menu/move", 127);
-        };
-        
-        // Input
-        if (Buttons == BT_USE && OldButtons != BT_USE)
-        {
-            // Make sure you have enough Credits to bet
-            if (CheckInventory("DRPGCredits") < Bet)
-            {
-                ActivatorSound("menu/error", 127);
-                SetFont("BIGFONT");
-                Print("\cgYou don't have enough Credits\n");
-            }
-            else
-            {
-                TakeInventory("Credits", Bet);
-                ActivatorSound("menu/move", 127);
-                Delay(1);
-                break;
-            };
-        };
-        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
-        {
-            ActivatorSound("menu/move", 127);
-            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-            Player.InMinigame = false;
-            return;
-        };
-        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
-        {
-            Bet += 100;
-            ActivatorSound("menu/move", 127);
-        };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && Bet > 0)
-        {
-            Bet -= 100;
-            ActivatorSound("menu/move", 127);
-        };
-        
-        // Reset the Delay Timer if no buttons are pressed
-        if (Buttons == 0 && OldButtons == 0)
-            Player.DelayTimer = 0;
-        
-        Delay(1);
+        // Place a dud
+        if (Random(1, 4) == 1)
+            WheelItems[i] = ItemNone;
     };
     
-    // Wipe old HudMessage stuff from the last game if it's still up
-    for (int i = 4997; i < 5000 + (MAX_HAND * 2); i++)
-        HudMessage("\n", HUDMSG_PLAIN, i, CR_WHITE, 0.0, 0.0, 0.0);
+    // Set Resolution
+    SetHudSize(640, 480, false);
     
-    // Reset hands
-    for (int i = 0; i < MAX_HAND; i++)
+    while (!Finished)
     {
-        Hand1[i] = 0;
-        Hand2[i] = 0;
-    };
-    
-    // Draw initial cards
-    Hand1[0] = Random(1, 13);
-    Hand1[1] = Random(1, 13);
-    Hand2[0] = Random(1, 13);
-    Hand2[1] = Random(1, 13);
-    
-    // Game Loop
-    while (true)
-    {
-        int HandThreshold = Random(18, 20);
-        int X1 = 100.1;
-        int X2 = 100.1;
-        int Total1 = 0;
-        int Total2 = 0;
-        int Size1 = 0;
-        int Size2 = 0;
+        // Buttons
+        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
         
-        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        // Freeze and Fade
+        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
         
-        SetHudSize(320, 240, false);
-        
-        // Draw bet
-        PrintSprite("CREDA0", 0, 160.1, 200.0, 0.05);
-        SetFont("BIGFONT");
-        HudMessage("%d\n", Bet, HUDMSG_PLAIN, 0, CR_GOLD, 186.1, 192.0, 0.05);
-        
-        // Draw Help
-        SetFont("SMALLFONT");
-        if (!BlackjackOver)
-            HudMessage("\cd%K\cj Hit\n\cd%K\cj Stay\n",
-                       "+use", "+speed",
-                       HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05)
-        else
-            HudMessage("\cd%K\cj Play Again\n\cd%K\cj Exit Game\n",
-                       "+use", "+speed",
-                       HUDMSG_PLAIN, 0, CR_WHITE, 144.1, 220.0, 0.05);
-        
-        SetFont("BIGFONT");
-        
-        // Draw hands
-        for (int i = 0; i < MAX_HAND; i++)
+        // Wheel Handling
+        for (int i = 0; i < Amount; i++)
         {
-            // Add totals
-            if (Hand1[i] >= 11)
-                Total1 += 10
-            else
-            {
-                if (Hand1[i] == 1 && Total1 <= 10)
-                    Total1 += 11
-                else
-                    Total1 += Hand1[i];
-            };
-            if (Hand2[i] >= 11)
-                Total2 += 10
-            else
-            {
-                if (Hand2[i] == 1 && Total2 <= 10)
-                    Total2 += 11
-                else
-                    Total2 += Hand2[i];
-            };
+            fixed Angle = -0.25 + ((1.0 / Amount) * i) + Offset;
+            fixed X = 320.0 + (Radius * Cos(Angle)) + WheelItems[i]->Sprite.XOff;
+            fixed Y = 240.0 + (Radius * Sin(Angle)) + WheelItems[i]->Sprite.YOff;
             
-            // Handle hand sizes
-            if (Hand1[i] > 0) Size1++;
-            if (Hand2[i] > 0) Size2++;
+            // Determine the current item near the cursor
+            if (DistanceScreen(320, 240 + Radius, X - WheelItems[i]->Sprite.XOff, Y - WheelItems[i]->Sprite.YOff) < 32)
+                Selection = i;
             
-            // Player's hand
-            if (Hand1[i] == 1) // Ace
-                HudMessage("A\n", HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 0.05)
-            else if (Hand1[i] > 1 && Hand1[i] <= 10) // 2-10
-                HudMessage("%d\n", Hand1[i], HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 0.05)
-            else if (Hand1[i] == 11) // Jack
-                HudMessage("J\n", HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 0.05)
-            else if (Hand1[i] == 12) // King
-                HudMessage("K\n", HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 0.05)
-            else if (Hand1[i] == 13) // Queen
-                HudMessage("Q\n", HUDMSG_PLAIN, 5000 + i, CR_GREEN, X1, 160.0, 0.05);
+            // Draw Name
+            SetFont("BIGFONT");
+            if (GetCVar("drpg_debug"))
+                HudMessage("%s\n", WheelItems[Selection]->Name, HUDMSG_PLAIN, MINIGAME_ID, CR_WHITE, 320, 240 + Radius + 32, 0.05);
             
-            // CPU's hand
-            if (Hand2[i] == 1) // Ace
-                HudMessage("A\n", HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 0.05)
-            else if (Hand2[i] > 1 && Hand2[i] <= 10) // 2-10
-                HudMessage("%d\n", Hand2[i], HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 0.05)
-            else if (Hand2[i] == 11) // Jack
-                HudMessage("J\n", HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 0.05)
-            else if (Hand2[i] == 12) // King
-                HudMessage("K\n", HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 0.05)
-            else if (Hand2[i] == 13) // Queen
-                HudMessage("Q\n", HUDMSG_PLAIN, 5010 + i, CR_BRICK, X2, 80.0, 0.05);
-
-            // Alignment
-            if (Hand1[i] > 0)
-                X1 += 20.0;
-            if (Hand2[i] > 0)
-                X2 += 20.0;
+            // Draw Box
+            PrintSprite("ItemBoxH", 0, 320, 240 + Radius, 0.05);
+            
+            // Draw Icon
+            PrintSprite(WheelItems[i]->Sprite.Name, 0, (int)X, (int)Y, 0.05);
+            if (StrLen(WheelItems[i]->Sprite.Name) < 0)
+                PrintSprite("SprNone", 0, (int)X, (int)Y, 0.05);
+            
+            // Audio Loop
+            PlaySound(0, "transfer/loop", CHAN_BODY, 1.0, true, ATTN_NONE);
         };
         
-        // Draw Totals
-        HudMessage("%d\n", Total1, HUDMSG_PLAIN, 4998, CR_WHITE, 60.1, 160.0, 0.05);
-        HudMessage("%d\n", Total2, HUDMSG_PLAIN, 4999, CR_GRAY, 60.1, 80.0, 0.05);
-        
-        // Input
-        if (Buttons == BT_USE && OldButtons != BT_USE)
+        // Input Handling
+        if (Buttons & BT_USE)
+            Spinning = false;
+        if (Buttons & BT_SPEED)
         {
-            if (BlackjackOver)
-            {
-                ActivatorSound("menu/move", 127);
-                Delay(1);
-                goto Start;
-            };
-
-            Hand1[Size1] = Random(1, 13);
-            if (Total2 < HandThreshold)
-                Hand2[Size2] = Random(1, 13);
-            
-            ActivatorSound("menu/move", 127);
-        };
-        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
-        {
-            if (BlackjackOver) break;
-            
-            if (Total2 < HandThreshold && Total1 != Total2)
-            {
-                Hand2[Size2] = Random(1, 13);
-                if (Hand2[Size2] >= 11)
-                    Total2 += 10
-                else
-                    Total2 += Hand2[Size2];
-                Size2++;
-            };
-            
-            BlackjackStay = true;
-            BlackjackOver = true;
-            ActivatorSound("menu/move", 127);
+            StopSound(0, CHAN_BODY);
+            Finished = true;
         };
         
-        // Check for win, lose and draw
-        SetHudSize(0, 0, false);
-        if (!BlackjackOver || (BlackjackStay && BlackjackOver))
-            if ((Total1 == 21 && Total2 != 21) || (Total1 < 21 && Total2 > 21) || (BlackjackStay && Total1 > Total2)) // You Win
+        // Slowly decrease the spin when done
+        if (!Spinning && (Timer() % 5) == 0)
+            Speed--;
+        
+        // Spin
+        Offset += ((fixed)Speed * 0.005);
+        
+        // Finished
+        if (!Spinning && Speed <= 0)
+        {
+            // Draw Name
+            SetFont("BIGFONT");
+            HudMessage("%s\n", WheelItems[Selection]->Name, HUDMSG_FADEOUT, MINIGAME_ID, (WheelItems[Selection] == ItemNone ? CR_RED : CR_GREEN), 320, 240 + Radius + 32, 2.0, 1.0);
+            
+            // Draw Box
+            PrintSpriteFade("ItemBoxR", 0, 320, 240 + Radius, 0.25, 0.75);
+            
+            // Draw Icon
+            PrintSpriteFade(WheelItems[Selection]->Sprite.Name, 0, 320 + WheelItems[Selection]->Sprite.XOff, 240 + Radius + WheelItems[Selection]->Sprite.YOff, 2.0, 1.0);
+            
+            // Give the item if it wasn't a blank
+            if (WheelItems[Selection] != ItemNone)
             {
-                if ((Hand1[0] == 1 && Hand1[1] >= 10) || (Hand1[1] == 1 && Hand1[0] >= 10)) // Blackjack
-                {
-                    if (Bet > 0)
-                        HudMessage("Blackjack!\n\ck+%d Credits\n", Bet * 4, HUDMSG_FADEOUT, 4997, CR_GREEN, 0.5, 0.5, 2.0, 1.0)
-                    else
-                        HudMessage("Blackjack!\n", HUDMSG_FADEOUT, 4997, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
-                    GiveInventory("Credits", Bet * 4);
-                }
-                else
-                {
-                    if (Bet > 0)
-                        HudMessage("You Win!\n\ck+%d Credits\n", Bet * 2, HUDMSG_FADEOUT, 4997, CR_GREEN, 0.5, 0.5, 2.0, 1.0)
-                    else
-                        HudMessage("You Win!\n", HUDMSG_FADEOUT, 4997, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
-                    GiveInventory("Credits", Bet * 2);
-                };
+                PlaySound(0, "transfer/complete", CHAN_BODY, 1.0, false, ATTN_NONE);
                 
-                ActivatorSound("credits/payout", 127);
-                BlackjackStay = false;
-                BlackjackOver = true;
+                // Item
+                str ItemActor = WheelItems[Selection]->Actor;
+                
+                // DoomRL Compatibility for weapons
+                if (GetCVar("drpg_ext_doomrl") && WheelItems[Selection]->Category == 0) // Weapons
+                    ItemActor = StrParam("%sPickup\n", ItemActor);
+                
+                // Spawn Item and try to pick it up
+                SpawnForced(ItemActor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+                SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
             }
-            else if ((Total1 > 21 && Total2 <= 21) || (Total2 == 21 && Total1 != 21) || (BlackjackStay && Total2 > Total1)) // You Lose
-            {
-                if (Bet > 0)
-                    HudMessage("You Lose!\n\ck-%d Credits\n", Bet, HUDMSG_FADEOUT, 4997, CR_RED, 0.5, 0.5, 2.0, 1.0)
-                else
-                    HudMessage("You Lose!\n", HUDMSG_FADEOUT, 4997, CR_RED, 0.5, 0.5, 2.0, 1.0);
-                ActivatorSound("menu/error", 127);
-                BlackjackStay = false;
-                BlackjackOver = true;
-            }
-            else if ((Total1 == 21 && Total2 == 21) || (Total1 > 21 && Total2 > 21) || (BlackjackStay && Total1 == Total2)) // Draw
-            {
-                HudMessage("Draw!\n", HUDMSG_FADEOUT, 4997, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
-                GiveInventory("Credits", Bet);
-                BlackjackStay = false;
-                BlackjackOver = true;
-            }
-            else if (Size1 > MAX_HAND || Size2 > MAX_HAND) // Out of cards
-            {
-                HudMessage("No more cards!\n", HUDMSG_FADEOUT, 4997, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
-                GiveInventory("Credits", Bet);
-                BlackjackStay = false;
-                BlackjackOver = true;
-            };
+            else
+                PlaySound(0, "menu/error", CHAN_BODY, 1.0, false, ATTN_NONE);
+            
+            Finished = true;
+        };
         
         Delay(1);
     };
-    
+        
     SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-    Player.InMinigame = false;
 };
