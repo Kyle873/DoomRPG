@@ -4,6 +4,7 @@
 #include "ItemData.dh"
 #include "Map.dh"
 #include "Menu.dh"
+#include "Minigame.dh"
 #include "Mission.dh"
 #include "Outpost.dh"
 #include "Shop.dh"
@@ -1009,6 +1010,7 @@ acscript void ShopSpecial()
 };
 
 // Player Locker
+// TODO: This needs cleanup and such, see the TODO list for details
 acscript void Locker(bool Wireless, int WirelessLevel)
 {
     // If you already have the Locker open, return
@@ -1432,6 +1434,50 @@ acscript void MissionBBS()
         };
         
         Delay(1);
+    };
+};
+
+// Roulette
+acscript void MinigameHandler()
+{
+    if (Player.InMinigame) return;
+    
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+    
+    // TODO: This will just play Roulette for now
+    if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
+    {
+        if (CheckInventory("DRPGCredits") >= 1000)
+        {
+            SetFont("BIGFONT");
+            HudMessage("Rare Item Roulette\n", HUDMSG_FADEOUT, 0, CR_GOLD, 0.5, 0.25, 0.75, 0.25);
+            TakeInventory("DRPGCredits", 1000);
+            Delay(35);
+            ItemRoulette(Random(5, 8), Random(5, 8), 0);
+        }
+        else
+        {
+            SetFont("BIGFONT");
+            HudMessage("You need 1000 Credits to use the Rare Item Roulette\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+            ActivatorSound("menu/error", 127);
+        };
+    }
+    else
+    {
+        if (CheckInventory("DRPGCredits") >= 100)
+        {
+            SetFont("BIGFONT");
+            HudMessage("Item Roulette\n", HUDMSG_FADEOUT, 0, CR_GOLD, 0.5, 0.25, 0.75, 0.25);
+            TakeInventory("DRPGCredits", 100);
+            Delay(35);
+            ItemRoulette(Random(1, 4), Random(1, 4), 0);
+        }
+        else
+        {
+            SetFont("BIGFONT");
+            HudMessage("You need 100 Credits to use the Normal Item Roulette\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+            ActivatorSound("menu/error", 127);
+        };
     };
 };
 
