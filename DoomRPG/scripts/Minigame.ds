@@ -5,7 +5,7 @@
 #include "Mission.dh"
 #include "Utils.dh"
 
-acscript void ItemRoulette(int Difficulty, int Speed, int Size)
+acscript void ItemRoulette(int Difficulty, fixed Speed, int Size)
 {
     // Exit if already in a minigame
     if (Player.InMinigame) return;
@@ -89,20 +89,23 @@ acscript void ItemRoulette(int Difficulty, int Speed, int Size)
         };
         
         // Input Handling
-        if (Buttons & BT_USE)
+        if (Buttons & BT_USE && Spinning)
+        {
+            ActivatorSound("menu/move", 127);
             Spinning = false;
-        if (Buttons & BT_SPEED)
+        };
+        if (Buttons & BT_SPEED && Spinning)
         {
             StopSound(0, CHAN_BODY);
             Finished = true;
         };
         
         // Slowly decrease the spin when done
-        if (!Spinning && (Timer() % 5) == 0)
-            Speed--;
+        if (!Spinning)
+            Speed -= 0.05;
         
         // Spin
-        Offset += ((fixed)Speed * 0.005);
+        Offset += (Speed * 0.005);
         
         // Finished
         if (!Spinning && Speed <= 0)
