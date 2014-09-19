@@ -22,9 +22,9 @@ ACTOR DoomRLMarineRPG : DoomRLMarine
 	TNT1 A 0 A_JumpIfInventory("RLAngelicAttireSetBonusActive",1,"AngelicAttireSetBonusRestore")
 	TNT1 A 0 A_JumpIfInventory("RLTheBeeArmorToken",1,"TheBeeRestore")
     TNT1 A 0
-    TNT1 A 0 A_JumpIfInventory("RLStep",1,3)
+	TNT1 A 0 A_JumpIfInventory("RLStep",1,3)
     PMAR A 17
-    TNT1 A 0 A_Jump(256,2)
+	TNT1 A 0 A_Jump(256,2)
     PMAR C 17
 	TNT1 A 0 A_JumpIfInventory("RL100RegenArmorWorn",1,9)
 	TNT1 A 0 A_JumpIfHealthLower(ACS_NamedExecuteWithResult("GetHealthMax") / 4, 2)
@@ -149,42 +149,42 @@ ACTOR DoomRLMarineRPG : DoomRLMarine
 	Goto Spawn
   Missile:
 	TNT1 A 0 A_JumpIfInventory("RLFistSelected",1,"Punch")
-    PMAR E 6
-    PMAR E 6
+    PMAR X 6
+    PMAR X 6
     Goto Spawn
   Melee:
+	TNT1 A 0 A_JumpIfInventory("RLMarineAnimationState",1,3)
+	TNT1 A 0 A_GiveInventory("RLMarineAnimationState",1)
     PMAR F 2 Bright
+    Goto Missile
+	TNT1 A 0 A_TakeInventory("RLMarineAnimationState",1)
+    PMAR E 2 Bright
     Goto Missile
   Punch:
     PMAR Z 6
     PMAR Z 6
     Goto Spawn
   // Secondary Types
+  Pain.Lightning:
+	TNT1 A 0
+    Goto Pain.Plasma
   Pain.Slime:
 	TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_TOXIC)
 	Goto PainNoForcedDamage
-  Pain.Lightning:
-    Goto Pain.Plasma
   Pain.HellNobleFire:
-    TNT1 A 0
-    Goto Pain.Plasma
+    TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_PLASMA)
+    Goto PainPlasmaNoSet
   Pain.PlasmaExplosion:
-    TNT1 A 0
     Goto Pain.Plasma
   Pain.Nightmare:
-    TNT1 A 0
-    Goto Pain.Plasma
+    TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_PLASMA)
+    Goto PainPlasmaNoSet
   Pain.SmallFireball:
-    TNT1 A 0
     Goto Pain.Fire
   Pain.Explosion:
-    TNT1 A 0
     Goto Pain.Fire
-  Pain.BluntMelee:
-    TNT1 A 0
-    Goto Pain.Melee
-  Pain.SmallFireball:
-    Goto Pain.Fire
+  Pain.Piercing:
+    Goto Pain.Bullet
   Pain.BluntMelee:
     Goto Pain.Melee
   // Main Types
@@ -484,8 +484,8 @@ ACTOR DoomRLMarineRPG : DoomRLMarine
   IndestructibleArmorCheck:
   //Check to see what you're wearing and throw an armor bonus at it.
 	TNT1 A 0 A_JumpIfInventory("BasicArmor",1,"IndestructibleArmorRestore")
-    TNT1 A 0 A_JumpIfInventory("RLAngelicArmorToken",1,"AngelicArmorRestore")
 	//Now to check to see which bloody indestructible armor you've worn has somehow popped.
+	TNT1 A 0 A_JumpIfInventory("RLAngelicArmorToken",1,"AngelicArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLBerserkerArmorToken",1,"BerserkerArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLCyberneticArmorToken",1,"CyberneticArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLLavaArmorToken",1,"LavaArmorRestore")
@@ -541,11 +541,12 @@ ACTOR DoomRLMarineRPG : DoomRLMarine
 // Kyle is a poop nose
     Goto PainNoCheck
   IndestructibleArmorRestore:
-    TNT1 A 0 A_GiveInventory("RLAngelicArmor",1)
-    TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
-    TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
-    Goto PainNoCheck
 	TNT1 A 0 A_GiveInventory("RLIndestructibleArmorRestorer",99999)
+	TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
+	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
+    Goto PainNoCheck
+  AngelicArmorRestore:
+	TNT1 A 0 A_GiveInventory("RLAngelicArmor",1)
 	TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
 	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
     Goto PainNoCheck
@@ -569,52 +570,28 @@ ACTOR DoomRLMarineRPG : DoomRLMarine
 	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
     Goto PainNoCheck
   CyberneticArmorRestoreBulk:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorBulk",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeBulk",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestorePower:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorPower",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadePower",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreAgility:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorAgility",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeAgility",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreTechnical:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorTechnical",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeTechnical",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreSniper:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorSniper",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeSniper",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreFirestorm:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorFirestorm",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeFirestorm",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreNano:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorNano",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeNano",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreOnyx:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorOnyx",1)
-    Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeOnyx",1)
     Goto CyberneticArmorRestoreContinue
   LavaArmorRestore:
 	TNT1 A 0 A_GiveInventory("RLLavaArmor",1)
@@ -1103,7 +1080,7 @@ ACTOR DoomRLMarineRPG : DoomRLMarine
     TNT1 A -1
     Stop
   Teleport:
-    TNT1 A 0 A_SpawnItemEx ("TeleportFog", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION) 
+	TNT1 A 0 A_SpawnItemEx ("TeleportFog", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION) 
     Goto Spawn
     }
 }
@@ -1268,31 +1245,26 @@ ACTOR DoomRLScoutRPG : DoomRLScout
     PSCO Z 6
     Goto Spawn
   // Secondary Types
+  Pain.Lightning:
+	TNT1 A 0
+    Goto Pain.Plasma
   Pain.Slime:
 	TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_TOXIC)
 	Goto PainNoForcedDamage
-  Pain.Lightning:
-    Goto Pain.Plasma
   Pain.HellNobleFire:
-    TNT1 A 0
-    Goto Pain.Plasma
+    TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_PLASMA)
+    Goto PainPlasmaNoSet
   Pain.PlasmaExplosion:
-    TNT1 A 0
     Goto Pain.Plasma
   Pain.Nightmare:
-    TNT1 A 0
-    Goto Pain.Plasma
+    TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_PLASMA)
+    Goto PainPlasmaNoSet
   Pain.SmallFireball:
-    TNT1 A 0
     Goto Pain.Fire
   Pain.Explosion:
-    TNT1 A 0
     Goto Pain.Fire
-  Pain.BluntMelee:
-    TNT1 A 0
-    Goto Pain.Melee
-  Pain.SmallFireball:
-    Goto Pain.Fire
+  Pain.Piercing:
+    Goto Pain.Bullet
   Pain.BluntMelee:
     Goto Pain.Melee
   // Main Types
@@ -1592,8 +1564,8 @@ ACTOR DoomRLScoutRPG : DoomRLScout
   IndestructibleArmorCheck:
   //Check to see what you're wearing and throw an armor bonus at it.
 	TNT1 A 0 A_JumpIfInventory("BasicArmor",1,"IndestructibleArmorRestore")
-    TNT1 A 0 A_JumpIfInventory("RLAngelicArmorToken",1,"AngelicArmorRestore")
 	//Now to check to see which bloody indestructible armor you've worn has somehow popped.
+	TNT1 A 0 A_JumpIfInventory("RLAngelicArmorToken",1,"AngelicArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLBerserkerArmorToken",1,"BerserkerArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLCyberneticArmorToken",1,"CyberneticArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLLavaArmorToken",1,"LavaArmorRestore")
@@ -1649,11 +1621,12 @@ ACTOR DoomRLScoutRPG : DoomRLScout
 // Kyle is a poop nose
     Goto PainNoCheck
   IndestructibleArmorRestore:
-    TNT1 A 0 A_GiveInventory("RLAngelicArmor",1)
-    TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
-    TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
-    Goto PainNoCheck
 	TNT1 A 0 A_GiveInventory("RLIndestructibleArmorRestorer",99999)
+	TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
+	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
+    Goto PainNoCheck
+  AngelicArmorRestore:
+	TNT1 A 0 A_GiveInventory("RLAngelicArmor",1)
 	TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
 	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
     Goto PainNoCheck
@@ -1677,52 +1650,28 @@ ACTOR DoomRLScoutRPG : DoomRLScout
 	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
     Goto PainNoCheck
   CyberneticArmorRestoreBulk:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorBulk",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeBulk",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestorePower:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorPower",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadePower",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreAgility:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorAgility",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeAgility",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreTechnical:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorTechnical",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeTechnical",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreSniper:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorSniper",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeSniper",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreFirestorm:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorFirestorm",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeFirestorm",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreNano:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorNano",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeNano",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreOnyx:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorOnyx",1)
-    Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeOnyx",1)
     Goto CyberneticArmorRestoreContinue
   LavaArmorRestore:
 	TNT1 A 0 A_GiveInventory("RLLavaArmor",1)
@@ -2211,7 +2160,7 @@ ACTOR DoomRLScoutRPG : DoomRLScout
     TNT1 A -1
     Stop
   Teleport:
-    TNT1 A 0 A_SpawnItemEx ("TeleportFog", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION) 
+	TNT1 A 0 A_SpawnItemEx ("TeleportFog", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION) 
     Goto Spawn
     }
 }
@@ -2237,9 +2186,9 @@ ACTOR DoomRLTechnicianRPG : DoomRLTechnician
 	TNT1 A 0 A_JumpIfInventory("RLAngelicAttireSetBonusActive",1,"AngelicAttireSetBonusRestore")
 	TNT1 A 0 A_JumpIfInventory("RLTheBeeArmorToken",1,"TheBeeRestore")
     TNT1 A 0
-    TNT1 A 0 A_JumpIfInventory("RLStep",1,3)
+	TNT1 A 0 A_JumpIfInventory("RLStep",1,3)
     PTEC A 17
-    TNT1 A 0 A_Jump(256,2)
+	TNT1 A 0 A_Jump(256,2)
     PTEC C 17
 	TNT1 A 0 A_JumpIfInventory("RL100RegenArmorWorn",1,9)
 	TNT1 A 0 A_JumpIfHealthLower(ACS_NamedExecuteWithResult("GetHealthMax") / 4, 2)
@@ -2375,31 +2324,26 @@ ACTOR DoomRLTechnicianRPG : DoomRLTechnician
     PTEC Z 6
     Goto Spawn
   // Secondary Types
+  Pain.Lightning:
+	TNT1 A 0
+    Goto Pain.Plasma
   Pain.Slime:
 	TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_TOXIC)
 	Goto PainNoForcedDamage
-  Pain.Lightning:
-    Goto Pain.Plasma
   Pain.HellNobleFire:
-    TNT1 A 0
-    Goto Pain.Plasma
+    TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_PLASMA)
+    Goto PainPlasmaNoSet
   Pain.PlasmaExplosion:
-    TNT1 A 0
     Goto Pain.Plasma
   Pain.Nightmare:
-    TNT1 A 0
-    Goto Pain.Plasma
+    TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_PLASMA)
+    Goto PainPlasmaNoSet
   Pain.SmallFireball:
-    TNT1 A 0
     Goto Pain.Fire
   Pain.Explosion:
-    TNT1 A 0
     Goto Pain.Fire
-  Pain.BluntMelee:
-    TNT1 A 0
-    Goto Pain.Melee
-  Pain.SmallFireball:
-    Goto Pain.Fire
+  Pain.Piercing:
+    Goto Pain.Bullet
   Pain.BluntMelee:
     Goto Pain.Melee
   // Main Types
@@ -2697,8 +2641,8 @@ ACTOR DoomRLTechnicianRPG : DoomRLTechnician
   IndestructibleArmorCheck:
   //Check to see what you're wearing and throw an armor bonus at it.
 	TNT1 A 0 A_JumpIfInventory("BasicArmor",1,"IndestructibleArmorRestore")
-    TNT1 A 0 A_JumpIfInventory("RLAngelicArmorToken",1,"AngelicArmorRestore")
 	//Now to check to see which bloody indestructible armor you've worn has somehow popped.
+	TNT1 A 0 A_JumpIfInventory("RLAngelicArmorToken",1,"AngelicArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLBerserkerArmorToken",1,"BerserkerArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLCyberneticArmorToken",1,"CyberneticArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLLavaArmorToken",1,"LavaArmorRestore")
@@ -2754,11 +2698,12 @@ ACTOR DoomRLTechnicianRPG : DoomRLTechnician
 // Kyle is a poop nose
     Goto PainNoCheck
   IndestructibleArmorRestore:
-    TNT1 A 0 A_GiveInventory("RLAngelicArmor",1)
-    TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
-    TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
-    Goto PainNoCheck
 	TNT1 A 0 A_GiveInventory("RLIndestructibleArmorRestorer",99999)
+	TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
+	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
+    Goto PainNoCheck
+  AngelicArmorRestore:
+	TNT1 A 0 A_GiveInventory("RLAngelicArmor",1)
 	TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
 	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
     Goto PainNoCheck
@@ -2782,52 +2727,28 @@ ACTOR DoomRLTechnicianRPG : DoomRLTechnician
 	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
     Goto PainNoCheck
   CyberneticArmorRestoreBulk:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorBulk",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeBulk",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestorePower:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorPower",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadePower",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreAgility:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorAgility",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeAgility",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreTechnical:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorTechnical",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeTechnical",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreSniper:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorSniper",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeSniper",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreFirestorm:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorFirestorm",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeFirestorm",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreNano:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorNano",1)
     Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeNano",1)
-    Goto CyberneticArmorRestoreContinue
   CyberneticArmorRestoreOnyx:
-	TNT1 A 0 A_JumpIfInventory("RLShellshockPerk",1,2)
 	TNT1 A 0 A_GiveInventory("RLCyberneticArmorOnyx",1)
-    Goto CyberneticArmorRestoreContinue
-	TNT1 A 0 A_GiveInventory("RLCyberneticArmorRenegadeOnyx",1)
     Goto CyberneticArmorRestoreContinue
   LavaArmorRestore:
 	TNT1 A 0 A_GiveInventory("RLLavaArmor",1)
@@ -3316,7 +3237,7 @@ ACTOR DoomRLTechnicianRPG : DoomRLTechnician
     TNT1 A -1
     Stop
   Teleport:
-    TNT1 A 0 A_SpawnItemEx ("TeleportFog", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION) 
+	TNT1 A 0 A_SpawnItemEx ("TeleportFog", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION) 
     Goto Spawn
     }
 }
@@ -3342,9 +3263,9 @@ ACTOR DoomRLRenegadeRPG : DoomRLRenegade
 	TNT1 A 0 A_JumpIfInventory("RLAngelicAttireSetBonusActive",1,"AngelicAttireSetBonusRestore")
 	TNT1 A 0 A_JumpIfInventory("RLTheBeeArmorToken",1,"TheBeeRestore")
     TNT1 A 0
-    TNT1 A 0 A_JumpIfInventory("RLStep",1,3)
+	TNT1 A 0 A_JumpIfInventory("RLStep",1,3)
     PREN A 17
-    TNT1 A 0 A_Jump(256,2)
+	TNT1 A 0 A_Jump(256,2)
     PREN C 17
 	TNT1 A 0 A_JumpIfInventory("RL100RegenArmorWorn",1,9)
 	TNT1 A 0 A_JumpIfHealthLower(ACS_NamedExecuteWithResult("GetHealthMax") / 4, 2)
@@ -3480,32 +3401,27 @@ ACTOR DoomRLRenegadeRPG : DoomRLRenegade
     PREN Z 6
     Goto Spawn
   // Secondary Types
-  Pain.Slime:
-    TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_TOXIC)
-    TNT1 A 0 A_GiveInventory("RLSlimeDamageToken",1)
-    Goto PainNoForcedDamage
   Pain.Lightning:
+	TNT1 A 0
     Goto Pain.Plasma
+  Pain.Slime:
+	TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_TOXIC)
+    TNT1 A 0 A_GiveInventory("RLSlimeDamageToken",1)
+	Goto PainNoForcedDamage
   Pain.HellNobleFire:
-    TNT1 A 0
-    Goto Pain.Plasma
+    TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_PLASMA)
+    Goto PainPlasmaNoSet
   Pain.PlasmaExplosion:
-    TNT1 A 0
     Goto Pain.Plasma
   Pain.Nightmare:
-    TNT1 A 0
-    Goto Pain.Plasma
+    TNT1 A 0 ACS_NamedExecuteWithResult("SetDamageType", DT_PLASMA)
+    Goto PainPlasmaNoSet
   Pain.SmallFireball:
-    TNT1 A 0
     Goto Pain.Fire
   Pain.Explosion:
-    TNT1 A 0
     Goto Pain.Fire
-  Pain.BluntMelee:
-    TNT1 A 0
-    Goto Pain.Melee
-  Pain.SmallFireball:
-    Goto Pain.Fire
+  Pain.Piercing:
+    Goto Pain.Bullet
   Pain.BluntMelee:
     Goto Pain.Melee
   // Main Types
@@ -3641,7 +3557,7 @@ ACTOR DoomRLRenegadeRPG : DoomRLRenegade
     Goto Spawn
 	TNT1 A 0 A_PlaySound("renegade/slimepain",CHAN_VOICE)
     PREN G 4 A_TakeInventory("RLSlimeDamageToken",1)
-	Goto Spawn
+    Goto Spawn
   Death.MindRape:
 	TNT1 A 0 A_GiveInventory("RLDeathZombieCheck",1)
   Death:
@@ -3813,8 +3729,8 @@ ACTOR DoomRLRenegadeRPG : DoomRLRenegade
   IndestructibleArmorCheck:
   //Check to see what you're wearing and throw an armor bonus at it.
 	TNT1 A 0 A_JumpIfInventory("BasicArmor",1,"IndestructibleArmorRestore")
-    TNT1 A 0 A_JumpIfInventory("RLAngelicArmorToken",1,"AngelicArmorRestore")
 	//Now to check to see which bloody indestructible armor you've worn has somehow popped.
+	TNT1 A 0 A_JumpIfInventory("RLAngelicArmorToken",1,"AngelicArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLBerserkerArmorToken",1,"BerserkerArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLCyberneticArmorToken",1,"CyberneticArmorRestore")
 	TNT1 A 0 A_JumpIfInventory("RLLavaArmorToken",1,"LavaArmorRestore")
@@ -3870,11 +3786,12 @@ ACTOR DoomRLRenegadeRPG : DoomRLRenegade
 // Kyle is a poop nose
     Goto PainNoCheck
   IndestructibleArmorRestore:
-    TNT1 A 0 A_GiveInventory("RLAngelicArmorRenegade",1)
-    TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
-    TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
-    Goto PainNoCheck
 	TNT1 A 0 A_GiveInventory("RLIndestructibleArmorRestorer",99999)
+	TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
+	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
+    Goto PainNoCheck
+  AngelicArmorRestore:
+	TNT1 A 0 A_GiveInventory("RLAngelicArmorRenegade",1)
 	TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
 	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
     Goto PainNoCheck
@@ -4170,7 +4087,8 @@ ACTOR DoomRLRenegadeRPG : DoomRLRenegade
 	TNT1 A 0 A_GiveInventory("RLOModSurvivalMediArmorRenegade",1)
 	TNT1 A 0 A_JumpIfInventory("RLDeathArmorCheck",1,"DeathNoCheck")
 	TNT1 A 0 A_JumpIfInventory("RLXDeathArmorCheck",1,"XDeathNoCheck")
-    Goto PainNoCheck  RegenStart:
+    Goto PainNoCheck
+  RegenStart:
 	TNT1 A 0 A_GiveInventory("RLPlayerArmorRegeneration",1)
 	TNT1 A 0 A_JumpIfInventory("RLNanoAblativeArmorToken",1,"NanoRegen5")
 	TNT1 A 0 A_JumpIfInventory("RLNecroArmorToken",1,"NecroDrain")
@@ -4407,7 +4325,7 @@ ACTOR DoomRLRenegadeRPG : DoomRLRenegade
     TNT1 A -1
     Stop
   Teleport:
-    TNT1 A 0 A_SpawnItemEx ("TeleportFog", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION) 
+	TNT1 A 0 A_SpawnItemEx ("TeleportFog", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION) 
     Goto Spawn
     }
 }
