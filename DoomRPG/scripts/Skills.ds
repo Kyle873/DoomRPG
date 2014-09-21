@@ -19,7 +19,7 @@ int ForceFieldTID = 1998;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
-    7; 9; 9; 4; 17; 8;
+    5; 9; 9; 5; 17; 8;
 };
 
 AddressSpace MapArray SkillSpace;
@@ -52,16 +52,6 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
             };
         };
         {
-            "Life Leech"; 100; 4; LifeLeech;
-            {
-                "Steal 10% of the target's current HP";
-                "Steal 20% of the target's current HP";
-                "Steal 30% of the target's current HP";
-                "Steal 40% of the target's current HP";
-                "Steal 50% of the target's current HP";
-            };
-        };
-        {
             "Decontamination"; 100; 4; Decontaminate;
             {
                 "Remove 25% of your Toxicity";
@@ -77,12 +67,6 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
                 "Repair 50% of your Armor";
                 "Repair 75% of your Armor";
                 "Repair all of your Armor";
-            };
-        };
-        {
-            "Aura Steal"; 200; 1; AuraSteal;
-            {
-                "Steals an enemies Aura, taking it from them and giving it to you\nTime based on their Level";
             };
         };
     };
@@ -264,9 +248,24 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
             };
         };
         {
-            "Soul Steal"; 500; 1; SoulSteal;
+            "Aura Steal"; 200; 1; AuraSteal;
             {
-                "Steal an enemies soul, killing them in the process\nDoes not work on Shadow enemies";
+                "Steals an enemies Aura, taking it from them and giving it to you\nTime based on their Level";
+            };
+        };
+        {
+            "Soul Steal"; 100; 10; SoulSteal;
+            {
+                "Steal 10% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 20% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 30% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 40% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 50% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 60% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 70% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 80% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 90% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 100% of the target's current HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
             };
         };
     };
@@ -939,51 +938,6 @@ acscript bool HealTeam(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool LifeLeech(Skill *Self, void *Data)
-{
-    int PlayerNum = PlayerNumber();
-    
-    SetActivatorToTarget(Players(PlayerNum).TID);
-    
-    // Refund - If the Player has no target
-    if (ActivatorTID() == Players(PlayerNum).TID)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    // Refund - If the target isn't actually a valid monster
-    if (!CheckInventory("DRPGMonsterInit"))
-    {
-        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
-        return false;
-    };
-    
-    // Refund - If the target has the DONTDRAIN flag set
-    if (CheckFlag(0, "DONTDRAIN"))
-    {
-        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
-        return false;
-    };
-    
-    int LeechAmount = Round((fixed)GetActorProperty(0, APROP_Health) * ((fixed)Self->CurrentLevel / 10.0));
-    
-    // Refund -- If you leech 0 HP
-    if (LeechAmount == 0)
-    {
-        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
-        return false;
-    };
-    
-    DamageThing(LeechAmount);
-    SetActivator(Players(PlayerNum).TID);
-    HealThing(LeechAmount);
-    
-    FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
-    ActivatorSound("skills/lifeleech", 127);
-    return true;
-};
-
 acscript bool Decontaminate(Skill *Self, void *Data)
 {
     if (Player.Toxicity <= 0)
@@ -1037,55 +991,6 @@ acscript bool Repair(Skill *Self, void *Data)
     };
     
     return false;
-};
-
-acscript bool AuraSteal(Skill *Self, void *Data)
-{
-    int PlayerNum = PlayerNumber();
-    int AuraType;
-    int AuraTime;
-    
-    SetActivatorToTarget(Players(PlayerNum).TID);
-    
-    // Pointer
-    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
-    
-    // Refund - If the Player has no target
-    if (ActivatorTID() == Players(PlayerNum).TID)
-    {
-        ActivatorSound("menu/error", 127);
-        return false;
-    };
-    
-    // Refund - If the target isn't actually a valid monster
-    if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
-    {
-        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
-        return false;
-    };
-    
-    // Refund - If the target doesn't have an Aura or has a Shadow Aura
-    if (Stats->Aura == 0 || Stats->Aura == 10)
-    {
-        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
-        return false;
-    };
-    
-    // Get Aura info
-    AuraType = Stats->Aura - 1;
-    AuraTime = (Stats->Level < 30 ? 30 : Stats->Level) * 35;
-    
-    // Remove Aura from monster
-    Stats->Aura = 0;
-    
-    SetActivator(Players(PlayerNum).TID);
-    
-    // Apply Aura to player
-    Player.Aura[AuraType] = true;
-    Player.AuraTimer += AuraTime;
-    
-    ActivatorSound("skills/aurasteal", 127);
-    return true;
 };
 
 acscript bool Powerup(Skill *Self, void *Data)
@@ -1331,6 +1236,55 @@ acscript bool Repulse(Skill *Self, void *Data)
     return true;
 };
 
+acscript bool AuraSteal(Skill *Self, void *Data)
+{
+    int PlayerNum = PlayerNumber();
+    int AuraType;
+    int AuraTime;
+    
+    SetActivatorToTarget(Players(PlayerNum).TID);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    // Refund - If the Player has no target
+    if (ActivatorTID() == Players(PlayerNum).TID)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target isn't actually a valid monster
+    if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target doesn't have an Aura or has a Shadow Aura
+    if (Stats->Aura == 0 || Stats->Aura == 10)
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Get Aura info
+    AuraType = Stats->Aura - 1;
+    AuraTime = (Stats->Level < 30 ? 30 : Stats->Level) * 35;
+    
+    // Remove Aura from monster
+    Stats->Aura = 0;
+    
+    SetActivator(Players(PlayerNum).TID);
+    
+    // Apply Aura to player
+    Player.Aura[AuraType] = true;
+    Player.AuraTimer += AuraTime;
+    
+    ActivatorSound("skills/aurasteal", 127);
+    return true;
+};
+
 acscript bool SoulSteal(Skill *Self, void *Data)
 {
     str[] SoulTypes =
@@ -1350,10 +1304,14 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     int PlayerNum = PlayerNumber();
     int SoulTID;
     
+    // Move activation to the user's target
     SetActivatorToTarget(Players(PlayerNum).TID);
     
     // Pointer
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    // Leech Amount
+    int LeechAmount = (int)((fixed)GetActorProperty(0, APROP_SpawnHealth) * ((fixed)Self->CurrentLevel / 10.0)) + 1;
     
     // Refund - If the Player has no target
     if (ActivatorTID() == Players(PlayerNum).TID)
@@ -1379,14 +1337,20 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     // Don't gain XP from this
     Stats->Flags += MF_NOXP;
     
-    // Kill the enemy
-    SetActorProperty(0, APROP_Health, 0);
+    // Damage Enemy
+    DamageThing(LeechAmount);
     
     // Drop the Soul and apply the stat to the uservar
-    SoulTID = DropMonsterItem(PlayerNum, 0, SoulTypes[(Stats->Aura > 0 ? Stats->Aura - 1 : Random(0, SOUL_MAX - 1))], 256);
+    if (GetActorProperty(0, APROP_Health) <= 0)
+        SoulTID = DropMonsterItem(PlayerNum, 0, SoulTypes[(Stats->Aura > 0 ? Stats->Aura - 1 : Random(0, SOUL_MAX - 1))], 256);
     
+    // Move activation back to the user
     SetActivator(Players(PlayerNum).TID);
     
+    // Heal the user
+    HealThing(LeechAmount);
+    
+    FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
     ActivatorSound("skills/soulsteal", 127);
     return true;
 };
