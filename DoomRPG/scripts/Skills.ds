@@ -746,11 +746,17 @@ script void SkillWheel() enter
     goto Start;
 };
 
-acscript void UseSkill() net
+acscript void UseSkill(int Key) net
 {
     // Current Skill
     int Index = (Player.InMenu && Player.Menu == 3 ? -1 : Player.SkillSelected);
-    Skill *CurrentSkill = &Skills[Player.SkillCategory[Index]][Player.SkillIndex[Index]];
+    Skill *CurrentSkill;
+    
+    // Quick Use handling
+    if (Key > 0)
+        CurrentSkill = &Skills[Player.SkillCategory[Key - 1]][Player.SkillIndex[Key - 1]]
+    else
+        CurrentSkill = &Skills[Player.SkillCategory[Index]][Player.SkillIndex[Index]];
     
     // If you're dead, terminate
     if (ClassifyActor(Player.TID) & ACTOR_DEAD) return;
@@ -1303,7 +1309,7 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     
     int PlayerNum = PlayerNumber();
     int SoulTID;
-    int UniqueMonsterTID = UniqueTID (0, 0);
+    int UniqueMonsterTID = UniqueTID();
     int RealMonsterTID;
     int BeforeHealthAmount;
     int AfterHealthAmount;
@@ -1347,6 +1353,7 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     if (AllowsXP)
         Stats->Flags |= MF_NOXP;
     
+    // Temporary changing of TID to handle giving XP properly
     RealMonsterTID = ActivatorTID();
     Thing_ChangeTID(0, UniqueMonsterTID);
     
@@ -1366,13 +1373,13 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     // Drop the Soul and apply the stat to the uservar
     if (GetActorProperty(0, APROP_Health) <= 0)
         SoulTID = DropMonsterItem(PlayerNum, 0, SoulTypes[(Stats->Aura > 0 ? Stats->Aura - 1 : Random(0, SOUL_MAX - 1))], 256)
-    else if (AllowsXP)
-        // Stats->Flags &= ~MF_NOXP; // Notify DavidPH that this doesn't work
+    else if (AllowsXP) // Stats->Flags &= ~MF_NOXP; // TODO: Notify DavidPH that this doesn't work
         Stats->Flags &= ~0x02;
     
     // Move activation back to the user
     SetActivator(Players(PlayerNum).TID);
     
+    // Reset the temporary TID
     Thing_ChangeTID(UniqueMonsterTID, RealMonsterTID);
     
     // Late Refund - If we did no damage to the target at all
