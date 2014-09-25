@@ -879,7 +879,10 @@ script void MonsterRegenerationHandler()
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
-    int RegenAmount = (int)((fixed)Stats->HealthMax * ((fixed)Stats->Regeneration / 1000.0));
+    long long RegenAmount = Stats->HealthMax * Stats->Regeneration;
+    RegenAmount /= 1000;
+    if (RegenAmount > 2147483647) // INT_MAX
+        RegenAmount = 2147483647;
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \ctRegeneration of %s: %d\n", GetActorClass(0), RegenAmount);
     HealThing(RegenAmount);
