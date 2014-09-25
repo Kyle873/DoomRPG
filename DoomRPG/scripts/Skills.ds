@@ -1178,6 +1178,9 @@ acscript bool UseAura(Skill *Self, void *Data)
     // Apply Aura
     Player.Aura[Index] = true;
     
+    // Aura Cost Multiplier
+    Player.AuraCostMult += 0.1;
+    
     return true;
 };
 
@@ -1991,7 +1994,15 @@ script void CleanDropTIDArray()
 
 function int ScaleEPCost(int Cost)
 {
-    return (int)((fixed)Cost * GetCVarFixed("drpg_skill_costscale"));
+    fixed ScaleCost;
+    
+    // Multiplier CVAR
+    ScaleCost = (fixed)Cost * GetCVarFixed("drpg_skill_costscale");
+    
+    // Aura Multiplier
+    ScaleCost *= 1.0 + Player.AuraCostMult;
+    
+    return ScaleCost;
 };
 
 function void CheckSkills()
@@ -2216,6 +2227,11 @@ function void CheckSkills()
                 Player.AuraTimer--;
                 break;
             };
+    
+    // Decrease Aura Cost Multiplier
+    if (Player.AuraCostMult > 0)
+        if ((Timer() % (35 * (30 + (GameSkill() * 5)))) == 0)
+            Player.AuraCostMult -= 0.1;
     
     // Reset Aura and Soul States
     for (int i = 0; i < AURA_MAX; i++)
