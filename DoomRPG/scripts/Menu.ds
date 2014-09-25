@@ -724,75 +724,83 @@ function void DrawSkillMenu()
         "Utility";
     };
     
+    Skill *CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
+    int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
+    int SkillCostNext = ScaleEPCost(CurrentSkill->Cost * (CurrentSkill->CurrentLevel + 1) * Player.SkillCostMult);
+    
     // Title
     SetFont("BIGFONT");
     HudMessage("Skills\n", HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
-    
-    // Current Skill
-    Skill *CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
 
-    // Skill Tokens
-    PrintSprite("TOKCA0", 0, 252.1, 56.1, 0.05);
-    SetFont("BIGFONT");
-    HudMessage("%d\n", CheckInventory("DRPGSkillToken"), HUDMSG_PLAIN, 0, CR_DARKGREEN, 278.1, 46.0, 0.05);
-    
-    // Skill Buy Cost
-    if (CurrentSkill->Level < CurrentSkill->MaxLevel)
-    HudMessage("-%d\n", CurrentSkill->Level + 1,
-               HUDMSG_PLAIN, 0, CR_RED, 278.1, 56.1, 0.05);
-    
     // Skill Category
-    HudMessage("%s\n", SkillCategories[Player.SkillPage],
+    HudMessage("%s \cd(%d/%d)\n", SkillCategories[Player.SkillPage], Player.SkillPage + 1, MAX_CATEGORIES,
                HUDMSG_PLAIN, 0, CR_WHITE,
                0.1, 25.0, 0.05);
     
-    // Scale EP Costs to Skill Level
-    int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
-    int SkillCostNext = ScaleEPCost(CurrentSkill->Cost * (CurrentSkill->CurrentLevel + 1) * Player.SkillCostMult);
+    // Skill Tokens
+    PrintSprite("TOKCA0", 0, 232.1, 64.1, 0.05);
+    SetFont("BIGFONT");
+    if (CurrentSkill->Level < CurrentSkill->MaxLevel)
+        HudMessage("%d \cg(-%d)\n", CheckInventory("DRPGSkillToken"), CurrentSkill->Level + 1, HUDMSG_PLAIN, 0, CR_DARKGREEN, 256.1, 54.0, 0.05)
+    else
+        HudMessage("%d\n", CheckInventory("DRPGSkillToken"), HUDMSG_PLAIN, 0, CR_DARKGREEN, 256.1, 54.0, 0.05);
 
     // Skill Cost/Next Level Cost
-    if (CurrentSkill->Level == CurrentSkill->MaxLevel)
-        HudMessage("EP: %d\n", SkillCost,
-                   HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 240.1, 25.0, 0.05)
+    PrintSprite("EPUPA0", 0, 248.0, 88.1, 0.05);
+    SetFont("BIGFONT");
+    if (CurrentSkill->Level < CurrentSkill->MaxLevel)
+        HudMessage("%d\nNext Level: %d\n", SkillCost, SkillCostNext,
+                   HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 256.1, 72.1, 0.05)
     else
-        HudMessage("EP: %d (%d)\n", SkillCost, SkillCostNext,
-                   HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 240.1, 25.0, 0.05);
-
-    // Skill List
-    SetFont("SMALLFONT");
-    for (int i = 0; i < SkillCategoryMax[Player.SkillPage]; i++)
+        HudMessage("%d\n", SkillCost,
+                   HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 256.1, 80.0, 0.05);
+    
+    // Aura Cost Multiplier
+    if (Player.AuraCostMult > 0)
     {
-        int Color = CR_WHITE;
-                
-        if (i == Player.MenuIndex)
-            Color = MenuCursorColor
-        else if (Skills[Player.SkillPage][i].Level == 0)
-            Color = CR_RED;
-        
-        if (Skills[Player.SkillPage][i].Level > 0)
-            HudMessage("%s (%d / %d) [%d]\n",
-                       Skills[Player.SkillPage][i].Name,
-                       Skills[Player.SkillPage][i].Level,
-                       Skills[Player.SkillPage][i].MaxLevel,
-                       Skills[Player.SkillPage][i].CurrentLevel,
-                       HUDMSG_PLAIN, MENU_ID + i, Color,
-                       20.1, 40.0 + (8.0 * i), 0.05)
-        else
-            HudMessage("%s (%d / %d)\n",
-                       Skills[Player.SkillPage][i].Name,
-                       Skills[Player.SkillPage][i].Level,
-                       Skills[Player.SkillPage][i].MaxLevel,
-                       HUDMSG_PLAIN, MENU_ID + i, Color,
-                       20.1, 40.0 + (8.0 * i), 0.05);
-
-        // If a skill key is assigned to this skill, draw an indicator
-        for (int j = 0; j < MAX_SKILLKEYS; j++)
-                if (Player.SkillCategory[j] == Player.SkillPage && Player.SkillIndex[j] == i)
-                    HudMessage("%d->\n", j + 1,
-                               HUDMSG_PLAIN, MENU_ID + 1 + MAX_SKILLS + j, CR_CYAN,
-                               0.1, 40.0 + (8.0 * i), 0.05);
+        PrintSpritePulse("Aura", 0, 232.0, 111.0, 0.75, 64.0, 0.25);
+        SetFont("BIGFONT");
+        HudMessage("+%d%% Skill Cost\n", (int)(Player.AuraCostMult * 100 + 1),
+                   HUDMSG_PLAIN, 0, CR_CYAN, 256.1, 112.0, 0.05);
     };
-
+    
+    // Skill Grid
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 6; j++)
+        {
+            int Index = j + (i * 6);
+            Skill *CurrentSkillIter = &Skills[Player.SkillPage][Index];
+            
+            // Break when we reach the last skill
+            if (Index >= SkillCategoryMax[Player.SkillPage]) break;
+            
+            SetFont("SMALLFONT");
+            
+            // This skill is on a skill key
+            for (int k = 0; k < MAX_SKILLKEYS; k++)
+                if (Player.SkillCategory[k] == Player.SkillPage && Player.SkillIndex[k] == Index)
+                    HudMessage("%d\n", k + 1, HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 24.1 + (j * 34.0), 40.0 + (i * 34.0), 0.05);
+            
+            // Skill Levels
+            HudMessage("%d/%d\n", CurrentSkillIter->CurrentLevel, CurrentSkillIter->MaxLevel, HUDMSG_PLAIN, 0, (CurrentSkillIter->Level >= CurrentSkillIter->MaxLevel ? CR_GREEN : CR_WHITE),
+                       0.1 + (j * 34.0), 64.0 + (i * 34.0), 0.05);
+            
+            // Skill Icon
+            PrintSprite(Skills[Player.SkillPage][Index].Icon, 0, 0.1 + (j * 34.0), 52.0 + (i * 34.0), 0.05);
+            
+            // Highlight Box
+            if (Player.MenuIndex == Index)
+                PrintSprite("SelectBo", 0, 0.1 + (j * 34.0), 52.0 + (i * 34.0), 0.05);
+            
+            // Box
+            PrintSprite("ItemBox", 0, 0.1 + (j * 34.0), 52.0 + (i * 34.0), 0.05);
+        };
+    
+    // Skill Name
+    SetFont("BIGFONT");
+    HudMessage("%s\n", CurrentSkill->Name, HUDMSG_PLAIN, 0, (CurrentSkill->Level > 0 ? CR_WHITE : CR_RED),
+               0.1, 154.1, 0.05);
+    
     // Skill Description
     SetFont("SMALLFONT");
     if (CurrentSkill->Level > 0 && CurrentSkill->Level < CurrentSkill->MaxLevel)
@@ -800,18 +808,15 @@ function void DrawSkillMenu()
                    CurrentSkill->Description[CurrentSkill->CurrentLevel - 1],
                    CurrentSkill->Description[CurrentSkill->Level],
                    HUDMSG_PLAIN, 0, CR_YELLOW,
-                   20.1, 184.1, 0.05)
+                   0.1, 168.1, 0.05)
     else if (CurrentSkill->Level == CurrentSkill->MaxLevel)
         HudMessage("%s\n", CurrentSkill->Description[CurrentSkill->CurrentLevel - 1],
                    HUDMSG_PLAIN, 0, CR_YELLOW,
-                   20.1, 184.1, 0.05)
+                   0.1, 168.1, 0.05)
     else
         HudMessage("%s\n", CurrentSkill->Description[0],
                    HUDMSG_PLAIN, 0, CR_DARKGRAY,
-                   20.1, 184.1, 0.05);
-    
-    // Skill Icon
-    PrintSprite(CurrentSkill->Icon, 0, 264.0, 100.0, 0.05);
+                   0.1, 168.1, 0.05);
 };
 
 function void DrawShieldMenu()
@@ -1191,48 +1196,72 @@ function void MenuInput()
     // Skills Menu
     if (Player.Menu == MENUPAGE_SKILLS && !Player.MenuBlock && !Player.SkillWheelOpen)
     {
-        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && Player.MenuIndex >= 0)
+        if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD))
         {
-            if (Player.MenuIndex <= 0) Player.MenuIndex = SkillCategoryMax[Player.SkillPage];
-            ActivatorSound("menu/move", 127);
-            Player.MenuIndex--;
-        };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && Player.MenuIndex < SkillCategoryMax[Player.SkillPage])
-        {
-            if (Player.MenuIndex >= SkillCategoryMax[Player.SkillPage] - 1) Player.MenuIndex = -1;
-            ActivatorSound("menu/move", 127);
-            Player.MenuIndex++;
-        };
-        if ((Buttons == BT_LEFT && OldButtons != BT_LEFT && Player.SkillPage >= 0) ||
-            (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && Player.SkillPage >= 0))
-        {
-            if (Player.SkillPage <= 0) Player.SkillPage = MAX_CATEGORIES;
-            ActivatorSound("menu/move", 127);
-            Player.MenuIndex = 0;
-            Player.SkillPage--;
-        };
-        if ((Buttons & BT_LEFT && !(OldButtons & BT_LEFT) && Buttons & BT_SPEED && Player.SkillPage >= 0) ||
-            (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && Buttons & BT_SPEED && Player.SkillPage >= 0))
-            if (Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel > 1)
+            if (Buttons & BT_SPEED)
             {
-                Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel--;
-                ActivatorSound("menu/move", 127);
-            };
-        if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT && Player.SkillPage < MAX_CATEGORIES) ||
-            (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && Player.SkillPage < MAX_CATEGORIES))
-        {
-            if (Player.SkillPage >= MAX_CATEGORIES - 1) Player.SkillPage = -1;
-            ActivatorSound("menu/move", 127);
-            Player.MenuIndex = 0;
-            Player.SkillPage++;
-        };
-        if ((Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT) && Buttons & BT_SPEED && Player.SkillPage < MAX_CATEGORIES) ||
-            (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT) && Buttons & BT_SPEED && Player.SkillPage < MAX_CATEGORIES))
-            if (Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel < Skills[Player.SkillPage][Player.MenuIndex].Level)
+                if (Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel > 1)
+                {
+                    Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel--;
+                    ActivatorSound("menu/move", 127);
+                };
+            }
+            else if (Player.MenuIndex > 0)
             {
-                Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel++;
                 ActivatorSound("menu/move", 127);
+                Player.MenuIndex -= 6;
+                if (Player.MenuIndex < 0) Player.MenuIndex = 0;
             };
+        };
+        if (Buttons & BT_BACK && !(OldButtons & BT_BACK))
+        {
+            if (Buttons & BT_SPEED)
+            {
+                if (Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel < Skills[Player.SkillPage][Player.MenuIndex].Level)
+                {
+                    Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel++;
+                    ActivatorSound("menu/move", 127);
+                };
+            }
+            else if (Player.MenuIndex < SkillCategoryMax[Player.SkillPage] - 1)
+            {
+                ActivatorSound("menu/move", 127);
+                Player.MenuIndex += 6;
+                if (Player.MenuIndex > SkillCategoryMax[Player.SkillPage] - 1) Player.MenuIndex = SkillCategoryMax[Player.SkillPage] - 1;
+            };
+        };
+        if ((Buttons & BT_LEFT && !(OldButtons & BT_LEFT)) ||
+            (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT)))
+        {
+            if (Buttons & BT_SPEED)
+            {
+                ActivatorSound("menu/move", 127);
+                Player.MenuIndex = 0;
+                Player.SkillPage--;
+                if (Player.SkillPage < 0) Player.SkillPage = MAX_CATEGORIES - 1;
+            }
+            else if (Player.MenuIndex > 0)
+            {
+                ActivatorSound("menu/move", 127);
+                Player.MenuIndex--;
+            };
+        };
+        if ((Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT)) ||
+            (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT)))
+        {
+            if (Buttons & BT_SPEED)
+            {
+                ActivatorSound("menu/move", 127);
+                Player.MenuIndex = 0;
+                Player.SkillPage++;
+                if (Player.SkillPage >= MAX_CATEGORIES - 1) Player.SkillPage = 0;
+            }
+            else if (Player.MenuIndex < SkillCategoryMax[Player.SkillPage] - 1)
+            {
+                ActivatorSound("menu/move", 127);
+                Player.MenuIndex++;
+            };
+        };
         if (Buttons == BT_USE && OldButtons != BT_USE)
             IncreaseSkill();
         if (Buttons & BT_ATTACK && !(OldButtons & BT_ATTACK))
@@ -1540,8 +1569,8 @@ function void MenuHelp()
                        HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
             break;
         case 3: // Skills Menu
-            HudMessage("\cd%K/%K\c- to navigate\n\cd%K/%K\c- to Switch Pages\n\cd%K\c- to Learn/Upgrade Skill\nHold \cd%K\c- to Assign Skill to Wheel Slot\n\cd%K + %K/%K\c- to Switch Current Skill Level\n\cd%K\c- to Quickuse selected skill\n",
-                       "+forward", "+back", "+moveleft", "+moveright", "+use", "+user1", "+speed", "+moveleft", "+moveright", "+attack",
+            HudMessage("\cd%K/%K/%K/%K\c- to navigate\n\cd%K + %K/%K\c- to Switch Pages\n\cd%K\c- to Learn/Upgrade Skill\nHold \cd%K\c- to Assign Skill to Wheel Slot\n\cd%K + %K/%K\c- to Switch Current Skill Level\n\cd%K\c- to Quickuse selected skill\n",
+                       "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+moveright", "+use", "+user1", "+speed", "+forward", "+back", "+attack",
                        HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
             break;
         case 4: // Shield Menu
@@ -1748,4 +1777,3 @@ function void ClearToxicityMeter()
     for (int i = TOXMETER_ID; i < TOXMETER_ID + 100; i++)
         ClearMessage(i);
 };
-
