@@ -988,6 +988,18 @@ function void CheckStatusEffects()
         Player.Shield.Charge = 0;
     };
     
+    if (Player.StatusType[SE_RADIATION]) // Radioactivity
+    {
+        PlaySound(Player.TID, "misc/radiation", 7, 1.0, true, ATTN_STATIC);
+        if (Player.Toxicity < 85 && !(Timer() % 70))
+        {
+            int i = Random(1, Player.StatusIntensity[SE_RADIATION]);
+            if (Player.Toxicity + i > 85)
+                i = 85 - Player.Toxicity;
+            Player.Toxicity += i;
+        };
+    };
+    
     for (int i = 0; i < SE_MAX; i++)
     {
         // Decrease timers
@@ -1001,6 +1013,9 @@ function void CheckStatusEffects()
             Player.StatusIntensity[i] = 0;
             Player.StatusTimer[i] = 0;
             Player.StatusTimerMax[i] = 0;
+            
+            if (i == SE_RADIATION)
+                StopSound(Player.TID, 7);
         };
     };
 };
