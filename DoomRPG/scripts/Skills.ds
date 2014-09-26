@@ -32,8 +32,8 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
             {
                 "Recover 25% HP";
                 "Recover 50% HP";
-                "Recover 75% HP";
-                "Recover 100% HP";
+                "Recover 75% HP\nHeals Status Effects";
+                "Recover 100% HP\nHeals Status Effects";
             };
         };
         {
@@ -47,8 +47,8 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
             {
                 "Heals you and your teammates for 25% HP";
                 "Heals you and your teammates for 50% HP";
-                "Heals you and your teammates for 75% HP";
-                "Heals you and your teammates for all HP";
+                "Heals you and your teammates for 75% HP\nHeals you and your teammmates Status Effects";
+                "Heals you and your teammates for all HP\nHeals you and your teammmates Status Effects";
             };
         };
         {
@@ -878,9 +878,10 @@ acscript bool Heal(Skill *Self, void *Data)
     };
     
     // Refund - If your health is max or above
-    if (GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth))
+    if (GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth) && !HaveStatusEffect())
     {
         ActivatorSound("menu/error", 127);
+        Print("lol\n");
         return false;
     };
     
@@ -888,6 +889,10 @@ acscript bool Heal(Skill *Self, void *Data)
     
     HealThing(HealAmount);
     ActivatorSound("skills/heal", 127);
+    
+    // Level 3+ - Remove Status Effects
+    if (Self->Level > 2)
+        ClearStatusEffects();
     
     return true;
 };
@@ -920,15 +925,6 @@ acscript bool HealTeam(Skill *Self, void *Data)
     int PlayerTID = Player.TID;
     int HealAmount;
     
-    // Calculate healing amount based on level
-    switch (Self->CurrentLevel)
-    {
-    case 1: HealAmount = Player.HealthMax / 4;      break; // 25%
-    case 2: HealAmount = Player.HealthMax / 2;      break; // 50%
-    case 3: HealAmount = Player.HealthMax / 1.33;   break; // 75%
-    case 4: HealAmount = Player.HealthMax;          break; // 100%
-    };
-    
     for (int i = 0; i < MAX_PLAYERS; i++)
         if (PlayerInGame(i))
         {
@@ -942,8 +938,13 @@ acscript bool HealTeam(Skill *Self, void *Data)
             };
             
             SetActivator(Players(i).TID);
-            FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
             HealThing(HealAmount);
+            
+            // Level 3+ - Remove Status Effects
+            if (Self->Level > 2)
+                ClearStatusEffects();
+            
+            FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
             ActivatorSound("skills/heal", 127);
         };
      
@@ -1982,6 +1983,18 @@ acscript void RemoveAura()
         Player.Aura[i] = false;
     
     Player.AuraTimer = 0;
+};
+
+acscript void ClearStatusEffects()
+{
+    for (int i = 0; i < SE_MAX; i++)
+    {
+        Player.StatusType[i] = false;
+        Player.StatusTypeHUD = 0;
+        Player.StatusIntensity[i] = 0;
+        Player.StatusTimer[i] = 0;
+        Player.StatusTimerMax[i] = 0;
+    };
 };
 
 script void CleanDropTIDArray()
