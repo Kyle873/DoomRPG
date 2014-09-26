@@ -4,7 +4,7 @@ color F
 set PATH=..\Utilities\DH-ACC
 set SRC=.\scripts
 set OBJ=.\acs
-set ACC=DH-acc --named-scripts --near-pointers --use-chunk-ATAG --debug-error-pos --debug-static-list=DebugStaticList.log -D__LIBDS_NOLIB --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc -i %SRC%\lib
+set ACC=DH-acc --named-scripts --near-pointers --use-chunk-ATAG --debug-error-pos --debug-static-list=DebugStaticList.log --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc -i %SRC%\lib
 
 rem Standard Libraries
 echo Compiling Standard Libraries
@@ -14,6 +14,12 @@ echo    - stdio
 %ACC% -c %PATH%/lib/stdio.ds -o %OBJ%\stdio.o
 echo    - string
 %ACC% -c %PATH%/lib/string.ds -o %OBJ%\string.o
+
+echo Linking LibDS.lib
+%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o -o %OBJ%\LibDS.lib
+
+rem Change the stack offset so we don't overlap with the standard library
+set ACC=%ACC% --static-offset=16842752
 
 rem Doom RPG Libraries
 echo Compiling Doom RPG Libraries
@@ -70,7 +76,7 @@ echo    - Utils
 %ACC% -c %SRC%\Utils.ds -o %OBJ%\Utils.o
 
 echo Linking RPG.lib
-%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\ItemData.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
+%ACC% %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\ItemData.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\Password.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
 
 echo Cleaning up Object Files
 del %OBJ%\*.o
