@@ -204,9 +204,42 @@ script void HealthBars()
                     PrintSprite("STAT6S", 0, X - 40.0, Y + 74.0, 0.05);
                     PrintSprite("STAT7S", 0, X + 16.0, Y + 74.0, 0.05);
                     PrintSprite("STAT8S", 0, X + 71.0, Y + 74.0, 0.05);
+                    
+                    // Aura Icon
+                    Aura = Stats->Aura;
+                    switch (Aura)
+                    {
+                    case 1: AuraType = "AuraRed"; break;
+                    case 2: AuraType = "AuraGree"; break;
+                    case 3: AuraType = "AuraWhit"; break;
+                    case 4: AuraType = "AuraPink"; break;
+                    case 5: AuraType = "AuraCyan"; break;
+                    case 6: AuraType = "AuraPurp"; break;
+                    case 7: AuraType = "AuraOran"; break;
+                    case 8: AuraType = "AuraBlue"; break;
+                    case 9: AuraType = "AuraYell"; break;
+                    case 10: AuraType = "AuraBlac"; break;
+                    };
+                    PrintSpritePulse(AuraType, 0, X - 136.0, Y + 30.0, 0.75, 64.0, 0.25);
                 }
                 else if (IsPlayer) // Player Stats
                 {
+                    static str[AURA_MAX] AuraIcons =
+                    {
+                        "AuraRed";
+                        "AuraGree";
+                        "AuraWhit";
+                        "AuraPink";
+                        "AuraCyan";
+                        "AuraPurp";
+                        "AuraOran";
+                        "AuraBlue";
+                        "AuraYell";
+                        "AuraBlac";
+                    };
+                    
+                    int AuraOffset = 0;
+                    
                     // Rank Emblems
                     for (int i = 0; i < PlayerStats[1]; i++)
                         PrintSprite("RankEmb", 0, X - 55.0 + (i * 7.0), Y + 22.0, 0.05);
@@ -234,27 +267,15 @@ script void HealthBars()
                     PrintSprite("STAT6S", 0, X - 40.0, Y + 75.0, 0.05);
                     PrintSprite("STAT7S", 0, X + 16.0, Y + 74.0, 0.05);
                     PrintSprite("STAT8S", 0, X + 71.0, Y + 73.0, 0.05);
+                    
+                    // Auras
+                    for (int i = 0; i < AURA_MAX; i++)
+                        if (Players(ID).Aura[i])
+                        {
+                            PrintSpritePulse(AuraIcons[i], 0, X - 136 - ((AuraOffset % 3) * 32), Y + 30.0 + ((AuraOffset / 3) * 32), 0.75, 64.0, 0.25);
+                            AuraOffset++;
+                        };
                 };
-                
-                // Get Aura
-                Aura = (IsPlayer ? CheckInventory("DRPGAura") : Stats->Aura);
-                
-                // Aura Icon
-                switch (Aura)
-                {
-                case 1:     AuraType = "AuraRed";   break;
-                case 2:     AuraType = "AuraGree";  break;
-                case 3:     AuraType = "AuraWhit";  break;
-                case 4:     AuraType = "AuraPink";  break;
-                case 5:     AuraType = "AuraCyan";  break;
-                case 6:     AuraType = "AuraPurp";  break;
-                case 7:     AuraType = "AuraOran";  break;
-                case 8:     AuraType = "AuraBlue";  break;
-                case 9:     AuraType = "AuraYell";  break;
-                case 10:    AuraType = "AuraBlac";  break;
-                };
-                if (Aura > 0)
-                    PrintSpritePulse(AuraType, 0, X - 136.0, Y + 30.0, 0.75, 64.0, 0.25);
                 
                 // Prevent bar overflow
                 if (HealthPercent > 1000)
