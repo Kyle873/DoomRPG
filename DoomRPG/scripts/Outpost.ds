@@ -1,6 +1,7 @@
 #include "RPG.dh"
 
 #include "Arena.dh"
+#include "Augs.dh"
 #include "ItemData.dh"
 #include "Map.dh"
 #include "Menu.dh"
@@ -9,6 +10,7 @@
 #include "Outpost.dh"
 #include "Shop.dh"
 #include "Stats.dh"
+#include "Skills.dh"
 #include "Utils.dh"
 
 // Globals
@@ -118,6 +120,7 @@ acscript void RegenArea(int ID)
             return;
         
         HealThing(5);
+        ClearStatusEffects();
         TakeInventory("DRPGCredits", 5);
 
         FadeRange(255, 0, 0, 0.1, 255, 0, 0, 0.0, 0.1);
@@ -149,21 +152,31 @@ acscript void RegenArea(int ID)
     // EP
     if (ID == 3)
     {
-        if (!CheckInventory("DRPGCredits"))
-            return;
-        if (Player.EP < Player.EPMax)
-        {
-            Player.EP += 5;
-            if (Player.EP > Player.EPMax)
-                Player.EP = Player.EPMax;
-        }
-        else if (Player.EP >= Player.EPMax)
-            return;
+        if (CheckInventory("DRPGCredits") == 0 || Player.EP >= Player.EPMax) return;
+        
+        Player.EP += 5;
+        if (Player.EP > Player.EPMax)
+            Player.EP = Player.EPMax;
         
         FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.1);
         AmbientSound("regen/ep", 127);
         
         TakeInventory("DRPGCredits", 1);
+        
+        Delay(Interval);
+        goto Start;
+    };
+    
+    // Augmentation Battery
+    if (ID == 4)
+    {
+        if (CheckInventory("DRPGCredits") < 5 || Player.Augs.Battery >= Player.Augs.BatteryMax) return;
+        
+        FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.1);
+        AmbientSound("regen/battery", 127);
+        
+        AddBattery(1);
+        TakeInventory("DRPGCredits", 5);
         
         Delay(Interval);
         goto Start;
