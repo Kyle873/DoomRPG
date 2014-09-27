@@ -43,7 +43,7 @@ str[MAX_MISSION_TYPES] MissionTypes =
 {
     "\cdCollection";
     "\caKill";
-    "\caKill Uniques";
+    "\caKill Auras";
     "\caKill Reinforcements";
     "\cgAssassination";
     "\cfFind Secrets";
@@ -51,96 +51,22 @@ str[MAX_MISSION_TYPES] MissionTypes =
     "\ctAchieve Combo";
 };
 
-script void PopulateMissions(int Index)
+bool MissionInit;
+
+script void PopulateMissions()
 {
     // Wait for the Rewards List to finish processing
     while (!RewardsInit) Delay(1);
     
-    for (int i = 0; i < MAX_MISSIONS; i++)
+    for (int i = 0; i < MAX_DIFFICULTIES; i++)
     {
-        if (Index >= 0) i = Index;
-        
-        int Type = Random(0, MAX_MISSION_TYPES - 1);
-        int Difficulty = Random(0, MAX_DIFFICULTIES - 1);
-        int NumPlayers = 0;
-        int RewardXP = 0;
-        int RewardRank = 0;
-        int RewardCredits = 0;
-        ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
-        
-        // Calculate the rewards based on all Player's average Level and Rank
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i)) continue;
+        for (int j = 0; j < MAX_MISSIONS; j++)
+            Missions[i][j] = CreateMission(i);
             
-            RewardXP += (Difficulty + 2) * (XPTable[Players(i).Level] / 100);
-            RewardRank += (Difficulty + 2) * (RankTable[Players(i).RankLevel] / 100);
-            RewardCredits += (Difficulty + Players(i).RankLevel + 1) * 100 * Random(1, 4);
-            
-            NumPlayers++;
-        };
-        
-        // Average the rewards
-        RewardXP /= NumPlayers;
-        RewardRank /= NumPlayers;
-        RewardCredits /= NumPlayers;
-        
-        // Assign info to the struct
-        Missions[i].Active = false;
-        Missions[i].Type = Type;
-        Missions[i].Difficulty = Difficulty;
-        Missions[i].RewardXP = RewardXP;
-        Missions[i].RewardRank = RewardRank;
-        Missions[i].RewardCredits = RewardCredits;
-        Missions[i].RewardItem = RewardItem;
-        
-        // Collection Mission
-        if (Type == MT_COLLECT)
-        {
-            // Generate Item and Amount
-            int ItemIndex = Random(0, MAX_LOOT - 1);
-            int Amount = Random(5, 10);
-            LootItemPtr ItemPtr = &LootData[ItemIndex];
-            
-            // Remove any of the selected loot item if you already have any
-            if (CheckInventory(ItemPtr->Actor) > 0)
-                SetInventory(ItemPtr->Actor, 0);
-            
-            // Pass data to the Mission struct
-            Missions[i].Item = ItemPtr;
-            Missions[i].Amount = Amount;
-        };
-        
-        // Kill Mission
-        if (Type == MT_KILL)
-            GetTargetMonster(&Missions[i]);
-        
-        // Kill Uniques Mission
-        if (Type == MT_KILLUNIQUES)
-            Missions[i].Amount = Random(5 * (Difficulty + 1), 5 * (Difficulty + 1) * 2);
-        
-        // Kill Reinforcements Mission
-        if (Type == MT_REINFORCEMENTS)
-            Missions[i].Amount = Random(10 * (Difficulty + 1), 10 * (Difficulty + 1) * 2);
-        
-        // Assassination Mission
-        if (Type == MT_ASSASSINATION)
-            GetTargetMonster(&Missions[i]);
-        
-        // Find Secrets Mission
-        if (Type == MT_SECRETS)
-            Missions[i].Amount = Random((Difficulty + 1), (Difficulty + 2) * 2) * 2;
-        
-        // Find Items Mission
-        if (Type == MT_ITEMS)
-            Missions[i].Amount = Random((Difficulty + 1), (Difficulty + 2) * 2) * 20;
-        
-        // Combo Mission
-        if (Type == MT_COMBO)
-            Missions[i].Amount = (Difficulty + 2) * 50 * PlayerCount();
-        
-        if (Index >= 0) break;
+        Delay(1);
     };
+    
+    MissionInit = true;
 };
 
 script void InitMission()
@@ -263,8 +189,8 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
                 Players(Killer).Mission.Current++;
         };
         
-        // Kill Uniques Mission
-        if (Players(Killer).Mission.Type == MT_KILLUNIQUES)
+        // Kill Auras Mission
+        if (Players(Killer).Mission.Type == MT_KILLAURAS)
             if (Stats->Aura > 0)
                 Players(Killer).Mission.Current++;
         
@@ -277,6 +203,95 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
         if (Stats->Target)
             Players(Stats->Target - 1).Mission.Current++;
     };
+};
+
+function MissionInfo CreateMission(int Difficulty)
+{
+    int Type = Random(0, MAX_MISSION_TYPES - 1);
+    int NumPlayers = 0;
+    int RewardXP = 0;
+    int RewardRank = 0;
+    int RewardCredits = 0;
+    ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
+    MissionInfo Mission;
+    
+    // Calculate the rewards based on all Player's average Level and Rank
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i)) continue;
+        
+        RewardXP += (Difficulty + 2) * (XPTable[Players(i).Level] / 100);
+        RewardRank += (Difficulty + 2) * (RankTable[Players(i).RankLevel] / 100);
+        RewardCredits += (Difficulty + Players(i).RankLevel + 1) * 100 * Random(1, 4);
+        
+        NumPlayers++;
+    };
+    
+    // Average the rewards
+    RewardXP /= NumPlayers;
+    RewardRank /= NumPlayers;
+    RewardCredits /= NumPlayers;
+    
+    // Assign info to the struct
+    Mission.Active = false;
+    Mission.Type = Type;
+    Mission.Difficulty = Difficulty;
+    Mission.RewardXP = RewardXP;
+    Mission.RewardRank = RewardRank;
+    Mission.RewardCredits = RewardCredits;
+    Mission.RewardItem = RewardItem;
+    
+    // Collection Mission
+    if (Type == MT_COLLECT)
+    {
+        // Generate Item and Amount
+        int ItemIndex = Random(0, MAX_LOOT - 1);
+        int Amount = Random(5, 10);
+        LootItemPtr ItemPtr = &LootData[ItemIndex];
+        
+        // Remove any of the selected loot item if you already have any
+        if (CheckInventory(ItemPtr->Actor) > 0)
+            SetInventory(ItemPtr->Actor, 0);
+        
+        // Pass data to the Mission struct
+        Mission.Item = ItemPtr;
+        Mission.Amount = Amount;
+    };
+    
+    // Kill Mission
+    if (Type == MT_KILL)
+        Mission = GetTargetMonster(Mission);
+    
+    // Kill Auras Mission
+    if (Type == MT_KILLAURAS)
+        Mission.Amount = Random(5 * (Difficulty + 1), 5 * (Difficulty + 1) * 2);
+    
+    // Kill Reinforcements Mission
+    if (Type == MT_REINFORCEMENTS)
+        Mission.Amount = Random(10 * (Difficulty + 1), 10 * (Difficulty + 1) * 2);
+    
+    // Assassination Mission
+    if (Type == MT_ASSASSINATION)
+        Mission = GetTargetMonster(Mission);
+    
+    // Find Secrets Mission
+    if (Type == MT_SECRETS)
+        Mission.Amount = Random((Difficulty + 1), (Difficulty + 2) * 2) * 2;
+    
+    // Find Items Mission
+    if (Type == MT_ITEMS)
+        Mission.Amount = Random((Difficulty + 1), (Difficulty + 2) * 2) * 20;
+    
+    // Combo Mission
+    if (Type == MT_COMBO)
+        Mission.Amount = (Difficulty + 2) * 50 * PlayerCount();
+    
+    return Mission;
+};
+
+function void CreateMissionAt(int Difficulty, int Index)
+{
+    Missions[Difficulty][Index] = CreateMission(Difficulty);
 };
 
 function void CheckMission()
@@ -300,7 +315,7 @@ function void CheckMission()
     };
     
     // Generic Checking
-    if (Player.Mission.Type == MT_KILL || Player.Mission.Type == MT_KILLUNIQUES ||
+    if (Player.Mission.Type == MT_KILL || Player.Mission.Type == MT_KILLAURAS ||
         Player.Mission.Type == MT_REINFORCEMENTS || Player.Mission.Type == MT_SECRETS ||
         Player.Mission.Type == MT_ITEMS)
         if (Player.Mission.Current >= Player.Mission.Amount)
@@ -391,45 +406,48 @@ function ItemInfoPtr GetRewardItem(int Difficulty)
     return RewardList[Random(SliceStart, (SliceStart + SliceLength) - 1)];
 };
 
-function void GetTargetMonster(MissionInfo *Mission)
+function void GetTargetMonster(MissionInfo Mission)
 {
     bool DRLA = GetCVar("drpg_ext_doomrl");
     bool Brutal = GetCVar("drpg_ext_Brutal");
     int Amount;
     MonsterInfoPtr[64] PotentialMonsters;
     int NumPotentialMonsters;
-    int MonsterDataAmt;
+    int MonsterDataAmount;
     
     if (DRLA)
-        MonsterDataAmt = MAX_DEF_MONSTERS_DRLA
+        MonsterDataAmount = MAX_DEF_MONSTERS_DRLA
     else
-        MonsterDataAmt = MAX_DEF_MONSTERS;
-    // Generate a list based on monsters' threat levels.
-    for (int i = 0; i < MonsterDataAmt; i++)
-    {
-        MonsterInfoPtr TmpMonster;
-        if (DRLA)
-            TmpMonster = &MonsterDataDRLA[i]
-        else if (Brutal)
-            TmpMonster = &MonsterDataBrutal[i]
-        else
-            TmpMonster = &MonsterData[i];
+        MonsterDataAmount = MAX_DEF_MONSTERS;
     
-        if (TmpMonster->Difficulty > ((Mission->Difficulty + 1) * 10) - 15 &&
-            TmpMonster->Difficulty < ((Mission->Difficulty + 1) * 10) + 15)
-            PotentialMonsters[NumPotentialMonsters++] = TmpMonster;
+    // Generate a list based on monsters' threat levels.
+    for (int i = 0; i < MonsterDataAmount; i++)
+    {
+        MonsterInfoPtr TempMonster;
+        if (DRLA)
+            TempMonster = &MonsterDataDRLA[i]
+        else if (Brutal)
+            TempMonster = &MonsterDataBrutal[i]
+        else
+            TempMonster = &MonsterData[i];
+    
+        if (TempMonster->Difficulty > ((Mission.Difficulty + 1) * 10) - 15 &&
+            TempMonster->Difficulty < ((Mission.Difficulty + 1) * 10) + 15)
+            PotentialMonsters[NumPotentialMonsters++] = TempMonster;
     };
     
     MonsterInfoPtr MonsterPtr = PotentialMonsters[Random(0, NumPotentialMonsters - 1)];
     
     // Now that we know the monster type, we can calculate an amount
-    int BaseAmount = (10 + (23 * Mission->Difficulty) * (101 - MonsterPtr->Difficulty)) / 100;
+    int BaseAmount = (10 + (23 * Mission.Difficulty) * (101 - MonsterPtr->Difficulty)) / 100;
     Amount = Random((BaseAmount / 4) * 3, BaseAmount);
     if (Amount < 2) Amount = 2;
     
     // Insert info into the passed struct
-    Mission->Monster = MonsterPtr;
-    Mission->Amount = Amount;
+    Mission.Monster = MonsterPtr;
+    Mission.Amount = Amount;
+    
+    return Mission;
 };
 
 function int CalculateAverageDifficulty()

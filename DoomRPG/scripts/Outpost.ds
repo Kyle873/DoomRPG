@@ -1337,6 +1337,7 @@ acscript void Locker(bool Wireless, int WirelessLevel)
 acscript void MissionBBS()
 {
     int Index;
+    int Difficulty;
     
     // If Marines are hostile, terminate
     if (MarinesHostile) return;
@@ -1345,7 +1346,7 @@ acscript void MissionBBS()
     if (Player.OutpostMenu == OMENU_BBS) return;
 
     // Make sure the Rewards List is finished Processing
-    if (!RewardsInit)
+    if (!RewardsInit || !MissionInit)
     {
         ActivatorSound("menu/error", 127);
         SetFont("BIGFONT");
@@ -1365,15 +1366,18 @@ acscript void MissionBBS()
     {
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-        MissionInfo *Mission = &Missions[Index];
+        MissionInfo *Mission = &Missions[Difficulty][Index];
         
         // Set the HUD Size
         SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
         
+        // Difficulty
+        HudMessage("Difficulty: %s\n", MissionDifficulties[Difficulty], HUDMSG_PLAIN, 0, CR_WHITE, 32.1, 136.0, 0.05);
+        
         // Mission Labels
         for (int i = 0; i < MAX_MISSIONS; i++)
         {
-            MissionInfo *MissionIter = &Missions[i];
+            MissionInfo *MissionIter = &Missions[Difficulty][i];
             
             SetFont("SMALLFONT");
             
@@ -1405,7 +1409,7 @@ acscript void MissionBBS()
             HudMessage("Amount: \ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 272.0, 0.05);
             HudMessage("Type: \cg%s\n", Mission->Monster->Name, HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 288.0, 0.05);
             break;
-        case MT_KILLUNIQUES:
+        case MT_KILLAURAS:
         case MT_REINFORCEMENTS:
             HudMessage("Amount: \ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, 200.1, 272.0, 0.05);
             break;
@@ -1436,12 +1440,24 @@ acscript void MissionBBS()
             Index++;
             if (Index > MAX_MISSIONS - 1) Index = 0;
         };
+        if (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT)
+        {
+            ActivatorSound("menu/move", 127);
+            Difficulty--;
+            if (Difficulty < 0) Difficulty = MAX_DIFFICULTIES - 1;
+        };
+        if (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT)
+        {
+            ActivatorSound("menu/move", 127);
+            Difficulty++;
+            if (Difficulty >= MAX_DIFFICULTIES - 1) Difficulty = 0;
+        };
         if (Buttons == BT_USE && OldButtons != BT_USE && !Player.Mission.Active)
         {
             ActivatorSound("mission/get", 127);
             Mission->Active = true;
             Player.Mission = *Mission;
-            PopulateMissions(Index);
+            CreateMissionAt(Difficulty, Index);
         };
         if (Buttons == BT_SPEED)
         {
