@@ -197,7 +197,16 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
         // Kill Reinforcements Mission
         if (Players(Killer).Mission.Type == MT_REINFORCEMENTS)
             if (Stats->Reinforcement)
-                Players(Killer).Mission.Current++;
+                if (InMultiplayer) // Reinforcements kills count for everybody in multiplayer
+                {
+                    for (int i = 0; i < MAX_PLAYERS; i++)
+                    {
+                        if (!PlayerInGame(i)) continue;
+                        Players(i).Mission.Current++;
+                    };
+                }
+                else
+                    Players(Killer).Mission.Current++;
         
         // Assassination Mission
         if (Stats->Target)
