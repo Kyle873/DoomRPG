@@ -421,43 +421,28 @@ script void MonsterInitStats(int StatFlags)
         // Calculate the monster's cut and special stats
         if (GetCVar("drpg_monster_specialize"))
         {
-            // Zero out the StatEffect array
-            for (int i = 0; i < 8; i++)
-                StatEffect[i] = 0;
+            // Here's a fun and fast little way of doing it:
             
-            int DelayCounter = 0;
-            int CutCount = 0;
-            int SpecializedCount = 0;
-            while (CutCount < 4 || SpecializedCount < 2)
+            // 2 specialized stats
+            StatEffect[0] = 2;
+            StatEffect[1] = 2;
+            // 2 normal stats
+            StatEffect[2] = 0;
+            StatEffect[3] = 0;
+            // 4 cut stats
+            StatEffect[4] = 1;
+            StatEffect[5] = 1;
+            StatEffect[6] = 1;
+            StatEffect[7] = 1;
+            
+            // And shuffle 'em up!
+            for (int i = 0; i < STAT_MAX; i++)
             {
-                for (int i = 0; i < 8; i++)
-                {
-                    if (StatEffect[i] == 0)
-                    {
-                        if (CutCount < 4 && Random(1, 2) == 1) // Cut Stat
-                        {
-                            StatEffect[i] = 1;
-                            CutCount++;
-                        }
-                        else if (SpecializedCount < 2) // Specialized Stat
-                        {
-                            StatEffect[i] = 2;
-                            SpecializedCount++;
-                        };
-                    };
-                };
+                int swapwith = Random(0, STAT_MAX - 1);
+                int temp = StatEffect[i];
                 
-                DelayCounter++;
-                if ((DelayCounter % 10) == 0)
-                    Delay(1);
-                
-                // Give up if it takes too long
-                if (DelayCounter > 100)
-                {
-                    if (GetUserCVar(Arbitrator, "drpg_debug"))
-                        Log("\cgERROR: \c-Gave up on specializing monster!\n");
-                    break;
-                };
+                StatEffect[i] = StatEffect[swapwith];
+                StatEffect[swapwith] = temp;
             };
         };
         
