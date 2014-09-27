@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 9, 3);
+        Version version = new Version(0, 9, 4);
         Config config = new Config();
         string currentBranch = string.Empty;
         List<PatchInfo> patches = new List<PatchInfo>();
@@ -106,7 +106,7 @@ namespace DoomRPG
             List<string> branches = await GetBranches();
             foreach (string branch in branches)
                 comboBoxBranch.Items.Add(branch);
-            comboBoxBranch.SelectedIndex = 0;
+            comboBoxBranch.Text = "master";
             comboBoxBranch.Enabled = true;
         }
 
