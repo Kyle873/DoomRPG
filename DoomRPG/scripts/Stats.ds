@@ -990,15 +990,27 @@ function void CheckStatusEffects()
     
     if (Player.StatusType[SE_RADIATION]) // Radioactivity
     {
-        PlaySound(Player.TID, "misc/radiation", 7, 1.0, true, ATTN_STATIC);
-        if (Player.Toxicity < 85 && !(Timer() % 70))
+        if ((Timer() % 70) == 0)
         {
-            int i = Random(1, Player.StatusIntensity[SE_RADIATION]);
-            if (Player.Toxicity + i > 85)
-                i = 85 - Player.Toxicity;
-            AddToxicity(i);
-            FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, i * 0.25);
+            // Trail Light
+            SpawnForced("DRPGRadiationGlow2", GetActorX(0), GetActorY(0), GetActorZ(0) + (GetActorProperty(0, APROP_Height) / 2.0));
+            
+            // Geiger Sound
+            AmbientSound("misc/radiation", 96 + Random(0, Player.StatusIntensity[SE_RADIATION] * 2));
+            
+            // Poisoning
+            if (Player.Toxicity < 85)
+            {
+                int i = Random(1, Player.StatusIntensity[SE_RADIATION]);
+                if (Player.Toxicity + i > 85)
+                    i = 85 - Player.Toxicity;
+                AddToxicity(i);
+                FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, i * 0.25);
+            };
         };
+        
+        // Trail Light
+        SpawnForced("DRPGRadiationGlow", GetActorX(0), GetActorY(0), GetActorZ(0) + (GetActorProperty(0, APROP_Height) / 2.0));
     };
     
     for (int i = 0; i < SE_MAX; i++)
