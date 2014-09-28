@@ -288,6 +288,70 @@ script void MissionHUD() enter
     goto Start;
 };
 
+script void AuraTimerHUD() enter
+{
+    Start:
+    
+    bool HaveAura = false;
+    fixed Offset = 0;
+    
+    // Determine if we have any Auras or not
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Player.Aura[i])
+        {
+            HaveAura = true;
+            break;
+        };
+    
+    while (HaveAura)
+    {
+        fixed X = GetCVarFixed("drpg_auratimer_x");
+        fixed Y = GetCVarFixed("drpg_auratimer_y");
+        int AuraCount = 0;
+        int AuraAdd = 0;
+        int Radius = 16;
+        
+        SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+        
+        // Timer
+        SetFont("BIGFONT");
+        HudMessage("%d\n", Player.AuraTimer / 35 + 1, HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+        
+        // Calculate number of active Auras
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Player.Aura[i])
+                AuraCount++;
+        
+        // Main Icon
+        if (AuraCount >= 9)
+            PrintSpritePulse("AuraBlac", 0, X, Y + 32.0, 0.75, 64.0, 0.25)
+        else
+            PrintSpritePulse("Aura", 0, X, Y, 0.75, 64.0, 0.25);
+        
+        // Orbiting Icons
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Player.Aura[i])
+            {
+                fixed Angle = -0.25 + ((1.0 / AuraCount) * AuraAdd++) + Offset;
+                fixed XOff = X + (Radius * Cos(Angle));
+                fixed YOff = Y + (Radius * Sin(Angle)) + 32.0;
+                PrintSpriteAlpha(AuraIcons[i], 0, (int)XOff, (int)YOff, 0.05, 0.75);
+            };
+        
+        // Offset
+        Offset += 0.0025;
+        
+        // Check and remove the Aura when the timer is up
+        if (Player.AuraTimer <= 0)
+            HaveAura = false;
+        
+        Delay(1);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
 // [KS] This is context-sensitive, so we need to run this from the main loop.
 script void CheckDamageHUD()
 {
