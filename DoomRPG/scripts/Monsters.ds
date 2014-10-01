@@ -855,7 +855,13 @@ script void MonsterEPDrainHandler()
         {
             int Previous = Players(i).EP;
             
-            Players(i).EP -= Stats->Energy;
+            // [KS] Okay, so at max with an aug, a player has 4000 EP. We want that to drain in 20 seconds rather than just instantly.
+            // This should also make specialized Energy auras more tolerable in general.
+            int DrainAmount = Stats->Energy / 5;
+            if (DrainAmount < 1)
+                DrainAmount = 1;
+            
+            Players(i).EP -= DrainAmount;
             
             if (Players(i).EP < 0)
                 Players(i).EP = 0;
@@ -955,15 +961,16 @@ script void MonsterAmmoDrainHandler()
         
         if (Distance(0, Players(i).TID) < Stats->Radius * GameSkill() * 4 + Stats->Radius && CheckSight(0, Players(i).TID, 0))
         {
-            int ClipSteal = Stats->Capacity / 5;
-            int ShellSteal = Stats->Capacity / 8;
-            int RocketSteal = Stats->Capacity / 10;
-            int CellSteal = Stats->Capacity / 8;
+            // [KS] We'll give the player 30 seconds of ammo if they were full at max with augs.
+            int ClipSteal = (int)((fixed)Stats->Capacity / 1.875);
+            int ShellSteal = (int)((fixed)Stats->Capacity / 7.5);
+            int RocketSteal = (int)((fixed)Stats->Capacity / 7.5);
+            int CellSteal = (int)((fixed)Stats->Capacity / 1.25);
             
-            if (ClipSteal < 5) ClipSteal = 5;
-            if (ShellSteal < 2) ShellSteal = 2;
+            if (ClipSteal < 2) ClipSteal = 2;
+            if (ShellSteal < 1) ShellSteal = 1;
             if (RocketSteal < 1) RocketSteal = 1;
-            if (CellSteal < 5) CellSteal = 5;
+            if (CellSteal < 3) CellSteal = 3;
             
             TakeActorInventory(Players(i).TID, "Clip",       ClipSteal);
             TakeActorInventory(Players(i).TID, "Shell",      ShellSteal);
