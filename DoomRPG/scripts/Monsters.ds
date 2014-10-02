@@ -301,30 +301,33 @@ acscript void MonsterDump()
     Log(" TID: %d\n", ActivatorTID());
     Log(" ID: %d\n", GetMonsterID(0));
     
-    Log("\cf===== MONSTER FLAGS =====\n");
-    Log(" Init: %d\n", Stats->Init);
-    Log(" Named: %d\n", Stats->Named);
-    Log(" HealthBar: %d\n", Stats->HealthBar);
-    Log(" RenderStyle: %d\n", Stats->RenderStyle);
-    Log(" DRPG Flags: %d\n", Stats->Flags);
-    Log(" Reinforcement: %d\n", Stats->Reinforcement);
-    Log(" Assassination Target: %d\n", Stats->Target);
-    
-    Log("\cd===== MONSTER STATS =====\n");
-    Log(" Level: %d\n", Stats->Level);
-    Log(" Aura: %d\n", Stats->Aura);
-    Log(" Threat: %d\n", Stats->Threat);
-    Log(" Spawn Health: %d\n", Stats->SpawnHealth);
-    Log(" Health Max: %d\n", Stats->HealthMax);
-    Log(" Base Speed: %d\n", Stats->Speed);
-    Log(" \cgStrength: %d\n", Stats->Strength);
-    Log(" \cdDefense: %d\n", Stats->Defense);
-    Log(" \caVitality: %d\n", Stats->Vitality);
-    Log(" \cnEnergy: %d\n", Stats->Energy);
-    Log(" \ctRegeneration: %d\n", Stats->Regeneration);
-    Log(" \ciAgility: %d\n", Stats->Agility);
-    Log(" \chCapacity: %d\n", Stats->Capacity);
-    Log(" \ckLuck: %d\n", Stats->Luck);
+    if (GetMonsterID(0) != 0)
+    {
+        Log("\cf===== MONSTER FLAGS =====\n");
+        Log(" Init: %d\n", Stats->Init);
+        Log(" Named: %d\n", Stats->Named);
+        Log(" HealthBar: %d\n", Stats->HealthBar);
+        Log(" RenderStyle: %d\n", Stats->RenderStyle);
+        Log(" DRPG Flags: %d\n", Stats->Flags);
+        Log(" Reinforcement: %d\n", Stats->Reinforcement);
+        Log(" Assassination Target: %d\n", Stats->Target);
+        
+        Log("\cd===== MONSTER STATS =====\n");
+        Log(" Level: %d\n", Stats->Level);
+        Log(" Aura: %d\n", Stats->Aura);
+        Log(" Threat: %d\n", Stats->Threat);
+        Log(" Spawn Health: %d\n", Stats->SpawnHealth);
+        Log(" Health Max: %d\n", Stats->HealthMax);
+        Log(" Base Speed: %d\n", Stats->Speed);
+        Log(" \cgStrength: %d\n", Stats->Strength);
+        Log(" \cdDefense: %d\n", Stats->Defense);
+        Log(" \caVitality: %d\n", Stats->Vitality);
+        Log(" \cnEnergy: %d\n", Stats->Energy);
+        Log(" \ctRegeneration: %d\n", Stats->Regeneration);
+        Log(" \ciAgility: %d\n", Stats->Agility);
+        Log(" \chCapacity: %d\n", Stats->Capacity);
+        Log(" \ckLuck: %d\n", Stats->Luck);
+    };
 };
 
 // Damage the target
@@ -621,8 +624,14 @@ script void MonsterStatsHandler()
     
     Start:
     
-    if (ClassifyActor(0) & ACTOR_DEAD)
+    if (ClassifyActor(0) & ACTOR_WORLD)
         return;
+    
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     if (Stats->NeedReinit)
     {
@@ -750,9 +759,15 @@ script void MonsterAuraDisplayHandler()
     
     Start:
     
-    if (ClassifyActor(0) & ACTOR_DEAD)
+    if (ClassifyActor(0) & ACTOR_WORLD)
         return;
     
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
+
     VisibleToPlayers = false;
     
     for (int i = 0; i < MAX_PLAYERS; i++)
@@ -815,8 +830,14 @@ script void MonsterLevelupHandler()
         DelayTime = 35;
     Delay(DelayTime);
     
-    if (ClassifyActor(0) & (ACTOR_DEAD | ACTOR_WORLD))
+    if (ClassifyActor(0) & ACTOR_WORLD)
         return;
+    
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     // White and Shadow Aura monsters levelup monsters near them
     if (Stats->Aura == 3 || Stats->Aura == 10)
@@ -841,8 +862,15 @@ script void MonsterEPDrainHandler()
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     Start:
-    if (ClassifyActor(0) & ACTOR_DEAD)
+    
+    if (ClassifyActor(0) & ACTOR_WORLD)
         return;
+    
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     if (Stats->Aura != 5 && Stats->Aura != 10)
         return;
@@ -885,8 +913,15 @@ script void MonsterRegenerationHandler()
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     Start:
-    if (ClassifyActor(0) & ACTOR_DEAD)
+    
+    if (ClassifyActor(0) & ACTOR_WORLD)
         return;
+    
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     long long RegenAmount = Stats->HealthMax * Stats->Regeneration;
     RegenAmount /= 1000;
@@ -913,8 +948,14 @@ script void MonsterMoneyDrainHandler()
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     Start:
-    if (ClassifyActor(0) & ACTOR_DEAD)
+    if (ClassifyActor(0) & ACTOR_WORLD)
         return;
+    
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     if (Stats->Aura != 9 && Stats->Aura != 10)
         return;
@@ -949,8 +990,14 @@ script void MonsterAmmoDrainHandler()
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     Start:
-    if (ClassifyActor(0) & ACTOR_DEAD)
+    if (ClassifyActor(0) & ACTOR_WORLD)
         return;
+    
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     if (Stats->Aura != 8 && Stats->Aura != 10)
         return;
@@ -989,9 +1036,14 @@ script void MonsterDeathCheck()
     // Delay Stagger
     Delay(GetMonsterID(0) % 4);
     
+    Delay(1);
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+
     Start:
     
-    // Death
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        goto Disappeared;
+    
     if (ClassifyActor(0) & ACTOR_ALIVE)
     {
         Delay(4);
@@ -999,7 +1051,22 @@ script void MonsterDeathCheck()
     };
     
     MonsterDeath();
-    return;
+    
+    PostDeathWait:
+    
+    Delay(35);
+    
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        goto Disappeared;
+    
+    if (ClassifyActor(0) & ACTOR_ALIVE)
+        goto Start;
+    
+    goto PostDeathWait;
+    
+    Disappeared:
+    
+    Stats->Init = false; // Mark as unused
 };
 
 script void MonsterDeath()
@@ -1213,10 +1280,14 @@ script void MonsterDeath()
     if (GetCVar("drpg_shotguns"))
         DropMonsterItem(Killer, 0, "DRPGShotSpawn", 1, 255);
     
-    // Free up our Stats slot so that another monster can use it
-    Stats->Init = false;
-    SetMonsterID(0, 0);
-    SetInventory("DRPGMonsterInit", 0);
+    // [KS] We killed this monster now, so if an Arch-vile resurrects it, it doesn't count anymore to re-kill
+    // TODO: Need to maybe make sure that for Kill Missions, we can't just gimp Arch-vile resurrection.
+    Stats->Flags |= MF_NODROPS;
+    Stats->Flags |= MF_NOXP;
+    Stats->Aura = 0;
+    SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle); // In case of Shadow Aura
+    Stats->Target = false;
+    Stats->Reinforcement = false;
 };
 
 acscript void MonsterTransport(int Difficulty, int Time, int Radius)
