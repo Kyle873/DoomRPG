@@ -119,36 +119,44 @@ actor DRPGShieldBooster : CustomInventory 20080
     Inventory.PickupMessage "Got a Shield Booster!"
     Inventory.PickupSound "shield/booster"
     
-    +ISMONSTER
-    
     States
     {
     Spawn:
         SBST A 0 Bright NoDelay A_SpawnItemEx("DRPGShieldBoosterBeam", 0, 0, 0, 0, 0, 0, 0, SXF_SETMASTER)
-        SBST A 1 Bright
-        Goto Spawn+1
+        SBST A -1 Bright
+        Stop
     Pickup:
         SBST A 0 ACS_NamedExecute("AddShield", 0, ACS_NamedExecuteWithResult("GetShieldMax", 0) / 10)
+        TNT1 A 0 A_RemoveChildren(true)
         Stop
     }
 }
 
 actor DRPGShieldBoosterBeam
 {
-    YScale 4.0
-    Alpha 0.25
+    Scale 0.25
+    Alpha 0.75
     RenderStyle Add
     
-    +VISIBILITYPULSE
     +FORCEYBILLBOARD
-    +ISMONSTER
+    
+    Translation "0 : 255 = %[0.0, 0.0, 0.0] : [0.0, 0.25, 0.75]"
     
     States
     {
     Spawn:
-        BEAM A 1
-        BEAM A 0 Bright A_Warp(AAPTR_MASTER, 0, 0, 0, 0, WARPF_NOCHECKPOSITION, "Spawn")
-        Stop
+    FadeOut:
+        BEAM A 1 Bright
+        TNT1 A 0 A_Warp(AAPTR_MASTER, 0, 0, 0, 0, WARPF_NOCHECKPOSITION | WARPF_TOFLOOR | WARPF_COPYINTERPOLATION)
+        TNT1 A 0 A_FadeOut(0.025)
+        TNT1 A 0 A_JumpIf(Alpha <= 0.25, "FadeIn")
+        Loop
+    FadeIn:
+        BEAM A 1 Bright
+        TNT1 A 0 A_Warp(AAPTR_MASTER, 0, 0, 0, 0, WARPF_NOCHECKPOSITION | WARPF_TOFLOOR | WARPF_COPYINTERPOLATION)
+        TNT1 A 0 A_FadeIn(0.025)
+        TNT1 A 0 A_JumpIf(Alpha >= 0.75, "FadeOut")
+        Loop
     }
 }
 
