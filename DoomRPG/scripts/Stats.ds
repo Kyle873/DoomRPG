@@ -521,10 +521,6 @@ function void DoRegen()
             Player.EP = Player.EPMax;
     };
     
-    // If damaged, reset the Healing timer
-    if (Player.HealthLoss != 0)
-        Player.HPRate = 0;
-    
     // Check and Reset timers
     if (Player.HPRate >= Player.HPTime)
         Player.HPRate = 0;
@@ -594,6 +590,12 @@ function void DoRegen()
             Player.EPRate += EPAmount;
         };
     };
+};
+
+function void ResetRegen()
+{
+    // If damaged, reset the Healing timer
+    Player.HPRate = 0;
 };
 
 // Keep stats capped at certain values
@@ -734,7 +736,7 @@ function void CheckBurnout()
 function void CheckPerks()
 {
     // If you're dead, return
-    if (ClassifyActor(Player.TID) & ACTOR_DEAD || GetActorProperty(Player.TID, APROP_Health) <= 0) return;
+    if (GetActorProperty(Player.TID, APROP_Health) <= 0) return;
     
     if (Player.Strength >= 100)     Player.Perks[STAT_STRENGTH] = true      else Player.Perks[STAT_STRENGTH] = false;
     if (Player.Defense >= 100)      Player.Perks[STAT_DEFENSE] = true       else Player.Perks[STAT_DEFENSE] = false;
@@ -745,8 +747,8 @@ function void CheckPerks()
     if (Player.Capacity >= 100)     Player.Perks[STAT_CAPACITY] = true      else Player.Perks[STAT_CAPACITY] = false;
     if (Player.Luck >= 100)         Player.Perks[STAT_LUCK] = true          else Player.Perks[STAT_LUCK] = false;
     
-    int StrengthPercent = Player.HealthMax / GetActorProperty(Player.TID, APROP_Health);
-    fixed DefensePercent = ((fixed)GetActorProperty(Player.TID, APROP_Health) / (fixed)Player.HealthMax);
+    fixed StrengthPercent = ((fixed)Player.HealthMax / (fixed)Player.ActualHealth);
+    fixed DefensePercent = ((fixed)Player.ActualHealth / (fixed)Player.HealthMax);
     
     // Cap Strength Percent
     if (StrengthPercent > 100)
@@ -759,11 +761,11 @@ function void CheckPerks()
         DefensePercent = 1.0;
     
     // Strength Perk - Exponentially increase Strength as Health Decreases
-    if (Player.Perks[STAT_STRENGTH] && StrengthPercent >= 1 && !Player.Shield.Active)
-        Player.TotalDamage *= StrengthPercent;
+    if (Player.Perks[STAT_STRENGTH] && StrengthPercent >= 1)
+        Player.TotalDamage = (fixed)Player.TotalDamage * StrengthPercent;
     
     // Defense Perk - Exponentially increase Defense as Health Decreases
-    if (Player.Perks[STAT_DEFENSE] && DefensePercent > 0 && !Player.Shield.Active)
+    if (Player.Perks[STAT_DEFENSE] && DefensePercent > 0)
         Player.DamageFactor *= DefensePercent;
     
     // Vitality Perk - Halve Health regeneration time
@@ -808,10 +810,6 @@ function void CheckToxicity()
     if (Player.Toxicity < 0)
         Player.Toxicity = 0;
     
-    // Check Damage Type for Toxicity
-    if (Player.HealthLoss > 0 && Player.DamageType == DT_TOXIC && !CheckInventory("PowerIronFeet") && !(Player.Shield.Accessory == SHIELD_ACC_TXBGONN && Player.Shield.Active))
-        AddToxicity(Random(1, GameSkill()));
-    
     // Slowly decrease Toxicity
     if (Player.Toxicity > 0 && Timer() % (35 * (30 - Player.ToxicityRegenBonus)) == 0)
     {
@@ -844,6 +842,13 @@ function void CheckToxicity()
         Thing_Damage2(Player.TID, 1000000000, "Toxicity");
         Player.Toxicity = 0;
     };
+};
+
+function void ToxicityDamage()
+{
+    // Check Damage Type for Toxicity
+    if (Player.DamageType == DT_TOXIC && !CheckInventory("PowerIronFeet") && !(Player.Shield.Accessory == SHIELD_ACC_TXBGONN && Player.Shield.Active))
+        AddToxicity(Random(1, GameSkill()));
 };
 
 function void CheckStatusEffects()
@@ -950,14 +955,9 @@ function void CheckStatusEffects()
     
     if (Player.StatusType[SE_POISON]) // Poison
         if ((Timer() % 35) == 0)
-            if (Player.Shield.Active && Player.Shield.Health - Player.StatusIntensity[SE_POISON] > 0)
+            if (Player.ActualHealth - Player.StatusIntensity[SE_POISON] > 0)
             {
-                Player.Shield.Health -= Player.StatusIntensity[SE_POISON];
-                FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0.0, Player.StatusIntensity[SE_POISON] * 0.25);
-            }
-            else if (GetActorProperty(Player.TID, APROP_Health) - Player.StatusIntensity[SE_POISON] > 0)
-            {
-                SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) - Player.StatusIntensity[SE_POISON]);
+                Player.ActualHealth -= Player.StatusIntensity[SE_POISON];
                 FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0.0, Player.StatusIntensity[SE_POISON] * 0.25);
             };
     
@@ -1031,7 +1031,7 @@ function void CheckStatusEffects()
     };
 };
 
-function void CheckStatusDamage()
+function void StatusDamage(int Amount)
 {
     int Type;
     int Time;
@@ -1042,154 +1042,148 @@ function void CheckStatusDamage()
     // Can't get Status Effects if Pink Aura is active
     if (Player.Aura[AURA_PINK] || Player.SoulActive[SOUL_PINK]) return;
     
-    // Hacky crap so that we don't apply status effects if you're removing your Shield
-    if (Player.HealthLoss >= SHIELD_HEALTH - Player.Shield.Health) return;
+    // Calculate the chance
+    Chance = Random(0.0, 100.0);
     
-    if (Player.HealthLoss > 0)
+    // Criticals boost 2.5x
+    if (Amount >= Player.HealthMax / 2)
+        Chance *= 2.5;
+    
+    // Damage Types
+    switch (Player.DamageType)
     {
-        // Calculate the chance
-        Chance = Random(0.0, 100.0);
-        
-        // Criticals boost 2.5x
-        if (Player.HealthLoss >= Player.HealthMax / 2)
-            Chance *= 2.5;
-        
-        // Damage Types
-        switch (Player.DamageType)
+    case DT_TOXIC:
+        if (Chance <= 20.0) // 1 in 5
         {
-        case DT_TOXIC:
-            if (Chance <= 20.0) // 1 in 5
+            switch (Random(1, 3))
             {
-                switch (Random(1, 3))
-                {
-                case 1:
-                    Type = SE_POISON;
-                    Intensity = Random(1, 5);
-                    Time = Random(1, 5);
-                    break;
-                case 2:
-                    Type == SE_CORROSION;
-                    Intensity = Random(1, 5);
-                    Time = Random(1, 5);
-                    break;
-                case 3:
-                    Type = SE_RADIATION;
-                    Intensity = Random(1, 5);
-                    Time = Random(1, 10);
-                    break;
-                };
+            case 1:
+                Type = SE_POISON;
+                Intensity = Random(1, 5);
+                Time = Random(1, 5);
+                break;
+            case 2:
+                Type == SE_CORROSION;
+                Intensity = Random(1, 5);
+                Time = Random(1, 5);
+                break;
+            case 3:
+                Type = SE_RADIATION;
+                Intensity = Random(1, 5);
+                Time = Random(1, 10);
+                break;
             };
-            break;
-        case DT_MELEE:
-            if (Chance <= 12.5) // 1 in 8
-            {
-                switch (Random(1, 3))
-                {
-                case 1:
-                    Type = SE_BLIND;
-                    Intensity = Random(1, 5);
-                    Time = Random(5, 10);
-                    break;
-                case 2:
-                    Type = SE_CONFUSION;
-                    Intensity = Random(1, 5);
-                    Time = Random(5, 10);
-                    break;
-                case 3:
-                    Type = SE_FATIGUE;
-                    Intensity = Random(1, 5);
-                    Time = Random(5, 30);
-                    break;
-                };
-            };
-            break;
-        case DT_PLASMA:
-            if (Chance <= 12.5) // 1 in 8
-            {
-                switch (Random(1, 4))
-                {
-                case 1:
-                    Type = SE_POISON;
-                    Intensity = Random(1, 5);
-                    Time = Random(5, 20);
-                    break;
-                case 2:
-                    Type == SE_CORROSION;
-                    Intensity = Random(1, 5);
-                    Time = Random(1, 5);
-                    break;
-                case 3:
-                    Type = SE_VIRUS;
-                    Intensity = Random(1, 5);
-                    Time = Random(30, 120);
-                    break;
-                case 4:
-                    Type == SE_CURSE;
-                    Intensity = Random(1, 5);
-                    Time = Random(10, 60);
-                    break;
-                };
-            };
-            break;
-        case DT_LIGHTNING:
-            if (Chance <= 20.0) // 1 in 5
-            {
-                switch (Random(1, 4))
-                {
-                case 1:
-                    Type = SE_BLIND;
-                    Intensity = Random(1, 5);
-                    Time = Random(1, 10);
-                    break;
-                case 2:
-                    Type == SE_SILENCE;
-                    Intensity = Random(1, 5);
-                    Time = Random(10 * Intensity, 30 * Intensity);
-                    break;
-                case 3:
-                    Type = SE_EMP;
-                    Intensity = Random(1, 5);
-                    Time = Random(5, 30);
-                    break;
-                case 4:
-                    Type = SE_RADIATION;
-                    Intensity = Random(1, 5);
-                    Time = Random(5, 20);
-                    break;
-                };
-            };
-            break;
-        case DT_FIRE:
-            if (Chance <= 12.5) // 1 in 8
-            {
-                switch (Random(1, 2))
-                {
-                case 1:
-                    Type = SE_BLIND;
-                    Intensity = Random(1, 5);
-                    Time = Random(1, 10);
-                    break;
-                case 2:
-                    Type = SE_FATIGUE;
-                    Intensity = Random(1, 5);
-                    Time = Random(5, 30);
-                    break;
-                };
-            };
-            break;
         };
-        
-        if (Type > 0)
+        break;
+    case DT_MELEE:
+        if (Chance <= 12.5) // 1 in 8
         {
-            // Status Effect Resist check
-            if (RandomFixed(0.0, 100.0) <= Player.StatusEffectResist)
-                ActivatorSound("health/statuseffect2", 127)
-            else // Apply status effect
+            switch (Random(1, 3))
             {
-                ActivatorSound("health/statuseffect", 127);
-                Player.StatusTypeHUD = Type;
-                StatusEffect(Type, Time, Intensity);
+            case 1:
+                Type = SE_BLIND;
+                Intensity = Random(1, 5);
+                Time = Random(5, 10);
+                break;
+            case 2:
+                Type = SE_CONFUSION;
+                Intensity = Random(1, 5);
+                Time = Random(5, 10);
+                break;
+            case 3:
+                Type = SE_FATIGUE;
+                Intensity = Random(1, 5);
+                Time = Random(5, 30);
+                break;
             };
+        };
+        break;
+    case DT_PLASMA:
+        if (Chance <= 12.5) // 1 in 8
+        {
+            switch (Random(1, 4))
+            {
+            case 1:
+                Type = SE_POISON;
+                Intensity = Random(1, 5);
+                Time = Random(5, 20);
+                break;
+            case 2:
+                Type == SE_CORROSION;
+                Intensity = Random(1, 5);
+                Time = Random(1, 5);
+                break;
+            case 3:
+                Type = SE_VIRUS;
+                Intensity = Random(1, 5);
+                Time = Random(30, 120);
+                break;
+            case 4:
+                Type == SE_CURSE;
+                Intensity = Random(1, 5);
+                Time = Random(10, 60);
+                break;
+            };
+        };
+        break;
+    case DT_LIGHTNING:
+        if (Chance <= 20.0) // 1 in 5
+        {
+            switch (Random(1, 4))
+            {
+            case 1:
+                Type = SE_BLIND;
+                Intensity = Random(1, 5);
+                Time = Random(1, 10);
+                break;
+            case 2:
+                Type == SE_SILENCE;
+                Intensity = Random(1, 5);
+                Time = Random(10 * Intensity, 30 * Intensity);
+                break;
+            case 3:
+                Type = SE_EMP;
+                Intensity = Random(1, 5);
+                Time = Random(5, 30);
+                break;
+            case 4:
+                Type = SE_RADIATION;
+                Intensity = Random(1, 5);
+                Time = Random(5, 20);
+                break;
+            };
+        };
+        break;
+    case DT_FIRE:
+        if (Chance <= 12.5) // 1 in 8
+        {
+            switch (Random(1, 2))
+            {
+            case 1:
+                Type = SE_BLIND;
+                Intensity = Random(1, 5);
+                Time = Random(1, 10);
+                break;
+            case 2:
+                Type = SE_FATIGUE;
+                Intensity = Random(1, 5);
+                Time = Random(5, 30);
+                break;
+            };
+        };
+        break;
+    };
+    
+    if (Type > 0)
+    {
+        // Status Effect Resist check
+        if (RandomFixed(0.0, 100.0) <= Player.StatusEffectResist)
+            ActivatorSound("health/statuseffect2", 127)
+        else // Apply status effect
+        {
+            ActivatorSound("health/statuseffect", 127);
+            Player.StatusTypeHUD = Type;
+            StatusEffect(Type, Time, Intensity);
         };
     };
 };

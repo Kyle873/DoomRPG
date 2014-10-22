@@ -43,6 +43,7 @@ struct PlayerData
     bool InMenu;
     bool InShop;
     bool InMinigame;
+    bool LastLegs;      // You're about to die, do something about it!
     
     // Primary Stats
     int Strength;       // Increases Damage
@@ -53,6 +54,7 @@ struct PlayerData
     int Agility;        // Increases movement speed, jump height and survival bonus (and optionally weapon speed)
     int Capacity;       // Increases max ammo capacities
     int Luck;           // Increases drop chances
+    int ActualHealth;   // The player's real, actual Health
     int HealthMax;      // Max player Health
     int ArmorMax;       // Max Armor that the player's current armor can go up to
     
@@ -164,14 +166,6 @@ struct PlayerData
     int[SE_MAX] StatusTimerMax;
     int Toxicity;
     
-    // Per-tic Checks
-    int BeforeHealth;
-    int AfterHealth;
-    int HealthLoss;
-    int BeforeShield;
-    int AfterShield;
-    int ShieldLoss;
-    
     // Locker
     int[ITEM_CATEGORIES][ITEM_MAX] Locker;
     bool LockerGlobal;
@@ -202,6 +196,7 @@ struct PlayerData
     int ShopCard;
     int DelayTimer;
     int DamageType;
+    bool AutosaveTimerReset;
     
     // Associated Drops
     int[MAX_DROPS] DropTID;
@@ -236,7 +231,6 @@ struct PlayerData
         int ChargeRate;
         fixed DelayRate;
         int Timer;
-        int Health;
         
         // Accessories
         bool LightAmp;
@@ -321,6 +315,8 @@ extern "ACS"
     script void QuickHeal(bool) net;
     script void QuickEP() net;
     script void StatusEffect(int, int, int);
+    script bool AddHealth(int, int);
+    script bool AddHealthDirect(int, int);
 };
 
 extern
@@ -329,6 +325,7 @@ extern
     script void Init() enter;
     script void Loop();
     script void WeaponSpeed();
+    script void PlayerDamage();
     script void StatRandomizer();
     script void AutosaveHandler();
     script void Dead() death;

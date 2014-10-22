@@ -115,8 +115,6 @@ script void Init() enter
             Player.Vitality = 10;
             Player.Energy = 10;
             Player.Capacity = 10;
-            
-            Player.EP = Player.Energy * 10;
         };
         if (GetCVar("drpg_special_start") == 1) // Luck Based
         {
@@ -125,9 +123,6 @@ script void Init() enter
             Player.Regeneration = -100;
             Player.Capacity = 5;
             Player.Luck = 100;
-            
-            SetActorProperty(0, APROP_Health, Player.Vitality * 10);
-            Player.EP = Player.Energy * 10;
         };
         if (GetCVar("drpg_special_start") == 2) // Speed Demon
         {
@@ -136,9 +131,6 @@ script void Init() enter
             Player.Energy = 0;
             Player.Agility = 100;
             Player.Capacity = 10;
-            
-            SetActorProperty(0, APROP_Health, Player.Vitality * 10);
-            Player.EP = Player.Energy * 10;
         };
         if (GetCVar("drpg_special_start") == 3) // The Magic Man
         {
@@ -146,9 +138,6 @@ script void Init() enter
             Player.Vitality = 5;
             Player.Energy = 100;
             Player.Capacity = 5;
-            
-            SetActorProperty(0, APROP_Health, Player.Vitality * 10);
-            Player.EP = Player.Energy * 10;
         };
         
         // Set the default skill indices
@@ -157,6 +146,10 @@ script void Init() enter
             Player.SkillCategory[i] = -1;
             Player.SkillIndex[i] = -1;
         };
+        
+        Player.EP = Player.Energy * 10;
+        Player.ActualHealth = Player.Vitality * 10;
+        SetActorProperty(0, APROP_Health, Player.ActualHealth);
         
         // Set default selected skill to nothing
         Player.SkillSelected = -1;
@@ -212,7 +205,8 @@ script void Init() enter
     
     // Execute Game Loops
     Loop();
-    ShieldScript();
+    PlayerDamage();
+    ShieldTimer();
     WeaponSpeed();
     StatRandomizer();
     AutosaveHandler();
@@ -236,11 +230,7 @@ script void Loop()
     
     // If the player's dead, terminate
     if (GetActorProperty(0, APROP_Health) <= 0)
-    {
-        // Show the killing blow
-        CheckDamageHUD();
         return;
-    };
     
     // Update Functions
     CheckCombo();
@@ -264,12 +254,10 @@ script void Loop()
     CheckStatBounds();
     CheckToxicity();
     CheckStatusEffects();
-    CheckStatusDamage();
     CheckCapacity();
     CheckShopCard();
     CheckMission();
     CheckHUD();
-    CheckDamageHUD();
     
     // Handle the menu cursor color
     MenuCursorColor = CursorColors[(Timer() / 3) % 6];
@@ -316,23 +304,8 @@ script void Loop()
     // Shop Special Handling
     if (Arbitrator) CheckShopSpecial(false);
     
-    // Always Quick Heal if CVAR is set
-    if (GetCVar("drpg_auto_heal"))
-        QuickHeal(false);
-    
-    // Check Health/Shield for this tic
-    Player.BeforeHealth = GetActorProperty(Player.TID, APROP_Health);
-    Player.BeforeShield = Player.Shield.Charge;
-    
-    // Quick temporary little shield hack to prevent you from exploding if you still have charge left in it
-    if (Player.Shield.Active && Player.Shield.Charge > 0)
-        SetPlayerProperty(0, 1, PROP_BUDDHA)
-    else
-        SetPlayerProperty(0, 0, PROP_BUDDHA);
-    
     // Regeneration
-    if (ClassifyActor(Player.TID) & ACTOR_ALIVE)
-        DoRegen();
+    DoRegen();
     
     // Give the Strength boosting item
     if (Player.TotalDamage != OldDamage)
@@ -352,42 +325,6 @@ script void Loop()
     if (CheckInventory("PowerInvulnerable"))
         Player.Mass *= 128;
     
-    // Survival Bonus
-    if (RandomFixed(0.0, 100.0) <= Player.SurvivalBonus)
-    {
-        SetPlayerProperty(0, 1, PROP_BUDDHA);
-        
-        if (GetActorProperty(Player.TID, APROP_Health) == 1)
-        {
-            if (Player.Shield.Accessory == SHIELD_ACC_UW0T && !Player.Shield.Active)
-            {
-                Player.Shield.Charge = Player.Shield.Capacity;
-                ToggleShield();
-            };
-            
-            HealThing(1);
-            ActivatorSound("health/survive", 127);
-            SetHudSize(100, 100, false);
-            SetFont("PINSA0");
-            HudMessage("A\n", HUDMSG_FADEOUT | HUDMSG_ADDBLEND, 0, CR_UNTRANSLATED, 61.4, 89.4, 0.5, 0.5);
-        };
-    }
-    else
-        SetPlayerProperty(0, 0, PROP_BUDDHA);
-    
-    // Continue check
-    if (CheckInventory("DRPGContinue") > 0)
-    {
-        SetPlayerProperty(0, 1, PROP_BUDDHA);
-        
-        if (GetActorProperty(Player.TID, APROP_Health) <= 1)
-        {
-            HealThing(1000000);
-            ActivatorSound("health/resurrect", 127);
-            TakeInventory("DRPGContinue", 1);
-        };
-    };
-    
     // Apply Stats
     SetActorProperty(Player.TID, APROP_SpawnHealth, Player.HealthMax);
     SetActorPropertyFixed(Player.TID, APROP_DamageFactor, Player.DamageFactor);
@@ -399,26 +336,197 @@ script void Loop()
     if ((Player.InMenu || Player.InShop) && GetCVar("drpg_menufreeze"))
         SetActorProperty(Player.TID, APROP_DamageFactor, 0);
     
-    // Reset Damage Type
-    Player.DamageType = DT_NONE;
-    
     // Store your current weapon in the Player Weapon array
     PlayerWeapon[PlayerNumber()] = GetWeapon();
     
     // Loop
     Delay(1);
     
-    // this needs to be done in a separate tic
-    Player.AfterHealth = GetActorProperty(Player.TID, APROP_Health);
-    Player.HealthLoss = Player.BeforeHealth - Player.AfterHealth;
-    Player.AfterShield = Player.Shield.Charge;
-    Player.ShieldLoss = Player.BeforeShield - Player.AfterShield;
+    goto Start;
+};
+
+// Damage Handler Entry Point
+script void PlayerDamage()
+{
+    int BeforeDamage;
+    int DamageTaken;
+    int ShieldDamageAmt;
+    bool CanSurvive;
     
-    // Cap health at 200% of your max based on Vitality
-    if (GetActorProperty(0, APROP_Health) > Player.Vitality * 10 * 2 && !Player.Shield.Active)
-        SetActorProperty(0, APROP_Health, Player.Vitality * 10 * 2);
+    Start:
+    
+    // If the player's dead, terminate
+    if (GetActorProperty(0, APROP_Health) <= 0)
+        return;
+    
+    CanSurvive = Player.SurvivalBonus > 0 && RandomFixed(0.0, 100.0) <= Player.SurvivalBonus && !Player.LastLegs;
+    
+    if (Player.ActualHealth <= 0) // [KS] This is to make sure the player actually dies, even if they're shielded.
+    {
+        SetPlayerProperty(0, 0, PROP_BUDDHA);
+        SetActorProperty(0, APROP_Health, 0);
+        goto Start;
+    };
+    
+    if (!Player.Shield.Active || !Player.Shield.Charge)
+    {
+        SetActorProperty(0, APROP_Health, Player.ActualHealth);
+        
+        if (Player.ActualHealth > 1)
+            Player.LastLegs = false;
+        
+        if (CanSurvive || CheckInventory("DRPGContinue"))
+            SetPlayerProperty(0, 1, PROP_BUDDHA)
+        else
+            SetPlayerProperty(0, 0, PROP_BUDDHA);
+    }
+    else
+    {
+        SetPlayerProperty(0, 0, PROP_BUDDHA);
+        
+        SetActorProperty(0, APROP_Health, 1000000);
+        
+        // Hilarious hack to allow healing detection
+        SetActorProperty(0, APROP_SpawnHealth, Player.ActualHealth < Player.HealthMax? 2000000 : 1000000);
+    };
+    
+    BeforeDamage = GetActorProperty(Player.TID, APROP_Health);
+    Player.DamageType = DT_NONE;
+    
+    Delay(1);
+    
+    DamageTaken = BeforeDamage - GetActorProperty(Player.TID, APROP_Health);
+    ShieldDamageAmt = 0;
+    
+    if (DamageTaken > 0)
+    {
+        Player.AutosaveTimerReset = true;
+        
+        AugDamage(DamageTaken);
+        ToxicityDamage();
+        StatusDamage(DamageTaken);
+        ResetRegen();
+        DamageHUD(DamageTaken);
+    };
+    
+    if (DamageTaken > 0 && Player.Shield.Active)
+    {
+        ShieldTimerReset();
+    };
+    
+    if (DamageTaken > 0 && Player.Shield.Active && Player.Shield.Charge)
+    {
+        ShieldDamageAmt = DamageTaken; // For callback
+        if (ShieldDamageAmt > Player.Shield.Charge)
+            ShieldDamageAmt = Player.Shield.Charge;
+        
+        Player.Shield.Charge -= DamageTaken;
+        Player.Shield.Full = false;
+        
+        ShieldDamage(ShieldDamageAmt);
+        
+        if (Player.Shield.Charge <= 0)
+        {
+            if (Player.Shield.Charge < 0)
+            {
+                DamageTaken = -Player.Shield.Charge;
+                Player.ActualHealth -= DamageTaken;
+                Player.Shield.Charge = 0;
+            }
+            else
+                DamageTaken = 0;
+            
+            ShieldBroken();
+        }
+        else
+            DamageTaken = 0;
+    };
+    
+    if (DamageTaken > 0)
+    {
+        Player.ActualHealth -= DamageTaken;
+        
+        if (Player.ActualHealth == 1) // Near-Death stuff
+        {
+            // Continue check
+            if (CheckInventory("DRPGContinue"))
+            {
+                Player.ActualHealth = Player.HealthMax;
+                ActivatorSound("health/resurrect", 127);
+                TakeInventory("DRPGContinue", 1);
+                
+                SetHudSize(320, 200, false);
+                SetFont("CONTA0");
+                HudMessage("A\n", HUDMSG_FADEOUT, 0, CR_UNTRANSLATED, 160.0, 114.0, 0.5, 0.5);
+                SetFont("BigFont");
+                HudMessage("Used a Continue!\n", HUDMSG_FADEOUT, 0, CR_GOLD, 160.0, 140.0, 0.5, 0.5);
+            };
+            
+            // Survival Bonus
+            if (CanSurvive)
+            {
+                Player.LastLegs = true;
+                
+                if (Player.Shield.Accessory == SHIELD_ACC_UW0T)
+                {
+                    Player.Shield.Charge = Player.Shield.Capacity;
+                };
+                
+                ActivatorSound("health/survive", 127);
+                SetHudSize(320, 200, false);
+                SetFont("BigFont");
+                HudMessage("Agility Save!\n", HUDMSG_FADEOUT, 0, CR_ORANGE, 160.0, 140.0, 0.5, 0.5);
+            };
+        };
+        
+        // Always Quick Heal if CVAR is set
+        if (GetCVar("drpg_auto_heal"))
+            QuickHeal(false);
+    }
+    else if (DamageTaken < 0)
+    {
+        DamageTaken = -DamageTaken;
+        
+        // Negative "damage" == We got health from an outside source (eg. RLA assembly unit)
+        // We'll just need to assume it's a regular capped heal if we got it this way.
+        // Anything that needs otherwise should be redefined anyway.
+        
+        if (Player.ActualHealth + DamageTaken > Player.HealthMax)
+            DamageTaken = Player.HealthMax - Player.ActualHealth;
+        
+        Player.ActualHealth += DamageTaken;
+    };
     
     goto Start;
+};
+
+acscript bool AddHealth(int HealthPercent, int MaxPercent)
+{
+    int RealMax = (fixed)Player.HealthMax * ((fixed)MaxPercent / 100.0);
+    int HealthAmount = (fixed)Player.HealthMax * ((fixed)HealthPercent / 100.0);
+    
+    if (Player.ActualHealth >= RealMax)
+        return false;
+    
+    if (Player.ActualHealth + HealthAmount > RealMax)
+        HealthAmount = RealMax - Player.ActualHealth;
+    
+    Player.ActualHealth += HealthPercent;
+    return true;
+};
+
+acscript bool AddHealthDirect(int HealthAmount, int MaxPercent)
+{
+    int RealMax = (fixed)Player.HealthMax * ((fixed)MaxPercent / 100.0);
+    
+    if (Player.ActualHealth >= RealMax)
+        return false;
+    
+    if (Player.ActualHealth + HealthAmount > RealMax)
+        HealthAmount = RealMax - Player.ActualHealth;
+    
+    Player.ActualHealth += HealthAmount;
+    return true;
 };
 
 // Handles Weapon Firing Speed
@@ -472,10 +580,11 @@ script void AutosaveHandler()
     
     while (true)
     {
-        if (Player.HealthLoss)
+        if (Player.AutosaveTimerReset)
             DamageTimer = 0
         else
             ++DamageTimer;
+        Player.AutosaveTimerReset = false;
         
         if ((Player.InMenu || Player.InShop) && !GetCVar("drpg_menufreeze"))
             DamageTimer = ASAVE_SAFETIME;
@@ -652,6 +761,7 @@ script void Respawn() respawn
     
     // Run Scripts
     Loop();
+    PlayerDamage();
     DamageNumbers();
     InfoPopoffs();
     HealthBars();
@@ -711,7 +821,7 @@ function void CheckHUD()
     {
         Shield[PlayerNum] = Player.Shield.Charge;
         ShieldCapacity[PlayerNum] = Player.Shield.Capacity;
-        ShieldHealth[PlayerNum] = Player.Shield.Health;
+        ShieldHealth[PlayerNum] = Player.ActualHealth;
         SetInventory("DRPGShieldCapacity", (int)(((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 100.0));
         SetInventory("DRPGShield", Player.Shield.Active);
     };

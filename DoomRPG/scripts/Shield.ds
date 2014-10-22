@@ -155,19 +155,12 @@ int[MAX_PARTS] ShieldAccessoryPrices =
     65000;  // RF-CT
 };
 
-script void ShieldScript()
+script void ShieldTimer()
 {
     while (true)
     {
         if (Player.Shield.Active)
         {
-            /* Debugging
-            SetFont("BIGFONT");
-            Print("%d\n%d\n%d\n",
-                  Player.BeforeHealth,
-                  Player.AfterHealth,
-                  Player.HealthLoss); */
-            
             // Inventory items for multiplayer/health bar handling
             SetInventory("DRPGShieldCharge", Player.Shield.Charge);
             SetInventory("DRPGShieldChargeMax", Player.Shield.Capacity);
@@ -177,32 +170,6 @@ script void ShieldScript()
             {
                 ActivatorSound("shield/full", 127);
                 Player.Shield.Full = true;
-            };
-            
-            // Damage
-            if (Player.HealthLoss > 0)
-            {
-                if (Player.Shield.Charge == 0)
-                {
-                    Player.Shield.Health -= Player.HealthLoss;
-                    ToggleShield();
-                }
-                else if (Player.HealthLoss > Player.Shield.Charge)
-                {
-                    SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health - (Player.HealthLoss - Player.Shield.Charge));
-                    Player.Shield.Charge = 0;
-                    if (Player.Shield.Accessory == SHIELD_ACC_NOVA2 && Random(1, 4) == 1) // NOV-A2
-                        Nova("BFGBall", Random(4, 16));
-                    ToggleShield();
-                }
-                else
-                {
-                    Player.Shield.Charge -= Player.HealthLoss;
-                    SetActorProperty(Player.TID, APROP_Health, SHIELD_HEALTH);
-                };
-                
-                Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
-                Player.Shield.Full = false;
             };
             
             // Increase Charge
@@ -242,6 +209,56 @@ script void ShieldScript()
     };
 };
 
+script void ShieldDamage(int Amount)
+{
+    switch (Player.Shield.Accessory)
+    {
+    // BST-700
+    case SHIELD_ACC_BST700:
+        if (Random(1, 4) == 1)
+        {
+            int TID = UniqueTID();
+            fixed Angle = GetActorAngle(0);
+            fixed X = GetActorX(0) + Cos(Angle) * 48.0;
+            fixed Y = GetActorY(0) + Sin(Angle) * 48.0;
+            fixed DirX = Cos(Angle);
+            fixed DirY = Sin(Angle);
+            fixed Z = GetActorZ(0);
+            
+            Spawn("DRPGShieldBooster", X, Y, Z, TID, Angle);
+            SetActorVelocity(TID, DirX * RandomFixed(8.0, 16.0), DirY * RandomFixed(8.0, 16.0), RandomFixed(4.0, 8.0), false, false);
+        };
+        break;
+    // SP-00K
+    case SHIELD_ACC_SP00K:
+        if (Random(1, 8) == 1)
+        {
+            GiveInventory("DRPGShieldGhost", 1);
+            Player.Shield.Ghost = true;
+            Player.Shield.GhostTimer = 35 * 5;
+        };
+        break;
+    // E1N-T31
+    case SHIELD_ACC_E1NT31:
+        GiveInventory("DRPGShieldTimeFreezer", 1);
+        UseInventory("DRPGShieldTimeFreezer");
+        Player.Shield.TimeFreezerTimer = 35;
+        Player.Shield.TimeFreezer = true;
+        break;
+    };
+};
+
+script void ShieldBroken()
+{
+    if (Player.Shield.Accessory == SHIELD_ACC_NOVA2 && Random(1, 4) == 1) // NOV-A2
+        Nova("BFGBall", Random(4, 16));
+};
+
+script void ShieldTimerReset()
+{
+    Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
+};
+
 acscript void ToggleShield() net
 {
     // If you're dead, terminate
@@ -260,8 +277,6 @@ acscript void ToggleShield() net
     {
         GiveInventory("DRPGShieldOn", 1);
         ActivatorSound("shield/on", 127);
-        Player.Shield.Health = GetActorProperty(Player.TID, APROP_Health);
-        SetActorProperty(Player.TID, APROP_Health, SHIELD_HEALTH);
         Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
         Player.Shield.Active = true;
     }
@@ -269,7 +284,6 @@ acscript void ToggleShield() net
     {
         GiveInventory("DRPGShieldOff", 1);
         ActivatorSound("shield/off", 127);
-        SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);
         Player.Shield.Active = false;
         if (GetCVar("drpg_shield_reset"))
             Player.Shield.Charge = 0;
@@ -284,11 +298,6 @@ acscript void AddShield(int Amount)
     Player.Shield.Charge += Amount;
 };
 
-acscript void AddShieldHealth(int Amount)
-{
-    Player.Shield.Health += Amount;
-};
-
 function void CheckShields()
 {
     ShieldPartPtr PartBodyPtr = &ShieldData[0][Player.Shield.Body - 1];
@@ -301,7 +310,6 @@ function void CheckShields()
     {
         ActivatorSound("shield/off", 127);
         Player.Shield.Active = false;
-        SetActorProperty(Player.TID, APROP_Health, Player.Shield.Health);;
         if (GetCVar("drpg_shield_reset"))
             Player.Shield.Charge = 0;
         GiveInventory("DRPGShieldOff", 1);
@@ -357,10 +365,6 @@ function void CheckShields()
     SetInventory("DRPGShieldLightAmpToken", Player.Shield.LightAmp);
     SetInventory("DRPGShieldInvisibilityToken", Player.Shield.Invisibility);
     SetInventory("DRPGShieldTimeFreezerToken", Player.Shield.TimeFreezer);
-    
-    // Cap Shield health at 200% of your max based on Vitality
-    if (Player.Shield.Health > Player.Vitality * 10 * 2)
-        Player.Shield.Health = Player.Vitality * 10 * 2;
 };
 
 function void CheckShieldAccessory()
@@ -371,9 +375,9 @@ function void CheckShieldAccessory()
             Player.TotalDamage *= 2;
     
     // SGENX-5b
-    if (Player.Shield.Accessory == SHIELD_ACC_SGENX5B && Player.Shield.Active && Player.Shield.Health < Player.HealthMax)
+    if (Player.Shield.Accessory == SHIELD_ACC_SGENX5B && Player.Shield.Active && Player.Shield.Charge && Player.ActualHealth < Player.HealthMax)
         if ((Timer() % (35 / 2)) == 0)
-            Player.Shield.Health++;
+            Player.ActualHealth++;
     
     // AMP-3000
     if (Player.Shield.Accessory == SHIELD_ACC_AMP3000 && Player.Shield.Active)
@@ -448,23 +452,6 @@ function void CheckShieldAccessory()
     if (Player.Shield.Accessory == SHIELD_ACC_LZY200)
         Player.Shield.ChargeRate *= 2;
     
-    // BST-700
-    if (Player.Shield.Accessory == SHIELD_ACC_BST700 && Player.Shield.Active)
-        if (Player.HealthLoss > 0)
-            if (Random(1, 4) <= 1)
-            {
-                int TID = UniqueTID();
-                fixed Angle = GetActorAngle(0);
-                fixed X = GetActorX(0) + Cos(Angle) * 48.0;
-                fixed Y = GetActorY(0) + Sin(Angle) * 48.0;
-                fixed DirX = Cos(Angle);
-                fixed DirY = Sin(Angle);
-                fixed Z = GetActorZ(0);
-                
-                Spawn("DRPGShieldBooster", X, Y, Z, TID, Angle);
-                SetActorVelocity(TID, DirX * RandomFixed(8.0, 16.0), DirY * RandomFixed(8.0, 16.0), RandomFixed(4.0, 8.0), false, false);
-            };
-    
     // MM-12
     if (Player.Shield.Accessory == SHIELD_ACC_MM12 && Player.Shield.Active)
         Player.Shield.ChargeRate = (fixed)Player.Shield.ChargeRate * (1.0 + ((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 3.0);
@@ -486,17 +473,6 @@ function void CheckShieldAccessory()
     // SP-00k
     if (Player.Shield.Accessory == SHIELD_ACC_SP00K && Player.Shield.Active)
     {
-        // 1/8 chance of activating
-        if (Player.HealthLoss > 0)
-        {
-            if (Random(1, 8) == 1)
-            {
-                GiveInventory("DRPGShieldGhost", 1);
-                Player.Shield.Ghost = true;
-                Player.Shield.GhostTimer = 35 * 5;
-            };
-        };
-        
         // Remove when time is up
         if (Player.Shield.GhostTimer <= 0)
         {
@@ -508,16 +484,6 @@ function void CheckShieldAccessory()
         if (Player.Shield.Ghost)
             Player.Shield.GhostTimer--;
     };
-    
-    // E1N-T31
-    if (Player.Shield.Accessory == SHIELD_ACC_E1NT31 && Player.Shield.Active)
-        if (Player.HealthLoss > 0)
-        {
-            GiveInventory("DRPGShieldTimeFreezer", 1);
-            UseInventory("DRPGShieldTimeFreezer");
-            Player.Shield.TimeFreezerTimer = 35;
-            Player.Shield.TimeFreezer = true;
-        };
     
     // E1N-T31 - Remove when timer ends
     if (Player.Shield.TimeFreezerTimer <= 0 && Player.Shield.TimeFreezer)
