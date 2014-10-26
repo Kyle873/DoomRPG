@@ -376,13 +376,13 @@ function void CheckHealth()
     if (ClassifyActor(0) & ACTOR_DEAD) return;
     
     // < 10% Health
-    if (GetActorProperty(Player.TID, APROP_Health) <= Player.HealthMax / 10 && !Player.Perks[STAT_VITALITY])
+    if (Player.ActualHealth <= Player.HealthMax / 10 && !Player.Perks[STAT_VITALITY])
     {
         // Fade Effect
         FadeRange(255, 0, 0, 0.15 + (Sin(Timer() / 64.0) * 0.1), 255, 0, 0, 0.0, 1.0);
         
         // Heartbeat
-        if ((Timer() % 64) == 0 && GetActorProperty(Player.TID, APROP_Health) > 0)
+        if ((Timer() % 64) == 0 && Player.ActualHealth > 0)
             ActivatorSound("health/low", 64);
         
         // Halve Movement Speed and Jump Height
@@ -555,7 +555,7 @@ function void DoRegen()
         if (Player.Perks[STAT_REGENERATION])
         {
             // Health
-            int Health = GetActorProperty(Player.TID, APROP_Health);
+            int Health = Player.ActualHealth;
             if (Health == 0) Health = 1;
             HPAmount = 1 + (Player.HealthMax / Health);
             
@@ -568,7 +568,7 @@ function void DoRegen()
         // Movement/Crouching/Idling mechanics
         if (GetCVar("drpg_regen_movement"))
         {
-            if (!IsPlayerMoving()) // Movement - 50% Regen Rate
+            if (IsPlayerMoving()) // Movement - 50% Regen Rate
             {
                 Player.HPRate += HPAmount;
                 Player.EPRate += EPAmount;
