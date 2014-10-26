@@ -116,11 +116,11 @@ acscript void RegenArea(int ID)
     {
         if (CheckInventory("DRPGCredits") < 5)
             return;
-        if (GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth) && Player.Toxicity <= 0)
+        if (Player.ActualHealth >= Player.HealthMax && Player.Toxicity <= 0 && !HaveStatusEffect())
             return;
         
         // Heal
-        HealThing(5);
+        AddHealthDirect(5, 100);
         
         // Heal Toxicity
         if (Player.Toxicity > 0)
@@ -150,7 +150,9 @@ acscript void RegenArea(int ID)
         if (CheckInventory("Armor") >= Player.ArmorMax)
             return;
         
-        GiveInventory("DRPGArmorBonus", 5);
+        for (int i = 5; i && CheckInventory("Armor") < Player.ArmorMax; i--)
+            GiveInventory("DRPGArmorBonus", 1);
+        
         TakeInventory("DRPGCredits", 5);
         
         FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0.0, 0.1);

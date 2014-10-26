@@ -874,16 +874,10 @@ acscript bool Heal(Skill *Self, void *Data)
     int HealAmount;
     
     // Calculate healing amount based on level
-    switch (Self->CurrentLevel)
-    {
-    case 1: HealAmount = Player.HealthMax / 4;      break; // 25%
-    case 2: HealAmount = Player.HealthMax / 2;      break; // 50%
-    case 3: HealAmount = Player.HealthMax / 1.33;   break; // 75%
-    case 4: HealAmount = Player.HealthMax;          break; // 100%
-    };
+    HealAmount = 25 * Self->CurrentLevel;
     
     // Refund - If your health is max or above
-    if (GetActorProperty(Player.TID, APROP_Health) >= GetActorProperty(Player.TID, APROP_SpawnHealth) && !HaveStatusEffect())
+    if (Player.ActualHealth >= Player.HealthMax && !HaveStatusEffect())
     {
         ActivatorSound("menu/error", 127);
         return false;
@@ -891,7 +885,7 @@ acscript bool Heal(Skill *Self, void *Data)
     
     FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
     
-    HealThing(HealAmount);
+    AddHealth(HealAmount, 100);
     ActivatorSound("skills/heal", 127);
     
     // Level 3+ - Remove Status Effects
@@ -929,20 +923,13 @@ acscript bool HealTeam(Skill *Self, void *Data)
     int PlayerTID = Player.TID;
     int HealAmount;
     
+    HealAmount = 25 * Self->CurrentLevel;
+    
     for (int i = 0; i < MAX_PLAYERS; i++)
         if (PlayerInGame(i))
         {
-            // Calculate this player's max HP
-            switch (Self->CurrentLevel)
-            {
-            case 1: HealAmount = Players(i).HealthMax / 4;      break; // 25%
-            case 2: HealAmount = Players(i).HealthMax / 2;      break; // 50%
-            case 3: HealAmount = Players(i).HealthMax / 1.33;   break; // 75%
-            case 4: HealAmount = Players(i).HealthMax;          break; // 100%
-            };
-            
             SetActivator(Players(i).TID);
-            HealThing(HealAmount);
+            AddHealth(HealAmount, 100);
             
             // Level 3+ - Remove Status Effects
             if (Self->Level > 2)
@@ -1381,7 +1368,9 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     //SetActivator(UniqueMonsterTID);
     
     // Damage Enemy (current method)
+    SetActivator(Players(PlayerNum).TID);
     SetActorProperty(UniqueMonsterTID, APROP_Health, GetActorProperty(UniqueMonsterTID, APROP_Health) - LeechAmount);
+    SetActivator(UniqueMonsterTID);
     
     AfterHealthAmount = GetActorProperty(0, APROP_Health);
     if (AfterHealthAmount < 0)
@@ -1409,7 +1398,7 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     };
     
     // Heal the user
-    HealThing(LeechAmount);
+    AddHealthDirect(LeechAmount, 100);
     
     FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
     ActivatorSound("skills/soulsteal", 127);
