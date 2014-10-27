@@ -411,7 +411,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
             "Unsummon"; 0; 2; Unsummon;
             {
                 "Banishes all of the friendly creatures under your control";
-                "Banishes all of the friendly creatures under your control\nEach creature banished restores\n\cn25 EP";
+                "Banishes all of the friendly creatures under your control\nEach creature banished restores \cn1% EP";
             };
         };
         {
@@ -1752,8 +1752,8 @@ acscript bool Unsummon(Skill *Self, void *Data)
         // Continue if there's no summon in this slot
         if (Player.SummonTID[i] == 0) continue;
         
-        if (Self->CurrentLevel == 2 && GetActorProperty(i, APROP_Health) > 0)
-            EPAdd += 25;
+        if (Self->CurrentLevel == 2 && GetActorProperty(Player.SummonTID[i], APROP_Health) > 0)
+            EPAdd += (int)((fixed)Player.EPMax * 0.01) + 1;
         
         // Overdrive - Remove summons (teleport out) instead of killing them
         if (GetActorProperty(Player.SummonTID[i], APROP_Health) > 0)
@@ -1767,6 +1767,7 @@ acscript bool Unsummon(Skill *Self, void *Data)
     };
     
     
+    Log("EPAdd: %d\n", EPAdd);
     if (Self->CurrentLevel == 2)
         Player.EP += EPAdd;
 
