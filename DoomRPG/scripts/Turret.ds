@@ -1,0 +1,97 @@
+#include "RPG.dh"
+
+#include "Monsters.dh"
+#include "Turret.dh"
+#include "Utils.dh"
+
+acscript void TurretSetOffset(int Angle, int LookAngle, int DistanceOffset)
+{
+    Player.Turret.AngleOffset += (fixed)Angle / 100.0;
+    Player.Turret.LookAngleOffset += (fixed)LookAngle / 100.0;
+    Player.Turret.DistanceOffset += (fixed)DistanceOffset;
+};
+
+acscript void TurretInit(int TID)
+{
+    int PlayerTID = GetActorProperty(0, APROP_MasterTID);
+    
+    // Reset turret offsets
+    Player.Turret.AngleOffset = 0;
+    Player.Turret.LookAngleOffset = 0;
+    Player.Turret.DistanceOffset = 0;
+    
+    // Nametag
+    SetActivator(PlayerTID);
+    SetActorPropertyString(TID, APROP_Nametag, StrParam("%N\c-'s Turret\n", PlayerNumber() + 1));
+    SetActivator(TID);
+    
+    // Base Stats
+    Delay(4);
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    Stats->Level = 1;
+    Stats->Strength = 0;
+    Stats->Defense = 0;
+    Stats->Vitality = 0;
+    Stats->Energy = 0;
+    Stats->Regeneration = 0;
+    Stats->Agility = 0;
+    Stats->Capacity = 0;
+    Stats->Luck = 0;
+    Stats->Threat = CalculateMonsterThreatLevel(&Monsters[GetMonsterID(0)]);
+    Stats->NeedReinit = true;
+    
+    // Set TID
+    Player.Turret.TID = TID;
+    
+    // Enter Loop
+    Player.Turret.Active = true;
+    TurretLoop();
+};
+
+acscript int TurretActive()
+{
+    return (int)Player.Turret.Active;
+};
+
+script void TurretLoop()
+{
+    bool Spawned;
+
+    while (true)
+    {
+        int PlayerTID = GetActorProperty(0, APROP_MasterTID);
+        int PlayerID = FindPlayerID(PlayerTID);
+        
+        // Turret is ded
+        if (GetActorProperty(Player.Turret.TID, APROP_Health) <= 0)
+        {
+            Player.Turret.Active = false;
+            return;
+        };
+        
+        // Offset
+        fixed Angle = GetActorAngle(PlayerTID) - 0.125 + Players(PlayerID).Turret.AngleOffset;
+        fixed LookAngle = GetActorAngle(PlayerTID) + Players(PlayerID).Turret.LookAngleOffset;
+        fixed X = GetActorX(PlayerTID) + Cos(Angle) * 48.0 + Players(PlayerID).Turret.DistanceOffset;
+        fixed Y = GetActorY(PlayerTID) + Sin(Angle) * 48.0 + Players(PlayerID).Turret.DistanceOffset;
+        fixed Z = GetActorZ(PlayerTID) + 32.0;
+        
+        // Set Position/Angle
+        SetActorPosition(Player.Turret.TID, X, Y, Z, false);
+        SetActorAngle(Player.Turret.TID, LookAngle);
+        
+        // Teleport Fog
+        if (!Spawned)
+        {
+            SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
+            Spawned = true;
+        };
+        
+        Delay(1);
+    };
+};
+
+function void TurretSpawn()
+{
+    GiveInventory("DRPGPortableTurretPickup", 1);
+};

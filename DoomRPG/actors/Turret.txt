@@ -1,4 +1,4 @@
-//Railbot base code by Captain Toenail
+// Railbot base code by Captain Toenail
 
 ACTOR DRPGOutpostTurret 19997
 {
@@ -166,5 +166,57 @@ actor DRPGOutpostTurretExplosion
         MISL C 6 bright
         MISL D 4 bright
         stop
+    }
+}
+
+// PORTABLE TURRET
+// --------------------------------------------------
+
+ACTOR DRPGPortableTurret : DRPGOutpostTurret
+{
+    var int user_tid;
+    
+    Health 100
+    
+    -SOLID
+    -SPAWNCEILING
+    -CEILINGHUGGER
+    +NOCLIP
+    +FLOATBOB
+    +FRIENDLY
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOXP | MF_NOAURA | MF_NODROPS)
+        TNT1 A 0 A_SetUservar("user_tid", CallACS("GetUniqueTID"))
+        TNT1 A 0 Thing_ChangeTID(0, user_tid)
+        TNT1 A 0 ACS_NamedExecuteAlways("TurretInit", 0, user_tid)
+        Goto Super::See
+    GotShot:
+        Goto See
+    DeathHatred:
+        TNT1 A 0
+        Stop
+    }
+}
+
+ACTOR DRPGPortableTurretPickup : CustomInventory
+{
+    Inventory.PickupMessage "You got a Portable UAC Turret."
+    Inventory.PickupSound "drpgturret/activate"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_JumpIf(CallACS("TurretActive") == 1, "Death")
+        OTUR A -1 Bright
+        Stop
+    Pickup:
+        TNT1 A 0 A_SpawnItemEx("DRPGPortableTurret", 0, 0, 32, 0, 0, 0, 0, SXF_SETMASTER)
+        Stop
+    Death: // TODO: This should spawn random turret parts if the turret is already active
+        TNT1 A 0
+        Stop
     }
 }
