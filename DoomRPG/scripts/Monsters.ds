@@ -380,46 +380,43 @@ script void MonsterInitStats(int StatFlags)
     PlayerAvgLevel /= NumPlayers;
     
     // Monster Stats System
-    if (GetCVar("drpg_monster_levels") > 0)
+    if (GetCVar("drpg_monster_levels") > 0 && !(StatFlags & SF_RECREATE))
     {
         // level
-        if (!StatFlags)
-        {
-            int LevelType = GetCVar("drpg_monster_levels");
-            fixed LevelWeight = GetCVarFixed("drpg_monster_level_weight");
-            fixed MapWeight = GetCVarFixed("drpg_monster_map_weight");
-            fixed RandomMinWeight = GetCVarFixed("drpg_monster_random_min_mult");
-            fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
-            int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
-            
-            // Cap Level Number to 100
-            if (LevelNum > 100)
-                LevelNum = 100;
-            
-            // If the Arena is active, base the Monster Levels Map Number portion on the current wave
-            if (InBase && ArenaActive)
-                LevelNum = ArenaWave;
-            
-            // Calculate Monster Level
-            if (LevelType == 1 || LevelType == 3) // Player Level
-                MonsterLevel += (int)((fixed)PlayerAvgLevel * LevelWeight);
-            if (LevelType == 2 || LevelType == 3) // Map Number
-                MonsterLevel += (int)((fixed)LevelNum * MapWeight);
-            
-            // Randomization Weight
-            if (RandomMinWeight > RandomMaxWeight)
-                Log("\cgERROR: \c-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!\n")
-            else
-                MonsterLevel = (int)(MonsterLevel * RandomFixed(RandomMinWeight, RandomMaxWeight));
-            
-            // If the monster is friendly, it has the average level of all players in the game
-            if (GetActorProperty(0, APROP_Friendly))
-                MonsterLevel = PlayerAvgLevel;
-            
-            // Special case for Powersuit Mk. II
-            if (GetActorClass(0) == "DRPGSuperPowerSuit")
-                MonsterLevel = 1000;
-        };
+        int LevelType = GetCVar("drpg_monster_levels");
+        fixed LevelWeight = GetCVarFixed("drpg_monster_level_weight");
+        fixed MapWeight = GetCVarFixed("drpg_monster_map_weight");
+        fixed RandomMinWeight = GetCVarFixed("drpg_monster_random_min_mult");
+        fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
+        int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+        
+        // Cap Level Number to 100
+        if (LevelNum > 100)
+            LevelNum = 100;
+        
+        // If the Arena is active, base the Monster Levels Map Number portion on the current wave
+        if (InBase && ArenaActive)
+            LevelNum = ArenaWave;
+        
+        // Calculate Monster Level
+        if (LevelType == 1 || LevelType == 3) // Player Level
+            MonsterLevel += (int)((fixed)PlayerAvgLevel * LevelWeight);
+        if (LevelType == 2 || LevelType == 3) // Map Number
+            MonsterLevel += (int)((fixed)LevelNum * MapWeight);
+        
+        // Randomization Weight
+        if (RandomMinWeight > RandomMaxWeight)
+            Log("\cgERROR: \c-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!\n")
+        else
+            MonsterLevel = (int)(MonsterLevel * RandomFixed(RandomMinWeight, RandomMaxWeight));
+        
+        // If the monster is friendly, it has the average level of all players in the game
+        if (GetActorProperty(0, APROP_Friendly))
+            MonsterLevel = PlayerAvgLevel;
+        
+        // Special case for Powersuit Mk. II
+        if (GetActorClass(0) == "DRPGSuperPowerSuit")
+            MonsterLevel = 1000;
         
         // Calculate the monster's cut and special stats
         if (GetCVar("drpg_monster_specialize"))
@@ -581,24 +578,26 @@ script void MonsterInitStats(int StatFlags)
     CapMonsterStats(Stats);
     
     // We need to make sure we only pass the speed to the monster if it's being initially created
-    if (!StatFlags)
+    if (!(StatFlags & SF_RECREATE))
         MonsterSpeed = GetActorPropertyFixed(0, APROP_Speed);
     
     // Apply the stats to the monster
-    Stats->Level = MonsterLevel;
-    Stats->Aura = MonsterAura;
-    Stats->Speed = MonsterSpeed;
-    Stats->Strength = MonsterStrength;
-    Stats->Defense = MonsterDefense;
-    Stats->Vitality = MonsterVitality;
-    Stats->Energy = MonsterEnergy;
-    Stats->Regeneration = MonsterRegeneration;
-    Stats->Agility = MonsterAgility;
-    Stats->Capacity = MonsterCapacity;
-    Stats->Luck = MonsterLuck;
+    if (!(StatFlags & SF_RECREATE))
+    {
+        Stats->Level = MonsterLevel;
+        Stats->Aura = MonsterAura;
+        Stats->Speed = MonsterSpeed;
+        Stats->Strength = MonsterStrength;
+        Stats->Defense = MonsterDefense;
+        Stats->Vitality = MonsterVitality;
+        Stats->Energy = MonsterEnergy;
+        Stats->Regeneration = MonsterRegeneration;
+        Stats->Agility = MonsterAgility;
+        Stats->Capacity = MonsterCapacity;
+        Stats->Luck = MonsterLuck;
+    };
     
     // [KS] We only need to do a health check here since the other checks are handled below.
-    
     // Calculate Health
     Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
     SetActorProperty(0, APROP_Health, Stats->HealthMax);

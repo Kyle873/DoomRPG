@@ -1362,10 +1362,11 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     
     BeforeHealthAmount = GetActorProperty(0, APROP_Health);
     
-    // Damage Enemy (old method)
-    //SetActivator(Players(PlayerNum).TID);
-    //Thing_Damage2(UniqueMonsterTID, LeechAmount, "LifeSteal");
-    //SetActivator(UniqueMonsterTID);
+    /* Damage Enemy (old method)
+    SetActivator(Players(PlayerNum).TID);
+    Thing_Damage2(UniqueMonsterTID, LeechAmount, "LifeSteal");
+    SetActivator(UniqueMonsterTID);
+    */
     
     // Damage Enemy (current method)
     SetActivator(Players(PlayerNum).TID);
@@ -1607,6 +1608,23 @@ acscript bool Summon(Skill *Self, void *Data)
         SetActorProperty(NewID, APROP_Friendly, 1);
         SetActorProperty(NewID, APROP_MasterTID, Player.TID);
         GiveActorInventory(NewID, "DRPGFriendlyBooster", 1);
+        
+        // Setup Stats
+        Delay(4); // We need this initial delay to make sure the ID is valid
+        MonsterStatsPtr Stats = &Monsters[GetMonsterID(NewID)];
+        fixed Modifier = 1.0 + (fixed)Player.Level * ((fixed)Player.Energy / 20.0);
+        Stats->Level = Modifier;
+        Stats->Strength = Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Defense = Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Vitality = Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Energy = Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Regeneration = Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Agility = Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Capacity = Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Luck = Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Threat = CalculateMonsterThreatLevel(&Monsters[GetMonsterID(NewID)]);
+        Stats->Flags |= MF_NODROPS;
+        Stats->NeedReinit = true;
         
         // Add summon to your summon array
         for (int i = 0; i < MAX_SUMMONS; i++)
