@@ -17,6 +17,15 @@ acscript void TurretInit(int TID)
     
     SetActivator(PlayerTID);
     
+    // Turret is already active
+    if (Player.Turret.Active)
+    {
+        // TODO: If you picked up an extra turret and you already have one, give random parts
+        
+        Thing_Remove(TID);
+        return;
+    };
+    
     // Turret Init
     if (!Player.Turret.Init)
     {
@@ -76,11 +85,6 @@ acscript void TurretInit(int TID)
     TurretLoop();
 };
 
-acscript int TurretActive()
-{
-    return (int)Player.Turret.Active;
-};
-
 script void TurretLoop()
 {
     bool Spawned;
@@ -91,7 +95,7 @@ script void TurretLoop()
         int PlayerID = FindPlayerID(PlayerTID);
         
         // Turret is ded or disabled
-        if (GetActorProperty(Player.Turret.TID, APROP_Health) <= 0 || Players(PlayerID).Turret.Active)
+        if (GetActorProperty(Players(PlayerID).Turret.TID, APROP_Health) <= 0 || !Players(PlayerID).Turret.Active)
         {
             Player.Turret.Active = false;
             return;
@@ -105,8 +109,8 @@ script void TurretLoop()
         fixed Z = GetActorZ(PlayerTID) + 32.0;
         
         // Set Position/Angle
-        SetActorPosition(Player.Turret.TID, X, Y, Z, false);
-        SetActorAngle(Player.Turret.TID, LookAngle);
+        SetActorPosition(Players(PlayerID).Turret.TID, X, Y, Z, false);
+        SetActorAngle(Players(PlayerID).Turret.TID, LookAngle);
         
         // Teleport Fog
         if (!Spawned)
