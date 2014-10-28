@@ -17,6 +17,7 @@
 #include "Skills.dh"
 #include "Stats.dh"
 #include "Stims.dh"
+#include "Turret.dh"
 #include "Utils.dh"
 
 // Version
@@ -219,6 +220,14 @@ script void Init() enter
 	// CheckCursor();
 	// CheckGUI();
 	// MenuUpdate();
+    
+    // Spawn Turret if it's active
+    if (Player.Turret.Init && Player.Turret.Active)
+    {
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: \c-Turret was active, Respawning...\n");
+        TurretSpawn();
+    };
 };
 
 // Loop Script
@@ -229,8 +238,7 @@ script void Loop()
     Start:
     
     // If the player's dead, terminate
-    if (GetActorProperty(0, APROP_Health) <= 0)
-        return;
+    if (GetActorProperty(0, APROP_Health) <= 0) return;
     
     // Update Functions
     CheckCombo();
@@ -356,8 +364,7 @@ script void PlayerDamage()
     Start:
     
     // If the player's dead, terminate
-    if (GetActorProperty(0, APROP_Health) <= 0)
-        return;
+    if (GetActorProperty(0, APROP_Health) <= 0) return;
     
     CanSurvive = Player.SurvivalBonus > 0 && RandomFixed(0.0, 100.0) <= Player.SurvivalBonus && !Player.LastLegs;
     
@@ -446,7 +453,7 @@ script void PlayerDamage()
     {
         Player.ActualHealth -= DamageTaken;
         
-        if (Player.ActualHealth == 1) // Near-Death stuff
+        if (Player.ActualHealth <= 1) // Near-Death stuff
         {
             // Continue check
             if (CheckInventory("DRPGContinue"))
@@ -456,10 +463,9 @@ script void PlayerDamage()
                 TakeInventory("DRPGContinue", 1);
                 
                 SetHudSize(320, 200, false);
-                SetFont("CONTA0");
-                HudMessage("A\n", HUDMSG_FADEOUT, 0, CR_UNTRANSLATED, 160.0, 114.0, 0.5, 0.5);
-                SetFont("BigFont");
-                HudMessage("Used a Continue!\n", HUDMSG_FADEOUT, 0, CR_GOLD, 160.0, 140.0, 0.5, 0.5);
+                PrintSpriteFade("CONTA0", 0, 172.0, 160.0, 0.5, 1.5);
+                SetFont("BIGFONT");
+                HudMessage("Used a Continue!\n", HUDMSG_FADEOUT, 0, CR_GOLD, 160.0, 140.0, 0.5, 1.5);
             };
             
             // Survival Bonus
@@ -576,7 +582,7 @@ script void AutosaveHandler()
     
     int SaveTimer = GetCVar("drpg_autosave") * (35 * 60);
     bool Safe;
-    bool DamageTimer;
+    int DamageTimer;
     
     while (true)
     {
@@ -586,7 +592,7 @@ script void AutosaveHandler()
             ++DamageTimer;
         Player.AutosaveTimerReset = false;
         
-        if ((Player.InMenu || Player.InShop) && !GetCVar("drpg_menufreeze"))
+        if ((Player.InMenu || Player.InShop || Player.OutpostMenu > 0) && !GetCVar("drpg_menufreeze"))
             DamageTimer = ASAVE_SAFETIME;
         
         if (!SaveTimer)
@@ -615,8 +621,8 @@ script void AutosaveHandler()
 // Quick Heal
 acscript void QuickHeal(int Quick) net
 {
-    // If you're dead, return
-    if (ClassifyActor(Player.TID) & ACTOR_DEAD) return;
+    // If the player's dead, terminate
+    if (GetActorProperty(0, APROP_Health) <= 0) return;
     
     int Health = Player.ActualHealth;
     int Percent = GetCVar("drpg_auto_heal_percent");

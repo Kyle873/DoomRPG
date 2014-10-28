@@ -1,0 +1,198 @@
+#include "RPG.dh"
+
+#include "Monsters.dh"
+#include "Turret.dh"
+#include "Utils.dh"
+
+script void TurretMenu() enter
+{
+    Start:
+    
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+    int Page;
+    int Index;
+    
+    // Open the Menu
+    if (Buttons & BT_USER2 && !(Player.InMenu || Player.InShop || Player.OutpostMenu > 0))
+    {
+        // You don't have a turret
+        if (!Player.Turret.Init && !(OldButtons & BT_USER2))
+        {
+            SetHudSize(0, 0, false);
+            SetFont("BIGFONT");
+            HudMessage("You don't have a turret\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            ActivatorSound("menu/error", 127);
+            Delay(1);
+            goto Start;
+        }
+        else if (Player.Turret.Init)
+        {
+            ActivatorSound("menu/click", 127);
+            Player.Turret.MenuOpen = true;
+        };
+    };
+    
+    // Menu Loop
+    while (Player.Turret.MenuOpen)
+    {
+        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        
+        // Check Input
+        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        
+        // Check for release
+        if (!(Buttons & BT_USER2))
+        {
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            Player.Turret.MenuOpen = false;
+        };
+        
+        Delay(1);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
+acscript void TurretSetOffset(int Angle, int LookAngle, int DistanceOffset)
+{
+    Player.Turret.AngleOffset += (fixed)Angle / 100.0;
+    Player.Turret.LookAngleOffset += (fixed)LookAngle / 100.0;
+    Player.Turret.DistanceOffset += (fixed)DistanceOffset;
+};
+
+acscript void TurretInit(int TID)
+{
+    int PlayerTID = GetActorProperty(0, APROP_MasterTID);
+    
+    SetActivator(PlayerTID);
+    
+    // You already have a turret
+    if (Player.Turret.Init && Player.Turret.Active)
+    {
+        // TODO: If you picked up an extra turret and you already have one, give random parts
+        
+        Thing_Remove(TID);
+        return;
+    };
+    
+    // Turret Init
+    if (!Player.Turret.Init)
+    {
+        Player.Turret.Active = false;
+        
+        Player.Turret.TID = 0;
+        
+        Player.Turret.Level = 1;
+        Player.Turret.Strength = 0;
+        Player.Turret.Defense = 0;
+        Player.Turret.Vitality = 0;
+        Player.Turret.Energy = 0;
+        Player.Turret.Regeneration = 0;
+        Player.Turret.Agility = 0;
+        Player.Turret.Capacity = 0;
+        Player.Turret.Luck = 0;
+        
+        Player.Turret.Aura = 0;
+        Player.Turret.AuraTimer = 0;
+        
+        Player.Turret.BatteryMax = 60 * 2;
+        Player.Turret.Battery = Player.Turret.BatteryMax;
+        
+        Player.Turret.RefitTimer = 0;
+        
+        Player.Turret.AngleOffset = -0.125;
+        Player.Turret.LookAngleOffset = 0;
+        Player.Turret.DistanceOffset = 48;
+        
+        Player.Turret.Init = true;
+    };
+    
+    // Nametag
+    SetActorPropertyString(TID, APROP_Nametag, StrParam("%N\c-'s Turret\n", PlayerNumber() + 1));
+    
+    // Setup Stats
+    Delay(4);
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
+    Stats->Level = Player.Turret.Level;
+    Stats->Strength = Player.Turret.Strength;
+    Stats->Defense = Player.Turret.Defense;
+    Stats->Vitality = Player.Turret.Vitality;
+    Stats->Energy = Player.Turret.Energy;
+    Stats->Regeneration = Player.Turret.Regeneration;
+    Stats->Agility = Player.Turret.Agility;
+    Stats->Capacity = Player.Turret.Capacity;
+    Stats->Luck = Player.Turret.Luck;
+    Stats->Threat = CalculateMonsterThreatLevel(&Monsters[GetMonsterID(TID)]);
+    Stats->NeedReinit = true;
+    
+    // Set Active and TID
+    Player.Turret.Active = true;
+    Player.Turret.TID = TID;
+    
+    // Enter Loop
+    SetActivator(TID);
+    TurretLoop();
+};
+
+script void TurretLoop()
+{
+    bool Spawned;
+
+    while (true)
+    {
+        int PlayerTID = GetActorProperty(0, APROP_MasterTID);
+        int PlayerID = FindPlayerID(PlayerTID);
+        
+        // Turret is ded or inactive
+        if (GetActorProperty(0, APROP_Health) <= 0 || !Players(PlayerID).Turret.Active)
+        {
+            Player.Turret.Active = false;
+            return;
+        };
+        
+        // Offset
+        fixed Angle = GetActorAngle(PlayerTID) + Players(PlayerID).Turret.AngleOffset;
+        fixed LookAngle = GetActorAngle(PlayerTID) + Players(PlayerID).Turret.LookAngleOffset;
+        fixed X = GetActorX(PlayerTID) + Cos(Angle) * Players(PlayerID).Turret.DistanceOffset;
+        fixed Y = GetActorY(PlayerTID) + Sin(Angle) * Players(PlayerID).Turret.DistanceOffset;
+        fixed Z = GetActorZ(PlayerTID) + 32.0;
+        
+        // Set Position/Angle
+        SetActorPosition(Players(PlayerID).Turret.TID, X, Y, Z, false);
+        SetActorAngle(Players(PlayerID).Turret.TID, LookAngle);
+        
+        // Teleport Fog
+        if (!Spawned)
+        {
+            SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
+            Spawned = true;
+        };
+        
+        /* Drain Battery
+           No point in having this active right now with no way to restore the battery implemented yet
+        if ((Timer() % 35) == 0)
+            Players(PlayerID).Turret.Battery--;
+        */
+        
+        // Battery is drained
+        if (Players(PlayerID).Turret.Battery <= 0)
+            TurretDespawn();
+        
+        Delay(1);
+    };
+};
+
+function void TurretSpawn()
+{
+    Player.Turret.Active = false;
+    GiveInventory("DRPGPortableTurretPickup", 1);
+};
+
+function void TurretDespawn()
+{
+    Player.Turret.Active = false;
+    SetActorState(Player.Turret.TID, "Despawn");
+};
