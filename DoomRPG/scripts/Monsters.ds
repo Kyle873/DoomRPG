@@ -12,6 +12,7 @@ AddressSpace MapArray MonsterSpace;
 AddressSpace MapArray MonsterStatsSpace;
 
 MapRegister int MonsterID = 1;
+
 MonsterStatsSpace MonsterStats[MAX_MONSTERS] Monsters;
 
 MonsterSpace MonsterInfo[MAX_DEF_MONSTERS] MonsterData =
@@ -140,6 +141,16 @@ MonsterSpace str[MAX_HUMANS][2] MonsterHumanData =
     { "RLEliteCaptainTristarBlaster";   "RLEliteCaptain";   };
 };
 
+MonsterSpace str[MAX_MEGABOSSES] MegaBosses =
+{
+    "Cyberdemon";
+    "SpiderMastermind";
+};
+
+// MegaBoss
+bool MegaBoss = false;
+DynamicArray *MonsterPositions;
+
 function int NewMonsterID()
 {
     int CurrentID = MonsterID;
@@ -154,7 +165,7 @@ function int NewMonsterID()
     
     if (CheckCount >= MAX_MONSTERS)
     {
-        Log("\cgWARNING: \caToo many monsters! Some of them couldn't be given stats.\n");
+        Log("\ciWARNING: \caToo many monsters! Some of them couldn't be given stats.\n");
         return 0;
     };
     
@@ -210,6 +221,42 @@ acscript void MonsterInit(int Flags)
     // Set as initialized
     Stats->Init = true;
     SetInventory("DRPGMonsterInit", 1);
+    
+    // MegaBoss Event
+    if (Random(1, 100) == 1)
+    {
+        if (!MegaBoss)
+        {
+            ArrayCreate(MonsterPositions, 64, sizeof(MonsterPosition));
+            MegaBoss = true;
+        };
+        
+        // Delay for the boss spawn to work properly
+        Delay(1);
+        
+        // Array has grown too big, resize it
+        if (MonsterPositions->Position == MonsterPositions->Size)
+            ArrayResize(MonsterPositions, sizeof(MonsterPosition));
+        
+        // Store position
+        ((MonsterPosition *)MonsterPositions->Data)[MonsterPositions->Position++] =
+        {
+            GetActorX(0);
+            GetActorY(0);
+            GetActorZ(0);
+        };
+        
+        // Remove
+        if (!CheckInventory("DRPGMegaBoss"))
+            Thing_Remove(0);
+    };
+    
+    // MegaBoss flag check
+    if (CheckInventory("DRPGMegaBoss"))
+    {
+        Stats->MegaBoss = true;
+        TakeInventory("DRPGMegaBoss", 1);
+    };
     
     // Store Actor Name
     Stats->Actor = GetActorClass(0);
@@ -417,6 +464,10 @@ script void MonsterInitStats(int StatFlags)
         // Special case for Powersuit Mk. II
         if (GetActorClass(0) == "DRPGSuperPowerSuit")
             MonsterLevel = 1000;
+        
+        // Special case for MegaBosses
+        if (Stats->MegaBoss)
+            MonsterLevel += 100;
         
         // Calculate the monster's cut and special stats
         if (GetCVar("drpg_monster_specialize"))
@@ -1434,6 +1485,70 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
     };
 };
 
+script void MegaBossHandler()
+{
+    bool Spawned;
+    bool Spotted;
+    int TID;
+    int BossType;
+    int Index;
+    MonsterPosition *Position;
+    
+    // Debug message
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \cgMEGABOSS EVENT ACTIVE!\n");
+    
+    // Ambient Music
+    SetMusic("MBossA1");
+    
+    // EVIL WARNING LAUGHTER
+    AmbientSound("mission/gottarget2", 127);
+    
+    // TODO: Shuffle the positions
+    
+    while (!Spawned)
+    {
+        TID = UniqueTID();
+        BossType = Random(0, MAX_MEGABOSSES - 1);
+        Index = Random(0, MonsterPositions->Position - 1);
+        Position = &((MonsterPosition *)MonsterPositions->Data)[Index];
+        Spawned = Spawn(MegaBosses[BossType], Position->X, Position->Y, Position->Z, TID, Random(0, 255));
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, Position->X, Position->Y, Position->Z);
+        
+        Delay(1);
+    };
+    
+    // Successful spawn
+    GiveActorInventory(TID, "DRPGMegaBoss", 1);
+    GiveActorInventory(TID, "DRPGWhiteAuraGiver", 1);
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \cg%s MegaBoss successfully spawned\n", MegaBosses[BossType]);
+    
+    while (true)
+    {
+        // Spotted
+        if (!Spotted)
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (CheckSight(TID, Players(i).TID, 0))
+                {
+                    SetMusic(StrParam("MBossC%d\n", Random(1, 2)));
+                    Spotted = true;
+                    break;
+                };
+        
+        // Defeated
+        if (GetActorProperty(TID, APROP_Health) <= 0)
+        {
+            SetMusic("*");
+            return;
+        };
+        
+        Delay(1);
+    };
+};
+
 script int WhoKilledMe()
 {
     SetActivatorToTarget(0);
@@ -1584,4 +1699,10 @@ acscript void OutputMonsters()
         Log("\cdMonster %d:\n", i);
         Output Monsters[i];
     };
+};
+
+acscript void OutputPositions()
+{
+    for (int i = 0; i < MonsterPositions->Size; i++)
+        Output ((MonsterPosition *)MonsterPositions->Data)[i];
 };
