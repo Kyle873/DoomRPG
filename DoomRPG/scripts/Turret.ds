@@ -4,6 +4,58 @@
 #include "Turret.dh"
 #include "Utils.dh"
 
+script void TurretMenu() enter
+{
+    Start:
+    
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+    int Page;
+    int Index;
+    
+    // Open the Menu
+    if (Buttons & BT_USER2 && !(Player.InMenu || Player.InShop || Player.OutpostMenu > 0))
+    {
+        // You don't have a turret
+        if (!Player.Turret.Init && !(OldButtons & BT_USER2))
+        {
+            SetHudSize(0, 0, false);
+            SetFont("BIGFONT");
+            HudMessage("You don't have a turret\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            ActivatorSound("menu/error", 127);
+            Delay(1);
+            goto Start;
+        }
+        else if (Player.Turret.Init)
+        {
+            ActivatorSound("menu/click", 127);
+            Player.Turret.MenuOpen = true;
+        };
+    };
+    
+    // Menu Loop
+    while (Player.Turret.MenuOpen)
+    {
+        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        
+        // Check Input
+        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        
+        // Check for release
+        if (!(Buttons & BT_USER2))
+        {
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            Player.Turret.MenuOpen = false;
+        };
+        
+        Delay(1);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
 acscript void TurretSetOffset(int Angle, int LookAngle, int DistanceOffset)
 {
     Player.Turret.AngleOffset += (fixed)Angle / 100.0;
@@ -17,8 +69,8 @@ acscript void TurretInit(int TID)
     
     SetActivator(PlayerTID);
     
-    // Turret is already active
-    if (Player.Turret.Active)
+    // You already have a turret
+    if (Player.Turret.Init)
     {
         // TODO: If you picked up an extra turret and you already have one, give random parts
         
@@ -94,8 +146,8 @@ script void TurretLoop()
         int PlayerTID = GetActorProperty(0, APROP_MasterTID);
         int PlayerID = FindPlayerID(PlayerTID);
         
-        // Turret is ded or disabled
-        if (GetActorProperty(Players(PlayerID).Turret.TID, APROP_Health) <= 0 || !Players(PlayerID).Turret.Active)
+        // Turret is ded or inactive
+        if (GetActorProperty(0, APROP_Health) <= 0 || !Players(PlayerID).Turret.Active)
         {
             Player.Turret.Active = false;
             return;
