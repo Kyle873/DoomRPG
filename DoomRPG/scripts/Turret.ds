@@ -15,28 +15,55 @@ acscript void TurretInit(int TID)
 {
     int PlayerTID = GetActorProperty(0, APROP_MasterTID);
     
-    // Reset turret offsets
-    Player.Turret.AngleOffset = 0;
-    Player.Turret.LookAngleOffset = 0;
-    Player.Turret.DistanceOffset = 0;
+    // Turret Init
+    if (!Player.Turret.Init)
+    {
+        Player.Turret.Active = false;
+        
+        Player.Turret.TID = 0;
+        
+        Player.Turret.Level = 1;
+        Player.Turret.Strength = 0;
+        Player.Turret.Defense = 0;
+        Player.Turret.Vitality = 0;
+        Player.Turret.Energy = 0;
+        Player.Turret.Regeneration = 0;
+        Player.Turret.Agility = 0;
+        Player.Turret.Capacity = 0;
+        Player.Turret.Luck = 0;
+        
+        Player.Turret.Aura = 0;
+        Player.Turret.AuraTimer = 0;
+        
+        Player.Turret.Battery = 300;
+        Player.Turret.BatteryMax = 300;
+        
+        Player.Turret.RefitTimer = 0;
+        
+        Player.Turret.AngleOffset = 0;
+        Player.Turret.LookAngleOffset = 0;
+        Player.Turret.DistanceOffset = 0;
+        
+        Player.Turret.Init = true;
+    };
     
     // Nametag
     SetActivator(PlayerTID);
     SetActorPropertyString(TID, APROP_Nametag, StrParam("%N\c-'s Turret\n", PlayerNumber() + 1));
     SetActivator(TID);
     
-    // Base Stats
+    // Setup Stats
     Delay(4);
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
-    Stats->Level = 1;
-    Stats->Strength = 0;
-    Stats->Defense = 0;
-    Stats->Vitality = 0;
-    Stats->Energy = 0;
-    Stats->Regeneration = 0;
-    Stats->Agility = 0;
-    Stats->Capacity = 0;
-    Stats->Luck = 0;
+    Stats->Level = Player.Turret.Level;
+    Stats->Strength = Player.Turret.Strength;
+    Stats->Defense = Player.Turret.Defense;
+    Stats->Vitality = Player.Turret.Vitality;
+    Stats->Energy = Player.Turret.Energy;
+    Stats->Regeneration = Player.Turret.Regeneration;
+    Stats->Agility = Player.Turret.Agility;
+    Stats->Capacity = Player.Turret.Capacity;
+    Stats->Luck = Player.Turret.Luck;
     Stats->Threat = CalculateMonsterThreatLevel(&Monsters[GetMonsterID(0)]);
     Stats->NeedReinit = true;
     
@@ -62,8 +89,8 @@ script void TurretLoop()
         int PlayerTID = GetActorProperty(0, APROP_MasterTID);
         int PlayerID = FindPlayerID(PlayerTID);
         
-        // Turret is ded
-        if (GetActorProperty(Player.Turret.TID, APROP_Health) <= 0)
+        // Turret is ded or disabled
+        if (GetActorProperty(Player.Turret.TID, APROP_Health) <= 0 || !Player.Turret.Active)
         {
             Player.Turret.Active = false;
             return;
@@ -87,6 +114,14 @@ script void TurretLoop()
             Spawned = true;
         };
         
+        // Drain Battery
+        if ((Timer() % 35) == 0)
+            Player.Turret.Battery--;
+        
+        // Battery is drained
+        if (Player.Turret.Battery <= 0)
+            TurretDespawn();
+        
         Delay(1);
     };
 };
@@ -94,4 +129,10 @@ script void TurretLoop()
 function void TurretSpawn()
 {
     GiveInventory("DRPGPortableTurretPickup", 1);
+};
+
+function void TurretDespawn()
+{
+    Player.Turret.Active = false;
+    SetActorState(Player.Turret.TID, "DeSpawn");
 };
