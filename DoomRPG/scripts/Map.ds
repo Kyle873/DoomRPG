@@ -125,7 +125,7 @@ script void MapInit() open
 
 script void SetupMapEvent()
 {
-    if (Random(1, 32) != 1)
+    if (Random(1, 4) != 1)
         return; // No special event
     
     MapSpecialInfo.CurrentEvent = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
@@ -162,11 +162,17 @@ script void SetupMapEvent()
     };
     
     if (GetCVar("drpg_debug") && MapSpecialInfo.CurrentEvent > 0)
-        Log("\cdDEBUG: Special Event: \cg%s\n", EventNames[MapSpecialInfo.CurrentEvent]);
+    {
+        str Text = StrParam("\cdDEBUG: Special Event: \cg%s\n", EventNames[MapSpecialInfo.CurrentEvent]);
+        Log("%s\n", Text);
+        SetFont("BIGFONT");
+        Print("%s\n", Text);
+    };
     
     switch (MapSpecialInfo.CurrentEvent)
     {
         // Normal events
+        // --------------------------------------------------
         
         case MAPEVENT_MEGABOSS:
             // Megaboss: One incredibly powerful super-monster spawns, nothing else in level.
@@ -181,7 +187,6 @@ script void SetupMapEvent()
                 Light_ChangeToValue(i, 128);
                 Sector_SetFade(i, 63, 131, 47);
             };
-            
             break;
         
         case MAPEVENT_NUCLEARBOMB:
@@ -209,6 +214,7 @@ script void SetupMapEvent()
             break;
         
         // Bonus events
+        // --------------------------------------------------
         
         case MAPEVENT_BONUS_RAINBOWS:
             // RAINBOWS: ALL OF THE COLORS!
@@ -217,6 +223,7 @@ script void SetupMapEvent()
             break;
         
         // DoomRL-exclusive
+        // --------------------------------------------------
         
         case MAPEVENT_DRLA_NIGHTMARE:
             // DRLA - Nightmare!: All monsters are their Nightmare equivalents.
@@ -232,6 +239,7 @@ script void SetupMapEvent()
             break;
         
         // Standard level
+        // --------------------------------------------------
         
         default:
             break;
@@ -343,7 +351,7 @@ script void ThermonuclearBomb()
 {
     SetHudSize(320, 200, 0);
     
-    int BombTime = GetLevelInfo(LEVELINFO_PAR_TIME)? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300;
+    int BombTime = GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300;
     BombTime *= 35;
     
     int Minutes = BombTime / 35 / 60;
@@ -353,27 +361,31 @@ script void ThermonuclearBomb()
     
     Delay(35);
     
-    SetFont("BigFont");
-    HudMessageBold("\c[Red]WARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\c[Orange]TIME UNTIL DETONATION: %i:%s%i\n",
-        Minutes, Seconds < 10? "0" : "", Seconds, HUDMSG_TYPEON, 0, CR_RED, 160.4, 66.0, 3.0, 0.03, 0.5);
+    SetFont("BIGFONT");
+    HudMessageBold("\cgWARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\ciTIME UNTIL DETONATION: %i:%s%i\n",
+        Minutes, Seconds < 10 ? "0" : "", Seconds, HUDMSG_TYPEON, 0, CR_RED, 160.4, 66.0, 3.0, 0.03, 0.5);
+    AmbientSound("event/nukealert", 127);
     
-    Delay(35*4);
+    Delay(35 * 4);
     
-    SetMusic("music/Bomb.ogg");
+    SetMusic("Bomb");
     
     while (BombTime)
     {
         Minutes = BombTime / 35 / 60;
         Seconds = BombTime / 35 % 60;
-        SetFont("BigFont");
-        HudMessageBold("\c[Red]DETONATION IN: %i:%s%i\n",
-            Minutes, Seconds < 10? "0" : "", Seconds, HUDMSG_FADEOUT, MAKE_ID('N','U','K','E'), CR_RED, 32.1, 32.1, 3.0, 0.5);
+        
+        SetFont("BIGFONT");
+        HudMessageBold("\cgDETONATION IN: %i:%s%i\n",
+            Minutes, Seconds < 10 ? "0" : "", Seconds, HUDMSG_FADEOUT, MAKE_ID('N', 'U', 'K', 'E'), CR_RED, 32.1, 32.1, 3.0, 0.5);
+        
         BombTime--;
+        
         Delay(1);
     };
     
     // Explosion
-    AmbientSound("misc/nuclearbomb", 127);
+    AmbientSound("event/nukedetonate", 127);
     Thing_Destroy(0, 1);
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
@@ -427,14 +439,15 @@ script void RainbowSectors()
     
     for (int i = 0; i < 65536; i++)
         Light_ChangeToValue(i, 176);
+    
     Delay(1);
     
     Start:
     Angle -= 1.0 / 350;
     if (Angle < 0.0) Angle = 1.0 + Angle;
-    Red = 128 + (Sin (Angle) * 128.0);
-    Green = 128 + (Sin (Angle + 0.33) * 128.0);
-    Blue = 128 + (Sin (Angle + 0.67) * 128.0);
+    Red = 128 + (Sin(Angle) * 128.0);
+    Green = 128 + (Sin(Angle + 0.33) * 128.0);
+    Blue = 128 + (Sin(Angle + 0.67) * 128.0);
     
     for (int i = 0; i < 65536; Sector_SetColor(i++, Red, Green, Blue, 128));
     
