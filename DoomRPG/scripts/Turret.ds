@@ -8,6 +8,7 @@ script void TurretMenu() enter
 {
     Start:
     
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(Player.Turret.TID)];
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
     int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
     int Page;
@@ -21,7 +22,7 @@ script void TurretMenu() enter
         {
             SetHudSize(0, 0, false);
             SetFont("BIGFONT");
-            HudMessage("You don't have a turret\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            HudMessage("You don't have a turret\n", HUDMSG_PLAIN, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
             ActivatorSound("menu/error", 127);
             Delay(1);
             goto Start;
@@ -47,6 +48,87 @@ script void TurretMenu() enter
         {
             SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.Turret.MenuOpen = false;
+        };
+        
+        // Basic Stats and Commands
+        if (Page == TURRETPAGE_MAIN)
+        {
+            // Turret
+            SetHudSize(320, 240, false);
+            PrintSprite("OTURA1", 0, 64.0, 64.0, 0.05);
+            
+            SetHudSize(640, 480, false);
+            
+            fixed X = 190.0;
+            fixed Y = 110.0;
+            
+            // Turret Upgrade Units
+            PrintSprite("TUPGA0", 0, X, Y + 16.0, 0.05);
+            SetFont("BIGFONT");
+            HudMessage("%d\n", 0, HUDMSG_PLAIN, 0, CR_WHITE, X + 16.0, Y, 0.05);
+
+            // Health
+            HudMessage("HP: %d / %d\n", GetActorProperty(Player.Turret.TID, APROP_Health), Stats->HealthMax, HUDMSG_PLAIN, 0, CR_BRICK, X - 114.0 + 0.1, Y + 20.0, 0.05);
+            DrawBar("Stim1", X - 114.0, Y + 32.0, (GetActorProperty(Player.Turret.TID, APROP_Health) * Stats->HealthMax) / 100 * 2, true);
+            
+            // Threat Level
+            Y += 24.0;
+            for (int i = 1; i <= Player.Turret.Threat; i++)
+            {
+                if (i == 1)
+                    PrintSprite("RankEmb1", 0, X + 36.0 + (i * 7.0), Y + 22.0, 0.05)
+                else if (i >= 2 && i <= 4)
+                    PrintSprite("RankEmb2", 0, X + 36.0 + (i * 7.0), Y + 22.0, 0.05)
+                else if (i == 5 || i == 6)
+                    PrintSprite("RankEmb3", 0, X + 36.0 + (i * 7.0), Y + 22.0, 0.05)
+                else if (i == 7 || i == 8)
+                    PrintSprite("RankEmb4", 0, X + 36.0 + (i * 7.0), Y + 22.0, 0.05)
+                else if (i == 9)
+                    PrintSprite("RankEmb5", 0, X + 36.0 + (i * 7.0), Y + 22.0, 0.05)
+                else if (i == 10)
+                    PrintSprite("RankEmb6", 0, X + 36.0 + (i * 7.0), Y + 22.0, 0.05);
+            };
+            
+            // Stat Amounts
+            // TODO: This is getting really tiring to repeat, this is the third place now, make this into some sort of generic function or something to draw stats/icons
+            SetFont("BIGFONT");
+            HudMessage("%d\n", Player.Turret.Level, HUDMSG_PLAIN, 0, CR_WHITE, X - 96.1, Y + 21.0, 0.05);
+            HudMessage("%d\n", Player.Turret.Strength, HUDMSG_PLAIN, 0, CR_RED, X - 96.1, Y + 39.0, 0.05);
+            HudMessage("%d\n", Player.Turret.Defense, HUDMSG_PLAIN, 0, CR_GREEN, X - 40.1, Y + 39.0, 0.05);
+            HudMessage("%d\n", Player.Turret.Vitality, HUDMSG_PLAIN, 0, CR_BRICK, X + 16.1, Y + 39.0, 0.05);
+            HudMessage("%d\n", Player.Turret.Energy, HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 72.1, Y + 39.0, 0.05);
+            HudMessage("%d\n", Player.Turret.Regeneration, HUDMSG_PLAIN, 0, CR_PURPLE, X - 96.1, Y + 58.0, 0.05);
+            HudMessage("%d\n", Player.Turret.Agility, HUDMSG_PLAIN, 0, CR_ORANGE, X - 40.1, Y + 58.0, 0.05);
+            HudMessage("%d\n", Player.Turret.Capacity, HUDMSG_PLAIN, 0, CR_BLUE, X + 16.1, Y + 58.0, 0.05);
+            HudMessage("%d\n", Player.Turret.Luck, HUDMSG_PLAIN, 0, CR_YELLOW, X + 72.1, Y + 58.0, 0.05);
+            
+            // Stat Icons
+            PrintSprite("MonLevel", 0, X - 107.0, Y + 21.0, 0.05);
+            PrintSprite("STAT1S", 0, X - 96.0, Y + 54.0, 0.05);
+            PrintSprite("STAT2S", 0, X - 40.0, Y + 54.0, 0.05);
+            PrintSprite("STAT3S", 0, X + 16.0, Y + 54.0, 0.05);
+            PrintSprite("STAT4S", 0, X + 72.0, Y + 54.0, 0.05);
+            PrintSprite("STAT5S", 0, X - 96.0, Y + 74.0, 0.05);
+            PrintSprite("STAT6S", 0, X - 40.0, Y + 74.0, 0.05);
+            PrintSprite("STAT7S", 0, X + 16.0, Y + 74.0, 0.05);
+            PrintSprite("STAT8S", 0, X + 71.0, Y + 74.0, 0.05);
+            
+            // Ammo
+            Y += 100.0;
+            PrintSprite("AMMOA0", 0, X + 0.1 - 96.0, Y, 0.05);
+            PrintSprite("SBOXA0", 0, X + 0.1 - 96.0, Y + 16.0, 0.05);
+            PrintSprite("BROKA0", 0, X + 0.1 - 96.0, Y + 46.0, 0.05);
+            PrintSprite("CELPA0", 0, X + 0.1 - 96.0, Y + 72.0, 0.05);
+        };
+        
+        // Upgrades
+        if (Page == TURRETPAGE_UPGRADE)
+        {
+        };
+        
+        // Movement/Positioning
+        if (Page == TURRETPAGE_MOVE)
+        {
         };
         
         Delay(1);
@@ -86,6 +168,7 @@ acscript void TurretInit(int TID)
         Player.Turret.TID = 0;
         
         Player.Turret.Level = 1;
+        Player.Turret.Threat = 0;
         Player.Turret.Strength = 0;
         Player.Turret.Defense = 0;
         Player.Turret.Vitality = 0;
@@ -100,6 +183,15 @@ acscript void TurretInit(int TID)
         
         Player.Turret.BatteryMax = 60 * 2;
         Player.Turret.Battery = Player.Turret.BatteryMax;
+        
+        Player.Turret.Clip = 100;
+        Player.Turret.ClipMax = 200;
+        Player.Turret.Shell = 0;
+        Player.Turret.ShellMax = 50;
+        Player.Turret.Rocket = 0;
+        Player.Turret.RocketMax = 50;
+        Player.Turret.Plasma = 0;
+        Player.Turret.PlasmaMax = 300;
         
         Player.Turret.RefitTimer = 0;
         
