@@ -1794,28 +1794,23 @@ acscript bool Recall(Skill *Self, void *Data)
 
 acscript bool Magnetize(Skill *Self, void *Data)
 {
+    int *TID = (int *)Player.DropTID->Data;
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0);
     fixed Y = GetActorY(0);
-    fixed Z = GetActorZ(0) + (GetActorProperty(0, APROP_Height) / 2);
+    fixed Z = GetActorZ(0) + (GetActorPropertyFixed(0, APROP_Height) / 2);
+    int AngleDivide = Player.DropTID->Position;
     fixed AngleAdd;
-    int ItemCount;
-    auto int[MAX_DROPS] ItemTIDs;
     
     CleanDropTIDArray();
     
-    // Count all the items in the DropTID array
-    for (int i = 0; i < MAX_DROPS; i++)
-    {
-        if (Player.DropTID[i] != -1)
-        {
-            ItemTIDs[ItemCount] = Player.DropTID[i];
-            ItemCount++;
-        };
-    };
+    // Count the amount to subtract from the total to give a nice neat circle
+    for (int i = 0; i < Player.DropTID->Position; i++)
+        if (TID[i] == 0)
+            AngleDivide--;
     
     // Refund - If there are no items in the array
-    if (ItemCount == 0)
+    if (Player.DropTID->Position == 0)
     {
         ActivatorSound("menu/error", 127);
         return false;
@@ -1824,8 +1819,12 @@ acscript bool Magnetize(Skill *Self, void *Data)
     // Overdrive - Pull the items on top of you and pick them all up
     if (Overdrive)
     {
-        for (int i = 0; i < ItemCount; i++)
-            SetActorPosition(ItemTIDs[i], X, Y, Z, 0);
+        for (int i = 0; i < Player.DropTID->Position; i++)
+            if (TID[i] > 0)
+            {
+                SetActorPosition(TID[i], X, Y, Z, 0);
+                GiveActorInventory(TID[i], "DRPGMagnetizedItem", 1);
+            };
         
         SetActorVelocity(0, 0.01, 0.01, 0, true, false);
         
@@ -1834,15 +1833,17 @@ acscript bool Magnetize(Skill *Self, void *Data)
         return true;
     };
     
-    AngleAdd = 1.0 / ItemCount;
+    AngleAdd = 1.0 / AngleDivide;
     
-    for (int i = 0; i < ItemCount; i++)
-    {
-        X = GetActorX(0) + Cos(Angle) * 64.0;
-        Y = GetActorY(0) + Sin(Angle) * 64.0;
-        SetActorPosition(ItemTIDs[i], X, Y, Z, 0);
-        Angle += AngleAdd;
-    };
+    for (int i = 0; i < Player.DropTID->Position; i++)
+        if (TID[i] > 0)
+        {
+            X = GetActorX(0) + Cos(Angle) * 64.0;
+            Y = GetActorY(0) + Sin(Angle) * 64.0;
+            SetActorPosition(TID[i], X, Y, Z, 0);
+            GiveActorInventory(TID[i], "DRPGMagnetizedItem", 1);
+            Angle += AngleAdd;
+        };
     
     FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 1.0);
     ActivatorSound("skills/magnet", 127);
@@ -2015,9 +2016,10 @@ acscript void ClearStatusEffects()
 script void CleanDropTIDArray()
 {
     // [KS] !!WARNING!! THIS CANNOT BE A FUNCTION.
-    for (int i = 0; i < MAX_DROPS; i++)
-        if (Player.DropTID[i] != -1 && ClassifyActor(Player.DropTID[i]) == ACTOR_NONE)
-            Player.DropTID[i] = -1;
+    int *TID = (int *)Player.DropTID->Data;
+    for (int i = 0; i < Player.DropTID->Position; i++)
+        if (ClassifyActor(TID[i]) == ACTOR_NONE)
+            TID[i] = 0;
 };
 
 function int ScaleEPCost(int Cost)

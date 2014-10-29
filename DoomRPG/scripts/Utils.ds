@@ -1415,13 +1415,12 @@ function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XA
         // Set Velocity
         SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
         
-        // Now iterate the DropTID array and insert the ItemTID into the next available entry
-        for (int j = 0; j < MAX_DROPS; j++)
-            if (Players(Killer).DropTID[j] == -1)
-            {
-                Players(Killer).DropTID[j] = ItemTID;
-                break;
-            };
+        // Array has grown too big, resize it
+        if (Player.DropTID->Position == Player.DropTID->Size)
+            ArrayResize(Player.DropTID, sizeof(int));
+        
+        // Add item's TID to drop array
+        ((int *)Players(Killer).DropTID->Data)[Players(Killer).DropTID->Position++] = ItemTID;
     };
     
     return ItemTID;
@@ -1505,6 +1504,7 @@ function void ArrayResize(DynamicArray *Array, int DataSize)
     {
         free(Array->Data);
         Log("\cgERROR: \c-Cannot resize dynamic array!\n");
+        return;
     };
     
     memset(Array->Data + OldSize, 0, Array->Size * DataSize);
