@@ -125,7 +125,7 @@ script void MapInit() open
 
 script void SetupMapEvent()
 {
-    if (Random(1, 32) != 1 && !InBase)
+    if (Random(1, 1) != 1)
         return; // No special event
     
     MapSpecialInfo.CurrentEvent = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
@@ -218,8 +218,8 @@ script void SetupMapEvent()
         
         case MAPEVENT_BONUS_RAINBOWS:
             // RAINBOWS: ALL OF THE COLORS!
+            SetMusic("RAINBOWS");
             RainbowSectors();
-            SetMusic("music/RAINBOWS.mp3");
             break;
         
         // DoomRL-exclusive
@@ -229,10 +229,12 @@ script void SetupMapEvent()
             // DRLA - Nightmare!: All monsters are their Nightmare equivalents.
             // TODO
             break;
+        
         case MAPEVENT_DRLA_TECHNOPHOBIA:
             // DRLA - Technophobia: All monsters are their Cybernetic equivalents.
             // TODO
             break;
+        
         case MAPEVENT_DRLA_ARMAGEDDON:
             // DRLA - Armageddon: All monsters are their Armageddon equivalents.
             // TODO
@@ -259,7 +261,7 @@ script void MegaBossEvent()
     ArrayCreate(MonsterPositions, 64, sizeof(MonsterPosition));
     
     // Ambient Music
-    SetMusic(StrParam("MBossA%d\n", Random(1, 1)));
+    SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
     
     Delay(1); // Maximize our instructions
     
@@ -279,6 +281,7 @@ script void MegaBossEvent()
     
     Delay(2); // Monsters disappear!
     
+    // Shuffle positions
     for (int i = 0; i < MonsterPositions->Position; i++)
     {
         int x = Random(0, MonsterPositions->Position - 1);
@@ -289,6 +292,7 @@ script void MegaBossEvent()
         ((MonsterPosition *)MonsterPositions->Data)[x] = TempPosition;
     };
     
+    // Spawning
     while (!Spawned)
     {
         TID = UniqueTID();
@@ -362,8 +366,8 @@ script void ThermonuclearBomb()
     Delay(35);
     
     SetFont("BIGFONT");
-    HudMessageBold("\cgWARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\ciTIME UNTIL DETONATION: %i:%s%i\n",
-        Minutes, Seconds < 10 ? "0" : "", Seconds, HUDMSG_TYPEON, 0, CR_RED, 160.4, 66.0, 3.0, 0.03, 0.5);
+    HudMessageBold("\cgWARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\ciTIME UNTIL DETONATION: %s\n",
+        FormatTime(BombTime), HUDMSG_TYPEON, 0, CR_RED, 160.4, 66.0, 3.0, 0.03, 0.5);
     AmbientSound("event/nukealert", 127);
     
     Delay(35 * 4);
@@ -376,8 +380,7 @@ script void ThermonuclearBomb()
         Seconds = BombTime / 35 % 60;
         
         SetFont("BIGFONT");
-        HudMessageBold("\cgDETONATION IN: %i:%s%i\n",
-            Minutes, Seconds < 10 ? "0" : "", Seconds, HUDMSG_FADEOUT, MAKE_ID('N', 'U', 'K', 'E'), CR_RED, 32.1, 32.1, 3.0, 0.5);
+        HudMessageBold("\cgT - %s\n", FormatTime(BombTime), HUDMSG_FADEOUT, MAKE_ID('N', 'U', 'K', 'E'), CR_RED, 32.1, 32.1, 3.0, 0.5);
         
         BombTime--;
         
@@ -428,8 +431,8 @@ script void OneMonsterEvent()
         else
             Monsters[i].ReplaceActor = StrParam("DRPG%s\n", MonsterType->Actor);
         
-        //if (GetCVar("drpg_debug") && MapSpecialInfo.CurrentEvent > 0)
-        //    Log("\cdDEBUG: Monster Actor: \cg%s\n", Monsters[i].ReplaceActor);
+        // if (GetCVar("drpg_debug") && MapSpecialInfo.CurrentEvent > 0)
+        //     Log("\cdDEBUG: Monster Actor: \cg%s\n", Monsters[i].ReplaceActor);
     };
 };
 
