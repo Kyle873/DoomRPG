@@ -4,7 +4,7 @@ color F
 set PATH=..\Utilities\DH-ACC
 set SRC=.\scripts
 set OBJ=.\acs
-set ACC=DH-acc --named-scripts --near-pointers --use-chunk-ATAG --debug-error-pos --debug-static-list=DebugStaticList.log --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc -i %SRC%\lib
+set ACC=DH-acc --named-scripts --near-pointers --use-chunk-ATAG --debug-error-pos -D__LIBDS_HEAPSIZE=128 --debug-static-list=DebugStaticList.log --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc -i %SRC%\lib
 
 rem Standard Libraries
 echo Compiling Standard Libraries
