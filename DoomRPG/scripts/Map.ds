@@ -12,6 +12,8 @@ static LevelInfo *KnownLevels;
 static int NumKnownLevels;
 static int LastVisitedLevel;
 
+map_array LocalLevelInfo MapSpecialInfo;
+
 // Map Init Script
 script void MapInit() open
 {
@@ -48,10 +50,16 @@ script void MapInit() open
     
     int Index = FindLevelInfoIndex();
     
-    // Outpost, or the map has no level number
-    if (Index == -2 || Index == -3)
+    // The map has no level number
+    if (Index == -3)
     {
         CurrentLevel = NULL;
+        return;
+    }
+    else if (Index == -2) // UAC Outpost
+    {
+        CurrentLevel = NULL;
+        SetupOutpostEvent();
         return;
     }
     else if (Index == -1) // New map - We need to create new info for it
@@ -105,8 +113,339 @@ script void MapInit() open
         CurrentLevel->NeedsRealInfo = false;
     };
     
+    // Delay to allow monsters to register themselves (See Monsters.ds:199)
+    Delay(1);
+    
+    // Decide the special map event (if any)
+    SetupMapEvent();
+    
     if (CurrentLevel)
         MapLoop();
+};
+
+script void SetupMapEvent()
+{
+    if (Random(1, 32) != 1)
+        return; // No special event
+    
+    MapSpecialInfo.CurrentEvent = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
+    
+    // *Really* rare
+    if (MapSpecialInfo.CurrentEvent == MAPEVENT_BONUS_RAINBOWS && Random(1, 8) != 1)
+    {
+        MapSpecialInfo.CurrentEvent = MAPEVENT_NONE;
+        return;
+    };
+    
+    // Can't do Nightmare/Technophobia/Armageddon levels without DRLA
+    if (MapSpecialInfo.CurrentEvent >= MAPEVENT_DRLA_NIGHTMARE && MapSpecialInfo.CurrentEvent <= MAPEVENT_DRLA_ARMAGEDDON && !GetCVar("drpg_ext_doomrl"))
+    {
+        MapSpecialInfo.CurrentEvent = MAPEVENT_NONE;
+        return;
+    };
+    
+    auto str[MAPEVENT_MAX] EventNames =
+    {
+        "None";
+        
+        "MegaBoss";
+        "Environmental Hazard";
+        "Thermonuclear Bomb";
+        "Low Power";
+        "All Auras";
+        "One-Monster";
+        "RAINBOWS!";
+        
+        "DRLA - Nightmare!";
+        "DRLA - Technophobia";
+        "DRLA - Armageddon";
+    };
+    
+    if (GetCVar("drpg_debug") && MapSpecialInfo.CurrentEvent > 0)
+        Log("\cdDEBUG: Special Event: \cg%s\n", EventNames[MapSpecialInfo.CurrentEvent]);
+    
+    switch (MapSpecialInfo.CurrentEvent)
+    {
+        // Normal events
+        
+        case MAPEVENT_MEGABOSS:
+            // Megaboss: One incredibly powerful super-monster spawns, nothing else in level.
+            MegaBossEvent();
+            break;
+        
+        case MAPEVENT_TOXICHAZARD:
+            // Environmental Hazard: Entire map is filled with damaging radiation. Monsters can drop extra Radiation Suits when killed.
+            EnvironmentalHazard();
+            for (int i = 0; i < 65536; i++)
+            {
+                Light_ChangeToValue(i, 128);
+                Sector_SetFade(i, 63, 131, 47);
+            };
+            
+            break;
+        
+        case MAPEVENT_NUCLEARBOMB:
+            // Thermonuclear Bomb: A Thermonuclear Bomb spawns next to you on map start. You have PAR * 3 to escape before it explodes.
+            ThermonuclearBomb();
+            break;
+        
+        case MAPEVENT_LOWPOWER:
+            // Low Power: Light levels are extremely diminished. IR goggles recommended.
+            for (int i = 0; i < 65536; i++)
+            {
+                Light_Flicker(i, 48, 96);
+                Sector_SetColor(i, 64, 96, 255, 0);
+            };
+            break;
+        
+        case MAPEVENT_ALLAURAS:
+            // All Auras: Self-Explanatory.
+            // Nothing to do here.
+            break;
+        
+        case MAPEVENT_ONEMONSTER:
+            // One-Monster: All monsters are of a single type.
+            OneMonsterEvent();
+            break;
+        
+        // Bonus events
+        
+        case MAPEVENT_BONUS_RAINBOWS:
+            // RAINBOWS: ALL OF THE COLORS!
+            RainbowSectors();
+            SetMusic("music/RAINBOWS.mp3");
+            break;
+        
+        // DoomRL-exclusive
+        
+        case MAPEVENT_DRLA_NIGHTMARE:
+            // DRLA - Nightmare!: All monsters are their Nightmare equivalents.
+            // TODO
+            break;
+        case MAPEVENT_DRLA_TECHNOPHOBIA:
+            // DRLA - Technophobia: All monsters are their Cybernetic equivalents.
+            // TODO
+            break;
+        case MAPEVENT_DRLA_ARMAGEDDON:
+            // DRLA - Armageddon: All monsters are their Armageddon equivalents.
+            // TODO
+            break;
+        
+        // Standard level
+        
+        default:
+            break;
+    };
+};
+
+script void MegaBossEvent()
+{
+    bool Spawned;
+    bool Spotted;
+    int TID;
+    int BossType;
+    int Index;
+    MonsterPosition *Position;
+    
+    DynamicArray *MonsterPositions;
+    ArrayCreate(MonsterPositions, 64, sizeof(MonsterPosition));
+    
+    // Ambient Music
+    SetMusic(StrParam("MBossA%d\n", Random(1, 1)));
+    
+    Delay(1); // Maximize our instructions
+    
+    for (int i = 1; i < MAX_MONSTERS; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        // Array has grown too big, resize it
+        if (MonsterPositions->Position == MonsterPositions->Size)
+            ArrayResize(MonsterPositions, sizeof(MonsterPosition));
+        
+        // Store position
+        ((MonsterPosition *)MonsterPositions->Data)[MonsterPositions->Position++] = Monsters[i].Position;
+        Monsters[i].ReplaceActor = "None";
+    };
+    
+    Delay(2); // Monsters disappear!
+    
+    for (int i = 0; i < MonsterPositions->Position; i++)
+    {
+        int x = Random(0, MonsterPositions->Position - 1);
+        MonsterPosition TempPosition;
+        
+        TempPosition = ((MonsterPosition *)MonsterPositions->Data)[i];
+        ((MonsterPosition *)MonsterPositions->Data)[i] = ((MonsterPosition *)MonsterPositions->Data)[x];
+        ((MonsterPosition *)MonsterPositions->Data)[x] = TempPosition;
+    };
+    
+    while (!Spawned)
+    {
+        TID = UniqueTID();
+        BossType = Random(0, MAX_MEGABOSSES - 1);
+        Position = &((MonsterPosition *)MonsterPositions->Data)[Index];
+        Spawned = Spawn(MegaBosses[BossType], Position->X, Position->Y, Position->Z, TID, Random(0, 255));
+        
+        // Successful spawn
+        if (Spawned)
+        {
+            SpawnForced("TeleportFog", Position->X, Position->Y, Position->Z, 0, 0);
+            GiveActorInventory(TID, "DRPGMegaBoss", 1);
+            GiveActorInventory(TID, "DRPGWhiteAuraGiver", 1);
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \cg%s MegaBoss successfully spawned\n", MegaBosses[BossType]);
+        };
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, Position->X, Position->Y, Position->Z);
+        
+        Index++;
+        Delay(1);
+    };
+    
+    // EVIL WARNING LAUGHTER
+    AmbientSound("mission/gottarget2", 127);
+    
+    while (true)
+    {
+        // Spotted
+        if (!Spotted)
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (CheckSight(TID, Players(i).TID, 0))
+                {
+                    SetMusic(StrParam("MBossC%d\n", Random(1, 2)));
+                    Spotted = true;
+                    break;
+                };
+        
+        // Defeated
+        if (GetActorProperty(TID, APROP_Health) <= 0)
+        {
+            SetMusic("");
+            return;
+        };
+        
+        Delay(1);
+    };
+};
+
+script void EnvironmentalHazard()
+{
+    Start:
+    SectorDamage(0, 10, "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
+    Delay(35);
+    goto Start;
+};
+
+script void ThermonuclearBomb()
+{
+    SetHudSize(320, 200, 0);
+    
+    int BombTime = GetLevelInfo(LEVELINFO_PAR_TIME)? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300;
+    BombTime *= 35;
+    
+    int Minutes = BombTime / 35 / 60;
+    int Seconds = BombTime / 35 % 60;
+    
+    SetMusic("");
+    
+    Delay(35);
+    
+    SetFont("BigFont");
+    HudMessageBold("\c[Red]WARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\c[Orange]TIME UNTIL DETONATION: %i:%s%i\n",
+        Minutes, Seconds < 10? "0" : "", Seconds, HUDMSG_TYPEON, 0, CR_RED, 160.4, 66.0, 3.0, 0.03, 0.5);
+    
+    Delay(35*4);
+    
+    SetMusic("music/Bomb.ogg");
+    
+    while (BombTime)
+    {
+        Minutes = BombTime / 35 / 60;
+        Seconds = BombTime / 35 % 60;
+        SetFont("BigFont");
+        HudMessageBold("\c[Red]DETONATION IN: %i:%s%i\n",
+            Minutes, Seconds < 10? "0" : "", Seconds, HUDMSG_FADEOUT, MAKE_ID('N','U','K','E'), CR_RED, 32.1, 32.1, 3.0, 0.5);
+        BombTime--;
+        Delay(1);
+    };
+    
+    // Explosion
+    AmbientSound("misc/nuclearbomb", 127);
+    Thing_Destroy(0, 1);
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        
+        Thing_Damage2(Players(i).TID, 25000, "Fire");
+    };
+};
+
+script void OneMonsterEvent()
+{
+    bool DRLA = GetCVar("drpg_ext_doomrl");
+    bool Extras = GetCVar("drpg_ext_extras");
+    bool Brutal = GetCVar("drpg_ext_Brutal");
+    MonsterInfoPtr MonsterType;
+    
+    if (DRLA)
+        MonsterType = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA)]
+    else if (Brutal)
+        MonsterType = &MonsterDataBrutal[Random(0, MAX_DEF_MONSTERS)]
+    else
+        MonsterType = &MonsterData[Random(0, MAX_DEF_MONSTERS)];
+    
+    if (GetCVar("drpg_debug") && MapSpecialInfo.CurrentEvent > 0)
+        Log("\cdDEBUG: Chosen Monster: \cg%s\n", MonsterType->Name);
+
+    for (int i = 1; i < MAX_MONSTERS; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        if (DRLA)
+            Monsters[i].ReplaceActor = StrParam("%sRPG\n", MonsterType->Actor)
+        else if (Extras)
+            Monsters[i].ReplaceActor = StrParam("DRPG%sExtras\n", MonsterType->Actor)
+        else if (Brutal)
+            Monsters[i].ReplaceActor = StrParam("%sBD\n", MonsterType->Actor)
+        else
+            Monsters[i].ReplaceActor = StrParam("DRPG%s\n", MonsterType->Actor);
+        
+        //if (GetCVar("drpg_debug") && MapSpecialInfo.CurrentEvent > 0)
+        //    Log("\cdDEBUG: Monster Actor: \cg%s\n", Monsters[i].ReplaceActor);
+    };
+};
+
+script void RainbowSectors()
+{
+    fixed Angle = 0;
+    int Red, Green, Blue;
+    
+    for (int i = 0; i < 65536; i++)
+        Light_ChangeToValue(i, 176);
+    Delay(1);
+    
+    Start:
+    Angle -= 1.0 / 350;
+    if (Angle < 0.0) Angle = 1.0 + Angle;
+    Red = 128 + (Sin (Angle) * 128.0);
+    Green = 128 + (Sin (Angle + 0.33) * 128.0);
+    Blue = 128 + (Sin (Angle + 0.67) * 128.0);
+    
+    for (int i = 0; i < 65536; Sector_SetColor(i++, Red, Green, Blue, 128));
+    
+    Delay(1);
+    goto Start;
+};
+
+script void SetupOutpostEvent()
+{
+    // TODO: Outpost Invasions, Power Fluctuations
+    return;
 };
 
 script void MapLoop()

@@ -1,6 +1,7 @@
 #include "RPG.dh"
 
 #include "Arena.dh"
+#include "Map.dh"
 #include "Mission.dh"
 #include "Monsters.dh"
 #include "Popoffs.dh"
@@ -147,10 +148,6 @@ MonsterSpace str[MAX_MEGABOSSES] MegaBosses =
     "SpiderMastermind";
 };
 
-// MegaBoss
-bool MegaBoss = false;
-DynamicArray *MonsterPositions;
-
 function int NewMonsterID()
 {
     int CurrentID = MonsterID;
@@ -171,6 +168,7 @@ function int NewMonsterID()
     
     // When re-using an existing ID, all of these need to be reset so Init knows what to do with them
     Monsters[CurrentID].Actor = nullptr;
+    Monsters[CurrentID].ReplaceActor = nullptr;
     Monsters[CurrentID].Flags = 0;
     Monsters[CurrentID].RenderStyle = 0;
     Monsters[CurrentID].SpawnHealth = 0;
@@ -218,38 +216,21 @@ acscript void MonsterInit(int Flags)
     // If initialization has already occurred on this monster, terminate
     if (Stats->Init) return;
     
+    Stats->Position = { GetActorX(0); GetActorY(0); GetActorZ(0); };
+    
     // Set as initialized
     Stats->Init = true;
     SetInventory("DRPGMonsterInit", 1);
     
-    // MegaBoss Event - This has to go here because ZDoom(TM)
-    if (!MegaBoss && !InBase && Random(1, 100) == 1)
-    {
-        ArrayCreate(MonsterPositions, 64, sizeof(MonsterPosition));
-        MegaBoss = true;
-    };
+    Delay(2); // Allow map events to modify our stats (see Map.ds:18)
     
-    // MegaBoss Event
-    if (MegaBoss)
+    if (StrLen(Stats->ReplaceActor) > 0)
     {
-        // Delay for the boss spawn to work properly
-        Delay(1);
-        
-        // Array has grown too big, resize it
-        if (MonsterPositions->Position == MonsterPositions->Size)
-            ArrayResize(MonsterPositions, sizeof(MonsterPosition));
-        
-        // Store position
-        ((MonsterPosition *)MonsterPositions->Data)[MonsterPositions->Position++] =
-        {
-            GetActorX(0);
-            GetActorY(0);
-            GetActorZ(0);
-        };
-        
-        // Remove
-        if (!CheckInventory("DRPGMegaBoss"))
-            Thing_Remove(0);
+        Thing_Remove(0);
+        Stats->Init = false;
+        if (StrICmp(Stats->ReplaceActor, "None") != 0)
+            Spawn(Stats->ReplaceActor, Stats->Position.X, Stats->Position.Y, Stats->Position.Z, ActivatorTID(), GetActorAngle(0) * 256);
+        return;        
     };
     
     // MegaBoss flag check
@@ -359,6 +340,7 @@ acscript void MonsterDump()
         Log(" DRPG Flags: %d\n", Stats->Flags);
         Log(" Reinforcement: %d\n", Stats->Reinforcement);
         Log(" Assassination Target: %d\n", Stats->Target);
+        Log(" MegaBoss: %d\n", Stats->MegaBoss);
         
         Log("\cd===== MONSTER STATS =====\n");
         Log(" Level: %d\n", Stats->Level);
@@ -522,6 +504,11 @@ script void MonsterInitStats(int StatFlags)
             MonsterAura = AuraRandomizer;
         if (GetCVar("drpg_monster_shadows"))
             MonsterAura = 10;
+        
+        if (MapSpecialInfo.CurrentEvent == MAPEVENT_ALLAURAS)
+            MonsterAura = Random(1, 10)
+        else if (MapSpecialInfo.CurrentEvent == MAPEVENT_BONUS_RAINBOWS)
+            MonsterCapacity *= Random(2, 4);
         
         // Monsters with an aura are *always* specialized in their primary stat
         if (GetCVar("drpg_monster_specialize"))
@@ -993,8 +980,8 @@ script void MonsterRegenerationHandler()
     RegenAmount /= 1000;
     if (RegenAmount > 2147483647) // INT_MAX
         RegenAmount = 2147483647;
-    if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \ctRegeneration of %s: %d\n", GetActorClass(0), RegenAmount);
+    //if (GetCVar("drpg_debug"))
+    //    Log("\cdDEBUG: \ctRegeneration of %s: %d\n", GetActorClass(0), RegenAmount);
     SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + RegenAmount);
     
     // Prevent going over 100%
@@ -1285,12 +1272,16 @@ script void MonsterDeath()
         };
     };
     
+    // Drop Radiation Suits during the Environmental Hazard event
+    if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && MapSpecialInfo.CurrentEvent == MAPEVENT_TOXICHAZARD)
+        DropMonsterItem(Killer, DropTID, "DRPGRadSuit", 64);
+    
     // Drop Credits
     if (!(Stats->Flags & MF_NODROPS) && CheckInventory("DRPGCredits") > 0)
         DropMoney(Killer, 0, Random(CheckInventory("DRPGCredits") / 2, CheckInventory("DRPGCredits")));
     
     // Credit Rain
-    if (Killer > -1 && Players(Killer).Luck >= 100 && Random(1, 256) == 1)
+    if (Killer > -1 && (Players(Killer).Luck >= 100 || MapSpecialInfo.CurrentEvent == MAPEVENT_BONUS_RAINBOWS) && Random(1, 256) == 1)
     {
         fixed Z = GetActorCeilingZ(Players(Killer).TID) - GetActorPropertyFixed(Players(Killer).TID, APROP_Height);
         fixed Radius = GetActorPropertyFixed(Players(Killer).TID, APROP_Radius);
@@ -1486,73 +1477,6 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
     };
 };
 
-script void MegaBossHandler()
-{
-    bool Spawned;
-    bool Spotted;
-    int TID;
-    int BossType;
-    int Index;
-    MonsterPosition *Position;
-    
-    if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \cgMEGABOSS EVENT ACTIVE!\n");
-    
-    // Ambient Music
-    SetMusic(StrParam("MBossA%d\n", Random(1, 1)));
-    
-    // EVIL WARNING LAUGHTER
-    AmbientSound("mission/gottarget2", 127);
-    
-    // TODO: Shuffle the positions
-    
-    while (!Spawned)
-    {
-        TID = UniqueTID();
-        BossType = Random(0, MAX_MEGABOSSES - 1);
-        Index = Random(0, MonsterPositions->Position - 1);
-        Position = &((MonsterPosition *)MonsterPositions->Data)[Index];
-        Spawned = Spawn(MegaBosses[BossType], Position->X, Position->Y, Position->Z, TID, Random(0, 255));
-        
-        // Teleport fog
-        if (Spawned)
-            Spawn("TeleportFog", Position->X, Position->Y, Position->Z, 0, 0);
-        
-        if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, Position->X, Position->Y, Position->Z);
-        
-        Delay(1);
-    };
-    
-    // Successful spawn
-    GiveActorInventory(TID, "DRPGMegaBoss", 1);
-    GiveActorInventory(TID, "DRPGWhiteAuraGiver", 1);
-    if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \cg%s MegaBoss successfully spawned\n", MegaBosses[BossType]);
-    
-    while (true)
-    {
-        // Spotted
-        if (!Spotted)
-            for (int i = 0; i < MAX_PLAYERS; i++)
-                if (CheckSight(TID, Players(i).TID, 0))
-                {
-                    SetMusic(StrParam("MBossC%d\n", Random(1, 2)));
-                    Spotted = true;
-                    break;
-                };
-        
-        // Defeated
-        if (GetActorProperty(TID, APROP_Health) <= 0)
-        {
-            SetMusic("*");
-            return;
-        };
-        
-        Delay(1);
-    };
-};
-
 script int WhoKilledMe()
 {
     SetActivatorToTarget(0);
@@ -1703,10 +1627,4 @@ acscript void OutputMonsters()
         Log("\cdMonster %d:\n", i);
         Output Monsters[i];
     };
-};
-
-acscript void OutputPositions()
-{
-    for (int i = 0; i < MonsterPositions->Size; i++)
-        Output ((MonsterPosition *)MonsterPositions->Data)[i];
 };
