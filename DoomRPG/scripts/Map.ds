@@ -12,8 +12,6 @@ static LevelInfo *KnownLevels;
 static int NumKnownLevels;
 static int LastVisitedLevel;
 
-map_array LocalLevelInfo MapSpecialInfo;
-
 // Map Init Script
 script void MapInit() open
 {
@@ -110,37 +108,40 @@ script void MapInit() open
         CurrentLevel->SecretsBonus = false;
         CurrentLevel->AllBonus = false;
         
+        // Decide the map's event, if any
+        DecideMapEvent();
+        
         CurrentLevel->NeedsRealInfo = false;
     };
     
     // Delay to allow monsters to register themselves (See Monsters.ds:199)
     Delay(1);
     
-    // Decide the special map event (if any)
+    // Set up the currently in-effect map event
     SetupMapEvent();
     
     if (CurrentLevel)
         MapLoop();
 };
 
-script void SetupMapEvent()
+script void DecideMapEvent()
 {
     if (Random(1, 32) != 1)
         return; // No special event
     
-    MapSpecialInfo.CurrentEvent = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
+    CurrentLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
     
     // *Really* rare
-    if (MapSpecialInfo.CurrentEvent == MAPEVENT_BONUS_RAINBOWS && Random(1, 8) != 1)
+    if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS && Random(1, 4) != 1)
     {
-        MapSpecialInfo.CurrentEvent = MAPEVENT_NONE;
+        CurrentLevel->Event = MAPEVENT_NONE;
         return;
     };
     
     // Can't do Nightmare/Technophobia/Armageddon levels without DRLA
-    if (MapSpecialInfo.CurrentEvent >= MAPEVENT_DRLA_NIGHTMARE && MapSpecialInfo.CurrentEvent <= MAPEVENT_DRLA_ARMAGEDDON && !GetCVar("drpg_ext_doomrl"))
+    if (CurrentLevel->Event >= MAPEVENT_DRLA_NIGHTMARE && CurrentLevel->Event <= MAPEVENT_DRLA_ARMAGEDDON && !GetCVar("drpg_ext_doomrl"))
     {
-        MapSpecialInfo.CurrentEvent = MAPEVENT_NONE;
+        CurrentLevel->Event = MAPEVENT_NONE;
         return;
     };
     
@@ -161,15 +162,19 @@ script void SetupMapEvent()
         "DRLA - Armageddon";
     };
     
-    if (GetCVar("drpg_debug") && MapSpecialInfo.CurrentEvent > 0)
+    if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
     {
-        str Text = StrParam("\cdDEBUG: Special Event: \cg%s\n", EventNames[MapSpecialInfo.CurrentEvent]);
+        str Text = StrParam("\cdDEBUG: Special Event: \cg%s\n", EventNames[CurrentLevel->Event]);
         Log("%s\n", Text);
         SetFont("BIGFONT");
         Print("%s\n", Text);
     };
     
-    switch (MapSpecialInfo.CurrentEvent)
+};
+
+script void SetupMapEvent()
+{
+    switch (CurrentLevel->Event)
     {
         // Normal events
         // --------------------------------------------------
@@ -336,6 +341,7 @@ script void MegaBossEvent()
         if (GetActorProperty(TID, APROP_Health) <= 0)
         {
             SetMusic("");
+            CurrentLevel->Event = MAPEVENT_NONE;
             return;
         };
         
@@ -345,6 +351,7 @@ script void MegaBossEvent()
 
 script void EnvironmentalHazard()
 {
+    // TODO: [02:47:04] <<@Yholl/ID>> Have some sort of radiation device that sciences away the radiation
     Start:
     SectorDamage(0, 10, "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
     Delay(35);
@@ -353,6 +360,7 @@ script void EnvironmentalHazard()
 
 script void ThermonuclearBomb()
 {
+    // TODO: The ability to defuse the bomb and set one up yourself
     SetHudSize(320, 200, 0);
     
     int BombTime = GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300;
@@ -398,6 +406,11 @@ script void ThermonuclearBomb()
         Thing_Damage2(Players(i).TID, 12500, "Fire");
         Thing_Damage2(Players(i).TID, 12500, "Melee");
     };
+    CurrentLevel->Event = MAPEVENT_NONE;
+    SetMusic("");
+    
+    Delay(35 * 5);
+    SetMusic("*");
 };
 
 script void OneMonsterEvent()
@@ -405,17 +418,19 @@ script void OneMonsterEvent()
     bool DRLA = GetCVar("drpg_ext_doomrl");
     bool Extras = GetCVar("drpg_ext_extras");
     bool Brutal = GetCVar("drpg_ext_Brutal");
-    MonsterInfoPtr MonsterType;
     
-    if (DRLA)
-        MonsterType = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA)]
-    else if (Brutal)
-        MonsterType = &MonsterDataBrutal[Random(0, MAX_DEF_MONSTERS)]
-    else
-        MonsterType = &MonsterData[Random(0, MAX_DEF_MONSTERS)];
-    
-    if (GetCVar("drpg_debug") && MapSpecialInfo.CurrentEvent > 0)
-        Log("\cdDEBUG: Chosen Monster: \cg%s\n", MonsterType->Name);
+    if (CurrentLevel->SelectedMonster == nullptr)
+    {
+        if (DRLA)
+            CurrentLevel->SelectedMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA)]
+        else if (Brutal)
+            CurrentLevel->SelectedMonster = &MonsterDataBrutal[Random(0, MAX_DEF_MONSTERS)]
+        else
+            CurrentLevel->SelectedMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS)];
+        
+        if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
+            Log("\cdDEBUG: Chosen Monster: \cg%s\n", CurrentLevel->SelectedMonster->Name);
+    };
 
     for (int i = 1; i < MAX_MONSTERS; i++)
     {
@@ -423,22 +438,22 @@ script void OneMonsterEvent()
             continue;
         
         if (DRLA)
-            Monsters[i].ReplaceActor = StrParam("%sRPG\n", MonsterType->Actor)
+            Monsters[i].ReplaceActor = StrParam("%sRPG\n", CurrentLevel->SelectedMonster->Actor)
         else if (Extras)
-            Monsters[i].ReplaceActor = StrParam("DRPG%sExtras\n", MonsterType->Actor)
+            Monsters[i].ReplaceActor = StrParam("DRPG%sExtras\n", CurrentLevel->SelectedMonster->Actor)
         else if (Brutal)
-            Monsters[i].ReplaceActor = StrParam("%sBD\n", MonsterType->Actor)
+            Monsters[i].ReplaceActor = StrParam("%sBD\n", CurrentLevel->SelectedMonster->Actor)
         else
-            Monsters[i].ReplaceActor = StrParam("DRPG%s\n", MonsterType->Actor);
+            Monsters[i].ReplaceActor = StrParam("DRPG%s\n", CurrentLevel->SelectedMonster->Actor);
         
-        // if (GetCVar("drpg_debug") && MapSpecialInfo.CurrentEvent > 0)
+        // if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
         //     Log("\cdDEBUG: Monster Actor: \cg%s\n", Monsters[i].ReplaceActor);
     };
     
     // Level feeling
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("%s\n", MonsterType->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.0, 150.0, 1.0, 19.0);
+    HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.0, 150.0, 1.0, 19.0);
 };
 
 script void RainbowSectors()
@@ -663,7 +678,15 @@ script void MapLoop()
         
         CurrentLevel->AllBonus = true;
     };
-
+    
+    if (MonstersKilled >= CurrentLevel->TotalMonsters && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
+    {
+        // All Auras and One-Monster events are ended by killing everything on the map
+        AmbientSound("misc/secret", 127);
+        HudMessageBold("Everything falls silent.\n",
+            HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+        CurrentLevel->Event = MAPEVENT_NONE;
+    };
     Delay(1);
     
     MonstersLastKilled = MonstersKilled;
@@ -722,6 +745,10 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         
         Delay(35 * 5);
     };
+    
+    // Remove the RAINBOWS event
+    if (CurrentLevel && CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
+        CurrentLevel->Event = MAPEVENT_NONE;
     
     // Now exit the level
     if (Secret)
