@@ -1428,7 +1428,7 @@ function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XA
         
         // Array has grown too big, resize it
         if (Players(Killer).DropTID->Position == Players(Killer).DropTID->Size)
-            ArrayResize(Players(Killer).DropTID, sizeof(int));
+            ArrayResize(Players(Killer).DropTID);
         
         // Add item's TID to drop array
         ((int *)Players(Killer).DropTID->Data)[Players(Killer).DropTID->Position++] = ItemTID;
@@ -1495,24 +1495,25 @@ function void LogMessage(str Message, int Level)
 // Dynamic Arrays
 // --------------------------------------------------
 
-function void ArrayCreate(DynamicArray *Array, int InitSize, int DataSize)
+function void ArrayCreate(DynamicArray *Array, int InitSize, int ItemSize)
 {
     if (Array->Data != nullptr)
         free(Array->Data);
     
     Array->Position = 0;
     Array->Size = InitSize;
-    Array->Data = malloc(DataSize * Array->Size);
+    Array->ItemSize = ItemSize;
+    Array->Data = malloc(Array->ItemSize * Array->Size);
     
-    memset(Array->Data, 0, Array->Size * DataSize);
+    memset(Array->Data, 0xEF, Array->Size * Array->ItemSize);
 };
 
-function void ArrayResize(DynamicArray *Array, int DataSize)
+function void ArrayResize(DynamicArray *Array)
 {
     int OldSize = Array->Size;
     
     Array->Size *= 2;
-    void *tmp = realloc(Array->Data, DataSize * Array->Size);
+    void *tmp = realloc(Array->Data, Array->ItemSize * Array->Size);
     
     if (!tmp)
     {
@@ -1523,5 +1524,5 @@ function void ArrayResize(DynamicArray *Array, int DataSize)
     
     Array->Data = tmp;
     
-    //memset((char *)Array->Data + (DataSize * OldSize), 0, (Array->Size * DataSize) - (DataSize * OldSize));
+    memset((char *)Array->Data + (Array->ItemSize * OldSize), 0xEF, (Array->Size * Array->ItemSize) - (Array->ItemSize * OldSize));
 };
