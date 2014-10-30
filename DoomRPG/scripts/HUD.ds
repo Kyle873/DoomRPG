@@ -167,9 +167,10 @@ script void SkillHUD() enter
         // Current Skill
         if (Player.SkillCategory[Player.SkillSelected] != -1 && Player.SkillIndex[Player.SkillSelected] != -1)
         {
-            Skill *CurrentSkill = &Skills[Player.SkillCategory[Player.SkillSelected]][Player.SkillIndex[Player.SkillSelected]];
+            SkillPtr CurrentSkill = &Skills[Player.SkillCategory[Player.SkillSelected]][Player.SkillIndex[Player.SkillSelected]];
+            SkillLevelInfo *SkillLevel = &Player.SkillLevel[Player.SkillCategory[Player.SkillSelected]][Player.SkillIndex[Player.SkillSelected]];
             
-            int Cost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
+            int Cost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel * Player.SkillCostMult);
             int Color = CR_LIGHTBLUE;
             
             if (Player.EP < Cost)
@@ -180,7 +181,7 @@ script void SkillHUD() enter
             HudMessage("%d\n", Cost, HUDMSG_PLAIN, 0, Color, X, Y - 16.0, 0.05);
             
             // Level
-            HudMessage("%d/%d\n", CurrentSkill->CurrentLevel, CurrentSkill->Level, HUDMSG_PLAIN, 0, CR_GREEN, X, Y + 16.0, 0.05);
+            HudMessage("%d/%d\n", SkillLevel->CurrentLevel, SkillLevel->Level, HUDMSG_PLAIN, 0, CR_GREEN, X, Y + 16.0, 0.05);
             
             // Icon
             PrintSprite(CurrentSkill->Icon, 0, X, Y, 0.05);
@@ -315,7 +316,7 @@ script void AuraTimerHUD() enter
         
         // Timer
         SetFont("BIGFONT");
-        HudMessage("%d\n", Player.AuraTimer / 35 + 1, HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+        HudMessage("%s\n", FormatTime(Player.AuraTimer), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
         
         // Calculate number of active Auras
         for (int i = 0; i < AURA_MAX; i++)

@@ -295,10 +295,10 @@ acscript void Respec(bool DoStats, bool DoSkills) net
         for (int i = 0; i < MAX_CATEGORIES; i++)
             for (int j = 0; j < MAX_SKILLS; j++)
                 if (!(i == 5 && j == 7)) // Skip Transport
-                    while (Skills[i][j].Level > 0)
+                    while (Player.SkillLevel[i][j].Level > 0)
                     {
-                        SkillPoints += Skills[i][j].Level;
-                        Skills[i][j].Level--;
+                        SkillPoints += Player.SkillLevel[i][j].Level;
+                        Player.SkillLevel[i][j].Level--;
                     };
         
         // Give Respecced Skill Tokens back
@@ -424,8 +424,8 @@ acscript void Cheat(int StatBoost, int ItemMax)
     for (int i = 0; i < MAX_CATEGORIES; i++)
         for (int j = 0; j < MAX_SKILLS; j++)
         {
-            Skills[i][j].Level = Skills[i][j].MaxLevel;
-            Skills[i][j].CurrentLevel = Skills[i][j].MaxLevel;
+            Player.SkillLevel[i][j].Level = Skills[i][j].MaxLevel;
+            Player.SkillLevel[i][j].CurrentLevel = Skills[i][j].MaxLevel;
         };
     
     // Items - Tokens
@@ -932,16 +932,27 @@ function bool Nova(str Type, int Projectiles)
 // Formats time into MM:SS for display with Print or HudMessage
 function str FormatTime(int t)
 {
-    int Minutes = t / 35 / 60;
+    int Hours = t / 35 / 60 / 60;
+    int Minutes = t / 35 / 60 % 60;
     int Seconds = t / 35 % 60;
-    str Time;
+    str Time = "";
     
-    // Calculate Minutes and Seconds
-    if (Seconds < 10)
-        Time = StrParam("%d:0%d\n", Minutes, Seconds)
+    // Hours
+    if (Hours > 0)
+        Time = StrParam("%d:\n", Hours);
+    
+    // Minutes
+    if (Minutes < 10)
+        Time = StrParam("%s0%d:\n", Time, Minutes)
     else
-        Time = StrParam("%d:%d\n", Minutes, Seconds);
-        
+        Time = StrParam("%s%d:\n", Time, Minutes);
+    
+    // Seconds
+    if (Seconds < 10)
+        Time = StrParam("%s0%d\n", Time, Seconds)
+    else
+        Time = StrParam("%s%d\n", Time, Seconds);
+    
     return Time;
 };
 
@@ -1415,13 +1426,12 @@ function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XA
         // Set Velocity
         SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
         
-        // Now iterate the DropTID array and insert the ItemTID into the next available entry
-        for (int j = 0; j < MAX_DROPS; j++)
-            if (Players(Killer).DropTID[j] == -1)
-            {
-                Players(Killer).DropTID[j] = ItemTID;
-                break;
-            };
+        // Array has grown too big, resize it
+        if (Players(Killer).DropTID->Position == Players(Killer).DropTID->Size)
+            ArrayResize(Players(Killer).DropTID, sizeof(int));
+        
+        // Add item's TID to drop array
+        ((int *)Players(Killer).DropTID->Data)[Players(Killer).DropTID->Position++] = ItemTID;
     };
     
     return ItemTID;
@@ -1487,6 +1497,9 @@ function void LogMessage(str Message, int Level)
 
 function void ArrayCreate(DynamicArray *Array, int InitSize, int DataSize)
 {
+    if (Array->Data != nullptr)
+        free(Array->Data);
+    
     Array->Position = 0;
     Array->Size = InitSize;
     Array->Data = malloc(DataSize * Array->Size);
@@ -1505,7 +1518,10 @@ function void ArrayResize(DynamicArray *Array, int DataSize)
     {
         free(Array->Data);
         Log("\cgERROR: \c-Cannot resize dynamic array!\n");
+        return;
     };
     
-    memset(Array->Data + OldSize, 0, Array->Size * DataSize);
+    Array->Data = tmp;
+    
+    //memset((char *)Array->Data + (DataSize * OldSize), 0, (Array->Size * DataSize) - (DataSize * OldSize));
 };

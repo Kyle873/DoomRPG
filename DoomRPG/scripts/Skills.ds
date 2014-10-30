@@ -11,7 +11,6 @@
 #include "Stats.dh"
 #include "Utils.dh"
 
-static Skill[MAX_PLAYERS][MAX_CATEGORIES][MAX_SKILLS] _SkillData;
 
 bool Overdrive;
 int BulletTimeTimer;
@@ -23,7 +22,7 @@ int[MAX_CATEGORIES] SkillCategoryMax =
 };
 
 AddressSpace MapArray SkillSpace;
-SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
+SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
 {
     // Healing/Support
     {
@@ -456,27 +455,8 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillDataBase =
     };
 };
 
-function void InitSkills()
-{
-    for (int i = 0; i < MAX_CATEGORIES; i++)
-        for (int j = 0; j < MAX_SKILLS; j++)
-        {
-            SkillPtr SkillIter = &SkillDataBase[i][j];
-            
-            Skills[i][j].Name = SkillIter->Name;
-            Skills[i][j].Cost = SkillIter->Cost;
-            Skills[i][j].MaxLevel = SkillIter->MaxLevel;
-            Skills[i][j].Description = SkillIter->Description;
-            Skills[i][j].Use = SkillIter->Use;
-        };
-};
-
 function void BuildSkillData()
 {
-    // Transport should always be known
-    Skills[MAX_CATEGORIES - 1][SkillCategoryMax[MAX_CATEGORIES - 1] - 1].Level = 1;
-    Skills[MAX_CATEGORIES - 1][SkillCategoryMax[MAX_CATEGORIES - 1] - 1].CurrentLevel = 1;
-    
     // DoomRL Compatibility
     if (GetCVar("drpg_ext_doomrl"))
     {
@@ -563,7 +543,8 @@ script void SkillWheel() enter
     int LastSelected = -1;
     int Radius = 96;
     int CurrentRadius = 0;
-    Skill *CurrentSkill;
+    SkillPtr CurrentSkill;
+    SkillLevelInfo *SkillLevel;
     
     // Open the wheel
     if (Buttons & BT_USER1 && !((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0))
@@ -659,22 +640,32 @@ script void SkillWheel() enter
                // Selected = -1;
         };
         
+        // Set Skill
+        if (Selected >= 0 && Player.SkillCategory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
+        {
+            CurrentSkill = &Skills[Player.SkillCategory[Selected]][Player.SkillIndex[Selected]];
+            SkillLevel = &Player.SkillLevel[Player.SkillCategory[Selected]][Player.SkillIndex[Selected]];
+        }
+        else
+        {
+            CurrentSkill = nullptr;
+            SkillLevel = nullptr;
+        };
+        
         // Extra Input Handling
         if (Buttons & BT_SPEED && Selected != -1)
         {
-            Skill *CurrentSkill = &Skills[Player.SkillCategory[Selected]][Player.SkillIndex[Selected]];
-            
             // Decrease selected skill level
-            if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && CurrentSkill->CurrentLevel > 1)
+            if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && SkillLevel->CurrentLevel > 1)
             {
-                CurrentSkill->CurrentLevel--;
+                SkillLevel->CurrentLevel--;
                 AmbientSound("menu/move", 127);
             };
             
             // Increase selected skill level
-            if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT) && CurrentSkill->CurrentLevel < CurrentSkill->Level)
+            if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT) && SkillLevel->CurrentLevel < SkillLevel->Level)
             {
-                CurrentSkill->CurrentLevel++;
+                SkillLevel->CurrentLevel++;
                 AmbientSound("menu/move", 127);
             };
             
@@ -686,12 +677,6 @@ script void SkillWheel() enter
                 AmbientSound("menu/move", 127);
             };
         };
-        
-        // Set Skill
-        if (Selected >= 0 && Player.SkillCategory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
-            CurrentSkill = &Skills[Player.SkillCategory[Selected]][Player.SkillIndex[Selected]]
-        else
-            CurrentSkill = nullptr;
         
         // Play sound
         if (Selected != LastSelected && Selected >= 0)
@@ -730,13 +715,13 @@ script void SkillWheel() enter
         // Skill Info
         if (CurrentSkill != nullptr)
         {
-            int Cost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
+            int Cost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel * Player.SkillCostMult);
             str CostColor = (Player.EP < Cost ? "\cg" : "\cv");
             str Info;
             
             // Build info string
             Info = StrParam("\cd%s\n\n\n", CurrentSkill->Name);
-            Info = StrParam("%s\cjLevel: %d/%d\n\n", Info, CurrentSkill->CurrentLevel, CurrentSkill->Level);
+            Info = StrParam("%s\cjLevel: %d/%d\n\n", Info, SkillLevel->CurrentLevel, SkillLevel->Level);
             Info = StrParam("%s%s%d EP\n", Info, CostColor, Cost);
             
             // Display
@@ -757,13 +742,20 @@ acscript void UseSkill(int Key) net
 {
     // Current Skill
     int Index = (Player.InMenu && Player.Menu == 3 ? -1 : Player.SkillSelected);
-    Skill *CurrentSkill;
+    SkillPtr CurrentSkill;
+    SkillLevelInfo *SkillLevel;
     
     // Quick Use handling
     if (Key > 0)
-        CurrentSkill = &Skills[Player.SkillCategory[Key - 1]][Player.SkillIndex[Key - 1]]
+    {
+        CurrentSkill = &Skills[Player.SkillCategory[Key - 1]][Player.SkillIndex[Key - 1]];
+        SkillLevel = &Player.SkillLevel[Player.SkillCategory[Key - 1]][Player.SkillIndex[Key - 1]];
+    }
     else
+    {
         CurrentSkill = &Skills[Player.SkillCategory[Index]][Player.SkillIndex[Index]];
+        SkillLevel = &Player.SkillLevel[Player.SkillCategory[Index]][Player.SkillIndex[Index]];
+    };
     
     // If you're dead, terminate
     if (ClassifyActor(Player.TID) & ACTOR_DEAD) return;
@@ -784,7 +776,7 @@ acscript void UseSkill(int Key) net
     
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
     int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-    int EPCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
+    int EPCost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel * Player.SkillCostMult);
     bool Success;
     
     // Overdrive?
@@ -793,17 +785,17 @@ acscript void UseSkill(int Key) net
         Overdrive = true;
     
     // Overdriving an unlearnt skill will learn it
-    if (Overdrive && CheckInventory("DRPGSkillToken") > 0 && CurrentSkill->Level == 0)
+    if (Overdrive && CheckInventory("DRPGSkillToken") > 0 && SkillLevel->Level == 0)
     {
-        CurrentSkill->Level++;
-        CurrentSkill->CurrentLevel++;
+        SkillLevel->Level++;
+        SkillLevel->CurrentLevel++;
         TakeInventory("DRPGSkillToken", 1);
         FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
         return;
     };
     
     // Check if the Skill has been learned yet
-    if (CurrentSkill->Level == 0)
+    if (SkillLevel->Level == 0)
     {
         SetFont("BIGFONT");
         HudMessage("You don't know this skill yet\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
@@ -841,21 +833,21 @@ acscript void UseSkill(int Key) net
         // Debugging
         if (GetCVar("drpg_debug"))
         {
-            Log("\cdDEBUG: \c-EP Cost for %s (\cdLevel %d\c-): \cn%d\n", CurrentSkill->Name, CurrentSkill->CurrentLevel, EPCost);
+            Log("\cdDEBUG: \c-EP Cost for %s (\cdLevel %d\c-): \cn%d\n", CurrentSkill->Name, SkillLevel->CurrentLevel, EPCost);
             Log("\cdDEBUG: \c-Data Category/Index: \cd%d\c-, \cd%d\n", DataCategory, DataIndex);
             Log("\cdDEBUG: \c-Skill Data passed: \cd%d\n", *(int *)Data);
         };
         
         // PWAA-9001 Accessory Handling - Increase skill level intermittently
-        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && CurrentSkill->CurrentLevel < CurrentSkill->MaxLevel)
-                CurrentSkill->CurrentLevel++;
+        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
+                SkillLevel->CurrentLevel++;
         
         // Use Skill
-        Success = CurrentSkill->Use(CurrentSkill, Data);
+        Success = CurrentSkill->Use(SkillLevel, Data);
         
         // PWAA-9001 Accessory Handling - Change back to previous level
-        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && CurrentSkill->CurrentLevel < CurrentSkill->MaxLevel)
-            CurrentSkill->CurrentLevel--;
+        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
+            SkillLevel->CurrentLevel--;
         
         // Check if the skill use was successful
         if (Success)
@@ -869,12 +861,12 @@ acscript void UseSkill(int Key) net
     };
 };
 
-acscript bool Heal(Skill *Self, void *Data)
+acscript bool Heal(SkillLevelInfo *SkillLevel, void *Data)
 {
     int HealAmount;
     
     // Calculate healing amount based on level
-    HealAmount = 25 * Self->CurrentLevel;
+    HealAmount = 25 * SkillLevel->CurrentLevel;
     
     // Refund - If your health is max or above
     if (Player.ActualHealth >= Player.HealthMax && !HaveStatusEffect())
@@ -889,13 +881,13 @@ acscript bool Heal(Skill *Self, void *Data)
     ActivatorSound("skills/heal", 127);
     
     // Level 3+ - Remove Status Effects
-    if (Self->Level > 2)
+    if (SkillLevel->Level > 2)
         ClearStatusEffects();
     
     return true;
 };
 
-acscript bool HealSummons(Skill *Self, void *Data)
+acscript bool HealSummons(SkillLevelInfo *SkillLevel, void *Data)
 {
     // Refund - If you have no summoned monsters
     if (Player.Summons == 0)
@@ -918,12 +910,12 @@ acscript bool HealSummons(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool HealTeam(Skill *Self, void *Data)
+acscript bool HealTeam(SkillLevelInfo *SkillLevel, void *Data)
 {
     int PlayerTID = Player.TID;
     int HealAmount;
     
-    HealAmount = 25 * Self->CurrentLevel;
+    HealAmount = 25 * SkillLevel->CurrentLevel;
     
     for (int i = 0; i < MAX_PLAYERS; i++)
         if (PlayerInGame(i))
@@ -932,7 +924,7 @@ acscript bool HealTeam(Skill *Self, void *Data)
             AddHealth(HealAmount, 100);
             
             // Level 3+ - Remove Status Effects
-            if (Self->Level > 2)
+            if (SkillLevel->Level > 2)
                 ClearStatusEffects();
             
             FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
@@ -944,7 +936,7 @@ acscript bool HealTeam(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool Decontaminate(Skill *Self, void *Data)
+acscript bool Decontaminate(SkillLevelInfo *SkillLevel, void *Data)
 {
     if (Player.Toxicity <= 0)
     {
@@ -952,23 +944,23 @@ acscript bool Decontaminate(Skill *Self, void *Data)
         return false;
     };
     
-    Player.Toxicity -= (25 * Self->CurrentLevel);
+    Player.Toxicity -= (25 * SkillLevel->CurrentLevel);
     Player.ToxicTimer = 0;
     Player.ToxicOffset = 0;
     Player.ToxicStage = 0;
     
     ActivatorSound("skills/decontaminate", 127);
-    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0 + (0.25 * Self->CurrentLevel));
+    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0 + (0.25 * SkillLevel->CurrentLevel));
     
     return true;
 };
 
-acscript bool Repair(Skill *Self, void *Data)
+acscript bool Repair(SkillLevelInfo *SkillLevel, void *Data)
 {
     int RepairAmount;
     
     // Calculate repair amount based on level
-    switch (Self->CurrentLevel)
+    switch (SkillLevel->CurrentLevel)
     {
     case 1: RepairAmount = Player.ArmorMax / 4;     break; // 25%
     case 2: RepairAmount = Player.ArmorMax / 2;     break; // 50%
@@ -999,7 +991,7 @@ acscript bool Repair(Skill *Self, void *Data)
     return false;
 };
 
-acscript bool Powerup(Skill *Self, void *Data)
+acscript bool Powerup(SkillLevelInfo *SkillLevel, void *Data)
 {
     int Index = *(int *)Data;
     
@@ -1012,7 +1004,7 @@ acscript bool Powerup(Skill *Self, void *Data)
             return false;
         };
         ActivatorSound("powerups/protect", 127);
-        GiveInventory(StrParam("DRPGSkillInvulnerability%d\n", Self->CurrentLevel), 1);
+        GiveInventory(StrParam("DRPGSkillInvulnerability%d\n", SkillLevel->CurrentLevel), 1);
         break;
     case 1: // Invisibility
         if (CheckInventory("PowerShadow"))
@@ -1021,7 +1013,7 @@ acscript bool Powerup(Skill *Self, void *Data)
             return false;
         };
         ActivatorSound("powerups/invis", 127);
-        GiveInventory(StrParam("DRPGSkillInvisibility%d\n", Self->CurrentLevel), 1);
+        GiveInventory(StrParam("DRPGSkillInvisibility%d\n", SkillLevel->CurrentLevel), 1);
         break;
     case 3: // Iron Feet
         if (CheckInventory("PowerIronFeet"))
@@ -1055,16 +1047,16 @@ acscript bool Powerup(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool BulletTime(Skill *Self, void *Data)
+acscript bool BulletTime(SkillLevelInfo *SkillLevel, void *Data)
 {
-    if (Self->CurrentLevel == 1) // Stutter Time
+    if (SkillLevel->CurrentLevel == 1) // Stutter Time
     {
         BulletTimeTimer = 350;
         SpawnForced("DRPGTimeFreezerQuickSound", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
         TakeInventory("PowerTimeFreezer", 1);
         GiveInventory("DRPGTimeFreezerQuick", 1);
     };
-    if (Self->CurrentLevel == 2) // Freeze Time
+    if (SkillLevel->CurrentLevel == 2) // Freeze Time
     {
         SpawnForced("DRPGTimeFreezerSound", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
         GiveInventory("DRPGTimeFreezer", 1);
@@ -1073,7 +1065,7 @@ acscript bool BulletTime(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool DropWeapon(Skill *Self, void *Data)
+acscript bool DropWeapon(SkillLevelInfo *SkillLevel, void *Data)
 {
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
@@ -1081,7 +1073,7 @@ acscript bool DropWeapon(Skill *Self, void *Data)
     fixed Z = GetActorZ(0) + 48.0;
     str Weapon;
     
-    switch (Self->CurrentLevel)
+    switch (SkillLevel->CurrentLevel)
     {
     case 1: Weapon = "Pistol";          break;
     case 2: Weapon = "Shotgun";         break;
@@ -1107,7 +1099,7 @@ acscript bool DropWeapon(Skill *Self, void *Data)
     return false;
 };
 
-acscript bool DropAmmo(Skill *Self, void *Data)
+acscript bool DropAmmo(SkillLevelInfo *SkillLevel, void *Data)
 {
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
@@ -1115,7 +1107,7 @@ acscript bool DropAmmo(Skill *Self, void *Data)
     fixed Z = GetActorZ(0) + 48.0;
     str Ammo;
     
-    switch (Self->CurrentLevel)
+    switch (SkillLevel->CurrentLevel)
     {
     case 1:         Ammo = "DRPGSmallBackpack"; break;
     case 2:         Ammo = "DRPGBackpack";      break;
@@ -1124,7 +1116,7 @@ acscript bool DropAmmo(Skill *Self, void *Data)
     
     if (Spawn(Ammo, X, Y, Z, 0, Angle))
     {
-        if (Self->CurrentLevel == 4 && GetCVar("drpg_ext_doomrl"))
+        if (SkillLevel->CurrentLevel == 4 && GetCVar("drpg_ext_doomrl"))
             Spawn("RLSupplyCrate", X, Y, Z, 0, Angle);
         
         ActivatorSound("skills/drop", 127);
@@ -1140,7 +1132,7 @@ acscript bool DropAmmo(Skill *Self, void *Data)
     return false;
 };
 
-acscript bool UseAura(Skill *Self, void *Data)
+acscript bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
 {
     int Index = *(int *)Data;
     
@@ -1170,13 +1162,16 @@ acscript bool UseAura(Skill *Self, void *Data)
     // Apply Aura
     Player.Aura[Index] = true;
     
+    // Aura Level
+    Player.AuraLevel[Index] = SkillLevel->CurrentLevel;
+    
     // Aura Cost Multiplier
     Player.AuraCostMult += 0.1;
     
     return true;
 };
 
-acscript bool Weaken(Skill *Self, void *Data)
+acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
 {
     int PlayerNum = PlayerNumber();
     
@@ -1211,7 +1206,7 @@ acscript bool Weaken(Skill *Self, void *Data)
     Stats->Luck /= 2;
     
     // Destroy Aura
-    if (Self->CurrentLevel == 2) 
+    if (SkillLevel->CurrentLevel == 2) 
         Stats->Aura = 0;
     
     // Cap Level
@@ -1229,23 +1224,23 @@ acscript bool Weaken(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool Translocate(Skill *Self, void *Data)
+acscript bool Translocate(SkillLevelInfo *SkillLevel, void *Data)
 {
     FireProjectile("DRPGTranslocateBall");
     return true;
 };
 
-acscript bool Repulse(Skill *Self, void *Data)
+acscript bool Repulse(SkillLevelInfo *SkillLevel, void *Data)
 {
-    SetInventory(StrParam("DRPGSkillBlast%d\n", Self->CurrentLevel), 1);
-    UseInventory(StrParam("DRPGSkillBlast%d\n", Self->CurrentLevel));
+    SetInventory(StrParam("DRPGSkillBlast%d\n", SkillLevel->CurrentLevel), 1);
+    UseInventory(StrParam("DRPGSkillBlast%d\n", SkillLevel->CurrentLevel));
     
-    FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.5 + (0.25 * Self->CurrentLevel));
+    FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.5 + (0.25 * SkillLevel->CurrentLevel));
     
     return true;
 };
 
-acscript bool AuraSteal(Skill *Self, void *Data)
+acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
 {
     int PlayerNum = PlayerNumber();
     int AuraType;
@@ -1288,13 +1283,14 @@ acscript bool AuraSteal(Skill *Self, void *Data)
     
     // Apply Aura to player
     Player.Aura[AuraType] = true;
+    Player.AuraLevel[AuraType] = Player.Energy / 25 + 1;
     Player.AuraTimer += AuraTime;
     
     ActivatorSound("skills/aurasteal", 127);
     return true;
 };
 
-acscript bool SoulSteal(Skill *Self, void *Data)
+acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
 {
     str[] SoulTypes =
     {
@@ -1346,7 +1342,7 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     };
     
     // Leech Amount
-    int LeechAmount = (int)((fixed)Stats->HealthMax * ((fixed)Self->CurrentLevel / 10.0));
+    int LeechAmount = (int)((fixed)Stats->HealthMax * ((fixed)SkillLevel->CurrentLevel / 10.0));
     if (LeechAmount < 1)
         LeechAmount = 1;
     
@@ -1406,7 +1402,7 @@ acscript bool SoulSteal(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool Summon(Skill *Self, void *Data)
+acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
 {
     int Index = *(int *)Data;
     fixed Angle = GetActorAngle(0);
@@ -1570,7 +1566,7 @@ acscript bool Summon(Skill *Self, void *Data)
     
     if (Index == 0) // Marines
     {
-        switch (Self->CurrentLevel)
+        switch (SkillLevel->CurrentLevel)
         {
         case 1: Name = "DRPGMarineGuardPistolSummoned";    break;
         case 2: Name = "DRPGMarineShotgunSummoned";        break;
@@ -1584,7 +1580,7 @@ acscript bool Summon(Skill *Self, void *Data)
     else // Monsters
     {
         if (GetCVar("drpg_ext_doomrl"))
-            Name = DRLASummons[Index - 1][Self->CurrentLevel - 1]
+            Name = DRLASummons[Index - 1][SkillLevel->CurrentLevel - 1]
         else if (GetCVar("drpg_ext_extras"))
             Name = StrParam("DRPG%sExtras\n", Summons[Index - 1])
         else
@@ -1608,6 +1604,7 @@ acscript bool Summon(Skill *Self, void *Data)
         SetActorProperty(NewID, APROP_Friendly, 1);
         SetActorProperty(NewID, APROP_MasterTID, Player.TID);
         GiveActorInventory(NewID, "DRPGFriendlyBooster", 1);
+        SetActorState(NewID, "See");
         
         // Setup Stats
         Delay(4); // We need this initial delay to make sure the ID is valid
@@ -1642,7 +1639,7 @@ acscript bool Summon(Skill *Self, void *Data)
     };
 };
 
-acscript bool BreakdownArmor(Skill *Self, void *Data)
+acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
 {
     int Armor = CheckInventory("BasicArmor");
     
@@ -1680,7 +1677,7 @@ acscript bool BreakdownArmor(Skill *Self, void *Data)
     return false;
 };
 
-acscript bool ForceWall(Skill *Self, void *Data)
+acscript bool ForceWall(SkillLevelInfo *SkillLevel, void *Data)
 {
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
@@ -1689,7 +1686,7 @@ acscript bool ForceWall(Skill *Self, void *Data)
     
     Thing_Remove(ForceFieldTID + PlayerNumber());
     
-    switch (Self->CurrentLevel)
+    switch (SkillLevel->CurrentLevel)
     {
     case 1:
         if (!Spawn("DRPGForceField", X, Y, Z, ForceFieldTID + PlayerNumber(), Angle) == 0) {return true;}
@@ -1712,7 +1709,7 @@ acscript bool ForceWall(Skill *Self, void *Data)
     return false;
 };
 
-acscript bool Rally(Skill *Self, void *Data)
+acscript bool Rally(SkillLevelInfo *SkillLevel, void *Data)
 {
     fixed X = GetActorX(0);
     fixed Y = GetActorY(0);
@@ -1736,7 +1733,7 @@ acscript bool Rally(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool Unsummon(Skill *Self, void *Data)
+acscript bool Unsummon(SkillLevelInfo *SkillLevel, void *Data)
 {
     int EPAdd;
     
@@ -1752,7 +1749,7 @@ acscript bool Unsummon(Skill *Self, void *Data)
         // Continue if there's no summon in this slot
         if (Player.SummonTID[i] == 0) continue;
         
-        if (Self->CurrentLevel == 2 && GetActorProperty(Player.SummonTID[i], APROP_Health) > 0)
+        if (SkillLevel->CurrentLevel == 2 && GetActorProperty(Player.SummonTID[i], APROP_Health) > 0)
             EPAdd += (int)((fixed)Player.EPMax * 0.01) + 1;
         
         // Overdrive - Remove summons (teleport out) instead of killing them
@@ -1768,7 +1765,7 @@ acscript bool Unsummon(Skill *Self, void *Data)
     
     
     Log("EPAdd: %d\n", EPAdd);
-    if (Self->CurrentLevel == 2)
+    if (SkillLevel->CurrentLevel == 2)
         Player.EP += EPAdd;
 
     Player.Summons = 0;
@@ -1778,7 +1775,7 @@ acscript bool Unsummon(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool Recall(Skill *Self, void *Data)
+acscript bool Recall(SkillLevelInfo *SkillLevel, void *Data)
 {
     // Fail if you're in the Arena or Marines are hostile
     if (ArenaActive || MarinesHostile)
@@ -1792,30 +1789,22 @@ acscript bool Recall(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool Magnetize(Skill *Self, void *Data)
+acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
 {
+    int *TID = (int *)Player.DropTID->Data;
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0);
     fixed Y = GetActorY(0);
-    fixed Z = GetActorZ(0) + (GetActorProperty(0, APROP_Height) / 2);
+    fixed Z = GetActorZ(0) + (GetActorPropertyFixed(0, APROP_Height) / 2);
+    int AngleDivide;
     fixed AngleAdd;
-    int ItemCount;
-    auto int[MAX_DROPS] ItemTIDs;
     
     CleanDropTIDArray();
     
-    // Count all the items in the DropTID array
-    for (int i = 0; i < MAX_DROPS; i++)
-    {
-        if (Player.DropTID[i] != -1)
-        {
-            ItemTIDs[ItemCount] = Player.DropTID[i];
-            ItemCount++;
-        };
-    };
+    AngleDivide = Player.DropTID->Position;
     
     // Refund - If there are no items in the array
-    if (ItemCount == 0)
+    if (Player.DropTID->Position == 0)
     {
         ActivatorSound("menu/error", 127);
         return false;
@@ -1824,8 +1813,11 @@ acscript bool Magnetize(Skill *Self, void *Data)
     // Overdrive - Pull the items on top of you and pick them all up
     if (Overdrive)
     {
-        for (int i = 0; i < ItemCount; i++)
-            SetActorPosition(ItemTIDs[i], X, Y, Z, 0);
+        for (int i = 0; i < Player.DropTID->Position; i++)
+        {
+            SetActorPosition(TID[i], X, Y, Z, 0);
+            GiveActorInventory(TID[i], "DRPGMagnetizedItem", 1);
+        };
         
         SetActorVelocity(0, 0.01, 0.01, 0, true, false);
         
@@ -1834,13 +1826,14 @@ acscript bool Magnetize(Skill *Self, void *Data)
         return true;
     };
     
-    AngleAdd = 1.0 / ItemCount;
+    AngleAdd = 1.0 / AngleDivide;
     
-    for (int i = 0; i < ItemCount; i++)
+    for (int i = 0; i < Player.DropTID->Position; i++)
     {
         X = GetActorX(0) + Cos(Angle) * 64.0;
         Y = GetActorY(0) + Sin(Angle) * 64.0;
-        SetActorPosition(ItemTIDs[i], X, Y, Z, 0);
+        SetActorPosition(TID[i], X, Y, Z, 0);
+        GiveActorInventory(TID[i], "DRPGMagnetizedItem", 1);
         Angle += AngleAdd;
     };
     
@@ -1849,13 +1842,13 @@ acscript bool Magnetize(Skill *Self, void *Data)
     return true;
 };
 
-acscript bool WirelessLocker(Skill *Self, void *Data)
+acscript bool WirelessLocker(SkillLevelInfo *SkillLevel, void *Data)
 {
-    Locker(true, Self->CurrentLevel);
+    Locker(true, SkillLevel->CurrentLevel);
     return true;
 };
 
-acscript bool Transport(Skill *Self, void *Data)
+acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
 {
     // If you're dead, terminate
     if (ClassifyActor(Player.TID) & ACTOR_DEAD) return false;
@@ -2015,9 +2008,19 @@ acscript void ClearStatusEffects()
 script void CleanDropTIDArray()
 {
     // [KS] !!WARNING!! THIS CANNOT BE A FUNCTION.
-    for (int i = 0; i < MAX_DROPS; i++)
-        if (Player.DropTID[i] != -1 && ClassifyActor(Player.DropTID[i]) == ACTOR_NONE)
-            Player.DropTID[i] = -1;
+    int *TID = (int *)Player.DropTID->Data;
+    for (int i = 0; i < Player.DropTID->Position; i++)
+    {
+        if (TID[i] == 0 || ClassifyActor(TID[i]) == ACTOR_NONE)
+        {
+            TID[i] = TID[Player.DropTID->Position - 1];
+            TID[Player.DropTID->Position - 1] = 0;
+            Player.DropTID->Position--;
+            i -= 2;
+            if (i < 0)
+                i = 0;
+        };
+    };
 };
 
 function int ScaleEPCost(int Cost)
@@ -2036,15 +2039,6 @@ function int ScaleEPCost(int Cost)
 function void CheckSkills()
 {
     // Aura-related vars to save typing :P
-    int RedAuraLevel = Skills[2][0].CurrentLevel;
-    int GreenAuraLevel = Skills[2][1].CurrentLevel;
-    int WhiteAuraLevel = Skills[2][2].CurrentLevel;
-    int PinkAuraLevel = Skills[2][3].CurrentLevel;
-    int BlueAuraLevel = Skills[2][4].CurrentLevel;
-    int PurpleAuraLevel = Skills[2][5].CurrentLevel;
-    int OrangeAuraLevel = Skills[2][6].CurrentLevel;
-    int DarkBlueAuraLevel = Skills[2][7].CurrentLevel;
-    int YellowAuraLevel = Skills[2][8].CurrentLevel;
     fixed LuckMult = 1;
     fixed X = GetActorX(0);
     fixed Y = GetActorY(0);
@@ -2078,17 +2072,17 @@ function void CheckSkills()
         if (Player.Aura[AURA_RED])
             if (Player.SoulActive[SOUL_RED])
                 GiveInventory("DRPGRedAuraDamage6", 1)
-            else if (RedAuraLevel >= 1)
-                GiveInventory(StrParam("DRPGRedAuraDamage%d\n", RedAuraLevel), 1);
+            else if (Player.AuraLevel[AURA_RED] >= 1)
+                GiveInventory(StrParam("DRPGRedAuraDamage%d\n", Player.AuraLevel[AURA_RED]), 1);
         
         // Green Aura
         if (Player.Aura[AURA_GREEN])
         {
-            if (GreenAuraLevel == 1)
+            if (Player.AuraLevel[AURA_GREEN] == 1)
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
-            if (GreenAuraLevel == 2)
+            if (Player.AuraLevel[AURA_GREEN] == 2)
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.5;
-            if (GreenAuraLevel == 3 || Player.SoulActive[SOUL_GREEN])
+            if (Player.AuraLevel[AURA_GREEN] == 3 || Player.SoulActive[SOUL_GREEN])
             {
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
                 GiveInventory("DRPGGreenAuraIronFeet", 1);
@@ -2098,54 +2092,54 @@ function void CheckSkills()
         // White Aura
         if (Player.Aura[AURA_WHITE])
         {
-            if (WhiteAuraLevel >= 2 || Player.SoulActive[SOUL_WHITE])
+            if (Player.AuraLevel[AURA_WHITE] >= 2 || Player.SoulActive[SOUL_WHITE])
             {
                 if (Player.Combo == 0) Player.Combo++;
                 Player.ComboTimer = COMBO_MAX - 1;
             };
-            if (WhiteAuraLevel == 3)
+            if (Player.AuraLevel[AURA_WHITE] == 3)
                 if ((Timer() % (35 * 4)) == 1)
                     Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
-            if (WhiteAuraLevel >= 4 || Player.SoulActive[SOUL_WHITE])
+            if (Player.AuraLevel[AURA_WHITE] >= 4 || Player.SoulActive[SOUL_WHITE])
                 if ((Timer() % (35 * 2)) == 1)
                     Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
         };
         
         // Pink Aura
         if (Player.Aura[AURA_PINK])
-            if (PinkAuraLevel >= 2 || Player.SoulActive[SOUL_PINK])
+            if (Player.AuraLevel[AURA_PINK] >= 2 || Player.SoulActive[SOUL_PINK])
                 GiveInventory("DRPGPinkAuraDrain", 1);
         
         // Blue Aura
         if (Player.Aura[AURA_BLUE])
         {
-            if (BlueAuraLevel == 1)
+            if (Player.AuraLevel[AURA_BLUE] == 1)
                 Player.SkillCostMult /= 1.33;
-            if (BlueAuraLevel == 2)
+            if (Player.AuraLevel[AURA_BLUE] == 2)
                 Player.SkillCostMult /= 2;
-            if (BlueAuraLevel == 3 || Player.SoulActive[SOUL_BLUE])
+            if (Player.AuraLevel[AURA_BLUE] == 3 || Player.SoulActive[SOUL_BLUE])
                 Player.SkillCostMult /= 4;
         };
         
         // Purple Aura
         if (Player.Aura[AURA_PURPLE])
         {
-            if (PurpleAuraLevel == 1)
+            if (Player.AuraLevel[AURA_PURPLE] == 1)
             {
                 Player.HPAmount *= 2;
                 Player.EPAmount *= 2;
             };
-            if (PurpleAuraLevel == 2)
+            if (Player.AuraLevel[AURA_PURPLE] == 2)
             {
                 Player.HPAmount *= 3;
                 Player.EPAmount *= 3;
             };
-            if (PurpleAuraLevel == 3)
+            if (Player.AuraLevel[AURA_PURPLE] == 3)
             {
                 Player.HPAmount *= 4;
                 Player.EPAmount *= 4;
             };
-            if (PurpleAuraLevel == 4 || Player.SoulActive[SOUL_PURPLE])
+            if (Player.AuraLevel[AURA_PURPLE] == 4 || Player.SoulActive[SOUL_PURPLE])
             {
                 Player.HPAmount *= 4;
                 Player.EPAmount *= 4;
@@ -2157,51 +2151,51 @@ function void CheckSkills()
         // Orange Aura
         if (Player.Aura[AURA_ORANGE])
         {
-            if (OrangeAuraLevel >= 1 || Player.SoulActive[SOUL_ORANGE])
+            if (Player.AuraLevel[AURA_ORANGE] >= 1 || Player.SoulActive[SOUL_ORANGE])
                 Player.Speed *= 2;
-            if (OrangeAuraLevel >= 2 || Player.SoulActive[SOUL_ORANGE])
+            if (Player.AuraLevel[AURA_ORANGE] >= 2 || Player.SoulActive[SOUL_ORANGE])
                 Player.JumpHeight *= 2;
-            if (OrangeAuraLevel >= 3 || Player.SoulActive[SOUL_ORANGE])
+            if (Player.AuraLevel[AURA_ORANGE] >= 3 || Player.SoulActive[SOUL_ORANGE])
                 Player.WeaponSpeed = 100;
         };
 
         // Dark Blue Aura
         if (Player.Aura[AURA_DARKBLUE])
         {
-            if (DarkBlueAuraLevel == 5)
+            if (Player.AuraLevel[AURA_DARKBLUE] == 5)
                 AmmoRegenMult = 2;
-            if (DarkBlueAuraLevel == 6 || Player.SoulActive[SOUL_DARKBLUE])
+            if (Player.AuraLevel[AURA_DARKBLUE] == 6 || Player.SoulActive[SOUL_DARKBLUE])
                 AmmoRegenMult = 4;
-            if (DarkBlueAuraLevel >= 1 || Player.SoulActive[SOUL_DARKBLUE])
+            if (Player.AuraLevel[AURA_DARKBLUE] >= 1 || Player.SoulActive[SOUL_DARKBLUE])
                 if ((Timer() % (35 / 2)) == 0)
                     GiveInventory("Clip", AmmoRegenMult);
-            if (DarkBlueAuraLevel >= 2 || Player.SoulActive[SOUL_DARKBLUE])
+            if (Player.AuraLevel[AURA_DARKBLUE] >= 2 || Player.SoulActive[SOUL_DARKBLUE])
                 if ((Timer() % 35) == 1)
                     GiveInventory("Shell", AmmoRegenMult);
-            if (DarkBlueAuraLevel >= 3 || Player.SoulActive[SOUL_DARKBLUE])
+            if (Player.AuraLevel[AURA_DARKBLUE] >= 3 || Player.SoulActive[SOUL_DARKBLUE])
                 if ((Timer() % (35 * 2)) == 0)
                     GiveInventory("RocketAmmo", AmmoRegenMult);
-            if (DarkBlueAuraLevel >= 4 || Player.SoulActive[SOUL_DARKBLUE])
+            if (Player.AuraLevel[AURA_DARKBLUE] >= 4 || Player.SoulActive[SOUL_DARKBLUE])
                 if ((Timer() % (35 / 2)) == 0)
                     GiveInventory("Cell", AmmoRegenMult);
-            if (DarkBlueAuraLevel >= 7 || Player.SoulActive[SOUL_DARKBLUE])
+            if (Player.AuraLevel[AURA_DARKBLUE] >= 7 || Player.SoulActive[SOUL_DARKBLUE])
                 GiveInventory("DRPGDarkBlueAuraInfiniteAmmo", 1);
         };
         
         // Yellow Aura
         if (Player.Aura[AURA_YELLOW])
         {
-            if ((Timer() % (35 * (6 - YellowAuraLevel))) == 1)
+            if ((Timer() % (35 * (6 - Player.AuraLevel[AURA_YELLOW]))) == 1)
                 GiveInventory("DRPGCredits", (Player.RankLevel + 1));
-            if (YellowAuraLevel == 1)
+            if (Player.AuraLevel[AURA_YELLOW] == 1)
                 LuckMult = 1.25;
-            if (YellowAuraLevel == 2)
+            if (Player.AuraLevel[AURA_YELLOW] == 2)
                 LuckMult = 1.5;
-            if (YellowAuraLevel == 3)
+            if (Player.AuraLevel[AURA_YELLOW] == 3)
                 LuckMult = 2;
-            if (YellowAuraLevel == 4)
+            if (Player.AuraLevel[AURA_YELLOW] == 4)
                 LuckMult = 4;
-            if (YellowAuraLevel == 5 || Player.SoulActive[SOUL_YELLOW])
+            if (Player.AuraLevel[AURA_YELLOW] == 5 || Player.SoulActive[SOUL_YELLOW])
                 LuckMult = 8;
             
             Player.HealthChance *= LuckMult;
@@ -2257,6 +2251,7 @@ function void CheckSkills()
         if (Player.AuraTimer <= 0)
         {
             Player.Aura[i] = false;
+            Player.AuraLevel[i] = 0;
             Player.SoulActive[i] = false;
         };
     

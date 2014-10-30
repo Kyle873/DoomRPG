@@ -725,9 +725,10 @@ function void DrawSkillMenu()
         "Utility";
     };
     
-    Skill *CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
-    int SkillCost = ScaleEPCost(CurrentSkill->Cost * CurrentSkill->CurrentLevel * Player.SkillCostMult);
-    int SkillCostNext = ScaleEPCost(CurrentSkill->Cost * (CurrentSkill->CurrentLevel + 1) * Player.SkillCostMult);
+    SkillPtr CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
+    SkillLevelInfo *SkillLevel = &Player.SkillLevel[Player.SkillPage][Player.MenuIndex];
+    int SkillCost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel * Player.SkillCostMult);
+    int SkillCostNext = ScaleEPCost(CurrentSkill->Cost * (SkillLevel->CurrentLevel + 1) * Player.SkillCostMult);
     
     // Title
     SetFont("BIGFONT");
@@ -741,15 +742,15 @@ function void DrawSkillMenu()
     // Skill Tokens
     PrintSprite("TOKCA0", 0, 232.1, 64.1, 0.05);
     SetFont("BIGFONT");
-    if (CurrentSkill->Level < CurrentSkill->MaxLevel)
-        HudMessage("%d \cg(-%d)\n", CheckInventory("DRPGSkillToken"), CurrentSkill->Level + 1, HUDMSG_PLAIN, 0, CR_DARKGREEN, 256.1, 54.0, 0.05)
+    if (SkillLevel->Level < CurrentSkill->MaxLevel)
+        HudMessage("%d \cg(-%d)\n", CheckInventory("DRPGSkillToken"), SkillLevel->Level + 1, HUDMSG_PLAIN, 0, CR_DARKGREEN, 256.1, 54.0, 0.05)
     else
         HudMessage("%d\n", CheckInventory("DRPGSkillToken"), HUDMSG_PLAIN, 0, CR_DARKGREEN, 256.1, 54.0, 0.05);
 
     // Skill Cost/Next Level Cost
     PrintSprite("EPUPA0", 0, 248.0, 88.1, 0.05);
     SetFont("BIGFONT");
-    if (CurrentSkill->Level < CurrentSkill->MaxLevel)
+    if (SkillLevel->Level < CurrentSkill->MaxLevel)
         HudMessage("%d\nNext Level: %d\n", SkillCost, SkillCostNext,
                    HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 256.1, 72.1, 0.05)
     else
@@ -765,12 +766,54 @@ function void DrawSkillMenu()
                    HUDMSG_PLAIN, 0, CR_CYAN, 256.1, 112.0, 0.05);
     };
     
+    // Active Aura Levels
+    if (Player.AuraTimer > 0)
+    {
+        static str[AURA_MAX] AuraInfo =
+        {
+            "AuraRed";  
+            "AuraGree";
+            "AuraWhit";
+            "AuraPink";
+            "AuraCyan";
+            "AuraPurp";
+            "AuraOran";
+            "AuraBlue";
+            "AuraYell";
+            "AuraBlac";
+        };
+        
+        static int[AURA_MAX] AuraColors =
+        {
+            CR_RED;
+            CR_GREEN;
+            CR_WHITE;
+            CR_BRICK;
+            CR_CYAN;
+            CR_PURPLE;
+            CR_ORANGE;
+            CR_BLUE;
+            CR_YELLOW;
+            CR_BLACK;
+        };
+        
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Player.Aura[i])
+            {
+                PrintSpritePulse(AuraIcons[i], 0, 232.0 + (i * 24.0), 176.0, 0.75, 64.0, 0.25);
+                SetFont("BIGFONT");
+                HudMessage("%d\n", Player.AuraLevel[i],
+                           HUDMSG_PLAIN, 0, AuraColors[i], 232.0 + (i * 24.0), 160.0, 0.05);
+            };
+    };
+    
     // Skill Grid
     for (int i = 0; i < 3; i++)
         for (int j = 0; j < 6; j++)
         {
             int Index = j + (i * 6);
-            Skill *CurrentSkillIter = &Skills[Player.SkillPage][Index];
+            SkillPtr CurrentSkillIter = &Skills[Player.SkillPage][Index];
+            SkillLevelInfo *SkillLevelIter = &Player.SkillLevel[Player.SkillPage][Index];
             int Color = CR_RED;
             
             // Break when we reach the last skill
@@ -784,13 +827,13 @@ function void DrawSkillMenu()
                     HudMessage("%d\n", k + 1, HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 24.1 + (j * 34.0), 40.0 + (i * 34.0), 0.05);
             
             // Determine Skill Levels Color
-            if (CurrentSkillIter->Level >= CurrentSkillIter->MaxLevel)
+            if (SkillLevelIter->Level >= CurrentSkillIter->MaxLevel)
                 Color = CR_GREEN
-            else if (CurrentSkillIter->Level > 0)
+            else if (SkillLevelIter->Level > 0)
                 Color = CR_WHITE;
             
             // Skill Levels
-            HudMessage("%d/%d\n", CurrentSkillIter->CurrentLevel, CurrentSkillIter->MaxLevel, HUDMSG_PLAIN, 0, Color, 0.1 + (j * 34.0), 64.0 + (i * 34.0), 0.05);
+            HudMessage("%d/%d\n", SkillLevelIter->CurrentLevel, CurrentSkillIter->MaxLevel, HUDMSG_PLAIN, 0, Color, 0.1 + (j * 34.0), 64.0 + (i * 34.0), 0.05);
             
             // Skill Icon
             PrintSprite(Skills[Player.SkillPage][Index].Icon, 0, 0.1 + (j * 34.0), 52.0 + (i * 34.0), 0.05);
@@ -805,19 +848,19 @@ function void DrawSkillMenu()
     
     // Skill Name
     SetFont("BIGFONT");
-    HudMessage("%s\n", CurrentSkill->Name, HUDMSG_PLAIN, 0, (CurrentSkill->Level > 0 ? CR_WHITE : CR_RED),
+    HudMessage("%s\n", CurrentSkill->Name, HUDMSG_PLAIN, 0, (SkillLevel->Level > 0 ? CR_WHITE : CR_RED),
                0.1, 154.1, 0.05);
     
     // Skill Description
     SetFont("SMALLFONT");
-    if (CurrentSkill->Level > 0 && CurrentSkill->Level < CurrentSkill->MaxLevel)
+    if (SkillLevel->Level > 0 && SkillLevel->Level < CurrentSkill->MaxLevel)
         HudMessage("%s\n\n\cdNext Level\n%s\n",
-                   CurrentSkill->Description[CurrentSkill->CurrentLevel - 1],
-                   CurrentSkill->Description[CurrentSkill->Level],
+                   CurrentSkill->Description[SkillLevel->CurrentLevel - 1],
+                   CurrentSkill->Description[SkillLevel->Level],
                    HUDMSG_PLAIN, 0, CR_YELLOW,
                    0.1, 168.1, 0.05)
-    else if (CurrentSkill->Level == CurrentSkill->MaxLevel)
-        HudMessage("%s\n", CurrentSkill->Description[CurrentSkill->CurrentLevel - 1],
+    else if (SkillLevel->Level == CurrentSkill->MaxLevel)
+        HudMessage("%s\n", CurrentSkill->Description[SkillLevel->CurrentLevel - 1],
                    HUDMSG_PLAIN, 0, CR_YELLOW,
                    0.1, 168.1, 0.05)
     else
@@ -1207,9 +1250,9 @@ function void MenuInput()
         {
             if (Buttons & BT_SPEED)
             {
-                if (Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel > 1)
+                if (Player.SkillLevel[Player.SkillPage][Player.MenuIndex].CurrentLevel > 1)
                 {
-                    Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel--;
+                    Player.SkillLevel[Player.SkillPage][Player.MenuIndex].CurrentLevel--;
                     ActivatorSound("menu/move", 127);
                 };
             }
@@ -1224,9 +1267,9 @@ function void MenuInput()
         {
             if (Buttons & BT_SPEED)
             {
-                if (Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel < Skills[Player.SkillPage][Player.MenuIndex].Level)
+                if (Player.SkillLevel[Player.SkillPage][Player.MenuIndex].CurrentLevel < Player.SkillLevel[Player.SkillPage][Player.MenuIndex].Level)
                 {
-                    Skills[Player.SkillPage][Player.MenuIndex].CurrentLevel++;
+                    Player.SkillLevel[Player.SkillPage][Player.MenuIndex].CurrentLevel++;
                     ActivatorSound("menu/move", 127);
                 };
             }
@@ -1509,15 +1552,16 @@ function void IncreaseStat(int Stat)
 
 function void IncreaseSkill()
 {
-    Skill *CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
+    SkillPtr CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
+    SkillLevelInfo *SkillLevel = &Player.SkillLevel[Player.SkillPage][Player.MenuIndex];
     
     if (CheckInventory("DRPGSkillToken") > 0)
     {
-        if (CurrentSkill->Level < CurrentSkill->MaxLevel && CheckInventory("DRPGSkillToken") > CurrentSkill->Level)
+        if (SkillLevel->Level < CurrentSkill->MaxLevel && CheckInventory("DRPGSkillToken") > SkillLevel->Level)
         {
-            CurrentSkill->Level++;
-            CurrentSkill->CurrentLevel++;
-            TakeInventory("DRPGSkillToken", CurrentSkill->Level);
+            SkillLevel->Level++;
+            SkillLevel->CurrentLevel++;
+            TakeInventory("DRPGSkillToken", SkillLevel->Level);
             ActivatorSound("menu/move", 127);
         };
     }

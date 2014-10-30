@@ -507,9 +507,9 @@ script void MonsterInitStats(int StatFlags)
         if (GetCVar("drpg_monster_shadows"))
             MonsterAura = 10;
         
-        if (MapSpecialInfo.CurrentEvent == MAPEVENT_ALLAURAS)
+        if (CurrentLevel->Event == MAPEVENT_ALLAURAS)
             MonsterAura = Random(1, 10)
-        else if (MapSpecialInfo.CurrentEvent == MAPEVENT_BONUS_RAINBOWS)
+        else if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
             MonsterCapacity *= Random(2, 4);
         
         // Monsters with an aura are *always* specialized in their primary stat
@@ -829,7 +829,7 @@ script void MonsterAuraDisplayHandler()
     };
     
     // Friendly Monster Aura
-    if (GetActorProperty(0, APROP_Friendly) && GetActorProperty(0, APROP_MasterTID) > 0 && Contains(GetActorPropertyString(0, APROP_Nametag), "Turret"))
+    if (GetActorProperty(0, APROP_Friendly) && GetActorProperty(0, APROP_MasterTID) > 0 && !EndsWith(GetActorPropertyString(0, APROP_Nametag), "Turret"))
         SpawnAura(0, 0, false);
     
     // Black Aura Effects
@@ -1275,15 +1275,15 @@ script void MonsterDeath()
     };
     
     // Drop Radiation Suits during the Environmental Hazard event
-    if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && MapSpecialInfo.CurrentEvent == MAPEVENT_TOXICHAZARD)
+    if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
         DropMonsterItem(Killer, DropTID, "DRPGRadSuit", 64);
     
     // Drop Credits
     if (!(Stats->Flags & MF_NODROPS) && CheckInventory("DRPGCredits") > 0)
-        DropMoney(Killer, 0, Random(CheckInventory("DRPGCredits") / 2, CheckInventory("DRPGCredits")));
+        DropMoney(Killer, 0, Random(CheckInventory("DRPGCredits") / 2, CheckInventory("DRPGCredits") * (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS ? 4 : 1)));
     
     // Credit Rain
-    if (Killer > -1 && (Players(Killer).Luck >= 100 || MapSpecialInfo.CurrentEvent == MAPEVENT_BONUS_RAINBOWS) && Random(1, 256) == 1)
+    if (Killer > -1 && (Players(Killer).Luck >= 100 || CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS) && Random(1, 256) == 1)
     {
         fixed Z = GetActorCeilingZ(Players(Killer).TID) - GetActorPropertyFixed(Players(Killer).TID, APROP_Height);
         fixed Radius = GetActorPropertyFixed(Players(Killer).TID, APROP_Radius);

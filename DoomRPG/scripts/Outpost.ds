@@ -207,6 +207,8 @@ acscript void LevelTransport()
     SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     Player.OutpostMenu = OMENU_LEVELTRANSPORT;
     
+    SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+    
     while (true)
     {
         // Stop Underflow
@@ -221,7 +223,95 @@ acscript void LevelTransport()
         
         // Text
         SetFont("BIGFONT");
-        HudMessage("Choose Level:\n\cf%s: %s\n", TeleDest->LumpName, TeleDest->NiceName, HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 1.5, 0.5, 0.05, 0.5);
+        HudMessage("Level Transporter\n", HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 32.1, 32.1, 0.05, 0.5);
+        
+        HudMessage("%s\n", TeleDest->NiceName, HUDMSG_FADEOUT, MENU_ID + 1, CR_GOLD, 32.1, 64.1, 0.05, 0.5);
+        SetFont("SMALLFONT");
+        HudMessage("%s\n", TeleDest->LumpName, HUDMSG_FADEOUT, MENU_ID + 2, CR_ORANGE, 32.1, 80.1, 0.05, 0.5);
+        
+        if (!TeleDest->NeedsRealInfo)
+        {
+            int KillPercentage = 100;
+            int ItemPercentage = 100;
+            int SecretPercentage = 100;
+            
+            if (TeleDest->TotalMonsters > 0)
+                KillPercentage = TeleDest->MaxMonstersKilled * 100 / TeleDest->TotalMonsters;
+            if (TeleDest->TotalItems > 0)
+                ItemPercentage = TeleDest->MaxItemsFound * 100 / TeleDest->TotalItems;
+            if (TeleDest->TotalSecrets > 0)
+                SecretPercentage = TeleDest->MaxSecretsFound * 100 / TeleDest->TotalSecrets;
+            
+            int KillColor = CR_BRICK;
+            if (TeleDest->KillBonus && Timer() & 16)
+                KillColor = CR_GREEN;
+            int ItemColor = CR_LIGHTBLUE;
+            if (TeleDest->ItemsBonus && Timer() & 16)
+                ItemColor = CR_GREEN;
+            int SecretColor = CR_YELLOW;
+            if (TeleDest->SecretsBonus && Timer() & 16)
+                SecretColor = CR_GREEN;
+            int ParColor = CR_GOLD;
+            if (TeleDest->ParBonus && TeleDest->Par > 0 && Timer() & 16)
+                ParColor = CR_GREEN;
+            
+            if (TeleDest->TotalMonsters > 0)
+                HudMessage("Kills: %d / %d (%d%%)\n", TeleDest->MaxMonstersKilled, TeleDest->TotalMonsters, KillPercentage, HUDMSG_FADEOUT, MENU_ID + 3, KillColor, 32.1, 96.1, 0.05, 0.5);
+            if (TeleDest->TotalItems > 0)
+                HudMessage("Items: %d / %d (%d%%)\n", TeleDest->MaxItemsFound, TeleDest->TotalItems, ItemPercentage, HUDMSG_FADEOUT, MENU_ID + 4, ItemColor, 32.1, 104.1, 0.05, 0.5);
+            if (TeleDest->TotalSecrets > 0)
+                HudMessage("Secrets: %d / %d (%d%%)\n", TeleDest->MaxSecretsFound, TeleDest->TotalSecrets, SecretPercentage, HUDMSG_FADEOUT, MENU_ID + 5, SecretColor, 32.1, 112.1, 0.05, 0.5);
+            
+            if (TeleDest->Par > 0)
+                HudMessage("Par Time: %s\n", FormatTime(TeleDest->Par * 35), HUDMSG_FADEOUT, MENU_ID + 6, ParColor, 32.1, 128.1, 0.05, 0.5);
+            if (TeleDest->ShortestTime != 0x7FFFFFFF)
+                HudMessage("Completion Time: %s\n", FormatTime(TeleDest->ShortestTime * 35), HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5)
+            else
+                HudMessage("Completion Time: \c[Red]N/A\n", HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5);
+            
+            SetFont("BIGFONT");
+            str AreaText = "No anomalies detected";
+            switch (TeleDest->Event)
+            {
+            case MAPEVENT_NONE:
+            default:
+                break;
+            case MAPEVENT_MEGABOSS:
+                AreaText = "\c[Grey]Detected: Unknown Hostile Lifeform";
+                break;
+            case MAPEVENT_TOXICHAZARD:
+                AreaText = "\c[DarkGreen]Detected: High Radiation Levels";
+                break;
+            case MAPEVENT_NUCLEARBOMB:
+                AreaText = "\c[Orange]Detected: Armed Nuclear Device";
+                break;
+            case MAPEVENT_LOWPOWER:
+                AreaText = "\c[Red]Scan failed due to insufficient power";
+                break;
+            case MAPEVENT_ALLAURAS:
+                AreaText = "\c[Yellow]Detected: Abnormal Energy Signature";
+                break;
+            case MAPEVENT_ONEMONSTER:
+                AreaText = StrParam("\c[LightBlue]Detected: Anomalous Lifeform Distribution\n\c[Red]Last seen: %s\n", TeleDest->SelectedMonster->Name);
+                break;
+            case MAPEVENT_BONUS_RAINBOWS:
+                AreaText = "\c[Red]Scan \c[Green]failed \c[Purple]due \c[White]to \c[Blue]internal \c[Grey]software \c[Orange]failure";
+                break;
+            case MAPEVENT_DRLA_NIGHTMARE:
+                AreaText = "\c[Red]Scan failed due to internal mechanism corruption";
+                break;
+            case MAPEVENT_DRLA_TECHNOPHOBIA:
+                AreaText = "\c[Red]Scan failed due to electromagnetic interference";
+                break;
+            case MAPEVENT_DRLA_ARMAGEDDON:
+                AreaText = "\c[Red]Scan failed - Area scanning mechanism destroyed";
+                break;
+            };
+            
+            HudMessage("Area Status\n", HUDMSG_FADEOUT, MENU_ID + 8, CR_GREEN, 32.1, 152.1, 0.05, 0.5);
+            SetFont("SMALLFONT");
+            HudMessage("%s\n", AreaText, HUDMSG_FADEOUT, MENU_ID + 9, CR_WHITE, 32.1, 168.1, 0.05, 0.5);
+        };
         
         // Input
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
