@@ -83,9 +83,12 @@ script void GlobalInit() open
         // Initialize XP & Rank Tables
         InitTables();
         
+        // Initial build of SkillData
+        BuildSkillData();
+
         GlobalsInitialized = true;
         
-        Delay (1); // Allow CVARs to update
+        Delay(1); // Allow CVARs to update
     };
     
     // Create Translations
@@ -148,6 +151,10 @@ script void Init() enter
             Player.SkillIndex[i] = -1;
         };
         
+        // Transport should always be known
+        Player.SkillLevel[MAX_CATEGORIES - 1][SkillCategoryMax[MAX_CATEGORIES - 1] - 1].Level = 1;
+        Player.SkillLevel[MAX_CATEGORIES - 1][SkillCategoryMax[MAX_CATEGORIES - 1] - 1].CurrentLevel = 1;
+        
         Player.EP = Player.Energy * 10;
         Player.ActualHealth = Player.Vitality * 10;
         SetActorProperty(0, APROP_Health, Player.ActualHealth);
@@ -186,12 +193,6 @@ script void Init() enter
     
     // Initialize DropTID Array
     ArrayCreate(Player.DropTID, 64, sizeof(int));
-    
-    // Initialize skill array
-    InitSkills();
-    
-    // Initial build of SkillData
-    BuildSkillData();
     
     // Mission Initialization
     InitMission();
