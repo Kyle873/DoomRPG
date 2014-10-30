@@ -1505,7 +1505,7 @@ function void ArrayCreate(DynamicArray *Array, int InitSize, int ItemSize)
     Array->ItemSize = ItemSize;
     Array->Data = malloc(Array->ItemSize * Array->Size);
     
-    memset(Array->Data, 0xEF, Array->Size * Array->ItemSize);
+    memset(Array->Data, 0xAAAAAAAA, Array->Size * Array->ItemSize);
 };
 
 function void ArrayResize(DynamicArray *Array)
@@ -1524,5 +1524,28 @@ function void ArrayResize(DynamicArray *Array)
     
     Array->Data = tmp;
     
-    memset((char *)Array->Data + (Array->ItemSize * OldSize), 0xEF, (Array->Size * Array->ItemSize) - (Array->ItemSize * OldSize));
+    memset((char *)Array->Data + (Array->ItemSize * OldSize), 0xAAAAAAAA, (Array->Size * Array->ItemSize) - (Array->ItemSize * OldSize));
+};
+
+function void ArrayDump(DynamicArray *Array)
+{
+    Log("\ciDynamicArray @ %p\n", Array->Data);
+    Log("\cd* Array size: \cj%d\n", Array->Size);
+    Log("\cd* Item bytesize: \cj%d\n", Array->ItemSize);
+    Log("\cd* End Position: \cj%d\n", Array->Position);
+    Log("\n");
+    
+    Log("\ciItem data:\n");
+    
+    for (int i = 0; i < Array->Size; i++)
+    {
+        str DataString = StrParam ("  %X: \n", i);
+        for (int b = 0; b < Array->ItemSize; b++)
+            DataString = StrParam ("%s%X \n", DataString, (char)((char *)Array->Data)[Array->ItemSize * i + b]);
+        
+        if (i >= Array->Position)
+            DataString = StrParam ("%s\cj(\cgUnused\cj)\n", DataString);
+        
+        Log("%s\n", DataString);
+    };
 };
