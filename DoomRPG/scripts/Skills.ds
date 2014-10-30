@@ -1803,15 +1803,12 @@ acscript bool Magnetize(Skill *Self, void *Data)
     fixed X = GetActorX(0);
     fixed Y = GetActorY(0);
     fixed Z = GetActorZ(0) + (GetActorPropertyFixed(0, APROP_Height) / 2);
-    int AngleDivide = Player.DropTID->Position;
+    int AngleDivide;
     fixed AngleAdd;
     
     CleanDropTIDArray();
     
-    // Count the amount to subtract from the total to give a nice neat circle
-    for (int i = 0; i < Player.DropTID->Position; i++)
-        if (TID[i] == 0)
-            AngleDivide--;
+    AngleDivide = Player.DropTID->Position;
     
     // Refund - If there are no items in the array
     if (Player.DropTID->Position == 0)
@@ -2022,8 +2019,15 @@ script void CleanDropTIDArray()
     // [KS] !!WARNING!! THIS CANNOT BE A FUNCTION.
     int *TID = (int *)Player.DropTID->Data;
     for (int i = 0; i < Player.DropTID->Position; i++)
+    {
         if (ClassifyActor(TID[i]) == ACTOR_NONE)
-            TID[i] = 0;
+        {
+            TID[i] = TID[Player.DropTID->Position - 1];
+            TID[Player.DropTID->Position - 1] = 0;
+            Player.DropTID->Position--;
+            i = 0;
+        };
+    };
 };
 
 function int ScaleEPCost(int Cost)
