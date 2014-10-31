@@ -1428,11 +1428,11 @@ function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XA
         SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
         
         // Array has grown too big, resize it
-        if (Players(Killer).DropTID->Position == Players(Killer).DropTID->Size)
-            ArrayResize(Players(Killer).DropTID);
+        if (Players(Killer).DropTID.Position == Players(Killer).DropTID.Size)
+            ArrayResize(&Players(Killer).DropTID);
         
         // Add item's TID to drop array
-        ((int *)Players(Killer).DropTID->Data)[Players(Killer).DropTID->Position++] = ItemTID;
+        ((int *)Players(Killer).DropTID.Data)[Players(Killer).DropTID.Position++] = ItemTID;
     };
     
     return ItemTID;
@@ -1499,26 +1499,32 @@ function void LogMessage(str Message, int Level)
 function void ArrayCreate(DynamicArray *Array, int InitSize, int ItemSize)
 {
     if (Array->Data != nullptr)
-        free(Array->Data);
+        ArrayDestroy(Array);
     
     Array->Position = 0;
     Array->Size = InitSize;
     Array->ItemSize = ItemSize;
-    Array->Data = malloc(Array->ItemSize * Array->Size);
+    Array->Data = Z_Malloc(Array->ItemSize * Array->Size, PU_STATIC, NULL);
     
     memset(Array->Data, 0xAAAAAAAA, Array->Size * Array->ItemSize);
 };
 
 function void ArrayResize(DynamicArray *Array)
 {
+    if (Array->Data == nullptr)
+    {
+        Log("\cgERROR: \c-Tried to resize a destroyed array!\n");
+        return;
+    };
+    
     int OldSize = Array->Size;
     
     Array->Size *= 2;
-    void *tmp = realloc(Array->Data, Array->ItemSize * Array->Size);
+    void *tmp = Z_Realloc(Array->Data, Array->ItemSize * Array->Size, PU_STATIC, NULL);
     
     if (!tmp)
     {
-        free(Array->Data);
+        Z_Free(Array->Data);
         Log("\cgERROR: \c-Cannot resize dynamic array!\n");
         return;
     };
@@ -1526,6 +1532,16 @@ function void ArrayResize(DynamicArray *Array)
     Array->Data = tmp;
     
     memset((char *)Array->Data + (Array->ItemSize * OldSize), 0xAAAAAAAA, (Array->Size * Array->ItemSize) - (Array->ItemSize * OldSize));
+};
+
+function void ArrayDestroy(DynamicArray *Array)
+{
+    Z_Free(Array->Data);
+    
+    Array->Position = 0;
+    Array->Size = 0;
+    Array->ItemSize = 0;
+    Array->Data = nullptr;
 };
 
 function void ArrayDump(DynamicArray *Array)

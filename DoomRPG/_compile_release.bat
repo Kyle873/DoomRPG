@@ -4,7 +4,7 @@ color F
 set PATH=..\Utilities\DH-ACC\bin\32
 set SRC=.\scripts
 set OBJ=.\acs
-set ACC=DH-acc --named-scripts --near-pointers --use-chunk-ATAG --debug-error-pos -D__LIBDS_HEAPSIZE=128 --debug-static-list=DebugStaticList.log --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc -i %SRC%\lib
+set ACC=DH-acc --named-scripts --near-pointers --use-chunk-ATAG --debug-error-pos -D__LIBDS_ZONESIZE=128 --debug-static-list=DebugStaticList.log --debug-mapregister-list=MapVars.log --debug-maparray-list=MapArrays.log --script-regargs=4 -Z -i %SRC%\inc -i %SRC%\lib
 
 rem Standard Libraries
 echo Compiling Standard Libraries
@@ -14,9 +14,11 @@ echo    - stdio
 %ACC% -c %PATH%\..\..\lib\stdio.ds -o %OBJ%\stdio.o
 echo    - string
 %ACC% -c %PATH%\..\..\lib\string.ds -o %OBJ%\string.o
+echo    - z_zone
+%ACC% -c %PATH%\..\..\lib\z_zone.c -o %OBJ%\z_zone.o
 
 echo Linking LibDS.lib
-%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o -o %OBJ%\LibDS.lib
+%ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o %OBJ%\z_zone.o -o %OBJ%\LibDS.lib
 
 rem Change the stack offset so we don't overlap with the standard library
 set ACC=%ACC% --static-offset=152000000
