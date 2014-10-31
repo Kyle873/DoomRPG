@@ -86,11 +86,8 @@ script void InitMission()
         
         if (MonsterID <= 1) return; // No monsters, no assassination.
         
-        int *PotentialTargets;
-        int NumPTs = 0;
-        int SizePTs = 64;
-        
-        PotentialTargets = malloc(sizeof(int) * SizePTs);
+        auto DynamicArray PotentialTargets;
+        ArrayCreate(&PotentialTargets, 32, sizeof(LevelInfo));
         
         for (int i = 1; i < MonsterID; i++)
         {
@@ -101,27 +98,18 @@ script void InitMission()
             
             if (StartsWith(Monsters[i].Actor, ActorToCheck))
             {
-                if (NumPTs == SizePTs)
-                {
-                    SizePTs *= 2;
-                    void *tmp = realloc(PotentialTargets, sizeof(int) * SizePTs);
-                    if (!tmp)
-                    {
-                        free(PotentialTargets);
-                        Log("\cgERROR: \c-Cannot allocate more space for Assassination Targets!\n");
-                        return;
-                    };
-                };
+                if (PotentialTargets.Position == PotentialTargets.Size)
+                    ArrayResize(&PotentialTargets);
                 
-                PotentialTargets[NumPTs++] = i;
+                ((int *)PotentialTargets.Data)[PotentialTargets.Position++] = i;
             };
             
             if (!(i % 1000)) Delay(1);
         };
         
-        if (NumPTs)
+        if (PotentialTargets.Position)
         {
-            int Chosen = PotentialTargets[Random(0, NumPTs - 1)];
+            int Chosen = ((int *)PotentialTargets.Data)[Random(0, PotentialTargets.Position - 1)];
             int LevelMod = Player.Mission.Difficulty * Player.Level + Random(0, 100);
             
             Monsters[Chosen].Target = PlayerNumber() + 1;
@@ -140,7 +128,7 @@ script void InitMission()
                 Log("\cdDEBUG: \c-Mission Target Chosen: \ca%d\n", Chosen);
         };
         
-        free(PotentialTargets);
+        ArrayDestroy(&PotentialTargets);
     };
 };
 

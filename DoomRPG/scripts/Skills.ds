@@ -1791,7 +1791,7 @@ acscript bool Recall(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
 {
-    int *TID = (int *)Player.DropTID->Data;
+    int *TID = (int *)Player.DropTID.Data;
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0);
     fixed Y = GetActorY(0);
@@ -1801,10 +1801,10 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
     
     CleanDropTIDArray();
     
-    AngleDivide = Player.DropTID->Position;
+    AngleDivide = Player.DropTID.Position;
     
     // Refund - If there are no items in the array
-    if (Player.DropTID->Position == 0)
+    if (Player.DropTID.Position == 0)
     {
         ActivatorSound("menu/error", 127);
         return false;
@@ -1813,7 +1813,7 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
     // Overdrive - Pull the items on top of you and pick them all up
     if (Overdrive)
     {
-        for (int i = 0; i < Player.DropTID->Position; i++)
+        for (int i = 0; i < Player.DropTID.Position; i++)
         {
             SetActorPosition(TID[i], X, Y, Z, 0);
             GiveActorInventory(TID[i], "DRPGMagnetizedItem", 1);
@@ -1828,7 +1828,7 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
     
     AngleAdd = 1.0 / AngleDivide;
     
-    for (int i = 0; i < Player.DropTID->Position; i++)
+    for (int i = 0; i < Player.DropTID.Position; i++)
     {
         X = GetActorX(0) + Cos(Angle) * 64.0;
         Y = GetActorY(0) + Sin(Angle) * 64.0;
@@ -1975,7 +1975,7 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
     }
     else
     {
-        ChangeLevel(KnownLevels[LastVisitedLevel].LumpName, 0, CHANGELEVEL_NOINTERMISSION, -1);
+        ChangeLevel(((LevelInfo *)KnownLevels.Data)[LastVisitedLevel].LumpName, 0, CHANGELEVEL_NOINTERMISSION, -1);
         InBase = false;
         Transported = true;
         return true;
@@ -2008,14 +2008,14 @@ acscript void ClearStatusEffects()
 script void CleanDropTIDArray()
 {
     // [KS] !!WARNING!! THIS CANNOT BE A FUNCTION.
-    int *TID = (int *)Player.DropTID->Data;
-    for (int i = 0; i < Player.DropTID->Position; i++)
+    int *TID = (int *)Player.DropTID.Data;
+    for (int i = 0; i < Player.DropTID.Position; i++)
     {
         if (TID[i] == 0 || ClassifyActor(TID[i]) == ACTOR_NONE)
         {
-            TID[i] = TID[Player.DropTID->Position - 1];
-            TID[Player.DropTID->Position - 1] = 0;
-            Player.DropTID->Position--;
+            TID[i] = TID[Player.DropTID.Position - 1];
+            TID[Player.DropTID.Position - 1] = 0;
+            Player.DropTID.Position--;
             i -= 2;
             if (i < -1)
                 i = -1;

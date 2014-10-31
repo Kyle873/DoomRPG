@@ -8,8 +8,7 @@
 
 // Level Info
 static LevelInfo *CurrentLevel;
-static LevelInfo *KnownLevels;
-static int NumKnownLevels;
+static DynamicArray KnownLevels;
 static int LastVisitedLevel;
 
 static DRLAEventMonsterReplacement[] NightmareReplacements =
@@ -127,31 +126,32 @@ static DRLAEventMonsterReplacement[] ArmageddonReplacements =
 script void MapInit() open
 {
     // Running the game for the first time
-    if (KnownLevels == 0)
+    if (KnownLevels.Data == nullptr)
     {
-        KnownLevels = malloc(sizeof(LevelInfo));
+        ArrayCreate(&KnownLevels, 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
-        NumKnownLevels = 1;
         
-        if (KnownLevels == 0)
+        if (KnownLevels.Data == nullptr)
         {
-            Log("\cgWARNING: \caCould not allocate \cd%d\ca bytes for level info!\n", sizeof(LevelInfo));
+            Log("\cgWARNING: \caCould not allocate level info!\n");
             return;
         };
         
         // Special case for starting in the Outpost: Add MAP01 with some bogus info
         if (GetLevelInfo(LEVELINFO_LEVELNUM) == 999)
         {
-            KnownLevels[0].LevelNum = 1;
-            KnownLevels[0].LumpName = "MAP01";
-            KnownLevels[0].NiceName = "Unknown Map";
-            KnownLevels[0].NeedsRealInfo = true;
+            LevelInfo *DummyMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+            DummyMap->LevelNum = 1;
+            DummyMap->LumpName = "MAP01";
+            DummyMap->NiceName = "Unknown Map";
+            DummyMap->NeedsRealInfo = true;
             return;
         }
         else
         {
-            CurrentLevel = &KnownLevels[0];
-            // So that FindCurrentLevelInfoIndex can pick it up immediately
+            // We don't need to Resize since the array size will always be 0 here
+            CurrentLevel = &(((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++]);
+            // So that FindLevelInfoIndex can pick it up immediately
             CurrentLevel->LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
             CurrentLevel->NeedsRealInfo = true;
         };
@@ -173,28 +173,14 @@ script void MapInit() open
     }
     else if (Index == -1) // New map - We need to create new info for it
     {
-        Index = NumKnownLevels;
-        int NewSize = sizeof(LevelInfo) * (NumKnownLevels + 1);
-        
-        register LevelInfo *TempArray = realloc(KnownLevels, NewSize);
-        
-        // TODO: move this stuff into a Dynamic Array?
-        
-        if (!TempArray)
-        {
-            Log("\cgWARNING: \caCould not allocate \cd%d\ca bytes for level info!\n", NewSize);
-            CurrentLevel = NULL;
-            return;
-        };
-        
-        KnownLevels = TempArray;
-        NumKnownLevels++;
-        
-        CurrentLevel = &KnownLevels[Index];
+        CurrentLevel = &(((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++]);
         CurrentLevel->NeedsRealInfo = true;
+        
+        if (KnownLevels.Position == KnownLevels.Size)
+            ArrayResize(&KnownLevels);
     }
     else
-        CurrentLevel = &KnownLevels[Index];
+        CurrentLevel = &(((LevelInfo *)KnownLevels.Data)[Index]);
     
     if (CurrentLevel->NeedsRealInfo)
     {
@@ -376,8 +362,8 @@ script void MegaBossEvent()
     int Index;
     MonsterPosition *Position;
     
-    DynamicArray *MonsterPositions;
-    ArrayCreate(MonsterPositions, 64, sizeof(MonsterPosition));
+    auto DynamicArray MonsterPositions;
+    ArrayCreate(&MonsterPositions, 64, sizeof(MonsterPosition));
     
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
@@ -390,25 +376,25 @@ script void MegaBossEvent()
             continue;
         
         // Array has grown too big, resize it
-        if (MonsterPositions->Position == MonsterPositions->Size)
-            ArrayResize(MonsterPositions);
+        if (MonsterPositions.Position == MonsterPositions.Size)
+            ArrayResize(&MonsterPositions);
         
         // Store position
-        ((MonsterPosition *)MonsterPositions->Data)[MonsterPositions->Position++] = Monsters[i].Position;
+        ((MonsterPosition *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
         Monsters[i].ReplaceActor = "None";
     };
     
     Delay(2); // Monsters disappear!
     
     // Shuffle positions
-    for (int i = 0; i < MonsterPositions->Position; i++)
+    for (int i = 0; i < MonsterPositions.Position; i++)
     {
-        int x = Random(0, MonsterPositions->Position - 1);
+        int x = Random(0, MonsterPositions.Position - 1);
         MonsterPosition TempPosition;
         
-        TempPosition = ((MonsterPosition *)MonsterPositions->Data)[i];
-        ((MonsterPosition *)MonsterPositions->Data)[i] = ((MonsterPosition *)MonsterPositions->Data)[x];
-        ((MonsterPosition *)MonsterPositions->Data)[x] = TempPosition;
+        TempPosition = ((MonsterPosition *)MonsterPositions.Data)[i];
+        ((MonsterPosition *)MonsterPositions.Data)[i] = ((MonsterPosition *)MonsterPositions.Data)[x];
+        ((MonsterPosition *)MonsterPositions.Data)[x] = TempPosition;
     };
     
     // Spawning
@@ -416,7 +402,7 @@ script void MegaBossEvent()
     {
         TID = UniqueTID();
         BossType = Random(0, MAX_MEGABOSSES - 1);
-        Position = &((MonsterPosition *)MonsterPositions->Data)[Index];
+        Position = &((MonsterPosition *)MonsterPositions.Data)[Index];
         Spawned = Spawn(MegaBosses[BossType], Position->X, Position->Y, Position->Z, TID, Random(0, 255));
         
         // Successful spawn
@@ -903,8 +889,8 @@ function int FindLevelInfoIndex(int LevelNum)
     if (LevelNum == 0)
         return -3; // The map has a bogus level number, so we just don't know.
     
-    for (int i = 0; i < NumKnownLevels; i++)
-        if (KnownLevels[i].LevelNum == LevelNum)
+    for (int i = 0; i < KnownLevels.Position; i++)
+        if (((LevelInfo *)KnownLevels.Data)[i].LevelNum == LevelNum)
             return i;
     
     return -1;
