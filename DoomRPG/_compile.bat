@@ -19,7 +19,7 @@ echo Linking LibDS.lib
 %ACC% %OBJ%\stdlib.o %OBJ%\stdio.o %OBJ%\string.o -o %OBJ%\LibDS.lib
 
 rem Change the stack offset so we don't overlap with the standard library
-set ACC=%ACC% --static-offset=16842752
+set ACC=%ACC% --static-offset=152000000
 
 rem Doom RPG Libraries
 echo Compiling Doom RPG Libraries
