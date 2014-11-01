@@ -960,25 +960,26 @@ acscript bool Decontaminate(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript bool Repair(SkillLevelInfo *SkillLevel, void *Data)
 {
+    int SaveAmount = GetArmorInfo(ARMORINFO_SAVEAMOUNT);
     int RepairAmount;
     
     // Calculate repair amount based on level
     switch (SkillLevel->CurrentLevel)
     {
-    case 1: RepairAmount = Player.ArmorMax / 4;     break; // 25%
-    case 2: RepairAmount = Player.ArmorMax / 2;     break; // 50%
-    case 3: RepairAmount = Player.ArmorMax / 1.33;  break; // 75%
-    case 4: RepairAmount = Player.ArmorMax;         break; // 100%
+    case 1: RepairAmount = SaveAmount / 4;     break; // 25%
+    case 2: RepairAmount = SaveAmount / 2;     break; // 50%
+    case 3: RepairAmount = SaveAmount / 1.33;  break; // 75%
+    case 4: RepairAmount = SaveAmount;         break; // 100%
     };
 
-    if (CheckInventory("Armor") > 0 && CheckInventory("Armor") < Player.ArmorMax)
+    if (CheckInventory("Armor") > 0 && CheckInventory("Armor") < SaveAmount)
     {
         FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
         GiveInventory("DRPGArmorBonus", RepairAmount);
         
-        if (CheckInventory("Armor") > Player.ArmorMax)
+        if (CheckInventory("Armor") > SaveAmount)
         {
-            int ArmorOverflow = CheckInventory("BasicArmor") - Player.ArmorMax;
+            int ArmorOverflow = CheckInventory("BasicArmor") - SaveAmount;
             TakeInventory("BasicArmor", ArmorOverflow);
         };
         
