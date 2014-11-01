@@ -726,10 +726,12 @@ script void Respawn() respawn
     // XP/Rank Penalty
     if (GetCVar("drpg_multi_takexp"))
     {
-        int XPPenalty = Abs(Round((fixed)XPTable[Player.Level] / 100.0 * GetCVarFixed("drpg_multi_takexp_percent")));
-        int RankPenalty = Abs(Round((fixed)RankTable[Player.RankLevel] / 100.0 * GetCVarFixed("drpg_multi_takexp_percent")));
+        long int XPPenalty = (long int)((fixed)XPTable[Player.Level] * (GetCVarFixed("drpg_multi_takexp_percent") / 100.0));
+        long int RankPenalty = (long int)((fixed)RankTable[Player.RankLevel] * (GetCVarFixed("drpg_multi_takexp_percent") / 100.0));
         
-        if (XPPenalty > 0 && RankPenalty > 0)
+        Log("%d, %d\n", XPPenalty, RankPenalty);
+        
+        if (XPPenalty > 0 || RankPenalty > 0)
         {
             Player.XP -= XPPenalty;
             Player.Rank -= RankPenalty;
@@ -763,7 +765,7 @@ script void Respawn() respawn
     HealthBars();
 };
 
-// Apply values to global vars visible to the HUD
+// Apply values to global vars visible on the HUD
 function void CheckHUD()
 {
     int PlayerNum = PlayerNumber();

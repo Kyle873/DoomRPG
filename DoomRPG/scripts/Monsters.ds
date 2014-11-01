@@ -300,8 +300,8 @@ acscript void MonsterSet(int Level, int Aura, int Flags)
     if (Flags > 0)
         Stats->Flags = Flags;
     
-    // Re-run the Stats Script
-    MonsterInitStats(SF_RECREATE);
+    // Needs reinitialization to apply new info
+    Stats->NeedReinit = true;
 };
 
 // Dump the targeted monster's stats to the console
@@ -944,13 +944,13 @@ script void MonsterEPDrainHandler()
                 Popoff(0, Previous - Players(i).EP, DNUM_EPGAIN);
                 
                 int OrigTID = ActivatorTID();
-                int NewTID = UniqueTID(0,0);
-                Thing_ChangeTID(0,NewTID);
+                int NewTID = UniqueTID(0, 0);
+                Thing_ChangeTID(0, NewTID);
                 SetActivator(Players(i).TID);
-                FadeRange(64, 128, 128, 1.0, 64, 128, 128, 0.0, 0.5);
+                FadeRange(64, 128, 128, 0.5, 64, 128, 128, 0.0, 0.5);
                 ActivatorSound("misc/epdrain", 127);
                 SetActivator(NewTID);
-                Thing_ChangeTID(0,OrigTID);
+                Thing_ChangeTID(0, OrigTID);
             };
         };
     };
@@ -1075,19 +1075,35 @@ script void MonsterAmmoDrainHandler()
             if (RocketSteal < 1) RocketSteal = 1;
             if (CellSteal < 3) CellSteal = 3;
             
-            TakeActorInventory(Players(i).TID, "Clip",       ClipSteal);
-            TakeActorInventory(Players(i).TID, "Shell",      ShellSteal);
-            TakeActorInventory(Players(i).TID, "RocketAmmo", RocketSteal);
-            TakeActorInventory(Players(i).TID, "Cell",       CellSteal);
+            if (CheckActorInventory(Players(i).TID, "Clip") >= ClipSteal)
+            {
+                TakeActorInventory(Players(i).TID, "Clip",       ClipSteal);
+                GiveInventory("Clip",       ClipSteal);
+            };
+            if (CheckActorInventory(Players(i).TID, "Shell") >= ShellSteal)
+            {
+                TakeActorInventory(Players(i).TID, "Shell",      ShellSteal);
+                GiveInventory("Shell",      ShellSteal);
+            };
+            if (CheckActorInventory(Players(i).TID, "RocketAmmo") >= RocketSteal)
+            {
+                TakeActorInventory(Players(i).TID, "RocketAmmo", RocketSteal);
+                GiveInventory("RocketAmmo", RocketSteal);
+            };
+            if (CheckActorInventory(Players(i).TID, "Cell") >= CellSteal)
+            {
+                TakeActorInventory(Players(i).TID, "Cell",       CellSteal);
+                GiveInventory("Cell",       CellSteal);
+            };
             
             int OrigTID = ActivatorTID();
-            int NewTID = UniqueTID(0,0);
-            Thing_ChangeTID(0,NewTID);
+            int NewTID = UniqueTID(0, 0);
+            Thing_ChangeTID(0, NewTID);
             SetActivator(Players(i).TID);
-            FadeRange(0, 0, 255, 1.0, 0, 0, 255, 0.0, 0.5);
+            FadeRange(0, 0, 255, 0.5, 0, 0, 255, 0.0, 0.5);
             ActivatorSound("misc/ammodrain", 127);
             SetActivator(NewTID);
-            Thing_ChangeTID(0,OrigTID);
+            Thing_ChangeTID(0, OrigTID);
         };
     };
     
@@ -1348,6 +1364,32 @@ script void MonsterDeath()
     // SHOTGUNS!
     if (GetCVar("drpg_shotguns"))
         DropMonsterItem(Killer, 0, "DRPGShotSpawn", 1, 255);
+    
+    // Drop stolen ammo
+    while (CheckInventory("Clip") >= 10)
+    {
+        DropMonsterItem(Killer, DropTID, "Clip", 256);
+        TakeInventory("Clip", 10);
+        if ((Timer() % 35) == 0) Delay(1);
+    };
+    while (CheckInventory("Shell") >= 4)
+    {
+        DropMonsterItem(Killer, DropTID, "Shell", 256);
+        TakeInventory("Shell", 4);
+        if ((Timer() % 35) == 0) Delay(1);
+    };
+    while (CheckInventory("RocketAmmo") >= 1)
+    {
+        DropMonsterItem(Killer, DropTID, "RocketAmmo", 256);
+        TakeInventory("RocketAmmo", 1);
+        if ((Timer() % 35) == 0) Delay(1);
+    };
+    while (CheckInventory("Cell") >= 20)
+    {
+        DropMonsterItem(Killer, DropTID, "Cell", 256);
+        TakeInventory("Cell", 20);
+        if ((Timer() % 35) == 0) Delay(1);
+    };
     
     // [KS] We killed this monster now, so if an Arch-vile resurrects it, it doesn't count anymore to re-kill
     // TODO: Need to maybe make sure that for Kill Missions, we can't just gimp Arch-vile resurrection.

@@ -2059,14 +2059,30 @@ function void CheckSkills()
         else if (Player.Augs.Level[AUG_ENERGY] >= 5)
             Player.SkillCostMult = 0.5;
             
-    // Give the player the Aura item while an Aura is active (for SBARINFO hax)
-    if (Player.AuraTimer > 0)
-        GiveInventory("DRPGAura", 1)
-    else
-        TakeInventory("DRPGAura", 1);
+    // Team Aura Handling
+    if (InMultiplayer && Player.AuraTimer > 0)
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Skip yourself
+            if (Player.TID == Players(i).TID) continue;
+            
+            if (Distance(Player.TID, Players(i).TID) <= Player.AuraRange)
+            {
+                Players(i).TeamAura = true;
+                
+                for (int j = 0; j < AURA_MAX; j++)
+                    if (Player.Aura[j])
+                    {
+                        Players(i).Aura[j] = Player.Aura[j];
+                        Players(i).AuraLevel[j] = Player.AuraLevel[j];
+                    };
+            }
+            else
+                Players(i).TeamAura = false;
+        };
     
     // Aura handling
-    if (Player.AuraTimer > 0)
+    if (Player.AuraTimer > 0 || Player.TeamAura)
     {
         // Red Aura
         if (Player.Aura[AURA_RED])
@@ -2247,13 +2263,14 @@ function void CheckSkills()
             Player.AuraCostMult -= 0.1;
     
     // Reset Aura and Soul States
-    for (int i = 0; i < AURA_MAX; i++)
-        if (Player.AuraTimer <= 0)
-        {
-            Player.Aura[i] = false;
-            Player.AuraLevel[i] = 0;
-            Player.SoulActive[i] = false;
-        };
+    if (!Player.TeamAura)
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Player.AuraTimer <= 0)
+            {
+                Player.Aura[i] = false;
+                Player.AuraLevel[i] = 0;
+                Player.SoulActive[i] = false;
+            };
     
     // Summoned Monsters Handling
     for (int i = 0; i < MAX_SUMMONS; i++)

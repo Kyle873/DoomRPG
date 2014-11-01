@@ -194,7 +194,7 @@ script void SkillHUD() enter
 
 script void StimHUD() enter
 {
-    int[] StatColors =
+    static int[STAT_MAX] StatColors =
     {
         CR_RED; CR_GREEN; CR_BRICK; CR_LIGHTBLUE;
         CR_PURPLE; CR_ORANGE; CR_BLUE; CR_GOLD;
@@ -217,7 +217,7 @@ script void StimHUD() enter
         
         // Time
         SetFont("BIGFONT");
-        HudMessage("%d\n", Player.Stim.Timer / 35 + 1, HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_WHITE, X + 110.1, Y, 0.05, 0.75);
+        HudMessage("%s\n", FormatTime(Player.Stim.Timer), HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_WHITE, X + 110.1, Y, 0.05, 0.75);
         
         // Icons
         for (int i = 0; i < StimStatsEnd; i++)
@@ -235,7 +235,7 @@ script void StimHUD() enter
         {
             int TimerPercent = (int)(((fixed)Player.Stim.PowerupTimer[i] / (fixed)Player.Stim.PowerupTimerMax[i]) * 100.0);
             SetFont("SMALLFONT");
-            HudMessage("%d\n", Player.Stim.PowerupTimer[i] / 35 + 1, HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CompoundColors[i], X + 112.1, Y + 56.0, 0.05, 0.75);
+            HudMessage("%s\n", FormatTime(Player.Stim.PowerupTimer[i]), HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CompoundColors[i], X + 112.1, Y + 56.0, 0.05, 0.75);
             DrawBar(StrParam("Stim%d\n", i + 1), X, Y + 56.0, TimerPercent, true);
             Y += 8.0;
         };
@@ -298,7 +298,7 @@ script void AuraTimerHUD() enter
     
     // Determine if we have any Auras or not
     for (int i = 0; i < AURA_MAX; i++)
-        if (Player.Aura[i])
+        if (Player.Aura[i] || Player.TeamAura)
         {
             HaveAura = true;
             break;
@@ -315,8 +315,11 @@ script void AuraTimerHUD() enter
         SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
         
         // Timer
-        SetFont("BIGFONT");
-        HudMessage("%s\n", FormatTime(Player.AuraTimer), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+        if (Player.AuraTimer > 0)
+        {
+            SetFont("BIGFONT");
+            HudMessage("%s\n", FormatTime(Player.AuraTimer), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+        };
         
         // Calculate number of active Auras
         for (int i = 0; i < AURA_MAX; i++)
@@ -324,10 +327,14 @@ script void AuraTimerHUD() enter
                 AuraCount++;
         
         // Main Icon
-        if (AuraCount >= 9)
+        if (Player.AuraTimer > 0 && AuraCount >= 9)
             PrintSpritePulse("AuraBlac", 0, X, Y + 32.0, 0.75, 64.0, 0.25)
-        else
+        else if (Player.AuraTimer > 0)
             PrintSpritePulse("Aura", 0, X, Y, 0.75, 64.0, 0.25);
+        
+        // Team Aura Icon
+        if (Player.TeamAura)
+            PrintSpritePulse("SAURK0", 0, X + 18.0, Y + 24.0, 0.75, 64.0, 0.25);
         
         // Orbiting Icons
         for (int i = 0; i < AURA_MAX; i++)
@@ -343,7 +350,7 @@ script void AuraTimerHUD() enter
         Offset += 0.0025;
         
         // Check and remove the Aura when the timer is up
-        if (Player.AuraTimer <= 0)
+        if (Player.AuraTimer <= 0 && !Player.TeamAura)
             HaveAura = false;
         
         Delay(1);
