@@ -1801,6 +1801,36 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
     fixed Z = GetActorZ(0) + (GetActorPropertyFixed(0, APROP_Height) / 2);
     int AngleDivide;
     fixed AngleAdd;
+    int CreditCount;
+    
+    // Count Credits
+    for (int i = 0; i < Player.DropTID.Position; i++)
+        if (StartsWith(GetActorClass(TID[i]), "DRPGCredits"))
+        {
+            if (GetActorClass(TID[i]) == "DRPGCredits1")
+                CreditCount++;
+            if (GetActorClass(TID[i]) == "DRPGCredits5")
+                CreditCount += 5;
+            if (GetActorClass(TID[i]) == "DRPGCredits10")
+                CreditCount += 10;
+            if (GetActorClass(TID[i]) == "DRPGCredits20")
+                CreditCount += 20;
+            if (GetActorClass(TID[i]) == "DRPGCredits50")
+                CreditCount += 50;
+            if (GetActorClass(TID[i]) == "DRPGCredits100")
+                CreditCount += 100;
+            if (GetActorClass(TID[i]) == "DRPGCredits1000")
+                CreditCount += 1000;
+            
+            Thing_Remove(TID[i]);
+        };
+    
+    // Give calculated Credits
+    if (CreditCount > 0)
+    {
+        GiveInventory("DRPGCredits", CreditCount);
+        ActivatorSound("credits/pickup", 127);
+    };
     
     CleanDropTIDArray();
     
@@ -1813,7 +1843,8 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
         return false;
     };
     
-    // Overdrive - Pull the items on top of you and pick them all up
+    /* Overdrive - Pull the items on top of you and pick them all up
+    // TODO: re-do this to not be so redundant and/or merge it with the below
     if (Overdrive)
     {
         for (int i = 0; i < Player.DropTID.Position; i++)
@@ -1828,7 +1859,7 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
         FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 1.0);
         ActivatorSound("skills/magnet", 127);
         return true;
-    };
+    }; */
     
     AngleAdd = 1.0 / AngleDivide;
     
