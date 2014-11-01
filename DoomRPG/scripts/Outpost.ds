@@ -103,81 +103,103 @@ acscript void RegenArea(int ID)
     // If you're dead, terminate
     if (ClassifyActor(Player.TID) & ACTOR_DEAD) return;
     
-    Start:
-    // Input
-    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-    int Interval;
-    
-    if (Buttons & BT_SPEED) Interval = 2 else Interval = 10;
-    
     // Health
     if (ID == 1)
     {
-        if (CheckInventory("DRPGCredits") < 5)
-            return;
-        if (Player.ActualHealth >= Player.HealthMax && Player.Toxicity <= 0 && !HaveStatusEffect())
-            return;
+        int HealthCharges;
+        bool DoMessage = false;
         
-        // Heal
-        AddHealthDirect(5, 100);
-        
-        // Heal Toxicity
-        if (Player.Toxicity > 0)
+        if (CheckInventory("DRPGCredits") > 0 && Player.ActualHealth < Player.HealthMax)
         {
-            ClearToxicityMeter();
-            Player.Toxicity--;
+            HealthCharges = Player.HealthMax - Player.ActualHealth;
+            if (HealthCharges > CheckInventory("DRPGCredits"))
+                HealthCharges = CheckInventory("DRPGCredits");
+            
+            AddHealthDirect(HealthCharges, 100);
+            TakeInventory("DRPGCredits", HealthCharges);
+            DoMessage = true;
         };
         
-        // Heal Status Effects
-        ClearStatusEffects();
+        if (CheckInventory("DRPGCredits") > 5 && Player.Toxicity > 0)
+        {
+            HealthCharges = Player.Toxicity;
+            if (HealthCharges > CheckInventory("DRPGCredits") / 5)
+                HealthCharges = CheckInventory("DRPGCredits") / 5;
+            
+            ClearToxicityMeter();
+            Player.Toxicity -= HealthCharges;
+            TakeInventory("DRPGCredits", HealthCharges * 5);
+            DoMessage = true;
+        };
         
-        TakeInventory("DRPGCredits", 5);
-
-        FadeRange(255, 0, 0, 0.1, 255, 0, 0, 0.0, 0.1);
+        if (CheckInventory("DRPGCredits") > 50 && HaveStatusEffect())
+        {
+            ClearStatusEffects();
+            TakeInventory("DRPGCredits", 50);
+            DoMessage = true;
+        };
         
-        AmbientSound("regen/health", 127);
-        
-        Delay(Interval);
-        goto Start;
+        if (DoMessage)
+        {
+            SetFont("BigFont");
+            HudMessage("Health restored\n", HUDMSG_FADEOUT, 0, CR_BRICK, 0.5, 0.33, 2.0, 0.5);
+            FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0.0, 1.0);
+            ActivatorSound("regen/health", 127);
+        };
     };
     
     // Armor
     if (ID == 2)
     {
-        if (CheckInventory("DRPGCredits") < 5)
-            return;
         if (CheckInventory("Armor") >= GetArmorInfo(ARMORINFO_SAVEAMOUNT))
             return;
         
-        for (int i = 5; i && CheckInventory("Armor") < GetArmorInfo(ARMORINFO_SAVEAMOUNT); i--)
-            GiveInventory("DRPGArmorBonus", 1);
+        int ArmorPercent = CheckInventory("Armor") * 100 / GetArmorInfo(ARMORINFO_SAVEAMOUNT);
+        int ArmorFee = (ArmorPercent / 5) * 5;
+        if (ArmorFee < 5)
+            ArmorFee = 5;
         
-        TakeInventory("DRPGCredits", 5);
+        if (CheckInventory("DRPGCredits") < ArmorFee)
+        {
+            SetFont("BigFont");
+            HudMessage("You need %d credits to repair armor\n", ArmorFee, HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.33, 2.0, 0.5);
+            ActivatorSound("menu/error", 127);
+            return;
+        };
         
-        FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0.0, 0.1);
-        AmbientSound("regen/armor", 127);
+        GiveInventory(GetArmorInfoString(ARMORINFO_CLASSNAME), 1);
+        TakeInventory("DRPGCredits", ArmorFee);
         
-        Delay(Interval);
-        goto Start;
+        SetFont("BigFont");
+        HudMessage("Armor repaired\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.33, 2.0, 0.5);
+        FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0);
+        ActivatorSound("regen/armor", 127);
     };
     
     // EP
     if (ID == 3)
     {
-        if (CheckInventory("DRPGCredits") == 0 || Player.EP >= Player.EPMax) return;
+        if (CheckInventory("DRPGCredits") < 1 || Player.EP >= Player.EPMax) return;
         
-        Player.EP += 5;
-        if (Player.EP > Player.EPMax)
-            Player.EP = Player.EPMax;
+        int EPCharges = (Player.EPMax - Player.EP) / 5;
+        if (Player.EP % 5 > 0)
+            EPCharges++;
+        if (CheckInventory("DRPGCredits") < EPCharges)
+            EPCharges = CheckInventory("DRPGCredits");
         
-        FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.1);
-        AmbientSound("regen/ep", 127);
+        int EPGive = EPCharges * 5;
         
-        TakeInventory("DRPGCredits", 1);
+        if (Player.EP + EPGive > Player.EPMax)
+            EPGive = Player.EPMax - Player.EP;
         
-        Delay(Interval);
-        goto Start;
+        Player.EP += EPGive;
+        
+        TakeInventory("DRPGCredits", EPCharges);
+        
+        SetFont("BigFont");
+        HudMessage("EP restored\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.33, 2.0, 0.5);
+        FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 1.0);
+        ActivatorSound("regen/ep", 127);
     };
     
     // Augmentation Battery
@@ -185,14 +207,17 @@ acscript void RegenArea(int ID)
     {
         if (CheckInventory("DRPGCredits") < 10 || Player.Augs.Battery >= Player.Augs.BatteryMax) return;
         
-        FadeRange(255, 255, 0, 0.1, 255, 255, 0, 0.0, 0.1);
-        AmbientSound("regen/battery", 127);
+        int BatteryCharges = Player.Augs.BatteryMax - Player.Augs.Battery;
+        if (CheckInventory("DRPGCredits") / 10 < BatteryCharges)
+            BatteryCharges = CheckInventory("DRPGCredits") / 10;
         
-        AddBattery(1);
-        TakeInventory("DRPGCredits", 10);
+        AddBattery(BatteryCharges);
+        TakeInventory("DRPGCredits", BatteryCharges * 10);
         
-        Delay(Interval);
-        goto Start;
+        SetFont("BigFont");
+        HudMessage("Augmentation Battery Recharged\n", HUDMSG_FADEOUT, 0, CR_YELLOW, 0.5, 0.33, 2.0, 0.5);
+        FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0.0, 1.0);
+        ActivatorSound("regen/battery", 127);
     };
 };
 
