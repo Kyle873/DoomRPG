@@ -228,7 +228,7 @@ acscript void ArenaChooseBonus()
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
         
-        SetPlayerProperty(false, 1, PROP_TOTALLYFROZEN);
+        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
         
         // Prevent the menus from being opened
         Player.InMenu = false;
@@ -246,8 +246,7 @@ acscript void ArenaChooseBonus()
         {
             ActivatorSound("menu/move", 127);
             BonusChoice--;
-            if (BonusChoice < 1) BonusChoice = MAX_BONUS - 1;
-            if (BonusChoice == 11 && !CanChooseKey) BonusChoice--;
+            if (BonusChoice < 1) BonusChoice = MAX_BONUS - (CanChooseKey ? 1 : 2);
             if (BonusChoice == 10 && !GetCVar("drpg_ext_doomrl")) BonusChoice--;
         };
         if (Buttons == BT_BACK && OldButtons != BT_BACK)
@@ -255,12 +254,11 @@ acscript void ArenaChooseBonus()
             ActivatorSound("menu/move", 127);
             BonusChoice++;
             if (BonusChoice == 10 && !GetCVar("drpg_ext_doomrl")) BonusChoice++;
-            if (BonusChoice == 11 && !CanChooseKey) BonusChoice++;
-            if (BonusChoice > MAX_BONUS - 1) BonusChoice = 1;
+            if (BonusChoice > MAX_BONUS - (CanChooseKey ? 1 : 2)) BonusChoice = 1;
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
-            SetPlayerProperty(false, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             ArenaGetBonus(BonusChoice);
             Player.OutpostMenu = 0;
             return;
@@ -294,7 +292,7 @@ function void ArenaGetBonus(int Bonus)
     switch (Bonus)
     {
     case 0: // Choose Your Own!
-        ActivatorSound("misc/secret", 127);
+        ActivatorSound("arena/pickbonus", 127);
         ArenaChooseBonus();
         break;
     case 1: // Full EP
@@ -432,6 +430,7 @@ function void ArenaGetBonus(int Bonus)
             Thing_ChangeTID(ArenaItemTID, 0);
         };
         if (ArenaKey < 6) ArenaKey++;
+        ActivatorSound("arena/keydrop", 127);
         break;
     };
     
@@ -441,7 +440,8 @@ function void ArenaGetBonus(int Bonus)
         SetHudSize(0, 0, false);
         SetFont("BIGFONT");
         HudMessageBold("%s\n", ArenaBonus[Bonus], HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
-        ActivatorSound("misc/secret", 127);
+        if (Bonus != 10)
+            ActivatorSound("arena/drop", 127);
     };
 };
 
