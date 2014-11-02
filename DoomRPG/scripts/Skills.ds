@@ -755,7 +755,7 @@ acscript void UseSkill(int Key) net
     };
     
     // If you're dead, terminate
-    if (GetActorProperty(0, APROP_Health)) return;
+    if (GetActorProperty(0, APROP_Health) <= 0) return;
     
     // If you have no current skill selected, terminate
     if (Player.SkillSelected == -1 && !Player.InMenu) return;
@@ -1863,7 +1863,7 @@ acscript bool WirelessLocker(SkillLevelInfo *SkillLevel, void *Data)
 acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
 {
     // If you're dead, terminate
-    if (GetActorProperty(0, APROP_Health)) return false;
+    if (GetActorProperty(0, APROP_Health) <= 0) return false;
     
     // Don't allow Transport while the arena is active, if the Marines are hostile, or you're in an Outpost-related menu
     if (ArenaActive || MarinesHostile || Player.OutpostMenu > 0)
@@ -1877,6 +1877,7 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
     {
         int Players = PlayerCount();
         bool Ready = false; 
+        bool Force = (Arbitrator && Overdrive);
         bool[MAX_PLAYERS] Voted;
         int PlayersApprove = 0;
         int PlayersDeny = 0;
@@ -1884,7 +1885,7 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         for (int i = 0; i < MAX_PLAYERS; i++)
             Voted[i] = false;
         
-        while (!Ready)
+        while (!Ready && !Force)
         {
             // Freeze all players
             SetPlayerProperty(1, 1, PROP_TOTALLYFROZEN);
@@ -1930,31 +1931,34 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         };
         
         // Ready - tally votes and confirm/deny Transport
-        if (Ready)
+        if (Ready || Force)
         {
             SetPlayerProperty(1, 0, PROP_TOTALLYFROZEN);
             
             // Approved
-            if (PlayersApprove > PlayersDeny)
+            if (PlayersApprove > PlayersDeny || Force)
             {
                 for (int i = 0; i < MAX_PLAYERS; i++)
                     SetActorProperty(Players(i).TID, APROP_Invulnerable, true);
+                SetFont("BIGFONT");
                 HudMessageBold("\cdTransport Approved!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 4.0);
                 Delay(35 * 2);
                 FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 3.0);
                 Delay(35 * 3);
-            };
+            }
             
             // Denied
-            if (PlayersDeny > PlayersApprove)
+            else if (PlayersDeny > PlayersApprove)
             {
+                SetFont("BIGFONT");
                 HudMessageBold("\cgTransport Denied!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
                 return false;
-            };
+            }
             
             // Draw
-            if (PlayersApprove == PlayersDeny)
+            else if (PlayersApprove == PlayersDeny)
             {
+                SetFont("BIGFONT");
                 HudMessageBold("\cjDraw!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
                 return false;
             };
