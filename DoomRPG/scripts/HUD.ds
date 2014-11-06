@@ -360,6 +360,123 @@ script void AuraTimerHUD() enter
     goto Start;
 };
 
+script void DRLAHUD() enter
+{
+    static str[5] RaritySuffix =
+    {
+        " \ct[Exotic]\c-";
+        " \cv[Assembled]\c-";
+        " \cd[Unique]\c-";
+        " \cg[Demonic]\c-";
+        " \cf[Legendary]\c-";
+    };
+    
+    if (!GetCVar("drpg_ext_doomrl")) return;
+    
+    while (true)
+    {
+        fixed X = GetCVarFixed("drpg_drla_x");
+        fixed Y = GetCVarFixed("drpg_drla_y");
+        
+        SetHudSize(640, 480, false);
+        
+        for (int i = 0; i < ItemMax[0]; i++)
+        {
+            ItemInfoPtr ItemPtr = &ItemData[0][i];
+            
+            if (CheckWeapon(ItemPtr->Actor))
+            {
+                str Name = StrParam("%s\n", ItemPtr->Name);
+                str Color = "";
+                int Total = CheckInventory(StrParam("%sModLimit\n", ItemPtr->Actor));
+                int TotalMax = 0;
+                int Power = CheckInventory(StrParam("%sPowerMod\n", ItemPtr->Actor));
+                int Bulk = CheckInventory(StrParam("%sBulkMod\n", ItemPtr->Actor));
+                int Agility = CheckInventory(StrParam("%sAgilityMod\n", ItemPtr->Actor));
+                int Tech = CheckInventory(StrParam("%sTechnicalMod\n", ItemPtr->Actor));
+                int Firestorm = CheckInventory(StrParam("%sFirestormMod\n", ItemPtr->Actor));
+                int Sniper = CheckInventory(StrParam("%sSniperMod\n", ItemPtr->Actor));
+                int Nano = CheckInventory(StrParam("%sNanoMod\n", ItemPtr->Actor));
+                
+                // Determine total modpacks and the color char to use
+                if (CheckInventory("RLStandardWeaponToken"))
+                {
+                    Color = "\cj";
+                    TotalMax = 4;
+                }
+                else if (CheckInventory("RLExoticWeaponToken"))
+                {
+                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[0]));
+                    Color = "\ct";
+                    TotalMax = 4;
+                }
+                else if (CheckInventory("RLAssembledWeaponToken"))
+                {
+                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[1]));
+                    Color = "\cv";
+                    TotalMax = 2;
+                }
+                else if (CheckInventory("RLUniqueWeaponToken"))
+                {
+                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[2]));
+                    Color = "\cd";
+                    TotalMax = 1;
+                }
+                else if (CheckInventory("RLDemonicWeaponToken"))
+                {
+                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[3]));
+                    Color = "\cg";
+                    TotalMax = 1;
+                }
+                else if (CheckInventory("RLLegendaryWeaponToken"))
+                {
+                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[4]));
+                    Color = "\cf";
+                    TotalMax = 1;
+                }
+                else break; // Kinda lolhax
+                
+                // Name
+                SetFont("RLFONT");
+                HudMessage("%s%s\n", Color, Name, HUDMSG_PLAIN, 0, CR_WHITE, X, Y - 20.0, 0.05);
+                
+                // Mod Packs
+                if (Total > 0 && Total >= TotalMax)
+                    HudMessage("%d\n", Total, HUDMSG_ALPHA, 0, CR_GOLD, X - 50.0, Y, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
+                else if (Total > 0)
+                    HudMessage("%d\n", Total, HUDMSG_PLAIN, 0, CR_WHITE, X - 50.0, Y, 0.05);
+                if (Power > 0)
+                    HudMessage("%d\n", Power, HUDMSG_PLAIN, 0, CR_RED, X - 30.0, Y + 20.0, 0.05);
+                if (Bulk > 0)
+                    HudMessage("%d\n", Bulk, HUDMSG_PLAIN, 0, CR_BLUE, X - 20.0, Y + 20.0, 0.05);
+                if (Agility > 0)
+                    HudMessage("%d\n", Agility, HUDMSG_PLAIN, 0, CR_GREEN, X - 10.0, Y + 20.0, 0.05);
+                if (Tech > 0)
+                    HudMessage("%d\n", Tech, HUDMSG_PLAIN, 0, CR_YELLOW, X, Y + 20.0, 0.05);
+                if (Firestorm > 0)
+                    HudMessage("%d\n", Firestorm, HUDMSG_PLAIN, 0, CR_ORANGE, X + 10.0, Y + 20.0, 0.05);
+                if (Sniper > 0)
+                    HudMessage("%d\n", Sniper, HUDMSG_PLAIN, 0, CR_PURPLE, X + 20.0, Y + 20.0, 0.05);
+                if (Nano > 0)
+                    HudMessage("%d\n", Nano, HUDMSG_PLAIN, 0, CR_WHITE, X + 30.0, Y + 20.0, 0.05);
+                
+                // Icon
+                if (CheckInventory("RLUsePowerMod") || CheckInventory("RLUseBulkMod") ||
+                    CheckInventory("RLUseAgilityMod") || CheckInventory("RLUseTechnicalMod") ||
+                    CheckInventory("RLUseFirestormMod") || CheckInventory("RLUseSniperMod") ||
+                    CheckInventory("RLUseNanoMod"))
+                    PrintSpritePulse(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff, 0.75, 32.0, 0.25)
+                else
+                    PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff, 0.05);
+                
+                break;
+            };
+        };
+        
+        Delay(1);
+    };
+};
+
 script void DamageHUD(int Loss)
 {
     if (GetCVar("drpg_damagenumbers_hud"))
