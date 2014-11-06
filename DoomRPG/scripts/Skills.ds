@@ -60,12 +60,9 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Repair Armor"; 50; 4; Repair;
+            "Repair Armor"; 200; 1; Repair;
             {
-                "Repair 25% of your Armor";
-                "Repair 50% of your Armor";
-                "Repair 75% of your Armor";
-                "Repair all of your Armor";
+                "Repair your currently worn armor";
             };
         };
     };
@@ -758,7 +755,7 @@ acscript void UseSkill(int Key) net
     };
     
     // If you're dead, terminate
-    if (ClassifyActor(Player.TID) & ACTOR_DEAD) return;
+    if (GetActorProperty(0, APROP_Health) <= 0) return;
     
     // If you have no current skill selected, terminate
     if (Player.SkillSelected == -1 && !Player.InMenu) return;
@@ -960,38 +957,18 @@ acscript bool Decontaminate(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript bool Repair(SkillLevelInfo *SkillLevel, void *Data)
 {
-    int RepairAmount;
-    
-    // Calculate repair amount based on level
-    switch (SkillLevel->CurrentLevel)
-    {
-    case 1: RepairAmount = Player.ArmorMax / 4;     break; // 25%
-    case 2: RepairAmount = Player.ArmorMax / 2;     break; // 50%
-    case 3: RepairAmount = Player.ArmorMax / 1.33;  break; // 75%
-    case 4: RepairAmount = Player.ArmorMax;         break; // 100%
-    };
-
-    if (CheckInventory("Armor") > 0 && CheckInventory("Armor") < Player.ArmorMax)
-    {
-        FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
-        GiveInventory("DRPGArmorBonus", RepairAmount);
-        
-        if (CheckInventory("Armor") > Player.ArmorMax)
-        {
-            int ArmorOverflow = CheckInventory("BasicArmor") - Player.ArmorMax;
-            TakeInventory("BasicArmor", ArmorOverflow);
-        };
-        
-        ActivatorSound("skills/repair", 127);
-        return true;
-    }
-    else
+    if (CheckInventory("Armor") == 0 || CheckInventory("Armor") >= GetArmorInfo(ARMORINFO_SAVEAMOUNT))
     {
         ActivatorSound("menu/error", 127);
         return false;
     };
     
-    return false;
+    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
+    GiveInventory(GetArmorInfoString(ARMORINFO_CLASSNAME), 1);
+    
+    ActivatorSound("skills/repair", 127);
+    
+    return true;
 };
 
 acscript bool Powerup(SkillLevelInfo *SkillLevel, void *Data)
@@ -1837,7 +1814,7 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
     AngleDivide = Player.DropTID.Position;
     
     // Refund - If there are no items in the array
-    if (Player.DropTID.Position == 0)
+    if (Player.DropTID.Position == 0 && CreditCount == 0)
     {
         ActivatorSound("menu/error", 127);
         return false;
@@ -1886,7 +1863,7 @@ acscript bool WirelessLocker(SkillLevelInfo *SkillLevel, void *Data)
 acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
 {
     // If you're dead, terminate
-    if (ClassifyActor(Player.TID) & ACTOR_DEAD) return false;
+    if (GetActorProperty(0, APROP_Health) <= 0) return false;
     
     // Don't allow Transport while the arena is active, if the Marines are hostile, or you're in an Outpost-related menu
     if (ArenaActive || MarinesHostile || Player.OutpostMenu > 0)
@@ -1899,18 +1876,19 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
     if (InMultiplayer && PlayerCount() > 1)
     {
         int Players = PlayerCount();
-        bool Ready;
+        bool Ready = false; 
+        bool Force = (Arbitrator && Overdrive);
         bool[MAX_PLAYERS] Voted;
-        int PlayersApprove;
-        int PlayersDeny;
+        int PlayersApprove = 0;
+        int PlayersDeny = 0;
         
         for (int i = 0; i < MAX_PLAYERS; i++)
             Voted[i] = false;
         
-        while (!Ready)
+        while (!Ready && !Force)
         {
             // Freeze all players
-            SetPlayerProperty(true, 1, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(1, 1, PROP_TOTALLYFROZEN);
             
             // Input
             for (int i = 0; i < Players; i++)
@@ -1919,15 +1897,14 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
                 if (Voted[i]) continue;
                 
                 int Buttons = GetPlayerInput(i, INPUT_BUTTONS);
-                int OldButtons = GetPlayerInput(i, INPUT_OLDBUTTONS);
                 
-                if (Buttons == BT_USE && OldButtons != BT_USE)
+                if (Buttons == BT_USE)
                 {
                     ActivatorSound("menu/move", 127);
                     PlayersApprove++;
                     Voted[i] = true;
                 };
-                if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+                if (Buttons == BT_SPEED)
                 {
                     ActivatorSound("menu/move", 127);
                     PlayersDeny++;
@@ -1938,7 +1915,11 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
             // Check that everyone has voted
             Ready = true;
             for (int i = 0; i < Players; i++)
-                if (!Voted[i]) Ready = false;
+                if (!Voted[i])
+                {
+                    Ready = false;
+                    break;
+                };
             
             // Drawing
             SetFont("BIGFONT");
@@ -1950,31 +1931,34 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         };
         
         // Ready - tally votes and confirm/deny Transport
-        if (Ready)
+        if (Ready || Force)
         {
-            SetPlayerProperty(true, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(1, 0, PROP_TOTALLYFROZEN);
             
             // Approved
-            if (PlayersApprove > PlayersDeny)
+            if (PlayersApprove > PlayersDeny || Force)
             {
                 for (int i = 0; i < MAX_PLAYERS; i++)
                     SetActorProperty(Players(i).TID, APROP_Invulnerable, true);
+                SetFont("BIGFONT");
                 HudMessageBold("\cdTransport Approved!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 4.0);
                 Delay(35 * 2);
                 FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 3.0);
                 Delay(35 * 3);
-            };
+            }
             
             // Denied
-            if (PlayersDeny > PlayersApprove)
+            else if (PlayersDeny > PlayersApprove)
             {
+                SetFont("BIGFONT");
                 HudMessageBold("\cgTransport Denied!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
                 return false;
-            };
+            }
             
             // Draw
-            if (PlayersApprove == PlayersDeny)
+            else if (PlayersApprove == PlayersDeny)
             {
+                SetFont("BIGFONT");
                 HudMessageBold("\cjDraw!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
                 return false;
             };

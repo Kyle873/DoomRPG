@@ -154,7 +154,7 @@ typedef void __near *va_list;
 //
 
 #ifdef __LANG_DS__
-extern __variable static FILE[] _Stream;
+extern "C" __variable static FILE[] _Stream;
 #else
 extern FILE _Stream[];
 #endif
