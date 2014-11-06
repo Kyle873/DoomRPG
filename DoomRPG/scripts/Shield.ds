@@ -631,10 +631,10 @@ function bool CellFastCharge()
 };
 
 // Shield Damage
-function void BoosterShieldDamage(int DamageAmt)
+function void BoosterShieldDamage(int DamageAmount)
 {
     int Chance = 6;
-    Chance += 19 * DamageAmt / 65;
+    Chance += 19 * DamageAmount / 65;
     if (Chance > 25)
         Chance = 25;
     
@@ -653,7 +653,7 @@ function void BoosterShieldDamage(int DamageAmt)
     };
 };
 
-function void SpookyDamage(int DamageAmt)
+function void SpookyDamage(int DamageAmount)
 {
     if (Random(1, 8) == 1)
         GiveInventory("PowerShieldGhost", 1);
@@ -663,6 +663,7 @@ script void TimeyWimeyHurtyBallZDoomSucks()
 {
     // Note for future endeavours: PowerTimeFreezer will always work on an even tic, but never odd ones.
     // See: https://github.com/rheit/zdoom/blob/master/src/g_shared/a_artifacts.cpp#L1502
+    
     while (Timer() & 1) Delay(1);
     
     GiveInventory("DRPGShieldTimePause", 1);
@@ -670,7 +671,7 @@ script void TimeyWimeyHurtyBallZDoomSucks()
     TakeInventory("PowerShieldTimeFreezer", 1);
 };
 
-function void TimeyWimeyHurtyBall(int DamageAmt)
+function void TimeyWimeyHurtyBall(int DamageAmount)
 {
     TimeyWimeyHurtyBallZDoomSucks();
 };
@@ -814,7 +815,7 @@ function void MinuteMaidMod()
 
 function void AmericaShieldMod()
 {
-    int ExtraCapacity = (Player.Shield.Capacity * 3) * Player.RankLevel / 24;
+    int ExtraCapacity = (Player.Shield.Capacity * 3) * Player.RankLevel / MAX_RANK;
     Player.Shield.Capacity += ExtraCapacity;
 };
 
@@ -822,15 +823,15 @@ function void GhettoLuckMod()
 {
     int Luck = 50 - (Player.Luck / 2);
     
-    Player.HealthChance += Luck * 0.025;
-    Player.EPChance += Luck * 0.025;
-    Player.ArmorChance += Luck * 0.025;
-    Player.PowerupChance += Luck * 0.0125;
-    Player.WeaponChance += Luck * 0.0125;
-    Player.TokenChance += Luck * 0.01;
-    Player.AugChance += Luck * 0.0025;
-    Player.ShieldChance += Luck * 0.005;
-    Player.StimChance += Luck * 0.0125;
+    Player.HealthChance += Luck * LUCK_HEALTHCHANCE;
+    Player.EPChance += Luck * LUCK_EPCHANCE;
+    Player.ArmorChance += Luck * LUCK_ARMORCHANCE;
+    Player.PowerupChance += Luck * LUCK_POWERUPCHANCE;
+    Player.WeaponChance += Luck * LUCK_WEAPONCHANCE;
+    Player.TokenChance += Luck * LUCK_TOKENCHANCE;
+    Player.AugChance += Luck * LUCK_AUGCHANCE;
+    Player.ShieldChance += Luck * LUCK_SHIELDCHANCE;
+    Player.StimChance += Luck * LUCK_STIMCHANCE;
 };
 
 function void SuperSqueezyScalarMod()
@@ -1066,8 +1067,8 @@ acscript void ToggleShield() net
         
         GiveInventory("DRPGShieldOn", 1);
         PlaySound(0, "shield/on", 5, 1.0, false, 1.0);
-        Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
         Player.Shield.Active = true;
+        ShieldTimerReset();
     }
     else
     {
@@ -1189,12 +1190,6 @@ function void CheckShieldAccessory()
 {
     if (Player.Shield.Accessory && Player.Shield.Accessory->Modifier)
         Player.Shield.Accessory->Modifier();
-    
-/*
-    // RF-CT
-    if (Player.Shield.Accessory == SHIELD_ACC_RFCT && Player.Shield.Active)
-        GiveInventory("DRPGShieldReflection", 1);
-*/
 };
 
 function void DrawShieldModel(int ID, int X, int Y)
