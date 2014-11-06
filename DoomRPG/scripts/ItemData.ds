@@ -263,15 +263,21 @@ script void BuildItemData()
     };
     
     // Shield Accessories
+    auto ShieldAccsPtr[MAX_ACCESSORIES] ShieldAccessoriesSorted;
+    for (int i = 0; i < MAX_ACCESSORIES; i++)
+        ShieldAccessoriesSorted[i] = &ShieldAccessories[i];
+    
+    qsort(ShieldAccessoriesSorted, MAX_ACCESSORIES, sizeof(ShieldAccsPtr), ShieldInversePriceSort);
+    
     ItemMax[6] += MAX_ACCESSORIES;
     for (int i = 0; i < MAX_ACCESSORIES; i++)
     {
-        ShieldAccsPtr Accessory = &ShieldAccessories[i];
+        ShieldAccsPtr Accessory = ShieldAccessoriesSorted[i];
         
         ItemData[6][Index].Actor = Accessory->Actor;
         ItemData[6][Index].Name = StrParam("Shield Accessory - %s\n", Accessory->Name);
         ItemData[6][Index].Price = Accessory->Price;
-        ItemData[6][Index].Rank = (Accessory->Price - 10000) / 15833; // This makes all accessories available by SSgt +
+        ItemData[6][Index].Rank = i * (MAX_RANK / 2) / MAX_ACCESSORIES; // This makes all accessories available by SSgt +
         
         // Sprite Info
         ItemData[6][Index].Sprite.Name = Accessory->Icon;
@@ -795,6 +801,16 @@ script void BuildItemData()
     RewardsInit = true;
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \c-Finished Processing Rewards List (%d Tics Taken)\n", Timer());
+};
+
+function int ShieldInversePriceSort(void const *Left, void const *Right)
+{
+    ShieldAccsPtr LeftPart = *((ShieldAccsPtr*)Left);
+    ShieldAccsPtr RightPart = *((ShieldAccsPtr*)Right);
+    
+    if (LeftPart->Price > RightPart->Price) return 1;
+    if (LeftPart->Price < RightPart->Price) return -1;
+    return 0;
 };
 
 function void RemoveItemRanks()
