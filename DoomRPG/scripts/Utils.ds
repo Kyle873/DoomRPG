@@ -333,16 +333,25 @@ acscript void Respec(bool DoStats, bool DoSkills) net
 
 acscript void AddEP(int Amount, bool NoFlash)
 {
-    fixed FlashStrength = 0.01 * (Player.EP * 100 / Player.EPMax);
-    if (FlashStrength > 0.75)
-        FlashStrength = 0.75;
-    if (Amount > 0 && !NoFlash)
-        FadeRange(0, 255, 255, FlashStrength, 0, 255, 255, 0, FlashStrength * 2);
+    if (Player.EP + Amount > Player.EPMax)
+        Amount = Player.EPMax - Player.EP;
+    
+    if (Amount <= 0)
+        return;
+    
+    fixed FlashStrength = 0.01 * (Amount * 100 / Player.EPMax);
+    fixed FlashDuration = 0.03 * (Amount * 100 / Player.EPMax);
+    
+    if (FlashStrength > 0.5)
+        FlashStrength = 0.5;
+    
+    if (FlashDuration > 3.0)
+        FlashDuration = 3.0;
+    
+    if (!NoFlash)
+        FadeRange(0, 255, 255, FlashStrength, 0, 255, 255, 0, FlashDuration);
     
     Player.EP += Amount;
-    
-    if (Player.EP > Player.EPMax)
-        Player.EP = Player.EPMax;
 };
 
 acscript void RemoveEP(int Amount, int InUnits)
