@@ -129,7 +129,7 @@ script void MapInit() open
     // Running the game for the first time
     if (KnownLevels.Data == nullptr)
     {
-        ArrayCreate(&KnownLevels, 32, sizeof(LevelInfo));
+        ArrayCreate(&KnownLevels, "LVLS\x00", 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
         
         if (KnownLevels.Data == nullptr)
@@ -227,6 +227,8 @@ script void MapInit() open
         if (CurrentLevel->Par == 0)
             CurrentLevel->ParBonus = true;
         CalculateBonusMaps();
+        
+        CurrentLevel->SelectedMonster = nullptr;
     
         // Decide the map's event, if any
         DecideMapEvent();
@@ -382,8 +384,15 @@ script void MegaBossEvent()
     int Index;
     MonsterPosition *Position;
     
-    auto DynamicArray MonsterPositions;
-    ArrayCreate(&MonsterPositions, 64, sizeof(MonsterPosition));
+    auto DynamicArray MonsterPositions = 
+    {
+        {'\x00';'\x00';'\x00';'\x00';'\x00';};
+        0;
+        0;
+        0;
+        nullptr;
+    };
+    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(MonsterPosition));
     
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
@@ -811,6 +820,7 @@ script void MapLoop()
                 HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
         };
         CurrentLevel->Event = MAPEVENT_NONE;
+        CurrentLevel->SelectedMonster = nullptr;
     };
     
     Delay(1);

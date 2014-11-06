@@ -1537,15 +1537,29 @@ function int CalcPercent(int Current, int Max)
 // Dynamic Arrays
 // --------------------------------------------------
 
-function void ArrayCreate(DynamicArray *Array, int InitSize, int ItemSize)
+function void ArrayCreate(DynamicArray *Array, char[5] Name, int InitSize, int ItemSize)
 {
     if (Array->Data != nullptr)
         ArrayDestroy(Array);
+    
+    Array->Name = Name;
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDynamicArray: Allocating \cj%s\n", Array->Name);
     
     Array->Position = 0;
     Array->Size = InitSize;
     Array->ItemSize = ItemSize;
     Array->Data = Z_Malloc(Array->ItemSize * Array->Size, PU_STATIC, NULL);
+    
+    if (!Array->Data)
+    {
+        Log("\cgERROR: \c-Could not allocate space for array \cj%s\n", Array->Name);
+        return;
+    };
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDynamicArray: \cj%s\cd @ %p\n", Array->Name, Array->Data);
     
     memset(Array->Data, 0xAAAAAAAA, Array->Size * Array->ItemSize);
 };
@@ -1554,7 +1568,7 @@ function void ArrayResize(DynamicArray *Array)
 {
     if (Array->Data == nullptr)
     {
-        Log("\cgERROR: \c-Tried to resize a destroyed array!\n");
+        Log("\cgERROR: \c-Tried to resize destroyed array \cj%s\n", Array->Name);
         return;
     };
     
@@ -1566,9 +1580,12 @@ function void ArrayResize(DynamicArray *Array)
     if (!tmp)
     {
         Z_Free(Array->Data);
-        Log("\cgERROR: \c-Cannot resize dynamic array!\n");
+        Log("\cgERROR: \c-Cannot resize dynamic array \cj%s\n", Array->Name);
         return;
     };
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDynamicArray: Resizing array \cj%s\cd @ %p to \cj%d\cd elements\n", Array->Name, Array->Data, Array->ItemSize);
     
     Array->Data = tmp;
     
@@ -1577,6 +1594,9 @@ function void ArrayResize(DynamicArray *Array)
 
 function void ArrayDestroy(DynamicArray *Array)
 {
+    if (GetCVar("drpg_debug"))
+        Log("\cdDynamicArray: Destroying array \cj%s\cd @ %p\n", Array->Name, Array->Data);
+    
     Z_Free(Array->Data);
     
     Array->Position = 0;
@@ -1587,7 +1607,7 @@ function void ArrayDestroy(DynamicArray *Array)
 
 function void ArrayDump(DynamicArray *Array)
 {
-    Log("\ciDynamicArray @ %p\n", Array->Data);
+    Log("\ciDynamicArray \cj%s\c- @ %p\n", Array->Name, Array->Data);
     Log("\cd* Array size: \cj%d\n", Array->Size);
     Log("\cd* Item bytesize: \cj%d\n", Array->ItemSize);
     Log("\cd* End Position: \cj%d\n", Array->Position);
