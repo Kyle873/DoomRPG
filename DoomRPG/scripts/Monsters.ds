@@ -1290,9 +1290,12 @@ script void MonsterDeath()
         };
     };
     
+    if (Players(Killer).Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
+        AddRemoteShield(Players(Killer).TID, Stats->HealthMax / 4);
+    
     // Drop Radiation Suits during the Environmental Hazard event
     if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
-        DropMonsterItem(Killer, DropTID, "DRPGRadSuit", 64);
+        DropMonsterItem(Killer, DropTID, "DRPGRadSuit", 20);
     
     // Drop Credits
     if (!(Stats->Flags & MF_NODROPS) && CheckInventory("DRPGCredits") > 0)
@@ -1351,7 +1354,7 @@ script void MonsterDeath()
     // Add a kill to the pay kills
     if (!(Stats->Flags & MF_NOPAYKILL) && Killer > -1)
     {
-        if (Players(Killer).Shield.Accessory == SHIELD_ACC_REKT50 && Players(Killer).Shield.Active)
+        if (Player.Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_EPICMEGACASH && Players(Killer).Shield.Active)
             Players(Killer).PayKills += 3
         else
             Players(Killer).PayKills++;

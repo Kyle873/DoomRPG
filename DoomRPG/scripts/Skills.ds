@@ -839,19 +839,27 @@ acscript void UseSkill(int Key) net
         };
         
         // PWAA-9001 Accessory Handling - Increase skill level intermittently
-        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
-                SkillLevel->CurrentLevel++;
+        if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_SKILLPLUS && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
+            SkillLevel->CurrentLevel++;
         
         // Use Skill
         Success = CurrentSkill->Use(SkillLevel, Data);
         
         // PWAA-9001 Accessory Handling - Change back to previous level
-        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
+        if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_SKILLPLUS && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
             SkillLevel->CurrentLevel--;
         
         // Check if the skill use was successful
         if (Success)
-            Player.EP -= EPCost;
+        {
+            if (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_MORESKILLS || Random(1, 4) != 1)
+                Player.EP -= EPCost;
+            
+            if (Player.Shield.Active && Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_SKILLTOSHIELD)
+            {
+                Player.Shield.Charge += EPCost / 10;
+            };
+        };
     }
     else // Not enough EP
     {
@@ -1799,12 +1807,18 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
             if (GetActorClass(TID[i]) == "DRPGCredits1000")
                 CreditCount += 1000;
             
+            int HolderTID = UniqueTID(0, 0);
+            SpawnSpot("DRPGCreditsEmpty", TID[i], HolderTID, Random(0, 255));
+            SetActorVelocity(HolderTID, RandomFixed(-8,8), RandomFixed(-8,8), RandomFixed(2,8), false, false);
             Thing_Remove(TID[i]);
         };
     
     // Give calculated Credits
     if (CreditCount > 0)
     {
+        if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_DOSHMAGNET)
+            CreditCount *= 3;
+        
         GiveInventory("DRPGCredits", CreditCount);
         ActivatorSound("credits/pickup", 127);
     };

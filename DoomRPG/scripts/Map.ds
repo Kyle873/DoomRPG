@@ -10,6 +10,7 @@
 static LevelInfo *CurrentLevel;
 static DynamicArray KnownLevels;
 static int LastVisitedLevel;
+static int AllBonusMaps; // For the OCD Shield
 
 static DRLAEventMonsterReplacement[] NightmareReplacements =
 {
@@ -189,14 +190,20 @@ script void MapInit() open
         CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
         CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
         
-        CurrentLevel->MaxMonstersKilled = 0;
-        CurrentLevel->MaxItemsFound = 0;
-        CurrentLevel->MaxSecretsFound = 0;
-        CurrentLevel->ShortestTime = 0x7FFFFFFF;
+        CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+        CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+        CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+        CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+        CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+        CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+        CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+        CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
         
-        CurrentLevel->TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
-        CurrentLevel->TotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
-        CurrentLevel->TotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        // For rank giving and mission counting
+        CurrentLevel->UniqueSecrets = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+
+        CurrentLevel->ShortestTime = 0x7FFFFFFF;
         
         // These never change so we don't need to update them
         CurrentLevel->Par = GetLevelInfo(LEVELINFO_PAR_TIME);
@@ -208,6 +215,19 @@ script void MapInit() open
         CurrentLevel->AllBonus = false;
         CurrentLevel->ParBonus = false;
         
+        // Check to see if these are unobtainable
+        if (CurrentLevel->MaxTotalMonsters == 0)
+            CurrentLevel->KillBonus = true;
+        if (CurrentLevel->MaxTotalItems == 0)
+            CurrentLevel->ItemsBonus = true;
+        if (CurrentLevel->MaxTotalSecrets == 0)
+            CurrentLevel->SecretsBonus = true;
+        if (CurrentLevel->MaxTotalMonsters == 0 && CurrentLevel->MaxTotalItems == 0 && CurrentLevel->MaxTotalSecrets == 0)
+            CurrentLevel->AllBonus = true;
+        if (CurrentLevel->Par == 0)
+            CurrentLevel->ParBonus = true;
+        CalculateBonusMaps();
+    
         // Decide the map's event, if any
         DecideMapEvent();
         
@@ -611,57 +631,16 @@ script void MapLoop()
     int XPBonus;
     int RankBonus;
     
-    int MonstersKilled;
     int ItemsFound;
     int SecretsFound;
     
-    int MonstersLastKilled = 0;
     int ItemsLastFound = 0;
-    int SecretsLastFound = 0;
     
-    Start:
-    // These need to be updated on a constant basis because they can change due
-    // to scripting and mission spawns
-    CurrentLevel->TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
-    CurrentLevel->TotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
-    CurrentLevel->TotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
-    
-    // Check to see if these are unobtainable
-    if (CurrentLevel->TotalMonsters == 0)
-        CurrentLevel->KillBonus = true;
-    if (CurrentLevel->TotalItems == 0)
-        CurrentLevel->ItemsBonus = true;
-    if (CurrentLevel->TotalSecrets == 0)
-        CurrentLevel->SecretsBonus = true;
-    if (CurrentLevel->TotalMonsters == 0 && CurrentLevel->TotalItems == 0 && CurrentLevel->TotalSecrets == 0)
-        CurrentLevel->AllBonus = true;
-    
-    MonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+    Start:    
+    // MISSION TRACKERS
     ItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
     SecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
     
-    // MAX KILL / ITEM / SECRET TRACKERS
-    
-    if (MonstersKilled > CurrentLevel->MaxMonstersKilled)
-        CurrentLevel->MaxMonstersKilled = MonstersKilled;
-    
-    if (ItemsFound > CurrentLevel->MaxItemsFound)
-    {
-        // This counts only unique items
-        /*
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i) ||  Players(i).Mission.Type != MT_ITEMS)
-                continue;
-            
-            Players(i).Mission.Current += ItemsFound - CurrentLevel->MaxItemsFound;
-        };
-        */
-        
-        CurrentLevel->MaxItemsFound = ItemsFound;
-    };
-    
-    // This counts ALL items (Current behavior)
     if (ItemsFound > ItemsLastFound)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
@@ -673,9 +652,9 @@ script void MapLoop()
         };
     };
     
-    // Ditto, with secrets. These SHOULD be unique-only, because they're not
-    // secrets anymore once you know about them.
-    if (SecretsFound > CurrentLevel->MaxSecretsFound)
+    // These should be unique-only, because they're not secrets anymore once
+    // you know about them.
+    if (SecretsFound > CurrentLevel->UniqueSecrets)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -690,15 +669,36 @@ script void MapLoop()
             if (Players(i).Mission.Type != MT_SECRETS)
                 continue;
 
-            Players(i).Mission.Current += SecretsFound - CurrentLevel->MaxSecretsFound;
+            Players(i).Mission.Current += SecretsFound - CurrentLevel->UniqueSecrets;
         };
         
-        CurrentLevel->MaxSecretsFound = SecretsFound;
+        CurrentLevel->UniqueSecrets = SecretsFound;
     };
     
     // KILL / ITEM / SECRET SPECIAL BONUSES
     
-    if (MonstersKilled >= CurrentLevel->TotalMonsters && !CurrentLevel->KillBonus)
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage)
+    {
+        CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+        CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+        CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+    };
+    
+    if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS)) > CurrentLevel->MaxItemPercentage)
+    {
+        CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+        CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+        CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+    };
+    
+    if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS)) > CurrentLevel->MaxSecretPercentage)
+    {
+        CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+        CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
+    };
+    
+    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -721,7 +721,7 @@ script void MapLoop()
         CurrentLevel->KillBonus = true;
     };
 
-    if (ItemsFound >= CurrentLevel->TotalItems && !CurrentLevel->ItemsBonus)
+    if (CurrentLevel->MaxItemPercentage >= 100 && !CurrentLevel->ItemsBonus)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -744,7 +744,7 @@ script void MapLoop()
         CurrentLevel->ItemsBonus = true;
     };
 
-    if (SecretsFound >= CurrentLevel->TotalSecrets && !CurrentLevel->SecretsBonus)
+    if (CurrentLevel->MaxSecretPercentage >= 100 && !CurrentLevel->SecretsBonus)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -798,22 +798,24 @@ script void MapLoop()
         SetActivator(0, AAPTR_NULL);
         
         CurrentLevel->AllBonus = true;
+        CalculateBonusMaps();
     };
     
-    if (MonstersKilled >= CurrentLevel->TotalMonsters && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
     {
         // All Auras and One-Monster events are ended by killing everything on the map
-        AmbientSound("misc/secret", 127);
-        HudMessageBold("Everything falls silent.\n",
-            HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+        if (Timer() > 4)
+        {
+            AmbientSound("misc/secret", 127);
+            HudMessageBold("Everything falls silent.\n",
+                HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+        };
         CurrentLevel->Event = MAPEVENT_NONE;
     };
     
     Delay(1);
     
-    MonstersLastKilled = MonstersKilled;
     ItemsLastFound = ItemsFound;
-    SecretsLastFound = SecretsFound;
     
     goto Start;
 };
@@ -824,6 +826,11 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
 {
     int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
     bool Waiting = true;
+    
+    // How long it took to reach the exit
+    int ExitTime = Timer() / 35;
+    if (CurrentLevel->ShortestTime > ExitTime)
+        CurrentLevel->ShortestTime = ExitTime;
     
     // Prevent level exit until everyone is outside the menu
     if (InMultiplayer && PlayerCount() > 1)
@@ -837,11 +844,6 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
             
             Delay(35 * 3);
         };
-    
-    // How long it took to reach the exit
-    int ExitTime = Timer() / 35;
-    if (CurrentLevel->ShortestTime > ExitTime)
-        CurrentLevel->ShortestTime = ExitTime;
     
     // Check par time and give bonus if you beat it
     if (ParTime > 0 && ExitTime < ParTime && (CurrentLevel && !CurrentLevel->ParBonus))
@@ -896,7 +898,36 @@ function int FindLevelInfoIndex(int LevelNum)
     return -1;
 };
 
-acscript void SetMapEvent(int ID)
+script void CalculateBonusMaps()
 {
-    CurrentLevel->Event = ID;
+    int count = 0;
+    
+    for (int i = 0; i < KnownLevels.Position; i++)
+        if (((LevelInfo *)KnownLevels.Data)[i].AllBonus)
+            count++;
+    
+    AllBonusMaps = count;
+};
+
+acscript void SetMapEvent(int Level, int ID)
+{
+    if (Level == 0)
+        Level = GetLevelInfo(LEVELINFO_LEVELNUM);
+    
+    int LevelIndex = FindLevelInfoIndex(Level);
+    if (LevelIndex == -2)
+    {
+        Log("\cgOutpost Events aren't implemented yet.\n");
+        return;
+    }
+    else if (LevelIndex == -1 || LevelIndex == -3)
+    {
+        Log("\cgCan't set an event for that level - Visit it first.\n");
+        return;
+    };
+    
+    LevelInfo *MapToChange = &((LevelInfo *)KnownLevels.Data)[LevelIndex];
+    MapToChange->Event = ID;
+    if (CurrentLevel == MapToChange)
+        Log("\cjYou will need to warp back to this level to see changes take effect.\n");
 };

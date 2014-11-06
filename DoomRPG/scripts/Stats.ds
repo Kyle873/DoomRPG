@@ -478,6 +478,7 @@ function void DoRegen()
 {
     int HPAmount = 1;
     int EPAmount = 1;
+    int Overflow = 0;
     
     // HP Regen
     if (Player.HPRate >= Player.HPTime && ClassifyActor(Player.TID) & ACTOR_ALIVE)
@@ -487,9 +488,19 @@ function void DoRegen()
     if (Player.EPRate >= Player.EPTime && Player.EP < Player.EPMax)
     {
         Player.EP += Player.EPAmount;
+        Overflow = 0;
         
         if (Player.EP > Player.EPMax)
+        {
+            Overflow = Player.EP - Player.EPMax;
             Player.EP = Player.EPMax;
+        };
+        
+        if (Player.Shield.Active && Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_EPOVERFLOW)
+        {
+            HealThing(Overflow);
+            Player.Shield.Charge += Overflow;
+        };
     };
     
     // Check and Reset timers
@@ -640,7 +651,7 @@ function void CheckStatBounds()
         Player.WeaponSpeed = 100;
     
     // Cap Survival Bonus
-    if (Player.SurvivalBonus > 75)
+    if (Player.SurvivalBonus > 75 && (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_ROULETTE))
         Player.SurvivalBonus = 75;
     
     // Cap chances at 100%
@@ -818,7 +829,7 @@ function void CheckToxicity()
 function void ToxicityDamage()
 {
     // Check Damage Type for Toxicity
-    if (Player.DamageType == DT_TOXIC && !CheckInventory("PowerIronFeet") && !(Player.Shield.Accessory == SHIELD_ACC_TXBGONN && Player.Shield.Active))
+    if (Player.DamageType == DT_TOXIC && !CheckInventory("PowerIronFeet") && !(Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_NOTOXIC && Player.Shield.Active))
         AddToxicity(Random(1, GameSkill()));
 };
 

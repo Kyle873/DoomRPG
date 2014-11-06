@@ -331,10 +331,13 @@ acscript void Respec(bool DoStats, bool DoSkills) net
     ActivatorSound("misc/secret", 127);
 };
 
-acscript void AddEP(int Amount)
+acscript void AddEP(int Amount, bool NoFlash)
 {
-    if (Amount > 0)
-        FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 0.25);
+    fixed FlashStrength = 0.01 * (Player.EP * 100 / Player.EPMax);
+    if (FlashStrength > 0.75)
+        FlashStrength = 0.75;
+    if (Amount > 0 && !NoFlash)
+        FadeRange(0, 255, 255, FlashStrength, 0, 255, 255, 0, FlashStrength * 2);
     
     Player.EP += Amount;
     
@@ -571,29 +574,29 @@ acscript void FullShield()
     // Bodies
     for (int i = 0; i < ShieldPartsMax[0]; i++)
     {
-        ShieldPartPtr PartPtr = &ShieldData[0][i];
-        GiveInventory(StrParam("%s\n", PartPtr->Actor), 1);
+        ShieldPartPtr Part = &ShieldParts[0][i];
+        GiveInventory(Part->Actor, 1);
     };
     
     // Batteries
     for (int i = 0; i < ShieldPartsMax[1]; i++)
     {
-        ShieldPartPtr PartPtr = &ShieldData[1][i];
-        GiveInventory(StrParam("%s\n", PartPtr->Actor), 1);
+        ShieldPartPtr Part = &ShieldParts[1][i];
+        GiveInventory(Part->Actor, 1);
     };
 
     // Capacitors
     for (int i = 0; i < ShieldPartsMax[2]; i++)
     {
-        ShieldPartPtr PartPtr = &ShieldData[2][i];
-        GiveInventory(StrParam("%s\n", PartPtr->Actor), 1);
+        ShieldPartPtr Part = &ShieldParts[2][i];
+        GiveInventory(Part->Actor, 1);
     };
     
     // Accessories
-    for (int i = 0; i < ShieldPartsMax[3]; i++)
+    for (int i = 0; i < MAX_ACCESSORIES; i++)
     {
-        ShieldPartPtr PartPtr = &ShieldData[3][i];
-        GiveInventory(StrParam("%s\n", PartPtr->Actor), 1);
+        ShieldAccsPtr Accessory = &ShieldAccessories[i];
+        GiveInventory(Accessory->Actor, 1);
     };
 };
 
@@ -1512,6 +1515,14 @@ acscript void CheckArmorStats()
     Log("\c[Green]Protection: \c[Yellow]%k%%\n", GetArmorInfoFixed(ARMORINFO_SAVEPERCENT) * 100.0);
     Log("\c[Green]Max Absorb: \c[Grey]%i%%\n", GetArmorInfo(ARMORINFO_MAXABSORB));
     Log("\c[Green]Max Full Absorb: \c[Brick]%i%%\n", GetArmorInfo(ARMORINFO_MAXFULLABSORB));
+};
+
+// This function is specifically to avoid dividing by zero in the event that that can happen.
+function int CalcPercent(int Current, int Max)
+{
+    if (Max == 0)
+        return 100;
+    return Current * 100 / Max;
 };
 
 // Dynamic Arrays

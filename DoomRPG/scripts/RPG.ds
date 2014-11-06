@@ -21,7 +21,7 @@
 #include "Utils.dh"
 
 // Version
-str Version = "v0.9.11 Beta - Gotta Go Fast Edition";
+const str Version = "v0.9.12 Beta - Maximum Frisbee DLC: Now with 125% more Shield Accessories";
 
 // Flags
 static bool InBase;
@@ -69,6 +69,9 @@ script void GlobalInit() open
         
         // Initialize XP & Rank Tables
         InitTables();
+        
+        // Arena Wave
+        ArenaMaxWave = 1;
         
         GlobalsInitialized = true;
         
@@ -241,10 +244,10 @@ script void Loop()
     CheckRank();
     CheckSkills();
     CheckBurnout();
-    CheckShields();
-    CheckShieldAccessory();
     CheckStim();
     CheckPerks();
+    CheckShields();
+    CheckShieldAccessory();
     CheckStatBounds();
     CheckToxicity();
     CheckStatusEffects();
@@ -365,7 +368,7 @@ script void PlayerDamage()
     {
         SetActorProperty(0, APROP_Health, Player.ActualHealth);
         
-        if (Player.ActualHealth > 1)
+        if (Player.ActualHealth > 2)
             Player.LastLegs = false;
         
         if (CanSurvive || CheckInventory("DRPGContinue"))
@@ -457,9 +460,10 @@ script void PlayerDamage()
             // Survival Bonus
             if (CanSurvive)
             {
+                Player.ActualHealth = 2;
                 Player.LastLegs = true;
                 
-                if (Player.Shield.Accessory == SHIELD_ACC_UW0T)
+                if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_SURVIVECHARGE)
                 {
                     Player.Shield.Charge = Player.Shield.Capacity;
                 };
@@ -656,7 +660,7 @@ acscript void QuickEP() net
             Amount = CheckInventory("DRPGCredits");
         
         TakeInventory("DRPGCredits", Amount);
-        AddEP(Amount);
+        AddEP(Amount, false);
     }
     else
     {

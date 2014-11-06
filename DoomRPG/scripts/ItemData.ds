@@ -194,75 +194,91 @@ script void BuildItemData()
     
     // Shield Page
     ItemMax[6] = 1;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 3; i++)
     {
-        str ShieldActorName = "";
-        str ShieldName = "";
-        int ShieldCost = 0;
+        str ShieldName;
+        int ShieldPartCost;
         
         ItemMax[6] += ShieldPartsMax[i];
         
         switch (i)
         {
-        case 0: ShieldActorName = "DRPGShieldBody";         ShieldName = "Shield Body - ";      break;
-        case 1: ShieldActorName = "DRPGShieldBattery";      ShieldName = "Shield Battery - ";   break;
-        case 2: ShieldActorName = "DRPGShieldCapacitor";    ShieldName = "Shield Capacitor - "; break;
-        case 3: ShieldActorName = "DRPGShieldAccessory";    ShieldName = "Shield Accessory - "; break;
+        case 0: ShieldName = "Shield Body - ";      break;
+        case 1: ShieldName = "Shield Battery - ";   break;
+        case 2: ShieldName = "Shield Capacitor - "; break;
         };
         
         for (int j = 0; j < ShieldPartsMax[i]; j++)
         {
-            ShieldCost = 0;
+            ShieldPartCost = 0;
 
             // Name
-            ItemData[6][Index].Actor = StrParam("%s%d\n", ShieldActorName, j + 1);
-            ItemData[6][Index].Name = StrParam("%s%s\c-\n", ShieldName, ShieldData[i][j].Name);
+            ItemData[6][Index].Actor = StrParam("%s\n", ShieldParts[i][j].Actor);
+            ItemData[6][Index].Name = StrParam("%s%s\c-\n", ShieldName, ShieldParts[i][j].Name);
             
             // Price
-            if (i < 3) // Bodies, Batteries, Capacitors
-            {
-                ShieldPartPtr PartPtr = &ShieldData[i][j];
-                int Capacity = PartPtr->Capacity;
-                int ChargeRate = PartPtr->ChargeRate;
-                int DelayRate = PartPtr->DelayRate;
-                
-                // New Pricing Code, not perfect but...
-                ChargeRate += 1; // Shifts range to 0 - 31
-                DelayRate = (DelayRate - 15) * -1; // Shifts range to 0 - 20
-
-                ShieldCost += Capacity * 50;
-                ShieldCost += ChargeRate * 650;
-                ShieldCost += DelayRate * 40;
-                
-                ShieldCost *= (Capacity / 500) + 1;
-                ShieldCost *= (ChargeRate / 10) + 1;
-                DelayRate -= 15;
-                if (DelayRate > 0)
-                    ShieldCost *= DelayRate;
-                if (i == 0) ShieldCost += (j * 10 / 21) * j * 950;	// 21 max index
-                if (i == 1) ShieldCost += (j * 10 / 12) * j * 5000;	// 12 max index
-                if (i == 2) ShieldCost += (j * 10 / 14) * j * 4285;	// 14 max index
-                
-                // Don't go below 1000 Credits
-                if (ShieldCost < 1000)
-                    ShieldCost = 1000;
-            }
-            else // Accessories
-                ShieldCost = ShieldAccessoryPrices[j];
+            ShieldPartPtr PartPtr = &ShieldParts[i][j];
+            int Capacity = PartPtr->Capacity;
+            int ChargeRate = PartPtr->ChargeRate;
+            int DelayRate = PartPtr->DelayRate;
             
+            // New Pricing Code, not perfect but...
+            ChargeRate += 1; // Shifts range to 0 - 31
+            DelayRate = (DelayRate - 15) * -1; // Shifts range to 0 - 20
+
+            ShieldPartCost += Capacity * 50;
+            ShieldPartCost += ChargeRate * 650;
+            ShieldPartCost += DelayRate * 40;
+            
+            ShieldPartCost *= (Capacity / 500) + 1;
+            ShieldPartCost *= (ChargeRate / 10) + 1;
+            DelayRate -= 15;
+            if (DelayRate > 0)
+                ShieldPartCost *= DelayRate;
+            if (i == 0) ShieldPartCost += (j * 10 / 21) * j * 950;	// 21 max index
+            if (i == 1) ShieldPartCost += (j * 10 / 12) * j * 5000;	// 12 max index
+            if (i == 2) ShieldPartCost += (j * 10 / 14) * j * 4285;	// 14 max index
+            
+            // Round to the nearest 50
+            ShieldPartCost /= 50;
+            ShieldPartCost *= 50;
+            
+            // Don't go below 1000 Credits
+            if (ShieldPartCost < 1000)
+                ShieldPartCost = 1000;
+
             // Apply Price
-            ItemData[6][Index].Price = ShieldCost;
+            ItemData[6][Index].Price = ShieldPartCost;
             
             // Rank
             ItemData[6][Index].Rank = j / 1.5;
             
             // Sprite Info
-            ItemData[6][Index].Sprite.Name = ShieldData[i][j].Icon;
+            ItemData[6][Index].Sprite.Name = ShieldParts[i][j].Icon;
             ItemData[6][Index].Sprite.XOff = 16;
             ItemData[6][Index].Sprite.YOff = 32;
             
             Index++;
         };
+    };
+    
+    // Shield Accessories
+    ItemMax[6] += MAX_ACCESSORIES;
+    for (int i = 0; i < MAX_ACCESSORIES; i++)
+    {
+        ShieldAccsPtr Accessory = &ShieldAccessories[i];
+        
+        ItemData[6][Index].Actor = Accessory->Actor;
+        ItemData[6][Index].Name = StrParam("Shield Accessory - %s\n", Accessory->Name);
+        ItemData[6][Index].Price = Accessory->Price;
+        ItemData[6][Index].Rank = (Accessory->Price - 10000) / 15833; // This makes all accessories available by SSgt +
+        
+        // Sprite Info
+        ItemData[6][Index].Sprite.Name = Accessory->Icon;
+        ItemData[6][Index].Sprite.XOff = 16;
+        ItemData[6][Index].Sprite.YOff = 32;
+        
+        Index++;
     };
     
     // Compatibility handling - Extras
