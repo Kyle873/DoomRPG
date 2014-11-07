@@ -533,18 +533,22 @@ function void DoRegen()
             Thing_ChangeTID(AuraTID, 0);
         };
         
-        // Regeneration Perk - Exponentially increase Health/Energy regeneration rates as they lower
+        // Regeneration Perk - Exponentially increase Health/Energy regeneration rates up to 4x as they lower
         if (Player.Perks[STAT_REGENERATION])
         {
             // Health
-            int Health = Player.ActualHealth;
-            if (Health == 0) Health = 1;
-            HPAmount += Player.HealthMax / Health / 100;
+            fixed Health = Player.ActualHealth;
+            fixed MaxHealth = Player.HealthMax;
+            
+            fixed Multiplier = (1.0 - (Health / MaxHealth)) * 1.7325;
+            HPAmount += Multiplier * Multiplier;
             
             // EP
-            int EP = Player.EP;
-            if (EP == 0) EP = 1;
-            EPAmount += Abs(Player.EPMax / EP / 100);
+            fixed EP = Abs(Player.EP);
+            fixed MaxEP = Player.EPMax;
+            
+            fixed Multiplier = (1.0 - (EP / MaxEP)) * 1.7325;
+            EPAmount += Multiplier * Multiplier;
         };
         
         // Movement/Crouching/Idling mechanics
