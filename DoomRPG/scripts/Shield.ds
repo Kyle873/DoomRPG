@@ -296,21 +296,21 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         ReflectionMod; nullptr; ReflectionUnequip; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
-/*
     {
-        "DRPGShieldAccessory30"; // !!!
+        "DRPGShieldAccessory30";
         "\ciTEW-11";     "SHA2D0";  38000;
         "When your \cvShield reaches \cdfull charge\c-, it \cnmemorizes\c- where you last were\nWhen your \cvShield\c- is \cgdepleted\c-, it \cdteleports\c- you to that location";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        nullptr; nullptr; nullptr; nullptr; TeleportBreak; nullptr; nullptr; nullptr; TeleportFullCharge;
     };
     {
-        "DRPGShieldAccessory31"; // !!!
+        "DRPGShieldAccessory31";
         "\cdNU-YU5";     "SHA2E0";  65000;
         "If you are killed with your \cvShield\c- active, you respawn with it full and \cd90% Damage Reduction\c- for 6 seconds";
-        SHIELD_PASS_NONE;
+        SHIELD_PASS_HYPERION;
         nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
+/*
     {
         "DRPGShieldAccessory32"; // !!!
         "\ckADPT-V15";   "SHA2F0";  45000;
@@ -339,20 +339,22 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
+*/
     {
         "DRPGShieldAccessory36"; // !!!
         "\ciSANIC-S88";  "SHA2J0";  88000;
         "The faster you move, the faster your shield charges";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        SanicMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
     {
         "DRPGShieldAccessory37"; // !!!
         "\cdNAKD-N0W";   "SHA2K0";  30000;
         "While you aren't wearing armor, you have \cd+25% Damage Reduction\c-";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        NakedMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
+/*
     {
         "DRPGShieldAccessory38"; // !!!
         "\caHA3-L1N";   "SHA2L0";   45000;
@@ -388,14 +390,14 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
+*/
     {
-        "DRPGShieldAccessory43"; // !!!
+        "DRPGShieldAccessory43";
         "\ccCOUN-TR20"; "SHA2Q0";   46000;
         "Whenever you are struck with \ccMelee Damage\c-, you emit a powerful \cnRepulsion\c- blast";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        nullptr; nullptr; nullptr; CounterDamage; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
-*/
     {
         "DRPGShieldAccessory44";
         "\cfPRO-100";   "SHA2R0";   70000;
@@ -431,15 +433,13 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         HowDidYouEvenMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
-/*
     {
-        "DRPGShieldAccessory49"; // !!!
+        "DRPGShieldAccessory49";
         "\cgK00-LAYD";  "SHA2W0";   62000;
         "Upon entering a non-Outpost level, releases an \ckexplosive blast\c- that kills most monsters around you";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        OhYeahMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
-*/
     {
         "DRPGShieldAccessory50";
         "\cfSKROO-G3";  "SHA2X0";   100000;
@@ -461,14 +461,14 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_KILLSCHARGE;
         nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
-/*
     {
-        "DRPGShieldAccessory53"; // !!!
+        "DRPGShieldAccessory53";
         "\cgFLAN-495";  "SHA2[0";   90000;
         "When your Shield is depleted or reaches full charge, enemies around you \cgexplode\c-";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        nullptr; nullptr; nullptr; nullptr; FlanBreak; nullptr; nullptr; nullptr; FlanFullCharge;
     };
+/*
     {
         "DRPGShieldAccessory54"; // !!!
         "\cnTOJ1-K0";   "SHA2\\0";   55000;
@@ -676,11 +676,28 @@ function void TimeyWimeyHurtyBall(int DamageAmount)
     TimeyWimeyHurtyBallZDoomSucks();
 };
 
+function void CounterDamage(int DamageAmount)
+{
+    if (Player.DamageType == DT_MELEE)
+        GiveInventory("DRPGShieldCounterBlast", 1);
+};
+
 // Shield Depletion
 function void NovaShieldBreak()
 {
     if (Random(1, 4) == 1)
         Nova("BFGBall", Random(4, 16));
+};
+
+function void TeleportBreak()
+{
+    Teleport(Player.Shield.TeleportTID, 0, false);
+};
+
+function void FlanBreak()
+{
+    GiveInventory("DRPGShieldRadialExplosion", 1);
+    GiveInventory("DRPGShieldRadialExplosionResist", 1);
 };
 
 function void SpaghettiShieldBreak()
@@ -854,6 +871,22 @@ function void ReflectionUnequip(bool EMP)
     GiveInventory("DRPGShieldReflectionOff", 1);
 };
 
+function void SanicMod()
+{
+    int Movement = VectorLength(GetActorVelX(0), GetActorVelY(0));
+    
+    if (Movement > 30)
+        Movement = 30;
+    
+    Player.Shield.Interval -= Movement;
+};
+
+function void NakedMod()
+{
+    if (Player.Shield.Active && CheckInventory("Armor") > 0)
+        GiveInventory("DRPGShieldNakedResist", 1);
+};
+
 function void MLGNoScopeShieldMod()
 {
     int Extra = 0;
@@ -898,6 +931,17 @@ function void HowDidYouEvenMod()
     int DelayRate = Player.Shield.DelayRate;
     Player.Shield.DelayRate = Player.Shield.ChargeRate;
     Player.Shield.ChargeRate = DelayRate;
+};
+
+function void OhYeahMod()
+{
+    if (Timer() == 10 && !InBase)
+    {
+        FadeRange(255, 128, 0, 0.5, 255, 128, 0, 0.0, 0.5);
+        ActivatorSound("shield/ohyeah", 127);
+        GiveInventory("DRPGShieldRadialExplosion", 1);
+        GiveInventory("DRPGShieldRadialExplosionResist", 1);
+    };
 };
 
 function void McDuckMod()
@@ -958,10 +1002,26 @@ function void IronShieldMod()
     Player.Shield.Capacity += Player.ActualHealth / 100 * 20;
 };
 
+function void TeleportFullCharge()
+{
+    fixed X = GetActorX(0);
+    fixed Y = GetActorY(0);
+    fixed Z = GetActorZ(0);
+    
+    Player.Shield.TeleportTID = UniqueTID();
+    Spawn("DRPGShieldTeleportSpot", X, Y, Z,Player.Shield.TeleportTID, 0); 
+};
+
 function void EPRegenSwapperMod()
 {
     if (Player.Shield.Active)
         Player.EPAmount = Player.Shield.ChargeRate;
+};
+
+function void FlanFullCharge()
+{
+    GiveInventory("DRPGShieldRadialExplosion", 1);
+    GiveInventory("DRPGShieldRadialExplosionResist", 1);
 };
 
 script void ShieldTimer()
