@@ -468,15 +468,13 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         nullptr; nullptr; nullptr; nullptr; FlanExplosion; nullptr; nullptr; nullptr; FlanExplosion;
     };
-/*
     {
-        "DRPGShieldAccessory54"; // !!!
+        "DRPGShieldAccessory54";
         "\cnTOJ1-K0";   "SHA2\\0";   55000;
-        "Every time your \cvShield\c- charges, \cd25%\c- chance to \ckemit lightning bolts\c-";
+        "Every time your \cvShield\c- charges, it \ckemits lightning bolts\c-\nThe higher your \cdCharge Rate\c-, the more \cklightning\c- your \cvShield\c- emits";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        nullptr; nullptr; nullptr; nullptr; nullptr; LightningCharge; nullptr; nullptr; nullptr;
     };
-*/
     {
         "DRPGShieldAccessory55";
         "\ckTRANS-EB2S2";   "SHA2]0";   60000;
@@ -613,6 +611,25 @@ function void AmmoConversion(int Charge)
         GiveInventory("Shell", 1);
         Player.Shield.AccessoryBattery -= 4;
     };
+};
+
+// Standard Charging
+function int LightningCharge(int ChargeAmount)
+{
+    if (Player.Shield.Full) return ChargeAmount;
+    
+    int NumBolts = 0;
+    for (int i = 0; i < ChargeAmount; i++)
+        if (!Random(0, 3))
+            NumBolts++;
+    
+    if (!NumBolts) return ChargeAmount;
+    
+    for (; NumBolts > 0; NumBolts--)
+        GiveInventory("DRPGShieldLightningAttack", 1);
+    
+    PlaySound(0, "shield/lightning", CHAN_AUTO, 1.0, false, 1.0);
+    return ChargeAmount;
 };
 
 // Fast Charging
