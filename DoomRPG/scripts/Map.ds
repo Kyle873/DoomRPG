@@ -229,6 +229,8 @@ script void MapInit() open
         CalculateBonusMaps();
         
         CurrentLevel->SelectedMonster = nullptr;
+        CurrentLevel->LevelAdd = 0;
+        CurrentLevel->RareAdd = 0;
     
         // Decide the map's event, if any
         DecideMapEvent();
@@ -277,6 +279,8 @@ script void DecideMapEvent()
         "Low Power";
         "All Auras";
         "One-Monster";
+        "Hell Unleashed";
+        
         "RAINBOWS!";
         
         "DRLA - Nightmare!";
@@ -287,7 +291,6 @@ script void DecideMapEvent()
     if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
     {
         str Text = StrParam("\cdDEBUG: Special Event: \cg%s\n", EventNames[CurrentLevel->Event]);
-        Log("%s\n", Text);
         SetFont("BIGFONT");
         Print("%s\n", Text);
     };
@@ -298,7 +301,7 @@ script void SetupMapEvent()
 {
     switch (CurrentLevel->Event)
     {
-        // Normal events
+        // Normal Events
         // --------------------------------------------------
         
         case MAPEVENT_MEGABOSS:
@@ -340,7 +343,13 @@ script void SetupMapEvent()
             OneMonsterEvent();
             break;
         
-        // Bonus events
+        case MAPEVENT_HELLUNLEASHED:
+            // Hell Unleashed: Monsters will continue to spawn in over time
+            // Monster levels and rare drop rates will steadily increase while you stay in the level
+            HellUnleashedEvent();
+            break;
+        
+        // Bonus Events
         // --------------------------------------------------
         
         case MAPEVENT_BONUS_RAINBOWS:
@@ -349,7 +358,7 @@ script void SetupMapEvent()
             RainbowSectors();
             break;
         
-        // DoomRL-exclusive
+        // DoomRL Exclusive
         // --------------------------------------------------
         
         case MAPEVENT_DRLA_NIGHTMARE:
@@ -367,7 +376,7 @@ script void SetupMapEvent()
             DRLAReplaceMonsters(ArmageddonReplacements, "\c[Black]The day of reckoning is upon you!");
             break;
         
-        // Standard level
+        // Standard Level
         // --------------------------------------------------
         
         default:
@@ -475,7 +484,9 @@ script void EnvironmentalHazard()
 {
     // TODO: [02:47:04] <<@Yholl/ID>> Have some sort of radiation device that sciences away the radiation
     Start:
+    
     SectorDamage(0, 10, "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
+    
     Delay(35);
     goto Start;
 };
@@ -576,6 +587,96 @@ script void OneMonsterEvent()
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.0, 150.0, 1.0, 19.0);
+};
+
+script void HellUnleashedEvent()
+{
+    SetHudSize(640, 480, false);
+    
+    while (true)
+    {
+        // Spawn in new enemies
+        if ((Timer() % (35 * 30)) == 0)
+            HellUnleashedSpawnMonsters();
+        
+        // HUD
+        SetFont("MonLevel");
+        HudMessageBold("A\n", HUDMSG_ALPHA, 0, CR_WHITE, 14.1, 100.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+        SetFont("STAT8S");
+        HudMessageBold("A\n", HUDMSG_ALPHA, 0, CR_WHITE, 22.1, 133.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+        SetFont("BIGFONT");
+        HudMessageBold("+%k\n", CurrentLevel->LevelAdd, HUDMSG_PLAIN, 0, CR_WHITE, 40.1, 100.0, 0.05);
+        HudMessageBold("+%k%%\n", CurrentLevel->RareAdd, HUDMSG_PLAIN, 0, CR_GOLD, 40.1, 116.0, 0.05);
+        
+        // Slowly increment the values
+        CurrentLevel->LevelAdd += RandomFixed(0.001, 0.01);
+        CurrentLevel->RareAdd += RandomFixed(0.0001, 0.001);
+        
+        // Caps
+        if (CurrentLevel->LevelAdd > 1000)
+            CurrentLevel->LevelAdd = 1000;
+        if (CurrentLevel->RareAdd > 100)
+            CurrentLevel->RareAdd = 100;
+        
+        Delay(1);
+    };
+};
+
+script void HellUnleashedSpawnMonsters()
+{
+    auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
+    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-Spawning next wave of monsters...\n");
+
+    Delay(1); // Maximize our instructions
+    
+    for (int i = 1; i < MAX_MONSTERS; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        // Array has grown too big, resize it
+        if (MonsterPositions.Position == MonsterPositions.Size)
+            ArrayResize(&MonsterPositions);
+        
+        // Store position
+        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
+    };
+    
+    for (int i = 0; i < MonsterPositions.Position; i++)
+    {
+        int TID = UniqueTID();
+        Position *CurrentPosition = &((Position *)MonsterPositions.Data)[i];;
+        
+        // Determine a monster
+        MonsterInfoPtr Monster;
+        if (GetCVar("drpg_ext_doomrl"))
+            Monster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA - 1)]
+        else if (GetCVar("drpg_ext_Brutal"))
+            Monster = &MonsterDataBrutal[Random(0, MAX_DEF_MONSTERS - 1)]
+        else
+            Monster = &MonsterData[Random(0, MAX_DEF_MONSTERS - 1)];
+        
+        bool Success = Spawn(Monster->Actor, CurrentPosition->X, CurrentPosition->Y, CurrentPosition->Z, TID, CurrentPosition->Angle);
+        if (Success)
+            Spawn("TeleportFog", CurrentPosition->X, CurrentPosition->Y, CurrentPosition->Z, 0, CurrentPosition->Angle);
+        
+        // Stagger the loop here so that we can make monsters appear to spawn in semi-randomly
+        Delay(Random(1, 10));
+        
+        // Setup Stats
+        MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
+        Stats->Level += (int)CurrentLevel->LevelAdd;
+        Stats->NeedReinit = true;
+    };
+};
+
+acscript void SetHellEvent(int Level, int Rare)
+{
+    CurrentLevel->LevelAdd += Level;
+    CurrentLevel->RareAdd += Rare;
 };
 
 script void RainbowSectors()
