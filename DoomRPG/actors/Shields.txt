@@ -11,6 +11,7 @@ actor DRPGShieldChargeMax : Inventory           { Inventory.MaxAmount 1000000 }
 // Shield On/Off Items
 actor DRPGShieldOn : CustomInventory
 {
+    Inventory.MaxAmount 0
     +INVENTORY.AUTOACTIVATE
     
     States
@@ -23,6 +24,7 @@ actor DRPGShieldOn : CustomInventory
 
 actor DRPGShieldOff : CustomInventory
 {
+    Inventory.MaxAmount 0
     +INVENTORY.AUTOACTIVATE
     
     States
@@ -38,6 +40,7 @@ actor DRPGShieldBooster : CustomInventory 20080
 {
     Scale 0.5
     
+    Inventory.MaxAmount 0
     Inventory.PickupMessage "Got a Shield Booster!"
     Inventory.PickupSound "shield/booster"
     
@@ -80,65 +83,12 @@ actor DRPGShieldBoosterBeam
     }
 }
 
-actor DRPGShieldLightningParticle
-{
-    Radius 4
-    Height 2
-    +NoInteraction
-    RenderStyle Add
-    Alpha 1.0
-    Scale 0.0125
-    
-    var int user_parttime;
-    
-    States
-    {
-    Spawn:
-        TNT1 A 0 NoDelay A_SetUserVar("user_parttime", 10)
-        //TNT1 A 0 A_ChangeVelocity(FRandom(-0.33, 0.33),FRandom(-0.33, 0.33),FRandom(-0.33, 0.33))
-    DecayLoop:
-        SLGT A 1 Bright
-        //TNT1 A 0 A_ChangeVelocity(0,0,-0.025)
-        TNT1 A 0 A_SetScale(0.0125 - (0.0125 * Cos(user_parttime * 90.0 / 10.0)))
-        TNT1 A 0 A_SetUserVar("user_parttime", user_parttime - 1)
-        TNT1 A 0 A_JumpIf(user_parttime <= 0, "Death")
-        Loop
-    Death:
-        TNT1 A 1
-        Stop
-    }
-}
-
-actor DRPGShieldLightningAttack : CustomInventory
-{
-    Inventory.MaxAmount 0
-    +INVENTORY.AUTOACTIVATE
-    
-    States
-    {
-    Pickup:
-        TNT1 A 0 A_RailAttack (15, 0, 0, "None", "White", RGF_SILENT, 25, "DRPGLightningPuff", frandom(0,359), frandom(-45,45), random(64,256), 1, 1.5, 0, "DRPGShieldLightningParticle", frandom(-8,-16))
-        Stop
-    }
-}
-
-actor DRPGLightningPuff : BulletPuff
-{
-    DamageType "Lightning"
-    
-    States
-    {
-    Spawn:
-        TNT1 A 1
-        Stop
-    }
-}
-
 // Basic Shield Package
 actor DRPGBasicShieldPackage : CustomInventory
 {
     +INVENTORY.AUTOACTIVATE
     
+    Inventory.MaxAmount 0
     Inventory.PickupMessage "You got a Basic Shield Package."
     Inventory.PickupSound "shield/pickup"
     
@@ -1449,6 +1399,7 @@ actor DRPGShieldAdaptiveLightningResist : PowerProtection
 // RF-CT flag handlers
 actor DRPGShieldReflection : CustomInventory
 {
+    Inventory.MaxAmount 0
     +INVENTORY.AUTOACTIVATE
     
     States
@@ -1461,6 +1412,7 @@ actor DRPGShieldReflection : CustomInventory
 
 actor DRPGShieldReflectionOff : CustomInventory
 {
+    Inventory.MaxAmount 0
     +INVENTORY.AUTOACTIVATE
     
     States
@@ -1474,6 +1426,7 @@ actor DRPGShieldReflectionOff : CustomInventory
 // COUN-TR20
 actor DRPGShieldCounterBlast : CustomInventory
 {
+    Inventory.MaxAmount 0
     +INVENTORY.AUTOACTIVATE
     
     States
@@ -1528,6 +1481,7 @@ actor DRPGShieldRadialExplosionMaker
 
 actor DRPGShieldRadialExplosion : CustomInventory
 {
+    Inventory.MaxAmount 0
     +INVENTORY.AUTOACTIVATE
     
     States
@@ -1549,4 +1503,59 @@ actor DRPGShieldAvengerDefense : PowerProtection
 {
     DamageFactor 0.5
     Powerup.Duration -30
+}
+
+// TOJI-K0 Lightning & Effects
+actor DRPGShieldLightningParticle
+{
+    Radius 4
+    Height 2
+    +NoInteraction
+    RenderStyle Add
+    Alpha 1.0
+    Scale 0.0125
+    
+    var int user_parttime;
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_SetUserVar("user_parttime", 10)
+        // TNT1 A 0 A_ChangeVelocity(FRandom(-0.33, 0.33),FRandom(-0.33, 0.33),FRandom(-0.33, 0.33))
+    DecayLoop:
+        SLGT A 1 Bright
+        // TNT1 A 0 A_ChangeVelocity(0,0,-0.025)
+        TNT1 A 0 A_SetScale(0.0125 - (0.0125 * Cos(user_parttime * 90.0 / 10.0)))
+        TNT1 A 0 A_SetUserVar("user_parttime", user_parttime - 1)
+        TNT1 A 0 A_JumpIf(user_parttime <= 0, "Death")
+        Loop
+    Death:
+        TNT1 A 1
+        Stop
+    }
+}
+
+actor DRPGShieldLightningAttack : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_RailAttack (15, 0, 0, "None", "White", RGF_SILENT, 25, "DRPGLightningPuff", frandom(0,359), frandom(-45,45), random(64,256), 1, 1.5, 0, "DRPGShieldLightningParticle", frandom(-8,-16))
+        Stop
+    }
+}
+
+actor DRPGLightningPuff : BulletPuff
+{
+    DamageType "Lightning"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 1
+        Stop
+    }
 }
