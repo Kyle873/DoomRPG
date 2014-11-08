@@ -382,10 +382,10 @@ script void MegaBossEvent()
     int TID;
     int BossType;
     int Index;
-    MonsterPosition *Position;
+    Position *ChosenPosition;
     
     auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
-    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(MonsterPosition));
+    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
     
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
@@ -402,7 +402,7 @@ script void MegaBossEvent()
             ArrayResize(&MonsterPositions);
         
         // Store position
-        ((MonsterPosition *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
+        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
         Monsters[i].ReplaceActor = "None";
     };
     
@@ -412,11 +412,11 @@ script void MegaBossEvent()
     for (int i = 0; i < MonsterPositions.Position; i++)
     {
         int x = Random(0, MonsterPositions.Position - 1);
-        MonsterPosition TempPosition;
+        Position TempPosition;
         
-        TempPosition = ((MonsterPosition *)MonsterPositions.Data)[i];
-        ((MonsterPosition *)MonsterPositions.Data)[i] = ((MonsterPosition *)MonsterPositions.Data)[x];
-        ((MonsterPosition *)MonsterPositions.Data)[x] = TempPosition;
+        TempPosition = ((Position *)MonsterPositions.Data)[i];
+        ((Position *)MonsterPositions.Data)[i] = ((Position *)MonsterPositions.Data)[x];
+        ((Position *)MonsterPositions.Data)[x] = TempPosition;
     };
     
     // Spawning
@@ -424,21 +424,21 @@ script void MegaBossEvent()
     {
         TID = UniqueTID();
         BossType = Random(0, MAX_MEGABOSSES - 1);
-        Position = &((MonsterPosition *)MonsterPositions.Data)[Index];
-        Spawned = Spawn(MegaBosses[BossType], Position->X, Position->Y, Position->Z, TID, Random(0, 255));
+        ChosenPosition = &((Position *)MonsterPositions.Data)[Index];
+        Spawned = Spawn(MegaBosses[BossType], ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
         
         // Successful spawn
         if (Spawned)
         {
-            SpawnForced("TeleportFog", Position->X, Position->Y, Position->Z, 0, 0);
+            SpawnForced("TeleportFog", ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, 0, 0);
             GiveActorInventory(TID, "DRPGMegaBoss", 1);
             GiveActorInventory(TID, "DRPGWhiteAuraGiver", 1);
             if (GetCVar("drpg_debug"))
                 Log("\cdDEBUG: \cg%s MegaBoss successfully spawned\n", MegaBosses[BossType]);
         };
-        
-        if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, Position->X, Position->Y, Position->Z);
         
         Index++;
         Delay(1);

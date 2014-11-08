@@ -466,7 +466,7 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         "\cgFLAN-495";  "SHA2[0";   90000;
         "When your \cvShield\c- is \cgdepleted\c- or \cdreaches full charge\c-, enemies around you \ciexplode\c-";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; FlanBreak; nullptr; nullptr; nullptr; FlanFullCharge;
+        nullptr; nullptr; nullptr; nullptr; FlanExplosion; nullptr; nullptr; nullptr; FlanExplosion;
     };
 /*
     {
@@ -559,7 +559,7 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         "\cdS-SP4G3TT"; "SHA3K0";   36000;
         "Whenever your \cvShield\c- is \cgdepleted\c-, your \cdArmor\c- is fully repaired\n\cgShield must fully recharge between uses";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; SpaghettiShieldBreak; nullptr; nullptr; nullptr; SpaghettiShieldRecharge;
+        nullptr; nullptr; nullptr; nullptr; SpaghettiShieldBreak; nullptr; nullptr; nullptr; SpaghettiShieldFullCharge;
     };
 };
 
@@ -689,7 +689,14 @@ function void NovaShieldBreak()
 
 function void TeleportBreak()
 {
-    Teleport(Player.Shield.TeleportTID, 0, false);
+    if (Player.Shield.AccessoryBattery)
+    {
+        FadeRange(118, 255, 112, 0.5, 118, 255, 112, 0, 1.0);
+        SetActorPosition(0, Player.Shield.AccessoryPosition.X, Player.Shield.AccessoryPosition.Y, Player.Shield.AccessoryPosition.Z, true);
+        SetActorAngle(0, Player.Shield.AccessoryPosition.Angle);
+        SetActorPitch(0, Player.Shield.AccessoryPosition.Pitch);
+        SetActorVelocity(0, 0,0,0);
+    };
 };
 
 function void AdaptiveBreak()
@@ -705,7 +712,7 @@ function void AdaptiveBreak()
     };
 };
 
-function void FlanBreak()
+function void FlanExplosion() // This gets called on full charge too
 {
     GiveInventory("DRPGShieldRadialExplosion", 1);
     GiveInventory("DRPGShieldRadialExplosionResist", 1);
@@ -724,11 +731,20 @@ function void SpaghettiShieldBreak()
 };
 
 // Shield Recharge
-function void SpaghettiShieldRecharge()
+function void SpaghettiShieldFullCharge()
 {
     Player.Shield.AccessoryBattery = 1;
 };
 
+function void TeleportFullCharge()
+{
+    Player.Shield.AccessoryBattery = 1; // Indicate we have a spot
+    Player.Shield.AccessoryPosition.X = GetActorX(0);
+    Player.Shield.AccessoryPosition.Y = GetActorY(0);
+    Player.Shield.AccessoryPosition.Z = GetActorZ(0);
+    Player.Shield.AccessoryPosition.Angle = GetActorAngle(0);
+    Player.Shield.AccessoryPosition.Pitch = GetActorPitch(0);
+};
 
 // Stat Modifiers / Shield Maintenance
 function void X7Mod()
@@ -1013,16 +1029,6 @@ function void IronShieldMod()
     Player.Shield.Capacity += Player.ActualHealth / 100 * 20;
 };
 
-function void TeleportFullCharge()
-{
-    fixed X = GetActorX(0);
-    fixed Y = GetActorY(0);
-    fixed Z = GetActorZ(0);
-    
-    Player.Shield.TeleportTID = UniqueTID();
-    Spawn("DRPGShieldTeleportSpot", X, Y, Z,Player.Shield.TeleportTID, 0); 
-};
-
 function void EPRegenSwapperMod()
 {
     if (Player.Shield.Active)
@@ -1048,12 +1054,6 @@ function void HoarderMod()
         AddCharge += BaseCharge;
     
     Player.Shield.ChargeRate += AddCharge;
-};
-
-function void FlanFullCharge()
-{
-    GiveInventory("DRPGShieldRadialExplosion", 1);
-    GiveInventory("DRPGShieldRadialExplosionResist", 1);
 };
 
 script void ShieldTimer()
@@ -1260,11 +1260,6 @@ function void CheckShields()
     Player.Shield.ChargeRate = (BodyPtr? BodyPtr->ChargeRate : 0) + (BatteryPtr? BatteryPtr->ChargeRate : 0) + (CapacitorPtr? CapacitorPtr->ChargeRate : 0);
     Player.Shield.DelayRate = 5.0 + (BodyPtr? BodyPtr->DelayRate : 0) + (BatteryPtr? BatteryPtr->DelayRate : 0) + (CapacitorPtr? CapacitorPtr->DelayRate : 0);
     Player.Shield.Interval = 35;
-    
-    // Accessory Powerups Token handling
-    SetInventory("DRPGShieldLightAmpToken", Player.Shield.LightAmp);
-    SetInventory("DRPGShieldInvisibilityToken", Player.Shield.Invisibility);
-    SetInventory("DRPGShieldTimeFreezerToken", Player.Shield.TimeFreezer);
 };
 
 function void CheckShieldAccessory()
