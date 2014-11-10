@@ -1161,42 +1161,61 @@ script void ShieldTimerReset()
     Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
 };
 
+script bool ActivateShield()
+{
+    if (Player.Shield.Active)
+        return true;
+    
+    if (!Player.Shield.Body || !Player.Shield.Battery || !Player.Shield.Capacitor)
+        return false;
+    
+    if (Player.StatusType[SE_EMP])
+        return false;
+        
+    FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
+    
+    if (Player.Shield.Accessory && Player.Shield.Accessory->Equip)
+        Player.Shield.Accessory->Equip();
+    
+    GiveInventory("DRPGShieldOn", 1);
+    PlaySound(0, "shield/on", 5, 1.0, false, 1.0);
+    Player.Shield.Active = true;
+    ShieldTimerReset();
+    
+    return true;
+};
+
+script void DeactivateShield()
+{
+    if (!Player.Shield.Active)
+        return;
+    
+    FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
+    
+    if (Player.Shield.Accessory && Player.Shield.Accessory->Unequip)
+        Player.Shield.Accessory->Unequip(Player.StatusType[SE_EMP]);
+
+    GiveInventory("DRPGShieldOff", 1);
+    PlaySound(0, "shield/off", 5, 1.0, false, 1.0);
+    Player.Shield.Active = false;
+    Player.Shield.AccessoryBattery = 0;
+    if (GetCVar("drpg_shield_reset") || Player.StatusType[SE_EMP])
+        Player.Shield.Charge = 0;
+};
+
 acscript void ToggleShield() net
 {
     // If you're dead, terminate
     if (GetActorProperty(0, APROP_Health) <= 0) return;
     
-    // If you have no Shield parts equipped or are missing a part, terminate
-    if (!Player.Shield.Body || !Player.Shield.Battery || !Player.Shield.Capacitor || (!Player.Shield.Active && Player.StatusType[SE_EMP]))
-    {
-        ActivatorSound("menu/error", 127);
-        return;
-    };
-    
-    FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
-    
+    bool success = true;
     if (!Player.Shield.Active)
-    {
-        if (Player.Shield.Accessory && Player.Shield.Accessory->Equip)
-            Player.Shield.Accessory->Equip();
-        
-        GiveInventory("DRPGShieldOn", 1);
-        PlaySound(0, "shield/on", 5, 1.0, false, 1.0);
-        Player.Shield.Active = true;
-        ShieldTimerReset();
-    }
+        success = ActivateShield()
     else
-    {
-        if (Player.Shield.Accessory && Player.Shield.Accessory->Unequip)
-            Player.Shield.Accessory->Unequip(Player.StatusType[SE_EMP]);
-
-        GiveInventory("DRPGShieldOff", 1);
-        PlaySound(0, "shield/off", 5, 1.0, false, 1.0);
-        Player.Shield.Active = false;
-        Player.Shield.AccessoryBattery = 0;
-        if (GetCVar("drpg_shield_reset"))
-            Player.Shield.Charge = 0;
-    };
+        DeactivateShield();
+    
+    if (!success)
+        ActivatorSound("menu/error", 127);
 };
 
 function void RemoveShieldAccessory()
@@ -1251,7 +1270,7 @@ function void CheckShields()
     if (!BodyPtr || !BatteryPtr || !CapacitorPtr)
     {
         if (Player.Shield.Active)
-            ToggleShield();
+            DeactivateShield();
     };
     
     // EP -> Shield Charging
