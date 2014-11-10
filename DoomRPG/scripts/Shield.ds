@@ -1,5 +1,8 @@
 #include "RPG.dh"
 
+#include "Arena.dh"
+#include "Augs.dh"
+#include "Map.dh"
 #include "Menu.dh"
 #include "Popoffs.dh"
 #include "Shield.dh"
@@ -9,7 +12,7 @@
 
 AddressSpace MapArray ShieldSpace;
 
-ShieldSpace ShieldPart[4][MAX_PARTS] ShieldData =
+ShieldSpace ShieldPart[3][MAX_PARTS] ShieldParts =
 {
     // Actor, Name, Icon, Description, Capacity, Charge Rate, Delay Rate
     
@@ -24,135 +27,1056 @@ ShieldSpace ShieldPart[4][MAX_PARTS] ShieldData =
     
     // Bodies
     {
-        { "DRPGShieldBody1";        "\cjUAC";               "SHBOA0"; "";   25;   0;   0;    };
-        { "DRPGShieldBody2";        "\cjXTron";             "SHBOB0"; "";   50;   0;   0;    };
-        { "DRPGShieldBody3";        "\cjBlack Mesa";        "SHBOC0"; "";   150;  0;   2;    };
-        { "DRPGShieldBody4";        "\cjEDF";               "SHBOD0"; "";   100;  0;   0;    };
-        { "DRPGShieldBody5";        "\cjCyberdyne Systems"; "SHBOE0"; "";   80;   2;   0;    };
-        { "DRPGShieldBody6";        "\cjMisfit Tech";       "SHBOF0"; "";   150;  0;   0;    };
-        { "DRPGShieldBody7";        "\ckShadaloo";          "SHBOG0"; "";   400;  -1;  4;    };
-        { "DRPGShieldBody8";        "\cjArkai";             "SHBOH0"; "";   250;  0;   0;    };
-        { "DRPGShieldBody9";        "\cjIronclad Inc.";     "SHBOI0"; "";   150;  0;   -2;   };
-        { "DRPGShieldBody10";       "\cjYholl";             "SHBOJ0"; "";   50;   5;   -3;   };
-        { "DRPGShieldBody11";       "\cdHyperix";           "SHBOK0"; "";   200;  1;   -1;   };
-        { "DRPGShieldBody12";       "\cdXaser Inc.";        "SHBOL0"; "";   500;  0;   2.5;  };
-        { "DRPGShieldBody13";       "\cddataDyne";          "SHBOM0"; "";   250;  3;   -1;   };
-        { "DRPGShieldBody14";       "\cdStarbright";        "SHBON0"; "";   400;  2;   -1;   };
-        { "DRPGShieldBody15";       "\ckHellsing";          "SHBOO0"; "";   666;  -1;  0;    };
-        { "DRPGShieldBody16";       "\cnS.H.I.E.L.D.";      "SHBOP0"; "";   500;  0;   0;    };
-        { "DRPGShieldBody17";       "\cnUAC Elite";         "SHBOQ0"; "";   400;  1;   -3;   };
-        { "DRPGShieldBody18";       "\cnStark Industries";  "SHBOR0"; "";   550;  1;   -1;   };
-        { "DRPGShieldBody19";       "\cnWeyland-Yutani";    "SHBOS0"; "";   100;  7;   0;    };
-        { "DRPGShieldBody20";       "\cnMegalith";          "SHBOT0"; "";   750;  0;   5;    };
-        { "DRPGShieldBody21";       "\ckReaper Industries"; "SHBOU0"; "";   444;  4;   -4;   };
-        { "DRPGShieldBody22";       "\ckEternity Systems";  "SHBOV0"; "";   2000; 0;   15;   };
+        { "DRPGShieldBody1";        "\cjUAC";               "SHBOA0"; 25;   0;   0;    };
+        { "DRPGShieldBody2";        "\cjXTron";             "SHBOB0"; 50;   0;   0;    };
+        { "DRPGShieldBody3";        "\cjBlack Mesa";        "SHBOC0"; 150;  0;   2;    };
+        { "DRPGShieldBody4";        "\cjEDF";               "SHBOD0"; 100;  0;   0;    };
+        { "DRPGShieldBody5";        "\cjCyberdyne Systems"; "SHBOE0"; 80;   2;   0;    };
+        { "DRPGShieldBody6";        "\cjMisfit Tech";       "SHBOF0"; 150;  0;   0;    };
+        { "DRPGShieldBody7";        "\ckShadaloo";          "SHBOG0"; 400;  -1;  4;    };
+        { "DRPGShieldBody8";        "\cjArkai";             "SHBOH0"; 250;  0;   0;    };
+        { "DRPGShieldBody9";        "\cjIronclad Inc.";     "SHBOI0"; 150;  0;   -2;   };
+        { "DRPGShieldBody10";       "\cjYholl";             "SHBOJ0"; 50;   5;   -3;   };
+        { "DRPGShieldBody11";       "\cdHyperix";           "SHBOK0"; 200;  1;   -1;   };
+        { "DRPGShieldBody12";       "\cdXaser Inc.";        "SHBOL0"; 500;  0;   2.5;  };
+        { "DRPGShieldBody13";       "\cddataDyne";          "SHBOM0"; 250;  3;   -1;   };
+        { "DRPGShieldBody14";       "\cdStarbright";        "SHBON0"; 400;  2;   -1;   };
+        { "DRPGShieldBody15";       "\ckHellsing";          "SHBOO0"; 666;  -1;  0;    };
+        { "DRPGShieldBody16";       "\cnS.H.I.E.L.D.";      "SHBOP0"; 500;  0;   0;    };
+        { "DRPGShieldBody17";       "\cnUAC Elite";         "SHBOQ0"; 400;  1;   -3;   };
+        { "DRPGShieldBody18";       "\cnStark Industries";  "SHBOR0"; 550;  1;   -1;   };
+        { "DRPGShieldBody19";       "\cnWeyland-Yutani";    "SHBOS0"; 100;  7;   0;    };
+        { "DRPGShieldBody20";       "\cnMegalith";          "SHBOT0"; 750;  0;   5;    };
+        { "DRPGShieldBody21";       "\ckReaper Industries"; "SHBOU0"; 444;  4;   -4;   };
+        { "DRPGShieldBody22";       "\ckEternity Systems";  "SHBOV0"; 2000; 0;   15;   };
     };
     
     // Batteries
     {
-        { "DRPGShieldBattery1";     "\cjCrappy";           "SHBAA0"; "";    25;   0;   0;    };
-        { "DRPGShieldBattery2";     "\cjBullet";           "SHBAB0"; "";    50;   1;   0;    };
-        { "DRPGShieldBattery3";     "\cjElegant";          "SHBAC0"; "";    20;   0;   -3;   };
-        { "DRPGShieldBattery4";     "\cjSpiked";           "SHBAD0"; "";    100;  1;   0;    };
-        { "DRPGShieldBattery5";     "\cjStubborn";         "SHBAE0"; "";    250;  0;   0;    };
-        { "DRPGShieldBattery6";     "\cdMirrored";         "SHBAF0"; "";    150;  2;   0;    };
-        { "DRPGShieldBattery7";     "\cdRefined";          "SHBAG0"; "";    100;  2;   -1;   };
-        { "DRPGShieldBattery8";     "\cdClustered";        "SHBAH0"; "";    200;  3;   0;    };
-        { "DRPGShieldBattery9";     "\cnWinged";           "SHBAI0"; "";    250;  4;   0;    };
-        { "DRPGShieldBattery10";    "\cnOvercharged";      "SHBAJ0"; "";    10;   5;   -2;   };
-        { "DRPGShieldBattery11";    "\cnSuperb";           "SHBAK0"; "";    425;  1;   0;    };
-        { "DRPGShieldBattery12";    "\ckRedundant";        "SHBAL0"; "";    50;   30;  15;   };
-        { "DRPGShieldBattery13";    "\ckReinforced";       "SHBAM0"; "";    1000; 2;   2.5;  };
+        { "DRPGShieldBattery1";     "\cjCrappy";           "SHBAA0"; 25;   0;   0;    };
+        { "DRPGShieldBattery2";     "\cjBullet";           "SHBAB0"; 50;   1;   0;    };
+        { "DRPGShieldBattery3";     "\cjElegant";          "SHBAC0"; 20;   0;   -3;   };
+        { "DRPGShieldBattery4";     "\cjSpiked";           "SHBAD0"; 100;  1;   0;    };
+        { "DRPGShieldBattery5";     "\cjStubborn";         "SHBAE0"; 250;  0;   0;    };
+        { "DRPGShieldBattery6";     "\cdMirrored";         "SHBAF0"; 150;  2;   0;    };
+        { "DRPGShieldBattery7";     "\cdRefined";          "SHBAG0"; 100;  2;   -1;   };
+        { "DRPGShieldBattery8";     "\cdClustered";        "SHBAH0"; 200;  3;   0;    };
+        { "DRPGShieldBattery9";     "\cnWinged";           "SHBAI0"; 250;  4;   0;    };
+        { "DRPGShieldBattery10";    "\cnOvercharged";      "SHBAJ0"; 10;   5;   -2;   };
+        { "DRPGShieldBattery11";    "\cnSuperb";           "SHBAK0"; 425;  1;   0;    };
+        { "DRPGShieldBattery12";    "\ckRedundant";        "SHBAL0"; 50;   30;  15;   };
+        { "DRPGShieldBattery13";    "\ckReinforced";       "SHBAM0"; 1000; 2;   2.5;  };
     };
     
     // Capacitors
     {
-        { "DRPGShieldCapacitor1";   "\cjStandard";         "SHCAA0"; "";    0;     1;   0;   };
-        { "DRPGShieldCapacitor2";   "\cjOutdated";         "SHCAB0"; "";    0;     3;   2;   };
-        { "DRPGShieldCapacitor3";   "\cjCooled";           "SHCAC0"; "";    0;     2;   0;   };
-        { "DRPGShieldCapacitor4";   "\cjWarm";             "SHCAD0"; "";    25;    1;   0;   };
-        { "DRPGShieldCapacitor5";   "\cjInefficient";      "SHCAE0"; "";    0;     6;   5;   };
-        { "DRPGShieldCapacitor6";   "\cdEnergized";        "SHCAF0"; "";    0;     3;   0;   };
-        { "DRPGShieldCapacitor7";   "\cdInfused";          "SHCAG0"; "";    0;     4;   0;   };
-        { "DRPGShieldCapacitor8";   "\cdPlasmatic";        "SHCAH0"; "";    100;   3;   0;   };
-        { "DRPGShieldCapacitor9";   "\cdBurning";          "SHCAI0"; "";    0;     5;   0;   };
-        { "DRPGShieldCapacitor10";  "\ckPulsating";        "SHCAJ0"; "";    0;     1;   -5;  };
-        { "DRPGShieldCapacitor11";  "\cnFiery";            "SHCAK0"; "";    0;     5;   -1;  };
-        { "DRPGShieldCapacitor12";  "\cnEternal";          "SHCAL0"; "";    500;   1;   3;   };
-        { "DRPGShieldCapacitor13";  "\cnOverloaded";       "SHCAM0"; "";    0;     10;  1;   };
-        { "DRPGShieldCapacitor14";  "\ckDark";             "SHCAN0"; "";    1000;  -1;  15;  };
-        { "DRPGShieldCapacitor15";  "\ckChaotic";          "SHCAO0"; "";    0;     7;   -7;  };
-    };
-    
-    // Accessories
-    {
-        { "DRPGShieldAccessory1";   "\cgX-7";              "SHACA0"; "\cg2x Melee Damage";                                                                                                                                                };
-        { "DRPGShieldAccessory2";   "\caSGENX-5b";         "SHACB0"; "Heals you rapidly while active";                                                                                                                                    };
-        { "DRPGShieldAccessory3";   "\cgAMP-3000";         "SHACC0"; "\cg2x Damage\c- when full\nHalves \cvCapacity\c- on attack";                                                                                                        };
-        { "DRPGShieldAccessory4";   "\cdHRY-VP80";         "SHACD0"; "\cv-50% Capacity\n\ca-50% Delay";                                                                                                                                   };
-        { "DRPGShieldAccessory5";   "\cdDEF-2";            "SHACE0"; "\cv2x Capacity\n\ca2x Delay";                                                                                                                                       };
-        { "DRPGShieldAccessory6";   "\cdB1-ZUT3";          "SHACF0"; "\cd2x Charge Rate\n\cv-50% Capacity";                                                                                                                               };
-        { "DRPGShieldAccessory7";   "\cqCNV-RT99";         "SHACG0"; "Instead of fast charging with \cnEP\c-, uses 1 \cdCell\c- per 10 \cvCapacity";                                                                                      };
-        { "DRPGShieldAccessory8";   "\ckREK-T50";          "SHACH0"; "\cd+50% Damage\c- taken, but triples monster killing \ckpayout bonus";                                                                                              };
-        { "DRPGShieldAccessory9";   "\ciUW-0t";            "SHACI0"; "When your survival bonus goes off, your Shield reactivates and is fully recharged";                                                                                 };
-        { "DRPGShieldAccessory10";  "\cuCU-256";           "SHACJ0"; "When full, gives Light Amplification power";                                                                                                                        };
-        { "DRPGShieldAccessory11";  "\cdTX-BGONN";         "SHACK0"; "When full, immune to \cdToxicity";                                                                                                                                  };
-        { "DRPGShieldAccessory12";  "\cnWRP30-LITE";       "SHACL0"; "When full, gives Invisibility power";                                                                                                                               };
-        { "DRPGShieldAccessory13";  "\ciNOV-A2";           "SHACM0"; "1 in 4 chance of emitting BFG Balls when Shield is depleted";                                                                                                       };
-        { "DRPGShieldAccessory14";  "\ccLZ-Y200";          "SHACN0"; "\cd2x Charge Rate\nOnly charges while standing still";                                                                                                              };
-        { "DRPGShieldAccessory15";  "\cvBST-700";          "SHACO0"; "Randomly drops \cvShield Boosters\c- when hit";                                                                                                                     };
-        { "DRPGShieldAccessory16";  "\cnPH-D88";           "SHACP0"; "When full, recharges \cnEP\c- instead of \cvCapacity";                                                                                                              };
-        { "DRPGShieldAccessory17";  "\ckBATT-B";           "SHACQ0"; "When full, recharges \ckAugmentation Battery\c- instead of \cvCapacity";                                                                                            };
-        { "DRPGShieldAccessory18";  "\chSHVR-Z7";          "SHACR0"; "When full, regenerates \ccClips\c- and \ciShells";                                                                                                                  };
-        { "DRPGShieldAccessory19";  "\cvMM-12";            "SHACS0"; "\cdCharge Rate\c- scales based on current shield health\nThe higher the faster";                                                                                    };
-        { "DRPGShieldAccessory20";  "\caMRTE-KRAR";        "SHACT0"; "\cv-50% Capacity\n\cg1.5x Damage";                                                                                                                                  };
-        { "DRPGShieldAccessory21";  "\ccSP-00k";           "SHACU0"; "1 in 8 chance of getting Ghosted when hit";                                                                                                                         };
-        { "DRPGShieldAccessory22";  "\cvRR-G0";            "SHACV0"; "Scales your \cdCharge Rate\c- up and \caDelay\c- down based on how long you've been in a level";                                                                    };
-        { "DRPGShieldAccessory23";  "\cqE1N-T31";          "SHACW0"; "1 second Time Freeze when hit";                                                                                                                                     };
-        { "DRPGShieldAccessory24";  "\ckPATR-0T";          "SHACX0"; "Scales your \cvCapacity\c- based off your \ckRank";                                                                                                                 };
-        { "DRPGShieldAccessory25";  "\cfRNJSUS-2";         "SHACY0"; "Scales off of your \cfLuck\c- inversely\nWith 100+ \cfLuck\c-, it has no effect\nwith 0 \cfLuck\c-, it's equivalent to having 50 \cfLuck";                          };
-        { "DRPGShieldAccessory26";  "\cnPWAA-9001";        "SHACZ0"; "Uses the next level up of your current Skill for the cost of the current.";                                                                                         };
-        { "DRPGShieldAccessory27";  "\ckAW-G01";           "SHA2A0"; "Acts as an \cdAugmentation Slot Upgrade";                                                                                                                           };
-        { "DRPGShieldAccessory28";  "\ctSCL-AR53";         "SHA2B0"; "Uses your stats as a percentage to modify shield stats\n\chCapacity\c- for \cvCapacity\n\cnEnergy\c- for \cdCharge Rate\n\ctRegeneration\c- for reducing \caDelay"; };
-        { "DRPGShieldAccessory29";  "\ckRF-CT";            "SHA2C0"; "Reflects projectiles when hit";                                                                                                                                     };
+        { "DRPGShieldCapacitor1";   "\cjStandard";         "SHCAA0"; 0;     1;   0;   };
+        { "DRPGShieldCapacitor2";   "\cjOutdated";         "SHCAB0"; 0;     3;   2;   };
+        { "DRPGShieldCapacitor3";   "\cjCooled";           "SHCAC0"; 0;     2;   0;   };
+        { "DRPGShieldCapacitor4";   "\cjWarm";             "SHCAD0"; 25;    1;   0;   };
+        { "DRPGShieldCapacitor5";   "\cjInefficient";      "SHCAE0"; 0;     6;   5;   };
+        { "DRPGShieldCapacitor6";   "\cdEnergized";        "SHCAF0"; 0;     3;   0;   };
+        { "DRPGShieldCapacitor7";   "\cdInfused";          "SHCAG0"; 0;     4;   0;   };
+        { "DRPGShieldCapacitor8";   "\cdPlasmatic";        "SHCAH0"; 100;   3;   0;   };
+        { "DRPGShieldCapacitor9";   "\cdBurning";          "SHCAI0"; 0;     5;   0;   };
+        { "DRPGShieldCapacitor10";  "\ckPulsating";        "SHCAJ0"; 0;     1;   -5;  };
+        { "DRPGShieldCapacitor11";  "\cnFiery";            "SHCAK0"; 0;     5;   -1;  };
+        { "DRPGShieldCapacitor12";  "\cnEternal";          "SHCAL0"; 500;   1;   3;   };
+        { "DRPGShieldCapacitor13";  "\cnOverloaded";       "SHCAM0"; 0;     10;  1;   };
+        { "DRPGShieldCapacitor14";  "\ckDark";             "SHCAN0"; 1000;  -1;  15;  };
+        { "DRPGShieldCapacitor15";  "\ckChaotic";          "SHCAO0"; 0;     7;   -7;  };
     };
 };
 
 // Max Shield Parts per page
-int[4] ShieldPartsMax = { 22; 13; 15; 29; };
+int[3] ShieldPartsMax = { 22; 13; 15; };
 
-// Accessory Prices
-int[MAX_PARTS] ShieldAccessoryPrices =
+ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
 {
-    10000;  // X-7
-    15000;  // SGENX-5b
-    40000;  // AMP-3000
-    20000;  // HRY-VP80
-    20000;  // DEF-2
-    20000;  // B1-ZUT3
-    12000;  // CNV-RT99
-    15000;  // REK-T50
-    50000;  // UW-0t
-    12000;  // CU-256
-    15000;  // TX-BGONN
-    12000;  // WRP30-LITE
-    45000;  // NOV-A2
-    20000;  // LZ-Y200
-    25000;  // BST-700
-    75000;  // PH-D88
-    120000; // BATT-B
-    35000;  // SHVR-Z7
-    20000;  // MM-12
-    50000;  // MRTE-KRAR
-    10000;  // SP-00k
-    70000;  // RR-G0
-    70000;  // E1N-T31
-    45000;  // PATR-0T
-    45000;  // RNJSUS-2
-    40000;  // PWAA-9001
-    80000;  // AW-G01
-    200000; // SCL-AR53
-    65000;  // RF-CT
+    {
+        "DRPGShieldAccessory1";
+        "\cgX-7";       "SHACA0";   10000;
+        "\cg2x Melee Damage";
+        SHIELD_PASS_NONE;
+        X7Mod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory2";
+        "\caSGENX-5b";  "SHACB0";   15000;
+        "\cfConverter\c-: When full, restores \cgHealth\c-";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; HealthConversion; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory3";
+        "\cgAMP-3000";  "SHACC0";   40000;
+        "\cg2x Damage\c- when full\nHalves \cvCapacity\c- on attack";
+        SHIELD_PASS_NONE;
+        AmpShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory4";
+        "\cdHRY-VP80";  "SHACD0";   20000;
+        "\cv-50% Capacity\n\ca-50% Delay";
+        SHIELD_PASS_NONE;
+        HurryMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory5";
+        "\cdDEF-2";     "SHACE0";   20000;
+        "\cv2x Capacity\n\ca2x Delay";
+        SHIELD_PASS_NONE;
+        Def2Mod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory6";
+        "\cdB1-ZUT3";   "SHACF0";   20000;
+        "\cd2x Charge Rate\n\cv-50% Capacity";
+        SHIELD_PASS_NONE;
+        BlzutMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory7";
+        "\cqCNV-RT99";  "SHACG0";   12000;
+        "Instead of fast charging with \cnEP\c-, uses 1 \cdCell\c- per 10 \cvCapacity";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; CellFastCharge; nullptr;
+    };
+    {
+        "DRPGShieldAccessory8";
+        "\ckREK-T50";   "SHACH0";   15000;
+        "\cd-100% Damage Reduction\c-\nTriples monster killing \ckpayout bonus";
+        SHIELD_PASS_EPICMEGACASH;
+        RektMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory9";
+        "\ciUW-0t";     "SHACI0";   50000;
+        "When your \cisurvival bonus\c- goes off, your \cvShield\c- reactivates and is \cdfully recharged";
+        SHIELD_PASS_SURVIVECHARGE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory10";
+        "\cuCU-256";    "SHACJ0";   12000;
+        "When full, gives Light Amplification power";
+        SHIELD_PASS_NONE;
+        LightAmpMod; nullptr; LightAmpUnequip; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory11";
+        "\cdTX-BGONN";  "SHACK0";   15000;
+        "When full, immune to \cdToxicity";
+        SHIELD_PASS_NOTOXIC;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory12";
+        "\cnWRP30-LITE";"SHACL0";   12000;
+        "When full, gives Invisibility power";
+        SHIELD_PASS_NONE;
+        InvisibilityMod; nullptr; InvisibilityUnequip; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory13";
+        "\ciNOV-A2";    "SHACM0";   45000;
+        "1 in 4 chance of emitting \cdBFG Balls\c- when \cvShield\c- is depleted";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; NovaShieldBreak; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory14";
+        "\ccLZ-Y200";   "SHACN0";   20000;
+        "\cd2x Charge Rate\n\cgOnly charges while standing still";
+        SHIELD_PASS_NONE;
+        LazyMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory15";
+        "\cvBST-700";   "SHACO0";   25000;
+        "Randomly drops \cvShield Boosters\c- when hit";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; BoosterShieldDamage; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory16";
+        "\cnPH-D88";    "SHACP0";   75000;
+        "\cfConverter\c-: When full, recharges \cnEP\c-";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; EPConversion; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory17";
+        "\ckBATT-B";    "SHACQ0";   120000;
+        "\cfConverter\c-: When full, recharges \ckAugmentation Battery\c-";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; BatteryConversion; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory18";
+        "\chSHVR-Z7";   "SHACR0";   35000;
+        "\cfConverter\c-: When full, produces \ccClips\c- and \ciShells\c-";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; AmmoConversion; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory19";
+        "\cvMM-12";     "SHACS0";   20000;
+        "\cdCharge Rate\c- scales based on current \cvShield Charge\c-\nThe higher, the faster";
+        SHIELD_PASS_NONE;
+        AccelerativeShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory20";
+        "\caMRTE-KRAR"; "SHACT0";   50000;
+        "\cv-50% Capacity\n\cg1.5x Damage";
+        SHIELD_PASS_NONE;
+        TheKillingBoosterMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory21";
+        "\ccSP-00k";    "SHACU0";   10000;
+        "1 in 8 chance of getting \ccGhosted\c- when hit";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; SpookyDamage; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory22";
+        "\cvRR-G0";     "SHACV0";   70000;
+        "Scales your \cdCharge Rate\c- up and \caDelay\c- down based on how long you've been in a level";
+        SHIELD_PASS_NONE;
+        MinuteMaidMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory23";
+        "\cqE1N-T31";   "SHACW0";   70000;
+        "1 second \cqTime Freeze\c- when hit";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; TimeyWimeyHurtyBall; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory24";
+        "\ckPATR-0T";   "SHACX0";   45000;
+        "Scales your \cvCapacity\c- based off your \ckRank";
+        SHIELD_PASS_NONE;
+        AmericaShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory25";
+        "\cfRNJSUS-2";  "SHACY0";   45000;
+        "Scales off of your \cfLuck\c- inversely\nWith 100+ \cfLuck\c-, it has no effect\nwith 0 \cfLuck\c-, it's equivalent to having 50 \cfLuck";
+        SHIELD_PASS_NONE;
+        GhettoLuckMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory26";
+        "\cnPWAA-9001"; "SHACZ0";   40000;
+        "Uses the \cdnext level up\c- of your current \cnSkill\c- for the cost of the current";
+        SHIELD_PASS_SKILLPLUS;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory27";
+        "\ckAW-G01";    "SHA2A0";   80000;
+        "Acts as an \ckAugmentation Slot Upgrade";
+        SHIELD_PASS_AUGSLOT;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory28";
+        "\ctSCL-AR53";  "SHA2B0";   200000;
+        "Uses your stats as a percentage to modify \cvShield\c- stats\n\chCapacity\c- for \cvCapacity\n\cnEnergy\c- for \cdCharge Rate\n\ctRegeneration\c- for reducing \caDelay";
+        SHIELD_PASS_NONE;
+        SuperSqueezyScalarMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory29";
+        "\ckRF-CT";     "SHA2C0";   65000;
+        "\cdReflects projectiles\c- when hit";
+        SHIELD_PASS_NONE;
+        ReflectionMod; nullptr; ReflectionUnequip; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory30";
+        "\ciTEW-11";     "SHA2D0";  38000;
+        "When your \cvShield\c- reaches \cdfull charge\c-, it \cnmemorizes\c- where you last were\nWhen your \cvShield\c- is \cgdepleted\c-, it \cdteleports\c- you to that location";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; TeleportBreak; nullptr; nullptr; nullptr; TeleportFullCharge;
+    };
+    {
+        "DRPGShieldAccessory31";
+        "\cdNU-YU5";     "SHA2E0";  65000;
+        "If you are killed with your \cvShield\c- active, you respawn with it full and \cd90% Damage Reduction\c- for 6 seconds";
+        SHIELD_PASS_HYPERION;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory32";
+        "\ckADPT-V15";   "SHA2F0";  45000;
+        "When your \cvShield\c- is \cgdepleted\c-, it gives you \cf50% Resistance\c- for 15 seconds against the damage type that finished it off";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; AdaptiveBreak; nullptr; nullptr; nullptr; nullptr;
+    };
+/*
+    {
+        "DRPGShieldAccessory33"; // !!!
+        "\cdTENS-H11";   "SHA2G0";  55000;
+        "The lower your shield is, the higher your \cdDamage Reduction\c- is\nIt scales up to \cd75%\c- at \cv1 Capacity\c-\nWhen \cgfully depleted\c-, \cd0% Damage Reduction";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory34"; // !!!
+        "\cjTEEM-AU5";   "SHA2H0";  50000;
+        "While under the effects of an aura, each other person affected by that aura gains \cd+20% Damage Reduction\c-\n\cuThis does not stack with multiple auras";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+*/
+    {
+        "DRPGShieldAccessory35";
+        "\cgVENG-R";     "SHA2I0";  62000;
+        "When an ally is killed, you gain \cg1.5x Damage\c- and \cd+50% Damage Reduction\c- for 30 seconds";
+        SHIELD_PASS_AVENGER;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory36";
+        "\ciSANIC-S88";  "SHA2J0";  88000;
+        "The faster you move, the faster your \cvShield\c- charges";
+        SHIELD_PASS_NONE;
+        SanicMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory37";
+        "\cdNAKD-N0W";   "SHA2K0";  30000;
+        "While you \caaren't wearing armor\c-, you have \cd+25% Damage Reduction\c-";
+        SHIELD_PASS_NONE;
+        NakedMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+/*
+    {
+        "DRPGShieldAccessory38"; // !!!
+        "\caHA3-L1N";   "SHA2L0";   45000;
+        "Whenever you \cakill an enemy\c-, your shield recharges \ct5x as fast\c- for 3 seconds";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory39"; // !!!
+        "\cgHAET-60";   "SHA2M0";   125000;
+        "When you use a \cgBerserk Pack\c-, you gain \cd99% Resistance\c- to \ccMelee Damage\c- for 60 seconds";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory40"; // !!!
+        "\ckPHA-LX2";   "SHA2N0";   33000;
+        "You gain an additional \cd+10% Damage Reduction\c- for every player using this accessory";
+        SHIELD_PASS_FRIENDSHIPISDEFENSE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory41"; // !!!
+        "\cnIKU-N7";    "SHA2O0";   35000;
+        "Whenever you \catake damage\c-, you release a \cnsmall electrical blast\c- that stuns enemies\nIf your \cvShield\c- is \cgdepleted\c-, it releases a \cnlarge blast\c-";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory42"; // !!!
+        "\ctREGN-ER8";  "SHA2P0";   82000;
+        "\cdCharge Rate\c- scales based on how long since you were last hit\nFrom \cg0.5x\c- after being hit to \cd4x\c-";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+*/
+    {
+        "DRPGShieldAccessory43";
+        "\ccCOUN-TR20"; "SHA2Q0";   46000;
+        "Whenever you are struck with \ccMelee Damage\c-, you emit a powerful \cnRepulsion\c- blast";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; CounterDamage; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory44";
+        "\cfPRO-100";   "SHA2R0";   70000;
+        "Gives an additional \cv+100 Capacity\c- for every stat at or over 100";
+        SHIELD_PASS_NONE;
+        MLGNoScopeShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory45";
+        "\ciRUS-ROU1";  "SHA2S0";   48000;
+        "\cd-1000% Damage Reduction\n\ci5 In 6 Survival Bonus\c-";
+        SHIELD_PASS_ROULETTE; // To bypass the 75% survival cap
+        RussianRouletteMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory46";
+        "\ckOCD-MX90";  "SHA2T0";   88000;
+        "Every level you \cd100% complete\c- gives you:\n\cv+20 Capacity\n\cd+0.5 Charge Rate\n\ca-0.2 Delay";
+        SHIELD_PASS_NONE;
+        OCDShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory47";
+        "\caMASTA-R4";  "SHA2U0";   82000;
+        "Every new wave of \caThe Arena\c- you complete gives you:\n\cv+10 Capacity\n\cd+0.25 Charge Rate\n\ca-0.1 Delay";
+        SHIELD_PASS_NONE;
+        ArenaShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory48";
+        "\cvHOW-EV3N";  "SHA2V0";   53000;
+        "Swaps \caDelay\c- and \cdCharge Rate\c-";
+        SHIELD_PASS_NONE;
+        HowDidYouEvenMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory49";
+        "\cgK00-LAYD";  "SHA2W0";   62000;
+        "Upon entering a non-Outpost level, releases an \ckexplosive blast\c- that kills most monsters around you";
+        SHIELD_PASS_NONE;
+        OhYeahMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory50";
+        "\cfSKROO-G3";  "SHA2X0";   100000;
+        "\cv+50 Capacity\c- for every \cf10000 Credits\c- you currently have";
+        SHIELD_PASS_NONE;
+        McDuckMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory51";
+        "\ckINFI-NT1";  "SHA2Y0";   140000;
+        "\cg25% \cvCapacity\n\cg50% \cdCharge Rate\n\cg400% \caDelay\nYou have \ckinfinite ammo\c- while your \cvShield\c- is full";
+        SHIELD_PASS_NONE;
+        AmmoSpaceMod; nullptr; AmmoSpaceUnequip; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory52";
+        "\cvREMI-500";  "SHA2Z0";   90000;
+        "\cgYour Shield does not recharge\nInstead, every kill charges \cvShield\c- for 25% of the enemy's max health";
+        SHIELD_PASS_KILLSCHARGE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory53";
+        "\cgFLAN-495";  "SHA2[0";   90000;
+        "When your \cvShield\c- is \cgdepleted\c- or \cdreaches full charge\c-, enemies around you \ciexplode\c-";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; FlanExplosion; nullptr; nullptr; nullptr; FlanExplosion;
+    };
+    {
+        "DRPGShieldAccessory54";
+        "\cnTOJ1-K0";   "SHA2\\0";   55000;
+        "Every time your \cvShield\c- charges, it \ckemits lightning bolts\c-\nThe higher your \cdCharge Rate\c-, the more \cklightning\c- your \cvShield\c- emits";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; nullptr; LightningCharge; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory55";
+        "\ckTRANS-EB2S2";   "SHA2]0";   60000;
+        "If your \ckAugmentation Battery\c- is \ck100%\c- or higher, \cv2x Capacity\c-";
+        SHIELD_PASS_NONE;
+        TheAmazingBatteryShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory56";
+        "\cvLIL-ZZ8";   "SHA3A0";   23000;
+        "Adds \cdCharge Rate\c- to \cvCapacity\c-";
+        SHIELD_PASS_NONE;
+        LilZiggyMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory57";
+        "\cgMURD-BURD"; "SHA3B0";   75000;
+        "Every kill made on the current level grants \cv+10 Capacity\c-";
+        SHIELD_PASS_NONE;
+        MurderBurgerMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory58";
+        "\cfLKY-BSTRD4";    "SHA3C0";   42000;
+        "Adds \cfLuck\c- to \ciAgility\c- for the purpose of calculating \ciSurvival Bonus\c-";
+        SHIELD_PASS_NONE;
+        LuckyBastardMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory59";
+        "\caHEL-FY20";  "SHA3D0";   40000;
+        "Every \ca100 Health\c- you have adds \cv+20 Capacity\c-";
+        SHIELD_PASS_NONE;
+        IronShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory60";
+        "\ccMUN3-MAG";  "SHA3E0";   33000;
+        "Triples the amount of \cfCredits\c- gained from using \ccMagnetize\c-";
+        SHIELD_PASS_DOSHMAGNET;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory61";
+        "\cnEFF-C13";   "SHA3F0";   50000;
+        "\cn25% chance\c- of \cdnot using EP\c- when using a \cnSkill\c-";
+        SHIELD_PASS_MORESKILLS;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory62";
+        "\cnSYN-C3P";   "SHA3G0";   65000;
+        "\cnEP Regen\c- is substituted for \cdCharge Rate\c-";
+        SHIELD_PASS_NONE;
+        EPRegenSwapperMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory63";
+        "\cnTUFF-MAG3"; "SHA3H0";   80000;
+        "\cv10%\c- of the cost of a used \cnSkill\c- is added to your \cvShield\c-";
+        SHIELD_PASS_SKILLTOSHIELD;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory64";
+        "\cnUBR-MANZ5"; "SHA3I0";   220000;
+        "Whenever you gain \cnEP\c- with \cnEP maxed\c-, you gain the amount in \caHealth\c- and \cvShield\c- instead";
+        SHIELD_PASS_EPOVERFLOW;
+        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory65";
+        "\cdHORD-3RR";  "SHA3J0";   24000;
+        "While a \cfpowerup\c- is active, you gain 2x of your base \cdcharge rate\c-\n\cdStacks with multiple different powerups\c-";
+        SHIELD_PASS_NONE;
+        HoarderMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+    };
+    {
+        "DRPGShieldAccessory66";
+        "\cdS-SP4G3TT"; "SHA3K0";   36000;
+        "Whenever your \cvShield\c- is \cgdepleted\c-, your \cdArmor\c- is fully repaired\n\cgShield must fully recharge between uses";
+        SHIELD_PASS_NONE;
+        nullptr; nullptr; nullptr; nullptr; SpaghettiShieldBreak; nullptr; nullptr; nullptr; SpaghettiShieldFullCharge;
+    };
+};
+
+// Callback Functions
+
+// Converters
+function void HealthConversion(int Charge)
+{
+    Player.Shield.AccessoryBattery += Charge;
+    
+    while (Player.Shield.AccessoryBattery >= 5)
+    {
+        //FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 0.25);
+        AddHealthDirect(1, 100);
+        Player.Shield.AccessoryBattery -= 5;
+    };
+};
+
+function void EPConversion(int Charge)
+{
+    Player.Shield.AccessoryBattery += Charge;
+    
+    while (Player.Shield.AccessoryBattery >= 2)
+    {
+        //FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 0.25);
+        AddEP(1, true);
+        Player.Shield.AccessoryBattery -= 2;
+    };
+};
+
+function void BatteryConversion(int Charge)
+{
+    Player.Shield.AccessoryBattery += Charge;
+    
+    while (Player.Shield.AccessoryBattery >= 16)
+    {
+        //FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 0.25);
+        AddBattery(1);
+        Player.Shield.AccessoryBattery -= 16;
+    };
+};
+
+function void AmmoConversion(int Charge)
+{
+    Player.Shield.AccessoryBattery += Charge;
+    
+    while (Player.Shield.AccessoryBattery >= 4)
+    {
+        //FadeRange(0, 0, 255, 0.25, 0, 0, 255, 0, 0.25);
+        GiveInventory("Clip", 2);
+        GiveInventory("Shell", 1);
+        Player.Shield.AccessoryBattery -= 4;
+    };
+};
+
+// Standard Charging
+function int LightningCharge(int ChargeAmount)
+{
+    if (Player.Shield.Full) return ChargeAmount;
+    
+    int NumBolts = 0;
+    for (int i = 0; i < ChargeAmount; i++)
+        if (!Random(0, 3))
+            NumBolts++;
+    
+    if (!NumBolts) return ChargeAmount;
+    
+    for (; NumBolts > 0; NumBolts--)
+        GiveInventory("DRPGShieldLightningAttack", 1);
+    
+    PlaySound(0, "shield/lightning", CHAN_AUTO, 1.0, false, 1.0);
+    return ChargeAmount;
+};
+
+// Fast Charging
+function bool CellFastCharge()
+{
+    if (CheckInventory("Cell") < 1) return true;
+    
+    TakeInventory("Cell", 1);
+    FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
+    ActivatorSound("regen/shield", 64);
+    AddShield(10);
+    
+    return true;
+};
+
+// Shield Damage
+function void BoosterShieldDamage(int DamageAmount)
+{
+    int Chance = 6;
+    Chance += 19 * DamageAmount / 65;
+    if (Chance > 25)
+        Chance = 25;
+    
+    if (Random(1, 100) <= Chance)
+    {
+        int TID = UniqueTID();
+        fixed Angle = GetActorAngle(0);
+        fixed X = GetActorX(0) + Cos(Angle) * 48.0;
+        fixed Y = GetActorY(0) + Sin(Angle) * 48.0;
+        fixed DirX = Cos(Angle);
+        fixed DirY = Sin(Angle);
+        fixed Z = GetActorZ(0);
+        
+        Spawn("DRPGShieldBooster", X, Y, Z, TID, Angle);
+        SetActorVelocity(TID, DirX * RandomFixed(8.0, 16.0), DirY * RandomFixed(8.0, 16.0), RandomFixed(4.0, 8.0), false, false);
+    };
+};
+
+function void SpookyDamage(int DamageAmount)
+{
+    if (Random(1, 8) == 1)
+        GiveInventory("PowerShieldGhost", 1);
+};
+
+script void TimeyWimeyHurtyBallZDoomSucks()
+{
+    // Note for future endeavours: PowerTimeFreezer will always work on an even tic, but never odd ones.
+    // See: https://github.com/rheit/zdoom/blob/master/src/g_shared/a_artifacts.cpp#L1502
+    
+    while (Timer() & 1) Delay(1);
+    
+    GiveInventory("DRPGShieldTimePause", 1);
+    Delay(35);
+    TakeInventory("PowerShieldTimeFreezer", 1);
+};
+
+function void TimeyWimeyHurtyBall(int DamageAmount)
+{
+    TimeyWimeyHurtyBallZDoomSucks();
+};
+
+function void CounterDamage(int DamageAmount)
+{
+    if (Player.DamageType == DT_MELEE)
+        GiveInventory("DRPGShieldCounterBlast", 1);
+};
+
+// Shield Depletion
+function void NovaShieldBreak()
+{
+    if (Random(1, 4) == 1)
+        Nova("BFGBall", Random(4, 16));
+};
+
+script void TeleportPostDamageStop()
+{
+    Delay(1);
+    SetActorVelocity(0, 0, 0, 0);
+};
+
+function void TeleportBreak()
+{
+    if (Player.Shield.AccessoryBattery)
+    {
+        FadeRange(118, 255, 112, 0.5, 118, 255, 112, 0, 1.0);
+        SetActorPosition(0, Player.Shield.AccessoryPosition.X, Player.Shield.AccessoryPosition.Y, Player.Shield.AccessoryPosition.Z, true);
+        SetActorAngle(0, Player.Shield.AccessoryPosition.Angle);
+        SetActorPitch(0, Player.Shield.AccessoryPosition.Pitch);
+        TeleportPostDamageStop();
+    };
+};
+
+function void AdaptiveBreak()
+{
+    switch (Player.DamageType)
+    {
+    case DT_NORMAL:     GiveInventory("DRPGShieldAdaptiveNormalResist", 1);     break;
+    case DT_TOXIC:      GiveInventory("DRPGShieldAdaptiveToxicResist", 1);      break;
+    case DT_MELEE:      GiveInventory("DRPGShieldAdaptiveMeleeResist", 1);      break;
+    case DT_FIRE:       GiveInventory("DRPGShieldAdaptiveFireResist", 1);       break;
+    case DT_PLASMA:     GiveInventory("DRPGShieldAdaptivePlasmaResist", 1);     break;
+    case DT_LIGHTNING:  GiveInventory("DRPGShieldAdaptiveLightningResist", 1);  break;
+    };
+};
+
+function void FlanExplosion() // This gets called on full charge too
+{
+    GiveInventory("DRPGShieldRadialExplosion", 1);
+    GiveInventory("DRPGShieldRadialExplosionResist", 1);
+};
+
+function void SpaghettiShieldBreak()
+{
+    if (CheckInventory("Armor") == 0 || CheckInventory("Armor") >= GetArmorInfo(ARMORINFO_SAVEAMOUNT) || !Player.Shield.AccessoryBattery)
+        return;
+    
+    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
+    GiveInventory(GetArmorInfoString(ARMORINFO_CLASSNAME), 1);
+    
+    ActivatorSound("skills/repair", 127);
+    Player.Shield.AccessoryBattery = 0;
+};
+
+// Shield Recharge
+function void SpaghettiShieldFullCharge()
+{
+    Player.Shield.AccessoryBattery = 1;
+};
+
+function void TeleportFullCharge()
+{
+    Player.Shield.AccessoryBattery = 1; // Indicate we have a spot
+    Player.Shield.AccessoryPosition.X = GetActorX(0);
+    Player.Shield.AccessoryPosition.Y = GetActorY(0);
+    Player.Shield.AccessoryPosition.Z = GetActorZ(0);
+    Player.Shield.AccessoryPosition.Angle = GetActorAngle(0);
+    Player.Shield.AccessoryPosition.Pitch = GetActorPitch(0);
+};
+
+// Stat Modifiers / Shield Maintenance
+function void X7Mod()
+{
+    if (Player.Shield.Active)
+        if (CheckWeapon("Fist") || CheckWeapon("Knuckle") || CheckWeapon("RLFistRedux"))
+            Player.TotalDamage *= 2;
+};
+
+function void AmpShieldMod()
+{
+    if (Player.Shield.Active)
+    {
+        if (Player.Shield.AccessoryBattery > 0)
+        {
+            Player.TotalDamage *= 2;
+            Player.Shield.AccessoryBattery--;
+        };
+        
+        if (Player.Shield.Charge >= Player.Shield.Capacity)
+        {
+            int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+
+            if (Buttons & BT_ATTACK && !Player.InMenu && !Player.InShop && !Player.OutpostMenu)
+            {
+                PlaySound(0, "shield/amp", 5, 1.0, false, 1.0);
+                FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.5);
+                Player.Shield.Charge /= 2;
+                Player.Shield.AccessoryBattery = 70;
+            };
+        };
+    };
+};
+
+function void HurryMod()
+{
+    Player.Shield.Capacity /= 2;
+    Player.Shield.DelayRate /= 2;
+};
+
+function void Def2Mod()
+{
+    Player.Shield.Capacity *= 2;
+    Player.Shield.DelayRate *= 2;
+};
+
+function void BlzutMod()
+{
+    Player.Shield.Capacity /= 2;
+    Player.Shield.ChargeRate *= 2;
+};
+
+function void RektMod()
+{
+    Player.DamageFactor *= 2;
+};
+
+function void LightAmpMod()
+{
+    if (Player.Shield.Active && Player.Shield.Charge >= Player.Shield.Capacity)
+        SetInventory("PowerShieldLightAmp", 1)
+    else
+        TakeInventory("PowerShieldLightAmp", 1);
+};
+
+function void LightAmpUnequip(bool EMP)
+{
+    TakeInventory("PowerShieldLightAmp", 1);
+};
+
+function void InvisibilityMod()
+{
+    if (Player.Shield.Active && Player.Shield.Charge >= Player.Shield.Capacity)
+        SetInventory("PowerShieldInvisibility", 1)
+    else
+        TakeInventory("PowerShieldInvisibility", 1);
+};
+
+function void InvisibilityUnequip(bool EMP)
+{
+    TakeInventory("PowerShieldInvisibility", 1);
+};
+
+function void LazyMod()
+{
+    if (!IsPlayerMoving())
+        Player.Shield.ChargeRate *= 2
+    else
+        Player.Shield.ChargeRate = 0;
+};
+
+function void AccelerativeShieldMod()
+{
+    int AccelCharge = Player.Shield.ChargeRate;
+    AccelCharge += (Player.Shield.ChargeRate * 3) * Player.Shield.Charge / Player.Shield.Capacity;
+    Player.Shield.ChargeRate = AccelCharge;
+};
+
+function void TheKillingBoosterMod()
+{
+    Player.Shield.Capacity /= 2;
+    if (Player.Shield.Active)
+        Player.TotalDamage = Player.TotalDamage * 1.5;
+};
+
+function void MinuteMaidMod()
+{
+    int Minutes = Timer() / (35 * 60);
+    Player.Shield.ChargeRate += Minutes;
+    Player.Shield.DelayRate -= Minutes * 0.1;
+};
+
+function void AmericaShieldMod()
+{
+    int ExtraCapacity = (Player.Shield.Capacity * 3) * Player.RankLevel / MAX_RANK;
+    Player.Shield.Capacity += ExtraCapacity;
+};
+
+function void GhettoLuckMod()
+{
+    int Luck = 50 - (Player.Luck / 2);
+    
+    Player.HealthChance += Luck * LUCK_HEALTHCHANCE;
+    Player.EPChance += Luck * LUCK_EPCHANCE;
+    Player.ArmorChance += Luck * LUCK_ARMORCHANCE;
+    Player.PowerupChance += Luck * LUCK_POWERUPCHANCE;
+    Player.WeaponChance += Luck * LUCK_WEAPONCHANCE;
+    Player.TokenChance += Luck * LUCK_TOKENCHANCE;
+    Player.AugChance += Luck * LUCK_AUGCHANCE;
+    Player.ShieldChance += Luck * LUCK_SHIELDCHANCE;
+    Player.StimChance += Luck * LUCK_STIMCHANCE;
+};
+
+function void SuperSqueezyScalarMod()
+{
+    Player.Shield.Capacity = Player.Shield.Capacity * (1.0 + (Player.Capacity * 0.005)) + 1;
+    Player.Shield.ChargeRate += (Player.Energy / 10);
+    Player.Shield.DelayRate = Player.Shield.DelayRate - ((fixed)Player.Regeneration / 50.0);
+};
+
+function void ReflectionMod()
+{
+    if (Player.Shield.Active && Player.Shield.Charge)
+        GiveInventory("DRPGShieldReflection", 1)
+    else
+        GiveInventory("DRPGShieldReflectionOff", 1);
+};
+
+function void ReflectionUnequip(bool EMP)
+{
+    GiveInventory("DRPGShieldReflectionOff", 1);
+};
+
+function void SanicMod()
+{
+    int Movement = VectorLength(GetActorVelX(0), GetActorVelY(0));
+    
+    if (Movement > 30)
+        Movement = 30;
+    
+    Player.Shield.Interval -= Movement;
+};
+
+function void NakedMod()
+{
+    if (Player.Shield.Active && CheckInventory("Armor") > 0)
+        GiveInventory("DRPGShieldNakedResist", 1);
+};
+
+function void MLGNoScopeShieldMod()
+{
+    int Extra = 0;
+    if (Player.Strength     >= 100) Extra += 100;
+    if (Player.Defense      >= 100) Extra += 100;
+    if (Player.Vitality     >= 100) Extra += 100;
+    if (Player.Energy       >= 100) Extra += 100;
+    if (Player.Regeneration >= 100) Extra += 100;
+    if (Player.Agility      >= 100) Extra += 100;
+    if (Player.Capacity     >= 100) Extra += 100;
+    if (Player.Luck         >= 100) Extra += 100;
+    
+    Player.Shield.Capacity += Extra;
+};
+
+function void RussianRouletteMod()
+{
+    if (Player.Shield.Active)
+    {
+        Player.DamageFactor = 11.0; // Let's crank this up to eleven
+        Player.SurvivalBonus = (5.0 / 6.0) * 100.0;
+    };
+};
+
+function void OCDShieldMod()
+{
+    Player.Shield.Capacity += AllBonusMaps * 20;
+    Player.Shield.ChargeRate += AllBonusMaps / 2;
+    Player.Shield.DelayRate -= (fixed)AllBonusMaps * 0.2;
+};
+
+function void ArenaShieldMod()
+{
+    int ArenaCompletes = ArenaMaxWave - 1;
+    Player.Shield.Capacity += ArenaCompletes * 10;
+    Player.Shield.ChargeRate += ArenaCompletes / 4;
+    Player.Shield.DelayRate -= (fixed)ArenaCompletes * 0.1;
+};
+
+function void HowDidYouEvenMod()
+{
+    int DelayRate = Player.Shield.DelayRate;
+    Player.Shield.DelayRate = Player.Shield.ChargeRate;
+    Player.Shield.ChargeRate = DelayRate;
+};
+
+function void OhYeahMod()
+{
+    if (Timer() == 10 && !InBase)
+    {
+        FadeRange(255, 128, 0, 0.5, 255, 128, 0, 0.0, 0.5);
+        ActivatorSound("shield/ohyeah", 127);
+        GiveInventory("DRPGShieldRadialExplosion", 1);
+        GiveInventory("DRPGShieldRadialExplosionResist", 1);
+    };
+};
+
+function void McDuckMod()
+{
+    Player.Shield.Capacity += CheckInventory("DRPGCredits") / 10000 * 50;
+};
+
+function void AmmoSpaceMod()
+{
+    Player.Shield.Capacity /= 4;
+    Player.Shield.ChargeRate /= 2;
+    Player.Shield.DelayRate *= 4;
+    if (Player.Shield.Active && Player.Shield.Charge >= Player.Shield.Capacity)
+        SetInventory("PowerShieldInfiniteAmmo", 1)
+    else
+        TakeInventory("PowerShieldInfiniteAmmo", 1);
+};
+
+function void AmmoSpaceUnequip(bool EMP)
+{
+    TakeInventory("PowerShieldInfiniteAmmo", 1);
+};
+
+function void TheAmazingBatteryShieldMod()
+{
+    if (Player.Augs.Battery >= 100)
+        Player.Shield.Capacity *= 2;
+};
+
+function void LilZiggyMod()
+{
+    Player.Shield.Capacity += Player.Shield.ChargeRate;
+};
+
+function void MurderBurgerMod()
+{
+    Player.Shield.Capacity += GetLevelInfo(LEVELINFO_KILLED_MONSTERS) * 10;
+};
+
+function void LuckyBastardMod()
+{
+    if (Player.Shield.Active)
+    {
+        int CombinedStat = Player.Agility + Player.Luck;
+        
+        Player.SurvivalBonus = (fixed)CombinedStat / 10.0;
+        
+        if (Player.Augs.Level[AUG_AGILITY] >= 4)
+            Player.SurvivalBonus *= 2;
+        
+        if (Player.Perks[STAT_AGILITY])
+            Player.SurvivalBonus += 30;
+    };
+};
+
+function void IronShieldMod()
+{
+    Player.Shield.Capacity += Player.ActualHealth / 100 * 20;
+};
+
+function void EPRegenSwapperMod()
+{
+    if (Player.Shield.Active)
+        Player.EPAmount = Player.Shield.ChargeRate;
+};
+
+function void HoarderMod()
+{
+    int BaseCharge = Player.Shield.ChargeRate;
+    int AddCharge;
+    
+    if (CheckInventory("PowerInvulnerable"))
+        AddCharge += BaseCharge;
+    if (CheckInventory("PowerInvisibility") || CheckInventory("PowerShadow"))
+        AddCharge += BaseCharge;
+    if (CheckInventory("PowerTimeFreezer"))
+        AddCharge += BaseCharge;
+    if (CheckInventory("PowerIronFeet"))
+        AddCharge += BaseCharge;
+    if (CheckInventory("PowerLightAmp"))
+        AddCharge += BaseCharge;
+    if (CheckInventory("PowerStrength"))
+        AddCharge += BaseCharge;
+    
+    Player.Shield.ChargeRate += AddCharge;
 };
 
 script void ShieldTimer()
@@ -165,44 +1089,50 @@ script void ShieldTimer()
             SetInventory("DRPGShieldCharge", Player.Shield.Charge);
             SetInventory("DRPGShieldChargeMax", Player.Shield.Capacity);
             
-            // Shield is Full
-            if (Player.Shield.Charge >= Player.Shield.Capacity && !Player.Shield.Full)
-            {
-                ActivatorSound("shield/full", 127);
-                Player.Shield.Full = true;
-            };
+            if (Player.Shield.Charge < Player.Shield.Capacity)
+                Player.Shield.Full = false;
             
             // Increase Charge
-            if (Player.Shield.Timer == 0)
+            if (Player.Shield.Timer <= 0)
             {
-                Player.Shield.Charge += Player.Shield.ChargeRate;
+                int ChargeRate = Player.Shield.ChargeRate;
+                if (Player.Shield.Accessory && Player.Shield.Accessory->Charge)
+                    ChargeRate = Player.Shield.Accessory->Charge(ChargeRate);
+                
+                if (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_KILLSCHARGE)
+                {
+                    if (Player.Shield.Charge < 1)
+                        PlaySound(0, "shield/restart", 5, 1.0, false, 1.0)
+                    else if (Player.Shield.Charge < Player.Shield.Capacity)
+                        PlaySound(0, "shield/charge", 5, 0.25, false, 2.0);
+                    Player.Shield.Charge += ChargeRate;
+                };
+                
                 Player.Shield.Timer = Player.Shield.Interval;
                 
-                if (Player.Shield.Accessory == SHIELD_ACC_PHD88 && Player.Shield.Charge >= Player.Shield.Capacity && Player.EP < Player.EPMax)
-                    Player.EP++;
-                if (Player.Shield.Accessory == SHIELD_ACC_BATTB && Player.Shield.Charge >= Player.Shield.Capacity && Player.Augs.Battery < Player.Augs.BatteryMax)
+                if (Player.Shield.Charge >= Player.Shield.Capacity)
                 {
-                    Player.Augs.Battery++;
-                    DrawBattery();
-                };
-                if (Player.Shield.Accessory == SHIELD_ACC_SHVRZ7 && Player.Shield.Charge >= Player.Shield.Capacity)
-                {
-                    GiveInventory("Clip", 1);
-                    GiveInventory("Shell", 2);
+                    // Shield is Full
+                    if (!Player.Shield.Full)
+                    {
+                        Player.Shield.Full = true;
+                        PlaySound(0, "shield/full", 5, 1.0, false, 1.0);
+                        if (Player.Shield.Accessory && Player.Shield.Accessory->FullCharge)
+                            Player.Shield.Accessory->FullCharge();
+                    };
+                    
+                    int OverCharge = Player.Shield.Charge - Player.Shield.Capacity;
+
+                    if (OverCharge > 0 && Player.Shield.Accessory && Player.Shield.Accessory->Overcharge)
+                        Player.Shield.Accessory->Overcharge(OverCharge);
+                    
+                    Player.Shield.Charge = Player.Shield.Capacity;
                 };
             };
-
+            
             // Shield Timer
             if (Player.Shield.Timer > 0)
-            {
-                if (Player.Shield.Accessory == SHIELD_ACC_LZY200)
-                {
-                    if (!IsPlayerMoving())
-                        Player.Shield.Timer--;
-                }
-                else if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
-                    Player.Shield.Timer--;
-            };
+                Player.Shield.Timer--;
         };
         
         Delay(1);
@@ -211,47 +1141,19 @@ script void ShieldTimer()
 
 script void ShieldDamage(int Amount)
 {
-    switch (Player.Shield.Accessory)
-    {
-    // BST-700
-    case SHIELD_ACC_BST700:
-        if (Random(1, 4) == 1)
-        {
-            int TID = UniqueTID();
-            fixed Angle = GetActorAngle(0);
-            fixed X = GetActorX(0) + Cos(Angle) * 48.0;
-            fixed Y = GetActorY(0) + Sin(Angle) * 48.0;
-            fixed DirX = Cos(Angle);
-            fixed DirY = Sin(Angle);
-            fixed Z = GetActorZ(0);
-            
-            Spawn("DRPGShieldBooster", X, Y, Z, TID, Angle);
-            SetActorVelocity(TID, DirX * RandomFixed(8.0, 16.0), DirY * RandomFixed(8.0, 16.0), RandomFixed(4.0, 8.0), false, false);
-        };
-        break;
-    // SP-00K
-    case SHIELD_ACC_SP00K:
-        if (Random(1, 8) == 1)
-        {
-            GiveInventory("DRPGShieldGhost", 1);
-            Player.Shield.Ghost = true;
-            Player.Shield.GhostTimer = 35 * 5;
-        };
-        break;
-    // E1N-T31
-    case SHIELD_ACC_E1NT31:
-        GiveInventory("DRPGShieldTimeFreezer", 1);
-        UseInventory("DRPGShieldTimeFreezer");
-        Player.Shield.TimeFreezerTimer = 35;
-        Player.Shield.TimeFreezer = true;
-        break;
-    };
+    Player.Shield.Full = false;
+    
+    PlaySound(0, "shield/hit", 5, 1.0, false, 1.0);
+    if (Player.Shield.Accessory && Player.Shield.Accessory->Damage)
+        Player.Shield.Accessory->Damage(Amount);
 };
 
 script void ShieldBroken()
 {
-    if (Player.Shield.Accessory == SHIELD_ACC_NOVA2 && Random(1, 4) == 1) // NOV-A2
-        Nova("BFGBall", Random(4, 16));
+    PlaySound(0, "shield/empty", 5, 1.0, false, 1.0);
+    
+    if (Player.Shield.Accessory && Player.Shield.Accessory->Break)
+        Player.Shield.Accessory->Break();
 };
 
 script void ShieldTimerReset()
@@ -259,77 +1161,128 @@ script void ShieldTimerReset()
     Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
 };
 
+script bool ActivateShield()
+{
+    if (Player.Shield.Active)
+        return true;
+    
+    if (!Player.Shield.Body || !Player.Shield.Battery || !Player.Shield.Capacitor)
+        return false;
+    
+    if (Player.StatusType[SE_EMP])
+        return false;
+        
+    FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
+    
+    if (Player.Shield.Accessory && Player.Shield.Accessory->Equip)
+        Player.Shield.Accessory->Equip();
+    
+    GiveInventory("DRPGShieldOn", 1);
+    PlaySound(0, "shield/on", 5, 1.0, false, 1.0);
+    Player.Shield.Active = true;
+    ShieldTimerReset();
+    
+    return true;
+};
+
+script void DeactivateShield()
+{
+    if (!Player.Shield.Active)
+        return;
+    
+    FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
+    
+    if (Player.Shield.Accessory && Player.Shield.Accessory->Unequip)
+        Player.Shield.Accessory->Unequip(Player.StatusType[SE_EMP]);
+
+    GiveInventory("DRPGShieldOff", 1);
+    PlaySound(0, "shield/off", 5, 1.0, false, 1.0);
+    Player.Shield.Active = false;
+    Player.Shield.AccessoryBattery = 0;
+    if (GetCVar("drpg_shield_reset") || Player.StatusType[SE_EMP])
+        Player.Shield.Charge = 0;
+};
+
 acscript void ToggleShield() net
 {
     // If you're dead, terminate
     if (GetActorProperty(0, APROP_Health) <= 0) return;
     
-    // If you have no Shield parts equipped or are missing a part, terminate
-    if (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0)
-    {
-        ActivatorSound("menu/error", 127);
-        return;
-    };
-    
-    FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
-    
-    if (!Player.Shield.Active && !Player.StatusType[SE_EMP])
-    {
-        GiveInventory("DRPGShieldOn", 1);
-        ActivatorSound("shield/on", 127);
-        Player.Shield.Timer = 35.0 * Player.Shield.DelayRate;
-        Player.Shield.Active = true;
-    }
+    bool success = true;
+    if (!Player.Shield.Active)
+        success = ActivateShield()
     else
-    {
-        GiveInventory("DRPGShieldOff", 1);
-        ActivatorSound("shield/off", 127);
-        Player.Shield.Active = false;
-        if (GetCVar("drpg_shield_reset"))
-            Player.Shield.Charge = 0;
-        GiveInventory("DRPGShieldReflectionOff", 1);
-        GiveInventory("DRPGShieldGhostOff", 1);
-    };
+        DeactivateShield();
+    
+    if (!success)
+        ActivatorSound("menu/error", 127);
+};
+
+function void RemoveShieldAccessory()
+{
+    if (Player.Shield.Accessory->Unequip)
+        Player.Shield.Accessory->Unequip(false);
+    
+    Player.Shield.AccessoryBattery = 0;
+    Player.Shield.Accessory = nullptr;
+};
+
+function void SetShieldAccessory(ShieldAccsPtr Accessory)
+{
+    if (Player.Shield.Accessory)
+        RemoveShieldAccessory();
+
+    Player.Shield.Accessory = Accessory;
+    if (Player.Shield.Accessory->Equip)
+        Player.Shield.Accessory->Equip();
 };
 
 acscript void AddShield(int Amount)
 {
-    FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 0.25);
+    if (Player.Shield.Charge >= Player.Shield.Capacity) return;
+    
+    if (Player.Shield.Charge < 1)
+        PlaySound(0, "shield/restart", 5, 1.0, false, 1.0)
+    else
+        PlaySound(0, "shield/charge", 5, 0.25, false, 2.0);
+    FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 0.25);
+    if (Player.Shield.Charge + Amount > Player.Shield.Capacity)
+        Amount = Player.Shield.Capacity - Player.Shield.Charge;
+    
     Player.Shield.Charge += Amount;
+};
+
+acscript void AddRemoteShield(int TID, int Amount)
+{
+    SetActivator(TID);
+    if (PlayerNumber() < 0) return;
+    AddShield(Amount);
 };
 
 function void CheckShields()
 {
-    ShieldPartPtr PartBodyPtr = &ShieldData[0][Player.Shield.Body - 1];
-    ShieldPartPtr PartBatteryPtr = &ShieldData[1][Player.Shield.Battery - 1];
-    ShieldPartPtr PartCapacitorPtr = &ShieldData[2][Player.Shield.Capacitor - 1];
-    ShieldPartPtr PartAccessoryPtr = &ShieldData[3][Player.Shield.Accessory - 1];
+    ShieldPartPtr BodyPtr = Player.Shield.Body;
+    ShieldPartPtr BatteryPtr = Player.Shield.Battery;
+    ShieldPartPtr CapacitorPtr = Player.Shield.Capacitor;
+    ShieldAccsPtr AccessoryPtr = Player.Shield.Accessory;
     
     // Check to make sure the Shield has components
-    if (Player.Shield.Active && (Player.Shield.Body == 0 || Player.Shield.Battery == 0 || Player.Shield.Capacitor == 0))
+    if (!BodyPtr || !BatteryPtr || !CapacitorPtr)
     {
-        ActivatorSound("shield/off", 127);
-        Player.Shield.Active = false;
-        if (GetCVar("drpg_shield_reset"))
-            Player.Shield.Charge = 0;
-        GiveInventory("DRPGShieldOff", 1);
-        GiveInventory("DRPGShieldReflectionOff", 1);
-        GiveInventory("DRPGShieldGhostOff", 1);
-        Player.Shield.Timer = 35 * Player.Shield.DelayRate;
+        if (Player.Shield.Active)
+            DeactivateShield();
     };
     
     // EP -> Shield Charging
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
     if (Player.Shield.Active && (!Player.InMenu && !Player.InShop) && Buttons & BT_SPEED && Buttons & BT_USE && Player.Shield.Charge < Player.Shield.Capacity)
     {
-        if (Player.Shield.Accessory == SHIELD_ACC_CNVRT99 && CheckInventory("Cell") > 0)
-        {
-            FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
-            ActivatorSound("regen/shield", 64);
-            TakeInventory("Cell", 1);
-            Player.Shield.Charge += 10;
-        }
-        else if (Player.EP > 0)
+        bool SkipEPCharge = false;
+        
+        if (Player.Shield.Accessory && Player.Shield.Accessory->FastCharge)
+            SkipEPCharge = Player.Shield.Accessory->FastCharge();
+        
+        if (!SkipEPCharge && Player.EP > 0)
         {
             FadeRange(0, 255, 255, 0.1, 0, 255, 255, 0.0, 0.5);
             ActivatorSound("regen/shield", 64);
@@ -339,217 +1292,43 @@ function void CheckShields()
     };
     
     // If a part is sold/dropped/nuked from orbit/etc, unequip it
-    if (!CheckInventory(PartBodyPtr->Actor))       Player.Shield.Body = 0;
-    if (!CheckInventory(PartBatteryPtr->Actor))    Player.Shield.Battery = 0;
-    if (!CheckInventory(PartCapacitorPtr->Actor))  Player.Shield.Capacitor = 0;
-    if (!CheckInventory(PartAccessoryPtr->Actor))  Player.Shield.Accessory = 0;
+    if (BodyPtr &&      !CheckInventory(BodyPtr->Actor))        Player.Shield.Body = nullptr;
+    if (BatteryPtr &&   !CheckInventory(BatteryPtr->Actor))     Player.Shield.Battery = nullptr;
+    if (CapacitorPtr && !CheckInventory(CapacitorPtr->Actor))   Player.Shield.Capacitor = nullptr;
+    if (AccessoryPtr && !CheckInventory(AccessoryPtr->Actor))   RemoveShieldAccessory();
     
     // Apply Components stats to Shield
-    Player.Shield.Capacity = PartBodyPtr->Capacity + PartBatteryPtr->Capacity + PartCapacitorPtr->Capacity;
-    Player.Shield.ChargeRate = PartBodyPtr->ChargeRate + PartBatteryPtr->ChargeRate + PartCapacitorPtr->ChargeRate;
-    Player.Shield.DelayRate = 5.0 + PartBodyPtr->DelayRate + PartBatteryPtr->DelayRate + PartCapacitorPtr->DelayRate;
+    Player.Shield.Capacity = (BodyPtr? BodyPtr->Capacity : 0) + (BatteryPtr? BatteryPtr->Capacity : 0) + (CapacitorPtr? CapacitorPtr->Capacity : 0);
+    Player.Shield.ChargeRate = (BodyPtr? BodyPtr->ChargeRate : 0) + (BatteryPtr? BatteryPtr->ChargeRate : 0) + (CapacitorPtr? CapacitorPtr->ChargeRate : 0);
+    Player.Shield.DelayRate = 5.0 + (BodyPtr? BodyPtr->DelayRate : 0) + (BatteryPtr? BatteryPtr->DelayRate : 0) + (CapacitorPtr? CapacitorPtr->DelayRate : 0);
     Player.Shield.Interval = 35;
-    
-    // Aug Handling
-    if (Player.Augs.Active[AUG_REGENERATION])
-    {
-        if (Player.Augs.Level[AUG_REGENERATION] >= 3)
-            Player.Shield.ChargeRate *= 2;
-        if (Player.Augs.Level[AUG_REGENERATION] >= 4)
-            Player.Shield.DelayRate /= 2.0;
-        if (Player.Augs.Level[AUG_REGENERATION] >= 5)
-            Player.Shield.Interval /= 2;
-    };
-    
-    // Accessory Powerups Token handling
-    SetInventory("DRPGShieldLightAmpToken", Player.Shield.LightAmp);
-    SetInventory("DRPGShieldInvisibilityToken", Player.Shield.Invisibility);
-    SetInventory("DRPGShieldTimeFreezerToken", Player.Shield.TimeFreezer);
 };
 
 function void CheckShieldAccessory()
 {
-    // X-2
-    if (Player.Shield.Accessory == SHIELD_ACC_X7 && Player.Shield.Active)
-        if (CheckWeapon("Fist") || CheckWeapon("Knuckle") || CheckWeapon("RLFistRedux"))
-            Player.TotalDamage *= 2;
-    
-    // SGENX-5b
-    if (Player.Shield.Accessory == SHIELD_ACC_SGENX5B && Player.Shield.Active && Player.Shield.Charge && Player.ActualHealth < Player.HealthMax)
-        if ((Timer() % (35 / 2)) == 0)
-            Player.ActualHealth++;
-    
-    // AMP-3000
-    if (Player.Shield.Accessory == SHIELD_ACC_AMP3000 && Player.Shield.Active)
-        if (Player.Shield.Charge >= Player.Shield.Capacity)
-        {
-            int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-            
-            if (Buttons & BT_ATTACK && !Player.InMenu && !Player.InShop && !Player.OutpostMenu)
-            {
-                ActivatorSound("shield/amp", 127);
-                FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.5);
-                Player.Shield.Charge /= 2;
-            };
-            
-            Player.TotalDamage *= 2;
-        };
-    
-    // HRY-VP80
-    if (Player.Shield.Accessory == SHIELD_ACC_HRYVP80)
-    {
-        Player.Shield.Capacity /= 2;
-        Player.Shield.DelayRate /= 2;
-    };
-    
-    // DEF-2
-    if (Player.Shield.Accessory == SHIELD_ACC_DEF2)
-    {
-        Player.Shield.Capacity *= 2;
-        Player.Shield.DelayRate *= 2;
-    };
-    
-    // B1-ZUT3
-    if (Player.Shield.Accessory == SHIELD_ACC_B1ZUT3)
-    {
-        Player.Shield.ChargeRate *= 2;
-        Player.Shield.Capacity /= 2;
-    };
-    
-    // REK-T50
-    if (Player.Shield.Accessory == SHIELD_ACC_REKT50 && Player.Shield.Active)
-        Player.DamageFactor *= 2;
-    
-    // CU-256
-    if (Player.Shield.Accessory == SHIELD_ACC_CU256 && Player.Shield.Active)
-        if (Player.Shield.Charge >= Player.Shield.Capacity)
-        {
-            SetInventory("DRPGShieldLightAmp", 1);
-            UseInventory("DRPGShieldLightAmp");
-            Player.Shield.LightAmp = true;
-        };
-    if ((!Player.Shield.Active || Player.Shield.Accessory != SHIELD_ACC_CU256 || Player.Shield.Charge < Player.Shield.Capacity) && Player.Shield.LightAmp)
-    {
-        TakeInventory("PowerLightAmp", 1);
-        Player.Shield.LightAmp = false;
-    };
-    
-    // WRP30-LITE
-    if (Player.Shield.Accessory == SHIELD_ACC_WRP30LITE && Player.Shield.Active)
-        if (Player.Shield.Charge >= Player.Shield.Capacity)
-        {
-            SetInventory("DRPGShieldInvisibility", 1);
-            UseInventory("DRPGShieldInvisibility");
-            Player.Shield.Invisibility = true;
-        };
-    if ((!Player.Shield.Active || Player.Shield.Accessory != SHIELD_ACC_WRP30LITE || Player.Shield.Charge < Player.Shield.Capacity) && Player.Shield.Invisibility)
-    {
-        TakeInventory("PowerInvisibility", 1);
-        Player.Shield.Invisibility = false;
-    };
-    
-    // LZ-Y200
-    if (Player.Shield.Accessory == SHIELD_ACC_LZY200)
-        Player.Shield.ChargeRate *= 2;
-    
-    // MM-12
-    if (Player.Shield.Accessory == SHIELD_ACC_MM12 && Player.Shield.Active)
-        Player.Shield.ChargeRate = (fixed)Player.Shield.ChargeRate * (1.0 + ((fixed)Player.Shield.Charge / (fixed)Player.Shield.Capacity) * 3.0);
-    
-    // MRTE-KRAR
-    if (Player.Shield.Accessory == SHIELD_ACC_MRTEKRAR)
-    {
-        Player.Shield.Capacity /= 2;
-        Player.TotalDamage = Player.TotalDamage * 1.5;
-    };
-    
-    // RR-G0
-    if (Player.Shield.Accessory == SHIELD_ACC_RRG0)
-    {
-        Player.Shield.ChargeRate += Timer() / (35 * 60);
-        Player.Shield.DelayRate = Player.Shield.DelayRate - ((Timer() / (35 * 60)) * 0.1);
-    };
-    
-    // SP-00k
-    if (Player.Shield.Accessory == SHIELD_ACC_SP00K && Player.Shield.Active)
-    {
-        // Remove when time is up
-        if (Player.Shield.GhostTimer <= 0)
-        {
-            GiveInventory("DRPGShieldGhostOff", 1);
-            Player.Shield.Ghost = false;
-        };
-        
-        // Decrease the ghost timer
-        if (Player.Shield.Ghost)
-            Player.Shield.GhostTimer--;
-    };
-    
-    // E1N-T31 - Remove when timer ends
-    if (Player.Shield.TimeFreezerTimer <= 0 && Player.Shield.TimeFreezer)
-    {
-        TakeInventory("PowerTimeFreezer", 1);
-        Player.Shield.TimeFreezer = false;
-    };
-    
-    // E1N-T31 - Decrease Time Freeze timer
-    if (Player.Shield.TimeFreezerTimer > 0)
-        Player.Shield.TimeFreezerTimer--;
-    
-    // PATR-0T
-    if (Player.Shield.Accessory == SHIELD_ACC_PATR0T)
-        Player.Shield.Capacity = Player.Shield.Capacity * (1 + (Player.RankLevel * 0.125));
-    
-    // RNJSUS-2
-    if (Player.Shield.Accessory == SHIELD_ACC_RNJSUS2 && Player.Shield.Active)
-    {
-        int Luck = 50 - (Player.Luck / 2);
-        
-        Player.HealthChance += Luck * 0.025;
-        Player.EPChance += Luck * 0.025;
-        Player.ArmorChance += Luck * 0.025;
-        Player.PowerupChance += Luck * 0.0125;
-        Player.WeaponChance += Luck * 0.0125;
-        Player.TokenChance += Luck * 0.01;
-        Player.AugChance += Luck * 0.0025;
-        Player.ShieldChance += Luck * 0.005;
-        Player.StimChance += Luck * 0.0125;
-    };
-    
-    // SCL-AR53
-    if (Player.Shield.Accessory == SHIELD_ACC_SCLAR53)
-    {
-        Player.Shield.Capacity = Player.Shield.Capacity * (1.0 + (Player.Capacity * 0.005)) + 1;
-        Player.Shield.ChargeRate += (Player.Energy / 10);
-        Player.Shield.DelayRate = Player.Shield.DelayRate - ((fixed)Player.Regeneration / 50.0);
-    };
-    
-    // RF-CT
-    if (Player.Shield.Accessory == SHIELD_ACC_RFCT && Player.Shield.Active)
-        GiveInventory("DRPGShieldReflection", 1);
+    if (Player.Shield.Accessory && Player.Shield.Accessory->Modifier)
+        Player.Shield.Accessory->Modifier();
 };
 
 function void DrawShieldModel(int ID, int X, int Y)
 {
     PlayerData *CurrentPlayer = (ID == -1 ? &Player : &_PlayerData[ID]);
-    ShieldPartPtr PartBodyPtr = &ShieldData[0][CurrentPlayer->Shield.Body - 1];
-    ShieldPartPtr PartBatteryPtr = &ShieldData[1][CurrentPlayer->Shield.Battery - 1];
-    ShieldPartPtr PartCapacitorPtr = &ShieldData[2][CurrentPlayer->Shield.Capacitor - 1];
-    ShieldPartPtr PartAccessoryPtr = &ShieldData[3][CurrentPlayer->Shield.Accessory - 1];
     
-    // Body
-    if (CurrentPlayer->Shield.Capacitor > 0)
-        PrintSprite(PartCapacitorPtr->Icon,     0, X + 0.1, Y + 0.1, 0.05);
+    // [KS] These need to be reversed because 0 draws behind the last graphic printed
+
+    // Accessory
+    if (CurrentPlayer->Shield.Accessory)
+        PrintSprite(CurrentPlayer->Shield.Accessory->Icon,  0, X + 0.1, Y + 0.1, 0.05);
     
     // Battery
-    if (CurrentPlayer->Shield.Battery > 0)
-        PrintSprite(PartBatteryPtr->Icon,       0, X + 0.1, Y + 0.1, 0.05);
+    if (CurrentPlayer->Shield.Battery)
+        PrintSprite(CurrentPlayer->Shield.Battery->Icon,    0, X + 0.1, Y + 0.1, 0.05);
     
     // Capacitor
-    if (CurrentPlayer->Shield.Body > 0)
-        PrintSprite(PartBodyPtr->Icon,          0, X + 0.1, Y + 0.1, 0.05);
+    if (CurrentPlayer->Shield.Capacitor)
+        PrintSprite(CurrentPlayer->Shield.Capacitor->Icon,  0, X + 0.1, Y + 0.1, 0.05);
     
-    // Accessory
-    if (CurrentPlayer->Shield.Accessory > 0)
-        PrintSprite(PartAccessoryPtr->Icon,     0, X + 0.1, Y + 0.1, 0.05);
+    // Body
+    if (CurrentPlayer->Shield.Body)
+        PrintSprite(CurrentPlayer->Shield.Body->Icon,       0, X + 0.1, Y + 0.1, 0.05);
 };

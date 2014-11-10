@@ -331,15 +331,27 @@ acscript void Respec(bool DoStats, bool DoSkills) net
     ActivatorSound("misc/secret", 127);
 };
 
-acscript void AddEP(int Amount)
+acscript void AddEP(int Amount, bool NoFlash)
 {
-    if (Amount > 0)
-        FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 0.25);
+    if (Player.EP + Amount > Player.EPMax)
+        Amount = Player.EPMax - Player.EP;
+    
+    if (Amount <= 0)
+        return;
+    
+    fixed FlashStrength = 0.01 * (Amount * 100 / Player.EPMax);
+    fixed FlashDuration = 0.03 * (Amount * 100 / Player.EPMax);
+    
+    if (FlashStrength > 0.5)
+        FlashStrength = 0.5;
+    
+    if (FlashDuration > 3.0)
+        FlashDuration = 3.0;
+    
+    if (!NoFlash)
+        FadeRange(0, 255, 255, FlashStrength, 0, 255, 255, 0, FlashDuration);
     
     Player.EP += Amount;
-    
-    if (Player.EP > Player.EPMax)
-        Player.EP = Player.EPMax;
 };
 
 acscript void RemoveEP(int Amount, int InUnits)
@@ -571,29 +583,29 @@ acscript void FullShield()
     // Bodies
     for (int i = 0; i < ShieldPartsMax[0]; i++)
     {
-        ShieldPartPtr PartPtr = &ShieldData[0][i];
-        GiveInventory(StrParam("%s\n", PartPtr->Actor), 1);
+        ShieldPartPtr Part = &ShieldParts[0][i];
+        GiveInventory(Part->Actor, 1);
     };
     
     // Batteries
     for (int i = 0; i < ShieldPartsMax[1]; i++)
     {
-        ShieldPartPtr PartPtr = &ShieldData[1][i];
-        GiveInventory(StrParam("%s\n", PartPtr->Actor), 1);
+        ShieldPartPtr Part = &ShieldParts[1][i];
+        GiveInventory(Part->Actor, 1);
     };
 
     // Capacitors
     for (int i = 0; i < ShieldPartsMax[2]; i++)
     {
-        ShieldPartPtr PartPtr = &ShieldData[2][i];
-        GiveInventory(StrParam("%s\n", PartPtr->Actor), 1);
+        ShieldPartPtr Part = &ShieldParts[2][i];
+        GiveInventory(Part->Actor, 1);
     };
     
     // Accessories
-    for (int i = 0; i < ShieldPartsMax[3]; i++)
+    for (int i = 0; i < MAX_ACCESSORIES; i++)
     {
-        ShieldPartPtr PartPtr = &ShieldData[3][i];
-        GiveInventory(StrParam("%s\n", PartPtr->Actor), 1);
+        ShieldAccsPtr Accessory = &ShieldAccessories[i];
+        GiveInventory(Accessory->Actor, 1);
     };
 };
 
@@ -1514,18 +1526,40 @@ acscript void CheckArmorStats()
     Log("\c[Green]Max Full Absorb: \c[Brick]%i%%\n", GetArmorInfo(ARMORINFO_MAXFULLABSORB));
 };
 
+// This function is specifically to avoid dividing by zero in the event that that can happen.
+function int CalcPercent(int Current, int Max)
+{
+    if (Max == 0)
+        return 100;
+    return Current * 100 / Max;
+};
+
 // Dynamic Arrays
 // --------------------------------------------------
 
-function void ArrayCreate(DynamicArray *Array, int InitSize, int ItemSize)
+function void ArrayCreate(DynamicArray *Array, char[5] Name, int InitSize, int ItemSize)
 {
     if (Array->Data != nullptr)
         ArrayDestroy(Array);
+    
+    Array->Name = Name;
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDynamicArray: Allocating \cj%s\n", Array->Name);
     
     Array->Position = 0;
     Array->Size = InitSize;
     Array->ItemSize = ItemSize;
     Array->Data = Z_Malloc(Array->ItemSize * Array->Size, PU_STATIC, NULL);
+    
+    if (!Array->Data)
+    {
+        Log("\cgERROR: \c-Could not allocate space for array \cj%s\n", Array->Name);
+        return;
+    };
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDynamicArray: \cj%s\cd @ %p\n", Array->Name, Array->Data);
     
     memset(Array->Data, 0xAAAAAAAA, Array->Size * Array->ItemSize);
 };
@@ -1534,7 +1568,7 @@ function void ArrayResize(DynamicArray *Array)
 {
     if (Array->Data == nullptr)
     {
-        Log("\cgERROR: \c-Tried to resize a destroyed array!\n");
+        Log("\cgERROR: \c-Tried to resize destroyed array \cj%s\n", Array->Name);
         return;
     };
     
@@ -1546,9 +1580,12 @@ function void ArrayResize(DynamicArray *Array)
     if (!tmp)
     {
         Z_Free(Array->Data);
-        Log("\cgERROR: \c-Cannot resize dynamic array!\n");
+        Log("\cgERROR: \c-Cannot resize dynamic array \cj%s\n", Array->Name);
         return;
     };
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDynamicArray: Resizing array \cj%s\cd @ %p to \cj%d\cd elements\n", Array->Name, Array->Data, Array->Size);
     
     Array->Data = tmp;
     
@@ -1557,6 +1594,9 @@ function void ArrayResize(DynamicArray *Array)
 
 function void ArrayDestroy(DynamicArray *Array)
 {
+    if (GetCVar("drpg_debug"))
+        Log("\cdDynamicArray: Destroying array \cj%s\cd @ %p\n", Array->Name, Array->Data);
+    
     Z_Free(Array->Data);
     
     Array->Position = 0;
@@ -1567,7 +1607,7 @@ function void ArrayDestroy(DynamicArray *Array)
 
 function void ArrayDump(DynamicArray *Array)
 {
-    Log("\ciDynamicArray @ %p\n", Array->Data);
+    Log("\ciDynamicArray \cj%s\c- @ %p\n", Array->Name, Array->Data);
     Log("\cd* Array size: \cj%d\n", Array->Size);
     Log("\cd* Item bytesize: \cj%d\n", Array->ItemSize);
     Log("\cd* End Position: \cj%d\n", Array->Position);

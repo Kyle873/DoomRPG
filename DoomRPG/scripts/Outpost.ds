@@ -86,6 +86,9 @@ acscript void EnterOutpost()
     // Spawn the Shop Special item
     SpawnShopSpecialItem();
     
+    // Make the Portable Turret not attack Outpost Turrets
+    SetActorProperty(TurretTID, APROP_Friendly, true);
+    
     // Boss Placement
     PlaceBoss();
     
@@ -137,7 +140,7 @@ acscript void RegenArea(int ID)
         if (DoMessage)
         {
             SetFont("BigFont");
-            HudMessage("Health restored\n", HUDMSG_FADEOUT, 0, CR_BRICK, 0.5, 0.33, 2.0, 0.5);
+            HudMessage("Health restored\n", HUDMSG_FADEOUT, 1, CR_BRICK, 0.5, 0.33, 2.0, 0.5);
             FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0.0, 1.0);
             ActivatorSound("regen/health", 127);
         };
@@ -157,7 +160,7 @@ acscript void RegenArea(int ID)
         if (CheckInventory("DRPGCredits") < ArmorFee)
         {
             SetFont("BigFont");
-            HudMessage("You need %d credits to repair armor\n", ArmorFee, HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.33, 2.0, 0.5);
+            HudMessage("You need %d credits to repair armor\n", ArmorFee, HUDMSG_FADEOUT, 1, CR_RED, 0.5, 0.33, 2.0, 0.5);
             ActivatorSound("menu/error", 127);
             return;
         };
@@ -166,7 +169,7 @@ acscript void RegenArea(int ID)
         TakeInventory("DRPGCredits", ArmorFee);
         
         SetFont("BigFont");
-        HudMessage("Armor repaired\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.33, 2.0, 0.5);
+        HudMessage("Armor repaired\n", HUDMSG_FADEOUT, 1, CR_GREEN, 0.5, 0.33, 2.0, 0.5);
         FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0);
         ActivatorSound("regen/armor", 127);
     };
@@ -192,7 +195,7 @@ acscript void RegenArea(int ID)
         TakeInventory("DRPGCredits", EPCharges);
         
         SetFont("BigFont");
-        HudMessage("EP restored\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.33, 2.0, 0.5);
+        HudMessage("EP restored\n", HUDMSG_FADEOUT, 1, CR_LIGHTBLUE, 0.5, 0.33, 2.0, 0.5);
         FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 1.0);
         ActivatorSound("regen/ep", 127);
     };
@@ -210,7 +213,7 @@ acscript void RegenArea(int ID)
         TakeInventory("DRPGCredits", BatteryCharges * 10);
         
         SetFont("BigFont");
-        HudMessage("Augmentation Battery Recharged\n", HUDMSG_FADEOUT, 0, CR_YELLOW, 0.5, 0.33, 2.0, 0.5);
+        HudMessage("Augmentation Battery Recharged\n", HUDMSG_FADEOUT, 1, CR_YELLOW, 0.5, 0.33, 2.0, 0.5);
         FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0.0, 1.0);
         ActivatorSound("regen/battery", 127);
     };
@@ -245,23 +248,17 @@ acscript void LevelTransport()
         SetFont("BIGFONT");
         HudMessage("Level Transporter\n", HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 32.1, 32.1, 0.05, 0.5);
         
-        HudMessage("%s\n", TeleDest->NiceName, HUDMSG_FADEOUT, MENU_ID + 1, CR_GOLD, 32.1, 64.1, 0.05, 0.5);
+        int TitleColor = CR_GOLD;
+        if (TeleDest->NeedsRealInfo)
+            TitleColor = CR_RED
+        else if (TeleDest->AllBonus)
+            TitleColor = CR_GREEN;
+        HudMessage("%s\n", TeleDest->NiceName, HUDMSG_FADEOUT, MENU_ID + 1, TitleColor, 32.1, 64.1, 0.05, 0.5);
         SetFont("SMALLFONT");
         HudMessage("%s\n", TeleDest->LumpName, HUDMSG_FADEOUT, MENU_ID + 2, CR_ORANGE, 32.1, 80.1, 0.05, 0.5);
         
         if (!TeleDest->NeedsRealInfo)
         {
-            int KillPercentage = 100;
-            int ItemPercentage = 100;
-            int SecretPercentage = 100;
-            
-            if (TeleDest->TotalMonsters > 0)
-                KillPercentage = TeleDest->MaxMonstersKilled * 100 / TeleDest->TotalMonsters;
-            if (TeleDest->TotalItems > 0)
-                ItemPercentage = TeleDest->MaxItemsFound * 100 / TeleDest->TotalItems;
-            if (TeleDest->TotalSecrets > 0)
-                SecretPercentage = TeleDest->MaxSecretsFound * 100 / TeleDest->TotalSecrets;
-            
             int KillColor = CR_BRICK;
             if (TeleDest->KillBonus && Timer() & 16)
                 KillColor = CR_GREEN;
@@ -275,16 +272,16 @@ acscript void LevelTransport()
             if (TeleDest->ParBonus && TeleDest->Par > 0 && Timer() & 16)
                 ParColor = CR_GREEN;
             
-            if (TeleDest->TotalMonsters > 0)
-                HudMessage("Kills: %d / %d (%d%%)\n", TeleDest->MaxMonstersKilled, TeleDest->TotalMonsters, KillPercentage, HUDMSG_FADEOUT, MENU_ID + 3, KillColor, 32.1, 96.1, 0.05, 0.5);
-            if (TeleDest->TotalItems > 0)
-                HudMessage("Items: %d / %d (%d%%)\n", TeleDest->MaxItemsFound, TeleDest->TotalItems, ItemPercentage, HUDMSG_FADEOUT, MENU_ID + 4, ItemColor, 32.1, 104.1, 0.05, 0.5);
-            if (TeleDest->TotalSecrets > 0)
-                HudMessage("Secrets: %d / %d (%d%%)\n", TeleDest->MaxSecretsFound, TeleDest->TotalSecrets, SecretPercentage, HUDMSG_FADEOUT, MENU_ID + 5, SecretColor, 32.1, 112.1, 0.05, 0.5);
+            if (TeleDest->MaxTotalMonsters > 0)
+                HudMessage("Kills: %d / %d (%d%%)\n", TeleDest->MaxMonstersKilled, TeleDest->MaxTotalMonsters, TeleDest->MaxMonsterPercentage, HUDMSG_FADEOUT, MENU_ID + 3, KillColor, 32.1, 96.1, 0.05, 0.5);
+            if (TeleDest->MaxTotalItems > 0)
+                HudMessage("Items: %d / %d (%d%%)\n", TeleDest->MaxItemsFound, TeleDest->MaxTotalItems, TeleDest->MaxItemPercentage, HUDMSG_FADEOUT, MENU_ID + 4, ItemColor, 32.1, 104.1, 0.05, 0.5);
+            if (TeleDest->MaxTotalSecrets > 0)
+                HudMessage("Secrets: %d / %d (%d%%)\n", TeleDest->MaxSecretsFound, TeleDest->MaxTotalSecrets, TeleDest->MaxSecretPercentage, HUDMSG_FADEOUT, MENU_ID + 5, SecretColor, 32.1, 112.1, 0.05, 0.5);
             
             if (TeleDest->Par > 0)
                 HudMessage("Par Time: %s\n", FormatTime(TeleDest->Par * 35), HUDMSG_FADEOUT, MENU_ID + 6, ParColor, 32.1, 128.1, 0.05, 0.5);
-            if (TeleDest->ShortestTime != 0x7FFFFFFF)
+            if (TeleDest->ShortestTime < 0x7FFFFFFF)
                 HudMessage("Completion Time: %s\n", FormatTime(TeleDest->ShortestTime * 35), HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5)
             else
                 HudMessage("Completion Time: \c[Red]N/A\n", HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5);
@@ -297,22 +294,25 @@ acscript void LevelTransport()
             default:
                 break;
             case MAPEVENT_MEGABOSS:
-                AreaText = "\c[Grey]Detected: Unknown Hostile Lifeform";
+                AreaText = "\c[Grey]Detected: Unknown Hostile Lifeform\n\cgUse extreme caution when engaging target.\c-\nA quarantine has been issued for this area.";
                 break;
             case MAPEVENT_TOXICHAZARD:
-                AreaText = "\c[DarkGreen]Detected: High Radiation Levels";
+                AreaText = "\c[DarkGreen]Detected: High Radiation Levels\c-\nPlease wear protective clothing when traversing this location.";
                 break;
             case MAPEVENT_NUCLEARBOMB:
-                AreaText = "\c[Orange]Detected: Armed Nuclear Device";
+                AreaText = "\c[Orange]Detected: Armed Nuclear Device\c-\nDo not stay within the detonation area.";
                 break;
             case MAPEVENT_LOWPOWER:
-                AreaText = "\c[Red]Scan failed due to insufficient power";
+                AreaText = "\c[Red]Scan failed due to insufficient power\c-\nPlease contact the maintenance team for replacement power cell.";
                 break;
             case MAPEVENT_ALLAURAS:
-                AreaText = "\c[Yellow]Detected: Abnormal Energy Signature";
+                AreaText = "\c[Yellow]Detected: Abnormal Energy Signature\c-\nAnomalies may occur within this area.";
                 break;
             case MAPEVENT_ONEMONSTER:
                 AreaText = StrParam("\c[LightBlue]Detected: Anomalous Lifeform Distribution\n\c[Red]Last seen: %s\n", TeleDest->SelectedMonster->Name);
+                break;
+            case MAPEVENT_HELLUNLEASHED:
+                AreaText = "\ciWARNING: \cgThis area is an active battle front. Take preparatory measures before engaging the enemy.";
                 break;
             case MAPEVENT_BONUS_RAINBOWS:
                 AreaText = "\c[Red]Scan \c[Green]failed \c[Purple]due \c[White]to \c[Blue]internal \c[Grey]software \c[Orange]failure";
@@ -528,6 +528,7 @@ acscript void PassArenaLine()
     if (ArenaActive)
     {
         Ceiling_LowerToFloor(99, 64);
+        ArenaState = ARENA_READY;
         ArenaLoop();
     };
 };
@@ -545,7 +546,6 @@ acscript void SelectArenaWave()
     ActivatorSound("menu/move", 127);
     Player.OutpostMenu = OMENU_WAVESELECTOR;
 
-    if (ArenaMaxWave == 0) ArenaMaxWave = 1;
     WaveChoice = ArenaMaxWave;
     
     Delay(1);
@@ -644,6 +644,8 @@ acscript void PissOffMarines(bool Steal)
     
     // Pick combat music from Arena selection
     SetOutpostMusic(OUTPOST_MUSIC_COMBAT);
+    
+    SetActorProperty(TurretTID, APROP_Friendly, false);
     
     // Iterate Marines post-Delay
     for (int i = MarineTID; i <= MarineMaxTID; i++)

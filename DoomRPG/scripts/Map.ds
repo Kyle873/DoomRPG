@@ -10,6 +10,7 @@
 static LevelInfo *CurrentLevel;
 static DynamicArray KnownLevels;
 static int LastVisitedLevel;
+static int AllBonusMaps; // For the OCD Shield
 
 static DRLAEventMonsterReplacement[] NightmareReplacements =
 {
@@ -128,7 +129,7 @@ script void MapInit() open
     // Running the game for the first time
     if (KnownLevels.Data == nullptr)
     {
-        ArrayCreate(&KnownLevels, 32, sizeof(LevelInfo));
+        ArrayCreate(&KnownLevels, "LVLS\x00", 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
         
         if (KnownLevels.Data == nullptr)
@@ -189,14 +190,20 @@ script void MapInit() open
         CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
         CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
         
-        CurrentLevel->MaxMonstersKilled = 0;
-        CurrentLevel->MaxItemsFound = 0;
-        CurrentLevel->MaxSecretsFound = 0;
-        CurrentLevel->ShortestTime = 0x7FFFFFFF;
+        CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+        CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+        CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+        CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+        CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+        CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+        CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+        CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
         
-        CurrentLevel->TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
-        CurrentLevel->TotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
-        CurrentLevel->TotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        // For rank giving and mission counting
+        CurrentLevel->UniqueSecrets = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+
+        CurrentLevel->ShortestTime = 0x7FFFFFFF;
         
         // These never change so we don't need to update them
         CurrentLevel->Par = GetLevelInfo(LEVELINFO_PAR_TIME);
@@ -208,6 +215,23 @@ script void MapInit() open
         CurrentLevel->AllBonus = false;
         CurrentLevel->ParBonus = false;
         
+        // Check to see if these are unobtainable
+        if (CurrentLevel->MaxTotalMonsters == 0)
+            CurrentLevel->KillBonus = true;
+        if (CurrentLevel->MaxTotalItems == 0)
+            CurrentLevel->ItemsBonus = true;
+        if (CurrentLevel->MaxTotalSecrets == 0)
+            CurrentLevel->SecretsBonus = true;
+        if (CurrentLevel->MaxTotalMonsters == 0 && CurrentLevel->MaxTotalItems == 0 && CurrentLevel->MaxTotalSecrets == 0)
+            CurrentLevel->AllBonus = true;
+        if (CurrentLevel->Par == 0)
+            CurrentLevel->ParBonus = true;
+        CalculateBonusMaps();
+        
+        CurrentLevel->SelectedMonster = nullptr;
+        CurrentLevel->LevelAdd = 0;
+        CurrentLevel->RareAdd = 0;
+    
         // Decide the map's event, if any
         DecideMapEvent();
         
@@ -255,6 +279,8 @@ script void DecideMapEvent()
         "Low Power";
         "All Auras";
         "One-Monster";
+        "Hell Unleashed";
+        
         "RAINBOWS!";
         
         "DRLA - Nightmare!";
@@ -263,20 +289,14 @@ script void DecideMapEvent()
     };
     
     if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
-    {
-        str Text = StrParam("\cdDEBUG: Special Event: \cg%s\n", EventNames[CurrentLevel->Event]);
-        Log("%s\n", Text);
-        SetFont("BIGFONT");
-        Print("%s\n", Text);
-    };
-    
+        Log("\cdDEBUG: Special Event: \cg%s\n", EventNames[CurrentLevel->Event]);
 };
 
 script void SetupMapEvent()
 {
     switch (CurrentLevel->Event)
     {
-        // Normal events
+        // Normal Events
         // --------------------------------------------------
         
         case MAPEVENT_MEGABOSS:
@@ -318,7 +338,13 @@ script void SetupMapEvent()
             OneMonsterEvent();
             break;
         
-        // Bonus events
+        case MAPEVENT_HELLUNLEASHED:
+            // Hell Unleashed: Monsters will continue to spawn in over time
+            // Monster levels and rare drop rates will steadily increase while you stay in the level
+            HellUnleashedEvent();
+            break;
+        
+        // Bonus Events
         // --------------------------------------------------
         
         case MAPEVENT_BONUS_RAINBOWS:
@@ -327,7 +353,7 @@ script void SetupMapEvent()
             RainbowSectors();
             break;
         
-        // DoomRL-exclusive
+        // DoomRL Exclusive
         // --------------------------------------------------
         
         case MAPEVENT_DRLA_NIGHTMARE:
@@ -345,7 +371,7 @@ script void SetupMapEvent()
             DRLAReplaceMonsters(ArmageddonReplacements, "\c[Black]The day of reckoning is upon you!");
             break;
         
-        // Standard level
+        // Standard Level
         // --------------------------------------------------
         
         default:
@@ -360,10 +386,10 @@ script void MegaBossEvent()
     int TID;
     int BossType;
     int Index;
-    MonsterPosition *Position;
+    Position *ChosenPosition;
     
-    auto DynamicArray MonsterPositions;
-    ArrayCreate(&MonsterPositions, 64, sizeof(MonsterPosition));
+    auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
+    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
     
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
@@ -380,7 +406,7 @@ script void MegaBossEvent()
             ArrayResize(&MonsterPositions);
         
         // Store position
-        ((MonsterPosition *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
+        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
         Monsters[i].ReplaceActor = "None";
     };
     
@@ -390,11 +416,11 @@ script void MegaBossEvent()
     for (int i = 0; i < MonsterPositions.Position; i++)
     {
         int x = Random(0, MonsterPositions.Position - 1);
-        MonsterPosition TempPosition;
+        Position TempPosition;
         
-        TempPosition = ((MonsterPosition *)MonsterPositions.Data)[i];
-        ((MonsterPosition *)MonsterPositions.Data)[i] = ((MonsterPosition *)MonsterPositions.Data)[x];
-        ((MonsterPosition *)MonsterPositions.Data)[x] = TempPosition;
+        TempPosition = ((Position *)MonsterPositions.Data)[i];
+        ((Position *)MonsterPositions.Data)[i] = ((Position *)MonsterPositions.Data)[x];
+        ((Position *)MonsterPositions.Data)[x] = TempPosition;
     };
     
     // Spawning
@@ -402,21 +428,21 @@ script void MegaBossEvent()
     {
         TID = UniqueTID();
         BossType = Random(0, MAX_MEGABOSSES - 1);
-        Position = &((MonsterPosition *)MonsterPositions.Data)[Index];
-        Spawned = Spawn(MegaBosses[BossType], Position->X, Position->Y, Position->Z, TID, Random(0, 255));
+        ChosenPosition = &((Position *)MonsterPositions.Data)[Index];
+        Spawned = Spawn(MegaBosses[BossType], ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
         
         // Successful spawn
         if (Spawned)
         {
-            SpawnForced("TeleportFog", Position->X, Position->Y, Position->Z, 0, 0);
+            SpawnForced("TeleportFog", ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, 0, 0);
             GiveActorInventory(TID, "DRPGMegaBoss", 1);
             GiveActorInventory(TID, "DRPGWhiteAuraGiver", 1);
             if (GetCVar("drpg_debug"))
                 Log("\cdDEBUG: \cg%s MegaBoss successfully spawned\n", MegaBosses[BossType]);
         };
-        
-        if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, Position->X, Position->Y, Position->Z);
         
         Index++;
         Delay(1);
@@ -453,7 +479,9 @@ script void EnvironmentalHazard()
 {
     // TODO: [02:47:04] <<@Yholl/ID>> Have some sort of radiation device that sciences away the radiation
     Start:
+    
     SectorDamage(0, 10, "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
+    
     Delay(35);
     goto Start;
 };
@@ -522,11 +550,11 @@ script void OneMonsterEvent()
     if (CurrentLevel->SelectedMonster == nullptr)
     {
         if (DRLA)
-            CurrentLevel->SelectedMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA)]
+            CurrentLevel->SelectedMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA - 1)]
         else if (Brutal)
-            CurrentLevel->SelectedMonster = &MonsterDataBrutal[Random(0, MAX_DEF_MONSTERS)]
+            CurrentLevel->SelectedMonster = &MonsterDataBrutal[Random(0, MAX_DEF_MONSTERS - 1)]
         else
-            CurrentLevel->SelectedMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS)];
+            CurrentLevel->SelectedMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS - 1)];
         
         if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
             Log("\cdDEBUG: Chosen Monster: \cg%s\n", CurrentLevel->SelectedMonster->Name);
@@ -554,6 +582,90 @@ script void OneMonsterEvent()
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.0, 150.0, 1.0, 19.0);
+};
+
+script void HellUnleashedEvent()
+{
+    SetHudSize(640, 480, false);
+    
+    while (true)
+    {
+        // Spawn in new enemies
+        if ((Timer() % (35 * 30)) == 0)
+            HellUnleashedSpawnMonsters();
+        
+        // HUD
+        SetFont("MonLevel");
+        HudMessageBold("A\n", HUDMSG_ALPHA, 0, CR_WHITE, 14.1, 100.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+        SetFont("STAT8S");
+        HudMessageBold("A\n", HUDMSG_ALPHA, 0, CR_WHITE, 22.1, 133.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+        SetFont("BIGFONT");
+        HudMessageBold("+%k\n", CurrentLevel->LevelAdd, HUDMSG_PLAIN, 0, CR_WHITE, 40.1, 100.0, 0.05);
+        HudMessageBold("+%k%%\n", CurrentLevel->RareAdd, HUDMSG_PLAIN, 0, CR_GOLD, 40.1, 116.0, 0.05);
+        
+        // Slowly increment the values
+        CurrentLevel->LevelAdd += RandomFixed(0.001, 0.01);
+        CurrentLevel->RareAdd += RandomFixed(0.0001, 0.001);
+        
+        // Caps
+        if (CurrentLevel->LevelAdd > 1000)
+            CurrentLevel->LevelAdd = 1000;
+        if (CurrentLevel->RareAdd > 100)
+            CurrentLevel->RareAdd = 100;
+        
+        Delay(1);
+    };
+};
+
+script void HellUnleashedSpawnMonsters()
+{
+    auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
+    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-Spawning next wave of monsters...\n");
+
+    Delay(1); // Maximize our instructions
+    
+    for (int i = 1; i < MAX_MONSTERS; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        // Array has grown too big, resize it
+        if (MonsterPositions.Position == MonsterPositions.Size)
+            ArrayResize(&MonsterPositions);
+        
+        // Store position
+        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
+    };
+    
+    for (int i = 0; i < MonsterPositions.Position; i++)
+    {
+        int TID = UniqueTID();
+        Position *CurrentPosition = &((Position *)MonsterPositions.Data)[i];;
+        
+        // Determine a monster
+        MonsterInfoPtr Monster;
+        if (GetCVar("drpg_ext_doomrl"))
+            Monster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA - 1)]
+        else if (GetCVar("drpg_ext_Brutal"))
+            Monster = &MonsterDataBrutal[Random(0, MAX_DEF_MONSTERS - 1)]
+        else
+            Monster = &MonsterData[Random(0, MAX_DEF_MONSTERS - 1)];
+        
+        bool Success = Spawn(Monster->Actor, CurrentPosition->X, CurrentPosition->Y, CurrentPosition->Z, TID, CurrentPosition->Angle);
+        if (Success)
+            Spawn("TeleportFog", CurrentPosition->X, CurrentPosition->Y, CurrentPosition->Z, 0, CurrentPosition->Angle);
+        
+        // Stagger the loop here so that we can make monsters appear to spawn in semi-randomly
+        Delay(Random(1, 10));
+        
+        // Setup Stats
+        MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
+        Stats->Level += (int)CurrentLevel->LevelAdd;
+        Stats->NeedReinit = true;
+    };
 };
 
 script void RainbowSectors()
@@ -611,57 +723,16 @@ script void MapLoop()
     int XPBonus;
     int RankBonus;
     
-    int MonstersKilled;
     int ItemsFound;
     int SecretsFound;
     
-    int MonstersLastKilled = 0;
     int ItemsLastFound = 0;
-    int SecretsLastFound = 0;
     
-    Start:
-    // These need to be updated on a constant basis because they can change due
-    // to scripting and mission spawns
-    CurrentLevel->TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
-    CurrentLevel->TotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
-    CurrentLevel->TotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
-    
-    // Check to see if these are unobtainable
-    if (CurrentLevel->TotalMonsters == 0)
-        CurrentLevel->KillBonus = true;
-    if (CurrentLevel->TotalItems == 0)
-        CurrentLevel->ItemsBonus = true;
-    if (CurrentLevel->TotalSecrets == 0)
-        CurrentLevel->SecretsBonus = true;
-    if (CurrentLevel->TotalMonsters == 0 && CurrentLevel->TotalItems == 0 && CurrentLevel->TotalSecrets == 0)
-        CurrentLevel->AllBonus = true;
-    
-    MonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+    Start:    
+    // MISSION TRACKERS
     ItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
     SecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
     
-    // MAX KILL / ITEM / SECRET TRACKERS
-    
-    if (MonstersKilled > CurrentLevel->MaxMonstersKilled)
-        CurrentLevel->MaxMonstersKilled = MonstersKilled;
-    
-    if (ItemsFound > CurrentLevel->MaxItemsFound)
-    {
-        // This counts only unique items
-        /*
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i) ||  Players(i).Mission.Type != MT_ITEMS)
-                continue;
-            
-            Players(i).Mission.Current += ItemsFound - CurrentLevel->MaxItemsFound;
-        };
-        */
-        
-        CurrentLevel->MaxItemsFound = ItemsFound;
-    };
-    
-    // This counts ALL items (Current behavior)
     if (ItemsFound > ItemsLastFound)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
@@ -673,9 +744,9 @@ script void MapLoop()
         };
     };
     
-    // Ditto, with secrets. These SHOULD be unique-only, because they're not
-    // secrets anymore once you know about them.
-    if (SecretsFound > CurrentLevel->MaxSecretsFound)
+    // These should be unique-only, because they're not secrets anymore once
+    // you know about them.
+    if (SecretsFound > CurrentLevel->UniqueSecrets)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -690,15 +761,36 @@ script void MapLoop()
             if (Players(i).Mission.Type != MT_SECRETS)
                 continue;
 
-            Players(i).Mission.Current += SecretsFound - CurrentLevel->MaxSecretsFound;
+            Players(i).Mission.Current += SecretsFound - CurrentLevel->UniqueSecrets;
         };
         
-        CurrentLevel->MaxSecretsFound = SecretsFound;
+        CurrentLevel->UniqueSecrets = SecretsFound;
     };
     
     // KILL / ITEM / SECRET SPECIAL BONUSES
     
-    if (MonstersKilled >= CurrentLevel->TotalMonsters && !CurrentLevel->KillBonus)
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage)
+    {
+        CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+        CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+        CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+    };
+    
+    if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS)) > CurrentLevel->MaxItemPercentage)
+    {
+        CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+        CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+        CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+    };
+    
+    if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS)) > CurrentLevel->MaxSecretPercentage)
+    {
+        CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+        CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
+    };
+    
+    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -721,7 +813,7 @@ script void MapLoop()
         CurrentLevel->KillBonus = true;
     };
 
-    if (ItemsFound >= CurrentLevel->TotalItems && !CurrentLevel->ItemsBonus)
+    if (CurrentLevel->MaxItemPercentage >= 100 && !CurrentLevel->ItemsBonus)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -744,7 +836,7 @@ script void MapLoop()
         CurrentLevel->ItemsBonus = true;
     };
 
-    if (SecretsFound >= CurrentLevel->TotalSecrets && !CurrentLevel->SecretsBonus)
+    if (CurrentLevel->MaxSecretPercentage >= 100 && !CurrentLevel->SecretsBonus)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -798,22 +890,25 @@ script void MapLoop()
         SetActivator(0, AAPTR_NULL);
         
         CurrentLevel->AllBonus = true;
+        CalculateBonusMaps();
     };
     
-    if (MonstersKilled >= CurrentLevel->TotalMonsters && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
     {
         // All Auras and One-Monster events are ended by killing everything on the map
-        AmbientSound("misc/secret", 127);
-        HudMessageBold("Everything falls silent.\n",
-            HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+        if (Timer() > 4)
+        {
+            AmbientSound("misc/secret", 127);
+            HudMessageBold("Everything falls silent.\n",
+                HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+        };
         CurrentLevel->Event = MAPEVENT_NONE;
+        CurrentLevel->SelectedMonster = nullptr;
     };
     
     Delay(1);
     
-    MonstersLastKilled = MonstersKilled;
     ItemsLastFound = ItemsFound;
-    SecretsLastFound = SecretsFound;
     
     goto Start;
 };
@@ -824,6 +919,11 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
 {
     int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
     bool Waiting = true;
+    
+    // How long it took to reach the exit
+    int ExitTime = Timer() / 35;
+    if (CurrentLevel->ShortestTime > ExitTime)
+        CurrentLevel->ShortestTime = ExitTime;
     
     // Prevent level exit until everyone is outside the menu
     if (InMultiplayer && PlayerCount() > 1)
@@ -837,11 +937,6 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
             
             Delay(35 * 3);
         };
-    
-    // How long it took to reach the exit
-    int ExitTime = Timer() / 35;
-    if (CurrentLevel->ShortestTime > ExitTime)
-        CurrentLevel->ShortestTime = ExitTime;
     
     // Check par time and give bonus if you beat it
     if (ParTime > 0 && ExitTime < ParTime && (CurrentLevel && !CurrentLevel->ParBonus))
@@ -896,7 +991,36 @@ function int FindLevelInfoIndex(int LevelNum)
     return -1;
 };
 
-acscript void SetMapEvent(int ID)
+script void CalculateBonusMaps()
 {
-    CurrentLevel->Event = ID;
+    int count = 0;
+    
+    for (int i = 0; i < KnownLevels.Position; i++)
+        if (((LevelInfo *)KnownLevels.Data)[i].AllBonus)
+            count++;
+    
+    AllBonusMaps = count;
+};
+
+acscript void SetMapEvent(int Level, int ID)
+{
+    if (Level == 0)
+        Level = GetLevelInfo(LEVELINFO_LEVELNUM);
+    
+    int LevelIndex = FindLevelInfoIndex(Level);
+    if (LevelIndex == -2)
+    {
+        Log("\cgOutpost Events aren't implemented yet.\n");
+        return;
+    }
+    else if (LevelIndex == -1 || LevelIndex == -3)
+    {
+        Log("\cgCan't set an event for that level - Visit it first.\n");
+        return;
+    };
+    
+    LevelInfo *MapToChange = &((LevelInfo *)KnownLevels.Data)[LevelIndex];
+    MapToChange->Event = ID;
+    if (CurrentLevel == MapToChange)
+        Log("\cjYou will need to warp back to this level to see changes take effect.\n");
 };

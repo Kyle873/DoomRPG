@@ -21,7 +21,7 @@
 #include "Utils.dh"
 
 // Version
-str Version = "v0.9.11 Beta - Gotta Go Fast Edition";
+const str Version = "v0.9.12 Beta - Maximum Frisbee DLC: Now with 125% more Shield Accessories";
 
 // Flags
 static bool InBase;
@@ -69,6 +69,9 @@ script void GlobalInit() open
         
         // Initialize XP & Rank Tables
         InitTables();
+        
+        // Arena Wave
+        ArenaMaxWave = 1;
         
         GlobalsInitialized = true;
         
@@ -179,7 +182,7 @@ script void Init() enter
     Player.Summons = 0;
     
     // Initialize DropTID Array
-    ArrayCreate(&Player.DropTID, 64, sizeof(int));
+    ArrayCreate(&Player.DropTID, "DRPS\x00", 64, sizeof(int));
     
     // Mission Initialization
     InitMission();
@@ -241,10 +244,10 @@ script void Loop()
     CheckRank();
     CheckSkills();
     CheckBurnout();
-    CheckShields();
-    CheckShieldAccessory();
     CheckStim();
     CheckPerks();
+    CheckShields();
+    CheckShieldAccessory();
     CheckStatBounds();
     CheckToxicity();
     CheckStatusEffects();
@@ -365,7 +368,7 @@ script void PlayerDamage()
     {
         SetActorProperty(0, APROP_Health, Player.ActualHealth);
         
-        if (Player.ActualHealth > 1)
+        if (Player.ActualHealth > 2)
             Player.LastLegs = false;
         
         if (CanSurvive || CheckInventory("DRPGContinue"))
@@ -457,12 +460,11 @@ script void PlayerDamage()
             // Survival Bonus
             if (CanSurvive)
             {
+                Player.ActualHealth = 2;
                 Player.LastLegs = true;
                 
-                if (Player.Shield.Accessory == SHIELD_ACC_UW0T)
-                {
+                if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_SURVIVECHARGE)
                     Player.Shield.Charge = Player.Shield.Capacity;
-                };
                 
                 ActivatorSound("health/survive", 127);
                 SetHudSize(320, 200, false);
@@ -656,7 +658,7 @@ acscript void QuickEP() net
             Amount = CheckInventory("DRPGCredits");
         
         TakeInventory("DRPGCredits", Amount);
-        AddEP(Amount);
+        AddEP(Amount, false);
     }
     else
     {
@@ -698,6 +700,19 @@ script void Dead() death
     // Drop Inventory
     if (GetCVar("drpg_multi_dropinv"))
         DropInventory();
+    
+    // VENG-R Accessory
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        // Skip yourself
+        if (Player.TID == Players(i).TID) continue;
+        
+        if (Players(i).Shield.Accessory && Players(i).Shield.Accessory->PassiveEffect == SHIELD_PASS_AVENGER)
+        {
+            GiveActorInventory(Players(i).TID, "DRPGShieldAvengerDamage", 1);
+            GiveActorInventory(Players(i).TID, "DRPGShieldAvengerDefense", 1);
+        };
+    };
     
     // Remove TID
     Thing_ChangeTID(Player.TID, 0);
@@ -757,6 +772,16 @@ script void Respawn() respawn
     DamageNumbers();
     InfoPopoffs();
     HealthBars();
+    ShieldTimer();
+    
+    // NU-YU Accessory
+    if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_HYPERION)
+    {
+        ActivatorSound("shield/newu", 127);
+        Player.Shield.Active = true;
+        Player.Shield.Charge = Player.Shield.Capacity;
+        GiveInventory("DRPGShieldNewUProtection", 1);
+    };
 };
 
 // Apply values to global vars visible on the HUD

@@ -8,21 +8,41 @@ struct ShieldPart
     str Actor;
     str Name;
     str Icon;
-    str Description;
     
     int Capacity;
     int ChargeRate;
-    int DelayRate;
+    fixed DelayRate;
+};
+
+struct ShieldAccessory
+{
+    str Actor;
+    str Name;
+    str Icon;
+    int Price;
+    str Description;
+    EShieldPassive PassiveEffect;
+    
+    FuncPtr()            Modifier;
+    FuncPtr()            Equip;
+    FuncPtr(bool)        Unequip;
+    FuncPtr(int)         Damage;
+    FuncPtr()            Break;
+    FuncPtr(int)->int    Charge;
+    FuncPtr(int)         Overcharge;
+    FuncPtr()->bool      FastCharge;
+    FuncPtr()            FullCharge;
 };
 
 AddressSpaceDecl MapArray ShieldSpace;
 typedef ShieldPart ShieldSpace *ShieldPartPtr;
+typedef ShieldAccessory ShieldSpace *ShieldAccsPtr;
 
 extern
 {
-    variable ShieldSpace ShieldPart[4][MAX_PARTS] ShieldData;
-    variable MapArray int[4] ShieldPartsMax;
-    variable MapArray int[MAX_PARTS] ShieldAccessoryPrices;
+    variable ShieldSpace ShieldPart[3][MAX_PARTS] ShieldParts;
+    variable MapArray int[3] ShieldPartsMax;
+    variable ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories;
 };
 
 extern
@@ -31,16 +51,90 @@ extern
     script void ShieldDamage(int);
     script void ShieldBroken();
     script void ShieldTimerReset();
+    script bool ActivateShield();
+    script void DeactivateShield();
 };
 
 extern "ACS"
 {
     script void ToggleShield() net;
     script void AddShield(int);
+    script void AddRemoteShield(int, int);
 };
 
 extern
 {
+    // Accessory Equip/Unequip
+    function void RemoveShieldAccessory();
+    function void SetShieldAccessory(ShieldAccsPtr);
+    
+    // Conversions
+    function void HealthConversion(int);
+    function void EPConversion(int);
+    function void BatteryConversion(int);
+    function void AmmoConversion(int);
+    
+    // Charging
+    function int LightningCharge(int);
+    function bool CellFastCharge();
+    
+    // Damage Callbacks
+    function void BoosterShieldDamage(int);
+    function void SpookyDamage(int);
+    function void TimeyWimeyHurtyBall(int);
+    function void CounterDamage(int);
+
+    // Break Callbacks
+    function void NovaShieldBreak();
+    function void TeleportBreak();
+    function void AdaptiveBreak();
+    function void FlanExplosion();
+    function void SpaghettiShieldBreak();
+    
+    // Recharge Callbacks
+    function void SpaghettiShieldFullCharge();
+    function void TeleportFullCharge();
+    
+    // Modifier Callbacks
+    function void X7Mod();
+    function void AmpShieldMod();
+    function void HurryMod();
+    function void Def2Mod();
+    function void BlzutMod();
+    function void RektMod();
+    function void LightAmpMod();
+    function void LightAmpUnequip(bool);
+    function void InvisibilityMod();
+    function void InvisibilityUnequip(bool);
+    function void LazyMod();
+    function void AccelerativeShieldMod();
+    function void TheKillingBoosterMod();
+    function void MinuteMaidMod();
+    function void AmericaShieldMod();
+    function void GhettoLuckMod();
+    function void SuperSqueezyScalarMod();
+    function void ReflectionMod();
+    function void SanicMod();
+    function void NakedMod();
+    function void ReflectionUnequip(bool);
+    function void MLGNoScopeShieldMod();
+    function void RussianRouletteMod();
+    function void OCDShieldMod();
+    function void ArenaShieldMod();
+    function void HowDidYouEvenMod();
+    function void OhYeahMod();
+    function void McDuckMod();
+    function void AmmoSpaceMod();
+    function void AmmoSpaceUnequip(bool);
+    function void TheAmazingBatteryShieldMod();
+    function void LilZiggyMod();
+    function void MurderBurgerMod();
+    function void LuckyBastardMod();
+    function void IronShieldMod();
+    function void EPRegenSwapperMod();
+    function void HoarderMod();
+    
+    // General
     function void CheckShields();
     function void CheckShieldAccessory();
     function void DrawShieldModel(int, int, int);

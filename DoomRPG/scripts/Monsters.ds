@@ -217,7 +217,7 @@ acscript void MonsterInit(int Flags)
     // If initialization has already occurred on this monster, terminate
     if (Stats->Init) return;
     
-    Stats->Position = { GetActorX(0); GetActorY(0); GetActorZ(0); GetActorAngle(0); };
+    Stats->Position = { GetActorX(0); GetActorY(0); GetActorZ(0); GetActorAngle(0); GetActorPitch(0); };
     
     // Set as initialized
     Stats->Init = true;
@@ -429,7 +429,7 @@ script void MonsterInitStats(int StatFlags)
         
         // If the Arena is active, base the Monster Levels Map Number portion on the current wave
         if (InBase && ArenaActive)
-            LevelNum = ArenaWave;
+            LevelNum = ArenaWave / 3;
         
         // Calculate Monster Level
         if (LevelType == 1 || LevelType == 3) // Player Level
@@ -670,6 +670,14 @@ script void MonsterStatsHandler()
     
     if (ClassifyActor(0) & ACTOR_DEAD)
     {
+        OldStrength = 0;
+        OldDefense = 0;
+        OldCapacity = 0;
+        OldVitality = 0;
+        OldAgility = 0;
+        OldRegeneration = 0;
+        OldEnergy = 0;
+        OldLuck = 0;
         Delay(35);
         goto Start;
     };
@@ -738,7 +746,12 @@ script void MonsterStatsHandler()
         // Different effect depending on up or down
         Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
         
-        if (Stats->Vitality > OldVitality)
+        if (OldVitality == 0)
+        {
+            // This will trigger if the monster was previously dead and revived, so heal up fully
+            SetActorProperty (0, APROP_Health, Stats->HealthMax);
+        }
+        else if (Stats->Vitality > OldVitality)
         {
             int healthcurr = GetActorProperty (0, APROP_Health);
             int healthdiff = Stats->HealthMax - healthcurr;
@@ -1291,9 +1304,12 @@ script void MonsterDeath()
         };
     };
     
+    if (Players(Killer).Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
+        AddRemoteShield(Players(Killer).TID, Stats->HealthMax / 4);
+    
     // Drop Radiation Suits during the Environmental Hazard event
     if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
-        DropMonsterItem(Killer, DropTID, "DRPGRadSuit", 64);
+        DropMonsterItem(Killer, DropTID, "DRPGRadSuit", 20);
     
     // Drop Credits
     if (!(Stats->Flags & MF_NODROPS) && CheckInventory("DRPGCredits") > 0)
@@ -1352,7 +1368,7 @@ script void MonsterDeath()
     // Add a kill to the pay kills
     if (!(Stats->Flags & MF_NOPAYKILL) && Killer > -1)
     {
-        if (Players(Killer).Shield.Accessory == SHIELD_ACC_REKT50 && Players(Killer).Shield.Active)
+        if (Player.Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_EPICMEGACASH && Players(Killer).Shield.Active)
             Players(Killer).PayKills += 3
         else
             Players(Killer).PayKills++;

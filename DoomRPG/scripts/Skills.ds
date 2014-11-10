@@ -248,9 +248,10 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Aura Steal"; 200; 1; AuraSteal;
+            "Aura Steal"; 200; 2; AuraSteal;
             {
-                "Steals an enemies Aura, taking it from them and giving it to you\nTime based on their Level";
+                "Steals an enemies Aura, taking it from them and giving it to you\nTime based on their Energy";
+                "Steals an enemies Aura, taking it from them and giving it to you\nTime based on their Energy\nCan steal Shadow Auras";
             };
         };
         {
@@ -839,19 +840,25 @@ acscript void UseSkill(int Key) net
         };
         
         // PWAA-9001 Accessory Handling - Increase skill level intermittently
-        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
-                SkillLevel->CurrentLevel++;
+        if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_SKILLPLUS && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
+            SkillLevel->CurrentLevel++;
         
         // Use Skill
         Success = CurrentSkill->Use(SkillLevel, Data);
         
         // PWAA-9001 Accessory Handling - Change back to previous level
-        if (Player.Shield.Accessory == SHIELD_ACC_PWAA9001 && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
+        if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_SKILLPLUS && Player.Shield.Active && SkillLevel->CurrentLevel < CurrentSkill->MaxLevel)
             SkillLevel->CurrentLevel--;
         
         // Check if the skill use was successful
         if (Success)
-            Player.EP -= EPCost;
+        {
+            if (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_MORESKILLS || Random(1, 4) != 1)
+                Player.EP -= EPCost;
+            
+            if (Player.Shield.Active && Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_SKILLTOSHIELD)
+                Player.Shield.Charge += EPCost / 10;
+        };
     }
     else // Not enough EP
     {
@@ -1224,7 +1231,6 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
 {
     int PlayerNum = PlayerNumber();
     int AuraType;
-    int AuraTime;
     
     SetActivatorToTarget(Players(PlayerNum).TID);
     
@@ -1246,25 +1252,44 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
     };
     
     // Refund - If the target doesn't have an Aura or has a Shadow Aura
-    if (Stats->Aura == 0 || Stats->Aura == 10)
+    if (Stats->Aura == 0 || (SkillLevel->CurrentLevel < 2 && Stats->Aura == 10))
     {
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
     
-    // Get Aura info
+    // Get Aura type
     AuraType = Stats->Aura - 1;
-    AuraTime = (Stats->Level < 30 ? 30 : Stats->Level) * 35;
     
     // Remove Aura from monster
     Stats->Aura = 0;
+    SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle);
     
     SetActivator(Players(PlayerNum).TID);
     
     // Apply Aura to player
-    Player.Aura[AuraType] = true;
-    Player.AuraLevel[AuraType] = Player.Energy / 25 + 1;
-    Player.AuraTimer += AuraTime;
+    if (AuraType == 10 - 1) // This really needs an enum, srsly
+    {
+        for (int i = 0; i < AURA_MAX; i++)
+        {
+            int Level = Players(PlayerNum).Energy / 25 + 1;
+            if (Level > Skills[2][i].MaxLevel)
+                Level = Skills[2][i].MaxLevel;
+            
+            Player.Aura[i] = true;
+            Player.AuraLevel[i] = Level;
+        };
+    }
+    else
+    {
+        int Level = Players(PlayerNum).Energy / 25 + 1;
+        if (Level > Skills[2][AuraType].MaxLevel)
+            Level = Skills[2][AuraType].MaxLevel;
+        
+        Player.Aura[AuraType] = true;
+        Player.AuraLevel[AuraType] = Level;
+    };
+    Player.AuraTimer += 30 + (int)((fixed)Stats->Energy * 0.57) * 35;
     
     ActivatorSound("skills/aurasteal", 127);
     return true;
@@ -1799,12 +1824,18 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
             if (GetActorClass(TID[i]) == "DRPGCredits1000")
                 CreditCount += 1000;
             
+            int HolderTID = UniqueTID();
+            SpawnSpot("DRPGCreditsEmpty", TID[i], HolderTID, Random(0, 255));
+            SetActorVelocity(HolderTID, RandomFixed(-8, 8), RandomFixed(-8, 8), RandomFixed(2, 8), false, false);
             Thing_Remove(TID[i]);
         };
     
     // Give calculated Credits
     if (CreditCount > 0)
     {
+        if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_DOSHMAGNET)
+            CreditCount *= 3;
+        
         GiveInventory("DRPGCredits", CreditCount);
         ActivatorSound("credits/pickup", 127);
     };
@@ -2117,7 +2148,7 @@ function void CheckSkills()
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
             if (Player.AuraLevel[AURA_GREEN] == 2)
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.5;
-            if (Player.AuraLevel[AURA_GREEN] == 3 || Player.SoulActive[SOUL_GREEN])
+            if (Player.AuraLevel[AURA_GREEN] >= 3 || Player.SoulActive[SOUL_GREEN])
             {
                 Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
                 GiveInventory("DRPGGreenAuraIronFeet", 1);
@@ -2152,7 +2183,7 @@ function void CheckSkills()
                 Player.SkillCostMult /= 1.33;
             if (Player.AuraLevel[AURA_BLUE] == 2)
                 Player.SkillCostMult /= 2;
-            if (Player.AuraLevel[AURA_BLUE] == 3 || Player.SoulActive[SOUL_BLUE])
+            if (Player.AuraLevel[AURA_BLUE] >= 3 || Player.SoulActive[SOUL_BLUE])
                 Player.SkillCostMult /= 4;
         };
         
@@ -2174,7 +2205,7 @@ function void CheckSkills()
                 Player.HPAmount *= 4;
                 Player.EPAmount *= 4;
             };
-            if (Player.AuraLevel[AURA_PURPLE] == 4 || Player.SoulActive[SOUL_PURPLE])
+            if (Player.AuraLevel[AURA_PURPLE] >= 4 || Player.SoulActive[SOUL_PURPLE])
             {
                 Player.HPAmount *= 4;
                 Player.EPAmount *= 4;
@@ -2199,7 +2230,7 @@ function void CheckSkills()
         {
             if (Player.AuraLevel[AURA_DARKBLUE] == 5)
                 AmmoRegenMult = 2;
-            if (Player.AuraLevel[AURA_DARKBLUE] == 6 || Player.SoulActive[SOUL_DARKBLUE])
+            if (Player.AuraLevel[AURA_DARKBLUE] >= 6 || Player.SoulActive[SOUL_DARKBLUE])
                 AmmoRegenMult = 4;
             if (Player.AuraLevel[AURA_DARKBLUE] >= 1 || Player.SoulActive[SOUL_DARKBLUE])
                 if ((Timer() % (35 / 2)) == 0)
@@ -2230,7 +2261,7 @@ function void CheckSkills()
                 LuckMult = 2;
             if (Player.AuraLevel[AURA_YELLOW] == 4)
                 LuckMult = 4;
-            if (Player.AuraLevel[AURA_YELLOW] == 5 || Player.SoulActive[SOUL_YELLOW])
+            if (Player.AuraLevel[AURA_YELLOW] >= 5 || Player.SoulActive[SOUL_YELLOW])
                 LuckMult = 8;
             
             Player.HealthChance *= LuckMult;

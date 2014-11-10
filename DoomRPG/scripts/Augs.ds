@@ -50,13 +50,12 @@ AugSpace AugInfo[MAX_AUGS] AugData =
         };
     };
     {
-        "Adrenaline Booster"; 5;
+        "Adrenaline Booster"; 4;
         {
             "2x HP/EP Regen Amounts";
             "-2x HP/EP Regen Timers";
-            "2x Shield Charge Rate";
-            "-2x Shield Delay Rate";
-            "-2x Shield Charge Interval";
+            "4x HP/EP Regen Amounts";
+            "-4x HP/EP Regen Timers";
         };
     };
     {
@@ -159,7 +158,7 @@ function void CheckAugSlots()
     Player.Augs.Slots = (6 - GameSkill()) + CheckInventory("DRPGAugSlotUpgrade");
     
     // AW-G01 Accessory handling
-    if (Player.Shield.Accessory == SHIELD_ACC_AWG01 && Player.Shield.Active)
+    if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_AUGSLOT && Player.Shield.Active)
         Player.Augs.Slots++;
     
     // Cap max Aug slots at the max amount of available Augs
@@ -319,6 +318,16 @@ function void CheckAugs()
             Player.HPTime /= 2;
             Player.EPTime /= 2;
         };
+        if (Player.Augs.Level[AUG_REGENERATION] >= 3)
+        {
+            Player.HPAmount *= 2;
+            Player.EPAmount *= 2;
+        };
+        if (Player.Augs.Level[AUG_REGENERATION] >= 4)
+        {
+            Player.HPTime /= 2;
+            Player.EPTime /= 2;
+        };
     };
 
     // Agility Aug
@@ -383,8 +392,8 @@ function void CheckAugs()
 function void AugDamage(int Amount)
 {
     // Lightning damage type increases your Battery
-    if (Player.DamageType == DT_LIGHTNING)
-        AddBattery(Amount / 2);
+    if (Player.DamageType == DT_LIGHTNING && Amount / 5 > 0)
+        AddBattery(Amount / 5);
 };
 
 function void EquipAug(int Aug)
