@@ -383,14 +383,14 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
-    {
-        "DRPGShieldAccessory42"; // !!!
-        "\ctREGN-ER8";  "SHA2P0";   82000;
-        "\cdCharge Rate\c- scales based on how long since you were last hit\nFrom \cg0.5x\c- after being hit to \cd4x\c-";
-        SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
-    };
 */
+    {
+        "DRPGShieldAccessory42";
+        "\ctREGN-ER8";  "SHA2P0";   82000;
+        "\cdCharge Rate\c- scales based on how long since your \cvShield\c- took damage\nFrom \cg0.5x\c- after being hit to \cd4x\c-";
+        SHIELD_PASS_NONE;
+        RegenShieldMod; nullptr; nullptr; RegenShieldDamage; nullptr; RegenShieldCharge; nullptr; nullptr; nullptr;
+    };
     {
         "DRPGShieldAccessory43";
         "\ccCOUN-TR20"; "SHA2Q0";   46000;
@@ -632,6 +632,13 @@ function int LightningCharge(int ChargeAmount)
     return ChargeAmount;
 };
 
+function int RegenShieldCharge(int ChargeAmount)
+{
+    if (Player.Shield.AccessoryBattery < 20)
+        Player.Shield.AccessoryBattery++;
+    
+    return ChargeAmount;
+};
 // Fast Charging
 function bool CellFastCharge()
 {
@@ -695,6 +702,11 @@ function void CounterDamage(int DamageAmount)
 {
     if (Player.DamageType == DT_MELEE)
         GiveInventory("DRPGShieldCounterBlast", 1);
+};
+
+function void RegenShieldDamage(int DamageAmount)
+{
+    Player.Shield.AccessoryBattery = 0;
 };
 
 // Shield Depletion
@@ -937,6 +949,13 @@ function void NakedMod()
         GiveInventory("DRPGShieldNakedResist", 1);
 };
 
+function void RegenShieldMod()
+{
+    int BaseCharge = Player.Shield.ChargeRate / 2;
+    int AddCharge = Player.Shield.ChargeRate * 4 - BaseCharge;
+    Player.Shield.ChargeRate = AddCharge * Player.Shield.AccessoryBattery / 20 + BaseCharge;
+};
+
 function void MLGNoScopeShieldMod()
 {
     int Extra = 0;
@@ -1099,7 +1118,7 @@ script void ShieldTimer()
                 if (Player.Shield.Accessory && Player.Shield.Accessory->Charge)
                     ChargeRate = Player.Shield.Accessory->Charge(ChargeRate);
                 
-                if (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_KILLSCHARGE)
+                if (ChargeRate && (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_KILLSCHARGE))
                 {
                     if (Player.Shield.Charge < 1)
                         PlaySound(0, "shield/restart", 5, 1.0, false, 1.0)
