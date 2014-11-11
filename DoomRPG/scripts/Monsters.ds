@@ -1303,8 +1303,18 @@ script void MonsterDeath()
         };
     };
     
-    if (Players(Killer).Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
-        AddRemoteShield(Players(Killer).TID, Stats->HealthMax / 4);
+    if (Players(Killer).Shield.Accessory)
+    {
+        switch (Players(Killer).Shield.Accessory->PassiveEffect)
+        {
+        case SHIELD_PASS_KILLSCHARGE:
+            AddRemoteShield(Players(Killer).TID, Stats->HealthMax / 4);
+            break;
+        case SHIELD_PASS_BLOODYSHIELDSOREAL:
+            Players(Killer).Shield.AccessoryBattery = 35 * 3;
+            break;
+        };
+    };
     
     // Drop Radiation Suits during the Environmental Hazard event
     if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
