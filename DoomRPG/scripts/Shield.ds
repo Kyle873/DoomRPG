@@ -375,15 +375,13 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_FRIENDSHIPISDEFENSE;
         FriendshipShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
-/*
     {
-        "DRPGShieldAccessory41"; // !!!
+        "DRPGShieldAccessory41";
         "\cnIKU-N7";    "SHA2O0";   35000;
         "Whenever you \catake damage\c-, you release a \cnsmall electrical blast\c- that stuns enemies\nIf your \cvShield\c- is \cgdepleted\c-, it releases a \cnlarge blast\c-";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        nullptr; nullptr; nullptr; StaticChargeShieldDamage; StaticChargeShieldBreak; nullptr; nullptr; nullptr; nullptr;
     };
-*/
     {
         "DRPGShieldAccessory42";
         "\ctREGN-ER8";  "SHA2P0";   82000;
@@ -706,6 +704,13 @@ function void TimeyWimeyHurtyBall(int DamageAmount)
     TimeyWimeyHurtyBallZDoomSucks();
 };
 
+function void StaticChargeShieldDamage(int DamageAmount)
+{
+    int projtid = UniqueTID();
+    SpawnProjectile(0, "DRPGStaticChargeShieldExplosion", 0, 0, 0, false, projtid);
+    SetActorPosition(projtid, GetActorX(0), GetActorY(0), GetActorZ(0) + 32.0, false);
+};
+
 function void CounterDamage(int DamageAmount)
 {
     if (Player.DamageType == DT_MELEE)
@@ -753,6 +758,13 @@ function void AdaptiveBreak()
     case DT_PLASMA:     GiveInventory("DRPGShieldAdaptivePlasmaResist", 1);     break;
     case DT_LIGHTNING:  GiveInventory("DRPGShieldAdaptiveLightningResist", 1);  break;
     };
+};
+
+function void StaticChargeShieldBreak()
+{
+    int projtid = UniqueTID();
+    SpawnProjectile(0, "DRPGStaticChargeShieldLargeExplosion", 0, 0, 0, false, projtid);
+    SetActorPosition(projtid, GetActorX(0), GetActorY(0), GetActorZ(0) + 32.0, false);
 };
 
 function void FlanExplosion() // This gets called on full charge too
