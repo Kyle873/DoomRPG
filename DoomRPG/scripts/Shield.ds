@@ -317,14 +317,14 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         nullptr; nullptr; nullptr; nullptr; AdaptiveBreak; nullptr; nullptr; nullptr; nullptr;
     };
-/*
     {
-        "DRPGShieldAccessory33"; // !!!
+        "DRPGShieldAccessory33";
         "\cdTENS-H11";   "SHA2G0";  55000;
         "The lower your shield is, the higher your \cdDamage Reduction\c- is\nIt scales up to \cd75%\c- at \cv1 Capacity\c-\nWhen \cgfully depleted\c-, \cd0% Damage Reduction";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        ScarletWeatherRhapsodyShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
+/*
     {
         "DRPGShieldAccessory34"; // !!!
         "\cjTEEM-AU5";   "SHA2H0";  50000;
@@ -933,6 +933,21 @@ function void ReflectionMod()
 function void ReflectionUnequip(bool EMP)
 {
     GiveInventory("DRPGShieldReflectionOff", 1);
+};
+
+function void ScarletWeatherRhapsodyShieldMod()
+{
+    if (!Player.Shield.Active || Player.Shield.Capacity < 1)
+        return;
+    
+    if (Player.Shield.Charge < 1)
+    {
+        Player.DamageFactor = 1.0;
+        return;
+    };
+    
+    fixed BaseFactorMinus = 1.0 - Player.DamageFactor;
+    Player.DamageFactor -= (0.75 - BaseFactorMinus) - ((0.75 - BaseFactorMinus) * ((fixed)(Player.Shield.Charge - 1) / (fixed)(Player.Shield.Capacity - 1)));
 };
 
 function void SanicMod()
