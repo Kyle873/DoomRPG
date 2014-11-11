@@ -369,13 +369,15 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
+*/
     {
-        "DRPGShieldAccessory40"; // !!!
+        "DRPGShieldAccessory40";
         "\ckPHA-LX2";   "SHA2N0";   33000;
         "You gain an additional \cd+10% Damage Reduction\c- for every player using this accessory";
         SHIELD_PASS_FRIENDSHIPISDEFENSE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        FriendshipShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
+/*
     {
         "DRPGShieldAccessory41"; // !!!
         "\cnIKU-N7";    "SHA2O0";   35000;
@@ -956,6 +958,25 @@ function void BloodyShieldSoRealMod()
         Player.Shield.Interval /= 5;
         Player.Shield.AccessoryBattery--;
     };
+};
+
+function void FriendshipShieldMod()
+{
+    fixed TotalDefense = 0;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        if (!Players(i).Shield.Active)
+            continue;
+        if (!Players(i).Shield.Accessory || Players(i).Shield.Accessory->PassiveEffect != SHIELD_PASS_FRIENDSHIPISDEFENSE)
+            continue;
+        
+        TotalDefense += 0.1;
+    };
+    
+    Player.DamageFactor -= TotalDefense;
 };
 
 function void RegenShieldMod()
