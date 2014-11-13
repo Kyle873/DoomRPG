@@ -1128,7 +1128,8 @@ acscript bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
     
     // Remove all other Auras first if you don't have the Energy
     if (!Player.Perks[STAT_ENERGY])
-        RemoveAura();
+        for (int i = 0; i < AURA_MAX; i++)
+            Player.Aura.Type[i].Active = false;
     
     // Should the timer be stacked because you used the same Aura?
     if (Stack || Player.Perks[STAT_ENERGY])
@@ -2063,6 +2064,10 @@ function int ScaleEPCost(int Cost)
     
     // Aura Multiplier
     ScaleCost *= 1.0 + Player.Aura.CostMult;
+    
+    // Because ZDoom needs to lrn2math
+    if (Player.Aura.CostMult > 0)
+        ScaleCost++;
     
     return ScaleCost;
 };
