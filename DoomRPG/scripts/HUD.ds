@@ -293,18 +293,9 @@ script void AuraTimerHUD() enter
 {
     Start:
     
-    bool HaveAura = false;
     fixed Offset = 0;
     
-    // Determine if we have any Auras or not
-    for (int i = 0; i < AURA_MAX; i++)
-        if (Player.Aura[i] || Player.TeamAura)
-        {
-            HaveAura = true;
-            break;
-        };
-    
-    while (HaveAura)
+    while (PlayerHasAura(PlayerNumber()))
     {
         fixed X = GetCVarFixed("drpg_auratimer_x");
         fixed Y = GetCVarFixed("drpg_auratimer_y");
@@ -314,31 +305,31 @@ script void AuraTimerHUD() enter
         
         SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
         
-        // Timer
-        if (Player.AuraTimer > 0)
-        {
-            SetFont("BIGFONT");
-            HudMessage("%s\n", FormatTime(Player.AuraTimer), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
-        };
-        
         // Calculate number of active Auras
         for (int i = 0; i < AURA_MAX; i++)
-            if (Player.Aura[i])
+            if (Player.Aura.Type[i].Active)
                 AuraCount++;
         
+        // Timer
+        if (Player.Aura.Time > 0)
+        {
+            SetFont("BIGFONT");
+            HudMessage("%s\n", FormatTime(Player.Aura.Time), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+        };
+        
         // Main Icon
-        if (Player.AuraTimer > 0 && AuraCount >= 9)
+        if (Player.Aura.Time > 0 && PlayerHasShadowAura(PlayerNumber()))
             PrintSpritePulse("AuraBlac", 0, X, Y + 32.0, 0.75, 64.0, 0.25)
-        else if (Player.AuraTimer > 0)
+        else if (Player.Aura.Time > 0)
             PrintSpritePulse("Aura", 0, X, Y, 0.75, 64.0, 0.25);
         
         // Team Aura Icon
-        if (Player.TeamAura)
+        if (Player.Aura.Team)
             PrintSpritePulse("SAURK0", 0, X + 18.0, Y + 24.0, 0.75, 64.0, 0.25);
         
         // Orbiting Icons
         for (int i = 0; i < AURA_MAX; i++)
-            if (Player.Aura[i])
+            if (Player.Aura.Type[i].Active)
             {
                 fixed Angle = -0.25 + ((1.0 / AuraCount) * AuraAdd++) + Offset;
                 fixed XOff = X + (Radius * Cos(Angle));
@@ -348,10 +339,6 @@ script void AuraTimerHUD() enter
         
         // Offset
         Offset += 0.0025;
-        
-        // Check and remove the Aura when the timer is up
-        if (Player.AuraTimer <= 0 && !Player.TeamAura)
-            HaveAura = false;
         
         Delay(1);
     };

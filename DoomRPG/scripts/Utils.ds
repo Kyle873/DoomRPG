@@ -54,9 +54,9 @@ acscript int GetAmmoMax(int Type)
 
 acscript void SoulEffect(int Type)
 {
-    Player.Aura[Type] = true;
-    Player.AuraLevel[Type] = Skills[2][Type].MaxLevel;
-    Player.AuraTimer += 30 * 35;
+    Player.Aura.Type[Type].Active = true;
+    Player.Aura.Type[Type].Level = Skills[2][Type].MaxLevel;
+    Player.Aura.Time += 30 * 35;
     Player.SoulActive[Type] = true;
 };
 
@@ -993,16 +993,25 @@ function void SpawnAura(int TID, int Type, bool ForceFancy)
     bool IsPlayer = (ClassifyActor(TID) & ACTOR_PLAYER);
     int SimpleType = GetCVar("drpg_simple_auras");
     bool Simple = (IsPlayer ? (SimpleType == 1 || SimpleType == 3) : (SimpleType == 2 || SimpleType == 3));
-    int AuraCount;
+    int AuraCount = 0;
     
     // Calculate number of active Auras
-    if (IsPlayer)
-        for (int i = 0; i < AURA_MAX; i++)
-            if (Player.Aura[i])
+    for (int i = 0; i < AURA_MAX; i++)
+    {
+        if (IsPlayer)
+        {
+            if (Player.Aura.Type[i].Active)
                 AuraCount++;
+        }
+        else
+        {
+            if (Monsters[GetMonsterID(0)].Aura.Type[i].Active)
+                AuraCount++;
+        };
+    };
     
     // Create rotation for simple Aura icons
-    if (IsPlayer && Simple && AuraCount > 1)
+    if (Simple && AuraCount > 1)
     {
         if (Type == 10) // Shadow
             Z += 4.0 + Sin(Timer() / 64.0) * 4.0
@@ -1041,7 +1050,7 @@ function void SpawnAura(int TID, int Type, bool ForceFancy)
     if (!SpawnOK)
         return;
     
-    switch (Type)
+    switch (Type) // TODO: Use enum here
     {
     case 0: // Friendly Monster
         if (!Simple)
@@ -1532,6 +1541,62 @@ function int CalcPercent(int Current, int Max)
     if (Max == 0)
         return 100;
     return Current * 100 / Max;
+};
+
+function bool PlayerHasAura(int PlayerNum)
+{
+    bool HaveAura = false;
+    
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Players(PlayerNum).Aura.Type[i].Active)
+        {
+            HaveAura = true;
+            break;
+        };
+    
+    return HaveAura;
+};
+
+function bool MonsterHasAura(MonsterStatsPtr Stats)
+{
+    bool HaveAura = false;
+    
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Stats->Aura.Type[i].Active)
+        {
+            HaveAura = true;
+            break;
+        };
+    
+    return HaveAura;
+};
+
+function bool PlayerHasShadowAura(int PlayerNum)
+{
+    int AuraCount;
+    
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Player.Aura.Type[i].Active)
+            AuraCount++;
+    
+    if (AuraCount >= AURA_MAX)
+        return true
+    else
+        return false;
+};
+
+function bool MonsterHasShadowAura(MonsterStatsPtr Stats)
+{
+    int AuraCount;
+    
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Stats->Aura.Type[i].Active)
+            AuraCount++;
+    
+    if (AuraCount >= AURA_MAX)
+        return true
+    else
+        return false;
 };
 
 acscript void PurgeDrops() net

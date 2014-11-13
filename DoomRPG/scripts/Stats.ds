@@ -118,9 +118,9 @@ acscript void AddXP(int PlayerNum, long int XP, long int Rank, bool Reduced)
             Players(PlayerNum).RankGained += Rank;
         };
         
-        if (Players(PlayerNum).Aura[AURA_WHITE])
+        if (Players(PlayerNum).Aura.Type[AURA_WHITE].Active)
         {
-            if (Players(PlayerNum).AuraTimer > 0)
+            if (Players(PlayerNum).Aura.Time > 0)
                 Players(PlayerNum).Combo++;
             if (Player.SkillLevel[2][2].CurrentLevel >= 3 && XP > 0 && Rank > 0)
                 Players(PlayerNum).BonusGained += XP + Rank;
@@ -177,7 +177,7 @@ function void CheckCombo()
         };
         
         // Add up and randomize the XP and Rank gain
-        if (Player.ComboTimer == COMBO_STOP || (Player.Aura[AURA_WHITE] && Player.AuraLevel[AURA_WHITE] >= 2 && Timer() == 4))
+        if (Player.ComboTimer == COMBO_STOP || (Player.Aura.Type[AURA_WHITE].Active && Player.Aura.Type[AURA_WHITE].Level >= 2 && Timer() == 4))
         {
             int ComboBonus = (int)((((fixed)Player.Combo / (fixed)GameSkill()) * (Player.XPGained + Player.RankGained)) / 10.0);
             if (ComboBonus < 0) ComboBonus = 0;
@@ -403,7 +403,7 @@ function void CheckStats()
     Player.HealthMax = Player.Vitality * 10;
     Player.StatusEffectResist = Player.Vitality / 4.0;
     Player.EPMax = Player.Energy * 10;
-    Player.AuraRange = Player.Energy * 16;
+    Player.Aura.Range = Player.Energy * 16;
     Player.ToxicityRegenBonus = Player.Regeneration / 10;
     Player.Speed = 1.0 + 0.25 * ((fixed)Player.Agility / 100);
     Player.JumpHeight = 8.0 + (8.0 * ((fixed)Player.Agility / 100));
@@ -1040,7 +1040,7 @@ function void StatusDamage(int Amount)
     int Chance;
     
     // Can't get Status Effects if Pink Aura is active
-    if (Player.Aura[AURA_PINK] || Player.SoulActive[SOUL_PINK]) return;
+    if (Player.Aura.Type[AURA_PINK].Active || Player.SoulActive[SOUL_PINK]) return;
     
     // Calculate the chance
     Chance = Random(0.0, 100.0);
