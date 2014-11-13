@@ -263,7 +263,7 @@ script void DecideMapEvent()
     };
     
     // Can't do Nightmare/Technophobia/Armageddon levels without DRLA
-    if (CurrentLevel->Event >= MAPEVENT_DRLA_NIGHTMARE && CurrentLevel->Event <= MAPEVENT_DRLA_ARMAGEDDON && !GetCVar("drpg_ext_doomrl"))
+    if (CurrentLevel->Event >= MAPEVENT_DRLA_NIGHTMARE && CurrentLevel->Event <= MAPEVENT_DRLA_ARMAGEDDON && CompatMode != COMPAT_DRLA)
     {
         CurrentLevel->Event = MAPEVENT_NONE;
         return;
@@ -541,9 +541,9 @@ script void ThermonuclearBomb()
 
 script void OneMonsterEvent()
 {
-    bool DRLA = GetCVar("drpg_ext_doomrl");
-    bool Extras = GetCVar("drpg_ext_extras");
-    bool Brutal = GetCVar("drpg_ext_Brutal");
+    bool Extras = (CompatMode == COMPAT_EXTRAS);
+    bool DRLA = (CompatMode == COMPAT_DRLA);
+    bool Brutal = (CompatMode == COMPAT_BRUTAL);
     
     if (CurrentLevel->SelectedMonster == nullptr)
     {
@@ -563,10 +563,10 @@ script void OneMonsterEvent()
         if (!Monsters[i].Init)
             continue;
         
-        if (DRLA)
-            Monsters[i].ReplaceActor = StrParam("%sRPG\n", CurrentLevel->SelectedMonster->Actor)
-        else if (Extras)
+        if (Extras)
             Monsters[i].ReplaceActor = StrParam("DRPG%sExtras\n", CurrentLevel->SelectedMonster->Actor)
+        else if (DRLA)
+            Monsters[i].ReplaceActor = StrParam("%sRPG\n", CurrentLevel->SelectedMonster->Actor)
         else if (Brutal)
             Monsters[i].ReplaceActor = StrParam("%sBD\n", CurrentLevel->SelectedMonster->Actor)
         else
@@ -649,9 +649,9 @@ script void HellUnleashedSpawnMonsters()
         
         // Determine a monster
         MonsterInfoPtr Monster;
-        if (GetCVar("drpg_ext_doomrl"))
+        if (CompatMode == COMPAT_DRLA)
             Monster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA - 1)]
-        else if (GetCVar("drpg_ext_Brutal"))
+        else if (CompatMode == COMPAT_BRUTAL)
             Monster = &MonsterDataBrutal[Random(0, MAX_DEF_MONSTERS - 1)]
         else
             Monster = &MonsterData[Random(0, MAX_DEF_MONSTERS - 1)];

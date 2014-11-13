@@ -27,6 +27,7 @@ const str Version = "v0.9.12 Beta - Maximum Frisbee DLC: Now with 125% more Shie
 static bool InBase;
 static bool Transported;
 static bool GlobalsInitialized;
+static int CompatMode;
     
 // Arrays
 static str[MAX_PLAYERS] PlayerWeapon;
@@ -88,7 +89,7 @@ script void GlobalInit() open
     BuildSkillData();
     
     // !!SUPER-TEMPORARY!!
-    if (GetCVar("drpg_ext_doomrl"))
+    if (CompatMode == COMPAT_DRLA)
     {
         MegaBosses[0] = "RLNightmareCyberdemonRPG";
         MegaBosses[1] = "RLCyberneticSpiderMastermindRPG";
@@ -198,7 +199,7 @@ script void Init() enter
     Delay(4);
     
     // Some mods will require TID reassignment
-    if (GetCVar("drpg_ext_brutal"))
+    if (CompatMode == COMPAT_BRUTAL)
         AssignTIDs();
     
     // Execute Game Loops
@@ -828,15 +829,15 @@ function void CheckHUD()
 function void DefaultLoadout()
 {
     // Extras Compatibility
-    if(GetCVar("drpg_ext_extras"))
+    if (CompatMode == COMPAT_EXTRAS)
         SetWeapon("Pistol1");
     
     // DoomRL Compatibility
-    if (GetCVar("drpg_ext_doomrl"))
+    if (CompatMode == COMPAT_DRLA)
         SetWeapon("RLPistol");
     
     // Brutal Doom Compatibility
-    if (GetCVar("drpg_ext_brutal"))
+    if (CompatMode == COMPAT_BRUTAL)
     {
         GiveInventory("BrutalPistol", 1);
         GiveInventory("BDPistolAmmo", 15);
@@ -849,13 +850,10 @@ function void CheckCompatibility()
     bool Success = false;
     int TID = UniqueTID();
     
-    // Reset CVARs
-    SetCVar("drpg_ext_extras", 0);
-    SetCVar("drpg_ext_doomrl", 0);
-    SetCVar("drpg_ext_brutal", 0);
-    
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \c-Checking Compatibility...\n");
+    
+    CompatMode = COMPAT_NONE;
     
     // Extras
     Success = SpawnForced("DRPGExtrasIsLoaded", 0, 0, 0, TID, 0);
@@ -863,7 +861,7 @@ function void CheckCompatibility()
     {
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: \caExtras\c- detected\n");
-        SetCVar("drpg_ext_extras", 1);
+        CompatMode = COMPAT_EXTRAS;
         Thing_Remove(TID);
         return;
     };
@@ -874,8 +872,7 @@ function void CheckCompatibility()
     {
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: \cdDoomRL \c-detected\n");
-        SetCVar("drpg_ext_doomrl", 1);
-        SetInventory("DRPGDRLAActive", 1);
+        CompatMode = COMPAT_DRLA;
         Thing_Remove(TID);
         return;
     };
@@ -886,7 +883,7 @@ function void CheckCompatibility()
     {
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: \cgBrutal Doom \c-detected\n");
-        SetCVar("drpg_ext_brutal", 1);
+        CompatMode = COMPAT_BRUTAL;
         Thing_Remove(TID);
         return;
     };

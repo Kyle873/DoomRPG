@@ -23,11 +23,6 @@ echo Linking LibDS.lib
 rem Change the stack offset so we don't overlap with the standard library
 set ACC=%ACC% --static-offset=152000000
 
-rem Doom RPG Libraries
-echo Compiling Doom RPG Libraries
-echo    - BitIO
-%ACC% -c %SRC%/lib/BitIO.c -o %OBJ%\BitIO.o
-
 rem Doom RPG Modules
 echo Compiling Doom RPG
 echo    - Arena
@@ -82,7 +77,7 @@ echo    - Utils
 %ACC% -c %SRC%\Utils.ds -o %OBJ%\Utils.o
 
 echo Linking RPG.lib
-%ACC% %OBJ%\BitIO.o %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\ItemData.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\CharSave.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Turret.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
+%ACC% %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\ItemData.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\CharSave.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Turret.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
 
 echo Cleaning up Object Files
 del %OBJ%\*.o

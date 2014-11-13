@@ -225,10 +225,13 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
     // Attacks
     {
         {
-            "Weaken"; 200; 2; Weaken;
+            "Weaken"; 500; 5; Weaken;
             {
-                "Weakens an enemy, halving their stats";
-                "Weakens an enemy, halving their stats and destroying their Aura";
+                "Weakens an enemy\nReduces stats by half";
+                "Weakens an enemy\nReduces stats by 1/4th";
+                "Weakens an enemy\nReduces stats by 1/8th";
+                "Weakens an enemy\nReduces stats by 1/16th";
+                "Weakens an enemy\nReduces stats by 1/16th\nDestroys all active Auras";
             };
         };
         {
@@ -454,7 +457,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
 function void BuildSkillData()
 {
     // DoomRL Compatibility
-    if (GetCVar("drpg_ext_doomrl"))
+    if (CompatMode == COMPAT_DRLA)
     {
         // Add an extra level to the Ammo Drop to drop Supply Crates
         Skills[1][8].MaxLevel = 4;
@@ -1101,7 +1104,7 @@ acscript bool DropAmmo(SkillLevelInfo *SkillLevel, void *Data)
     
     if (Spawn(Ammo, X, Y, Z, 0, Angle))
     {
-        if (SkillLevel->CurrentLevel == 4 && GetCVar("drpg_ext_doomrl"))
+        if (SkillLevel->CurrentLevel == 4 && CompatMode == COMPAT_DRLA)
             Spawn("RLSupplyCrate", X, Y, Z, 0, Angle);
         
         ActivatorSound("skills/drop", 127);
@@ -1151,6 +1154,7 @@ acscript bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
 acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
 {
     int PlayerNum = PlayerNumber();
+    int StatDivide;
     
     SetActivatorToTarget(Players(PlayerNum).TID);
     
@@ -1171,19 +1175,44 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
         return false;
     };
     
+    // Refund - If the target is immune to Weaken
+    if (Stats->Flags & MF_NOWEAKEN)
+    {
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Determine stat division
+    // TODO: formula-ify this?
+    switch (SkillLevel->CurrentLevel)
+    {
+    case 1:         StatDivide = 2;     break;
+    case 2:         StatDivide = 4;     break;
+    case 3:         StatDivide = 8;     break;
+    case 4: case 5: StatDivide = 16;    break;
+    };
+    
+    // Bosses will double the divider
+    if (Stats->Flags & MF_BOSS)
+        StatDivide /= 2;
+    
+    // MegaBosses will quadruple the divider
+    if (Stats->Flags & MF_MEGABOSS)
+        StatDivide /= 4;
+    
     // Halve the monster's level and stats
-    Stats->Level /= 2;
-    Stats->Strength /= 2;
-    Stats->Defense /= 2;
-    Stats->Vitality /= 2;
-    Stats->Energy /= 2;
-    Stats->Regeneration /= 2;
-    Stats->Agility /= 2;
-    Stats->Capacity /= 2;
-    Stats->Luck /= 2;
+    Stats->Level /= StatDivide;
+    Stats->Strength /= StatDivide;
+    Stats->Defense /= StatDivide;
+    Stats->Vitality /= StatDivide;
+    Stats->Energy /= StatDivide;
+    Stats->Regeneration /= StatDivide;
+    Stats->Agility /= StatDivide;
+    Stats->Capacity /= StatDivide;
+    Stats->Luck /= StatDivide;
     
     // Destroy Aura
-    if (SkillLevel->CurrentLevel == 2)
+    if (SkillLevel->CurrentLevel >= 5)
         for (int i = 0; i < AURA_MAX; i++)
             Stats->Aura.Type[i].Active = false;
     
@@ -1562,9 +1591,9 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
     }
     else // Monsters
     {
-        if (GetCVar("drpg_ext_doomrl"))
+        if (CompatMode == COMPAT_DRLA)
             Name = DRLASummons[Index - 1][SkillLevel->CurrentLevel - 1]
-        else if (GetCVar("drpg_ext_extras"))
+        else if (CompatMode == COMPAT_EXTRAS)
             Name = StrParam("DRPG%sExtras\n", Summons[Index - 1])
         else
             Name = StrParam("DRPG%s\n", Summons[Index - 1]);
@@ -1639,7 +1668,7 @@ acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
         GiveInventory("DRPGCredits", Armor);
         
         // DoomRL Compatibility
-        if (GetCVar("drpg_ext_doomrl"))
+        if (CompatMode == COMPAT_DRLA)
         {
             TakeInventory("RL100ArmorWorn", 1);
             TakeInventory("RL150ArmorWorn", 1);
