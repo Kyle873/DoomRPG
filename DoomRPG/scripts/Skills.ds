@@ -225,10 +225,13 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
     // Attacks
     {
         {
-            "Weaken"; 200; 2; Weaken;
+            "Weaken"; 500; 5; Weaken;
             {
-                "Weakens an enemy, halving their stats";
-                "Weakens an enemy, halving their stats and destroying their Aura";
+                "Weakens an enemy\nReduces stats by half";
+                "Weakens an enemy\nReduces stats by 1/4th";
+                "Weakens an enemy\nReduces stats by 1/8th";
+                "Weakens an enemy\nReduces stats by 1/16th";
+                "Weakens an enemy\nReduces stats by 1/16th\nDestroys all active Auras";
             };
         };
         {
@@ -1151,6 +1154,7 @@ acscript bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
 acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
 {
     int PlayerNum = PlayerNumber();
+    int StatDivide;
     
     SetActivatorToTarget(Players(PlayerNum).TID);
     
@@ -1178,19 +1182,39 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
         return false;
     };
     
+    // Determine stat division
+    // TODO: formula-ify this?
+    switch (SkillLevel->CurrentLevel)
+    {
+    case 1:         StatDivide = 2;     break;
+    case 2:         StatDivide = 4;     break;
+    case 3:         StatDivide = 8;     break;
+    case 4: case 5: StatDivide = 16;    break;
+    };
+    
+    // Bosses will double the divider
+    if (Stats->Flags & MF_BOSS)
+        StatDivide *= 2;
+    
+    // MegaBosses will quadruple the divider
+    if (Stats->Flags & MF_MEGABOSS)
+        StatDivide *= 4;
+    
+    Log("Weaken Divider: %d\n", StatDivide);
+    
     // Halve the monster's level and stats
-    Stats->Level /= 2;
-    Stats->Strength /= 2;
-    Stats->Defense /= 2;
-    Stats->Vitality /= 2;
-    Stats->Energy /= 2;
-    Stats->Regeneration /= 2;
-    Stats->Agility /= 2;
-    Stats->Capacity /= 2;
-    Stats->Luck /= 2;
+    Stats->Level /= StatDivide;
+    Stats->Strength /= StatDivide;
+    Stats->Defense /= StatDivide;
+    Stats->Vitality /= StatDivide;
+    Stats->Energy /= StatDivide;
+    Stats->Regeneration /= StatDivide;
+    Stats->Agility /= StatDivide;
+    Stats->Capacity /= StatDivide;
+    Stats->Luck /= StatDivide;
     
     // Destroy Aura
-    if (SkillLevel->CurrentLevel == 2)
+    if (SkillLevel->CurrentLevel >= 5)
         for (int i = 0; i < AURA_MAX; i++)
             Stats->Aura.Type[i].Active = false;
     
