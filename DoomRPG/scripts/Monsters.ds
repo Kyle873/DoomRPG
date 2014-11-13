@@ -950,8 +950,11 @@ script void MonsterEPDrainHandler()
         goto Start;
     };
     
-    if (Stats->Aura.Type[AURA_BLUE].Active)
-        return;
+    if (!Stats->Aura.Type[AURA_BLUE].Active)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
@@ -981,7 +984,7 @@ script void MonsterEPDrainHandler()
                 Thing_ChangeTID(0, NewTID);
                 SetActivator(Players(i).TID);
                 FadeRange(64, 128, 128, 0.5, 64, 128, 128, 0.0, 0.5);
-                ActivatorSound("misc/epdrain", 127);
+                ActivatorSound("drain/ep", 127);
                 SetActivator(NewTID);
                 Thing_ChangeTID(0, OrigTID);
             };
@@ -1011,9 +1014,6 @@ script void MonsterRegenerationHandler()
         Delay(35);
         goto Start;
     };
-    
-    if (Stats->Aura.Type[AURA_PURPLE].Active)
-        return;
     
     long long RegenAmount = (long long)Stats->HealthMax * (long long)Stats->Regeneration;
     RegenAmount /= 1000;
@@ -1049,8 +1049,11 @@ script void MonsterMoneyDrainHandler()
         goto Start;
     };
     
-    if (Stats->Aura.Type[AURA_YELLOW].Active)
-        return;
+    if (!Stats->Aura.Type[AURA_YELLOW].Active)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
@@ -1059,9 +1062,16 @@ script void MonsterMoneyDrainHandler()
         if (Distance(0, Players(i).TID) < Stats->Radius * GameSkill() * 4 + Stats->Radius && CheckSight(0, Players(i).TID, 0))
         {
             int Previous = CheckActorInventory(Players(i).TID, "DRPGCredits");
-            
+            int OrigTID = ActivatorTID();
+            int NewTID = UniqueTID(0, 0);
+            Thing_ChangeTID(0, NewTID);
             TakeActorInventory(Players(i).TID, "DRPGCredits", Stats->Luck);
             GiveInventory("DRPGCredits", Stats->Luck);
+            SetActivator(Players(i).TID);
+            FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0.0, 0.5);
+            ActivatorSound("drain/money", 127);
+            SetActivator(NewTID);
+            Thing_ChangeTID(0, OrigTID);
             
             if (CheckActorInventory(Players(i).TID, "DRPGCredits") < Previous)
                 Popoff(0, Previous - CheckActorInventory(Players(i).TID, "DRPGCredits"), DNUM_CREDGAIN);
@@ -1091,8 +1101,11 @@ script void MonsterAmmoDrainHandler()
         goto Start;
     };
     
-    if (Stats->Aura.Type[AURA_DARKBLUE].Active)
-        return;
+    if (!Stats->Aura.Type[AURA_DARKBLUE].Active)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
@@ -1137,7 +1150,7 @@ script void MonsterAmmoDrainHandler()
             Thing_ChangeTID(0, NewTID);
             SetActivator(Players(i).TID);
             FadeRange(0, 0, 255, 0.5, 0, 0, 255, 0.0, 0.5);
-            ActivatorSound("misc/ammodrain", 127);
+            ActivatorSound("drain/ammo", 127);
             SetActivator(NewTID);
             Thing_ChangeTID(0, OrigTID);
         };
