@@ -93,7 +93,7 @@ script void InitMission()
         {
             str ActorToCheck = StrParam("DRPG%s\n", Player.Mission.Monster->Actor);
             
-            if (GetCVar("drpg_ext_doomrl"))
+            if (CompatMode == COMPAT_DRLA)
                 ActorToCheck = Player.Mission.Monster->Actor;
             
             if (StartsWith(Monsters[i].Actor, ActorToCheck))
@@ -152,7 +152,7 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
             int Match = StrCmp(Actor, NeededActor);
             
             // DoomRL Compatibility
-            if (GetCVar("drpg_ext_doomrl"))
+            if (CompatMode == COMPAT_DRLA)
             {
                 NeededActor = StrParam("%sRPG\n", Players(Killer).Mission.Monster->Actor);
                 
@@ -168,20 +168,20 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
                 Match = StrCmp(Actor, NeededActor);
             }
             // Extras Compatibility
-            else if (GetCVar("drpg_ext_extras"))
+            else if (CompatMode == COMPAT_EXTRAS)
             {
                 NeededActor = StrParam("DRPG%sExtras\n", Players(Killer).Mission.Monster->Actor);
                 Match = StrCmp(Actor, NeededActor);
             }
             // Brutal Doom Compatibility
-            else if (GetCVar("drpg_ext_brutal"))
+            else if (CompatMode == COMPAT_BRUTAL)
             {
                 NeededActor = StrParam("%sBD\n", Players(Killer).Mission.Monster->Actor);
                 Match = StrCmp(Actor, NeededActor);
             };
             
-            if (GetUserCVar(Killer, "drpg_debug"))
-                Log("\cdDEBUG: \caKilled %s, need %s, match was %d\n", Actor, NeededActor, Match);
+            // if (GetCVar("drpg_debug"))
+                // Log("\cdDEBUG: \caKilled %s, need %s, match was %d\n", Actor, NeededActor, Match);
             
             if (Match == 0)
             {
@@ -395,7 +395,7 @@ function void CheckMission()
         str RewardActor = Player.Mission.RewardItem->Actor;
         
         // DoomRL Compatibility for weapons
-        if (GetCVar("drpg_ext_doomrl") && Player.Mission.RewardItem->Category == 0) // Weapons
+        if (CompatMode == COMPAT_DRLA && Player.Mission.RewardItem->Category == 0) // Weapons
             RewardActor = StrParam("%sPickup\n", RewardActor);
         
         // Spawn Item and try to pick it up
@@ -443,8 +443,8 @@ function ItemInfoPtr GetRewardItem(int Difficulty)
 
 function void GetTargetMonster(MissionInfo *Mission)
 {
-    bool DRLA = GetCVar("drpg_ext_doomrl");
-    bool Brutal = GetCVar("drpg_ext_Brutal");
+    bool DRLA = (CompatMode == COMPAT_DRLA);
+    bool Brutal = (CompatMode == COMPAT_BRUTAL);
     int Amount;
     MonsterInfoPtr[64] PotentialMonsters;
     int NumPotentialMonsters;

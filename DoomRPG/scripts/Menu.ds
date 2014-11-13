@@ -304,7 +304,7 @@ function void DrawStatsMenu()
         int MaxCells = GetAmmoCapacity("Cell");
         
         // Brutal Doom Compatibility
-        if (GetCVar("drpg_ext_brutal"))
+        if (CompatMode == COMPAT_BRUTAL)
         {
             Bullets = CheckInventory("NewClip");
             MaxBullets = GetAmmoCapacity("NewClip");
@@ -590,7 +590,7 @@ function void DrawStatsMenu()
         
         // Health/Armor
         int Health = PlayerPtr->ActualHealth;
-        str Armor = (GetCVar("drpg_ext_doomrl") && CheckActorInventory(PlayerPtr->TID, "RLIndestructibleArmorWorn") ? "\caIndestructible\cd" : StrParam("%d\n", CheckActorInventory(PlayerPtr->TID, "Armor")));
+        str Armor = (CompatMode == COMPAT_DRLA && CheckActorInventory(PlayerPtr->TID, "RLIndestructibleArmorWorn") ? "\caIndestructible\cd" : StrParam("%d\n", CheckActorInventory(PlayerPtr->TID, "Armor")));
         SetFont("SMALLFONT");
         if (CheckActorInventory(PlayerPtr->TID, "Armor") > 0)
             HudMessage("\ca%d Health\c- / \cd%s Armor\n", Health, Armor, HUDMSG_PLAIN, 0, CR_WHITE, 48.1, 348.0, 0.05)
@@ -615,18 +615,17 @@ function void DrawStatsMenu()
         // Armor
         for (int i = 1; i < ItemMax[3]; i++)
         {
-            bool DRLA = GetCVar("drpg_ext_doomrl");
             ItemInfoPtr ItemPtr = &ItemData[3][i];
             str Actor = ItemPtr->Actor;
 
             // DoomRL Compatibility
-            if (DRLA)
+            if (CompatMode == COMPAT_DRLA)
             {
                 Actor = StrLeft(Actor, StrLen(Actor) - 6); // Strip "Pickup" off the end
                 Actor = StrParam("%sToken\n", Actor);
             };
             
-            if ((DRLA ? CheckActorInventory(PlayerPtr->TID, Actor) : GetArmorType(Actor, PlayerNum) > 0))
+            if ((CompatMode == COMPAT_DRLA ? CheckActorInventory(PlayerPtr->TID, Actor) : GetArmorType(Actor, PlayerNum) > 0))
             {
                 SetFont("SMALLFONT");
                 HudMessage("\cdArmor: \c-%s\n", ItemPtr->Name, HUDMSG_PLAIN, 0, CR_WHITE, 48.1, 364.0, 0.05);
@@ -1769,7 +1768,7 @@ function void MenuHelp()
 
 function void DrawPlayerSprite(int PlayerNum, fixed X, fixed Y)
 {
-    if (GetCVar("drpg_ext_doomrl"))
+    if (CompatMode == COMPAT_DRLA)
     {
         if (PlayerClass(PlayerNum) == 0) // Marine
             PrintSprite("PMARA1", 0, X, Y, 0.05);

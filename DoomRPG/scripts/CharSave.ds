@@ -20,6 +20,9 @@
     - Items such as Tokens, Shield Parts and Stims will be stored in the Locker for retrieval instead of in the save data itself
     - Each byte will be stored with a leading 0 if necessary, so a level of 10 and a rank level of 5 will come out as 0A05
     
+    1. Version / Compatibility Flag
+        - Version is referenced from defs, stored in 2 bytes
+        - Mirror of the CompatMode static, stored in 1 byte
     1. Level / Rank Level
         - Only Level and Rank Level are stored, the XP to give is determined from these
         - Both Level and Rank Level are stored in 1 byte each
@@ -54,6 +57,7 @@
     
     BASIC EXAMPLE
     - Each category is seperated for readability
+    - Version 1, DRLA Compatibility mode
     - Level 10, Rank 4
     - Stats are Defaults
     - First skill of each category learned at it's max level
@@ -62,7 +66,8 @@
     - 1000 Credits, 100% Battery, 25% Toxicity, 10% Pay Bonus
     - Locker and DRLA stuff are 0 and omitted for brevity
     
-    0A04
+    0102
+    -0A04
     -00000A0A00000A00
     -[0400000000][020000000000000000][060000000000000000][0200000000][0700000000000000000000000000000000][0100000000000000]
     -010203040102030401-
@@ -113,21 +118,6 @@ str[PW_MAX_ASSEMBLIES] DRLAAssemblies =
     "RLAutocannonAssemblyLearntToken";
 };
 
-int[ITEM_CATEGORIES] CategoryMaxStorage =
-{
-    1;      // Weapons
-    1000;   // Ammo
-    100;    // Health
-    1;      // Armor
-    100;    // Powerups
-    100;    // Tokens
-    1;      // Shield Parts
-    100;    // Stims/Augs
-    0;      // Loot
-    100;    // Mod Packs
-    1;      // Boots
-};
-
 acscript void SaveCharacter() net
 {
     // !!! TEMPORARY !!!
@@ -137,7 +127,7 @@ acscript void SaveCharacter() net
     ActivatorSound("menu/error", 127);
     return;
     
-    // Deposit all your goods into the locker
+    // You need to be in the Outpost to do this
     if (!InBase)
     {
         SetFont("BIGFONT");
@@ -158,110 +148,6 @@ acscript void SaveCharacter() net
             };
     };
     
-    // DRLA Compatibility - Reset item counters
-    if (GetCVar("drpg_ext_doomrl"))
-    {
-        SetInventory("RLWeaponLimit", 0);
-        SetInventory("RLArmorInInventory", 0);
-        SetInventory("RLModLimit", 0);
-        SetInventory("RLScavengerModLimit", 0);
-        SetInventory("RLArmorModItemInInventory", 0);
-        SetInventory("RLBootsInInventory", 0);
-    };
-    
-    // Init BitIO State
-    BitIO_Open(&State, Player.CharData);
-    
-    // 1. Version
-    int CompatibilityFlags = 0;
-    if (GetCVar("drpg_ext_extras")) CompatibilityFlags = PW_COMPAT_EXTRAS;
-    if (GetCVar("drpg_ext_doomrl")) CompatibilityFlags = PW_COMPAT_DOOMRL;
-    if (GetCVar("drpg_ext_brutal")) CompatibilityFlags = PW_COMPAT_BRUTAL;
-    BitIO_PutBits(&State, GetBitSize(256), PW_VERSION);
-    BitIO_PutBits(&State, GetBitSize(PW_COMPAT_SIZE), CompatibilityFlags);
-    
-    // 2. Level / Rank Level
-    BitIO_PutBits(&State, GetBitSize(MAX_LEVEL), Player.Level);
-    BitIO_PutBits(&State, GetBitSize(MAX_RANK), Player.RankLevel);
-    
-    // 3. Stats
-    BitIO_PutBits(&State, GetBitSize(200), Player.Strength);
-    BitIO_PutBits(&State, GetBitSize(200), Player.Defense);
-    BitIO_PutBits(&State, GetBitSize(200), Player.Vitality);
-    BitIO_PutBits(&State, GetBitSize(200), Player.Energy);
-    BitIO_PutBits(&State, GetBitSize(200), Player.Regeneration);
-    BitIO_PutBits(&State, GetBitSize(200), Player.Agility);
-    BitIO_PutBits(&State, GetBitSize(200), Player.Capacity);
-    BitIO_PutBits(&State, GetBitSize(200), Player.Luck);
-    
-    // 4. Skills
-    for (int i = 0; i < MAX_CATEGORIES; i++)
-        for (int j = 0; j < SkillCategoryMax[i]; j++)
-            BitIO_PutBits(&State, GetBitSize(Skills[i][j].MaxLevel), Player.SkillLevel[i][j].Level);
-    
-    // 5. Augmentations
-    for (int i = 0; i < MAX_AUGS; i++)
-        BitIO_PutBits(&State, GetBitSize(AugData[i].MaxLevel), Player.Augs.Level[i]);
-    
-    // 6. Shield Parts
-    for (int i = 0; i < ShieldPartsMax[0]; i++)
-        BitIO_PutBits(&State, 1, CheckInventory(StrParam("DRPGShieldBody%d\n", i + 1)) == 1);
-    for (int i = 0; i < ShieldPartsMax[1]; i++)
-        BitIO_PutBits(&State, 1, CheckInventory(StrParam("DRPGShieldBattery%d\n", i + 1)) == 1);
-    for (int i = 0; i < ShieldPartsMax[2]; i++)
-        BitIO_PutBits(&State, 1, CheckInventory(StrParam("DRPGShieldCapacitor%d\n", i + 1)) == 1);
-    for (int i = 0; i < ShieldPartsMax[3]; i++)
-        BitIO_PutBits(&State, 1, CheckInventory(StrParam("DRPGShieldAccessory%d\n", i + 1)) == 1);
-    
-    // 7. Stims
-    for (int i = 0; i < MAX_COMPOUNDS; i++)
-        BitIO_PutBits(&State, GetBitSize(4000), Player.Stim.Vials[i]);
-    
-    // 8. Misc
-    BitIO_PutBits(&State, GetBitSize(100), Player.Toxicity);
-    BitIO_PutBits(&State, GetBitSize(200), Player.Augs.Battery);
-    BitIO_PutBits(&State, GetBitSize(1000), Player.PayBonus);
-    BitIO_PutBits(&State, GetBitSize(1000), ArenaMaxWave);
-    
-    // 9. Inventory Items
-    BitIO_PutBits(&State, GetBitSize(1000000000), CheckInventory("DRPGCredits"));
-    BitIO_PutBits(&State, GetBitSize(10000), CheckInventory("DRPGStatToken"));
-    BitIO_PutBits(&State, GetBitSize(100), CheckInventory("DRPGStatCapToken"));
-    BitIO_PutBits(&State, GetBitSize(10000), CheckInventory("DRPGSkillToken"));
-    BitIO_PutBits(&State, GetBitSize(100), CheckInventory("DRPGAugCanister"));
-    BitIO_PutBits(&State, GetBitSize(100), CheckInventory("DRPGAugUpgradeCanister"));
-    BitIO_PutBits(&State, GetBitSize(100), CheckInventory("DRPGAugSlotUpgrade"));
-    BitIO_PutBits(&State, GetBitSize(1000), CheckInventory("DRPGStimSmall"));
-    BitIO_PutBits(&State, GetBitSize(1000), CheckInventory("DRPGStimMedium"));
-    BitIO_PutBits(&State, GetBitSize(1000), CheckInventory("DRPGStimLarge"));
-    BitIO_PutBits(&State, GetBitSize(1000), CheckInventory("DRPGStimXL"));
-    BitIO_PutBits(&State, GetBitSize(5), CheckInventory("DRPGUACCard"));
-    
-    // 10. DRLA Assemblies
-    for (int i = 0; i < PW_MAX_ASSEMBLIES; i++)
-        BitIO_PutBits(&State, 1, CheckInventory(DRLAAssemblies[i]) == 1);
-    
-    // 11. Locker
-    for (int i = 0; i < ItemCategories; i++)
-        for (int j = 0; j < ItemMax[i]; j++)
-            if (!ItemData[i][j].Unstorable)
-            {
-                int Amount = Player.Locker[i][j];
-                
-                if (Amount > CategoryMaxStorage[i])
-                    Amount = CategoryMaxStorage[i];
-                
-                BitIO_PutBits(&State, GetBitSize(CategoryMaxStorage[i]), Amount);
-            };
-    
-    // Debugging
-    if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \c-Character Save - \caCharacter Bits: %d\c-, \cdCharacter Words: %d\n", BitIO_UsedB(&State), BitIO_UsedW(&State));
-    
-    // Write into CVARs
-    for (int i = 0; i < PW_SIZE; i++)
-        SetCVar(StrParam("drpg_char_%d\n", i), Player.CharData[i]);
-    
     // Saving Successful
     ActivatorSound("charsave/save", 127);
     SetFont("BIGFONT");
@@ -277,124 +163,6 @@ acscript void LoadCharacter() net
     ActivatorSound("menu/error", 127);
     return;
     
-    // Read from CVARs
-    for (int i = 0; i < PW_SIZE; i++)
-        Player.CharData[i] = GetCVar(StrParam("drpg_char_%d\n", i));
-    
-    // Character data is invalid
-    for (int i = 0; i <= PW_SIZE; i++)
-    {
-        if (i != PW_SIZE && Player.CharData[i] != 0)
-            break;
-        
-        if (i == PW_SIZE)
-        {
-            ActivatorSound("charsave/fail", 127);
-            SetFont("BIGFONT");
-            HudMessage("===== Character Load Failed =====\n\n\cjNo Character Data Found\n", HUDMSG_FADEOUT, 0, CR_BRICK, 0.5, 0.5, 1.0, 2.0);
-            return;
-        };
-    };
-    
-    // Init BitIO State
-    BitIO_Open(&State, Player.CharData);
-    
-    // 1. Version
-    int Version = BitIO_GetBits(&State, GetBitSize(256));
-    if (Version != PW_VERSION)
-    {
-        ActivatorSound("charsave/fail", 127);
-        SetFont("BIGFONT");
-        HudMessage("===== Character Load Failed =====\n\n\cjVersion Mismatch\n\n\cjCurrent Version: \cd%d\n\cjSave Version: \cg%d\n", PW_VERSION, Version, HUDMSG_FADEOUT, 0, CR_BRICK, 1.5, 0.5, 3.0, 2.0);
-        return;
-    };
-    int CompatibilityFlags = BitIO_GetBits(&State, GetBitSize(PW_COMPAT_SIZE));
-    if (!CheckCompatibility(CompatibilityFlags))
-    {
-        ActivatorSound("charsave/fail", 127);
-        SetFont("BIGFONT");
-        HudMessage("===== Character Load Failed =====\n\n\cjCompatibility Mismatch\n", HUDMSG_FADEOUT, 0, CR_BRICK, 1.5, 0.5, 3.0, 2.0);
-        return;
-    };
-    
-    // 2. Level and Rank Level
-    Player.Level = BitIO_GetBits(&State, GetBitSize(MAX_LEVEL));
-    Player.XP = XPTable[Player.Level - 1];
-    Player.RankLevel = BitIO_GetBits(&State, GetBitSize(MAX_RANK));
-    Player.Rank = RankTable[Player.RankLevel - 1];
-    
-    // 3. Stats
-    Player.Strength = BitIO_GetBits(&State, GetBitSize(200));
-    Player.Defense = BitIO_GetBits(&State, GetBitSize(200));
-    Player.Vitality = BitIO_GetBits(&State, GetBitSize(200));
-    Player.Energy = BitIO_GetBits(&State, GetBitSize(200));
-    Player.Regeneration = BitIO_GetBits(&State, GetBitSize(200));
-    Player.Agility = BitIO_GetBits(&State, GetBitSize(200));
-    Player.Capacity = BitIO_GetBits(&State, GetBitSize(200));
-    Player.Luck = BitIO_GetBits(&State, GetBitSize(200));
-    
-    // 4. Skills
-    for (int i = 0; i < MAX_CATEGORIES; i++)
-        for (int j = 0; j < SkillCategoryMax[i]; j++)
-        {
-            Player.SkillLevel[i][j].Level = BitIO_GetBits(&State, GetBitSize(Skills[i][j].MaxLevel));
-            Player.SkillLevel[i][j].CurrentLevel = Player.SkillLevel[i][j].Level;
-        };
-    
-    // 5. Augmentations
-    for (int i = 0; i < MAX_AUGS; i++)
-        Player.Augs.Level[i] = BitIO_GetBits(&State, GetBitSize(AugData[i].MaxLevel));
-    
-    // 6. Shield Parts
-    for (int i = 0; i < ShieldPartsMax[0]; i++)
-        SetInventory(StrParam("DRPGShieldBody%d\n", i + 1), BitIO_GetBits(&State, 1));
-    for (int i = 0; i < ShieldPartsMax[1]; i++)
-        SetInventory(StrParam("DRPGShieldBattery%d\n", i + 1), BitIO_GetBits(&State, 1));
-    for (int i = 0; i < ShieldPartsMax[2]; i++)
-        SetInventory(StrParam("DRPGShieldCapacitor%d\n", i + 1), BitIO_GetBits(&State, 1));
-    for (int i = 0; i < ShieldPartsMax[3]; i++)
-        SetInventory(StrParam("DRPGShieldAccessory%d\n", i + 1), BitIO_GetBits(&State, 1));
-    
-    // 7. Stims
-    for (int i = 0; i < MAX_COMPOUNDS; i++)
-        Player.Stim.Vials[i] = BitIO_GetBits(&State, GetBitSize(4000));
-    
-    // 8. Misc
-    Player.Toxicity = BitIO_GetBits(&State, GetBitSize(100));
-    Player.Augs.Battery = BitIO_GetBits(&State, GetBitSize(200));
-    Player.PayBonus = BitIO_GetBits(&State, GetBitSize(1000));
-    int WaveMax = BitIO_GetBits(&State, GetBitSize(1000));
-    if (WaveMax > ArenaMaxWave);
-        ArenaMaxWave = WaveMax;
-    
-    // 9. Inventory Items
-    SetInventory("DRPGCredits", BitIO_GetBits(&State, GetBitSize(1000000000)));
-    SetInventory("DRPGStatToken", BitIO_GetBits(&State, GetBitSize(10000)));
-    SetInventory("DRPGStatCapToken", BitIO_GetBits(&State, GetBitSize(100)));
-    SetInventory("DRPGSkillToken", BitIO_GetBits(&State, GetBitSize(10000)));
-    SetInventory("DRPGAugCanister", BitIO_GetBits(&State, GetBitSize(100)));
-    SetInventory("DRPGAugUpgradeCanister", BitIO_GetBits(&State, GetBitSize(100)));
-    SetInventory("DRPGAugSlotUpgrade", BitIO_GetBits(&State, GetBitSize(100)));
-    SetInventory("DRPGStimSmall", BitIO_GetBits(&State, GetBitSize(1000)));
-    SetInventory("DRPGStimMedium", BitIO_GetBits(&State, GetBitSize(1000)));
-    SetInventory("DRPGStimLarge", BitIO_GetBits(&State, GetBitSize(1000)));
-    SetInventory("DRPGStimXL", BitIO_GetBits(&State, GetBitSize(1000)));
-    SetInventory("DRPGUACCard", BitIO_GetBits(&State, GetBitSize(5)));
-    
-    // 10. DRLA Assemblies
-    for (int i = 0; i < PW_MAX_ASSEMBLIES; i++)
-        SetInventory(DRLAAssemblies[i], BitIO_GetBits(&State, 1));
-    
-    // 11. Locker
-    for (int i = 0; i < ItemCategories; i++)
-        for (int j = 0; j < ItemMax[i]; j++)
-            if (!ItemData[i][j].Unstorable)
-                Player.Locker[i][j] = BitIO_GetBits(&State, GetBitSize(CategoryMaxStorage[i]));
-    
-    // Debugging
-    if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \c-Character Load - \caCharacter Bits: %d\c-, \cdCharacter Words: %d\n", BitIO_UsedB(&State), BitIO_UsedW(&State));
-    
     ActivatorSound("charsave/accept", 127);
     SetFont("BIGFONT");
     HudMessage("===== Character Load Complete =====\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 1.0, 2.0);
@@ -402,46 +170,6 @@ acscript void LoadCharacter() net
 
 acscript void DumpCharacter()
 {
-    str CharOutput;
-    
-    // Read from CVARs
-    for (int i = 0; i < PW_SIZE; i++)
-        Player.CharData[i] = GetCVar(StrParam("drpg_char_%d\n", i));
-    
-    for (int i = 0; i < PW_SIZE; i++)
-        CharOutput = StrParam("%s %d\n", CharOutput, Player.CharData[i]);
-        
-    Log("\cdCharData: \c-%s\n", CharOutput);
-};
-
-// Return how many bits an int would require for storage
-function int GetBitSize(int x)
-{
-    int Bits;
-    
-    while (x != 0)
-    {
-        x >>= 1;
-        Bits++;
-    };
-    
-    return Bits;
-};
-
-// Check Compatibility of the given flags against the current Compatibility CVAR settings
-function bool CheckCompatibility(int Flags)
-{
-    // Vanilla
-    if (!GetCVar("drpg_ext_extras") && !GetCVar("drpg_ext_doomrl"))
-        return (Flags == 0);
-    
-    // Extras
-    if (GetCVar("drpg_ext_extras"))
-        return (Flags & PW_COMPAT_EXTRAS);
-    
-    // DoomRLA
-    if (GetCVar("drpg_ext_doomrl"))
-        return (Flags & PW_COMPAT_DOOMRL);
 };
 
 // Hexadecimal storage
