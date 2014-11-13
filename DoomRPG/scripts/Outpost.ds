@@ -99,10 +99,10 @@ acscript void EnterOutpost()
 acscript void RegenArea(int ID)
 {
     // If you're dead, terminate
-    if (ClassifyActor(Player.TID) & ACTOR_DEAD) return;
+    if (GetActorProperty(0, APROP_Health) <= 0) return;
     
     // Health
-    if (ID == 1)
+    if (ID == OREGEN_HEALTH)
     {
         int HealthCharges;
         bool DoMessage = false;
@@ -139,7 +139,7 @@ acscript void RegenArea(int ID)
         
         if (DoMessage)
         {
-            SetFont("BigFont");
+            SetFont("BIGFONT");
             HudMessage("Health restored\n", HUDMSG_FADEOUT, 1, CR_BRICK, 0.5, 0.33, 2.0, 0.5);
             FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0.0, 1.0);
             ActivatorSound("regen/health", 127);
@@ -147,7 +147,7 @@ acscript void RegenArea(int ID)
     };
     
     // Armor
-    if (ID == 2)
+    if (ID == OREGEN_ARMOR)
     {
         if (CheckInventory("Armor") >= GetArmorInfo(ARMORINFO_SAVEAMOUNT))
             return;
@@ -159,7 +159,7 @@ acscript void RegenArea(int ID)
         
         if (CheckInventory("DRPGCredits") < ArmorFee)
         {
-            SetFont("BigFont");
+            SetFont("BIGFONT");
             HudMessage("You need %d credits to repair armor\n", ArmorFee, HUDMSG_FADEOUT, 1, CR_RED, 0.5, 0.33, 2.0, 0.5);
             ActivatorSound("menu/error", 127);
             return;
@@ -168,40 +168,68 @@ acscript void RegenArea(int ID)
         GiveInventory(GetArmorInfoString(ARMORINFO_CLASSNAME), 1);
         TakeInventory("DRPGCredits", ArmorFee);
         
-        SetFont("BigFont");
+        SetFont("BIGFONT");
         HudMessage("Armor repaired\n", HUDMSG_FADEOUT, 1, CR_GREEN, 0.5, 0.33, 2.0, 0.5);
         FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0);
         ActivatorSound("regen/armor", 127);
     };
     
     // EP
-    if (ID == 3)
+    if (ID == OREGEN_EP)
     {
-        if (CheckInventory("DRPGCredits") < 1 || Player.EP >= Player.EPMax) return;
-        
-        int EPCharges = (Player.EPMax - Player.EP) / 5;
-        if (Player.EP % 5 > 0)
-            EPCharges++;
-        if (CheckInventory("DRPGCredits") < EPCharges)
-            EPCharges = CheckInventory("DRPGCredits");
-        
-        int EPGive = EPCharges * 5;
-        
-        if (Player.EP + EPGive > Player.EPMax)
-            EPGive = Player.EPMax - Player.EP;
-        
-        Player.EP += EPGive;
-        
-        TakeInventory("DRPGCredits", EPCharges);
-        
-        SetFont("BigFont");
-        HudMessage("EP restored\n", HUDMSG_FADEOUT, 1, CR_LIGHTBLUE, 0.5, 0.33, 2.0, 0.5);
-        FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 1.0);
-        ActivatorSound("regen/ep", 127);
+        // Holding Run will restore your Shield capacity
+        if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
+        {
+            if (CheckInventory("DRPGCredits") < 1 || Player.Shield.Charge >= Player.Shield.Capacity) return;
+            
+            int ShieldCharges = (Player.Shield.Capacity - Player.Shield.Charge) / 5;
+            if (Player.Shield.Charge % 5 > 0)
+                ShieldCharges++;
+            if (CheckInventory("DRPGCredits") < ShieldCharges)
+                ShieldCharges = CheckInventory("DRPGCredits");
+            
+            int ShieldGive = ShieldCharges * 5;
+            
+            if (Player.Shield.Charge + ShieldGive > Player.Shield.Capacity)
+                ShieldGive = Player.Shield.Capacity - Player.Shield.Charge;
+            
+            Player.Shield.Charge += ShieldGive;
+            
+            TakeInventory("DRPGCredits", ShieldCharges);
+            
+            SetFont("BIGFONT");
+            HudMessage("Shield restored\n", HUDMSG_FADEOUT, 1, CR_CYAN, 0.5, 0.33, 2.0, 0.5);
+            FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 1.0);
+            ActivatorSound("regen/shield", 127);
+        }
+        else
+        {
+            if (CheckInventory("DRPGCredits") < 1 || Player.EP >= Player.EPMax) return;
+            
+            int EPCharges = (Player.EPMax - Player.EP) / 5;
+            if (Player.EP % 5 > 0)
+                EPCharges++;
+            if (CheckInventory("DRPGCredits") < EPCharges)
+                EPCharges = CheckInventory("DRPGCredits");
+            
+            int EPGive = EPCharges * 5;
+            
+            if (Player.EP + EPGive > Player.EPMax)
+                EPGive = Player.EPMax - Player.EP;
+            
+            Player.EP += EPGive;
+            
+            TakeInventory("DRPGCredits", EPCharges);
+            
+            SetFont("BIGFONT");
+            HudMessage("EP restored\n", HUDMSG_FADEOUT, 1, CR_LIGHTBLUE, 0.5, 0.33, 2.0, 0.5);
+            FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 1.0);
+            ActivatorSound("regen/ep", 127);
+        };
     };
     
     // Augmentation Battery
-    if (ID == 4)
+    if (ID == OREGEN_AUG)
     {
         if (CheckInventory("DRPGCredits") < 10 || Player.Augs.Battery >= Player.Augs.BatteryMax) return;
         
@@ -212,7 +240,7 @@ acscript void RegenArea(int ID)
         AddBattery(BatteryCharges);
         TakeInventory("DRPGCredits", BatteryCharges * 10);
         
-        SetFont("BigFont");
+        SetFont("BIGFONT");
         HudMessage("Augmentation Battery Recharged\n", HUDMSG_FADEOUT, 1, CR_YELLOW, 0.5, 0.33, 2.0, 0.5);
         FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0.0, 1.0);
         ActivatorSound("regen/battery", 127);
@@ -380,7 +408,7 @@ acscript void LevelTransport()
                     Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
                     
                     // Transfer is cancelled either by death or input
-                    if (ClassifyActor(Player.TID) & ACTOR_DEAD || Buttons & BT_SPEED)
+                    if (GetActorProperty(0, APROP_Health) <= 0 || Buttons & BT_SPEED)
                     {
                         PlaySound(0, "transfer/fail", CHAN_BODY, 1.0, false, ATTN_NONE);
                         SetPlayerProperty(0, 0, PROP_FROZEN);
