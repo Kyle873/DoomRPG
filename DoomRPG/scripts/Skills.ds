@@ -11,7 +11,6 @@
 #include "Stats.dh"
 #include "Utils.dh"
 
-
 bool Overdrive;
 int BulletTimeTimer;
 int ForceFieldTID = 1998;
@@ -248,25 +247,24 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Aura Steal"; 200; 2; AuraSteal;
+            "Aura Steal"; 200; 1; AuraSteal;
             {
-                "Steals an enemies Aura, taking it from them and giving it to you\nTime based on their Energy";
-                "Steals an enemies Aura, taking it from them and giving it to you\nTime based on their Energy\nCan steal Shadow Auras";
+                "Steals an enemies Auras, taking it from them and giving it to you\nTime based on their Energy";
             };
         };
         {
             "Soul Steal"; 100; 10; SoulSteal;
             {
-                "Steal 10% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
-                "Steal 20% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
-                "Steal 30% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
-                "Steal 40% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
-                "Steal 50% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
-                "Steal 60% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
-                "Steal 70% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
-                "Steal 80% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
-                "Steal 90% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
-                "Steal 100% of the target's maximum HP\nIf the enemy dies, they will drop their Soul\n\cuDoes not work on Shadow enemies";
+                "Steal 10% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
+                "Steal 20% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
+                "Steal 30% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
+                "Steal 40% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
+                "Steal 50% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
+                "Steal 60% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
+                "Steal 70% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
+                "Steal 80% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
+                "Steal 90% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
+                "Steal 100% of the target's maximum HP\nWhen the enemy dies, they will drop their Soul";
             };
         };
     };
@@ -1122,39 +1120,30 @@ acscript bool DropAmmo(SkillLevelInfo *SkillLevel, void *Data)
 acscript bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
 {
     int Index = *(int *)Data;
+    bool Stack = false;
     
-    ActivatorSound("skills/buff", 127);
+    // Is the Aura you used the same as the one you already have active?
+    if (Player.Aura.Type[Index].Active)
+        Stack = true;
     
-    if (Player.Perks[STAT_ENERGY])
-        Player.AuraTimer += (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1)
+    // Remove all other Auras first if you don't have the Energy
+    if (!Player.Perks[STAT_ENERGY])
+        RemoveAura();
+    
+    // Should the timer be stacked because you used the same Aura?
+    if (Stack || Player.Perks[STAT_ENERGY])
+        Player.Aura.Time += AURA_CALCTIME
     else
-    {
-        bool Stack = false;
-        
-        // Is the Aura you used the same as the one you already have active?
-        if (Player.Aura[Index])
-            Stack = true;
-        
-        // Remove all other Auras first
-        for (int i = 0; i < AURA_MAX; i++)
-            Player.Aura[i] = false;
-        
-        // Should the timer be stacked because you used the same Aura?
-        if (Stack)
-            Player.AuraTimer += (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1)
-        else
-            Player.AuraTimer = (1050 + Player.Energy * 5.25) * (Player.AuraBonus ? 2 : 1);
-    };
+        Player.Aura.Time = AURA_CALCTIME;
     
     // Apply Aura
-    Player.Aura[Index] = true;
-    
-    // Aura Level
-    Player.AuraLevel[Index] = SkillLevel->CurrentLevel;
+    Player.Aura.Type[Index].Active = true;
+    Player.Aura.Type[Index].Level = SkillLevel->CurrentLevel;
     
     // Aura Cost Multiplier
-    Player.AuraCostMult += 0.1;
+    Player.Aura.CostMult += 0.1;
     
+    ActivatorSound("skills/buff", 127);
     return true;
 };
 
@@ -1193,8 +1182,9 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
     Stats->Luck /= 2;
     
     // Destroy Aura
-    if (SkillLevel->CurrentLevel == 2) 
-        Stats->Aura = 0;
+    if (SkillLevel->CurrentLevel == 2)
+        for (int i = 0; i < AURA_MAX; i++)
+            Stats->Aura.Type[i].Active = false;
     
     // Cap Level
     if (Stats->Level < 1)
@@ -1230,7 +1220,6 @@ acscript bool Repulse(SkillLevelInfo *SkillLevel, void *Data)
 acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
 {
     int PlayerNum = PlayerNumber();
-    int AuraType;
     
     SetActivatorToTarget(Players(PlayerNum).TID);
     
@@ -1251,45 +1240,32 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
         return false;
     };
     
-    // Refund - If the target doesn't have an Aura or has a Shadow Aura
-    if (Stats->Aura == 0 || (SkillLevel->CurrentLevel < 2 && Stats->Aura == 10))
+    // Refund - If the target doesn't have an Aura
+    if (!MonsterHasAura(Stats))
     {
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
     
-    // Get Aura type
-    AuraType = Stats->Aura - 1;
-    
-    // Remove Aura from monster
-    Stats->Aura = 0;
-    SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle);
-    
-    SetActivator(Players(PlayerNum).TID);
-    
-    // Apply Aura to player
-    if (AuraType == 10 - 1) // This really needs an enum, srsly
-    {
-        for (int i = 0; i < AURA_MAX; i++)
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Stats->Aura.Type[i].Active)
         {
+            // Transfer
+            Players(PlayerNum).Aura.Type[i].Active = true;
+            
+            // Determine Level
             int Level = Players(PlayerNum).Energy / 25 + 1;
             if (Level > Skills[2][i].MaxLevel)
                 Level = Skills[2][i].MaxLevel;
+            Players(PlayerNum).Aura.Type[i].Level = Level;
             
-            Player.Aura[i] = true;
-            Player.AuraLevel[i] = Level;
+            // Remove from enemy
+            Stats->Aura.Type[i].Active = false;
+            SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle);
         };
-    }
-    else
-    {
-        int Level = Players(PlayerNum).Energy / 25 + 1;
-        if (Level > Skills[2][AuraType].MaxLevel)
-            Level = Skills[2][AuraType].MaxLevel;
-        
-        Player.Aura[AuraType] = true;
-        Player.AuraLevel[AuraType] = Level;
-    };
-    Player.AuraTimer += 30 + (int)((fixed)Stats->Energy * 0.57) * 35;
+    
+    // Add Time
+    Players(PlayerNum).Aura.Time += Stats->Aura.Time;
     
     ActivatorSound("skills/aurasteal", 127);
     return true;
@@ -1297,7 +1273,7 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
 {
-    str[] SoulTypes =
+    static str[SOUL_MAX] SoulTypes =
     {
         "DRPGSoulRed";
         "DRPGSoulGreen";
@@ -1308,11 +1284,9 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
         "DRPGSoulOrange";
         "DRPGSoulDarkBlue";
         "DRPGSoulYellow";
-        "DRPGSoulBlack";
     };
     
     int PlayerNum = PlayerNumber();
-    int SoulTID;
     int UniqueMonsterTID = UniqueTID();
     int RealMonsterTID;
     int BeforeHealthAmount;
@@ -1339,8 +1313,8 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
         return false;
     };
     
-    // Refund - If the target has a Shadow Aura, is a boss or can never have an aura to begin with
-    if (Stats->Aura == 10 || Stats->Flags & MF_BOSS || Stats->Flags & MF_NOAURA || CheckFlag(0, "BOSS"))
+    // Refund - If the target is a boss or can never have an aura to begin with
+    if (Stats->Flags & MF_BOSS || Stats->Flags & MF_NOAURA || CheckFlag(0, "BOSS"))
     {
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
@@ -1363,13 +1337,7 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     
     BeforeHealthAmount = GetActorProperty(0, APROP_Health);
     
-    /* Damage Enemy (old method)
-    SetActivator(Players(PlayerNum).TID);
-    Thing_Damage2(UniqueMonsterTID, LeechAmount, "LifeSteal");
-    SetActivator(UniqueMonsterTID);
-    */
-    
-    // Damage Enemy (current method)
+    // Damage Enemy
     SetActivator(Players(PlayerNum).TID);
     SetActorProperty(UniqueMonsterTID, APROP_Health, GetActorProperty(UniqueMonsterTID, APROP_Health) - LeechAmount);
     SetActivator(UniqueMonsterTID);
@@ -1380,9 +1348,18 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     
     LeechAmount = BeforeHealthAmount - AfterHealthAmount; // Only heal based on how much we *actually* took
     
-    // Drop the Soul and apply the stat to the uservar
+    // Drop the Soul
     if (GetActorProperty(0, APROP_Health) <= 0)
-        SoulTID = DropMonsterItem(PlayerNum, 0, SoulTypes[(Stats->Aura > 0 ? Stats->Aura - 1 : Random(0, SOUL_MAX - 1))], 256)
+    {
+        if (MonsterHasAura(Stats))
+        {
+            for (int i = 0; i < AURA_MAX; i++)
+                if (Stats->Aura.Type[i].Active)
+                    DropMonsterItem(PlayerNum, 0, SoulTypes[i], 256);
+        }
+        else
+            DropMonsterItem(PlayerNum, 0, SoulTypes[Random(0, SOUL_MAX - 1)], 256);
+    }
     else if (AllowsXP) // Stats->Flags &= ~MF_NOXP; // TODO: Notify DavidPH that this doesn't work
         Stats->Flags &= ~0x02;
     
@@ -1807,7 +1784,7 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
     
     // Count Credits
     for (int i = 0; i < Player.DropTID.Position; i++)
-        if (StartsWith(GetActorClass(TID[i]), "DRPGCredits"))
+        if (ThingCount(0, TID[i]) > 0 && StartsWith(GetActorClass(TID[i]), "DRPGCredits"))
         {
             if (GetActorClass(TID[i]) == "DRPGCredits1")
                 CreditCount++;
@@ -2034,10 +2011,14 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript void RemoveAura()
 {
-    for (int i = 0; i < AURA_MAX; i++)
-        Player.Aura[i] = false;
+    Player.Aura.Time = 0;
+    Player.Aura.Team = false;
     
-    Player.AuraTimer = 0;
+    for (int i = 0; i < AURA_MAX; i++)
+    {
+        Player.Aura.Type[i].Active = false;
+        Player.Aura.Type[i].Level = 0;
+    };
 };
 
 acscript void ClearStatusEffects()
@@ -2081,24 +2062,13 @@ function int ScaleEPCost(int Cost)
     ScaleCost = (fixed)Cost * GetCVarFixed("drpg_skill_costscale");
     
     // Aura Multiplier
-    ScaleCost *= 1.0 + Player.AuraCostMult;
+    ScaleCost *= 1.0 + Player.Aura.CostMult;
     
     return ScaleCost;
 };
 
 function void CheckSkills()
 {
-    // Aura-related vars to save typing :P
-    fixed LuckMult = 1;
-    fixed X = GetActorX(0);
-    fixed Y = GetActorY(0);
-    fixed Z = GetActorZ(0);
-    int Angle = GetActorAngle(0) * 256;
-    int AmmoRegenMult = 1;
-    bool Shadow = (Player.Aura[AURA_RED] && Player.Aura[AURA_GREEN] && Player.Aura[AURA_WHITE] &&
-                   Player.Aura[AURA_PINK] && Player.Aura[AURA_BLUE] && Player.Aura[AURA_PURPLE] &&
-                   Player.Aura[AURA_ORANGE] && Player.Aura[AURA_DARKBLUE] && Player.Aura[AURA_YELLOW]);
-    
     // Reset the Skill multiplier from the Blue Aura and Energy Augmentation
     Player.SkillCostMult = 1.0;
     
@@ -2108,219 +2078,6 @@ function void CheckSkills()
             Player.SkillCostMult = 0.75
         else if (Player.Augs.Level[AUG_ENERGY] >= 5)
             Player.SkillCostMult = 0.5;
-            
-    // Team Aura Handling
-    if (InMultiplayer && Player.AuraTimer > 0)
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            // Skip yourself
-            if (Player.TID == Players(i).TID) continue;
-            
-            if (Distance(Player.TID, Players(i).TID) <= Player.AuraRange)
-            {
-                Players(i).TeamAura = true;
-                
-                for (int j = 0; j < AURA_MAX; j++)
-                    if (Player.Aura[j])
-                    {
-                        Players(i).Aura[j] = Player.Aura[j];
-                        Players(i).AuraLevel[j] = Player.AuraLevel[j];
-                    };
-            }
-            else
-                Players(i).TeamAura = false;
-        };
-    
-    // Aura handling
-    if (Player.AuraTimer > 0 || Player.TeamAura)
-    {
-        // Red Aura
-        if (Player.Aura[AURA_RED])
-            if (Player.SoulActive[SOUL_RED])
-                GiveInventory("DRPGRedAuraDamage6", 1)
-            else if (Player.AuraLevel[AURA_RED] >= 1)
-                GiveInventory(StrParam("DRPGRedAuraDamage%d\n", Player.AuraLevel[AURA_RED]), 1);
-        
-        // Green Aura
-        if (Player.Aura[AURA_GREEN])
-        {
-            if (Player.AuraLevel[AURA_GREEN] == 1)
-                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
-            if (Player.AuraLevel[AURA_GREEN] == 2)
-                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.5;
-            if (Player.AuraLevel[AURA_GREEN] >= 3 || Player.SoulActive[SOUL_GREEN])
-            {
-                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
-                GiveInventory("DRPGGreenAuraIronFeet", 1);
-            };
-        };
-        
-        // White Aura
-        if (Player.Aura[AURA_WHITE])
-        {
-            if (Player.AuraLevel[AURA_WHITE] >= 2 || Player.SoulActive[SOUL_WHITE])
-            {
-                if (Player.Combo == 0) Player.Combo++;
-                Player.ComboTimer = COMBO_MAX - 1;
-            };
-            if (Player.AuraLevel[AURA_WHITE] == 3)
-                if ((Timer() % (35 * 4)) == 1)
-                    Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
-            if (Player.AuraLevel[AURA_WHITE] >= 4 || Player.SoulActive[SOUL_WHITE])
-                if ((Timer() % (35 * 2)) == 1)
-                    Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
-        };
-        
-        // Pink Aura
-        if (Player.Aura[AURA_PINK])
-            if (Player.AuraLevel[AURA_PINK] >= 2 || Player.SoulActive[SOUL_PINK])
-                GiveInventory("DRPGPinkAuraDrain", 1);
-        
-        // Blue Aura
-        if (Player.Aura[AURA_BLUE])
-        {
-            if (Player.AuraLevel[AURA_BLUE] == 1)
-                Player.SkillCostMult /= 1.33;
-            if (Player.AuraLevel[AURA_BLUE] == 2)
-                Player.SkillCostMult /= 2;
-            if (Player.AuraLevel[AURA_BLUE] >= 3 || Player.SoulActive[SOUL_BLUE])
-                Player.SkillCostMult /= 4;
-        };
-        
-        // Purple Aura
-        if (Player.Aura[AURA_PURPLE])
-        {
-            if (Player.AuraLevel[AURA_PURPLE] == 1)
-            {
-                Player.HPAmount *= 2;
-                Player.EPAmount *= 2;
-            };
-            if (Player.AuraLevel[AURA_PURPLE] == 2)
-            {
-                Player.HPAmount *= 3;
-                Player.EPAmount *= 3;
-            };
-            if (Player.AuraLevel[AURA_PURPLE] == 3)
-            {
-                Player.HPAmount *= 4;
-                Player.EPAmount *= 4;
-            };
-            if (Player.AuraLevel[AURA_PURPLE] >= 4 || Player.SoulActive[SOUL_PURPLE])
-            {
-                Player.HPAmount *= 4;
-                Player.EPAmount *= 4;
-                Player.HPTime /= 2;
-                Player.EPTime /= 2;
-            };
-        };
-        
-        // Orange Aura
-        if (Player.Aura[AURA_ORANGE])
-        {
-            if (Player.AuraLevel[AURA_ORANGE] >= 1 || Player.SoulActive[SOUL_ORANGE])
-                Player.Speed *= 2;
-            if (Player.AuraLevel[AURA_ORANGE] >= 2 || Player.SoulActive[SOUL_ORANGE])
-                Player.JumpHeight *= 2;
-            if (Player.AuraLevel[AURA_ORANGE] >= 3 || Player.SoulActive[SOUL_ORANGE])
-                Player.WeaponSpeed = 100;
-        };
-
-        // Dark Blue Aura
-        if (Player.Aura[AURA_DARKBLUE])
-        {
-            if (Player.AuraLevel[AURA_DARKBLUE] == 5)
-                AmmoRegenMult = 2;
-            if (Player.AuraLevel[AURA_DARKBLUE] >= 6 || Player.SoulActive[SOUL_DARKBLUE])
-                AmmoRegenMult = 4;
-            if (Player.AuraLevel[AURA_DARKBLUE] >= 1 || Player.SoulActive[SOUL_DARKBLUE])
-                if ((Timer() % (35 / 2)) == 0)
-                    GiveInventory("Clip", AmmoRegenMult);
-            if (Player.AuraLevel[AURA_DARKBLUE] >= 2 || Player.SoulActive[SOUL_DARKBLUE])
-                if ((Timer() % 35) == 1)
-                    GiveInventory("Shell", AmmoRegenMult);
-            if (Player.AuraLevel[AURA_DARKBLUE] >= 3 || Player.SoulActive[SOUL_DARKBLUE])
-                if ((Timer() % (35 * 2)) == 0)
-                    GiveInventory("RocketAmmo", AmmoRegenMult);
-            if (Player.AuraLevel[AURA_DARKBLUE] >= 4 || Player.SoulActive[SOUL_DARKBLUE])
-                if ((Timer() % (35 / 2)) == 0)
-                    GiveInventory("Cell", AmmoRegenMult);
-            if (Player.AuraLevel[AURA_DARKBLUE] >= 7 || Player.SoulActive[SOUL_DARKBLUE])
-                GiveInventory("DRPGDarkBlueAuraInfiniteAmmo", 1);
-        };
-        
-        // Yellow Aura
-        if (Player.Aura[AURA_YELLOW])
-        {
-            if ((Timer() % (35 * (6 - Player.AuraLevel[AURA_YELLOW]))) == 1)
-                GiveInventory("DRPGCredits", (Player.RankLevel + 1));
-            if (Player.AuraLevel[AURA_YELLOW] == 1)
-                LuckMult = 1.25;
-            if (Player.AuraLevel[AURA_YELLOW] == 2)
-                LuckMult = 1.5;
-            if (Player.AuraLevel[AURA_YELLOW] == 3)
-                LuckMult = 2;
-            if (Player.AuraLevel[AURA_YELLOW] == 4)
-                LuckMult = 4;
-            if (Player.AuraLevel[AURA_YELLOW] >= 5 || Player.SoulActive[SOUL_YELLOW])
-                LuckMult = 8;
-            
-            Player.HealthChance *= LuckMult;
-            Player.EPChance *= LuckMult;
-            Player.ArmorChance *= LuckMult;
-            Player.PowerupChance *= LuckMult;
-            Player.WeaponChance *= LuckMult;
-            Player.TokenChance *= LuckMult;
-            Player.AugChance *= LuckMult;
-            Player.ShieldChance *= LuckMult;
-            Player.StimChance *= LuckMult;
-        };
-        
-        // Spawn Aura FX
-        if (Player.Aura[AURA_RED] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
-            SpawnAura(Player.TID, AURA_RED + 1, false);
-        if (Player.Aura[AURA_GREEN] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
-            SpawnAura(Player.TID, AURA_GREEN + 1, false);
-        if (Player.Aura[AURA_WHITE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
-            SpawnAura(Player.TID, AURA_WHITE + 1, false);
-        if (Player.Aura[AURA_PINK] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
-            SpawnAura(Player.TID, AURA_PINK + 1, false);
-        if (Player.Aura[AURA_BLUE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
-            SpawnAura(Player.TID, AURA_BLUE + 1, false);
-        if (Player.Aura[AURA_PURPLE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
-            SpawnAura(Player.TID, AURA_PURPLE + 1, false);
-        if (Player.Aura[AURA_ORANGE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
-            SpawnAura(Player.TID, AURA_ORANGE + 1, false);
-        if (Player.Aura[AURA_DARKBLUE] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
-            SpawnAura(Player.TID, AURA_DARKBLUE + 1, false);
-        if (Player.Aura[AURA_YELLOW] && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
-            SpawnAura(Player.TID, AURA_YELLOW + 1, false);
-        if (Shadow)
-            SpawnAura(Player.TID, AURA_MAX + 1, false);
-    };
-    
-    // Decrease Aura Timer
-    for (int i = 0; i < AURA_MAX; i++)
-        if (Player.AuraTimer > 0 && Player.Aura[i])
-            if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
-            {
-                Player.AuraTimer--;
-                break;
-            };
-    
-    // Decrease Aura Cost Multiplier
-    if (Player.AuraCostMult > 0)
-        if ((Timer() % (35 * (30 + (GameSkill() * 5)))) == 0)
-            Player.AuraCostMult -= 0.1;
-    
-    // Reset Aura and Soul States
-    if (!Player.TeamAura)
-        for (int i = 0; i < AURA_MAX; i++)
-            if (Player.AuraTimer <= 0)
-            {
-                Player.Aura[i] = false;
-                Player.AuraLevel[i] = 0;
-                Player.SoulActive[i] = false;
-            };
     
     // Summoned Monsters Handling
     for (int i = 0; i < MAX_SUMMONS; i++)
@@ -2349,5 +2106,245 @@ function void CheckSkills()
             GiveInventory("DRPGTimeFreezerQuick", 1);
         
         BulletTimeTimer--;
+    };
+};
+
+function void CheckAuras()
+{
+    fixed LuckMult = 1;
+    fixed X = GetActorX(0);
+    fixed Y = GetActorY(0);
+    fixed Z = GetActorZ(0);
+    int Angle = GetActorAngle(0) * 256;
+    int AmmoRegenMult = 1;
+    bool Shadow = PlayerHasShadowAura(PlayerNumber());
+    
+    // Team Aura Handling
+    if (InMultiplayer && Player.Aura.Time > 0)
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Skip yourself
+            if (Player.TID == Players(i).TID) continue;
+            
+            if (Distance(Player.TID, Players(i).TID) <= Player.Aura.Range)
+            {
+                Players(i).Aura.Team = true;
+                
+                for (int j = 0; j < AURA_MAX; j++)
+                    if (Player.Aura.Type[j].Active)
+                        Players(i).Aura.Type[j] = Player.Aura.Type[j];
+            }
+            else
+                Players(i).Aura.Team = false;
+        };
+    
+    // TEEM-AU5 Shield Accessory Handling
+    if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_DATAURA && Player.Shield.Active)
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            for (int j = 0; j < AURA_MAX; j++)
+                if (Player.Aura.Type[j].Active && Players(i).Aura.Type[j].Active)
+                {
+                    Players(i).Aura.DefenseBoost = true;
+                    break;
+                };
+    if (Player.Aura.DefenseBoost)
+    {
+        Player.DamageFactor += 0.2;
+        Player.Aura.DefenseBoost = false;
+    };
+    
+    // Aura handling
+    if (Player.Aura.Time > 0 || Player.Aura.Team)
+    {
+        // Red Aura
+        if (Player.Aura.Type[AURA_RED].Active)
+            if (Player.SoulActive[SOUL_RED])
+                GiveInventory("DRPGRedAuraDamage6", 1)
+            else if (Player.Aura.Type[AURA_RED].Level >= 1)
+                GiveInventory(StrParam("DRPGRedAuraDamage%d\n", Player.Aura.Type[AURA_RED].Level), 1);
+        
+        // Green Aura
+        if (Player.Aura.Type[AURA_GREEN].Active)
+        {
+            if (Player.Aura.Type[AURA_GREEN].Level == 1)
+                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
+            if (Player.Aura.Type[AURA_GREEN].Level == 2)
+                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.5;
+            if (Player.Aura.Type[AURA_GREEN].Level >= 3 || Player.SoulActive[SOUL_GREEN])
+            {
+                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
+                GiveInventory("DRPGGreenAuraIronFeet", 1);
+            };
+        };
+        
+        // White Aura
+        if (Player.Aura.Type[AURA_WHITE].Active)
+        {
+            if (Player.Aura.Type[AURA_WHITE].Level >= 2 || Player.SoulActive[SOUL_WHITE])
+            {
+                if (Player.Combo == 0) Player.Combo++;
+                Player.ComboTimer = COMBO_MAX - 1;
+            };
+            if (Player.Aura.Type[AURA_WHITE].Level == 3)
+                if ((Timer() % (35 * 4)) == 1)
+                    Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
+            if (Player.Aura.Type[AURA_WHITE].Level >= 4 || Player.SoulActive[SOUL_WHITE])
+                if ((Timer() % (35 * 2)) == 1)
+                    Player.XPGained += XPTable[Player.Level] / 100 / (Player.Level + 1);
+        };
+        
+        // Pink Aura
+        if (Player.Aura.Type[AURA_PINK].Active)
+            if (Player.Aura.Type[AURA_PINK].Level >= 2 || Player.SoulActive[SOUL_PINK])
+                GiveInventory("DRPGPinkAuraDrain", 1);
+        
+        // Blue Aura
+        if (Player.Aura.Type[AURA_BLUE].Active)
+        {
+            if (Player.Aura.Type[AURA_BLUE].Level == 1)
+                Player.SkillCostMult /= 1.33;
+            if (Player.Aura.Type[AURA_BLUE].Level == 2)
+                Player.SkillCostMult /= 2;
+            if (Player.Aura.Type[AURA_BLUE].Level >= 3 || Player.SoulActive[SOUL_BLUE])
+                Player.SkillCostMult /= 4;
+        };
+        
+        // Purple Aura
+        if (Player.Aura.Type[AURA_PURPLE].Active)
+        {
+            if (Player.Aura.Type[AURA_PURPLE].Level == 1)
+            {
+                Player.HPAmount *= 2;
+                Player.EPAmount *= 2;
+            };
+            if (Player.Aura.Type[AURA_PURPLE].Level == 2)
+            {
+                Player.HPAmount *= 3;
+                Player.EPAmount *= 3;
+            };
+            if (Player.Aura.Type[AURA_PURPLE].Level == 3)
+            {
+                Player.HPAmount *= 4;
+                Player.EPAmount *= 4;
+            };
+            if (Player.Aura.Type[AURA_PURPLE].Level >= 4 || Player.SoulActive[SOUL_PURPLE])
+            {
+                Player.HPAmount *= 4;
+                Player.EPAmount *= 4;
+                Player.HPTime /= 2;
+                Player.EPTime /= 2;
+            };
+        };
+        
+        // Orange Aura
+        if (Player.Aura.Type[AURA_ORANGE].Level)
+        {
+            if (Player.Aura.Type[AURA_ORANGE].Level >= 1 || Player.SoulActive[SOUL_ORANGE])
+                Player.Speed *= 2;
+            if (Player.Aura.Type[AURA_ORANGE].Level >= 2 || Player.SoulActive[SOUL_ORANGE])
+                Player.JumpHeight *= 2;
+            if (Player.Aura.Type[AURA_ORANGE].Level >= 3 || Player.SoulActive[SOUL_ORANGE])
+                Player.WeaponSpeed = 100;
+        };
+
+        // Dark Blue Aura
+        if (Player.Aura.Type[AURA_DARKBLUE].Active)
+        {
+            if (Player.Aura.Type[AURA_DARKBLUE].Level == 5)
+                AmmoRegenMult = 2;
+            if (Player.Aura.Type[AURA_DARKBLUE].Level >= 6 || Player.SoulActive[SOUL_DARKBLUE])
+                AmmoRegenMult = 4;
+            if (Player.Aura.Type[AURA_DARKBLUE].Level >= 1 || Player.SoulActive[SOUL_DARKBLUE])
+                if ((Timer() % (35 / 2)) == 0)
+                    GiveInventory("Clip", AmmoRegenMult);
+            if (Player.Aura.Type[AURA_DARKBLUE].Level >= 2 || Player.SoulActive[SOUL_DARKBLUE])
+                if ((Timer() % 35) == 1)
+                    GiveInventory("Shell", AmmoRegenMult);
+            if (Player.Aura.Type[AURA_DARKBLUE].Level >= 3 || Player.SoulActive[SOUL_DARKBLUE])
+                if ((Timer() % (35 * 2)) == 0)
+                    GiveInventory("RocketAmmo", AmmoRegenMult);
+            if (Player.Aura.Type[AURA_DARKBLUE].Level >= 4 || Player.SoulActive[SOUL_DARKBLUE])
+                if ((Timer() % (35 / 2)) == 0)
+                    GiveInventory("Cell", AmmoRegenMult);
+            if (Player.Aura.Type[AURA_DARKBLUE].Level >= 7 || Player.SoulActive[SOUL_DARKBLUE])
+                GiveInventory("DRPGDarkBlueAuraInfiniteAmmo", 1);
+        };
+        
+        // Yellow Aura
+        if (Player.Aura.Type[AURA_YELLOW].Active)
+        {
+            if ((Timer() % (35 * (6 - Player.Aura.Type[AURA_YELLOW].Level))) == 1)
+                GiveInventory("DRPGCredits", (Player.RankLevel + 1));
+            if (Player.Aura.Type[AURA_YELLOW].Level == 1)
+                LuckMult = 1.25;
+            if (Player.Aura.Type[AURA_YELLOW].Level == 2)
+                LuckMult = 1.5;
+            if (Player.Aura.Type[AURA_YELLOW].Level == 3)
+                LuckMult = 2;
+            if (Player.Aura.Type[AURA_YELLOW].Level == 4)
+                LuckMult = 4;
+            if (Player.Aura.Type[AURA_YELLOW].Level >= 5 || Player.SoulActive[SOUL_YELLOW])
+                LuckMult = 8;
+            
+            Player.HealthChance *= LuckMult;
+            Player.EPChance *= LuckMult;
+            Player.ArmorChance *= LuckMult;
+            Player.PowerupChance *= LuckMult;
+            Player.WeaponChance *= LuckMult;
+            Player.TokenChance *= LuckMult;
+            Player.AugChance *= LuckMult;
+            Player.ShieldChance *= LuckMult;
+            Player.StimChance *= LuckMult;
+        };
+        
+        // Spawn Aura FX
+        if (Player.Aura.Type[AURA_RED].Active && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_RED + 1, false);
+        if (Player.Aura.Type[AURA_GREEN].Active && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_GREEN + 1, false);
+        if (Player.Aura.Type[AURA_WHITE].Active && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_WHITE + 1, false);
+        if (Player.Aura.Type[AURA_PINK].Active && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_PINK + 1, false);
+        if (Player.Aura.Type[AURA_BLUE].Active && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_BLUE + 1, false);
+        if (Player.Aura.Type[AURA_PURPLE].Active && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_PURPLE + 1, false);
+        if (Player.Aura.Type[AURA_ORANGE].Active && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_ORANGE + 1, false);
+        if (Player.Aura.Type[AURA_DARKBLUE].Active && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_DARKBLUE + 1, false);
+        if (Player.Aura.Type[AURA_YELLOW].Active && !(GetCVar("drpg_simple_auras") == 0 && Shadow))
+            SpawnAura(Player.TID, AURA_YELLOW + 1, false);
+        if (Shadow)
+            SpawnAura(Player.TID, AURA_MAX + 1, false);
+    };
+    
+    // Decrease Aura Timer
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Player.Aura.Time > 0 && Player.Aura.Type[i].Active)
+            if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
+            {
+                Player.Aura.Time--;
+                break; // Remove this for Yholl-style behavior, still contemplating
+            };
+    
+    // Decrease Aura Cost Multiplier
+    if (Player.Aura.CostMult > 0)
+        if ((Timer() % (35 * (30 + (GameSkill() * 5)))) == 0)
+            Player.Aura.CostMult -= 0.1;
+    
+    // Reset Aura and Soul States
+    if (Player.Aura.Time <= 0)
+    {
+        Player.Aura.Team = false;
+        
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Player.Aura.Time <= 0)
+            {
+                Player.Aura.Type[i].Active = false;
+                Player.Aura.Type[i].Level = 0;
+                Player.SoulActive[i] = false;
+            };
     };
 };

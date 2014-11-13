@@ -1559,3 +1559,69 @@ actor DRPGLightningPuff : BulletPuff
         Stop
     }
 }
+
+// HAET-60
+actor DRPGShieldHateHateHateDefense : PowerProtection
+{
+    DamageFactor "Melee", 0.01
+    Powerup.Duration -60
+}
+
+// IKU-N7
+actor DRPGShieldStaticParticle : DRPGShieldLightningParticle
+{
+    Scale 0.05
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_SetUserVar("user_parttime", 20)
+        // TNT1 A 0 A_ChangeVelocity(FRandom(-0.33, 0.33),FRandom(-0.33, 0.33),FRandom(-0.33, 0.33))
+    DecayLoop:
+        SLGT A 1 Bright
+        TNT1 A 0 A_ChangeVelocity(0,0,-0.025)
+        TNT1 A 0 A_SetScale(0.05 - (0.05 * Cos(user_parttime * 90.0 / 20.0)))
+        TNT1 A 0 A_SetUserVar("user_parttime", user_parttime - 1)
+        TNT1 A 0 A_JumpIf(user_parttime <= 0, "Death")
+        Loop
+    }
+}
+
+actor DRPGStaticChargeShieldExplosion
+{
+    Projectile
+    DamageType "Lightning"
+    Radius 8
+    Height 8
+    +FORCEPAIN
+    Speed 0
+    ReactionTime 6
+    SeeSound "shield/lightning"
+    States
+    {
+    Spawn:
+        TNT1 A 3 A_Explode(3, 128, 0, true, 128)
+        TNT1 A 0 A_SpawnItemEx("DRPGShieldStaticParticle", Random(-64,64), Random(-64,64), Random(-64,64), 0, 0, 0, 0)
+        TNT1 A 0 A_SpawnItemEx("DRPGShieldStaticParticle", Random(-64,64), Random(-64,64), Random(-64,64), 0, 0, 0, 0)
+        TNT1 A 0 A_SpawnItemEx("DRPGShieldStaticParticle", Random(-64,64), Random(-64,64), Random(-64,64), 0, 0, 0, 0)
+        TNT1 A 0 A_CountDown
+        Loop
+    Death:
+        TNT1 A 1
+        Stop
+    }
+}
+
+actor DRPGStaticChargeShieldLargeExplosion : DRPGStaticChargeShieldExplosion
+{
+    ReactionTime 12
+    States
+    {
+    Spawn:
+        TNT1 A 3 A_Explode(6, 256, 0, true, 256)
+        TNT1 A 0 A_SpawnItemEx("DRPGShieldStaticParticle", Random(-128,128), Random(-128,128), Random(-128,128), 0, 0, 0, 0)
+        TNT1 A 0 A_SpawnItemEx("DRPGShieldStaticParticle", Random(-128,128), Random(-128,128), Random(-128,128), 0, 0, 0, 0)
+        TNT1 A 0 A_SpawnItemEx("DRPGShieldStaticParticle", Random(-128,128), Random(-128,128), Random(-128,128), 0, 0, 0, 0)
+        TNT1 A 0 A_CountDown
+        Loop
+    }
+}

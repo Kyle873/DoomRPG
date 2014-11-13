@@ -4,6 +4,7 @@
 #include "Map.dh"
 #include "Mission.dh"
 #include "Monsters.dh"
+#include "Namegen.dh"
 #include "Popoffs.dh"
 #include "Shield.dh"
 #include "Stats.dh"
@@ -183,7 +184,12 @@ function int NewMonsterID()
     Monsters[CurrentID].Reinforcement = false;
     Monsters[CurrentID].Target = 0;
     Monsters[CurrentID].Level = 0;
-    Monsters[CurrentID].Aura = 0;
+    Monsters[CurrentID].Aura.Time = 0;
+    for (int i = 0; i < AURA_MAX; i++)
+    {
+        Monsters[CurrentID].Aura.Type[i].Active = false;
+        Monsters[CurrentID].Aura.Type[i].Level = 0;
+    };
     Monsters[CurrentID].Threat = 0;
     Monsters[CurrentID].Strength = 0;
     Monsters[CurrentID].Defense = 0;
@@ -296,7 +302,7 @@ acscript void MonsterSet(int Level, int Aura, int Flags)
     if (Level > 0)
         Stats->Level = Level;
     if (Aura > 0)
-        Stats->Aura = Aura;
+        Stats->Aura.Type[Aura - 1].Active = true;
     if (Flags > 0)
         Stats->Flags = Flags;
     
@@ -347,7 +353,6 @@ acscript void MonsterDump()
         
         Log("\cd===== MONSTER STATS =====\n");
         Log(" Level: %d\n", Stats->Level);
-        Log(" Aura: %d\n", Stats->Aura);
         Log(" Threat: %d\n", Stats->Threat);
         Log(" Spawn Health: %d\n", Stats->SpawnHealth);
         Log(" Health Max: %d\n", Stats->HealthMax);
@@ -360,6 +365,12 @@ acscript void MonsterDump()
         Log(" \ciAgility: %d\n", Stats->Agility);
         Log(" \chCapacity: %d\n", Stats->Capacity);
         Log(" \ckLuck: %d\n", Stats->Luck);
+        
+        Log("\cd===== MONSTER AURAS =====\n");
+        Log(" Time: %s\n", FormatTime(Stats->Aura.Time));
+        for (int i = 0; i < AURA_MAX; i++) // TODO: Make this prettier
+            if (Stats->Aura.Type[i].Active)
+                Log(" Active: %d\n", i);
     };
 };
 
@@ -385,7 +396,6 @@ script void MonsterInitStats(int StatFlags)
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     int MonsterLevel = Stats->Level;
-    int MonsterAura = Stats->Aura;
     int MonsterThreat = Stats->Threat;
     fixed MonsterSpeed = Stats->Speed;
     int MonsterStrength = Stats->Strength;
@@ -398,7 +408,6 @@ script void MonsterInitStats(int StatFlags)
     int MonsterLuck = Stats->Luck;
     int NumPlayers;
     int PlayerAvgLevel;
-    int AuraRandomizer;
     int[8] StatEffect;
     
     // Add up the levels of all the players in the game
@@ -494,40 +503,52 @@ script void MonsterInitStats(int StatFlags)
         MonsterAgility = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
         MonsterCapacity = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
         MonsterLuck = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        
+        // Map Event - RAINBOWS!
+        if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
+            MonsterCapacity *= Random(2, 4);
     };
     
     // Apply Aura
+    // TODO: A real curve
     if (!GetActorProperty(0, APROP_Friendly) && !(Stats->Flags & MF_NOAURA) && !StatFlags)
     {
         int AuraCurve = GetCVar("drpg_aura_curve");
-        int AuraMin = -1000 + MonsterEnergy + AuraCurve;
-        if (AuraMin > 0) AuraMin = 0;
-        AuraRandomizer = Random(AuraMin, 10);
-        if (AuraRandomizer > 0)
-            MonsterAura = AuraRandomizer;
-        if (GetCVar("drpg_monster_shadows"))
-            MonsterAura = 10;
+        int AuraRange = -1000 + MonsterEnergy + AuraCurve;
         
-        if (CurrentLevel->Event == MAPEVENT_ALLAURAS)
-            MonsterAura = Random(1, 10)
-        else if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
-            MonsterCapacity *= Random(2, 4);
-        
-        // Monsters with an aura are *always* specialized in their primary stat
-        if (GetCVar("drpg_monster_specialize"))
+        // Run through and decide on which Auras it should have
+        for (int i = 0; i < AURA_MAX; i++)
         {
-            switch (MonsterAura)
+            int AuraPick = Random(AuraRange, AURA_MAX);
+            
+            // Map Event - All Auras
+            if (CurrentLevel->Event == MAPEVENT_ALLAURAS)
             {
-            case AURA_RED + 1:      StatEffect[STAT_STRENGTH] = 2;      break;
-            case AURA_GREEN + 1:    StatEffect[STAT_DEFENSE] = 2;       break;
-            case AURA_PINK + 1:     StatEffect[STAT_VITALITY] = 2;      break;
-            case AURA_BLUE + 1:     StatEffect[STAT_ENERGY] = 2;        break;
-            case AURA_PURPLE + 1:   StatEffect[STAT_REGENERATION] = 2;  break;
-            case AURA_ORANGE + 1:   StatEffect[STAT_AGILITY] = 2;       break;
-            case AURA_DARKBLUE + 1: StatEffect[STAT_CAPACITY] = 2;      break;
-            case AURA_YELLOW + 1:   StatEffect[STAT_LUCK] = 2;          break;
+                if (Random(0, 2) == 0)
+                    continue;
+                
+                AuraPick = 1;
             };
+            
+            if (AuraPick > 0)
+                Stats->Aura.Type[i].Active = true;
         };
+        
+        // Are You A Bad Enough Dude?
+        if (GetCVar("drpg_monster_shadows"))
+            for (int i = 0; i < AURA_MAX; i++)
+                Stats->Aura.Type[i].Active = true;
+        
+        // Monsters with auras are *always* specialized in their primary stat
+        // TODO: Check to make sure this is actually working
+        if (GetCVar("drpg_monster_specialize"))
+            for (int i = 0; i < AURA_MAX; i++)
+            {
+                if (i == AURA_WHITE) continue;
+                
+                if (Stats->Aura.Type[i].Active)
+                    StatEffect[STAT_STRENGTH] = 2;
+            };
     };
     
     if (GetCVar("drpg_monster_specialize"))
@@ -554,67 +575,53 @@ script void MonsterInitStats(int StatFlags)
     };
     
     // Apply the aura effects
-    switch (MonsterAura)
+    if (Stats->Aura.Type[AURA_RED].Active) // Red Aura - Strength
     {
-    case 1: // Red Aura - Strength
         MonsterStrength *= 2;
         GiveInventory("DRPGRedAuraGiver", 1);
-        break;
-    case 2: // Green Aura - Defense
-        MonsterDefense *= 2;
-        GiveInventory("DRPGGreenAuraGiver", 1);
-        break;
-    case 3: // White Aura - XP
-        MonsterLevel *= 2;
-        GiveInventory("DRPGWhiteAuraGiver", 1);
-        MonsterLevelupHandler();
-        break;
-    case 4: // Pink Aura - Vitality
-        MonsterVitality *= 2;
-        GiveInventory("DRPGPinkAuraGiver", 1);
-        break;
-    case 5: // Blue Aura - Energy
-        MonsterEnergy *= 2;
-        GiveInventory("DRPGBlueAuraGiver", 1);
-        MonsterEPDrainHandler();
-        break;
-    case 6: // Purple Aura - Regeneration
-        MonsterRegeneration *= 2;
-        break;
-    case 7: // Orange Aura - Agility
-        MonsterAgility *= 2;
-        GiveInventory("DRPGOrangeAuraGiver", 1);
-        break;
-    case 8: // Dark Blue Aura - Capacity
-        MonsterCapacity *= 2;
-        MonsterAmmoDrainHandler();
-        break;
-    case 9: // Yellow Aura - Luck
-        MonsterLuck *= 2;
-        MonsterMoneyDrainHandler();
-        break;
-    case 10: // Black Aura - Miniboss
-        MonsterLevel *= 2;
-        MonsterStrength *= 2;
-        MonsterDefense *= 2;
-        MonsterVitality *= 2;
-        MonsterEnergy *= 2;
-        MonsterRegeneration *= 2;
-        MonsterAgility *= 2;
-        MonsterCapacity *= 2;
-        MonsterLuck *= 2;
-        GiveInventory("DRPGRedAuraGiver", 1);
-        GiveInventory("DRPGGreenAuraGiver", 1);
-        GiveInventory("DRPGWhiteAuraGiver", 1);
-        GiveInventory("DRPGPinkAuraGiver", 1);
-        GiveInventory("DRPGBlueAuraGiver", 1);
-        GiveInventory("DRPGOrangeAuraGiver", 1);
-        MonsterLevelupHandler();
-        MonsterEPDrainHandler();
-        MonsterMoneyDrainHandler();
-        MonsterAmmoDrainHandler();
-        break;
     };
+    if (Stats->Aura.Type[AURA_GREEN].Active) // Green Aura - Defense
+    {
+        MonsterDefense *= 2;
+        GiveInventory("DRPGGreenAuraGiver", 1);
+    };
+    if (Stats->Aura.Type[AURA_WHITE].Active) // White Aura - XP
+    {
+        MonsterLevel *= 2;
+        GiveInventory("DRPGWhiteAuraGiver", 1);
+        MonsterLevelupHandler();
+    };
+    if (Stats->Aura.Type[AURA_PINK].Active) // Pink Aura - Vitality
+    {
+        MonsterVitality *= 2;
+        GiveInventory("DRPGPinkAuraGiver", 1);
+    };
+    if (Stats->Aura.Type[AURA_BLUE].Active) // Blue Aura - Energy
+    {
+        MonsterEnergy *= 2;
+        GiveInventory("DRPGBlueAuraGiver", 1);
+        MonsterEPDrainHandler();
+    };
+    if (Stats->Aura.Type[AURA_PURPLE].Active) // Purple Aura - Regeneration
+        MonsterRegeneration *= 2;
+    if (Stats->Aura.Type[AURA_ORANGE].Active) // Orange Aura - Agility
+    {
+        MonsterAgility *= 2;
+        GiveInventory("DRPGOrangeAuraGiver", 1);
+    };
+    if (Stats->Aura.Type[AURA_DARKBLUE].Active) // Dark Blue Aura - Capacity
+    {
+        MonsterCapacity *= 2;
+        MonsterAmmoDrainHandler();
+    };
+    if (Stats->Aura.Type[AURA_YELLOW].Active) // Yellow Aura - Luck
+    {
+        MonsterLuck *= 2;
+        MonsterMoneyDrainHandler();
+    };
+    
+    // Calculate Aura time
+    Stats->Aura.Time = (30 * 35) + (int)((fixed)MonsterEnergy * 0.57) * 35;
     
     // Cap Level and Stats
     CapMonsterStats(Stats);
@@ -627,7 +634,6 @@ script void MonsterInitStats(int StatFlags)
     if (!(StatFlags & SF_RECREATE))
     {
         Stats->Level = MonsterLevel;
-        Stats->Aura = MonsterAura;
         Stats->Speed = MonsterSpeed;
         Stats->Strength = MonsterStrength;
         Stats->Defense = MonsterDefense;
@@ -643,6 +649,14 @@ script void MonsterInitStats(int StatFlags)
     // Calculate Health
     Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
     SetActorProperty(0, APROP_Health, Stats->HealthMax);
+    
+    // Generate Name
+    // TODO: This is fucking hack central, make a MF_NAMGEN flag or something
+    if (!Stats->Named && (MonsterHasShadowAura(Stats) || GetActorPropertyString(0, APROP_Nametag) == "Marine" || GetActorPropertyString(0, APROP_Nametag) == "Heavy Marine" || GetActorPropertyString(0, APROP_Nametag) == "UAC Heavy Powersuit" || GetActorPropertyString(0, APROP_Nametag) == "UAC Heavy Powersuit Mk. II"))
+    {
+        SetActorPropertyString(0, APROP_Nametag, GenerateName(GetActorClass(0), GetActorPropertyString(0, APROP_Nametag)));
+        Stats->Named = true;
+    };
 };
 
 script void MonsterStatsHandler()
@@ -846,16 +860,24 @@ script void MonsterAuraDisplayHandler()
     if (GetActorProperty(0, APROP_Friendly) && GetActorProperty(0, APROP_MasterTID) > 0 && !EndsWith(GetActorPropertyString(0, APROP_Nametag), "Turret"))
         SpawnAura(0, 0, false);
     
-    // Black Aura Effects
-    if (Stats->Aura == 10)
+    // Spawn Aura
+    if (MonsterHasShadowAura(Stats))
+        SpawnAura(0, 10, false)
+    else
+    {
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Stats->Aura.Type[i].Active)
+                SpawnAura(0, i + 1, false);
+    };
+    
+    // Shadow Aura Effects
+    if (MonsterHasShadowAura(Stats))
+    {
         if (GetActorLightLevel(0) < 192)
             SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy)
         else
             SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle);
-    
-    // Spawn Aura
-    if (Stats->Aura)
-        SpawnAura(0, Stats->Aura, false);
+    };
     
     // Spawn Assassination Target
     if (Stats->Target > 0)
@@ -898,7 +920,7 @@ script void MonsterLevelupHandler()
     };
     
     // White and Shadow Aura monsters levelup monsters near them
-    if (Stats->Aura == 3 || Stats->Aura == 10)
+    if (Stats->Aura.Type[AURA_WHITE].Active)
         GiveInventory("DRPGMonsterLevelupGiver", 1);
     
     // Loop back to the top if the monster is max level
@@ -930,7 +952,7 @@ script void MonsterEPDrainHandler()
         goto Start;
     };
     
-    if (Stats->Aura != 5 && Stats->Aura != 10)
+    if (Stats->Aura.Type[AURA_BLUE].Active)
         return;
     
     for (int i = 0; i < MAX_PLAYERS; i++)
@@ -992,7 +1014,10 @@ script void MonsterRegenerationHandler()
         goto Start;
     };
     
-    long long RegenAmount = Stats->HealthMax * Stats->Regeneration;
+    if (Stats->Aura.Type[AURA_PURPLE].Active)
+        return;
+    
+    long long RegenAmount = (long long)Stats->HealthMax * (long long)Stats->Regeneration;
     RegenAmount /= 1000;
     if (RegenAmount > 2147483647) // INT_MAX
         RegenAmount = 2147483647;
@@ -1004,7 +1029,7 @@ script void MonsterRegenerationHandler()
     if (GetActorProperty(0, APROP_Health) > Stats->HealthMax)
         SetActorProperty(0, APROP_Health, Stats->HealthMax);
     
-    Delay(35 * (30 - (Stats->Aura == 6 ? 20 : 0)));
+    Delay(35 * (30 - (Stats->Aura.Type[AURA_PURPLE].Active ? 20 : 0)));
     goto Start;
 };
 
@@ -1026,7 +1051,7 @@ script void MonsterMoneyDrainHandler()
         goto Start;
     };
     
-    if (Stats->Aura != 9 && Stats->Aura != 10)
+    if (Stats->Aura.Type[AURA_YELLOW].Active)
         return;
     
     for (int i = 0; i < MAX_PLAYERS; i++)
@@ -1068,7 +1093,7 @@ script void MonsterAmmoDrainHandler()
         goto Start;
     };
     
-    if (Stats->Aura != 8 && Stats->Aura != 10)
+    if (Stats->Aura.Type[AURA_DARKBLUE].Active)
         return;
     
     for (int i = 0; i < MAX_PLAYERS; i++)
@@ -1184,15 +1209,13 @@ script void MonsterDeath()
         DropMod = 256;
     
     // Aura-Based XP/Rank Modifiers
-    if (Stats->Aura > 0 && Stats->Aura < 10) // All Auras except Black
-        RankAmount *= 2;
-    if (Stats->Aura == 3) // White
-        XPAmount *= 2;
-    if (Stats->Aura == 10) // Black
+    if (MonsterHasShadowAura(Stats))
     {
         XPAmount *= 2;
         RankAmount *= 4;
-    };
+    }
+    else if (Stats->Aura.Type[AURA_WHITE].Active)
+        XPAmount *= 2;
     
     // Drops
     if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && !GetCVar("drpg_monster_shadows"))
@@ -1200,71 +1223,51 @@ script void MonsterDeath()
         for (int i = 1; i <= DropAmount; i++)
         {
             // Aura Drops
-            switch (Stats->Aura)
+            if (Stats->Aura.Type[AURA_RED].Active) // Red Aura - Strength
             {
-            case 1: // Red Aura - Strength
                 DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", 128 + DropMod);
                 DropMonsterItem(Killer, DropTID, "DRPGVialStrength", 255);
-                break;
-            case 2: // Green Aura - Defense
+            };
+            if (Stats->Aura.Type[AURA_RED].Active) // Green Aura - Defense
+            {
                 DropMonsterItem(Killer, DropTID, "DRPGArmorDropper", 128 + DropMod);
                 DropMonsterItem(Killer, DropTID, "DRPGVialDefense", 255);
-                break;
-            case 3: // White Aura - XP
+            };
+            if (Stats->Aura.Type[AURA_RED].Active) // White Aura - XP
+            {
                 DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", 96 + DropMod);
                 DropMonsterItem(Killer, DropTID, "DRPGVialPotency", 255);
-                break;
-            case 4: // Pink Aura - Vitality
+            };
+            if (Stats->Aura.Type[AURA_RED].Active) // Pink Aura - Vitality
+            {
                 DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", 128 + DropMod);
                 DropMonsterItem(Killer, DropTID, "DRPGVialVitality", 255);
-                break;
-            case 5: // Blue Aura - Energy
+            };
+            if (Stats->Aura.Type[AURA_RED].Active) // Blue Aura - Energy
+            {
                 DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", 128 + DropMod);
                 DropMonsterItem(Killer, DropTID, "DRPGBigEPCapsule", 64 + DropMod);
                 DropMonsterItem(Killer, DropTID, "DRPGVialEnergy", 255);
-                break;
-            case 6: // Purple Aura - Regeneration
+            };
+            if (Stats->Aura.Type[AURA_RED].Active) // Purple Aura - Regeneration
+            {
                 DropMonsterItem(Killer, DropTID, "DRPGRegenSphere", 128 + DropMod);
                 DropMonsterItem(Killer, DropTID, "DRPGVialRegeneration", 255);
-                break;
-            case 7: // Orange Aura - Agility
+            };
+            if (Stats->Aura.Type[AURA_RED].Active) // Orange Aura - Agility
+            {
                 DropMonsterItem(Killer, DropTID, "DRPGTimeSphere", 64 + (DropMod / 2));
                 DropMonsterItem(Killer, DropTID, "DRPGVialAgility", 255);
-                break;
-            case 8: // Dark Blue Aura - Capacity
+            };
+            if (Stats->Aura.Type[AURA_RED].Active) // Dark Blue Aura - Capacity
+            {
                 DropMonsterItem(Killer, DropTID, "DRPGAmmoDropper", 128 + DropMod);
                 if (GetCVar("drpg_ext_doomrl"))
                     DropMonsterItem(Killer, DropTID, "RLModpackSpawner", 128 + DropMod);
                 DropMonsterItem(Killer, DropTID, "DRPGVialCapacity", 255);
-                break;
-            case 9: // Yellow Aura - Luck
-                DropMonsterItem(Killer, DropTID, "DRPGVialLuck", 255);
-                break;
-            case 10: // Black Aura - Miniboss
-                DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGArmorDropper", 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", 96 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGBigEPCapsule", 64 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGRegenSphere", 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGTimeSphere", 64 + (DropMod / 2));
-                DropMonsterItem(Killer, DropTID, "DRPGAmmoDropper", 128 + DropMod);
-                if (GetCVar("drpg_ext_doomrl"))
-                    DropMonsterItem(Killer, DropTID, "RLModpackSpawner", 128 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialStrength", 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialDefense", 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialAgility", 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialVitality", 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialEnergy", 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialRegeneration", 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialCapacity", 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialLuck", 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialPurifier", 255);
-                DropMonsterItem(Killer, DropTID, "DRPGVialPotency", 192 + DropMod);
-                DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", 256);
-                break;
             };
+            if (Stats->Aura.Type[AURA_RED].Active) // Yellow Aura - Luck
+                DropMonsterItem(Killer, DropTID, "DRPGVialLuck", 255);
             
             // Rare Vials
             DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", 8);
@@ -1304,8 +1307,18 @@ script void MonsterDeath()
         };
     };
     
-    if (Players(Killer).Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
-        AddRemoteShield(Players(Killer).TID, Stats->HealthMax / 4);
+    if (Players(Killer).Shield.Accessory)
+    {
+        switch (Players(Killer).Shield.Accessory->PassiveEffect)
+        {
+        case SHIELD_PASS_KILLSCHARGE:
+            AddRemoteShield(Players(Killer).TID, Stats->HealthMax / 4);
+            break;
+        case SHIELD_PASS_BLOODYSHIELDSOREAL:
+            Players(Killer).Shield.AccessoryBattery = 35 * 3;
+            break;
+        };
+    };
     
     // Drop Radiation Suits during the Environmental Hazard event
     if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
@@ -1409,9 +1422,9 @@ script void MonsterDeath()
     
     // [KS] We killed this monster now, so if an Arch-vile resurrects it, it doesn't count anymore to re-kill
     // TODO: Need to maybe make sure that for Kill Missions, we can't just gimp Arch-vile resurrection.
+    // TODO: Should we nuke an enemies Aura here, or leave it alone?
     Stats->Flags |= MF_NODROPS;
     Stats->Flags |= MF_NOXP;
-    Stats->Aura = 0;
     SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle); // In case of Shadow Aura
     Stats->Target = false;
     Stats->Reinforcement = false;
@@ -1622,14 +1635,16 @@ function int CalculateMonsterThreatLevel(MonsterStatsPtr Stats)
     Threat /= 800;
     
     // Auras
-    if (Stats->Aura > 0 && Stats->Aura < 9) // Normal Auras
-        Threat++
-    else if (Stats->Aura == 10) // Black Aura
-        Threat += 2;
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Stats->Aura.Type[i].Active)
+            Threat++;
     
     // Bosses
-    if (CheckFlag(0, "BOSS"))
+    if (CheckFlag(0, "BOSS") || Stats->Flags & MF_BOSS)
         Threat++;
+    /* TODO: MF_MEGABOSS
+    if (Stats->Flags & MF_MEGABOSS)
+        Threat++; */
     
     // DRLA
     if (GetCVar("drpg_ext_doomrl"))

@@ -2,7 +2,6 @@
 
 #include "HealthBars.dh"
 #include "Monsters.dh"
-#include "Namegen.dh"
 #include "Utils.dh"
 
 // Handles HUD Health Bars
@@ -32,23 +31,14 @@ script void HealthBars()
         bool IsPlayer = false;
         int CurrentHealth = GetActorProperty(0, APROP_Health);
         str Name = GetActorPropertyString(0, APROP_Nametag);
+        int AuraOffset = 0;
         int HealthPercent;
-        int Aura;
         str FillType;
-        str AuraType;
         int ID;
         int[13] PlayerStats;
         
         // Blank out the name if it is the same as the actor itself
         if (Name == GetActorClass(0)) Name = "";
-        
-        // Generate Name
-        if ((Stats->Aura == 10 || Name == "Marine" || Name == "Heavy Marine" || Name == "UAC Heavy Powersuit" || Name == "UAC Heavy Powersuit Mk. II") && !Stats->Named)
-        {
-            SetActorPropertyString(0, APROP_Nametag, GenerateName(GetActorClass(0), Name));
-            Name = GetActorPropertyString(0, APROP_Nametag);
-            Stats->Named = true;
-        };
         
         // Special handling for Player Targets
         if (ActivatorTID() != Players(PlayerNum).TID && (ActivatorTID() >= PLAYER_TID && ActivatorTID() <= PLAYER_TID + MAX_PLAYERS))
@@ -121,26 +111,11 @@ script void HealthBars()
                         PrintSprite("HPBar", 0, X, Y, 0.05);
                 
                 // Name
+                // TODO: Find a new way to color the names?
                 if (GetCVar("drpg_healthbars_names"))
                 {
-                    int Color = CR_GRAY;
-                    
-                    switch (Stats->Aura)
-                    {
-                    case 1:     Color = CR_RED;     break;
-                    case 2:     Color = CR_GREEN;   break;
-                    case 3:     Color = CR_WHITE;   break;
-                    case 4:     Color = CR_BRICK;   break;
-                    case 5:     Color = CR_CYAN;    break;
-                    case 6:     Color = CR_PURPLE;  break;
-                    case 7:     Color = CR_ORANGE;  break;
-                    case 8:     Color = CR_BLUE;    break;
-                    case 9:     Color = CR_YELLOW;  break;
-                    case 10:    Color = CR_GRAY;    break;
-                    };
-                    
                     SetFont("BIGFONT");
-                    HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, Color, X, Y - 24.0, 0.05);
+                    HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, CR_GRAY, X, Y - 24.0, 0.05);
                 };
                 
                 // HP/Max HP and Armor
@@ -206,23 +181,12 @@ script void HealthBars()
                     PrintSprite("STAT8S", 0, X + 71.0, Y + 74.0, 0.05);
                     
                     // Aura Icon
-                    Aura = Stats->Aura;
-                    switch (Aura)
-                    {
-                    case 1: AuraType = "AuraRed"; break;
-                    case 2: AuraType = "AuraGree"; break;
-                    case 3: AuraType = "AuraWhit"; break;
-                    case 4: AuraType = "AuraPink"; break;
-                    case 5: AuraType = "AuraCyan"; break;
-                    case 6: AuraType = "AuraPurp"; break;
-                    case 7: AuraType = "AuraOran"; break;
-                    case 8: AuraType = "AuraBlue"; break;
-                    case 9: AuraType = "AuraYell"; break;
-                    case 10: AuraType = "AuraBlac"; break;
-                    default: AuraType = nullptr; break;
-                    };
-                    if (AuraType != nullptr)
-                        PrintSpritePulse(AuraType, 0, X - 136.0, Y + 30.0, 0.75, 64.0, 0.25);
+                    for (int i = 0; i < AURA_MAX; i++)
+                        if (Stats->Aura.Type[i].Active)
+                        {
+                            PrintSpritePulse(AuraIcons[i], 0, X - 136 - ((AuraOffset % 3) * 32), Y + 30.0 + ((AuraOffset / 3) * 32), 0.75, 64.0, 0.25);
+                            AuraOffset++;
+                        };
                 }
                 else if (IsPlayer) // Player Stats
                 {
@@ -258,7 +222,7 @@ script void HealthBars()
                     
                     // Auras
                     for (int i = 0; i < AURA_MAX; i++)
-                        if (Players(ID).Aura[i])
+                        if (Players(ID).Aura.Type[i].Active)
                         {
                             PrintSpritePulse(AuraIcons[i], 0, X - 136 - ((AuraOffset % 3) * 32), Y + 30.0 + ((AuraOffset / 3) * 32), 0.75, 64.0, 0.25);
                             AuraOffset++;

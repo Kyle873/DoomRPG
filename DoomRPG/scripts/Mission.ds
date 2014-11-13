@@ -113,10 +113,13 @@ script void InitMission()
             int LevelMod = Player.Mission.Difficulty * Player.Level + Random(0, 100);
             
             Monsters[Chosen].Target = PlayerNumber() + 1;
-            Monsters[Chosen].Aura = 10;
             Monsters[Chosen].Level += LevelMod;
             Monsters[Chosen].Level /= 2; // Shadow Auras always double their level
             Monsters[Chosen].NeedReinit = true;
+            
+            // Shadow Aura
+            for (int i = 0; i < AURA_MAX; i++)
+                Monsters[Chosen].Aura.Type[i].Active = true;
             
             // EVIL LAUGH OF WARNING
             if (Monsters[Chosen].Threat >= 10)
@@ -197,7 +200,7 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
         
         // Kill Auras Mission
         if (Players(Killer).Mission.Type == MT_KILLAURAS)
-            if (Stats->Aura > 0)
+            if (MonsterHasAura(Stats))
             {
                 Players(Killer).Mission.Current++;
                 

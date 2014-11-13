@@ -317,22 +317,20 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         nullptr; nullptr; nullptr; nullptr; AdaptiveBreak; nullptr; nullptr; nullptr; nullptr;
     };
-/*
     {
-        "DRPGShieldAccessory33"; // !!!
+        "DRPGShieldAccessory33";
         "\cdTENS-H11";   "SHA2G0";  55000;
         "The lower your shield is, the higher your \cdDamage Reduction\c- is\nIt scales up to \cd75%\c- at \cv1 Capacity\c-\nWhen \cgfully depleted\c-, \cd0% Damage Reduction";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        ScarletWeatherRhapsodyShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
     {
-        "DRPGShieldAccessory34"; // !!!
+        "DRPGShieldAccessory34";
         "\cjTEEM-AU5";   "SHA2H0";  50000;
         "While under the effects of an aura, each other person affected by that aura gains \cd+20% Damage Reduction\c-\n\cuThis does not stack with multiple auras";
-        SHIELD_PASS_NONE;
+        SHIELD_PASS_DATAURA;
         nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
-*/
     {
         "DRPGShieldAccessory35";
         "\cgVENG-R";     "SHA2I0";  62000;
@@ -354,43 +352,41 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
         SHIELD_PASS_NONE;
         NakedMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
-/*
     {
-        "DRPGShieldAccessory38"; // !!!
+        "DRPGShieldAccessory38";
         "\caHA3-L1N";   "SHA2L0";   45000;
         "Whenever you \cakill an enemy\c-, your shield recharges \ct5x as fast\c- for 3 seconds";
-        SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        SHIELD_PASS_BLOODYSHIELDSOREAL;
+        BloodyShieldSoRealMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
     {
-        "DRPGShieldAccessory39"; // !!!
+        "DRPGShieldAccessory39";
         "\cgHAET-60";   "SHA2M0";   125000;
         "When you use a \cgBerserk Pack\c-, you gain \cd99% Resistance\c- to \ccMelee Damage\c- for 60 seconds";
-        SHIELD_PASS_NONE;
+        SHIELD_PASS_HATEHATEHATE;
         nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
     {
-        "DRPGShieldAccessory40"; // !!!
+        "DRPGShieldAccessory40";
         "\ckPHA-LX2";   "SHA2N0";   33000;
         "You gain an additional \cd+10% Damage Reduction\c- for every player using this accessory";
         SHIELD_PASS_FRIENDSHIPISDEFENSE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        FriendshipShieldMod; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
     };
     {
-        "DRPGShieldAccessory41"; // !!!
+        "DRPGShieldAccessory41";
         "\cnIKU-N7";    "SHA2O0";   35000;
         "Whenever you \catake damage\c-, you release a \cnsmall electrical blast\c- that stuns enemies\nIf your \cvShield\c- is \cgdepleted\c-, it releases a \cnlarge blast\c-";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        nullptr; nullptr; nullptr; StaticChargeShieldDamage; StaticChargeShieldBreak; nullptr; nullptr; nullptr; nullptr;
     };
     {
-        "DRPGShieldAccessory42"; // !!!
+        "DRPGShieldAccessory42";
         "\ctREGN-ER8";  "SHA2P0";   82000;
-        "\cdCharge Rate\c- scales based on how long since you were last hit\nFrom \cg0.5x\c- after being hit to \cd4x\c-";
+        "\cdCharge Rate\c- scales based on how long since your \cvShield\c- took damage\nFrom \cg0.5x\c- after being hit to \cd4x\c-";
         SHIELD_PASS_NONE;
-        nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr; nullptr;
+        RegenShieldMod; nullptr; nullptr; RegenShieldDamage; nullptr; RegenShieldCharge; nullptr; nullptr; nullptr;
     };
-*/
     {
         "DRPGShieldAccessory43";
         "\ccCOUN-TR20"; "SHA2Q0";   46000;
@@ -561,6 +557,14 @@ ShieldSpace ShieldAccessory[MAX_ACCESSORIES] ShieldAccessories =
     };
 };
 
+acscript void AMShieldCharge()
+{
+    if (!Player.Shield.Active || !Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_HATEHATEHATE)
+        return;
+    
+    GiveInventory("DRPGShieldHateHateHateDefense", 1);
+};
+
 // Callback Functions
 
 // Converters
@@ -632,6 +636,13 @@ function int LightningCharge(int ChargeAmount)
     return ChargeAmount;
 };
 
+function int RegenShieldCharge(int ChargeAmount)
+{
+    if (Player.Shield.AccessoryBattery < 20)
+        Player.Shield.AccessoryBattery++;
+    
+    return ChargeAmount;
+};
 // Fast Charging
 function bool CellFastCharge()
 {
@@ -691,10 +702,22 @@ function void TimeyWimeyHurtyBall(int DamageAmount)
     TimeyWimeyHurtyBallZDoomSucks();
 };
 
+function void StaticChargeShieldDamage(int DamageAmount)
+{
+    int projtid = UniqueTID();
+    SpawnProjectile(0, "DRPGStaticChargeShieldExplosion", 0, 0, 0, false, projtid);
+    SetActorPosition(projtid, GetActorX(0), GetActorY(0), GetActorZ(0) + 32.0, false);
+};
+
 function void CounterDamage(int DamageAmount)
 {
     if (Player.DamageType == DT_MELEE)
         GiveInventory("DRPGShieldCounterBlast", 1);
+};
+
+function void RegenShieldDamage(int DamageAmount)
+{
+    Player.Shield.AccessoryBattery = 0;
 };
 
 // Shield Depletion
@@ -733,6 +756,13 @@ function void AdaptiveBreak()
     case DT_PLASMA:     GiveInventory("DRPGShieldAdaptivePlasmaResist", 1);     break;
     case DT_LIGHTNING:  GiveInventory("DRPGShieldAdaptiveLightningResist", 1);  break;
     };
+};
+
+function void StaticChargeShieldBreak()
+{
+    int projtid = UniqueTID();
+    SpawnProjectile(0, "DRPGStaticChargeShieldLargeExplosion", 0, 0, 0, false, projtid);
+    SetActorPosition(projtid, GetActorX(0), GetActorY(0), GetActorZ(0) + 32.0, false);
 };
 
 function void FlanExplosion() // This gets called on full charge too
@@ -921,6 +951,21 @@ function void ReflectionUnequip(bool EMP)
     GiveInventory("DRPGShieldReflectionOff", 1);
 };
 
+function void ScarletWeatherRhapsodyShieldMod()
+{
+    if (!Player.Shield.Active || Player.Shield.Capacity < 1)
+        return;
+    
+    if (Player.Shield.Charge < 1)
+    {
+        Player.DamageFactor = 1.0;
+        return;
+    };
+    
+    fixed BaseFactorMinus = 1.0 - Player.DamageFactor;
+    Player.DamageFactor -= (0.75 - BaseFactorMinus) - ((0.75 - BaseFactorMinus) * ((fixed)(Player.Shield.Charge - 1) / (fixed)(Player.Shield.Capacity - 1)));
+};
+
 function void SanicMod()
 {
     int Movement = VectorLength(GetActorVelX(0), GetActorVelY(0));
@@ -935,6 +980,41 @@ function void NakedMod()
 {
     if (Player.Shield.Active && CheckInventory("Armor") > 0)
         GiveInventory("DRPGShieldNakedResist", 1);
+};
+
+function void BloodyShieldSoRealMod()
+{
+    if (Player.Shield.AccessoryBattery)
+    {
+        Player.Shield.Interval /= 5;
+        Player.Shield.AccessoryBattery--;
+    };
+};
+
+function void FriendshipShieldMod()
+{
+    fixed TotalDefense = 0;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        if (!Players(i).Shield.Active)
+            continue;
+        if (!Players(i).Shield.Accessory || Players(i).Shield.Accessory->PassiveEffect != SHIELD_PASS_FRIENDSHIPISDEFENSE)
+            continue;
+        
+        TotalDefense += 0.1;
+    };
+    
+    Player.DamageFactor -= TotalDefense;
+};
+
+function void RegenShieldMod()
+{
+    int BaseCharge = Player.Shield.ChargeRate / 2;
+    int AddCharge = Player.Shield.ChargeRate * 4 - BaseCharge;
+    Player.Shield.ChargeRate = AddCharge * Player.Shield.AccessoryBattery / 20 + BaseCharge;
 };
 
 function void MLGNoScopeShieldMod()
@@ -1099,7 +1179,7 @@ script void ShieldTimer()
                 if (Player.Shield.Accessory && Player.Shield.Accessory->Charge)
                     ChargeRate = Player.Shield.Accessory->Charge(ChargeRate);
                 
-                if (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_KILLSCHARGE)
+                if (ChargeRate && (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_KILLSCHARGE))
                 {
                     if (Player.Shield.Charge < 1)
                         PlaySound(0, "shield/restart", 5, 1.0, false, 1.0)

@@ -328,8 +328,8 @@ function void DrawStatsMenu()
         HudMessage("%k%% Status Resist\n", Player.StatusEffectResist,                                       HUDMSG_PLAIN, 0, CR_BRICK,              30.1,   102.0,  0.05);
         HudMessage("%d Max EP\n", Player.EPMax,                                                             HUDMSG_PLAIN, 0, CR_LIGHTBLUE,          230.1,  86.0,   0.05);
         HudMessage("%d EP Regen\n", Player.EPAmount,                                                        HUDMSG_PLAIN, 0, CR_LIGHTBLUE,          230.1,  94.0,   0.05);
-        HudMessage("%d Sec Aura Time\n", ((1050 + (Player.Energy * 5.25)) * (Player.AuraBonus + 1)) / 35,   HUDMSG_PLAIN, 0, CR_LIGHTBLUE,          230.1,  102.0,  0.05);
-        HudMessage("%d Aura Range\n", Player.AuraRange,                                                     HUDMSG_PLAIN, 0, CR_LIGHTBLUE,          230.1,  110.0,  0.05);
+        HudMessage("%s Sec Aura Time\n", FormatTime(AURA_CALCTIME),                                         HUDMSG_PLAIN, 0, CR_LIGHTBLUE,          230.1,  102.0,  0.05);
+        HudMessage("%d Aura Range\n", Player.Aura.Range,                                                    HUDMSG_PLAIN, 0, CR_LIGHTBLUE,          230.1,  110.0,  0.05);
         HudMessage("HP Timer: %k Sec\n", (fixed)Player.HPTime / (35.0 * 2.0),                               HUDMSG_PLAIN, 0, CR_BRICK,              30.1,   136.0,  0.05);
         HudMessage("EP Timer: %k Sec\n", (fixed)Player.EPTime / (35.0 * 2.0),                               HUDMSG_PLAIN, 0, CR_LIGHTBLUE,          30.1,   144.0,  0.05);
         HudMessage("Regen Bonus: %d Sec\n", 5.0 + ((fixed)Player.Regeneration / 13.33),                     HUDMSG_PLAIN, 0, CR_PURPLE,             30.1,   152.0,  0.05);
@@ -778,16 +778,16 @@ function void DrawSkillMenu()
                    HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 256.1, 80.0, 0.05);
     
     // Aura Cost Multiplier
-    if (Player.AuraCostMult > 0)
+    if (Player.Aura.CostMult > 0)
     {
         PrintSpritePulse("Aura", 0, 232.0, 111.0, 0.75, 64.0, 0.25);
         SetFont("BIGFONT");
-        HudMessage("+%d%% Skill Cost\n", (int)(Player.AuraCostMult * 100 + 1),
+        HudMessage("+%d%% Skill Cost\n", (int)(Player.Aura.CostMult * 100 + 1),
                    HUDMSG_PLAIN, 0, CR_CYAN, 256.1, 112.0, 0.05);
     };
     
     // Active Aura Levels
-    if (Player.AuraTimer > 0 || Player.TeamAura)
+    if (Player.Aura.Time > 0 || Player.Aura.Team)
     {
         static int[AURA_MAX] AuraColors =
         {
@@ -804,11 +804,11 @@ function void DrawSkillMenu()
         };
         
         for (int i = 0; i < AURA_MAX; i++)
-            if (Player.Aura[i])
+            if (Player.Aura.Type[i].Active)
             {
                 PrintSpritePulse(AuraIcons[i], 0, 232.0 + (i * 24.0), 176.0, 0.75, 64.0, 0.25);
                 SetFont("BIGFONT");
-                HudMessage("%d\n", Player.AuraLevel[i],
+                HudMessage("%d\n", Player.Aura.Type[i].Level,
                            HUDMSG_PLAIN, 0, AuraColors[i], 232.0 + (i * 24.0), 160.0, 0.05);
             };
     };
