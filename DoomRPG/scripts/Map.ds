@@ -602,8 +602,12 @@ script void HellUnleashedEvent()
         HudMessageBold("+%k%%\n", CurrentLevel->RareAdd, HUDMSG_PLAIN, 0, CR_GOLD, 40.1, 116.0, 0.05);
         
         // Slowly increment the values
-        CurrentLevel->LevelAdd += RandomFixed(0.001, 0.01);
-        CurrentLevel->RareAdd += RandomFixed(0.0001, 0.001);
+        fixed ParTime = (fixed)GetLevelInfo(LEVELINFO_PAR_TIME);
+        if (ParTime <= 0) // Assign a default value to prevent divide-by-zero
+            ParTime = 0;
+        fixed AddMult = 0.1 / ParTime;
+        CurrentLevel->LevelAdd += RandomFixed(AddMult, AddMult * 10.0);
+        CurrentLevel->RareAdd += RandomFixed(AddMult * 0.1, AddMult);
         
         // Caps
         if (CurrentLevel->LevelAdd > 1000)
@@ -917,7 +921,7 @@ script void MapLoop()
 // Can't use NamedExecute in xlat, lame
 acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
 {
-    int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
+    int AddMult = GetLevelInfo(LEVELINFO_PAR_TIME);
     bool Waiting = true;
     
     // How long it took to reach the exit
@@ -939,7 +943,7 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         };
     
     // Check par time and give bonus if you beat it
-    if (ParTime > 0 && ExitTime < ParTime && (CurrentLevel && !CurrentLevel->ParBonus))
+    if (AddMult > 0 && ExitTime < AddMult && (CurrentLevel && !CurrentLevel->ParBonus))
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
