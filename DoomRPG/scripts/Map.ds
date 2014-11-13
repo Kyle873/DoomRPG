@@ -602,8 +602,12 @@ script void HellUnleashedEvent()
         HudMessageBold("+%k%%\n", CurrentLevel->RareAdd, HUDMSG_PLAIN, 0, CR_GOLD, 40.1, 116.0, 0.05);
         
         // Slowly increment the values
-        CurrentLevel->LevelAdd += RandomFixed(0.001, 0.01);
-        CurrentLevel->RareAdd += RandomFixed(0.0001, 0.001);
+        fixed ParTime = (fixed)GetLevelInfo(LEVELINFO_PAR_TIME);
+        if (ParTime <= 0) // Assign a default value to prevent divide-by-zero
+            ParTime = 0;
+        fixed AddMult = 0.1 / ParTime;
+        CurrentLevel->LevelAdd += RandomFixed(AddMult, AddMult * 10.0);
+        CurrentLevel->RareAdd += RandomFixed(AddMult * 0.1, AddMult);
         
         // Caps
         if (CurrentLevel->LevelAdd > 1000)
