@@ -225,7 +225,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
     // Attacks
     {
         {
-            "Weaken"; 500; 5; Weaken;
+            "Weaken"; 200; 5; Weaken;
             {
                 "Weakens an enemy\nReduces stats by 1/16th";
                 "Weakens an enemy\nReduces stats by 1/8th";
@@ -237,7 +237,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
         {
             "Translocate"; 50; 1; Translocate;
             {
-                "Teleports a monster to the beginning of the level";
+                "Teleports a monster to a random location\nin the area";
             };
         };
         {
@@ -250,7 +250,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Aura Steal"; 200; 1; AuraSteal;
+            "Aura Steal"; 500; 1; AuraSteal;
             {
                 "Steals an enemies Auras, taking it from them and giving it to you\nTime based on their Energy";
             };
@@ -793,6 +793,7 @@ acscript void UseSkill(int Key) net
         SkillLevel->CurrentLevel++;
         TakeInventory("DRPGSkillToken", 1);
         FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
+        ActivatorSound("health/epcapsule", 127);
         return;
     };
     
@@ -1233,6 +1234,12 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript bool Translocate(SkillLevelInfo *SkillLevel, void *Data)
 {
+    if (InBase)
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
     FireProjectile("DRPGTranslocateBall");
     return true;
 };
