@@ -36,6 +36,11 @@ str[AURA_MAX] AuraIcons =
     "AuraBlac";
 };
 
+acscript int InOutpost()
+{
+    return (int)InBase;
+};
+
 acscript int GetUniqueTID()
 {
     return UniqueTID();
@@ -1002,39 +1007,35 @@ function void SpawnAuras(int TID, bool ForceFancy)
                 AuraCount++;
         
         // Spawn the Aura
-        for (int i = 0; i < AURA_MAX; i++)
+        if (AuraCount >= AURA_MAX) // Shadow
         {
-            if (PlayerAura->Type[i].Active)
-            {
-                // Create rotation for simple Aura icons
-                if (Simple && AuraCount > 1)
-                {
-                    fixed AngleOffset = (1.0 / (fixed)AuraCount) * ((fixed)AuraAdd++ * 128.0);
-                    X = GetActorX(TID) + Sin(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
-                    Y = GetActorY(TID) + Cos(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
-                    Z = GetActorZ(TID) + 4.0 + Sin(Timer() / 64.0) * 4.0;
-                };
-            
-                // Spawn
-                if (!Simple)
-                    SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle)
-                else
-                    SpawnForced(StrParam("%sIndicator\n", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
-            };
-        };
-        
-        // Shadow Aura
-        if (AuraCount >= AURA_MAX)
-        {
-            // Reset positioning
-            X = GetActorX(TID);
-            Y = GetActorY(TID);
-            Z = GetActorZ(TID);
-            
             if (!Simple)
                 SpawnForced("DRPGBlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
             else
                 SpawnForced("DRPGBlackAuraIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
+        }
+        else // Normal
+        {
+            for (int i = 0; i < AURA_MAX; i++)
+            {
+                if (PlayerAura->Type[i].Active)
+                {
+                    // Create rotation for simple Aura icons
+                    if (Simple && AuraCount > 1)
+                    {
+                        fixed AngleOffset = (1.0 / (fixed)AuraCount) * ((fixed)AuraAdd++ * 128.0);
+                        X = GetActorX(TID) + Sin(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                        Y = GetActorY(TID) + Cos(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                        Z = GetActorZ(TID) + 4.0 + Sin(Timer() / 64.0) * 4.0;
+                    };
+                
+                    // Spawn
+                    if (!Simple)
+                        SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle)
+                    else
+                        SpawnForced(StrParam("%sIndicator\n", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
+                };
+            };
         };
     }
     else // Monster
