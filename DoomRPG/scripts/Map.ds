@@ -229,6 +229,7 @@ script void MapInit() open
         CalculateBonusMaps();
         
         CurrentLevel->SelectedMonster = nullptr;
+        CurrentLevel->MegabossActor = nullptr;
         CurrentLevel->LevelAdd = 0;
         CurrentLevel->RareAdd = 0;
     
@@ -391,6 +392,14 @@ script void MegaBossEvent()
     auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
     ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
     
+    if (CurrentLevel->MegabossActor == nullptr)
+    {
+        CurrentLevel->MegabossActor = MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
+        
+        if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
+            Log("\cdDEBUG: Chosen Boss: \cg%s\n", CurrentLevel->MegabossActor);
+    };
+
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
     
@@ -425,9 +434,8 @@ script void MegaBossEvent()
     while (!Spawned)
     {
         TID = UniqueTID();
-        BossType = Random(0, MAX_MEGABOSSES - 1);
         ChosenPosition = &((Position *)MonsterPositions.Data)[Index];
-        Spawned = Spawn(MegaBosses[BossType], ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
+        Spawned = Spawn(CurrentLevel->MegabossActor, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
         
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
