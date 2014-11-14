@@ -503,74 +503,70 @@ script void MonsterInitStats(int StatFlags)
         MonsterCapacity = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
         MonsterLuck = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
         
+        if (GetCVar("drpg_monster_specialize"))
+        {
+            // Cut Stats
+            if (StatEffect[0] == 1) MonsterStrength /= 2;
+            if (StatEffect[1] == 1) MonsterDefense /= 2;
+            if (StatEffect[2] == 1) MonsterVitality /= 2;
+            if (StatEffect[3] == 1) MonsterEnergy /= 2;
+            if (StatEffect[4] == 1) MonsterRegeneration /= 2;
+            if (StatEffect[5] == 1) MonsterAgility /= 2;
+            if (StatEffect[6] == 1) MonsterCapacity /= 2;
+            if (StatEffect[7] == 1) MonsterLuck /= 2;
+            
+            // Specialized Stats
+            if (StatEffect[0] == 2) MonsterStrength *= Random(2, 4);
+            if (StatEffect[1] == 2) MonsterDefense *= Random(2, 4);
+            if (StatEffect[2] == 2) MonsterVitality *= Random(2, 4);
+            if (StatEffect[3] == 2) MonsterEnergy *= Random(2, 4);
+            if (StatEffect[4] == 2) MonsterRegeneration *= Random(2, 4);
+            if (StatEffect[5] == 2) MonsterAgility *= Random(2, 4);
+            if (StatEffect[6] == 2) MonsterCapacity *= Random(2, 4);
+            if (StatEffect[7] == 2) MonsterLuck *= Random(2, 4);
+        };
+        
         // Map Event - RAINBOWS!
         if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
             MonsterCapacity *= Random(2, 4);
     };
     
     // Apply Aura
-    // TODO: A real curve
     if (!GetActorProperty(0, APROP_Friendly) && !(Stats->Flags & MF_NOAURA) && !StatFlags)
     {
-        int AuraCurve = GetCVar("drpg_aura_curve");
-        int AuraRange = -1000 + MonsterEnergy + AuraCurve;
+        // 1st roll: Chance of having an aura at all
+        int AuraChance = 31 + ((GetCVar("drpg_aura_curve") * 100 / 97) + (MonsterEnergy * 100 / 97));
+        if (AuraChance < 0)  AuraChance = 0;
+        if (AuraChance > 1000) AuraChance = 1000;
+        AuraChance *= AuraChance;
+        AuraChance /= 1000;
+        bool HasAura = Random(0, 1000) < AuraChance;
+        
+        // 2nd roll: Number of auras to have
+        int AuraRand = Random(MonsterEnergy / 10, 200);
+        int AuraNumber = (AuraRand * AuraRand) / 4000;
+        if (!HasAura || AuraNumber < 0) AuraNumber = 0;
+        if (AuraNumber > AURA_MAX) AuraNumber = AURA_MAX;
+
+        // Map Event - All Auras
+        if (CurrentLevel->Event == MAPEVENT_ALLAURAS)
+             AuraNumber = Random(1, AURA_MAX);
         
         // Run through and decide on which Auras it should have
-        for (int i = 0; i < AURA_MAX; i++)
+        while (AuraNumber > 0)
         {
-            int AuraPick = Random(AuraRange, AURA_MAX);
+            int AuraType = Random(0, AURA_MAX - 1);
+            if (Stats->Aura.Type[AuraType].Active == true)
+                continue;
             
-            // Map Event - All Auras
-            if (CurrentLevel->Event == MAPEVENT_ALLAURAS)
-            {
-                if (Random(0, 2) == 0)
-                    continue;
-                
-                AuraPick = 1;
-            };
-            
-            if (AuraPick > 0)
-                Stats->Aura.Type[i].Active = true;
+            Stats->Aura.Type[AuraType].Active = true;
+            AuraNumber--;
         };
         
         // Are You A Bad Enough Dude?
         if (GetCVar("drpg_monster_shadows"))
             for (int i = 0; i < AURA_MAX; i++)
                 Stats->Aura.Type[i].Active = true;
-        
-        // Monsters with auras are *always* specialized in their primary stat
-        // TODO: Check to make sure this is actually working
-        if (GetCVar("drpg_monster_specialize"))
-            for (int i = 0; i < AURA_MAX; i++)
-            {
-                if (i == AURA_WHITE) continue;
-                
-                if (Stats->Aura.Type[i].Active)
-                    StatEffect[STAT_STRENGTH] = 2;
-            };
-    };
-    
-    if (GetCVar("drpg_monster_specialize"))
-    {
-        // Cut Stats
-        if (StatEffect[0] == 1) MonsterStrength /= 2;
-        if (StatEffect[1] == 1) MonsterDefense /= 2;
-        if (StatEffect[2] == 1) MonsterVitality /= 2;
-        if (StatEffect[3] == 1) MonsterEnergy /= 2;
-        if (StatEffect[4] == 1) MonsterRegeneration /= 2;
-        if (StatEffect[5] == 1) MonsterAgility /= 2;
-        if (StatEffect[6] == 1) MonsterCapacity /= 2;
-        if (StatEffect[7] == 1) MonsterLuck /= 2;
-        
-        // Specialized Stats
-        if (StatEffect[0] == 2) MonsterStrength *= Random(2, 4);
-        if (StatEffect[1] == 2) MonsterDefense *= Random(2, 4);
-        if (StatEffect[2] == 2) MonsterVitality *= Random(2, 4);
-        if (StatEffect[3] == 2) MonsterEnergy *= Random(2, 4);
-        if (StatEffect[4] == 2) MonsterRegeneration *= Random(2, 4);
-        if (StatEffect[5] == 2) MonsterAgility *= Random(2, 4);
-        if (StatEffect[6] == 2) MonsterCapacity *= Random(2, 4);
-        if (StatEffect[7] == 2) MonsterLuck *= Random(2, 4);
     };
     
     // Apply the aura effects
