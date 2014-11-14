@@ -962,9 +962,22 @@ function str FormatTime(int t)
     return Time;
 };
 
-// Spawn an Aura on the given TID
-function void SpawnAura(int TID, int Type, bool ForceFancy)
+// Spawn the respective Aura effects on the given Player/Monster's TID
+function void SpawnAuras(int TID, bool ForceFancy)
 {
+    static str[AURA_MAX] AuraActors =
+    {
+        "DRPGRedAura";
+        "DRPGGreenAura";
+        "DRPGWhiteAura";
+        "DRPGPinkAura";
+        "DRPGCyanAura";
+        "DRPGPurpleAura";
+        "DRPGOrangeAura";
+        "DRPGBlueAura";
+        "DRPGYellowAura";
+    };
+    
     fixed X = GetActorX(TID);
     fixed Y = GetActorY(TID);
     fixed Z = GetActorZ(TID);
@@ -975,131 +988,127 @@ function void SpawnAura(int TID, int Type, bool ForceFancy)
     bool IsPlayer = (ClassifyActor(TID) & ACTOR_PLAYER);
     int SimpleType = GetCVar("drpg_simple_auras");
     bool Simple = (IsPlayer ? (SimpleType == 1 || SimpleType == 3) : (SimpleType == 2 || SimpleType == 3));
+    AuraInfo *PlayerAura = &Players(FindPlayerID(TID)).Aura;
+    AuraInfo MonsterStatsSpace *MonsterAura = &Monsters[GetMonsterID(TID)].Aura;
     int AuraCount = 0;
+    int AuraAdd = 0;
     
-    // Calculate number of active Auras
-    for (int i = 0; i < AURA_MAX; i++)
+    // WHYYYYYYYYYYYYYYYYYYYYYYY.YPEG
+    if (IsPlayer)
     {
-        if (IsPlayer)
-        {
-            if (Player.Aura.Type[i].Active)
+        // Calculate number of active Auras
+        for (int i = 0; i < AURA_MAX; i++)
+            if (PlayerAura->Type[i].Active)
                 AuraCount++;
+        
+        // Spawn the Aura
+        for (int i = 0; i < AURA_MAX; i++)
+        {
+            if (PlayerAura->Type[i].Active)
+            {
+                // Create rotation for simple Aura icons
+                if (Simple && AuraCount > 1)
+                {
+                    fixed AngleOffset = (1.0 / (fixed)AuraCount) * ((fixed)AuraAdd++ * 128.0);
+                    X = GetActorX(TID) + Sin(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                    Y = GetActorY(TID) + Cos(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                    Z = GetActorZ(TID) + 4.0 + Sin(Timer() / 64.0) * 4.0;
+                };
+            
+                // Spawn
+                if (!Simple)
+                    SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle)
+                else
+                    SpawnForced(StrParam("%sIndicator\n", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
+            };
+        };
+        
+        // Shadow Aura
+        if (AuraCount >= AURA_MAX)
+        {
+            // Reset positioning
+            X = GetActorX(TID);
+            Y = GetActorY(TID);
+            Z = GetActorZ(TID);
+            
+            if (!Simple)
+                SpawnForced("DRPGBlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+            else
+                SpawnForced("DRPGBlackAuraIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
+        };
+    }
+    else // Monster
+    {
+        // Calculate number of active Auras
+        for (int i = 0; i < AURA_MAX; i++)
+            if (MonsterAura->Type[i].Active)
+                AuraCount++;
+
+        // Return if the monster is stealthy
+        if (IsStealth(TID))
+            return;
+        
+        // LOS Checks
+        if (GameType() == GAME_SINGLE_PLAYER)
+        {
+            if (CheckSight(Players(0).TID, TID, CSF_NOBLOCKALL))
+                SpawnOK = true;
         }
         else
         {
-            if (Monsters[GetMonsterID(0)].Aura.Type[i].Active)
-                AuraCount++;
-        };
-    };
-    
-    // Create rotation for simple Aura icons
-    if (Simple && AuraCount > 1)
-    {
-        if (Type == 10) // Shadow
-            Z += 4.0 + Sin(Timer() / 64.0) * 4.0
-        else
-        {
-            fixed Time = (fixed)Timer() + ((fixed)Type * 14.5);
-            X += Sin(Time / 128.0) * 32.0;
-            Y += Cos(Time / 128.0) * 32.0;
-            Z += 4.0 + Sin(Timer() / 64.0) * 4.0;
-        };
-    };
-    
-    if (Type != 0 && Type != 10 && IsStealth(TID))
-        return;
-    
-    if (GameType() == GAME_SINGLE_PLAYER)
-    {
-        if (CheckSight(Players(0).TID, TID, CSF_NOBLOCKALL))
-            SpawnOK = true;
-    }
-    else
-    {
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i))
-                continue;
-            
-            if (CheckSight(Players(i).TID, TID, CSF_NOBLOCKALL))
+            for (int i = 0; i < MAX_PLAYERS; i++)
             {
-                SpawnOK = true;
-                break;
+                if (!PlayerInGame(i))
+                    continue;
+                
+                if (CheckSight(Players(i).TID, TID, CSF_NOBLOCKALL))
+                {
+                    SpawnOK = true;
+                    break;
+                };
             };
         };
-    };
-    
-    if (!SpawnOK)
-        return;
-    
-    switch (Type) // TODO: Use enum here
-    {
-    case 0: // Friendly Monster
-        if (!Simple)
-            SpawnForced("DRPGFriendlyAura", X, Y, Z + 32.0, 0, Angle)
-        else
-            SpawnForced("DRPGFriendlyIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 1: // Red Aura - Strength
-        if (!Simple)
-            SpawnForced("DRPGRedAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGRedAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 2: // Green Aura - Defense
-        if (!Simple)
-            SpawnForced("DRPGGreenAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGGreenAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 3: // White Aura - XP
-        if (!Simple)
-            SpawnForced("DRPGWhiteAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGWhiteAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 4: // Pink Aura - Vitality
-        if (!Simple)
-            SpawnForced("DRPGPinkAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGPinkAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 5: // Blue Aura - Energy
-        if (!Simple)
-            SpawnForced("DRPGCyanAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGCyanAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 6: // Purple Aura - Regeneration
-        if (!Simple)
-            SpawnForced("DRPGPurpleAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGPurpleAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 7: // Orange Aura - Agility
-        if (!Simple)
-            SpawnForced("DRPGOrangeAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGOrangeAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 8: // Dark Blue Aura - Capacity
-        if (!Simple)
-            SpawnForced("DRPGBlueAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGBlueAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 9: // Yellow Aura - Luck
-        if (!Simple)
-            SpawnForced("DRPGYellowAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGYellowAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
-    case 10: // Black Aura - Miniboss
-        if (!Simple)
-            SpawnForced("DRPGBlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-        else
-            SpawnForced("DRPGBlackAuraIndicator", X, Y, Z + Height + 8.0, 0, Angle);
-        break;
+        
+        // Return if LOS checks failed
+        if (!SpawnOK)
+            return;
+        
+        // Spawn the Aura
+        if (GetActorProperty(TID, APROP_Friendly)) // Friendly
+        {
+            if (!Simple)
+                SpawnForced("DRPGFriendlyAura", X, Y, Z + 32.0, 0, Angle)
+            else
+                SpawnForced("DRPGFriendlyIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
+        }
+        else if (AuraCount >= AURA_MAX) // Shadow
+        {
+            if (!Simple)
+                SpawnForced("DRPGBlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+            else
+                SpawnForced("DRPGBlackAuraIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
+        }
+        else // Normal
+        {
+            for (int i = 0; i < AURA_MAX; i++)
+                if (MonsterAura->Type[i].Active)
+                {
+                    // Create rotation for simple Aura icons
+                    if (Simple && AuraCount > 1)
+                    {
+                        fixed AngleOffset = (1.0 / (fixed)AuraCount) * ((fixed)AuraAdd++ * 128.0);
+                        X = GetActorX(TID) + Sin(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                        Y = GetActorY(TID) + Cos(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                        Z = GetActorZ(TID) + 4.0 + Sin(Timer() / 64.0) * 4.0;
+                    };
+                
+                    // Spawn
+                    if (!Simple)
+                        SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle)
+                    else
+                        SpawnForced(StrParam("%sIndicator\n", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
+                };
+        };
     };
     
     // Pass Radius and Height to the Auras for DECORATE usage
@@ -1465,10 +1474,7 @@ function int FindPlayerID(int TID)
 {
     for (int i = 0; i < MAX_PLAYERS; i++)
         if (Players(i).TID == TID)
-        {
             return i;
-            break;
-        };
     
     return -1;
 };
