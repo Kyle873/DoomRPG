@@ -126,6 +126,11 @@ function void DrawMainMenu()
     int MediumStims = CheckInventory("DRPGStimMedium");
     int LargeStims = CheckInventory("DRPGStimLarge");
     int XLStims = CheckInventory("DRPGStimXL");
+    int GoldChips = CheckInventory("DRPGChipGold");
+    int PlatinumChips = CheckInventory("DRPGChipPlatinum");
+    bool AllKills = (CurrentLevel && CurrentLevel->KillBonus);
+    bool AllItems = (CurrentLevel && CurrentLevel->ItemsBonus);
+    bool AllSecrets = (CurrentLevel && CurrentLevel->SecretsBonus);
     
     SetFont("BIGFONT");
     
@@ -179,18 +184,18 @@ function void DrawMainMenu()
     HudMessage("S: %d\nM: %d\nL: %d\nXL: %d\n", SmallStims, MediumStims, LargeStims, XLStims,   HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 334.0, 0.05);
     
     // Level Stats
-    if (CurrentLevel && CurrentLevel->KillBonus)
-        HudMessage("Monsters: %d / %d\n", CurrentKills, TotalKills,                             HUDMSG_PLAIN, 0, MenuCursorColor,   140.1, 178.0, 0.05)
-    else
-        HudMessage("Monsters: %d / %d\n", CurrentKills, TotalKills,                             HUDMSG_PLAIN, 0, CR_BRICK,          140.1, 178.0, 0.05);
-    if (CurrentLevel && CurrentLevel->ItemsBonus)
-        HudMessage("Items: %d / %d\n", CurrentItems, TotalItems,                                HUDMSG_PLAIN, 0, MenuCursorColor,   140.1, 193.0, 0.05)
-    else
-        HudMessage("Items: %d / %d\n", CurrentItems, TotalItems,                                HUDMSG_PLAIN, 0, CR_LIGHTBLUE,      140.1, 193.0, 0.05);
-    if (CurrentLevel && CurrentLevel->SecretsBonus)
-        HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound,                HUDMSG_PLAIN, 0, MenuCursorColor,   140.1, 207.0, 0.05)
-    else
-        HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound,                HUDMSG_PLAIN, 0, CR_GOLD,           140.1, 207.0, 0.05);
+    HudMessage("Monsters: %d / %d\n", CurrentKills, TotalKills,                 HUDMSG_PLAIN, 0, (AllKills ? MenuCursorColor : CR_BRICK),       180.1, 178.0, 0.05);
+    HudMessage("Items: %d / %d\n", CurrentItems, TotalItems,                    HUDMSG_PLAIN, 0, (AllItems ? MenuCursorColor : CR_LIGHTBLUE),   180.1, 193.0, 0.05);
+    HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound,    HUDMSG_PLAIN, 0, (AllSecrets ? MenuCursorColor : CR_GOLD),      180.1, 207.0, 0.05);
+    
+    // Chips
+    HudMessage("%d\n", GoldChips, HUDMSG_PLAIN, 0, CR_GOLD, 156.0, 182.1, 0.05);
+    HudMessage("%d\n", PlatinumChips, HUDMSG_PLAIN, 0, CR_WHITE, 156.0, 194.1, 0.05);
+    SetHudClipRect(140, 175, 16, 64);
+    PrintSprite("CHIPGOLD", 0, 140.1, 178.1, 0.05);
+    SetHudClipRect(156, 175, 16, 64);
+    PrintSprite("CHIPPLAT", 0, 140.1, 178.1, 0.05);
+    SetHudClipRect(0, 0, 0, 0);
     
     // Shield
     if (Player.Shield.Body != 0 || Player.Shield.Battery != 0 || Player.Shield.Capacitor != 0)

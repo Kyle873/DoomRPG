@@ -229,6 +229,7 @@ script void MapInit() open
         CalculateBonusMaps();
         
         CurrentLevel->SelectedMonster = nullptr;
+        CurrentLevel->MegabossActor = nullptr;
         CurrentLevel->LevelAdd = 0;
         CurrentLevel->RareAdd = 0;
     
@@ -391,6 +392,14 @@ script void MegaBossEvent()
     auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
     ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
     
+    if (CurrentLevel->MegabossActor == nullptr)
+    {
+        CurrentLevel->MegabossActor = MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
+        
+        if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
+            Log("\cdDEBUG: Chosen Boss: \cg%s\n", CurrentLevel->MegabossActor);
+    };
+
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
     
@@ -425,9 +434,8 @@ script void MegaBossEvent()
     while (!Spawned)
     {
         TID = UniqueTID();
-        BossType = Random(0, MAX_MEGABOSSES - 1);
         ChosenPosition = &((Position *)MonsterPositions.Data)[Index];
-        Spawned = Spawn(MegaBosses[BossType], ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
+        Spawned = Spawn(CurrentLevel->MegabossActor, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
         
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
@@ -465,6 +473,7 @@ script void MegaBossEvent()
         if (GetActorProperty(TID, APROP_Health) <= 0)
         {
             SetMusic("");
+            Delay(35 * 60); // Let the players pick up the loot
             CurrentLevel->Event = MAPEVENT_NONE;
             return;
         };
@@ -772,8 +781,7 @@ script void MapLoop()
     };
     
     // KILL / ITEM / SECRET SPECIAL BONUSES
-    
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage)
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS)
     {
         CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
         CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
@@ -923,6 +931,19 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
 {
     int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
     bool Waiting = true;
+    
+    if (CurrentLevel->Event == MAPEVENT_MEGABOSS)
+    {
+        AmbientSound("mission/gottarget2", 127);
+        
+        SetHudSize(640, 480, 0);
+        SetFont("BIGFONT");
+        HudMessageBold("\cgA mysterious force prevents you from leaving!\n",
+            HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
+        SetHudSize(0, 0, 0);
+        
+        while (CurrentLevel->Event == MAPEVENT_MEGABOSS) Delay(1); // Wait until the event is over
+    };
     
     // How long it took to reach the exit
     int ExitTime = Timer() / 35;
