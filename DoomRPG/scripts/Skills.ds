@@ -227,11 +227,11 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
         {
             "Weaken"; 500; 5; Weaken;
             {
-                "Weakens an enemy\nReduces stats by half";
-                "Weakens an enemy\nReduces stats by 1/4th";
-                "Weakens an enemy\nReduces stats by 1/8th";
                 "Weakens an enemy\nReduces stats by 1/16th";
-                "Weakens an enemy\nReduces stats by 1/16th\nDestroys all active Auras";
+                "Weakens an enemy\nReduces stats by 1/8th";
+                "Weakens an enemy\nReduces stats by 1/4th";
+                "Weakens an enemy\nReduces stats by half";
+                "Weakens an enemy\nReduces stats by half\nDestroys all active Auras";
             };
         };
         {
@@ -1186,30 +1186,30 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
     // TODO: formula-ify this?
     switch (SkillLevel->CurrentLevel)
     {
-    case 1:         StatDivide = 2;     break;
-    case 2:         StatDivide = 4;     break;
-    case 3:         StatDivide = 8;     break;
-    case 4: case 5: StatDivide = 16;    break;
+    case 1:         StatDivide = 16;    break;
+    case 2:         StatDivide = 8;     break;
+    case 3:         StatDivide = 4;     break;
+    case 4: case 5: StatDivide = 2;     break;
     };
     
     // Bosses will double the divider
     if (Stats->Flags & MF_BOSS)
-        StatDivide /= 2;
+        StatDivide *= 2;
     
     // MegaBosses will quadruple the divider
     if (Stats->Flags & MF_MEGABOSS)
-        StatDivide /= 4;
+        StatDivide *= 4;
     
     // Halve the monster's level and stats
-    Stats->Level /= StatDivide;
-    Stats->Strength /= StatDivide;
-    Stats->Defense /= StatDivide;
-    Stats->Vitality /= StatDivide;
-    Stats->Energy /= StatDivide;
-    Stats->Regeneration /= StatDivide;
-    Stats->Agility /= StatDivide;
-    Stats->Capacity /= StatDivide;
-    Stats->Luck /= StatDivide;
+    Stats->Level -= (Stats->Level / StatDivide);
+    Stats->Strength -= (Stats->Strength / StatDivide);
+    Stats->Defense -= (Stats->Defense / StatDivide);
+    Stats->Vitality -= (Stats->Vitality / StatDivide);
+    Stats->Energy -= (Stats->Energy / StatDivide);
+    Stats->Regeneration -= (Stats->Regeneration / StatDivide);
+    Stats->Agility -= (Stats->Agility / StatDivide);
+    Stats->Capacity -= (Stats->Capacity / StatDivide);
+    Stats->Luck -= (Stats->Luck / StatDivide);
     
     // Destroy Aura
     if (SkillLevel->CurrentLevel >= 5)
