@@ -228,11 +228,15 @@ script void MapInit() open
             CurrentLevel->ParBonus = true;
         CalculateBonusMaps();
         
+        CurrentLevel->MonsterPositions = BLANKDYNAMICARRAY;
         CurrentLevel->SelectedMonster = nullptr;
         CurrentLevel->MegabossActor = nullptr;
         CurrentLevel->LevelAdd = 0;
         CurrentLevel->RareAdd = 0;
-    
+        
+        // Allocate the Monster Positions dynamic array
+        ArrayCreate(&CurrentLevel->MonsterPositions, "MPOS\x00", 64, sizeof(Position));
+        
         // Decide the map's event, if any
         DecideMapEvent();
         
@@ -422,9 +426,6 @@ script void MegaBossEvent()
     int Index;
     Position *ChosenPosition;
     
-    auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
-    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
-    
     if (CurrentLevel->MegabossActor == nullptr)
     {
         CurrentLevel->MegabossActor = MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
@@ -436,38 +437,39 @@ script void MegaBossEvent()
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
     
+    // Populate the positions array
     for (int i = 1; i < MAX_MONSTERS; i++)
     {
         if (!Monsters[i].Init)
             continue;
         
         // Array has grown too big, resize it
-        if (MonsterPositions.Position == MonsterPositions.Size)
-            ArrayResize(&MonsterPositions);
+        if (CurrentLevel->MonsterPositions.Position == CurrentLevel->MonsterPositions.Size)
+            ArrayResize(&CurrentLevel->MonsterPositions);
         
         // Store position
-        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
+        ((Position *)CurrentLevel->MonsterPositions.Data)[CurrentLevel->MonsterPositions.Position++] = Monsters[i].Position;
         Monsters[i].ReplaceActor = "None";
     };
     
     Delay(2); // Monsters disappear!
     
     // Shuffle positions
-    for (int i = 0; i < MonsterPositions.Position; i++)
+    for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
     {
-        int x = Random(0, MonsterPositions.Position - 1);
+        int x = Random(0, CurrentLevel->MonsterPositions.Position - 1);
         Position TempPosition;
         
-        TempPosition = ((Position *)MonsterPositions.Data)[i];
-        ((Position *)MonsterPositions.Data)[i] = ((Position *)MonsterPositions.Data)[x];
-        ((Position *)MonsterPositions.Data)[x] = TempPosition;
+        TempPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[i] = ((Position *)CurrentLevel->MonsterPositions.Data)[x];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[x] = TempPosition;
     };
     
     // Spawning
     while (!Spawned)
     {
         TID = UniqueTID();
-        ChosenPosition = &((Position *)MonsterPositions.Data)[Index];
+        ChosenPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[Index];
         Spawned = Spawn(CurrentLevel->MegabossActor, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
         
         if (GetCVar("drpg_debug"))
@@ -510,6 +512,7 @@ script void MegaBossEvent()
             SetMusic("");
             Delay(35 * 60); // Let the players pick up the loot
             CurrentLevel->Event = MAPEVENT_NONE;
+            ArrayDestroy(&CurrentLevel->MonsterPositions);
             return;
         };
         
@@ -660,31 +663,15 @@ script void HellUnleashedEvent()
 
 script void HellUnleashedSpawnMonsters()
 {
-    auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
-    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
-    
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \c-Spawning next wave of monsters...\n");
 
     Delay(1); // Maximize our instructions
     
-    for (int i = 1; i < MAX_MONSTERS; i++)
-    {
-        if (!Monsters[i].Init)
-            continue;
-        
-        // Array has grown too big, resize it
-        if (MonsterPositions.Position == MonsterPositions.Size)
-            ArrayResize(&MonsterPositions);
-        
-        // Store position
-        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
-    };
-    
-    for (int i = 0; i < MonsterPositions.Position; i++)
+    for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
     {
         int TID = UniqueTID();
-        Position *CurrentPosition = &((Position *)MonsterPositions.Data)[i];;
+        Position *CurrentPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[i];;
         
         // Determine a monster
         MonsterInfoPtr Monster;

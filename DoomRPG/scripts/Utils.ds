@@ -3,6 +3,7 @@
 #include "Augs.dh"
 #include "Defs.dh"
 #include "ItemData.dh"
+#include "Map.dh"
 #include "Outpost.dh"
 #include "Shield.dh"
 #include "Shop.dh"
@@ -38,23 +39,21 @@ str[AURA_MAX] AuraIcons =
 
 acscript void TeleportMonster()
 {
-    auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
-    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
+    str Type = GetActorClass(0);
+    int TID = UniqueTID();
+    bool Success = false;
+    Position *ChosenPosition = nullptr;
     
-    for (int i = 1; i < MAX_MONSTERS; i++)
+    // Check the position
+    while (!Success)
     {
-        if (!Monsters[i].Init)
-            continue;
-        
-        // Array has grown too big, resize it
-        if (MonsterPositions.Position == MonsterPositions.Size)
-            ArrayResize(&MonsterPositions);
-        
-        // Store position
-        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
+        ChosenPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[Random(0, CurrentLevel->MonsterPositions.Position)];
+        Success = Spawn(Type, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle);
+        Thing_Remove(TID);
+        Delay(1);
     };
     
-    Position *ChosenPosition = &((Position *)MonsterPositions.Data)[Random(0, MonsterPositions.Position)];
+    // Teleport to this position
     SetActorPosition(0, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, true);
     SetActorAngle(0, ChosenPosition->Angle);
     SetActorPitch(0, ChosenPosition->Pitch);
