@@ -228,6 +228,7 @@ script void MapInit() open
             CurrentLevel->ParBonus = true;
         CalculateBonusMaps();
         
+        CurrentLevel->Event = MAPEVENT_NONE;
         CurrentLevel->MonsterPositions = BLANKDYNAMICARRAY;
         CurrentLevel->SelectedMonster = nullptr;
         CurrentLevel->MegabossActor = nullptr;
@@ -253,9 +254,9 @@ script void MapInit() open
         MapLoop();
 };
 
-function bool CheckMapEvent(int Event)
+function bool CheckMapEvent(int event)
 {
-    switch (Event)
+    switch (event)
     {
         case MAPEVENT_MEGABOSS:
             if (AveragePlayerLevel() < 50)
@@ -287,24 +288,14 @@ function bool CheckMapEvent(int Event)
         default:
             return true;
     };
+    
+    return false;
 };
 
 script void DecideMapEvent()
 {
-    if (RandomFixed(0.0, 100.0) >= GetCVarFixed("drpg_mapevent_chance"))
+    if (RandomFixed(0.0, 99.9) > GetCVarFixed("drpg_mapevent_chance"))
         return; // No special event
-    
-    int Rerolls = 256; // Just in case *no* events are possible for some reason
-    while (CurrentLevel->Event == MAPEVENT_NONE && Rerolls)
-    {
-        CurrentLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
-        if (!CheckMapEvent(CurrentLevel->Event))
-            CurrentLevel->Event = MAPEVENT_NONE;
-        Rerolls--;
-    };
-    
-    if (CurrentLevel->Event == MAPEVENT_NONE)
-        return;
     
     auto str[MAPEVENT_MAX] EventNames =
     {
@@ -325,7 +316,25 @@ script void DecideMapEvent()
         "DRLA - Armageddon";
     };
     
-    if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
+    int Rerolls = 256; // Just in case *no* events are possible for some reason
+    while (CurrentLevel->Event == MAPEVENT_NONE && Rerolls)
+    {
+        CurrentLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Trying \cj%s\n", EventNames[CurrentLevel->Event]);
+        if (!CheckMapEvent(CurrentLevel->Event))
+        {
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \cj%s\cg not possible\n", EventNames[CurrentLevel->Event]);
+            CurrentLevel->Event = MAPEVENT_NONE;
+        };
+        Rerolls--;
+    };
+    
+    if (CurrentLevel->Event == MAPEVENT_NONE)
+        return;
+    
+    if (GetCVar("drpg_debug") && CurrentLevel->Event != MAPEVENT_NONE)
         Log("\cdDEBUG: Special Event: \cg%s\n", EventNames[CurrentLevel->Event]);
 };
 
@@ -661,7 +670,6 @@ script void HellUnleashedEvent()
     };
 };
 
-// TODO: Find a nice way to determine what monsters to spawn, maybe use base threat and average player level in a calculation?
 script void HellUnleashedSpawnMonsters()
 {
     if (GetCVar("drpg_debug"))
