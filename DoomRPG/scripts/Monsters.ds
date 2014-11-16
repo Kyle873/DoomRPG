@@ -148,8 +148,7 @@ MonsterSpace str[MAX_HUMANS][2] MonsterHumanData =
 
 MonsterSpace str[MAX_MEGABOSSES] MegaBosses =
 {
-    "Cyberdemon";
-    "SpiderMastermind";
+    "DRPGMegabossSloth";
 };
 
 function int NewMonsterID()
@@ -225,6 +224,7 @@ acscript void MonsterInit(int Flags)
     // If initialization has already occurred on this monster, terminate
     if (Stats->Init) return;
     
+    // Store Position
     Stats->Position = { GetActorX(0); GetActorY(0); GetActorZ(0); GetActorAngle(0); GetActorPitch(0); };
     
     // Set as initialized
@@ -243,13 +243,6 @@ acscript void MonsterInit(int Flags)
         if (StrICmp(Stats->ReplaceActor, "None") != 0)
             Spawn(Stats->ReplaceActor, Stats->Position.X, Stats->Position.Y, Stats->Position.Z, ActivatorTID(), Stats->Position.Angle * 256);
         return;        
-    };
-    
-    // MegaBoss flag check
-    if (CheckInventory("DRPGMegaBoss"))
-    {
-        Stats->MegaBoss = true;
-        TakeInventory("DRPGMegaBoss", 1);
     };
     
     // Store Monster Flags
@@ -409,19 +402,7 @@ script void MonsterInitStats(int StatFlags)
     int MonsterCapacity = Stats->Capacity;
     int MonsterLuck = Stats->Luck;
     int NumPlayers;
-    int PlayerAvgLevel;
     int[8] StatEffect;
-    
-    // Add up the levels of all the players in the game
-    for (int i = 0; i < MAX_PLAYERS; i++)
-    {
-        if (!PlayerInGame(i)) continue;
-        NumPlayers++;
-        PlayerAvgLevel += Players(i).Level;
-    };
-    
-    // Now calculate the average level between them
-    PlayerAvgLevel /= NumPlayers;
     
     // Monster Stats System
     if (GetCVar("drpg_monster_levels") > 0 && !(StatFlags & SF_RECREATE))
@@ -444,7 +425,7 @@ script void MonsterInitStats(int StatFlags)
         
         // Calculate Monster Level
         if (LevelType == 1 || LevelType == 3) // Player Level
-            MonsterLevel += (int)((fixed)PlayerAvgLevel * LevelWeight);
+            MonsterLevel += (int)((fixed)AveragePlayerLevel() * LevelWeight);
         if (LevelType == 2 || LevelType == 3) // Map Number
             MonsterLevel += (int)((fixed)LevelNum * MapWeight);
         
@@ -456,15 +437,15 @@ script void MonsterInitStats(int StatFlags)
         
         // If the monster is friendly, it has the average level of all players in the game
         if (GetActorProperty(0, APROP_Friendly))
-            MonsterLevel = PlayerAvgLevel;
+            MonsterLevel = AveragePlayerLevel();
         
         // Special case for Powersuit Mk. II
         if (GetActorClass(0) == "DRPGSuperPowerSuit")
             MonsterLevel = 1000;
         
         // Special case for MegaBosses
-        if (Stats->MegaBoss)
-            MonsterLevel += 100;
+        if (Stats->Flags & MF_MEGABOSS)
+            MonsterLevel += ((1000 / MAX_PLAYERS) * PlayerCount());
         
         // Calculate the monster's cut and special stats
         if (GetCVar("drpg_monster_specialize"))
@@ -538,23 +519,24 @@ script void MonsterInitStats(int StatFlags)
     if (!GetActorProperty(0, APROP_Friendly) && !(Stats->Flags & MF_NOAURA) && !StatFlags)
     {
         // 1st roll: Chance of having an aura at all
-        int AuraChance = 31 + ((GetCVar("drpg_aura_curve") * 100 / 97) + (MonsterEnergy * 100 / 97));
-        if (AuraChance < 0)    AuraChance = 0;
-        if (AuraChance > 1000) AuraChance = 1000;
-        AuraChance *= AuraChance;
-        AuraChance /= 1000;
-        bool HasAura = (Random(0, 1000) < AuraChance);
+        bool HasAura = true;
+        if (CurrentLevel->Event != MAPEVENT_ALLAURAS)
+        {
+            int AuraChance = 31 + ((GetCVar("drpg_aura_curve") * 100 / 97) + (MonsterEnergy * 100 / 97));
+            if (AuraChance < 0)    AuraChance = 0;
+            if (AuraChance > 1000) AuraChance = 1000;
+            AuraChance *= AuraChance;
+            AuraChance /= 1000;
+            HasAura = (Random(0, 1000) < AuraChance);
+        };
         
         // 2nd roll: Number of auras to have
         int AuraRand = Random(MonsterEnergy / 10, 200);
         int AuraNumber = (AuraRand * AuraRand) / 4000;
-        if (!HasAura || AuraNumber < 0) AuraNumber = 0;
+        if (AuraNumber < 1) AuraNumber = 1;
         if (AuraNumber > AURA_MAX) AuraNumber = AURA_MAX;
+        if (!HasAura) AuraNumber = 0;
 
-        // Map Event - All Auras
-        if (CurrentLevel->Event == MAPEVENT_ALLAURAS)
-             AuraNumber = Random(1, AURA_MAX);
-        
         // Run through and decide on which Auras it should have
         while (AuraNumber > 0)
         {
@@ -1221,6 +1203,89 @@ script void MonsterDeath()
     else if (Stats->Aura.Type[AURA_WHITE].Active)
         XPAmount *= 2;
     
+    if (Players(Killer).Shield.Accessory)
+    {
+        switch (Players(Killer).Shield.Accessory->PassiveEffect)
+        {
+        case SHIELD_PASS_KILLSCHARGE:
+            AddRemoteShield(Players(Killer).TID, Stats->HealthMax / 4);
+            break;
+        case SHIELD_PASS_BLOODYSHIELDSOREAL:
+            Players(Killer).Shield.AccessoryBattery = 35 * 3;
+            break;
+        };
+    };
+    
+    // Credit Rain
+    if (Killer > -1 && (Players(Killer).Luck >= 100 || CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS) && Random(1, 256) == 1)
+    {
+        fixed Z = GetActorCeilingZ(Players(Killer).TID) - GetActorPropertyFixed(Players(Killer).TID, APROP_Height);
+        fixed Radius = GetActorPropertyFixed(Players(Killer).TID, APROP_Radius);
+        
+        ThingSound(Players(Killer).TID, "credits/payout", 127);
+        Log("\cdLUDICROUS CREDITS!\n");
+        
+        for (int i = 0; i < 100; i++)
+        {
+            int CreditType = Random(1, 6);
+            str CreditName;
+            
+            switch (CreditType)
+            {
+            case 1: CreditName = "DRPGCredits1";    break;
+            case 2: CreditName = "DRPGCredits5";    break;
+            case 3: CreditName = "DRPGCredits10";   break;
+            case 4: CreditName = "DRPGCredits20";   break;
+            case 5: CreditName = "DRPGCredits50";   break;
+            case 6: CreditName = "DRPGCredits100";  break;
+            };
+            
+            DropMonsterItem(Killer, Players(Killer).TID, CreditName, 256, RandomFixed(-Radius, Radius), RandomFixed(-Radius, Radius), Z);
+            Delay(1);
+        };
+    };
+    
+    // Add XP/Rank
+    if (!(Stats->Flags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
+    {
+        // XP modifications based on level and skill
+        if (GetCVar("drpg_xp_monsterlevel")) XPAmount *= 1.0 + ((fixed)Stats->Level / 100.0);
+        if (GetCVar("drpg_xp_skilllevel")) XPAmount *= 1.0 - (0.15 * (fixed)GameSkill());
+        
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (Stats->Flags & MF_NEGATIVEXP)
+                AddXP(i, (int)XPAmount, -RankAmount, false)
+            else
+            {
+                if (Killer == i)
+                    AddXP(i, (int)XPAmount, RankAmount, false)
+                else
+                    AddXP(i, (int)XPAmount, RankAmount, true);
+            };
+        };
+    };
+    
+    // Add a kill to the pay kills
+    if (!(Stats->Flags & MF_NOPAYKILL) && Killer > -1)
+    {
+        if (Player.Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_EPICMEGACASH && Players(Killer).Shield.Active)
+            Players(Killer).PayKills += 3
+        else if (Stats->Flags & MF_BOSS)
+            Players(Killer).PayKills += 4
+        else if (Stats->Flags & MF_MEGABOSS)
+            Players(Killer).PayKills += 8
+        else
+            Players(Killer).PayKills++;
+    };
+    
+    // Mission Handling
+    MissionDeathCheck(Killer, Stats);
+    
+    // SHOTGUNS!
+    if (GetCVar("drpg_shotguns"))
+        DropMonsterItem(Killer, 0, "DRPGShotSpawn", 1, 255);
+    
     // Drops
     if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && !GetCVar("drpg_monster_shadows"))
     {
@@ -1280,7 +1345,7 @@ script void MonsterDeath()
             DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", 8);
             
             // Luck-based Drops
-            if (Killer > -1)
+            if (Killer > -1 && !(Stats->Flags & MF_MEGABOSS))
             {
                     if (RandomFixed(0.0, 100.0) < Players(Killer).HealthChance) DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", 256);
                     if (RandomFixed(0.0, 100.0) < Players(Killer).EPChance)     DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", 256);
@@ -1312,18 +1377,26 @@ script void MonsterDeath()
             if (CompatMode == COMPAT_DRLA)
                 DropMonsterItem(Killer, DropTID, "DRPGImmunityCrystal", DropMod / 2);
         };
-    };
-    
-    if (Players(Killer).Shield.Accessory)
-    {
-        switch (Players(Killer).Shield.Accessory->PassiveEffect)
+        
+        // Megaboss Drops
+        if (Stats->Flags & MF_MEGABOSS)
         {
-        case SHIELD_PASS_KILLSCHARGE:
-            AddRemoteShield(Players(Killer).TID, Stats->HealthMax / 4);
-            break;
-        case SHIELD_PASS_BLOODYSHIELDSOREAL:
-            Players(Killer).Shield.AccessoryBattery = 35 * 3;
-            break;
+            AmbientSound("megaboss/lootsplosion", 127);
+            Delay(35 * 2.25); // Just long enough to sync up with the sound nicely
+            
+            // LOOTSPLOOOOOOOOOOOOOSIIIOOOOOOOOOOOOOONNNNNN
+            int Rolls = 200;
+            while (Rolls--)
+            {
+                DropMonsterItem(Killer, DropTID, "DRPGCredits1000", 256, 0, 0, 0, 16, 16, Random(8, 16));
+                for (int i = 0; i < PlayerCount(); i++)
+                    DropMonsterItem(Killer, DropTID, "DRPGGenericBossDropper", 256, 0, 0, 0, 16, 16, Random(8, 16));
+                if ((Rolls % 5) == 0)
+                    Delay(1);
+            };
+            
+            // TODO: Drop the Diamond UAC Card
+            DropMonsterItem(Killer, DropTID, "DRPGUACCard", 256);
         };
     };
     
@@ -1334,72 +1407,6 @@ script void MonsterDeath()
     // Drop Credits
     if (!(Stats->Flags & MF_NODROPS) && CheckInventory("DRPGCredits") > 0)
         DropMoney(Killer, 0, Random(CheckInventory("DRPGCredits") / 2, CheckInventory("DRPGCredits") * (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS ? 4 : 1)));
-    
-    // Credit Rain
-    if (Killer > -1 && (Players(Killer).Luck >= 100 || CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS) && Random(1, 256) == 1)
-    {
-        fixed Z = GetActorCeilingZ(Players(Killer).TID) - GetActorPropertyFixed(Players(Killer).TID, APROP_Height);
-        fixed Radius = GetActorPropertyFixed(Players(Killer).TID, APROP_Radius);
-        
-        ThingSound(Players(Killer).TID, "credits/payout", 127);
-        Log("\cdLUDICROUS CREDITS!\n");
-        
-        for (int i = 0; i < 100; i++)
-        {
-            int CreditType = Random(1, 6);
-            str CreditName;
-            
-            switch (CreditType)
-            {
-            case 1: CreditName = "DRPGCredits1";    break;
-            case 2: CreditName = "DRPGCredits5";    break;
-            case 3: CreditName = "DRPGCredits10";   break;
-            case 4: CreditName = "DRPGCredits20";   break;
-            case 5: CreditName = "DRPGCredits50";   break;
-            case 6: CreditName = "DRPGCredits100";  break;
-            };
-            
-            DropMonsterItem(Killer, Players(Killer).TID, CreditName, 256, RandomFixed(-Radius, Radius), RandomFixed(-Radius, Radius), Z);
-            Delay(1);
-        };
-    };
-    
-    // Add XP/Rank
-    if (!(Stats->Flags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
-    {
-        // XP modifications based on level and skill
-        if (GetCVar("drpg_xp_monsterlevel")) XPAmount *= 1.0 + ((fixed)Stats->Level / 100.0);
-        if (GetCVar("drpg_xp_skilllevel")) XPAmount *= 1.0 - (0.15 * (fixed)GameSkill());
-        
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (Stats->Flags & MF_NEGATIVEXP)
-                AddXP(i, (int)XPAmount, -RankAmount, false)
-            else
-            {
-                if (Killer == i)
-                    AddXP(i, (int)XPAmount, RankAmount, false)
-                else
-                    AddXP(i, (int)XPAmount, RankAmount, true);
-            };
-        };
-    };
-    
-    // Add a kill to the pay kills
-    if (!(Stats->Flags & MF_NOPAYKILL) && Killer > -1)
-    {
-        if (Player.Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_EPICMEGACASH && Players(Killer).Shield.Active)
-            Players(Killer).PayKills += 3
-        else
-            Players(Killer).PayKills++;
-    };
-    
-    // Mission Handling
-    MissionDeathCheck(Killer, Stats);
-    
-    // SHOTGUNS!
-    if (GetCVar("drpg_shotguns"))
-        DropMonsterItem(Killer, 0, "DRPGShotSpawn", 1, 255);
     
     // Drop stolen ammo
     while (CheckInventory("Clip") >= 10)
@@ -1649,9 +1656,9 @@ function int CalculateMonsterThreatLevel(MonsterStatsPtr Stats)
     // Bosses
     if (CheckFlag(0, "BOSS") || Stats->Flags & MF_BOSS)
         Threat++;
-    /* TODO: MF_MEGABOSS
+    // Megaboss
     if (Stats->Flags & MF_MEGABOSS)
-        Threat++; */
+        Threat += 2;
     
     // DRLA
     if (CompatMode == COMPAT_DRLA)

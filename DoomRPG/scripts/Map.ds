@@ -228,11 +228,16 @@ script void MapInit() open
             CurrentLevel->ParBonus = true;
         CalculateBonusMaps();
         
+        CurrentLevel->Event = MAPEVENT_NONE;
+        CurrentLevel->MonsterPositions = BLANKDYNAMICARRAY;
         CurrentLevel->SelectedMonster = nullptr;
         CurrentLevel->MegabossActor = nullptr;
         CurrentLevel->LevelAdd = 0;
         CurrentLevel->RareAdd = 0;
-    
+        
+        // Allocate the Monster Positions dynamic array
+        ArrayCreate(&CurrentLevel->MonsterPositions, "MPOS\x00", 64, sizeof(Position));
+        
         // Decide the map's event, if any
         DecideMapEvent();
         
@@ -249,26 +254,48 @@ script void MapInit() open
         MapLoop();
 };
 
+function bool CheckMapEvent(int event)
+{
+    switch (event)
+    {
+        case MAPEVENT_MEGABOSS:
+            if (AveragePlayerLevel() < 50)
+                return false;
+            return true;
+        
+        case MAPEVENT_ALLAURAS:
+            if (AveragePlayerLevel() < 20)
+                return false;
+            return true;
+        
+        case MAPEVENT_BONUS_RAINBOWS:
+            if (Random(0, 3))
+                return false;
+            return true;
+        
+        case MAPEVENT_DRLA_NIGHTMARE:
+        case MAPEVENT_DRLA_TECHNOPHOBIA:
+        case MAPEVENT_DRLA_ARMAGEDDON:
+            if (CompatMode != COMPAT_DRLA || AveragePlayerLevel() < 10)
+                return false;
+            return true;
+        
+        case MAPEVENT_TOXICHAZARD:
+        case MAPEVENT_NUCLEARBOMB:
+        case MAPEVENT_LOWPOWER:
+        case MAPEVENT_ONEMONSTER:
+        case MAPEVENT_HELLUNLEASHED:
+        default:
+            return true;
+    };
+    
+    return false;
+};
+
 script void DecideMapEvent()
 {
-    if (RandomFixed(0.0, 100.0) >= GetCVarFixed("drpg_mapevent_chance"))
+    if (RandomFixed(0.0, 99.9) > GetCVarFixed("drpg_mapevent_chance"))
         return; // No special event
-    
-    CurrentLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
-    
-    // *Really* rare
-    if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS && Random(1, 4) != 1)
-    {
-        CurrentLevel->Event = MAPEVENT_NONE;
-        return;
-    };
-    
-    // Can't do Nightmare/Technophobia/Armageddon levels without DRLA
-    if (CurrentLevel->Event >= MAPEVENT_DRLA_NIGHTMARE && CurrentLevel->Event <= MAPEVENT_DRLA_ARMAGEDDON && CompatMode != COMPAT_DRLA)
-    {
-        CurrentLevel->Event = MAPEVENT_NONE;
-        return;
-    };
     
     auto str[MAPEVENT_MAX] EventNames =
     {
@@ -289,7 +316,25 @@ script void DecideMapEvent()
         "DRLA - Armageddon";
     };
     
-    if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
+    int Rerolls = 256; // Just in case *no* events are possible for some reason
+    while (CurrentLevel->Event == MAPEVENT_NONE && Rerolls)
+    {
+        CurrentLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Trying \cj%s\n", EventNames[CurrentLevel->Event]);
+        if (!CheckMapEvent(CurrentLevel->Event))
+        {
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \cj%s\cg not possible\n", EventNames[CurrentLevel->Event]);
+            CurrentLevel->Event = MAPEVENT_NONE;
+        };
+        Rerolls--;
+    };
+    
+    if (CurrentLevel->Event == MAPEVENT_NONE)
+        return;
+    
+    if (GetCVar("drpg_debug") && CurrentLevel->Event != MAPEVENT_NONE)
         Log("\cdDEBUG: Special Event: \cg%s\n", EventNames[CurrentLevel->Event]);
 };
 
@@ -322,6 +367,7 @@ script void SetupMapEvent()
         
         case MAPEVENT_LOWPOWER:
             // Low Power: Light levels are extremely diminished. IR goggles recommended.
+            AmbientSound("misc/poweroff", 127);
             for (int i = 0; i < 65536; i++)
             {
                 Light_Flicker(i, 48, 96);
@@ -389,9 +435,6 @@ script void MegaBossEvent()
     int Index;
     Position *ChosenPosition;
     
-    auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
-    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
-    
     if (CurrentLevel->MegabossActor == nullptr)
     {
         CurrentLevel->MegabossActor = MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
@@ -403,38 +446,39 @@ script void MegaBossEvent()
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
     
+    // Populate the positions array
     for (int i = 1; i < MAX_MONSTERS; i++)
     {
         if (!Monsters[i].Init)
             continue;
         
         // Array has grown too big, resize it
-        if (MonsterPositions.Position == MonsterPositions.Size)
-            ArrayResize(&MonsterPositions);
+        if (CurrentLevel->MonsterPositions.Position == CurrentLevel->MonsterPositions.Size)
+            ArrayResize(&CurrentLevel->MonsterPositions);
         
         // Store position
-        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
+        ((Position *)CurrentLevel->MonsterPositions.Data)[CurrentLevel->MonsterPositions.Position++] = Monsters[i].Position;
         Monsters[i].ReplaceActor = "None";
     };
     
     Delay(2); // Monsters disappear!
     
     // Shuffle positions
-    for (int i = 0; i < MonsterPositions.Position; i++)
+    for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
     {
-        int x = Random(0, MonsterPositions.Position - 1);
+        int x = Random(0, CurrentLevel->MonsterPositions.Position - 1);
         Position TempPosition;
         
-        TempPosition = ((Position *)MonsterPositions.Data)[i];
-        ((Position *)MonsterPositions.Data)[i] = ((Position *)MonsterPositions.Data)[x];
-        ((Position *)MonsterPositions.Data)[x] = TempPosition;
+        TempPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[i] = ((Position *)CurrentLevel->MonsterPositions.Data)[x];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[x] = TempPosition;
     };
     
     // Spawning
     while (!Spawned)
     {
         TID = UniqueTID();
-        ChosenPosition = &((Position *)MonsterPositions.Data)[Index];
+        ChosenPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[Index];
         Spawned = Spawn(CurrentLevel->MegabossActor, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
         
         if (GetCVar("drpg_debug"))
@@ -457,6 +501,8 @@ script void MegaBossEvent()
     // EVIL WARNING LAUGHTER
     AmbientSound("mission/gottarget2", 127);
     
+    // Loop
+    // TODO: Cycle locations every once and a while to make sure it doesn't spawn intself in a monster closet or something
     while (true)
     {
         // Spotted
@@ -475,6 +521,7 @@ script void MegaBossEvent()
             SetMusic("");
             Delay(35 * 60); // Let the players pick up the loot
             CurrentLevel->Event = MAPEVENT_NONE;
+            ArrayDestroy(&CurrentLevel->MonsterPositions);
             return;
         };
         
@@ -493,16 +540,13 @@ script void EnvironmentalHazard()
     goto Start;
 };
 
+// TODO: The ability to defuse the bomb and set one up yourself
 script void ThermonuclearBomb()
 {
-    // TODO: The ability to defuse the bomb and set one up yourself
-    SetHudSize(640, 480, 0);
+    SetHudSize(640, 480, false);
     
-    int BombTime = GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300;
+    int BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300);
     BombTime *= 35;
-    
-    int Minutes = BombTime / 35 / 60;
-    int Seconds = BombTime / 35 % 60;
     
     SetMusic("");
     
@@ -519,9 +563,6 @@ script void ThermonuclearBomb()
     
     while (BombTime)
     {
-        Minutes = BombTime / 35 / 60;
-        Seconds = BombTime / 35 % 60;
-        
         SetFont("BIGFONT");
         HudMessageBold("\cgT - %s\n", FormatTime(BombTime), HUDMSG_FADEOUT, MAKE_ID('N', 'U', 'K', 'E'), CR_RED, 64.1, 64.1, 3.0, 0.5);
         
@@ -548,6 +589,7 @@ script void ThermonuclearBomb()
     SetMusic("*");
 };
 
+// TODO: Calculate which monster should spawn based on their base threat level and average player levels
 script void OneMonsterEvent()
 {
     bool Extras = (CompatMode == COMPAT_EXTRAS);
@@ -588,7 +630,7 @@ script void OneMonsterEvent()
     // Level feeling
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.0, 150.0, 1.0, 19.0);
+    HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.4, 150.0, 1.0, 19.0);
 };
 
 script void HellUnleashedEvent()
@@ -630,31 +672,15 @@ script void HellUnleashedEvent()
 
 script void HellUnleashedSpawnMonsters()
 {
-    auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
-    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
-    
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \c-Spawning next wave of monsters...\n");
 
     Delay(1); // Maximize our instructions
     
-    for (int i = 1; i < MAX_MONSTERS; i++)
-    {
-        if (!Monsters[i].Init)
-            continue;
-        
-        // Array has grown too big, resize it
-        if (MonsterPositions.Position == MonsterPositions.Size)
-            ArrayResize(&MonsterPositions);
-        
-        // Store position
-        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
-    };
-    
-    for (int i = 0; i < MonsterPositions.Position; i++)
+    for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
     {
         int TID = UniqueTID();
-        Position *CurrentPosition = &((Position *)MonsterPositions.Data)[i];;
+        Position *CurrentPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[i];;
         
         // Determine a monster
         MonsterInfoPtr Monster;
