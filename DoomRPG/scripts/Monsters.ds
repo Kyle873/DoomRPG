@@ -406,19 +406,7 @@ script void MonsterInitStats(int StatFlags)
     int MonsterCapacity = Stats->Capacity;
     int MonsterLuck = Stats->Luck;
     int NumPlayers;
-    int PlayerAvgLevel;
     int[8] StatEffect;
-    
-    // Add up the levels of all the players in the game
-    for (int i = 0; i < MAX_PLAYERS; i++)
-    {
-        if (!PlayerInGame(i)) continue;
-        NumPlayers++;
-        PlayerAvgLevel += Players(i).Level;
-    };
-    
-    // Now calculate the average level between them
-    PlayerAvgLevel /= NumPlayers;
     
     // Monster Stats System
     if (GetCVar("drpg_monster_levels") > 0 && !(StatFlags & SF_RECREATE))
@@ -441,7 +429,7 @@ script void MonsterInitStats(int StatFlags)
         
         // Calculate Monster Level
         if (LevelType == 1 || LevelType == 3) // Player Level
-            MonsterLevel += (int)((fixed)PlayerAvgLevel * LevelWeight);
+            MonsterLevel += (int)((fixed)AveragePlayerLevel() * LevelWeight);
         if (LevelType == 2 || LevelType == 3) // Map Number
             MonsterLevel += (int)((fixed)LevelNum * MapWeight);
         
@@ -453,7 +441,7 @@ script void MonsterInitStats(int StatFlags)
         
         // If the monster is friendly, it has the average level of all players in the game
         if (GetActorProperty(0, APROP_Friendly))
-            MonsterLevel = PlayerAvgLevel;
+            MonsterLevel = AveragePlayerLevel();
         
         // Special case for Powersuit Mk. II
         if (GetActorClass(0) == "DRPGSuperPowerSuit")
