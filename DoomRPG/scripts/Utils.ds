@@ -36,6 +36,30 @@ str[AURA_MAX] AuraIcons =
     "AuraBlac";
 };
 
+acscript void TeleportMonster()
+{
+    auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
+    ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
+    
+    for (int i = 1; i < MAX_MONSTERS; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        // Array has grown too big, resize it
+        if (MonsterPositions.Position == MonsterPositions.Size)
+            ArrayResize(&MonsterPositions);
+        
+        // Store position
+        ((Position *)MonsterPositions.Data)[MonsterPositions.Position++] = Monsters[i].Position;
+    };
+    
+    Position *ChosenPosition = &((Position *)MonsterPositions.Data)[Random(0, MonsterPositions.Position)];
+    SetActorPosition(0, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, true);
+    SetActorAngle(0, ChosenPosition->Angle);
+    SetActorPitch(0, ChosenPosition->Pitch);
+};
+
 // For calling from DECORATE
 acscript void HealMonster(int HealPercent)
 {
