@@ -67,6 +67,9 @@ acscript void HealMonster(int HealPercent)
     int HealAmount = Stats->HealthMax * HealPercent / 100;  
     
     SetActorProperty(0, APROP_Health, Health + HealAmount);
+    
+    if (GetActorProperty(0, APROP_Health) >= Stats->HealthMax)
+        SetActorProperty(0, APROP_Health, Stats->HealthMax);
 };
 
 acscript int GetItemDropLuck()
@@ -1482,7 +1485,7 @@ function bool DropPlayerItem(str Item)
     return (SpawnOK && SightOK);
 };
 
-function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XAdd, fixed YAdd, fixed ZAdd)
+function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XAdd, fixed YAdd, fixed ZAdd, fixed XVelAdd, fixed YVelAdd, fixed ZVelAdd)
 {
     // if this is an invalid killer, return
     if (!(Killer > -1)) return 0;
@@ -1494,9 +1497,9 @@ function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XA
     fixed X = GetActorX(TID) + XAdd;
     fixed Y = GetActorY(TID) + YAdd;
     fixed Z = GetActorZ(TID) + (GetActorPropertyFixed(0, APROP_Height) / 2.0) + ZAdd;
-    fixed XSpeed = GetCVarFixed("drpg_monster_dropdist");
-    fixed YSpeed = GetCVarFixed("drpg_monster_dropdist");
-    fixed ZSpeed = 8.0;
+    fixed XSpeed = GetCVarFixed("drpg_monster_dropdist") + XVelAdd;
+    fixed YSpeed = GetCVarFixed("drpg_monster_dropdist") + YVelAdd;
+    fixed ZSpeed = 8.0 + ZVelAdd;
     int ItemTID = UniqueTID();
     bool Success = false;
     
