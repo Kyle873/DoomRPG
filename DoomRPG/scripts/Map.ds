@@ -249,26 +249,58 @@ script void MapInit() open
         MapLoop();
 };
 
+function bool CheckMapEvent(int event)
+{
+    switch (event)
+    {
+        case MAPEVENT_MEGABOSS:
+            if (AveragePlayerLevel() < 50)
+                return false;
+            return true;
+        
+        case MAPEVENT_ALLAURAS:
+            if (AveragePlayerLevel() < 20)
+                return false;
+            return true;
+        
+        case MAPEVENT_BONUS_RAINBOWS:
+            if (Random(0, 3))
+                return false;
+            return true;
+        
+        case MAPEVENT_DRLA_NIGHTMARE:
+        case MAPEVENT_DRLA_TECHNOPHOBIA:
+        case MAPEVENT_DRLA_ARMAGEDDON:
+            if (CompatMode != COMPAT_DRLA || AveragePlayerLevel() < 10)
+                return false;
+            return true;
+        
+        case MAPEVENT_TOXICHAZARD:
+        case MAPEVENT_NUCLEARBOMB:
+        case MAPEVENT_LOWPOWER:
+        case MAPEVENT_ONEMONSTER:
+        case MAPEVENT_HELLUNLEASHED:
+        default:
+            return true;
+    };
+};
+
 script void DecideMapEvent()
 {
     if (RandomFixed(0.0, 100.0) >= GetCVarFixed("drpg_mapevent_chance"))
         return; // No special event
     
-    CurrentLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
-    
-    // *Really* rare
-    if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS && Random(1, 4) != 1)
+    int Rerolls = 256; // Just in case *no* events are possible for some reason
+    while (CurrentLevel->Event == MAPEVENT_NONE && Rerolls)
     {
-        CurrentLevel->Event = MAPEVENT_NONE;
-        return;
+        CurrentLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
+        if (!CheckMapEvent (CurrentLevel->Event))
+            CurrentLevel->Event = MAPEVENT_NONE;
+        Rerolls--;
     };
     
-    // Can't do Nightmare/Technophobia/Armageddon levels without DRLA
-    if (CurrentLevel->Event >= MAPEVENT_DRLA_NIGHTMARE && CurrentLevel->Event <= MAPEVENT_DRLA_ARMAGEDDON && CompatMode != COMPAT_DRLA)
-    {
-        CurrentLevel->Event = MAPEVENT_NONE;
+    if (CurrentLevel->Event == MAPEVENT_NONE)
         return;
-    };
     
     auto str[MAPEVENT_MAX] EventNames =
     {
@@ -389,13 +421,6 @@ script void MegaBossEvent()
     int BossType;
     int Index;
     Position *ChosenPosition;
-    
-    // Not high enough average player level, bail out
-    if (AveragePlayerLevel() < 50)
-    {
-        CurrentLevel->Event = MAPEVENT_NONE;
-        return;
-    };
     
     auto DynamicArray MonsterPositions = BLANKDYNAMICARRAY;
     ArrayCreate(&MonsterPositions, "MPOS\x00", 64, sizeof(Position));
