@@ -23,19 +23,24 @@
     1. Version / Compatibility Flag
         - Version is referenced from defs, stored in 2 bytes
         - Mirror of the CompatMode static, stored in 1 byte
-    1. Level / Rank Level
+    2. Level / Rank Level
         - Only Level and Rank Level are stored, the XP to give is determined from these
         - Both Level and Rank Level are stored in 1 byte each
-    2. Stats
+    3. Stats
         - Each stat will be stored in 1 byte since they will never go above 200 by normal means
-    3. Skills
+    4. Skills
         - Each skill level is stored in 1 byte
         - Each skill category will be wrapped in a set of []'s
-    4. Augmentations
+    5. Skill Wheel
+        - 16 bytes total
+        - Each slot is 2 bytes
+        - First byte is the category, second byte is the index
+        - Both bytes being 255 (FFFF) means it is blank
+    6. Augmentations
         - Each augmentation's level is stored in 1 byte
-    5. Stims
+    7. Stims
         - Each stim vial type is stored in 4 bytes
-    6. Misc
+    8. Misc
         - Credits
           - Stored in 4 bytes
         - Augmentation Battery
@@ -44,39 +49,48 @@
           - Stored in 1 byte
         - Pay Bonus
           - Stored in 2 bytes
-    8. Locker
+        - Arena Wave
+          - Stored in 2 bytes
+    9. Locker
         - Each item's count will be stored in 4 bytes
-        - Each item category will be wapped in a set of []'s
-    9. DRLA Assemblies
+        - Each item category will be wrapped in a set of []'s
+        
+    ----- COMPATIBILITY EXTENSIONS -----
+    
+    1. DRLA Assemblies
         - Each assembly set can be stored in a 4-byte bitfield
-    10. DRLA Known Exotic Effects Info
+    2. DRLA Known Exotic Effects Info
         - Each weapon can use a 1 byte bitfield to hold the known exoctic effects
-    11. Checksum
+    
+    Checksum
         - Checksum is seperated out at the end via a |
-        - Checksum is determined by adding the value of each entry into a buffer and bit-shifting << 8
+        - Checksum is determined by adding the value of each entry into a total buffer and doing the following:
+          ((Total * 8) / 2) << 8
     
     BASIC EXAMPLE
-    - Each category is seperated for readability
+    - Each category is seperated onto a new line for readability
     - Version 1, DRLA Compatibility mode
     - Level 10, Rank 4
     - Stats are Defaults
     - First skill of each category learned at it's max level
+    - Skill wheel contains Heal and Red Aura on slots 1 and 2
     - Augs are levels 1, 2, 3, 4, 1, 2, 3, 4, 1 respectively
     - Each stim is 0 for brevity
     - 1000 Credits, 100% Battery, 25% Toxicity, 10% Pay Bonus
     - Locker and DRLA stuff are 0 and omitted for brevity
     
     0102
-    -0A04
+    -0A02
     -00000A0A00000A00
     -[0400000000][020000000000000000][060000000000000000][0200000000][0700000000000000000000000000000000][0100000000000000]
+    -00000200FFFFFFFFFFFFFFFFFFFFFFFF
     -010203040102030401-
     -...
     -03E864190A
     -...
     -...
     -...
-    |4C600000
+    42F00000
     
 */
 
