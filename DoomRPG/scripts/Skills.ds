@@ -26,35 +26,31 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
     // Healing/Support
     {
         {
-            "Heal"; 25; 4; Heal;
+            "Heal"; 100; 3; Heal;
             {
-                "Recover 25% HP";
-                "Recover 50% HP";
-                "Recover 75% HP\nHeals Status Effects";
-                "Recover 100% HP\nHeals Status Effects";
+                "Recover all of your health";
+                "Recover all of your health\nHeals Status Effects";
+                "Heal to 200% of your maximum health\n\cgSlowly drains back down to 100% maximum health\nHeals Status Effects";
             };
         };
         {
             "Heal Summons"; 100; 1; HealSummons;
             {
-                "Summons recover all of their HP";
+                "Summons recover all of their health";
             };
         };
         {
             "Heal Team"; 50; 4; HealTeam;
             {
-                "Heals you and your teammates for 25% HP";
-                "Heals you and your teammates for 50% HP";
-                "Heals you and your teammates for 75% HP\nHeals you and your teammmates Status Effects";
-                "Heals you and your teammates for all HP\nHeals you and your teammmates Status Effects";
+                "Heals you and your teammates for 25% health";
+                "Heals you and your teammates for 50% health";
+                "Heals you and your teammates for 75% health\nHeals you and your teammmates Status Effects";
+                "Heals you and your teammates for all health\nHeals you and your teammmates Status Effects";
             };
         };
         {
-            "Decontamination"; 100; 4; Decontaminate;
+            "Decontamination"; 300; 1; Decontaminate;
             {
-                "Remove 25% of your Toxicity";
-                "Remove 50% of your Toxicity";
-                "Remove 75% of your Toxicity";
                 "Remove all of your Toxicity";
             };
         };
@@ -114,7 +110,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Weapon Drop"; 200; 7; DropWeapon;
+            "Weapon Drop"; 100; 7; DropWeapon;
             {
                 "Drops a Weapon at your location\n\cjPistol";
                 "Drops a Weapon at your location\n\cjShotgun";
@@ -126,7 +122,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Ammo Drop"; 50; 3; DropAmmo;
+            "Ammo Drop"; 100; 3; DropAmmo;
             {
                 "Drops a Small Backpack full of ammo at your location";
                 "Drops a Backpack full of ammo at your location";
@@ -872,27 +868,28 @@ acscript void UseSkill(int Key) net
 
 acscript bool Heal(SkillLevelInfo *SkillLevel, void *Data)
 {
-    int HealAmount;
-    
-    // Calculate healing amount based on level
-    HealAmount = 25 * SkillLevel->CurrentLevel;
-    
-    // Refund - If your health is max or above
-    if (Player.ActualHealth >= Player.HealthMax && !HaveStatusEffect())
+    // Refund - If your health is max or above at levels lower than 3 or you don't have a status effect
+    if ((SkillLevel->CurrentLevel < 3 && Player.ActualHealth >= Player.HealthMax) && !HaveStatusEffect())
     {
         ActivatorSound("menu/error", 127);
         return false;
     };
     
-    FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
+    // Healing
+    if (SkillLevel->CurrentLevel <= 2)
+        AddHealth(100, 100) 
+    else
+    {
+        AddHealth(200, 200);
+        Player.OverHeal = true;
+    };
     
-    AddHealth(HealAmount, 100);
-    ActivatorSound("skills/heal", 127);
-    
-    // Level 3+ - Remove Status Effects
-    if (SkillLevel->Level > 2)
+    // Remove Status Effects
+    if (SkillLevel->CurrentLevel >= 2)
         ClearStatusEffects();
     
+    FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
+    ActivatorSound("skills/heal", 127);
     return true;
 };
 
@@ -933,7 +930,7 @@ acscript bool HealTeam(SkillLevelInfo *SkillLevel, void *Data)
             AddHealth(HealAmount, 100);
             
             // Level 3+ - Remove Status Effects
-            if (SkillLevel->Level > 2)
+            if (SkillLevel->CurrentLevel > 2)
                 ClearStatusEffects();
             
             FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
@@ -953,13 +950,11 @@ acscript bool Decontaminate(SkillLevelInfo *SkillLevel, void *Data)
         return false;
     };
     
-    Player.Toxicity -= (25 * SkillLevel->CurrentLevel);
-    Player.ToxicTimer = 0;
-    Player.ToxicOffset = 0;
-    Player.ToxicStage = 0;
+    Player.Toxicity = 0;
+    ClearToxicityMeter();
     
     ActivatorSound("skills/decontaminate", 127);
-    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0 + (0.25 * SkillLevel->CurrentLevel));
+    FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0);
     
     return true;
 };
@@ -2362,12 +2357,16 @@ function void CheckAuras()
     {
         Player.Aura.Team = false;
         
+        // Reset Auras
         for (int i = 0; i < AURA_MAX; i++)
             if (Player.Aura.Time <= 0)
             {
                 Player.Aura.Type[i].Active = false;
                 Player.Aura.Type[i].Level = 0;
-                Player.SoulActive[i] = false;
             };
+        
+        // Reset Souls
+        for (int i = 0; i < SOUL_MAX; i++)
+            Player.SoulActive[i] = false;
     };
 };

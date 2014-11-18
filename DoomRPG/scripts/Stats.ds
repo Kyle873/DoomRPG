@@ -365,7 +365,16 @@ function void CheckRank()
 function void CheckHealth()
 {
     // If you're dead, return
-    if (ClassifyActor(0) & ACTOR_DEAD) return;
+    if (GetActorProperty(0, APROP_Health) <= 0) return;
+    
+    // Over-Heal behavior
+    if (Player.OverHeal)
+    {
+        if ((Timer() % 35) == 0)
+            Player.ActualHealth--;
+        if (Player.ActualHealth <= Player.HealthMax)
+            Player.OverHeal = false;
+    };
     
     // < 10% Health
     if (Player.ActualHealth <= Player.HealthMax / 10 && !Player.Perks[STAT_VITALITY])
@@ -418,6 +427,7 @@ function void CheckStats()
     };
     
     // Brutal Doom Compatibility
+    // Fucking special flower faggotry to the max right here
     if (CompatMode == COMPAT_BRUTAL)
     {
         SetAmmoCapacity("NewClip", Player.Capacity * 20);
