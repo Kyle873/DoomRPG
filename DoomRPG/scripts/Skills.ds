@@ -17,7 +17,7 @@ int ForceFieldTID = 1998;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
-    5; 9; 9; 5; 17; 8;
+    4; 9; 9; 5; 17; 8;
 };
 
 AddressSpace MapArray SkillSpace;
@@ -26,26 +26,18 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
     // Healing/Support
     {
         {
-            "Heal"; 100; 3; Heal;
+            "Heal"; 75; 4; Heal;
             {
                 "Recover all of your health";
                 "Recover all of your health\nHeals Status Effects";
-                "Heal to 200% of your maximum health\n\cgSlowly drains back down to 100% maximum health\nHeals Status Effects";
+                "Recover all of your health\nHeals Status Effects\n\caAlso Effects Teammates";
+                "Recover to 200% of your maximum health\n\cgSlowly drains back down to 100% maximum health\nHeals Status Effects\n\caAlso Affects Teammates";
             };
         };
         {
             "Heal Summons"; 100; 1; HealSummons;
             {
                 "Summons recover all of their health";
-            };
-        };
-        {
-            "Heal Team"; 50; 4; HealTeam;
-            {
-                "Heals you and your teammates for 25% health";
-                "Heals you and your teammates for 50% health";
-                "Heals you and your teammates for 75% health\nHeals you and your teammmates Status Effects";
-                "Heals you and your teammates for all health\nHeals you and your teammmates Status Effects";
             };
         };
         {
@@ -868,6 +860,9 @@ acscript void UseSkill(int Key) net
 
 acscript bool Heal(SkillLevelInfo *SkillLevel, void *Data)
 {
+    int PlayerTID = Player.TID;
+    bool Team = (SkillLevel->CurrentLevel >= 3);
+    
     // Refund - If your health is max or above at levels lower than 3 or you don't have a status effect
     if ((SkillLevel->CurrentLevel < 3 && Player.ActualHealth >= Player.HealthMax) && !HaveStatusEffect())
     {
@@ -876,20 +871,76 @@ acscript bool Heal(SkillLevelInfo *SkillLevel, void *Data)
     };
     
     // Healing
-    if (SkillLevel->CurrentLevel <= 2)
-        AddHealth(100, 100) 
+    if (Team)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i)) continue;
+            
+            SetActivator(Players(i).TID);
+            
+            if (SkillLevel->CurrentLevel >= 4)
+            {
+                AddHealth(200, 200);
+                Players(i).OverHeal = true;
+            }
+            else
+                AddHealth(100, 100);
+        };
+        
+        SetActivator(PlayerTID);
+    }
     else
     {
-        AddHealth(200, 200);
-        Player.OverHeal = true;
+        if (SkillLevel->CurrentLevel >= 4)
+        {
+            AddHealth(200, 200);
+            Player.OverHeal = true;
+        }
+        else
+            AddHealth(100, 100);
     };
     
     // Remove Status Effects
     if (SkillLevel->CurrentLevel >= 2)
-        ClearStatusEffects();
+    {
+        if (Team)
+        {
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                if (!PlayerInGame(i)) continue;
+                
+                SetActivator(Players(i).TID);
+                
+                ClearStatusEffects();
+            };
+            
+            SetActivator(PlayerTID);
+        }
+        else
+            ClearStatusEffects();
+    };
     
-    FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
-    ActivatorSound("skills/heal", 127);
+    if (Team)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i)) continue;
+            
+            SetActivator(Players(i).TID);
+            
+            FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
+            ActivatorSound("skills/heal", (Players(i).TID == PlayerTID ? 127 : 64));
+        };
+        
+        SetActivator(PlayerTID);
+    }
+    else
+    {
+        FadeRange(255, 0, 255, 0.5, 255, 0, 255, 0, 1.0);
+        ActivatorSound("skills/heal", 127);
+    };
+    
     return true;
 };
 
@@ -912,32 +963,6 @@ acscript bool HealSummons(SkillLevelInfo *SkillLevel, void *Data)
         };
     
     ActivatorSound("skills/heal2", 127);
-    
-    return true;
-};
-
-acscript bool HealTeam(SkillLevelInfo *SkillLevel, void *Data)
-{
-    int PlayerTID = Player.TID;
-    int HealAmount;
-    
-    HealAmount = 25 * SkillLevel->CurrentLevel;
-    
-    for (int i = 0; i < MAX_PLAYERS; i++)
-        if (PlayerInGame(i))
-        {
-            SetActivator(Players(i).TID);
-            AddHealth(HealAmount, 100);
-            
-            // Level 3+ - Remove Status Effects
-            if (SkillLevel->CurrentLevel > 2)
-                ClearStatusEffects();
-            
-            FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0, 1.0);
-            ActivatorSound("skills/heal", 127);
-        };
-     
-    SetActivator(PlayerTID);
     
     return true;
 };
