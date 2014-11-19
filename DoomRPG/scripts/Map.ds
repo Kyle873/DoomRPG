@@ -250,6 +250,20 @@ script void MapInit() open
     // Set up the currently in-effect map event
     SetupMapEvent();
     
+    // Populate the positions array
+    for (int i = 1; i < MAX_MONSTERS; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        // Array has grown too big, resize it
+        if (CurrentLevel->MonsterPositions.Position == CurrentLevel->MonsterPositions.Size)
+            ArrayResize(&CurrentLevel->MonsterPositions);
+        
+        // Store position
+        ((Position *)CurrentLevel->MonsterPositions.Data)[CurrentLevel->MonsterPositions.Position++] = Monsters[i].Position;
+    };
+    
     if (CurrentLevel)
         MapLoop();
 };
@@ -280,11 +294,15 @@ function bool CheckMapEvent(int event)
                 return false;
             return true;
         
+        case MAPEVENT_HELLUNLEASHED:
+            if (AveragePlayerLevel() < 1)
+                return false;
+            return true;
+        
         case MAPEVENT_TOXICHAZARD:
         case MAPEVENT_NUCLEARBOMB:
         case MAPEVENT_LOWPOWER:
         case MAPEVENT_ONEMONSTER:
-        case MAPEVENT_HELLUNLEASHED:
         default:
             return true;
     };
@@ -446,18 +464,12 @@ script void MegaBossEvent()
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
     
-    // Populate the positions array
+    // Replace them with nothing
     for (int i = 1; i < MAX_MONSTERS; i++)
     {
         if (!Monsters[i].Init)
             continue;
         
-        // Array has grown too big, resize it
-        if (CurrentLevel->MonsterPositions.Position == CurrentLevel->MonsterPositions.Size)
-            ArrayResize(&CurrentLevel->MonsterPositions);
-        
-        // Store position
-        ((Position *)CurrentLevel->MonsterPositions.Data)[CurrentLevel->MonsterPositions.Position++] = Monsters[i].Position;
         Monsters[i].ReplaceActor = "None";
     };
     
@@ -520,7 +532,6 @@ script void MegaBossEvent()
             SetMusic("");
             Delay(35 * 60); // Let the players pick up the loot
             CurrentLevel->Event = MAPEVENT_NONE;
-            ArrayDestroy(&CurrentLevel->MonsterPositions);
             return;
         };
         
@@ -654,12 +665,18 @@ script void HellUnleashedEvent()
         // Slowly increment the values
         fixed ParTime = (fixed)GetLevelInfo(LEVELINFO_PAR_TIME);
         if (ParTime <= 0) // Assign a default value to prevent divide-by-zero
-            ParTime = 0;
+            ParTime = 35 * 60;
         fixed AddMult = 0.1 / ParTime;
         CurrentLevel->LevelAdd += RandomFixed(AddMult, AddMult * 10.0);
         CurrentLevel->RareAdd += RandomFixed(AddMult * 0.1, AddMult);
         
-        // Caps
+        // Level Imposed Caps
+        if (CurrentLevel->LevelAdd > (fixed)AveragePlayerLevel() * (fixed)GameSkill())
+            CurrentLevel->LevelAdd = (fixed)AveragePlayerLevel() * (fixed)GameSkill();
+        if (CurrentLevel->RareAdd > AveragePlayerLevel() / 10.0)
+            CurrentLevel->RareAdd = AveragePlayerLevel() / 10.0;
+        
+        // Hard Caps
         if (CurrentLevel->LevelAdd > 1000)
             CurrentLevel->LevelAdd = 1000;
         if (CurrentLevel->RareAdd > 100)

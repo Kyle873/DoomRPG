@@ -119,109 +119,110 @@ script void InitMission()
 
 script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
 {
-    if (Killer > -1 && Players(Killer).Mission.Active && !InBase && !GetActorProperty(0, APROP_Friendly))
+    if (Killer > -1 && !InBase && !GetActorProperty(0, APROP_Friendly))
     {
+        // Determine actor name
+        str Actor = GetActorClass(0);
+        str NeededActor = StrParam("DRPG%s\n", Players(Killer).Mission.Monster->Actor);
+        int Match = StrCmp(Actor, NeededActor);
+        
+        // DoomRL Compatibility
+        if (CompatMode == COMPAT_DRLA)
+        {
+            NeededActor = StrParam("%sRPG\n", Players(Killer).Mission.Monster->Actor);
+            
+            // Special handling for Humans
+            for (int i = 0; i < MAX_HUMANS; i++)
+                if (StrCmp(StrLeft(Actor, StrLen(Actor) - 3), MonsterHumanData[i][0]) == 0)
+                {
+                    Actor = StrParam("%sRPG\n", MonsterHumanData[i][1]);
+                    break;
+                };
+            
+            // Re-check the match
+            Match = StrCmp(Actor, NeededActor);
+        }
+        // Extras Compatibility
+        else if (CompatMode == COMPAT_EXTRAS)
+        {
+            NeededActor = StrParam("DRPG%sExtras\n", Players(Killer).Mission.Monster->Actor);
+            Match = StrCmp(Actor, NeededActor);
+        }
+        // Brutal Doom Compatibility
+        else if (CompatMode == COMPAT_BRUTAL)
+        {
+            NeededActor = StrParam("%sBD\n", Players(Killer).Mission.Monster->Actor);
+            Match = StrCmp(Actor, NeededActor);
+        };
+        
         // Collection Mission
         if (Players(Killer).Mission.Type == MT_COLLECT)
             if (Random(1, 1 << ((Players(Killer).Mission.Difficulty + 1))) == 1)
                 DropMonsterItem(Killer, 0, Players(Killer).Mission.Item->Actor, 256);
         
         // Kill Mission
-        if (Players(Killer).Mission.Type == MT_KILL)
+        if (Match == 0)
         {
-            str Actor = GetActorClass(0);
-            str NeededActor = StrParam("DRPG%s\n", Players(Killer).Mission.Monster->Actor);
-            int Match = StrCmp(Actor, NeededActor);
-            
-            // DoomRL Compatibility
-            if (CompatMode == COMPAT_DRLA)
-            {
-                NeededActor = StrParam("%sRPG\n", Players(Killer).Mission.Monster->Actor);
-                
-                // Special handling for Humans
-                for (int i = 0; i < MAX_HUMANS; i++)
-                    if (StrCmp(StrLeft(Actor, StrLen(Actor) - 3), MonsterHumanData[i][0]) == 0)
-                    {
-                        Actor = StrParam("%sRPG\n", MonsterHumanData[i][1]);
-                        break;
-                    };
-                
-                // Re-check the match
-                Match = StrCmp(Actor, NeededActor);
-            }
-            // Extras Compatibility
-            else if (CompatMode == COMPAT_EXTRAS)
-            {
-                NeededActor = StrParam("DRPG%sExtras\n", Players(Killer).Mission.Monster->Actor);
-                Match = StrCmp(Actor, NeededActor);
-            }
-            // Brutal Doom Compatibility
-            else if (CompatMode == COMPAT_BRUTAL)
-            {
-                NeededActor = StrParam("%sBD\n", Players(Killer).Mission.Monster->Actor);
-                Match = StrCmp(Actor, NeededActor);
-            };
-            
-            // if (GetCVar("drpg_debug"))
-                // Log("\cdDEBUG: \caKilled %s, need %s, match was %d\n", Actor, NeededActor, Match);
-            
-            if (Match == 0)
-            {
-                Players(Killer).Mission.Current++;
-                
-                // Multiplayer
-                if (InMultiplayer)
-                    for (int i = 0; i < MAX_PLAYERS; i++)
-                    {
-                        if (!PlayerInGame(i)) continue;
-                        if (Players(i).Mission.Monster->Name == Actor)
-                            Players(i).Mission.Current++;
-                    };
-            };
-        };
-        
-        // Kill Auras Mission
-        if (Players(Killer).Mission.Type == MT_KILLAURAS)
-            if (MonsterHasAura(Stats))
-            {
-                Players(Killer).Mission.Current++;
-                
-                // Multiplayer
-                if (InMultiplayer)
-                    for (int i = 0; i < MAX_PLAYERS; i++)
-                    {
-                        if (!PlayerInGame(i)) continue;
-                        if (Players(i).Mission.Type == MT_KILLAURAS)
-                            Players(i).Mission.Current++;
-                    };
-            };
-        
-        // Kill Reinforcements Mission
-        if (Stats->Reinforcement)
-            if (InMultiplayer) // Reinforcements kills count for everybody in multiplayer
+            if (InMultiplayer)
             {
                 for (int i = 0; i < MAX_PLAYERS; i++)
                 {
                     if (!PlayerInGame(i)) continue;
-                    Players(i).Mission.Current++;
+                    if (Players(i).Mission.Active && Players(i).Mission.Type == MT_KILL && Players(i).Mission.Monster->Name == Actor)
+                        Players(i).Mission.Current++;
                 };
             }
-            else
+            else if (!InMultiplayer && Players(Killer).Mission.Active && Players(Killer).Mission.Type == MT_KILL)
                 Players(Killer).Mission.Current++;
+        };
+        
+        // Kill Auras Mission
+        if (MonsterHasAura(Stats))
+        {
+            // Multiplayer
+            if (InMultiplayer)
+            {
+                for (int i = 0; i < MAX_PLAYERS; i++)
+                {
+                    if (!PlayerInGame(i)) continue;
+                    if (Players(i).Mission.Active && Players(i).Mission.Type == MT_KILLAURAS)
+                        Players(i).Mission.Current++;
+                };
+            }
+            else if (!InMultiplayer && Players(Killer).Mission.Active && Players(Killer).Mission.Type == MT_KILLAURAS)
+                Players(Killer).Mission.Current++;
+        };
+        
+        // Kill Reinforcements Mission
+        if (Stats->Reinforcement)
+        {
+            if (InMultiplayer)
+            {
+                for (int i = 0; i < MAX_PLAYERS; i++)
+                {
+                    if (!PlayerInGame(i)) continue;
+                    if (Players(i).Mission.Active && Players(i).Mission.Type == MT_REINFORCEMENTS)
+                        Players(i).Mission.Current++;
+                };
+            }
+            else if (!InMultiplayer && Players(Killer).Mission.Active && Players(Killer).Mission.Type == MT_REINFORCEMENTS)
+                Players(Killer).Mission.Current++;
+        };
         
         // Assassination Mission
         if (Stats->Target)
         {
-            Players(Stats->Target - 1).Mission.Current++;
-            
-            // Multiplayer
             if (InMultiplayer)
+            {
                 for (int i = 0; i < MAX_PLAYERS; i++)
                 {
                     if (!PlayerInGame(i)) continue;
-                    if (Players(i).Mission.Monster->Actor == Players(Stats->Target - 1).Mission.Monster->Actor)
+                    if (Players(i).Mission.Active && Players(i).Mission.Type == MT_ASSASSINATION && Players(i).Mission.Monster->Actor == Players(Stats->Target - 1).Mission.Monster->Actor)
                         Players(i).Mission.Current++;
                 };
+            }
+            else if (!InMultiplayer && Players(Killer).Mission.Active && Players(Killer).Mission.Type == MT_ASSASSINATION)
+                Players(Stats->Target - 1).Mission.Current++;
         };
     };
 };
