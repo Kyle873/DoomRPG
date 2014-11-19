@@ -741,8 +741,6 @@ script void Respawn() respawn
         long int XPPenalty = (long int)(XPTable[Player.Level] * GetCVar("drpg_multi_takexp_percent") / 100);
         long int RankPenalty = (long int)(RankTable[Player.RankLevel] * GetCVar("drpg_multi_takexp_percent") / 100);
         
-        Log("%d, %d\n", XPPenalty, RankPenalty);
-        
         if (XPPenalty > 0 || RankPenalty > 0)
         {
             Player.XP -= XPPenalty;
@@ -787,6 +785,16 @@ script void Respawn() respawn
         Player.Shield.Active = true;
         Player.Shield.Charge = Player.Shield.Capacity;
         GiveInventory("DRPGShieldNewUProtection", 1);
+    };
+    
+    // Quick Teleport
+    if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
+    {
+        int PlayerNum = -1;
+        while (PlayerNum == -1 || PlayerNum == PlayerNumber() || !PlayerInGame(PlayerNum))
+            PlayerNum = Random(0, PlayerCount());
+        PlayerTeleport(PlayerNum);
+        Player.EP -= ScaleEPCost(50);
     };
 };
 
