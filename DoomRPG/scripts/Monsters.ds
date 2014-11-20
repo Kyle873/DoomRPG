@@ -146,9 +146,9 @@ MonsterSpace str[MAX_HUMANS][2] MonsterHumanData =
     { "RLEliteCaptainTristarBlaster";   "RLEliteCaptain";   };
 };
 
-MonsterSpace str[MAX_MEGABOSSES] MegaBosses =
+MonsterSpace MegabossInfo[MAX_MEGABOSSES] MegaBosses =
 {
-    "DRPGMegabossSloth";
+    { "DRPGMegabossSloth";   "Sloth"; };
 };
 
 function int NewMonsterID()
@@ -439,13 +439,17 @@ script void MonsterInitStats(int StatFlags)
         if (GetActorProperty(0, APROP_Friendly))
             MonsterLevel = AveragePlayerLevel();
         
+        // Special case for Bosses
+        if (Stats->Flags & MF_BOSS)
+            MonsterLevel += (GameSkill() * 10);
+        
+        // Special case for Megabosses
+        if (Stats->Flags & MF_MEGABOSS)
+            MonsterLevel += ((1000 / MAX_PLAYERS) * PlayerCount());
+        
         // Special case for Powersuit Mk. II
         if (GetActorClass(0) == "DRPGSuperPowerSuit")
             MonsterLevel = 1000;
-        
-        // Special case for MegaBosses
-        if (Stats->Flags & MF_MEGABOSS)
-            MonsterLevel += ((1000 / MAX_PLAYERS) * PlayerCount());
         
         // Calculate the monster's cut and special stats
         if (GetCVar("drpg_monster_specialize"))
@@ -631,7 +635,7 @@ script void MonsterInitStats(int StatFlags)
     SetActorProperty(0, APROP_Health, Stats->HealthMax);
     
     // Generate Name
-    if (!Stats->Named && (Stats->Flags & MF_NAMEGEN || MonsterHasShadowAura(Stats)))
+    if (!Stats->Named && (Stats->Flags & MF_MEGABOSS || Stats->Flags & MF_NAMEGEN || MonsterHasShadowAura(Stats)))
     {
         SetActorPropertyString(0, APROP_Nametag, GenerateName(GetActorClass(0), GetActorPropertyString(0, APROP_Nametag)));
         Stats->Named = true;

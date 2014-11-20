@@ -2,6 +2,7 @@
 
 #include "Monsters.dh"
 #include "Namegen.dh"
+#include "Utils.dh"
 
 str[NAME_MAX_SHARED] SharedPool =
 {
@@ -501,12 +502,23 @@ str[NAME_MAX_LAST] LastNames =
     "Cole";
 };
 
+// TODO: Should be MAX_MEGABOSSES when they are finished
+str[7] MegabossSuffixes =
+{
+    "The Prideful";
+    "The Wrathladen";
+    "The Lustful";
+    "The Greedy";
+    "The Gluttonous";
+    "The Envious";
+    "The Slothful";
+};
+
 str[NAME_MAX_SUIT] PowersuitNames =
 {
     "Col. Roysten";
     "Maj. Solo";
     "Gen. Belanger";
-    "MstSgt. Shooter Person";
 };
 
 str[NAME_MAX_COLORS] NameColors =
@@ -516,12 +528,13 @@ str[NAME_MAX_COLORS] NameColors =
     "\cq"; "\cr"; "\cs"; "\ct"; "\cu"; "\cv";
 };
 
+// TODO: Stupid bullshit hacks everywhere here because Contains is broken due to StrLen() being broken, GEGHEWFGIUHEUFIHEWIUGHWIUGNJHEIFNWJH
 function str GenerateName(str Actor, str Tag)
 {
     // Human (DRPG)
-    if (!StrCmp(StrLeft (Actor, 13), "DRPGZombieMan") || 
-        !StrCmp(StrLeft (Actor, 14), "DRPGShotgunGuy") ||
-        !StrCmp(StrLeft (Actor, 15), "DRPGChaingunGuy"))
+    if (!StrCmp(StrLeft(Actor, 13), "DRPGZombieMan") || 
+        !StrCmp(StrLeft(Actor, 14), "DRPGShotgunGuy") ||
+        !StrCmp(StrLeft(Actor, 15), "DRPGChaingunGuy"))
         return GenerateZombieName(false);
     
     // Human (DRLA)
@@ -547,6 +560,13 @@ function str GenerateName(str Actor, str Tag)
             Female = true;
         
         return GenerateMarineName(Female);
+    };
+    
+    // Megabosses
+    if (Tag == "Sloth")
+    {
+        if (Tag == "Sloth")
+            return GenerateMegabossName(6);
     };
     
     // Heavy and Super Powersuits
@@ -647,6 +667,13 @@ function str GenerateMarineName(bool Female)
     str LastName = LastNames[LastNamePick];
     
     return StrParam("%s %s %s\n", Rank, FirstName, LastName);
+};
+
+function str GenerateMegabossName(int SuffixIndex)
+{
+    int Pick = Random(0, NAME_MAX_DEMON_NAMES - 1);
+    
+    return StrParam("%s %s\n", DemonNames[Pick], MegabossSuffixes[SuffixIndex]);
 };
 
 function str GeneratePowersuitName()
