@@ -436,13 +436,17 @@ script void MonsterInitStats(int StatFlags)
         if (GetActorProperty(0, APROP_Friendly))
             MonsterLevel = AveragePlayerLevel();
         
+        // Special case for Bosses
+        if (Stats->Flags & MF_BOSS)
+            MonsterLevel += (GameSkill() * 10);
+        
+        // Special case for Megabosses
+        if (Stats->Flags & MF_MEGABOSS)
+            MonsterLevel += ((1000 / MAX_PLAYERS) * PlayerCount());
+        
         // Special case for Powersuit Mk. II
         if (GetActorClass(0) == "DRPGSuperPowerSuit")
             MonsterLevel = 1000;
-        
-        // Special case for MegaBosses
-        if (Stats->Flags & MF_MEGABOSS)
-            MonsterLevel += ((1000 / MAX_PLAYERS) * PlayerCount());
         
         // Calculate the monster's cut and special stats
         if (GetCVar("drpg_monster_specialize"))
