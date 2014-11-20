@@ -455,10 +455,10 @@ script void MegaBossEvent()
     
     if (CurrentLevel->MegabossActor == nullptr)
     {
-        CurrentLevel->MegabossActor = MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
+        CurrentLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
         
         if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
-            Log("\cdDEBUG: Chosen Boss: \cg%s\n", CurrentLevel->MegabossActor);
+            Log("\cdDEBUG: Chosen Boss: \cg%s\n", CurrentLevel->MegabossActor->Actor);
     };
 
     // Ambient Music
@@ -491,10 +491,10 @@ script void MegaBossEvent()
     {
         TID = UniqueTID();
         ChosenPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[Index];
-        Spawned = Spawn(CurrentLevel->MegabossActor, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
+        Spawned = Spawn(CurrentLevel->MegabossActor->Actor, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
         
         if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType], Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
+            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType].Actor, Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
         
         // Successful spawn
         if (Spawned)
@@ -502,7 +502,7 @@ script void MegaBossEvent()
             SpawnForced("TeleportFog", ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, 0, 0);
             GiveActorInventory(TID, "DRPGWhiteAuraGiver", 1);
             if (GetCVar("drpg_debug"))
-                Log("\cdDEBUG: \cg%s MegaBoss successfully spawned\n", MegaBosses[BossType]);
+                Log("\cdDEBUG: \cg%s MegaBoss successfully spawned\n", MegaBosses[BossType].Actor);
         };
         
         Index++;
@@ -521,7 +521,7 @@ script void MegaBossEvent()
             for (int i = 0; i < MAX_PLAYERS; i++)
                 if (CheckSight(TID, Players(i).TID, 0))
                 {
-                    SetMusic(StrParam("MBossC%d\n", Random(1, 2)));
+                    SetMusic(CurrentLevel->MegabossActor->Music);
                     Spotted = true;
                     break;
                 };
@@ -529,7 +529,7 @@ script void MegaBossEvent()
         // Defeated
         if (GetActorProperty(TID, APROP_Health) <= 0)
         {
-            SetMusic("");
+            SetMusic("*");
             Delay(35 * 60); // Let the players pick up the loot
             CurrentLevel->Event = MAPEVENT_NONE;
             return;
