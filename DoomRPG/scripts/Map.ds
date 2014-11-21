@@ -517,11 +517,20 @@ script void MegaBossEvent()
     AmbientSound("mission/gottarget2", 127);
     
     // Loop
-    // TODO: Cycle locations every once and a while to make sure it doesn't spawn intself in a monster closet or something
     while (true)
     {
-        // Spotted
+        // Checks to perform while the player has not been spotted
         if (!Spotted)
+        {
+            // Cycle locations every minute until the player has been spotted
+            if ((Timer() % (35 * 60)) == 0)
+            {
+                SetActivator(TID);
+                TeleportMonster();
+                SetActivator(0);
+            };
+            
+            // Check LOS
             for (int i = 0; i < MAX_PLAYERS; i++)
                 if (CheckSight(TID, Players(i).TID, 0))
                 {
@@ -529,11 +538,12 @@ script void MegaBossEvent()
                     Spotted = true;
                     break;
                 };
+        };
         
         // Defeated
         if (GetActorProperty(TID, APROP_Health) <= 0)
         {
-            SetMusic("*");
+            SetMusic("*"); // TODO: Some sort of victory fanfare thingy here?
             Delay(35 * 60); // Let the players pick up the loot
             CurrentLevel->Event = MAPEVENT_NONE;
             return;
