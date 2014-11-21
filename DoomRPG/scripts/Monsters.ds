@@ -1452,29 +1452,30 @@ script void MonsterDeath()
         DropMoney(Killer, 0, Random(CheckInventory("DRPGCredits") / 2, CheckInventory("DRPGCredits") * (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS ? 4 : 1)));
     
     // Drop stolen ammo
+    int Count = 0;
     while (CheckInventory("Clip") >= 10)
     {
-        DropMonsterItem(Killer, DropTID, "Clip", 256);
+        DropMonsterItem(Killer, DropTID, "DRPGStolenClip", 256);
         TakeInventory("Clip", 10);
-        if ((Timer() % 35) == 0) Delay(1);
+        if ((Count++ % 1000) == 0) Delay(1);
     };
     while (CheckInventory("Shell") >= 4)
     {
-        DropMonsterItem(Killer, DropTID, "Shell", 256);
+        DropMonsterItem(Killer, DropTID, "DRPGStolenShell", 256);
         TakeInventory("Shell", 4);
-        if ((Timer() % 35) == 0) Delay(1);
+        if ((Count++ % 1000) == 0) Delay(1);
     };
     while (CheckInventory("RocketAmmo") >= 1)
     {
-        DropMonsterItem(Killer, DropTID, "RocketAmmo", 256);
+        DropMonsterItem(Killer, DropTID, "DRPGStolenRocketAmmo", 256);
         TakeInventory("RocketAmmo", 1);
-        if ((Timer() % 35) == 0) Delay(1);
+        if ((Count++ % 1000) == 0) Delay(1);
     };
     while (CheckInventory("Cell") >= 20)
     {
-        DropMonsterItem(Killer, DropTID, "Cell", 256);
+        DropMonsterItem(Killer, DropTID, "DRPGStolenCell", 256);
         TakeInventory("Cell", 20);
-        if ((Timer() % 35) == 0) Delay(1);
+        if ((Count++ % 1000) == 0) Delay(1);
     };
     
     // [KS] We killed this monster now, so if an Arch-vile resurrects it, it doesn't count anymore to re-kill
@@ -1486,8 +1487,7 @@ script void MonsterDeath()
     Stats->Reinforcement = false;
     
     // [KS] Nuke auras so we don't cause bizarre problems
-    for (int i = 0; i < AURA_MAX; i++)
-        Stats->Aura.Type[i].Active = false;
+    RemoveMonsterAura(Stats);
 };
 
 acscript void MonsterTransport(int Difficulty, int Time, int Radius)
