@@ -576,6 +576,7 @@ script void MonsterInitStats(int StatFlags)
     {
         MonsterVitality *= 2;
         GiveInventory("DRPGPinkAuraGiver", 1);
+        MonsterFellowResurrectionHandler();
     };
     if (Stats->Aura.Type[AURA_BLUE].Active) // Blue Aura - Energy
     {
@@ -1137,6 +1138,48 @@ script void MonsterAmmoDrainHandler()
     goto Start;
 };
 
+script void MonsterFellowResurrectionHandler()
+{
+    // Delay Stagger
+    Delay(GetMonsterID(0) % 4);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    Start:
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        return;
+    
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
+    
+    if (!Stats->Aura.Type[AURA_PINK].Active)
+    {
+        Delay(35);
+        goto Start;
+    };
+    
+    int revivertid = UniqueTID();
+    
+    SpawnSpotFacingForced("DRPGMonsterReviver", 0, revivertid);
+    SpawnSpotFacingForced("DRPGMonsterReviver", 0, revivertid);
+    SpawnSpotFacingForced("DRPGMonsterReviver", 0, revivertid);
+    
+    if (GetActorProperty(0, APROP_Friendly))
+        SetActorProperty(revivertid, APROP_Friendly, true);
+    
+    SetActorProperty(revivertid, APROP_TargetTID, GetActorProperty(0, APROP_TargetTID));
+    
+    Thing_ChangeTID(revivertid, 0);
+    
+    Delay(35 * 5);
+    
+    goto Start;
+};
+
 script void MonsterDeathCheck()
 {
     // Delay Stagger
@@ -1436,12 +1479,15 @@ script void MonsterDeath()
     
     // [KS] We killed this monster now, so if an Arch-vile resurrects it, it doesn't count anymore to re-kill
     // TODO: Need to maybe make sure that for Kill Missions, we can't just gimp Arch-vile resurrection.
-    // TODO: Should we nuke an enemies Aura here, or leave it alone?
     Stats->Flags |= MF_NODROPS;
     Stats->Flags |= MF_NOXP;
     SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle); // In case of Shadow Aura
     Stats->Target = false;
     Stats->Reinforcement = false;
+    
+    // [KS] Nuke auras so we don't cause bizarre problems
+    for (int i = 0; i < AURA_MAX; i++)
+        Stats->Aura.Type[i].Active = false;
 };
 
 acscript void MonsterTransport(int Difficulty, int Time, int Radius)
