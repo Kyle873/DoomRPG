@@ -558,9 +558,23 @@ script void EnvironmentalHazard()
     // TODO: [02:47:04] <<@Yholl/ID>> Have some sort of radiation device that sciences away the radiation
     SetMusic("EvHazard");
     
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        // [KS] If the players are level 0 (ie just started the game) and the first map is an Environmental Hazard,
+        // give them some extra suits so they aren't instantly screwed.
+        if (!PlayerInGame(i))
+            continue;
+        
+        if (Players(i).Level >= 1)
+            continue;
+        
+        GiveActorInventory(Players(i).TID, "DRPGRadSuit", 2);
+        UseActorInventory(Players(i).TID, "DRPGRadSuit");
+    };
+    
     Start:
     
-    SectorDamage(0, 10, "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
+    SectorDamage(0, 10, "Slime", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
     
     Delay(35);
     goto Start;

@@ -1781,6 +1781,46 @@ function void RemoveMonsterAura(MonsterStatsPtr Stats)
     SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle);
 };
 
+function str DetermineBestStatColor(MonsterStatsPtr Stats)
+{
+    static str[STAT_MAX] StatColors =
+    {
+        "\cg";
+        "\cd";
+        "\ca";
+        "\cn";
+        "\ct";
+        "\ci";
+        "\ch";
+        "\cf";
+    };
+    
+    int[STAT_MAX] BaseStat;
+    int HighestStat = 0;
+    int HighestStatType = 0;
+    
+    if (Stats->Flags & MF_NOSTATS)
+        return "\cc";
+    
+    BaseStat[0] = Stats->Strength;
+    BaseStat[1] = Stats->Defense;
+    BaseStat[2] = Stats->Vitality;
+    BaseStat[3] = Stats->Energy;
+    BaseStat[4] = Stats->Regeneration;
+    BaseStat[5] = Stats->Agility;
+    BaseStat[6] = Stats->Capacity;
+    BaseStat[7] = Stats->Luck;
+    
+    for (int i = 0; i < STAT_MAX; i++)
+        if (BaseStat[i] > HighestStat)
+        {
+            HighestStat = BaseStat[i];
+            HighestStatType = i;
+        };
+    
+    return StatColors[HighestStatType];
+};
+
 // For Debugging
 acscript void OutputMonsters()
 {

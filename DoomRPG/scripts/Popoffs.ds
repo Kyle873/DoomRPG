@@ -121,6 +121,10 @@ function Popoff(int TID, int Value, int Color)
     fixed Y = GetActorY(TID);
     fixed Z = GetActorZ(TID) + (GetMonsterID(TID) > 0 ? Monsters[GetMonsterID(TID)].Height : GetActorPropertyFixed(TID, APROP_Height));
     
+    // Ceiling monsters need special Z calculations
+    if (CheckFlag(TID, "CEILINGHUGGER"))
+        Z = GetActorZ(TID) - Monsters[GetMonsterID(TID)].Height;
+    
     // Prevent digit overflow
     if (Value > 9999999)
         Value = 9999999;
@@ -160,7 +164,10 @@ function Popoff(int TID, int Value, int Color)
     SetUserVariable(DigitTID, "user_fade", GetCVar("drpg_damagenumbers_fade"));
     
     // Float away
-    SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), 0.5, 0, 0);
+    if (CheckFlag(TID, "CEILINGHUGGER"))
+        SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), -0.5, 0, 0)
+    else
+        SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), 0.5, 0, 0);
 };
 
 function int GetDigit(int Num, int Digit)
