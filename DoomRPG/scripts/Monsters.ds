@@ -1301,15 +1301,10 @@ script void MonsterDeath()
         
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            if (Stats->Flags & MF_NEGATIVEXP)
-                AddXP(i, (int)XPAmount, -RankAmount, false)
+            if (Killer == i)
+                AddXP(i, (int)XPAmount, RankAmount, false)
             else
-            {
-                if (Killer == i)
-                    AddXP(i, (int)XPAmount, RankAmount, false)
-                else
-                    AddXP(i, (int)XPAmount, RankAmount, true);
-            };
+                AddXP(i, (int)XPAmount, RankAmount, true);
         };
     };
     
@@ -1648,6 +1643,9 @@ function void MonsterLevelup(MonsterStatsPtr Stats)
     Stats->Agility += Random(1, GameSkill());
     Stats->Capacity += Random(1, GameSkill());
     Stats->Luck += Random(1, GameSkill());
+    
+    // Cap the stats
+    CapMonsterStats(Stats);
     
     // Spawn Level-up Arrow
     SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height), 0, 0);
