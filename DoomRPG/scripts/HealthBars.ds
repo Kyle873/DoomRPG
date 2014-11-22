@@ -36,12 +36,16 @@ script void HealthBars()
         // Initialize HUD information struct
         HUDBarInfo Info =
         {
-            false;                      // Is Player?
+            false; false;               // Is Player? / Is Friendly?
             ""; "";                     // Name
             0; 0; {};                   // Level/Rank/Auras
             0; 0; 0; 0; false; 0; 0;    // Health/Armor/Shield
             0; 0; 0; 0; 0; 0; 0; 0;     // Stats
         };
+        
+        // Friendly
+        if (GetActorProperty(0, APROP_Friendly))
+            Info.Friendly = true;
         
         // Populate Stats
         if (ClassifyActor(0) & ACTOR_PLAYER)
@@ -126,7 +130,7 @@ script void HealthBars()
         };
         
         // Terminate if the player is dead
-        if (GetActorProperty(0, APROP_Health) <= 0) return;
+        if (GetActorProperty(Players(PlayerNum).TID, APROP_Health) <= 0) return;
     };
     
     Delay(1);
@@ -136,20 +140,12 @@ script void HealthBars()
 function void DrawBarBase(HUDBarInfo Info)
 {
     // Bar Type
-    if (GetActorProperty(0, APROP_Friendly))
-    {
-        if (GetCVar("screenblocks") == 10)
-            PrintSprite("HPBarSS", 0, HealthBarX, HealthBarY, 0.05)
-        else
-            PrintSprite("HPBar2", 0, HealthBarX, HealthBarY, 0.05);
-    }
+    if (GetCVar("screenblocks") == 10)
+        PrintSprite("HPBarSS", 0, HealthBarX, HealthBarY, 0.05)
+    else if (Info.Friendly)
+        PrintSprite("HPBar2", 0, HealthBarX, HealthBarY, 0.05)
     else
-    {
-        if (GetCVar("screenblocks") == 10)
-            PrintSprite("HPBarSS", 0, HealthBarX, HealthBarY, 0.05)
-        else
-            PrintSprite("HPBar", 0, HealthBarX, HealthBarY, 0.05);
-    };
+        PrintSprite("HPBar", 0, HealthBarX, HealthBarY, 0.05);
     
     // Name
     if (GetCVar("drpg_healthbars_names"))
@@ -159,7 +155,7 @@ function void DrawBarBase(HUDBarInfo Info)
     };
     
     // HP/Max HP and Armor
-    // TODO: Do this better? It's kinda shit atm
+    // TODO: Do this better? It's kinda shit atm, build up a string instead maybe?
     SetFont("SMALLFONT");
     if (Info.ShieldActive)
     {
