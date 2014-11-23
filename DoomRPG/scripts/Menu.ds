@@ -35,18 +35,10 @@ acscript void OpenMenu() net
     if (GetActorProperty(0, APROP_Health) <= 0) return;
     
     // If you're in an Outpost menu, return
-    if (Player.OutpostMenu > 0 && Player.OutpostMenu != OMENU_LOCKER) return;
+    if (Player.OutpostMenu > 0) return;
     
     // If you're in any minigames, terminate
     if (Player.InMinigame) return;
-    
-    if (Player.OutpostMenu == OMENU_LOCKER) // Locker
-    {
-        Player.OutpostMenu = 0;
-        SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-        ActivatorSound("menu/move", 127);
-        return;
-    };
     
     if (Player.InShop && InBase)
     {
@@ -1150,16 +1142,13 @@ function void MenuInput()
         {
             ActivatorSound("menu/move", 127);
             Player.MenuIndex--;
-            if (Player.MenuIndex < 0) Player.MenuIndex = MAX_MENU - 1;
+            if (Player.MenuIndex < 0) Player.MenuIndex = (GetCVar("drpg_shoptype") ? MAX_MENU - 1 : MAX_MENU - 2);
         };
         if (Buttons == BT_BACK && OldButtons != BT_BACK)
         {
-            if (!GetCVar("drpg_shoptype") && Player.MenuIndex == 4)
-                return;
-            
             ActivatorSound("menu/move", 127);
             Player.MenuIndex++;
-            if (Player.MenuIndex > MAX_MENU - 1) Player.MenuIndex = 0;
+            if (Player.MenuIndex > (GetCVar("drpg_shoptype") ? MAX_MENU - 1 : MAX_MENU - 2)) Player.MenuIndex = 0;
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
@@ -1722,9 +1711,16 @@ function void MenuHelp()
     
     // Shop Menu Help
     if (!Player.InMenu && Player.InShop)
-        HudMessage("\cd%K/%K/%K/%K\c- to navigate\n\cd%K + %K/%K\c- to Switch Pages\n\cd%K\c- to Buy Item\n\cd%K + %K\c- to Sell Item, Hold to Bulk Sell Item\n\cd%K\c- to toggle Auto-Selling of item\n\cd%K\c- to Drop selected item\n\cd%K\c- to Exit\n",
-                   "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+moveright", "+use", "+speed", "+use", "+attack", "+zoom", "drpg_menu",
-                   HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+    {
+        if (Player.LockerMode)
+            HudMessage("\cd%K\c- to switch to the Shop\n\cd%K/%K/%K/%K\c- to navigate\n\cd%K + %K/%K\c- to Switch Pages\n\cd%K\c- to Deposit Item\n\cd%K + %K\c- to Withdraw Item\n\cd%K\c- to Drop selected item\n\cd%K\c- to Exit\n",
+                       "+jump", "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+moveright", "+use", "+speed", "+use", "+zoom", "drpg_menu",
+                       HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05)
+        else
+            HudMessage("\cd%K\c- to switch to the Locker\n\cd%K/%K/%K/%K\c- to navigate\n\cd%K + %K/%K\c- to Switch Pages\n\cd%K\c- to Buy Item\n\cd%K + %K\c- to Sell Item\n\cd%K\c- to toggle Auto-Selling of item\n\cd%K\c- to Drop selected item\n\cd%K\c- to Exit\n",
+                       "+jump", "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+moveright", "+use", "+speed", "+use", "+attack", "+zoom", "drpg_menu",
+                       HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+    };
     
     // Outpost Menus
     if (Player.OutpostMenu > 0)
@@ -1759,11 +1755,6 @@ function void MenuHelp()
         case OMENU_BONUSSELECTOR: // Arena Bonus Selector
             HudMessage("\cd%K/%K\c- to navigate\n\cd%K\c- to Select\n",
                        "+forward", "+back", "+use",
-                       HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
-            break;
-        case OMENU_LOCKER: // Locker
-            HudMessage("\cd%K/%K/%K/%K\c- to navigate\n\cd%K + %K/%K\c- to Switch Pages\n\cd%K\c- to Deposit Item\n\cd%K + %K\c- to Withdraw Item\n\cd%K\c- to Exit\n",
-                       "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+moveright", "+use", "+speed", "+use", "drpg_menu",
                        HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
             break;
         case OMENU_BBS: // Mission BBS

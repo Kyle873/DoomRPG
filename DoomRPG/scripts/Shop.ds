@@ -27,13 +27,6 @@ acscript void OpenShop(bool FromBase) net
     // Close the main menu if it's open
     Player.InMenu = false;
     
-    if (Player.OutpostMenu == OMENU_LOCKER) // Locker
-    {
-        Player.LockerGlobal = !Player.LockerGlobal;
-        ActivatorSound("menu/move", 127);
-        return;
-    };
-    
     if (Player.InShop)
     {
         // Sanity Check to prevent the shop closing itself after buying an item in the Outpost Shop
@@ -111,36 +104,57 @@ function void ShopLoop()
     SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
 
     // Get the sell price
-    SellPrice = GetSellPrice("", 1);
+    SellPrice = GetSellPrice(nullptr, 1);
     
     // Set the HUD Size
     SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 
-    // Draw Shop
     SetFont("BIGFONT");
-    HudMessage("Shop - %s (%d/%d)\n",
-               ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories,
-               HUDMSG_PLAIN, 0, CR_GREEN,
-               24.1, 24.0, 0.05);
+    if (Player.LockerMode)
+    {
+        // Title and Page
+        HudMessage("Locker - %s (%d/%d)\n",
+                   ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories,
+                   HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
+        
+        // EP Cost/Inventory Count
+        if (GetCVar("drpg_inv_capacity"))
+            HudMessage("\cn%d EP \c-(Inventory: %d/%d)\n",
+                       LOCKER_EPRATE, Player.InvItems, CheckInventoryMax(),
+                       HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 38.0, 0.05)
+        else
+            HudMessage("\cn%d EP\n",
+                       LOCKER_EPRATE,
+                       HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 38.0, 0.05);
+    }
+    else
+    {
+        // Title and Page
+        HudMessage("Shop - %s (%d/%d)\n",
+                   ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories,
+                   HUDMSG_PLAIN, 0, CR_GREEN,
+                   24.1, 24.0, 0.05);
+        
+        // Price
+        if (CategoryFlags[Player.ShopPage] & CF_NOSELL) // No Selling
+            HudMessage("\cj%d C \ck(Discount: %d%%)\n",
+                       Cost, Player.ShopDiscount,
+                       HUDMSG_PLAIN, 0, CR_GOLD,
+                       24.1, 38.0, 0.05)
+        else if (CategoryFlags[Player.ShopPage] & CF_NOBUY || Rank == -1) // No Buying
+            HudMessage("\ci%d C \ck(Discount: %d%%)\n",
+                       SellPrice, Player.ShopDiscount,
+                       HUDMSG_PLAIN, 0, CR_GOLD,
+                       24.1, 38.0, 0.05)
+        else // Normal
+            HudMessage("\cj%d C \ci(%d C) \ck(Discount: %d%%)\n",
+                       Cost, SellPrice, Player.ShopDiscount,
+                       HUDMSG_PLAIN, 0, CR_GOLD,
+                       24.1, 38.0, 0.05);
+    };
     
-    // Draw Price
-    if (CategoryFlags[Player.ShopPage] & CF_NOSELL) // No selling
-        HudMessage("\cj%d C \ck(Discount: %d%%)\n",
-                   Cost, Player.ShopDiscount,
-                   HUDMSG_PLAIN, 0, CR_GOLD,
-                   24.1, 38.0, 0.05)
-    else if (CategoryFlags[Player.ShopPage] & CF_NOBUY || Rank == -1) // No Buying
-        HudMessage("\ci%d C \ck(Discount: %d%%)\n",
-                   SellPrice, Player.ShopDiscount,
-                   HUDMSG_PLAIN, 0, CR_GOLD,
-                   24.1, 38.0, 0.05)
-    else // Normal
-        HudMessage("\cj%d C \ci(%d C) \ck(Discount: %d%%)\n",
-                   Cost, SellPrice, Player.ShopDiscount,
-                   HUDMSG_PLAIN, 0, CR_GOLD,
-                   24.1, 38.0, 0.05);
-    
-    DrawItemGrid(IG_STORE);
+    // Item Grid
+    DrawItemGrid();
     
     // Draw Shop Card
     if (Player.ShopCard > 0)
@@ -221,11 +235,26 @@ function void ShopLoop()
             Player.ShopIndex++;
             if (Player.ShopIndex > ItemMax[Player.ShopPage] - 1) Player.ShopIndex = ItemMax[Player.ShopPage] - 1;
         };
-    if (Buttons & BT_USE && !(OldButtons & BT_USE) && !Player.MenuBlock)
+    if (Buttons & BT_USE && (Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat") ? true : !(OldButtons & BT_USE)) && !Player.MenuBlock)
         if (Buttons & BT_SPEED)
-            SellItem(ItemPtr->Actor, false, false)
+        {
+            if (Player.LockerMode)
+                WithdrawItem()
+            else
+                SellItem(ItemPtr->Actor, false, false);
+        }
         else
-            BuyItem(ItemPtr->Actor);
+        {
+            if (Player.LockerMode)
+                DepositItem()
+            else if (!Player.AutoSell[Player.ShopPage][Player.ShopIndex])
+                BuyItem(ItemPtr->Actor);
+        };
+    if (Buttons & BT_JUMP && !(OldButtons & BT_JUMP))
+    {
+        Player.LockerMode = !Player.LockerMode;
+        ActivatorSound("menu/move", 127);
+    };
     if (Buttons & BT_ZOOM && !(OldButtons & BT_ZOOM))
         if (CheckInventory(ItemPtr->Actor) > 0 && !(CompatMode == COMPAT_DRLA && (Player.ShopPage == 0 || Player.ShopPage == 3 || Player.ShopPage == 9 || Player.ShopPage == 10)))
         {
@@ -235,24 +264,14 @@ function void ShopLoop()
         }
         else
             ActivatorSound("menu/error", 127);
-    if (Buttons & BT_USE && Buttons & BT_SPEED)
-    {
+    if (Buttons & BT_USE || (Buttons & BT_USE && Buttons & BT_SPEED))
         Player.DelayTimer++;
-        
-        if (Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat"))
-        {
-            SellItem(ItemPtr->Actor, true, false);
-            Player.DelayTimer = 0;
-        };
-    };
     if (Buttons == BT_ATTACK && OldButtons != BT_ATTACK)
-        if (!(CategoryFlags[Player.ShopPage] & CF_NOSELL))
+        if (!(CategoryFlags[Player.ShopPage] & CF_NOSELL) && !Player.LockerMode)
         {
             Player.AutoSell[Player.ShopPage][Player.ShopIndex] = !Player.AutoSell[Player.ShopPage][Player.ShopIndex];
             ActivatorSound("menu/move", 127);
-        }
-        else
-            ActivatorSound("menu/error", 127);
+        };
     
     // Reset the Delay Timer if no buttons are pressed
     if (Buttons == 0 && OldButtons == 0)
@@ -271,37 +290,51 @@ function void BuyItem(str Item)
     // If you're not the required rank, return
     if (ItemPtr->Rank > Player.RankLevel)
     {
-        SetHudSize(0, 0, false);
-        SetFont("BIGFONT");
-        HudMessage("You are not a high enough Rank to buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
-        ActivatorSound("menu/error", 127);
+        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        {
+            SetHudSize(0, 0, false);
+            SetFont("BIGFONT");
+            HudMessage("You are not a high enough Rank to buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            ActivatorSound("menu/error", 127);
+        };
+        
         return;
     };
     
     // If the item (or category) is flagged to never be buyable, return
     if (ItemPtr->Rank == -1 || CategoryFlags[Player.ShopPage] & CF_NOBUY)
     {
-        SetHudSize(0, 0, false);
-        SetFont("BIGFONT");
-        HudMessage("You cannot buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
-        ActivatorSound("menu/error", 127);
+        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        {
+            SetHudSize(0, 0, false);
+            SetFont("BIGFONT");
+            HudMessage("You cannot buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            ActivatorSound("menu/error", 127);
+        };
+        
         return;
     };
     
     // If you don't have enough Credits, return
     if (CheckInventory("DRPGCredits") < ItemPtr->Price - ItemPtr->Price * Player.ShopDiscount / 100)
     {
-        SetHudSize(0, 0, false);
-        SetFont("BIGFONT");
-        HudMessage("You don't have enough Credits to buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
-        ActivatorSound("menu/error", 127);
+        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        {
+            SetHudSize(0, 0, false);
+            SetFont("BIGFONT");
+            HudMessage("You don't have enough Credits to buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            ActivatorSound("menu/error", 127);
+        };
+        
         return;
     };
     
     // If the item has no cost, return
     if (Cost == 0)
     {
-        ActivatorSound("menu/error", 127);
+        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+            ActivatorSound("menu/error", 127);
+        
         return;
     };
     
@@ -323,7 +356,7 @@ function void BuyItem(str Item)
         ActivatorSound("menu/buy", 127);
         TakeInventory("DRPGCredits", Cost);
     }
-    else
+    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         ActivatorSound("menu/error", 127);
 };
 
@@ -333,7 +366,7 @@ function int GetSellPrice(str Item, int Amount)
     int SellCost;
     
     // Just use the current index if item is blank
-    if (Item == "")
+    if (Item == nullptr)
         SellCost = ItemPtr->Price;
     
     // Iterate to find the item
@@ -369,17 +402,23 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     // You must be at least Rank 1 or in the Outpost to sell items
     if (Player.RankLevel == 0 && !InBase)
     {
-        SetHudSize(0, 0, false);
-        SetFont("BIGFONT");
-        HudMessage("You cannot sell items outside the Outpost until you reach the first rank\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
-        ActivatorSound("menu/error", 127);
+        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        {
+            SetHudSize(0, 0, false);
+            SetFont("BIGFONT");
+            HudMessage("You cannot sell items outside the Outpost until you reach the first rank\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            ActivatorSound("menu/error", 127);
+        };
+        
         return 0;
     };
     
     // If you're on a page that doesn't allow selling or you don't have any of the required item, fail
     if (!AutoSold && (CheckInventory(Item) == 0 || CategoryFlags[Player.ShopPage] & CF_NOSELL))
     {
-        ActivatorSound("menu/error", 127);
+        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+            ActivatorSound("menu/error", 127);
+        
         return 0;
     };
     
@@ -419,10 +458,204 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
         TakeInventory(Item, Amount);
         GiveInventory("DRPGCredits", SellCost);
     }
-    else
+    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         ActivatorSound("menu/error", 127);
     
     return SellCost;
+};
+
+function void DepositItem()
+{
+    ItemInfoPtr ItemPtr = &ItemData[Player.ShopPage][Player.ShopIndex];
+    
+    if (Player.EP >= LOCKER_EPRATE && CheckInventory(ItemPtr->Actor) > 0)
+    {
+       // DoomRL Compatibility
+       if (CompatMode == COMPAT_DRLA)
+       {
+           if (Player.ShopPage == 0) // Weapons
+           {
+                TakeInventory("RLWeaponLimit", 1);
+                
+                // Weapon portion of Nuclear Set Bonus Checking
+                if (!CheckInventory("RLNuclearPlasmaPistol") || !CheckInventory("RLHighPowerNuclearPlasmaPistol") || !CheckInventory("RLStormNuclearPlasmaPistol") || CheckInventory("RLSuperchargedNuclearPlasmaPistol") ||
+                    !CheckInventory("RLNuclearPlasmaRifle") || !CheckInventory("RLHighPowerNuclearPlasmaRifle") || !CheckInventory("RLAssaultRifleNuclearPlasmaRifle") || !CheckInventory("RLBurstCannonNuclearPlasmaRifle") ||
+                    !CheckInventory("RLNuclearBFG9000") || !CheckInventory("RLHighPowerNuclearBFG9000") || !CheckInventory("RLNuclearVBFG9000") || !CheckInventory("RLNuclearBiggestFuckingGun"))
+                {
+                    TakeInventory("RLNuclearWeaponSetBonusWeapon", 1);
+                    TakeInventory("RLNuclearWeaponSetBonusActive", 1);
+                };
+                
+                // Tristar blaster Set Bonus Checking
+                if (!CheckInventory("RLTristarBlaster") || !CheckInventory("RLHighPowerTristarBlaster") || !CheckInventory("RLNanomanufactureAmmoTristarBlaster"))
+                    TakeInventory("RLCerberusSetBonusTristarBlaster", 1);
+            }
+            else if (Player.ShopPage == 3) // Armor
+                TakeInventory("RLArmorInInventory", 1)
+            else if (Player.ShopPage == 9) // Mod Packs
+            {
+                if (Player.ShopIndex == 8) // Special handling case for Armor Modpack
+                    TakeInventory("RLArmorModItemInInventory", 1)
+                else
+                {
+                    if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
+                        TakeInventory("RLScavengerModLimit", 1)
+                    else
+                        TakeInventory("RLModLimit", 1);
+                };
+            }
+            else if (Player.ShopPage == 10) // Boots
+                TakeInventory("RLBootsInInventory", 1);
+        };
+        
+        TakeInventory(ItemPtr->Actor, 1);
+        Player.EP -= LOCKER_EPRATE;
+        Player.Locker[Player.ShopPage][Player.ShopIndex]++;
+        ActivatorSound("menu/move", 127);
+    }
+    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        ActivatorSound("menu/error", 127);
+};
+
+function void WithdrawItem()
+{
+    ItemInfoPtr ItemPtr = &ItemData[Player.ShopPage][Player.ShopIndex];
+    
+    // Spawning
+    if (Player.EP >= LOCKER_EPRATE && Player.Locker[Player.ShopPage][Player.ShopIndex] > 0)
+    {
+        if (CompatMode == COMPAT_DRLA && Player.ShopPage == 0) // Weapons
+            SpawnForced(StrParam("%sPickup\n", ItemPtr->Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0)
+        else if (Player.ShopPage == 1) // Ammo
+            GiveInventory(ItemPtr->Actor, 1)
+        else // Everything else
+            SpawnForced(ItemPtr->Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+        
+        SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
+        Player.Locker[Player.ShopPage][Player.ShopIndex]--;
+        Player.EP -= LOCKER_EPRATE;
+        ActivatorSound("menu/move", 127);
+    }
+    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        ActivatorSound("menu/error", 127);
+};
+
+function void DrawItemGrid()
+{
+    // Width/Height
+    int Width = 9;
+    int Height = 6;
+    
+    // Coordinates
+    fixed BaseX;
+    fixed BaseY;
+    fixed BoxX;
+    fixed BoxY;
+    fixed X;
+    fixed Y;
+    fixed IconX;
+    fixed IconY;
+    
+    for (int i = 0; i < Height; i++)
+    {
+        // Reset base X
+        BaseX = 0.0;
+        
+        for (int j = 0; j < Width; j++)
+        {
+            int Index = j + (i * Width);
+            
+            // Calculate offset
+            if (Player.ShopIndex >= Height * Width)
+                Index += (Player.ShopIndex / (Height * Width)) * (Height * Width);
+            
+            ItemInfo ItemSpace *Item = &ItemData[Player.ShopPage][Index];
+            str Icon = Item->Sprite.Name;
+            str Name = Item->Name;
+            int IconXOff = Item->Sprite.XOff;
+            int IconYOff = Item->Sprite.YOff;
+            int Held = CheckInventory(Item->Actor);
+            int Stored = Player.Locker[Player.ShopPage][Index];
+            int Rank = Item->Rank;
+            int Price = Item->Price;
+            bool Unlocked = !((Rank > 0 && Player.RankLevel < Rank));
+            bool CanBuy = !(Rank == -1);
+            bool CanAfford = (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100);
+            bool AutoSell = Player.AutoSell[Player.ShopPage][Index];
+            
+            // Stop if we're at the end of the list
+            if (Index > ItemMax[Player.ShopPage] - 1) break;
+            
+            // Placeholder Icon
+            if (StrLen(Icon) == 0)
+                Icon = "SprNone";
+            
+            // Setup X and Y
+            X = 26.0 + BaseX;
+            Y = 50.0 + BaseY;
+            BoxX = 48.0 + BaseX;
+            BoxY = 72.0 + BaseY;
+            IconX = 48.0 + BaseX;
+            IconY = 72.0 + BaseY;
+            IconX += IconXOff;
+            IconY += IconYOff;
+            
+            // Amount
+            if (Held > 0)
+            {
+                SetFont("BIGFONT");
+                HudMessage("%d\n", Held, HUDMSG_PLAIN, 0, CR_GREEN, X + 44.2, Y + 44.2, 0.05);
+            };
+            if (Stored > 0)
+            {
+                SetFont("BIGFONT");
+                HudMessage("%d\n", Stored, HUDMSG_PLAIN, 0, CR_YELLOW, X + 44.2, Y + 12.2, 0.05);
+            };
+            
+            // Auto-Sell Icon
+            if (Player.AutoSell[Player.ShopPage][Index])
+                PrintSpritePulse("SELLICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
+            
+            // Icon
+            SetHudClipRect(X, Y, 44, 44);
+            if (Player.ShopIndex == Index)
+            {
+                if (Unlocked || Player.LockerMode)
+                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.75, 32.0, 0.25)
+                else
+                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.25, 32.0, 0.25);
+            }
+            else
+            {
+                if (Unlocked || Player.LockerMode)
+                    PrintSprite(Icon, 0, IconX, IconY, 0.05)
+                else
+                    PrintSpriteAlpha(Icon, 0, IconX, IconY, 0.05, 0.25);
+            };
+            SetHudClipRect(0, 0, 0, 0);
+            
+            // Box
+            if (Player.ShopIndex == Index)
+                if ((!CanAfford || !Unlocked || !CanBuy) && !Player.LockerMode)
+                    PrintSprite("ItemBoxR", 0, BoxX, BoxY, 0.05)
+                else
+                    PrintSprite("ItemBoxH", 0, BoxX, BoxY, 0.05);
+            PrintSprite("ItemBoxB", 0, BoxX, BoxY, 0.05);
+            
+            // Item Name
+            if (Player.ShopIndex == Index)
+            {
+                SetFont("BIGFONT");
+                HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, ((!Player.LockerMode && CanAfford) || Player.LockerMode ? CR_WHITE : CR_RED), 24.1, 344.1, 0.05);
+            };
+            
+            // Increment X
+            BaseX += 48.0;
+        };
+        
+        // Increment Y
+        BaseY += 48.0;
+    };
 };
 
 function void CheckShopCard()
