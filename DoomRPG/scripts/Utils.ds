@@ -209,6 +209,42 @@ acscript bool HPEPMax()
     return (Player.ActualHealth >= Player.HealthMax && Player.EP >= Player.EPMax);
 };
 
+// Really only used to bypass startup error spam due to looking for DRLA actors
+acscript int PowersuitCheck()
+{
+    bool ValidPlayer = false;
+    
+    SetActivatorToTarget(0);
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+        if (ActivatorTID() == Players(i).TID)
+        {
+            ValidPlayer = true;
+            break;
+        };
+    
+    if (ValidPlayer)
+    {
+        if (CheckInventory("PowerRLReactiveShieldSystemBullet"))
+            return 1; // Bullet
+        if (CheckInventory("RLPlasmaShieldArmorToken") || CheckInventory("PowerRLReactiveShieldSystemPlasma"))
+            return 2; // Plasma
+        if (CheckInventory("PowerRLReactiveShieldSystemFire") || CheckInventory("RLInquisitorsSetBonusActive"))
+            return 3; // Fire
+        if (CheckInventory("PowerInvulnerable") ||
+            CheckInventory("PowerTimeFreezer") ||
+            CheckInventory("DRPGPowerStimIndestructible") ||
+            CheckInventory("DRPGPowerImmunityBullet") ||
+            CheckInventory("DRPGPowerImmunityBullet") ||
+            CheckInventory("DRPGPowerImmunityMelee") ||
+            CheckInventory("DRPGPowerImmunityPlasma") ||
+            CheckInventory("RLPlasmaShieldArmorToken"))
+            return 4; // Powerups/Immunities for Anti Demon Field
+    }
+    else
+        return -1;
+};
+
 // --------------------------------------------------
 // Monsters
 // 
