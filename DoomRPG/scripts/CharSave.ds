@@ -96,7 +96,7 @@
     
 */
 
-str[PW_MAX_ASSEMBLIES] DRLAAssemblies =
+str[DRLA_MAX_ASSEMBLIES] DRLAAssemblies =
 {
     "RLChainswordAssemblyLearntToken";
     "RLPiercingBladeAssemblyLearntToken";
@@ -164,6 +164,10 @@ acscript void SaveCharacter() net
             };
     };
     
+    // Populate the data
+    auto CharSaveInfo Info = {};
+    PopulateCharData(&Info);
+    
     // Saving Successful
     ActivatorSound("charsave/save", 127);
     SetFont("BIGFONT");
@@ -219,7 +223,69 @@ function int FromHexChar(char c)
     return 0; // Default
 };
 
-function str AppendString(str Base, str Append)
+function void PopulateCharData(CharSaveInfo *Info)
 {
-    return StrParam("%s%s\n", Base, Append);
+    // 1. Version / Compatibility Flag
+    Info->Version = CHARSAVE_VERSION;
+    Info->CompatMode = CompatMode;
+    
+    // 2. Level / Rank Level
+    Info->Level = Player.Level;
+    Info->RankLevel = Player.RankLevel;
+    
+    // 3. Stats
+    Info->Stats =
+    {
+        Player.Strength;
+        Player.Defense;
+        Player.Vitality;
+        Player.Energy;
+        Player.Regeneration;
+        Player.Agility;
+        Player.Capacity;
+        Player.Luck;
+    };
+    
+    // 4. Skills
+    for (int i = 0; i < MAX_CATEGORIES; i++)
+        for (int j = 0; j < MAX_SKILLS; j++)
+            Info->Skills[i][j] = Player.SkillLevel[i][j].Level;
+    
+    // 5. Skill Wheel
+    for (int i = 0; i < MAX_SKILLKEYS; i++)
+    {
+        Info->SkillWheel[i][0] = Player.SkillCategory[i];
+        Info->SkillWheel[i][1] = Player.SkillIndex[i];
+    };
+    
+    // 6. Augmentations
+    for (int i = 0; i < MAX_AUGS; i++)
+        Info->Augs[i] = Player.Augs.Level[i];
+    
+    // 7. Stims
+    for (int i = 0; i < MAX_COMPOUNDS; i++)
+        Info->Stims[i] = Player.Stim.Vials[i];
+    
+    // 8. Misc
+    Info->Credits = CheckInventory("DRPGCredits");
+    Info->Battery = Player.Augs.Battery;
+    Info->Toxicity = Player.Toxicity;
+    Info->PayBonus = Player.PayBonus;
+    Info->ArenaWave = ArenaMaxWave;
+    
+    // 9. Locker
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; i < ITEM_MAX; j++)
+            Info->Locker[i][j] = Player.Locker[i][j];
+    
+    // ----- COMPATIBILITY EXTENSIONS -----
+    
+    // 1. DRLA Assemblies
+    for (int i = 0; i < DRLA_MAX_ASSEMBLIES; i++)
+        Info->DRLAAssemblies[i] = CheckInventory(DRLAAssemblies[i]);
+};
+
+function int CalculateChecksum(int Value)
+{
+    return ((Value * 8) / 2) << 8;
 };
