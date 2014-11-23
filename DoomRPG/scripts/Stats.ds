@@ -93,45 +93,27 @@ acscript void AddXP(int PlayerNum, long int XP, long int Rank, bool Reduced)
     case 7: XP /= 4;                break;  // 0.25x
     };
     
-    if (GetCVar("drpg_combo"))
+    Players(PlayerNum).ComboTimer = COMBO_MAX;
+    Players(PlayerNum).Combo++;
+    
+    if (Reduced)
     {
-        Players(PlayerNum).ComboTimer = COMBO_MAX;
-        Players(PlayerNum).Combo++;
-        
-        if (Reduced)
-        {
-            if (XP > 0)
-                Players(PlayerNum).XPGained += XP / 3;
-        }
-        else
-        {
-            if (XP > 0)
-                Players(PlayerNum).XPGained += XP;
-            Players(PlayerNum).RankGained += Rank;
-        };
-        
-        if (Players(PlayerNum).Aura.Type[AURA_WHITE].Active)
-        {
-            if (Players(PlayerNum).Aura.Time > 0)
-                Players(PlayerNum).Combo++;
-            if (Player.SkillLevel[2][2].CurrentLevel >= 3 && XP > 0 && Rank > 0)
-                Players(PlayerNum).BonusGained += XP + Rank;
-        };
+        if (XP > 0)
+            Players(PlayerNum).XPGained += XP / 3;
     }
     else
     {
-        if (Reduced)
-        {
-            if (XP > 0)
-                Players(PlayerNum).XP += XP / 3;
-            Players(PlayerNum).Rank += Rank / 3;
-        }
-        else
-        {
-            if (XP > 0)
-                Players(PlayerNum).XP += XP;
-            Players(PlayerNum).Rank += Rank;
-        };
+        if (XP > 0)
+            Players(PlayerNum).XPGained += XP;
+        Players(PlayerNum).RankGained += Rank;
+    };
+    
+    if (Players(PlayerNum).Aura.Type[AURA_WHITE].Active)
+    {
+        if (Players(PlayerNum).Aura.Time > 0)
+            Players(PlayerNum).Combo++;
+        if (Player.Aura.Type[AURA_WHITE].Level >= 3 && XP > 0 && Rank > 0)
+            Players(PlayerNum).BonusGained += XP + Rank;
     };
 };
 
@@ -150,60 +132,55 @@ function void InitTables()
 
 function void CheckCombo()
 {
-    if (GetCVar("drpg_combo"))
+    // Time Freeze special handling
+    if (Player.Combo > 0 && CheckInventory("PowerTimeFreezer") && Player.ComboTimer >= COMBO_MAX)
+        Player.ComboTimer = COMBO_MAX - 1;
+    
+    // Subtract the combo timer each tic
+    if ((Player.Combo > 0 || Player.ComboTimer < COMBO_MAX) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
+        Player.ComboTimer--;
+    
+    // Reset values if you start the combo again while it was cooling down
+    if (Player.ComboTimer == COMBO_MAX)
     {
-        // Time Freeze special handling
-        if (Player.Combo > 0 && CheckInventory("PowerTimeFreezer") && Player.ComboTimer >= COMBO_MAX)
-            Player.ComboTimer = COMBO_MAX - 1;
+        Player.BonusGained = 0;
+        Player.XPGained = 0;
+        Player.RankGained = 0;
+    };
+    
+    // Add up and randomize the XP and Rank gain
+    if (Player.ComboTimer == COMBO_STOP || (Player.Aura.Type[AURA_WHITE].Active && Player.Aura.Type[AURA_WHITE].Level >= 2 && Timer() == 4))
+    {
+        int ComboBonus = (int)((((fixed)Player.Combo / (fixed)GameSkill()) * (Player.XPGained + Player.RankGained)) / 10.0);
+        if (ComboBonus < 0) ComboBonus = 0;
         
-        // Subtract the combo timer each tic
-        if ((Player.Combo > 0 || Player.ComboTimer < COMBO_MAX) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
-            Player.ComboTimer--;
+        // You cannot gain Negative XP, but you can lose Rank
+        if (Player.XPGained < 0) Player.XPGained = 0;
         
-        // Reset values if you start the combo again while it was cooling down
-        if (Player.ComboTimer == COMBO_MAX)
+        if (Player.Combo > 1)
         {
-            Player.BonusGained = 0;
-            Player.XPGained = 0;
-            Player.RankGained = 0;
+            Player.BonusGained += ComboBonus;
+            Player.XP += Player.XPGained + ComboBonus;
+            Player.Rank += Player.RankGained + ComboBonus;
+        }
+        else
+        {
+            Player.XP += Player.XPGained;
+            Player.Rank += Player.RankGained;
         };
         
-        // Add up and randomize the XP and Rank gain
-        if (Player.ComboTimer == COMBO_STOP || (Player.Aura.Type[AURA_WHITE].Active && Player.Aura.Type[AURA_WHITE].Level >= 2 && Timer() == 4))
-        {
-            int ComboBonus = (int)((((fixed)Player.Combo / (fixed)GameSkill()) * (Player.XPGained + Player.RankGained)) / 10.0);
-            if (ComboBonus < 0) ComboBonus = 0;
-            
-            // You cannot gain Negative XP, but you can lose Rank
-            if (Player.XPGained < 0) Player.XPGained = 0;
-            
-            if (Player.Combo > 1)
-            {
-                Player.BonusGained += ComboBonus;
-                Player.XP += Player.XPGained + ComboBonus;
-                Player.Rank += Player.RankGained + ComboBonus;
-            }
-            else
-            {
-                Player.XP += Player.XPGained;
-                Player.Rank += Player.RankGained;
-            };
-            
-            Player.XPGained = 0;
-            Player.RankGained = 0;
-        };
-        
-        if (Player.ComboTimer < 0)
-        {
-            Player.Combo = 0;
-            Player.ComboTimer = COMBO_MAX;
-            Player.BonusGained = 0;
-            Player.XPGained = 0;
-            Player.RankGained = 0;
-        };
-    }
-    else
-        Player.ComboTimer = 0;
+        Player.XPGained = 0;
+        Player.RankGained = 0;
+    };
+    
+    if (Player.ComboTimer < 0)
+    {
+        Player.Combo = 0;
+        Player.ComboTimer = COMBO_MAX;
+        Player.BonusGained = 0;
+        Player.XPGained = 0;
+        Player.RankGained = 0;
+    };
 };
 
 // Keeps current level and XP updated
