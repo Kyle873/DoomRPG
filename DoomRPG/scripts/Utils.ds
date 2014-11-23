@@ -1253,122 +1253,6 @@ function void DrawBattery()
     HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, BATTERY_ID + 1, CR_YELLOW, X + 24.0, Y - 10.0, HoldTime, FadeTime);
 };
 
-function void DrawItemGrid(int Type)
-{
-    // Coordinates
-    fixed BaseX;
-    fixed BaseY;
-    fixed BoxX;
-    fixed BoxY;
-    fixed X;
-    fixed Y;
-    fixed IconX;
-    fixed IconY;
-    
-    for (int i = 0; i < 6; i++)
-    {
-        // Reset base X
-        BaseX = 0.0;
-        
-        for (int j = 0; j < 9; j++)
-        {
-            int Page = (Type == IG_LOCKER ? Player.LockerPage : Player.ShopPage);
-            int BaseIndex = (Type == IG_LOCKER ? Player.LockerIndex : Player.ShopIndex);
-            int Index = j + (i * 9);
-            
-            // Calculate offset
-            if (BaseIndex >= 6 * 9)
-                Index += (BaseIndex / (6 * 9)) * (6 * 9);
-            
-            ItemInfo ItemSpace *Item = &ItemData[Page][Index];
-            str Icon = Item->Sprite.Name;
-            str Name = Item->Name;
-            int IconXOff = Item->Sprite.XOff;
-            int IconYOff = Item->Sprite.YOff;
-            int Held = CheckInventory(Item->Actor);
-            int Stored = (Player.LockerGlobal ? GlobalLocker[Page][Index] : Player.Locker[Page][Index]);
-            int Rank = Item->Rank;
-            int Price = Item->Price;
-            bool Unlocked = !((Rank > 0 && Player.RankLevel < Rank));
-            bool CanBuy = !(Rank == -1);
-            bool CanAfford = (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100);
-            bool AutoSell = Player.AutoSell[Page][Index];
-            
-            // Stop if we're at the end of the list
-            if (Index > ItemMax[Page] - 1) break;
-            
-            // Placeholder Icon
-            if (StrLen(Icon) == 0)
-                Icon = "SprNone";
-            
-            // Setup X and Y
-            X = 26.0 + BaseX;
-            Y = 50.0 + BaseY;
-            BoxX = 48.0 + BaseX;
-            BoxY = 72.0 + BaseY;
-            IconX = 48.0 + BaseX;
-            IconY = 72.0 + BaseY;
-            IconX += IconXOff;
-            IconY += IconYOff;
-            
-            // Amount
-            if (Held > 0)
-            {
-                SetFont("BIGFONT");
-                HudMessage("%d\n", Held, HUDMSG_PLAIN, 0, CR_GREEN, X + 44.2, Y + 44.2, 0.05);
-            };
-            if (Type == IG_LOCKER && Stored > 0)
-            {
-                SetFont("BIGFONT");
-                HudMessage("%d\n", Stored, HUDMSG_PLAIN, 0, CR_YELLOW, X + 44.2, Y + 12.2, 0.05);
-            };
-            
-            // Auto-Sell Icon
-            if (Type == IG_STORE && Player.AutoSell[Page][Index])
-                PrintSpritePulse("SELLICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
-            
-            // Icon
-            SetHudClipRect(X, Y, 44, 44);
-            if (BaseIndex == Index)
-            {
-                if (Unlocked || Type == IG_LOCKER)
-                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.75, 32.0, 0.25)
-                else
-                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.25, 32.0, 0.25);
-            }
-            else
-            {
-                if (Unlocked || Type == IG_LOCKER)
-                    PrintSprite(Icon, 0, IconX, IconY, 0.05)
-                else
-                    PrintSpriteAlpha(Icon, 0, IconX, IconY, 0.05, 0.25);
-            };
-            SetHudClipRect(0, 0, 0, 0);
-            
-            // Box
-            if (BaseIndex == Index)
-                if ((!CanAfford || !Unlocked || !CanBuy) && Type == IG_STORE)
-                    PrintSprite("ItemBoxR", 0, BoxX, BoxY, 0.05)
-                else
-                    PrintSprite("ItemBoxH", 0, BoxX, BoxY, 0.05);
-            PrintSprite("ItemBoxB", 0, BoxX, BoxY, 0.05);
-            
-            // Item Name
-            if (BaseIndex == Index)
-            {
-                SetFont("BIGFONT");
-                HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, ((Type == IG_STORE && CanAfford) || Type == IG_LOCKER ? CR_WHITE : CR_RED), 24.1, 344.1, 0.05);
-            };
-            
-            // Increment X
-            BaseX += 48.0;
-        };
-        
-        // Increment Y
-        BaseY += 48.0;
-    };
-};
-
 function void DrawBar(str Fill, int X, int Y, int Amount, bool Pulse)
 {
     for (int i = 0; i < Amount; i++)
@@ -1671,18 +1555,13 @@ acscript void FullShield()
 };
 
 // Full Locker
-acscript void FullLocker(int Amount, bool Global)
+acscript void FullLocker(int Amount)
 {
     for (int i = 0; i < ItemCategories; i++)
         for (int j = 0; j < ItemMax[i]; j++)
         {
             ItemInfoPtr ItemPtr = &ItemData[i][j];
-            
-            if (!ItemPtr->Unstorable)
-                if (Global)
-                    GlobalLocker[i][j] = Amount
-                else
-                    Player.Locker[i][j] = Amount;
+            Player.Locker[i][j] = Amount;
         };
 };
 
