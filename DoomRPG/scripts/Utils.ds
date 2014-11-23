@@ -11,6 +11,10 @@
 #include "Stats.dh"
 #include "Utils.dh"
 
+// --------------------------------------------------
+// Variables
+// 
+
 int AuraTID = 20000;
 
 // Skill Level Names
@@ -21,6 +25,7 @@ str[6] SkillLevels =
     "Hard";
     "Nightmare";
     "Hell";
+    "Armageddon";
 };
 
 str[AURA_MAX] AuraIcons =
@@ -37,65 +42,9 @@ str[AURA_MAX] AuraIcons =
     "AuraBlac";
 };
 
-acscript void TeleportMonster()
-{
-    str Type = GetActorClass(0);
-    int TID = UniqueTID();
-    bool Success = false;
-    Position *ChosenPosition = nullptr;
-    
-    // Check the position
-    while (!Success)
-    {
-        ChosenPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[Random(0, CurrentLevel->MonsterPositions.Position)];
-        Success = Spawn(Type, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle);
-        Thing_Remove(TID);
-        Delay(1);
-    };
-    
-    // Teleport to this position
-    SetActorPosition(0, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, true);
-    SetActorAngle(0, ChosenPosition->Angle);
-    SetActorPitch(0, ChosenPosition->Pitch);
-};
-
-// For calling from DECORATE
-acscript void HealMonster(int HealPercent)
-{
-    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
-    int Health = GetActorProperty(0, APROP_Health);
-    int HealAmount = Stats->HealthMax * HealPercent / 100;  
-    
-    SetActorProperty(0, APROP_Health, Health + HealAmount);
-    
-    if (GetActorProperty(0, APROP_Health) >= Stats->HealthMax)
-        SetActorProperty(0, APROP_Health, Stats->HealthMax);
-};
-
-acscript int GetItemDropLuck()
-{
-    int NumPlayers;
-    int TotalLuck;
-    
-    for (int i = 0; i < MAX_PLAYERS; i++)
-    {
-        // Skip player if they're not ingame
-        if (!PlayerInGame(i)) continue;
-        
-        TotalLuck += Players(i).Luck;
-        NumPlayers++;
-    };
-    
-    // Average the Luck
-    TotalLuck /= NumPlayers;
-    TotalLuck = (int)((fixed)TotalLuck / 1.5625);
-    
-    // Prevent overflow from Luck total being too high
-    if (TotalLuck > 128)
-        TotalLuck = 128;
-    
-    return TotalLuck;
-};
+// --------------------------------------------------
+// DECORATE
+// 
 
 acscript int InOutpost()
 {
@@ -126,53 +75,6 @@ acscript void SoulEffect(int Type)
     Player.SoulActive[Type] = true;
 };
 
-acscript void PlayerTeleport(int PlayerNum)
-{
-    bool NearPlayers = true;
-    
-    if (PlayerNum == PlayerNumber() || !PlayerInGame(PlayerNum))
-    {
-        ActivatorSound("menu/error", 127);
-        return;
-    };
-    
-    // Teleport
-    GiveInventory("DRPGPlayerTeleportGhost", 1);
-    SetActorPosition(Player.TID, GetActorX(Players(PlayerNum).TID), GetActorY(Players(PlayerNum).TID), GetActorZ(Players(PlayerNum).TID), true);
-    SetActorAngle(Player.TID, GetActorAngle(Players(PlayerNum).TID));
-    SetActorProperty(Player.TID, APROP_RenderStyle, STYLE_Translucent);
-    
-    while (NearPlayers)
-    {
-        // Reset the flag
-        NearPlayers = false;
-        
-        // Make sure you're not inside or near any other players before we solidify
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (i == PlayerNumber() || !PlayerInGame(i)) continue;
-            if (Distance(Player.TID, Players(i).TID) <= GetActorPropertyFixed(Players(i).TID, APROP_Radius) * 4.0)
-            {
-                NearPlayers = true;
-                break;
-            };
-        };
-        
-        // Player Flashyness
-        SetActorPropertyFixed(Player.TID, APROP_Alpha, 0.75 + (Sin(Timer() / 32.0) * 0.25));
-        
-        // Solidify
-        if (!NearPlayers)
-        {
-            GiveInventory("DRPGPlayerTeleportNormal", 1);
-            SetActorProperty(Player.TID, APROP_RenderStyle, STYLE_Normal);
-            SetActorPropertyFixed(Player.TID, APROP_Alpha, 1.0);
-        };
-        
-        Delay(1);
-    };
-};
-
 // Used by DECORATE and the Immunity Crystals plus Anti-Demon Field
 acscript void DestroyImmunity()
 {
@@ -199,22 +101,6 @@ acscript int GetShopCard()
 acscript void SetDamageType(int Type)
 {
     Player.DamageType = Type;
-};
-
-// Add Toxicity to the Player
-acscript void AddToxicity(int Amount)
-{
-    int PrevToxicity = Player.Toxicity;
-    
-    Player.Toxicity += Amount;
-    Player.ToxicTimer = 0;
-    Player.ToxicOffset = 0;
-    Player.ToxicStage = 0;
-    
-    if ((PrevToxicity < 25 && Player.Toxicity >= 25) ||
-        (PrevToxicity < 50 && Player.Toxicity >= 50) ||
-        (PrevToxicity < 75 && Player.Toxicity >= 75))
-        ActivatorSound("misc/toxic", 127);
 };
 
 // Return whether your Aug Battery is full or not1
@@ -311,6 +197,138 @@ acscript int GetTimer()
     return Timer();
 };
 
+// Returns the Agility for A_SetTics calls in DECORATE
+acscript int GetSpeed(int Tics)
+{
+    return Tics - ((Tics - 1) / 100) * Player.Agility;
+};
+
+// Used by DECORATE to check if both your Health and EP are at max
+acscript bool HPEPMax()
+{
+    return (Player.ActualHealth >= Player.HealthMax && Player.EP >= Player.EPMax);
+};
+
+// --------------------------------------------------
+// Monsters
+// 
+
+// For calling from DECORATE
+acscript void HealMonster(int HealPercent)
+{
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    int Health = GetActorProperty(0, APROP_Health);
+    int HealAmount = Stats->HealthMax * HealPercent / 100;  
+    
+    SetActorProperty(0, APROP_Health, Health + HealAmount);
+    
+    if (GetActorProperty(0, APROP_Health) >= Stats->HealthMax)
+        SetActorProperty(0, APROP_Health, Stats->HealthMax);
+};
+
+acscript void TeleportMonster()
+{
+    str Type = GetActorClass(0);
+    int TID = UniqueTID();
+    bool Success = false;
+    Position *ChosenPosition = nullptr;
+    
+    // Check the position
+    while (!Success)
+    {
+        ChosenPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[Random(0, CurrentLevel->MonsterPositions.Position)];
+        Success = Spawn(Type, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle);
+        Thing_Remove(TID);
+        Delay(1);
+    };
+    
+    // Teleport to this position
+    SetActorPosition(0, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, true);
+    SetActorAngle(0, ChosenPosition->Angle);
+    SetActorPitch(0, ChosenPosition->Pitch);
+};
+
+function void DropMoney(int Killer, int TID, int Amount)
+{
+    int Total = Amount;
+    int Drops;
+    
+    Drops = Total / 1000;
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1000", 256);
+    Total %= 1000;
+
+    Drops = Total / 100;
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits100", 256);
+    Total %= 100;
+
+    Drops = Total / 50;
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits50", 256);
+    Total %= 50;
+
+    Drops = Total / 20;
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits20", 256);
+    Total %= 20;
+
+    Drops = Total / 10;
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits10", 256);
+    Total %= 10;
+
+    Drops = Total / 5;
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits5", 256);
+    Total %= 5;
+    
+    Drops = Total;
+    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1", 256);
+};
+
+function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XAdd, fixed YAdd, fixed ZAdd, fixed XVelAdd, fixed YVelAdd, fixed ZVelAdd)
+{
+    // if this is an invalid killer, return
+    if (!(Killer > -1)) return 0;
+    
+    // Chance
+    if (!(Random(1, 256) <= Chance)) return 0;
+    
+    fixed Angle = GetActorAngle(TID);
+    fixed X = GetActorX(TID) + XAdd;
+    fixed Y = GetActorY(TID) + YAdd;
+    fixed Z = GetActorZ(TID) + (GetActorPropertyFixed(0, APROP_Height) / 2.0) + ZAdd;
+    fixed XSpeed = GetCVarFixed("drpg_monster_dropdist") + XVelAdd;
+    fixed YSpeed = GetCVarFixed("drpg_monster_dropdist") + YVelAdd;
+    fixed ZSpeed = 8.0 + ZVelAdd;
+    int ItemTID = UniqueTID();
+    bool Success = false;
+    
+    // Spawn the Item
+    Success = SpawnForced(Item, X, Y, Z, ItemTID, Angle);
+    
+    // Spawn successful
+    if (Success)
+    {
+        // Set Velocity
+        SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
+        
+        // Array has grown too big, resize it
+        if (Players(Killer).DropTID.Position == Players(Killer).DropTID.Size)
+            ArrayResize(&Players(Killer).DropTID);
+        
+        // Add item's TID to drop array
+        ((int *)Players(Killer).DropTID.Data)[Players(Killer).DropTID.Position++] = ItemTID;
+    };
+    
+    return ItemTID;
+};
+
+// --------------------------------------------------
+// Players
+// 
+
+// Used by the RegenSphere to temporarily increase regen rates
+acscript void RegenBoost()
+{
+    Player.RegenBoostTimer += (35 * 5) + ((Player.Regeneration / 13.33) * 35);
+};
+
 // Set Skill Level during the game
 acscript void SetSkill(int NewSkill)
 {
@@ -398,6 +416,335 @@ acscript void Respec(bool DoStats, bool DoSkills) net
     ActivatorSound("misc/secret", 127);
 };
 
+// Add Toxicity to the Player
+acscript void AddToxicity(int Amount)
+{
+    int PrevToxicity = Player.Toxicity;
+    
+    Player.Toxicity += Amount;
+    Player.ToxicTimer = 0;
+    Player.ToxicOffset = 0;
+    Player.ToxicStage = 0;
+    
+    if ((PrevToxicity < 25 && Player.Toxicity >= 25) ||
+        (PrevToxicity < 50 && Player.Toxicity >= 50) ||
+        (PrevToxicity < 75 && Player.Toxicity >= 75))
+        ActivatorSound("misc/toxic", 127);
+};
+
+acscript void PurgeDrops() net
+{
+    int *TID = (int *)Player.DropTID.Data;
+    for (int i = 0; i < Player.DropTID.Position; i++)
+    {
+        if (ClassifyActor(TID[i]) == ACTOR_NONE)
+            continue;
+        
+        SpawnSpot("TeleportFog", TID[i], 0, 0);
+        Thing_Remove(TID[i]);
+    };
+    
+    CleanDropTIDArray();
+    Print("\cdRemoved \cgall\cd monster-dropped items\n");
+};
+
+acscript void CheckArmorStats()
+{
+    Log("\c[Orange]-- ARMOR STATS --\n");
+    Log("\c[Green]Class name: \c[White]%s\n", GetArmorInfoString(ARMORINFO_CLASSNAME));
+    Log("\c[Green]Durability: \c[LightBlue]%i%%\n", GetArmorInfo(ARMORINFO_SAVEAMOUNT));
+    Log("\c[Green]Protection: \c[Yellow]%k%%\n", GetArmorInfoFixed(ARMORINFO_SAVEPERCENT) * 100.0);
+    Log("\c[Green]Max Absorb: \c[Grey]%i%%\n", GetArmorInfo(ARMORINFO_MAXABSORB));
+    Log("\c[Green]Max Full Absorb: \c[Brick]%i%%\n", GetArmorInfo(ARMORINFO_MAXFULLABSORB));
+};
+
+// Calculates pay for the Rank Payout
+function int CalculatePay(int PlayerNum)
+{
+    if (PlayerNum == 0) PlayerNum = PlayerNumber();
+    return (int)(((((fixed)Players(PlayerNum).RankLevel + 1.0) * 10.0) + ((fixed)Players(PlayerNum).PayKills * ((fixed)Players(PlayerNum).RankLevel + 1.0))) * (1.0 + (fixed)Players(PlayerNum).PayBonus / 100.0));
+};
+
+function int AveragePlayerLevel()
+{
+    int NumPlayers;
+    int TotalLevel;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        // Skip player if they're not ingame
+        if (!PlayerInGame(i)) continue;
+        
+        TotalLevel += Players(i).Level;
+        NumPlayers++;
+    };
+    
+    return TotalLevel / NumPlayers;
+};
+
+function bool HaveStatusEffect()
+{
+    for (int i = 0; i < SE_MAX; i++)
+        if (Player.StatusType[i])
+            return true;
+    
+    return false;
+};
+
+function bool DropPlayerItem(str Item)
+{
+    fixed Angle = GetActorAngle(0);
+    fixed X = GetActorX(0) + Cos(Angle);
+    fixed Y = GetActorY(0) + Sin(Angle);
+    fixed Z = GetActorZ(0) + 16.0;
+    fixed XSpeed = Cos(Angle) * 4.0;
+    fixed YSpeed = Sin(Angle) * 4.0;
+    int TID = UniqueTID();
+    bool SpawnOK = Spawn(Item, X, Y, Z, TID, Angle);
+    bool SightOK = CheckSight(TID, 0, 0);
+    
+    // Remove the item if it fails the sight check
+    if (!SightOK)
+        Thing_Remove(TID);
+    
+    // Apply Velocity
+    if (SpawnOK && SightOK)
+        SetActorVelocity(TID, XSpeed, YSpeed, 0, false, false);
+    
+    return (SpawnOK && SightOK);
+};
+
+function bool IsPlayerMoving()
+{
+    return (GetPlayerInput(PlayerNumber(), MODINPUT_FORWARDMOVE) ||
+            GetPlayerInput(PlayerNumber(), MODINPUT_SIDEMOVE) ||
+            GetPlayerInput(PlayerNumber(), MODINPUT_UPMOVE));
+};
+
+function int FindPlayerID(int TID)
+{
+    for (int i = 0; i < MAX_PLAYERS; i++)
+        if (Players(i).TID == TID)
+            return i;
+    
+    return -1;
+};
+
+function bool IsTimeFrozen()
+{
+    for (int i = 0; i < MAX_PLAYERS; i++)
+        if (CheckActorInventory (Players(i).TID, "PowerTimeFreezer") ||
+            CheckActorInventory (Players(i).TID, "PowerShieldTimeFreezer") ||
+            CheckActorInventory (Players(i).TID, "PowerRLChronotrooperFreeze") /* DoomRL */ ||
+            CheckActorInventory (Players(i).TID, "DRPGMenuFreezer"))
+            return true;
+    
+    return false;
+};
+
+// --------------------------------------------------
+// Inventory
+// 
+
+function int CheckInventoryTID(int TID, str Item)
+{
+    return (TID == 0 ? CheckInventory(Item) : CheckActorInventory(TID, Item));
+};
+
+function int SetInventory(str Item, int Count)
+{
+    int n = Count - CheckInventory(Item);
+    
+    if (n > 0)
+        GiveInventory(Item, n)
+    else if (n < 0)
+        TakeInventory(Item, -n);
+    
+    return n;
+};
+
+function int SetActorInventory(int tid, str item, int count)
+{
+    int n = count - CheckActorInventory (tid, item);
+    
+    if (n > 0)
+        GiveActorInventory(tid, item, n)
+    else if (n < 0)
+        TakeActorInventory(tid, item, -1 * n);
+    
+    return n;
+};
+
+// Drop your entire inventory on the ground
+function void DropInventory()
+{
+    auto DroppedItem[] ItemList =
+    {
+        // Health
+        { "Stimpack"; };
+        { "Medikit"; };
+        { "LargeMedikit"; };
+        { "XLMedikit"; };
+        { "MedPack"; };
+        { "SurgeryKit"; };
+        { "Continue"; };
+        
+        // Armor
+        { "GreenArmor"; };
+        { "UsedGreenArmor"; };
+        { "BlueArmor"; };
+        { "UsedBlueArmor"; };
+        { "YellowArmor"; };
+        { "UsedYellowArmor"; };
+        { "RedArmor"; };
+        { "UsedRedArmor"; };
+        { "WhiteArmor"; };
+        { "UsedWhiteArmor"; };
+        
+        // Powerups
+        { "InvulnerabilitySphere"; };
+        { "InvulnerabilityCharge"; };
+        { "BlurSphere"; };
+        { "InvisibilityCharge"; };
+        { "RegenSphere"; };
+        { "RadSuit"; };
+        { "Infrared"; };
+        { "AllMap"; };
+        { "Berserk"; };
+        { "Wings"; };
+        { "StimSmall"; };
+        { "StimMedium"; };
+        { "StimLarge"; };
+        
+        // DoomRL - Powerups
+        { "InvulnerabilitySphere2"; };
+        { "RadSuit2"; };
+        { "Infrared2"; };
+        { "Berserk2"; };
+
+        // DoomRL - Modpacks
+        { "RLPowerModItem"; };
+        { "RLBulkModItem"; };
+        { "RLAgilityModItem"; };
+        { "RLTechnicalModItem"; };
+        { "RLSniperModItem"; };
+        { "RLFirestormModItem"; };
+        { "RLNanoModItem"; };
+        { "RLOnyxModItem"; };
+        { "RLArmorModItem"; };
+        { "RLModLimit"; true; true; 4; };
+        { "RLScavengerModLimit"; true; true; 8; };
+        { "RLArmorModItemInInventory"; true; };
+        
+        // End of list
+        { nullptr; };
+    };
+    
+    for (int i = 0; ItemList[i].Actor != nullptr; i++)
+        for (int j = 0; j < CheckInventory(ItemList[i].Actor); j++)
+        {
+            // Limit the drops if you have more than 25 to prevent massive amounts of lag
+            if (j >= 25) break;
+            
+            if (ItemList[i].TakeAll)
+                TakeInventory(ItemList[i].Actor, ItemList[i].Max)
+            else
+                TakeInventory(ItemList[i].Actor, 1);
+            
+            if (!ItemList[i].NoDrop)
+                DropItem(0, ItemList[i].Actor, 1, 255);
+        };
+};
+
+// --------------------------------------------------
+// Items
+// 
+
+acscript int GetItemDropLuck()
+{
+    int NumPlayers;
+    int TotalLuck;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        // Skip player if they're not ingame
+        if (!PlayerInGame(i)) continue;
+        
+        TotalLuck += Players(i).Luck;
+        NumPlayers++;
+    };
+    
+    // Average the Luck
+    TotalLuck /= NumPlayers;
+    TotalLuck = (int)((fixed)TotalLuck / 1.5625);
+    
+    // Prevent overflow from Luck total being too high
+    if (TotalLuck > 128)
+        TotalLuck = 128;
+    
+    return TotalLuck;
+};
+
+// Return the amount of ammo corresponding to an ammo pickup
+function int GetAmmoAmount(str Item)
+{
+    int Amount = 1;
+    
+    if (Item == "Clip")         Amount = 10;
+    if (Item == "ClipBox")      Amount = 50;
+    if (Item == "Shell")        Amount = 4;
+    if (Item == "ShellBox")     Amount = 20;
+    if (Item == "RocketAmmo")   Amount = 1;
+    if (Item == "RocketBox")    Amount = 5;
+    if (Item == "Cell")         Amount = 20;
+    if (Item == "CellPack")     Amount = 100;
+    
+    return Amount;
+};
+
+// --------------------------------------------------
+// Health
+// 
+
+// Returns the amount to heal given the percentage out of max HP (for DECORATE)
+acscript int GetHealPercent(int Percent)
+{
+    return Player.HealthMax * Percent / 100;
+};
+
+// Returns your max Health (for DECORATE)
+acscript int GetHealthMax()
+{
+    return Player.HealthMax;
+};
+
+// Used by DECORATE in UseShield state to cap healing items to only heal to maximum Health
+acscript void CapHealthItem()
+{
+    if (Player.ActualHealth > Player.HealthMax)
+        Player.ActualHealth = Player.HealthMax;
+};
+
+// --------------------------------------------------
+// Shield
+// 
+
+// Returns the capacity of your current Shield (for DECORATE)
+acscript int GetShieldMax()
+{
+    return Player.Shield.Capacity;
+};
+
+// Used by DECORATE to check if your Shield's stored Health is at max
+acscript bool ShieldHealthMax()
+{
+    return (Player.ActualHealth >= Player.HealthMax);
+};
+
+// --------------------------------------------------
+// EP
+// 
+
 acscript void AddEP(int Amount, bool NoFlash)
 {
     if (Player.EP + Amount > Player.EPMax)
@@ -441,54 +788,683 @@ acscript int GetEPMax()
     return Player.EPMax;
 };
 
-// Returns the amount to heal given the percentage out of max HP (for DECORATE)
-acscript int GetHealPercent(int Percent)
+// --------------------------------------------------
+// Skills
+// 
+
+acscript void PlayerTeleport(int PlayerNum)
 {
-    return Player.HealthMax * Percent / 100;
+    bool NearPlayers = true;
+    
+    if (PlayerNum == PlayerNumber() || !PlayerInGame(PlayerNum))
+    {
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    // Teleport
+    GiveInventory("DRPGPlayerTeleportGhost", 1);
+    SetActorPosition(Player.TID, GetActorX(Players(PlayerNum).TID), GetActorY(Players(PlayerNum).TID), GetActorZ(Players(PlayerNum).TID), true);
+    SetActorAngle(Player.TID, GetActorAngle(Players(PlayerNum).TID));
+    SetActorProperty(Player.TID, APROP_RenderStyle, STYLE_Translucent);
+    
+    while (NearPlayers)
+    {
+        // Reset the flag
+        NearPlayers = false;
+        
+        // Make sure you're not inside or near any other players before we solidify
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (i == PlayerNumber() || !PlayerInGame(i)) continue;
+            if (Distance(Player.TID, Players(i).TID) <= GetActorPropertyFixed(Players(i).TID, APROP_Radius) * 4.0)
+            {
+                NearPlayers = true;
+                break;
+            };
+        };
+        
+        // Player Flashyness
+        SetActorPropertyFixed(Player.TID, APROP_Alpha, 0.75 + (Sin(Timer() / 32.0) * 0.25));
+        
+        // Solidify
+        if (!NearPlayers)
+        {
+            GiveInventory("DRPGPlayerTeleportNormal", 1);
+            SetActorProperty(Player.TID, APROP_RenderStyle, STYLE_Normal);
+            SetActorPropertyFixed(Player.TID, APROP_Alpha, 1.0);
+        };
+        
+        Delay(1);
+    };
 };
 
-// Returns your max Health (for DECORATE)
-acscript int GetHealthMax()
+// Fires a projectile from the Player
+function bool FireProjectile(str Type)
 {
-    return Player.HealthMax;
+    fixed X = GetActorX(0);
+    fixed Y = GetActorY(0);
+    fixed Z = GetActorZ(0);
+    fixed Pitch = GetActorPitch(0);
+    fixed Angle = GetActorAngle(0);
+    fixed XSpeed = Cos(Angle) * 16.0;
+    fixed YSpeed = Sin(Angle) * 16.0;
+    fixed ZSpeed = -Sin(Pitch) * 16.0;
+    fixed FireHeight = GetActorViewHeight(0) * 0.8;
+    int TID = UniqueTID();
+    
+    SpawnProjectile(0, Type, 0, 0, 0, 0, TID);
+    SetActorVelocity(TID, XSpeed, YSpeed, ZSpeed, 0, 0);
+    SetActorAngle(TID, Angle);
+    SetActorPosition(TID, X, Y, Z + FireHeight, 0);
+    Thing_ChangeTID(TID, 0);
+    
+    return true;
 };
 
-// Used by DECORATE in UseShield state to cap healing items to only heal to maximum Health
-acscript void CapHealthItem()
+// Emits a Nova from the Player
+function bool Nova(str Type, int Projectiles)
 {
-    if (Player.ActualHealth > Player.HealthMax)
-        Player.ActualHealth = Player.HealthMax;
+    fixed X = GetActorX(0);
+    fixed Y = GetActorY(0);
+    fixed Z = GetActorZ(0);
+    fixed Pitch = GetActorPitch(0);
+    fixed Angle = GetActorAngle(0);
+    fixed XSpeed = Cos(Angle) * 16.0;
+    fixed YSpeed = Sin(Angle) * 16.0;
+    fixed ZSpeed = -Sin(Pitch) * 16.0;
+    fixed FireHeight = GetActorViewHeight(0) * 0.8;
+    int TID = UniqueTID();
+    fixed AngleAdd;
+    
+    AngleAdd = 1.0 / Projectiles;
+    
+    for (int i = 0; i < Projectiles; i++)
+    {
+        XSpeed = Cos(Angle) * 16.0;
+        YSpeed = Sin(Angle) * 16.0;
+        ZSpeed = -Sin(Pitch) * 16.0;
+        
+        SpawnProjectile(0, Type, 0, 0, 0, 0, TID);
+        SetActorVelocity(TID, XSpeed, YSpeed, ZSpeed, 0, 0);
+        SetActorAngle(TID, Angle);
+        SetActorPosition(TID, X, Y, Z + FireHeight, 0);
+        Thing_ChangeTID(TID, 0);
+        
+        Angle += AngleAdd;
+    };
+    
+    return true;
 };
 
-// Returns the capacity of your current Shield (for DECORATE)
-acscript int GetShieldMax()
+// --------------------------------------------------
+// Auras
+// 
+
+// Spawn the respective Aura effects on the given Player/Monster's TID
+function void SpawnAuras(int TID, bool ForceFancy)
 {
-    return Player.Shield.Capacity;
+    static str[AURA_MAX] AuraActors =
+    {
+        "DRPGRedAura";
+        "DRPGGreenAura";
+        "DRPGWhiteAura";
+        "DRPGPinkAura";
+        "DRPGCyanAura";
+        "DRPGPurpleAura";
+        "DRPGOrangeAura";
+        "DRPGBlueAura";
+        "DRPGYellowAura";
+    };
+    
+    fixed X = GetActorX(TID);
+    fixed Y = GetActorY(TID);
+    fixed Z = GetActorZ(TID);
+    fixed Radius = GetActorPropertyFixed(TID, APROP_Radius);
+    fixed Height = GetActorPropertyFixed(TID, APROP_Height);
+    int Angle = GetActorAngle(TID) * 256;
+    bool SpawnOK = false;
+    bool IsPlayer = (ClassifyActor(TID) & ACTOR_PLAYER);
+    int SimpleType = GetCVar("drpg_simple_auras");
+    bool Simple = (IsPlayer ? (SimpleType == 1 || SimpleType == 3) : (SimpleType == 2 || SimpleType == 3));
+    AuraInfo *PlayerAura = &Players(FindPlayerID(TID)).Aura;
+    AuraInfo MonsterStatsSpace *MonsterAura = &Monsters[GetMonsterID(TID)].Aura;
+    int AuraCount = 0;
+    int AuraAdd = 0;
+    
+    // WHYYYYYYYYYYYYYYYYYYYYYYY.YPEG
+    if (IsPlayer)
+    {
+        // Calculate number of active Auras
+        for (int i = 0; i < AURA_MAX; i++)
+            if (PlayerAura->Type[i].Active)
+                AuraCount++;
+        
+        // Spawn the Aura
+        if (AuraCount >= AURA_MAX) // Shadow
+        {
+            if (!Simple)
+                SpawnForced("DRPGBlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+            else
+                SpawnForced("DRPGBlackAuraIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
+        }
+        else // Normal
+        {
+            for (int i = 0; i < AURA_MAX; i++)
+            {
+                if (PlayerAura->Type[i].Active)
+                {
+                    // Create rotation for simple Aura icons
+                    if (Simple && AuraCount > 1)
+                    {
+                        fixed AngleOffset = (1.0 / (fixed)AuraCount) * ((fixed)AuraAdd++ * 128.0);
+                        X = GetActorX(TID) + Sin(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                        Y = GetActorY(TID) + Cos(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                        Z = GetActorZ(TID) + 4.0 + Sin(Timer() / 64.0) * 4.0;
+                    };
+                
+                    // Spawn
+                    if (!Simple)
+                        SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle)
+                    else
+                        SpawnForced(StrParam("%sIndicator\n", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
+                };
+            };
+        };
+    }
+    else // Monster
+    {
+        // Calculate number of active Auras
+        for (int i = 0; i < AURA_MAX; i++)
+            if (MonsterAura->Type[i].Active)
+                AuraCount++;
+
+        // Return if the monster is stealthy
+        if (IsStealth(TID))
+            return;
+        
+        // LOS Checks
+        if (GameType() == GAME_SINGLE_PLAYER)
+        {
+            if (CheckSight(Players(0).TID, TID, CSF_NOBLOCKALL))
+                SpawnOK = true;
+        }
+        else
+        {
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                if (!PlayerInGame(i))
+                    continue;
+                
+                if (CheckSight(Players(i).TID, TID, CSF_NOBLOCKALL))
+                {
+                    SpawnOK = true;
+                    break;
+                };
+            };
+        };
+        
+        // Return if LOS checks failed
+        if (!SpawnOK)
+            return;
+        
+        // Spawn the Aura
+        if (GetActorProperty(TID, APROP_Friendly)) // Friendly
+        {
+            if (!Simple)
+                SpawnForced("DRPGFriendlyAura", X, Y, Z + 32.0, 0, Angle)
+            else
+                SpawnForced("DRPGFriendlyIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
+        }
+        else if (AuraCount >= AURA_MAX) // Shadow
+        {
+            if (!Simple)
+                SpawnForced("DRPGBlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
+            else
+                SpawnForced("DRPGBlackAuraIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
+        }
+        else // Normal
+        {
+            for (int i = 0; i < AURA_MAX; i++)
+                if (MonsterAura->Type[i].Active)
+                {
+                    // Create rotation for simple Aura icons
+                    if (Simple && AuraCount > 1)
+                    {
+                        fixed AngleOffset = (1.0 / (fixed)AuraCount) * ((fixed)AuraAdd++ * 128.0);
+                        X = GetActorX(TID) + Sin(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                        Y = GetActorY(TID) + Cos(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
+                        Z = GetActorZ(TID) + 4.0 + Sin(Timer() / 64.0) * 4.0;
+                    };
+                
+                    // Spawn
+                    if (!Simple)
+                        SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle)
+                    else
+                        SpawnForced(StrParam("%sIndicator\n", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
+                };
+        };
+    };
+    
+    // Pass Radius and Height to the Auras for DECORATE usage
+    if (!Simple)
+    {
+        SetUserVariable(AuraTID, "user_radius", (int)Radius);
+        SetUserVariable(AuraTID, "user_height", (int)Height);
+    };
+    
+    // Remove the TID
+    Thing_ChangeTID(AuraTID, 0);
 };
 
-// Returns the Agility for A_SetTics calls in DECORATE
-acscript int GetSpeed(int Tics)
+// Returns whether a monster is in some form of stealth or not
+function bool IsStealth(int tid)
 {
-    return Tics - ((Tics - 1) / 100) * Player.Agility;
+    return
+    (
+        // Fuzzy
+        GetActorProperty(tid, APROP_RenderStyle) == STYLE_Fuzzy ||
+        GetActorProperty(tid, APROP_RenderStyle) == STYLE_OptFuzzy ||
+        // Translucent
+        (GetActorProperty(tid, APROP_RenderStyle) == STYLE_Translucent &&
+            GetActorPropertyFixed(tid, APROP_Alpha) < 0.5) ||
+        (GetActorProperty(tid, APROP_RenderStyle) == STYLE_TranslucentStencil &&
+            GetActorPropertyFixed(tid, APROP_Alpha) < 0.5) ||
+        (GetActorProperty(tid, APROP_RenderStyle) == STYLE_Add &&
+            GetActorPropertyFixed(tid, APROP_Alpha) < 0.5) ||
+        // Totally invisible
+        GetActorProperty(tid, APROP_RenderStyle) == STYLE_None ||
+        // Actor flags
+        // These two cases are already handled by the RenderStyle checks above
+        // CheckFlag(tid, "STEALTH") ||
+        // CheckFlag(tid, "SHADOW") ||
+        CheckFlag(tid, "INVISIBLE")
+    );
 };
 
-// Used by DECORATE to check if your Shield's stored Health is at max
-acscript bool ShieldHealthMax()
+function bool PlayerHasAura(int PlayerNum)
 {
-    return (Player.ActualHealth >= Player.HealthMax);
+    bool HaveAura = false;
+    
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Players(PlayerNum).Aura.Type[i].Active)
+        {
+            HaveAura = true;
+            break;
+        };
+    
+    return HaveAura;
 };
 
-// Used by DECORATE to check if both your Health and EP are at max
-acscript bool HPEPMax()
+function bool MonsterHasAura(MonsterStatsPtr Stats)
 {
-    return (Player.ActualHealth >= Player.HealthMax && Player.EP >= Player.EPMax);
+    bool HaveAura = false;
+    
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Stats->Aura.Type[i].Active)
+        {
+            HaveAura = true;
+            break;
+        };
+    
+    return HaveAura;
 };
 
-// Used by the RegenSphere to temporarily increase regen rates
-acscript void RegenBoost()
+function bool PlayerHasShadowAura(int PlayerNum)
 {
-    Player.RegenBoostTimer += (35 * 5) + ((Player.Regeneration / 13.33) * 35);
+    int AuraCount;
+    
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Player.Aura.Type[i].Active)
+            AuraCount++;
+    
+    if (AuraCount >= AURA_MAX)
+        return true
+    else
+        return false;
 };
+
+function bool MonsterHasShadowAura(MonsterStatsPtr Stats)
+{
+    int AuraCount;
+    
+    for (int i = 0; i < AURA_MAX; i++)
+        if (Stats->Aura.Type[i].Active)
+            AuraCount++;
+    
+    if (AuraCount >= AURA_MAX)
+        return true
+    else
+        return false;
+};
+
+// --------------------------------------------------
+// Drawing
+// 
+
+script void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fixed HoldTime, fixed Speed, fixed Spacing, fixed Radius)
+{
+    int Time = (int)(HoldTime * 35.0);
+    int TimeMax = Time;
+    
+    SetHudSize(640, 480, false);
+    
+    while (Time > 0)
+    {
+        for (int i = 0; Text[i] != NULL; i++)
+        {
+            fixed XOff = (fixed)X + (Spacing * i);
+            fixed YOff = (fixed)Y + Sin((Timer() + i) / Speed) * Radius;
+            HudMessage("%c\n", Text[i], HUDMSG_PLAIN | HUDMSG_ALPHA, ID + i, Color, (int)XOff, (int)YOff, 0.05, ((fixed)Time / (fixed)TimeMax));
+        };
+        
+        Time--;
+        Delay(1);
+    };
+};
+
+// PrintSprite Utility Function
+function void PrintSprite(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime)
+{
+    SetFont(Sprite);
+    HudMessage("A\n", HUDMSG_PLAIN, ID, CR_UNTRANSLATED, X, Y, DelayTime);
+};
+
+function void PrintSpriteFade(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime, fixed HoldTime)
+{
+    SetFont(Sprite);
+    HudMessage("A\n", HUDMSG_FADEOUT, ID, CR_UNTRANSLATED, X, Y, DelayTime, HoldTime);
+};
+
+function void PrintSpriteAlpha(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime, fixed Alpha)
+{
+    SetFont(Sprite);
+    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, DelayTime, Alpha);
+};
+
+function void PrintSpritePulse(str Sprite, int ID, fixed X, fixed Y, fixed Alpha, fixed Speed, fixed Radius, bool AddBlend)
+{
+    SetFont(Sprite);
+    
+    if (AddBlend)
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius))
+    else
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
+};
+
+function void ClearMessage(int ID)
+{
+    HudMessage("\n", HUDMSG_PLAIN, ID, CR_WHITE, 0, 0, 0.05);
+};
+
+function void DrawPay(int Amount)
+{
+    SetFont("BIGFONT");
+    SetHudSize(0, 0, false);
+    HudMessage("+%d\n", Amount, HUDMSG_FADEOUT, PAY_ID, CR_GOLD, -0.12, 0.09, 4.0, 2.0);
+};
+
+function void DrawBattery()
+{
+    fixed X = GetCVarFixed("drpg_aug_x");
+    fixed Y = GetCVarFixed("drpg_aug_y");
+    int HoldTime = (GetCVar("drpg_aug_showbattery") ? 0.05 : 3.0);
+    int FadeTime = (GetCVar("drpg_aug_showbattery") ? 0.05 : 2.0);
+    
+    SetHudSize(640, 480, false);
+    PrintSpriteFade("AUGBATT", BATTERY_ID, X + 0.4, Y + 0.4, HoldTime, FadeTime);
+    SetFont("BIGFONT");
+    HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, BATTERY_ID + 1, CR_YELLOW, X + 24.0, Y - 10.0, HoldTime, FadeTime);
+};
+
+function void DrawItemGrid(int Type)
+{
+    // Coordinates
+    fixed BaseX;
+    fixed BaseY;
+    fixed BoxX;
+    fixed BoxY;
+    fixed X;
+    fixed Y;
+    fixed IconX;
+    fixed IconY;
+    
+    for (int i = 0; i < 6; i++)
+    {
+        // Reset base X
+        BaseX = 0.0;
+        
+        for (int j = 0; j < 9; j++)
+        {
+            int Page = (Type == IG_LOCKER ? Player.LockerPage : Player.ShopPage);
+            int BaseIndex = (Type == IG_LOCKER ? Player.LockerIndex : Player.ShopIndex);
+            int Index = j + (i * 9);
+            
+            // Calculate offset
+            if (BaseIndex >= 6 * 9)
+                Index += (BaseIndex / (6 * 9)) * (6 * 9);
+            
+            ItemInfo ItemSpace *Item = &ItemData[Page][Index];
+            str Icon = Item->Sprite.Name;
+            str Name = Item->Name;
+            int IconXOff = Item->Sprite.XOff;
+            int IconYOff = Item->Sprite.YOff;
+            int Held = CheckInventory(Item->Actor);
+            int Stored = (Player.LockerGlobal ? GlobalLocker[Page][Index] : Player.Locker[Page][Index]);
+            int Rank = Item->Rank;
+            int Price = Item->Price;
+            bool Unlocked = !((Rank > 0 && Player.RankLevel < Rank));
+            bool CanBuy = !(Rank == -1);
+            bool CanAfford = (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100);
+            bool AutoSell = Player.AutoSell[Page][Index];
+            
+            // Stop if we're at the end of the list
+            if (Index > ItemMax[Page] - 1) break;
+            
+            // Placeholder Icon
+            if (StrLen(Icon) == 0)
+                Icon = "SprNone";
+            
+            // Setup X and Y
+            X = 26.0 + BaseX;
+            Y = 50.0 + BaseY;
+            BoxX = 48.0 + BaseX;
+            BoxY = 72.0 + BaseY;
+            IconX = 48.0 + BaseX;
+            IconY = 72.0 + BaseY;
+            IconX += IconXOff;
+            IconY += IconYOff;
+            
+            // Amount
+            if (Held > 0)
+            {
+                SetFont("BIGFONT");
+                HudMessage("%d\n", Held, HUDMSG_PLAIN, 0, CR_GREEN, X + 44.2, Y + 44.2, 0.05);
+            };
+            if (Type == IG_LOCKER && Stored > 0)
+            {
+                SetFont("BIGFONT");
+                HudMessage("%d\n", Stored, HUDMSG_PLAIN, 0, CR_YELLOW, X + 44.2, Y + 12.2, 0.05);
+            };
+            
+            // Auto-Sell Icon
+            if (Type == IG_STORE && Player.AutoSell[Page][Index])
+                PrintSpritePulse("SELLICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
+            
+            // Icon
+            SetHudClipRect(X, Y, 44, 44);
+            if (BaseIndex == Index)
+            {
+                if (Unlocked || Type == IG_LOCKER)
+                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.75, 32.0, 0.25)
+                else
+                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.25, 32.0, 0.25);
+            }
+            else
+            {
+                if (Unlocked || Type == IG_LOCKER)
+                    PrintSprite(Icon, 0, IconX, IconY, 0.05)
+                else
+                    PrintSpriteAlpha(Icon, 0, IconX, IconY, 0.05, 0.25);
+            };
+            SetHudClipRect(0, 0, 0, 0);
+            
+            // Box
+            if (BaseIndex == Index)
+                if ((!CanAfford || !Unlocked || !CanBuy) && Type == IG_STORE)
+                    PrintSprite("ItemBoxR", 0, BoxX, BoxY, 0.05)
+                else
+                    PrintSprite("ItemBoxH", 0, BoxX, BoxY, 0.05);
+            PrintSprite("ItemBoxB", 0, BoxX, BoxY, 0.05);
+            
+            // Item Name
+            if (BaseIndex == Index)
+            {
+                SetFont("BIGFONT");
+                HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, ((Type == IG_STORE && CanAfford) || Type == IG_LOCKER ? CR_WHITE : CR_RED), 24.1, 344.1, 0.05);
+            };
+            
+            // Increment X
+            BaseX += 48.0;
+        };
+        
+        // Increment Y
+        BaseY += 48.0;
+    };
+};
+
+function void DrawBar(str Fill, int X, int Y, int Amount, bool Pulse)
+{
+    for (int i = 0; i < Amount; i++)
+        if (Pulse)
+            PrintSpriteAlpha(Fill, 0, X + 0.1 + (i * 1.0), Y, 0.05, 0.75 + Sin((Timer() + i) / 32.0) * 0.25)
+        else
+            PrintSprite(Fill, 0, X + 0.1 + (i * 1.0), Y, 0.05);
+};
+
+// --------------------------------------------------
+// Math
+// 
+
+// This function is specifically to avoid dividing by zero in the event that that can happen.
+function int CalcPercent(int Current, int Max)
+{
+    if (Max == 0)
+        return 100;
+    return Current * 100 / Max;
+};
+
+// Computes n-th power of x
+function int Pow(int x, int n)
+{
+    int y = 1;
+    while (n-- > 0) y *= x;
+    return y;
+};
+
+// Return the absolute value of a negative integer
+function int Abs(int x)
+{
+    if (x < 0)
+        return -x;
+
+    return x;
+};
+
+// Rounds a fixed to the nearest integer
+function int Round(fixed fixedNumber)
+{
+    return (int)(fixedNumber + 0.5);
+};
+
+// Gets the distance between two TIDs
+function fixed Distance(int TID1, int TID2)
+{
+    fixed X = GetActorX(TID1) - GetActorX(TID2);
+    fixed Y = GetActorY(TID1) - GetActorY(TID2);
+    fixed Z = GetActorZ(TID1) - GetActorZ(TID2);
+    
+    return VectorLength(VectorLength(X, Y), Z);
+};
+
+// Gets the distance between two points on the HUD
+function fixed DistanceScreen(int X1, int Y1, int X2, int Y2)
+{
+    fixed X = X1 - X2;
+    fixed Y = Y1 - Y2;
+    
+    return VectorLength(X, Y);
+};
+
+// --------------------------------------------------
+// Strings
+// 
+
+function bool StartsWith(str InString, str Prefix, bool NoCase)
+{
+    if (NoCase)
+        return !StrICmp(InString, Prefix, StrLen(Prefix));
+    return !StrCmp(InString, Prefix, StrLen(Prefix));
+};
+
+function bool EndsWith(str InString, str Suffix, bool NoCase)
+{
+    if (StrLen(InString) < StrLen(Suffix))
+        return false;
+    
+    if (NoCase)
+        return !StrICmp(StrRight(InString, StrLen(Suffix)), Suffix);
+    return !StrCmp(StrRight(InString, StrLen(Suffix)), Suffix);
+};
+
+function bool Contains(str InString, str SubString, bool NoCase)
+{
+    int TargLen = StrLen(InString);
+    int SubLen = StrLen(SubString);
+    
+    if (TargLen < SubLen)
+        return false;
+    
+    for (int i = 0; i <= TargLen - SubLen; i++)
+    {
+        str Part = StrMid(InString, i, SubLen);
+        if ((!NoCase && !StrCmp(Part, SubString)) || (NoCase && !StrICmp(Part, SubString)))
+            return true;
+    };
+    
+    return false;
+};
+
+// Formats time into MM:SS for display with Print or HudMessage
+function str FormatTime(int t)
+{
+    int Hours = t / 35 / 60 / 60;
+    int Minutes = t / 35 / 60 % 60;
+    int Seconds = t / 35 % 60;
+    str Time = "";
+    
+    // Hours
+    if (Hours > 0)
+        Time = StrParam("%d:\n", Hours);
+    
+    // Minutes
+    if (Hours > 0 && Minutes < 10)
+        Time = StrParam("%s0%d:\n", Time, Minutes)
+    else
+        Time = StrParam("%s%d:\n", Time, Minutes);
+    
+    // Seconds
+    if (Seconds < 10)
+        Time = StrParam("%s0%d\n", Time, Seconds)
+    else
+        Time = StrParam("%s%d\n", Time, Seconds);
+    
+    return Time;
+};
+
+// --------------------------------------------------
+// Debugging/Cheats
+// 
 
 // HAAAAAAAAAAAAAAAX
 acscript void Cheat(int StatBoost)
@@ -684,40 +1660,9 @@ acscript void GiveCompounds(int Amount)
             Player.Stim.Vials[i] += Amount;
 };
 
-// For thrusting things with more realistic momentum handling
-acscript void ThrustMomentum()
-{
-    fixed VelocityX = GetActorVelX(0);
-    fixed VelocityY = GetActorVelY(0);
-    fixed Angle = VectorAngle(VelocityX, VelocityY);
-    int Force = Abs(VelocityX) + Abs(VelocityY);
-
-    ThrustThing(Angle * 256, Force * 3, 0, 0);
-    ThrustThingZ(0, Force * 4, 0, 1);
-   
-    Delay(4);
-};
-
-script void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fixed HoldTime, fixed Speed, fixed Spacing, fixed Radius)
-{
-    int Time = (int)(HoldTime * 35.0);
-    int TimeMax = Time;
-    
-    SetHudSize(640, 480, false);
-    
-    while (Time > 0)
-    {
-        for (int i = 0; Text[i] != NULL; i++)
-        {
-            fixed XOff = (fixed)X + (Spacing * i);
-            fixed YOff = (fixed)Y + Sin((Timer() + i) / Speed) * Radius;
-            HudMessage("%c\n", Text[i], HUDMSG_PLAIN | HUDMSG_ALPHA, ID + i, Color, (int)XOff, (int)YOff, 0.05, ((fixed)Time / (fixed)TimeMax));
-        };
-        
-        Time--;
-        Delay(1);
-    };
-};
+// --------------------------------------------------
+// System
+// 
 
 function void CreateTranslations()
 {
@@ -767,793 +1712,6 @@ function void CreateTranslations()
     CreateTranslationEnd();
 };
 
-// PrintSprite Utility Function
-function void PrintSprite(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime)
-{
-    SetFont(Sprite);
-    HudMessage("A\n", HUDMSG_PLAIN, ID, CR_UNTRANSLATED, X, Y, DelayTime);
-};
-
-function void PrintSpriteFade(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime, fixed HoldTime)
-{
-    SetFont(Sprite);
-    HudMessage("A\n", HUDMSG_FADEOUT, ID, CR_UNTRANSLATED, X, Y, DelayTime, HoldTime);
-};
-
-function void PrintSpriteAlpha(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime, fixed Alpha)
-{
-    SetFont(Sprite);
-    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, DelayTime, Alpha);
-};
-
-function void PrintSpritePulse(str Sprite, int ID, fixed X, fixed Y, fixed Alpha, fixed Speed, fixed Radius, bool AddBlend)
-{
-    SetFont(Sprite);
-    
-    if (AddBlend)
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius))
-    else
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
-};
-
-function void ClearMessage(int ID)
-{
-    HudMessage("\n", HUDMSG_PLAIN, ID, CR_WHITE, 0, 0, 0.05);
-};
-
-function int CheckInventoryTID(int TID, str Item)
-{
-    return (TID == 0 ? CheckInventory(Item) : CheckActorInventory(TID, Item));
-};
-
-function int SetInventory(str Item, int Count)
-{
-    int n = Count - CheckInventory(Item);
-    
-    if (n > 0)
-        GiveInventory(Item, n)
-    else if (n < 0)
-        TakeInventory(Item, -n);
-    
-    return n;
-};
-
-function int SetActorInventory(int tid, str item, int count)
-{
-    int n = count - CheckActorInventory (tid, item);
-    
-    if (n > 0)
-        GiveActorInventory(tid, item, n)
-    else if (n < 0)
-        TakeActorInventory(tid, item, -1 * n);
-    
-    return n;
-};
-
-// Drop your entire inventory on the ground
-function void DropInventory()
-{
-    auto DroppedItem[] ItemList =
-    {
-        // Health
-        { "Stimpack"; };
-        { "Medikit"; };
-        { "LargeMedikit"; };
-        { "XLMedikit"; };
-        { "MedPack"; };
-        { "SurgeryKit"; };
-        { "Continue"; };
-        
-        // Armor
-        { "GreenArmor"; };
-        { "UsedGreenArmor"; };
-        { "BlueArmor"; };
-        { "UsedBlueArmor"; };
-        { "YellowArmor"; };
-        { "UsedYellowArmor"; };
-        { "RedArmor"; };
-        { "UsedRedArmor"; };
-        { "WhiteArmor"; };
-        { "UsedWhiteArmor"; };
-        
-        // Powerups
-        { "InvulnerabilitySphere"; };
-        { "InvulnerabilityCharge"; };
-        { "BlurSphere"; };
-        { "InvisibilityCharge"; };
-        { "RegenSphere"; };
-        { "RadSuit"; };
-        { "Infrared"; };
-        { "AllMap"; };
-        { "Berserk"; };
-        { "Wings"; };
-        { "StimSmall"; };
-        { "StimMedium"; };
-        { "StimLarge"; };
-        
-        // DoomRL - Powerups
-        { "InvulnerabilitySphere2"; };
-        { "RadSuit2"; };
-        { "Infrared2"; };
-        { "Berserk2"; };
-
-        // DoomRL - Modpacks
-        { "RLPowerModItem"; };
-        { "RLBulkModItem"; };
-        { "RLAgilityModItem"; };
-        { "RLTechnicalModItem"; };
-        { "RLSniperModItem"; };
-        { "RLFirestormModItem"; };
-        { "RLNanoModItem"; };
-        { "RLOnyxModItem"; };
-        { "RLArmorModItem"; };
-        { "RLModLimit"; true; true; 4; };
-        { "RLScavengerModLimit"; true; true; 8; };
-        { "RLArmorModItemInInventory"; true; };
-        
-        // End of list
-        { nullptr; };
-    };
-    
-    for (int i = 0; ItemList[i].Actor != nullptr; i++)
-        for (int j = 0; j < CheckInventory(ItemList[i].Actor); j++)
-        {
-            // Limit the drops if you have more than 25 to prevent massive amounts of lag
-            if (j >= 25) break;
-            
-            if (ItemList[i].TakeAll)
-                TakeInventory(ItemList[i].Actor, ItemList[i].Max)
-            else
-                TakeInventory(ItemList[i].Actor, 1);
-            
-            if (!ItemList[i].NoDrop)
-                DropItem(0, ItemList[i].Actor, 1, 255);
-        };
-};
-
-function void DropMoney(int Killer, int TID, int Amount)
-{
-    int Total = Amount;
-    int Drops;
-    
-    Drops = Total / 1000;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1000", 256);
-    Total %= 1000;
-
-    Drops = Total / 100;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits100", 256);
-    Total %= 100;
-
-    Drops = Total / 50;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits50", 256);
-    Total %= 50;
-
-    Drops = Total / 20;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits20", 256);
-    Total %= 20;
-
-    Drops = Total / 10;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits10", 256);
-    Total %= 10;
-
-    Drops = Total / 5;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits5", 256);
-    Total %= 5;
-    
-    Drops = Total;
-    while (Drops--) DropMonsterItem(Killer, TID, "DRPGCredits1", 256);
-};
-
-function bool IsTimeFrozen()
-{
-    for (int i = 0; i < MAX_PLAYERS; i++)
-        if (CheckActorInventory (Players(i).TID, "PowerTimeFreezer") ||
-            CheckActorInventory (Players(i).TID, "PowerShieldTimeFreezer") ||
-            CheckActorInventory (Players(i).TID, "PowerRLChronotrooperFreeze") /* DoomRL */ ||
-            CheckActorInventory (Players(i).TID, "DRPGMenuFreezer"))
-            return true;
-    
-    return false;
-};
-
-// Fires a projectile from the Player
-function bool FireProjectile(str Type)
-{
-    fixed X = GetActorX(0);
-    fixed Y = GetActorY(0);
-    fixed Z = GetActorZ(0);
-    fixed Pitch = GetActorPitch(0);
-    fixed Angle = GetActorAngle(0);
-    fixed XSpeed = Cos(Angle) * 16.0;
-    fixed YSpeed = Sin(Angle) * 16.0;
-    fixed ZSpeed = -Sin(Pitch) * 16.0;
-    fixed FireHeight = GetActorViewHeight(0) * 0.8;
-    int TID = UniqueTID();
-    
-    SpawnProjectile(0, Type, 0, 0, 0, 0, TID);
-    SetActorVelocity(TID, XSpeed, YSpeed, ZSpeed, 0, 0);
-    SetActorAngle(TID, Angle);
-    SetActorPosition(TID, X, Y, Z + FireHeight, 0);
-    Thing_ChangeTID(TID, 0);
-    
-    return true;
-};
-
-// Emits a Nova from the Player
-function bool Nova(str Type, int Projectiles)
-{
-    fixed X = GetActorX(0);
-    fixed Y = GetActorY(0);
-    fixed Z = GetActorZ(0);
-    fixed Pitch = GetActorPitch(0);
-    fixed Angle = GetActorAngle(0);
-    fixed XSpeed = Cos(Angle) * 16.0;
-    fixed YSpeed = Sin(Angle) * 16.0;
-    fixed ZSpeed = -Sin(Pitch) * 16.0;
-    fixed FireHeight = GetActorViewHeight(0) * 0.8;
-    int TID = UniqueTID();
-    fixed AngleAdd;
-    
-    AngleAdd = 1.0 / Projectiles;
-    
-    for (int i = 0; i < Projectiles; i++)
-    {
-        XSpeed = Cos(Angle) * 16.0;
-        YSpeed = Sin(Angle) * 16.0;
-        ZSpeed = -Sin(Pitch) * 16.0;
-        
-        SpawnProjectile(0, Type, 0, 0, 0, 0, TID);
-        SetActorVelocity(TID, XSpeed, YSpeed, ZSpeed, 0, 0);
-        SetActorAngle(TID, Angle);
-        SetActorPosition(TID, X, Y, Z + FireHeight, 0);
-        Thing_ChangeTID(TID, 0);
-        
-        Angle += AngleAdd;
-    };
-    
-    return true;
-};
-
-// Formats time into MM:SS for display with Print or HudMessage
-function str FormatTime(int t)
-{
-    int Hours = t / 35 / 60 / 60;
-    int Minutes = t / 35 / 60 % 60;
-    int Seconds = t / 35 % 60;
-    str Time = "";
-    
-    // Hours
-    if (Hours > 0)
-        Time = StrParam("%d:\n", Hours);
-    
-    // Minutes
-    if (Hours > 0 && Minutes < 10)
-        Time = StrParam("%s0%d:\n", Time, Minutes)
-    else
-        Time = StrParam("%s%d:\n", Time, Minutes);
-    
-    // Seconds
-    if (Seconds < 10)
-        Time = StrParam("%s0%d\n", Time, Seconds)
-    else
-        Time = StrParam("%s%d\n", Time, Seconds);
-    
-    return Time;
-};
-
-// Spawn the respective Aura effects on the given Player/Monster's TID
-function void SpawnAuras(int TID, bool ForceFancy)
-{
-    static str[AURA_MAX] AuraActors =
-    {
-        "DRPGRedAura";
-        "DRPGGreenAura";
-        "DRPGWhiteAura";
-        "DRPGPinkAura";
-        "DRPGCyanAura";
-        "DRPGPurpleAura";
-        "DRPGOrangeAura";
-        "DRPGBlueAura";
-        "DRPGYellowAura";
-    };
-    
-    fixed X = GetActorX(TID);
-    fixed Y = GetActorY(TID);
-    fixed Z = GetActorZ(TID);
-    fixed Radius = GetActorPropertyFixed(TID, APROP_Radius);
-    fixed Height = GetActorPropertyFixed(TID, APROP_Height);
-    int Angle = GetActorAngle(TID) * 256;
-    bool SpawnOK = false;
-    bool IsPlayer = (ClassifyActor(TID) & ACTOR_PLAYER);
-    int SimpleType = GetCVar("drpg_simple_auras");
-    bool Simple = (IsPlayer ? (SimpleType == 1 || SimpleType == 3) : (SimpleType == 2 || SimpleType == 3));
-    AuraInfo *PlayerAura = &Players(FindPlayerID(TID)).Aura;
-    AuraInfo MonsterStatsSpace *MonsterAura = &Monsters[GetMonsterID(TID)].Aura;
-    int AuraCount = 0;
-    int AuraAdd = 0;
-    
-    // WHYYYYYYYYYYYYYYYYYYYYYYY.YPEG
-    if (IsPlayer)
-    {
-        // Calculate number of active Auras
-        for (int i = 0; i < AURA_MAX; i++)
-            if (PlayerAura->Type[i].Active)
-                AuraCount++;
-        
-        // Spawn the Aura
-        if (AuraCount >= AURA_MAX) // Shadow
-        {
-            if (!Simple)
-                SpawnForced("DRPGBlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-            else
-                SpawnForced("DRPGBlackAuraIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
-        }
-        else // Normal
-        {
-            for (int i = 0; i < AURA_MAX; i++)
-            {
-                if (PlayerAura->Type[i].Active)
-                {
-                    // Create rotation for simple Aura icons
-                    if (Simple && AuraCount > 1)
-                    {
-                        fixed AngleOffset = (1.0 / (fixed)AuraCount) * ((fixed)AuraAdd++ * 128.0);
-                        X = GetActorX(TID) + Sin(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
-                        Y = GetActorY(TID) + Cos(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
-                        Z = GetActorZ(TID) + 4.0 + Sin(Timer() / 64.0) * 4.0;
-                    };
-                
-                    // Spawn
-                    if (!Simple)
-                        SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle)
-                    else
-                        SpawnForced(StrParam("%sIndicator\n", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
-                };
-            };
-        };
-    }
-    else // Monster
-    {
-        // Calculate number of active Auras
-        for (int i = 0; i < AURA_MAX; i++)
-            if (MonsterAura->Type[i].Active)
-                AuraCount++;
-
-        // Return if the monster is stealthy
-        if (IsStealth(TID))
-            return;
-        
-        // LOS Checks
-        if (GameType() == GAME_SINGLE_PLAYER)
-        {
-            if (CheckSight(Players(0).TID, TID, CSF_NOBLOCKALL))
-                SpawnOK = true;
-        }
-        else
-        {
-            for (int i = 0; i < MAX_PLAYERS; i++)
-            {
-                if (!PlayerInGame(i))
-                    continue;
-                
-                if (CheckSight(Players(i).TID, TID, CSF_NOBLOCKALL))
-                {
-                    SpawnOK = true;
-                    break;
-                };
-            };
-        };
-        
-        // Return if LOS checks failed
-        if (!SpawnOK)
-            return;
-        
-        // Spawn the Aura
-        if (GetActorProperty(TID, APROP_Friendly)) // Friendly
-        {
-            if (!Simple)
-                SpawnForced("DRPGFriendlyAura", X, Y, Z + 32.0, 0, Angle)
-            else
-                SpawnForced("DRPGFriendlyIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
-        }
-        else if (AuraCount >= AURA_MAX) // Shadow
-        {
-            if (!Simple)
-                SpawnForced("DRPGBlackAura", X, Y, Z + Height / 2.0, AuraTID, Angle)
-            else
-                SpawnForced("DRPGBlackAuraIndicator", X, Y, Z + Height + 12.0 + Sin(Timer() / 64.0) * 4.0, 0, Angle);
-        }
-        else // Normal
-        {
-            for (int i = 0; i < AURA_MAX; i++)
-                if (MonsterAura->Type[i].Active)
-                {
-                    // Create rotation for simple Aura icons
-                    if (Simple && AuraCount > 1)
-                    {
-                        fixed AngleOffset = (1.0 / (fixed)AuraCount) * ((fixed)AuraAdd++ * 128.0);
-                        X = GetActorX(TID) + Sin(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
-                        Y = GetActorY(TID) + Cos(((fixed)Timer() + AngleOffset) / 128.0) * (Radius * 2.0);
-                        Z = GetActorZ(TID) + 4.0 + Sin(Timer() / 64.0) * 4.0;
-                    };
-                
-                    // Spawn
-                    if (!Simple)
-                        SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle)
-                    else
-                        SpawnForced(StrParam("%sIndicator\n", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
-                };
-        };
-    };
-    
-    // Pass Radius and Height to the Auras for DECORATE usage
-    if (!Simple)
-    {
-        SetUserVariable(AuraTID, "user_radius", (int)Radius);
-        SetUserVariable(AuraTID, "user_height", (int)Height);
-    };
-    
-    // Remove the TID
-    Thing_ChangeTID(AuraTID, 0);
-};
-
-// Returns whether a monster is in some form of stealth or not
-function bool IsStealth(int tid)
-{
-    return
-    (
-        // Fuzzy
-        GetActorProperty(tid, APROP_RenderStyle) == STYLE_Fuzzy ||
-        GetActorProperty(tid, APROP_RenderStyle) == STYLE_OptFuzzy ||
-        // Translucent
-        (GetActorProperty(tid, APROP_RenderStyle) == STYLE_Translucent &&
-            GetActorPropertyFixed(tid, APROP_Alpha) < 0.5) ||
-        (GetActorProperty(tid, APROP_RenderStyle) == STYLE_TranslucentStencil &&
-            GetActorPropertyFixed(tid, APROP_Alpha) < 0.5) ||
-        (GetActorProperty(tid, APROP_RenderStyle) == STYLE_Add &&
-            GetActorPropertyFixed(tid, APROP_Alpha) < 0.5) ||
-        // Totally invisible
-        GetActorProperty(tid, APROP_RenderStyle) == STYLE_None ||
-        // Actor flags
-        // These two cases are already handled by the RenderStyle checks above
-        //CheckFlag(tid, "STEALTH") ||
-        //CheckFlag(tid, "SHADOW") ||
-        CheckFlag(tid, "INVISIBLE")
-    );
-};
-
-// Return the amount of ammo corresponding to an ammo pickup
-function int GetAmmoAmount(str Item)
-{
-    int Amount = 1;
-    
-    if (Item == "Clip")         Amount = 10;
-    if (Item == "ClipBox")      Amount = 50;
-    if (Item == "Shell")        Amount = 4;
-    if (Item == "ShellBox")     Amount = 20;
-    if (Item == "RocketAmmo")   Amount = 1;
-    if (Item == "RocketBox")    Amount = 5;
-    if (Item == "Cell")         Amount = 20;
-    if (Item == "CellPack")     Amount = 100;
-    
-    return Amount;
-};
-
-// Calculates pay for the Rank Payout
-function int CalculatePay(int PlayerNum)
-{
-    if (PlayerNum == 0) PlayerNum = PlayerNumber();
-    return (int)(((((fixed)Players(PlayerNum).RankLevel + 1.0) * 10.0) + ((fixed)Players(PlayerNum).PayKills * ((fixed)Players(PlayerNum).RankLevel + 1.0))) * (1.0 + (fixed)Players(PlayerNum).PayBonus / 100.0));
-};
-
-function void DrawPay(int Amount)
-{
-    SetFont("BIGFONT");
-    SetHudSize(0, 0, false);
-    HudMessage("+%d\n", Amount, HUDMSG_FADEOUT, PAY_ID, CR_GOLD, -0.12, 0.09, 4.0, 2.0);
-};
-
-function void DrawBattery()
-{
-    fixed X = GetCVarFixed("drpg_aug_x");
-    fixed Y = GetCVarFixed("drpg_aug_y");
-    int HoldTime = (GetCVar("drpg_aug_showbattery") ? 0.05 : 3.0);
-    int FadeTime = (GetCVar("drpg_aug_showbattery") ? 0.05 : 2.0);
-    
-    SetHudSize(640, 480, false);
-    PrintSpriteFade("AUGBATT", BATTERY_ID, X + 0.4, Y + 0.4, HoldTime, FadeTime);
-    SetFont("BIGFONT");
-    HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, BATTERY_ID + 1, CR_YELLOW, X + 24.0, Y - 10.0, HoldTime, FadeTime);
-};
-
-function void DrawItemGrid(int Type)
-{
-    // Coordinates
-    fixed BaseX;
-    fixed BaseY;
-    fixed BoxX;
-    fixed BoxY;
-    fixed X;
-    fixed Y;
-    fixed IconX;
-    fixed IconY;
-    
-    for (int i = 0; i < 6; i++)
-    {
-        // Reset base X
-        BaseX = 0.0;
-        
-        for (int j = 0; j < 9; j++)
-        {
-            int Page = (Type == IG_LOCKER ? Player.LockerPage : Player.ShopPage);
-            int BaseIndex = (Type == IG_LOCKER ? Player.LockerIndex : Player.ShopIndex);
-            int Index = j + (i * 9);
-            
-            // Calculate offset
-            if (BaseIndex >= 6 * 9)
-                Index += (BaseIndex / (6 * 9)) * (6 * 9);
-            
-            ItemInfo ItemSpace *Item = &ItemData[Page][Index];
-            str Icon = Item->Sprite.Name;
-            str Name = Item->Name;
-            int IconXOff = Item->Sprite.XOff;
-            int IconYOff = Item->Sprite.YOff;
-            int Held = CheckInventory(Item->Actor);
-            int Stored = (Player.LockerGlobal ? GlobalLocker[Page][Index] : Player.Locker[Page][Index]);
-            int Rank = Item->Rank;
-            int Price = Item->Price;
-            bool Unlocked = !((Rank > 0 && Player.RankLevel < Rank));
-            bool CanBuy = !(Rank == -1);
-            bool CanAfford = (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100);
-            bool AutoSell = Player.AutoSell[Page][Index];
-            
-            // Stop if we're at the end of the list
-            if (Index > ItemMax[Page] - 1) break;
-            
-            // Placeholder Icon
-            if (StrLen(Icon) == 0)
-                Icon = "SprNone";
-            
-            // Setup X and Y
-            X = 26.0 + BaseX;
-            Y = 50.0 + BaseY;
-            BoxX = 48.0 + BaseX;
-            BoxY = 72.0 + BaseY;
-            IconX = 48.0 + BaseX;
-            IconY = 72.0 + BaseY;
-            IconX += IconXOff;
-            IconY += IconYOff;
-            
-            // Amount
-            if (Held > 0)
-            {
-                SetFont("BIGFONT");
-                HudMessage("%d\n", Held, HUDMSG_PLAIN, 0, CR_GREEN, X + 44.2, Y + 44.2, 0.05);
-            };
-            if (Type == IG_LOCKER && Stored > 0)
-            {
-                SetFont("BIGFONT");
-                HudMessage("%d\n", Stored, HUDMSG_PLAIN, 0, CR_YELLOW, X + 44.2, Y + 12.2, 0.05);
-            };
-            
-            // Auto-Sell Icon
-            if (Type == IG_STORE && Player.AutoSell[Page][Index])
-                PrintSpritePulse("SELLICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
-            
-            // Icon
-            SetHudClipRect(X, Y, 44, 44);
-            if (BaseIndex == Index)
-            {
-                if (Unlocked || Type == IG_LOCKER)
-                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.75, 32.0, 0.25)
-                else
-                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.25, 32.0, 0.25);
-            }
-            else
-            {
-                if (Unlocked || Type == IG_LOCKER)
-                    PrintSprite(Icon, 0, IconX, IconY, 0.05)
-                else
-                    PrintSpriteAlpha(Icon, 0, IconX, IconY, 0.05, 0.25);
-            };
-            SetHudClipRect(0, 0, 0, 0);
-            
-            // Box
-            if (BaseIndex == Index)
-                if ((!CanAfford || !Unlocked || !CanBuy) && Type == IG_STORE)
-                    PrintSprite("ItemBoxR", 0, BoxX, BoxY, 0.05)
-                else
-                    PrintSprite("ItemBoxH", 0, BoxX, BoxY, 0.05);
-            PrintSprite("ItemBoxB", 0, BoxX, BoxY, 0.05);
-            
-            // Item Name
-            if (BaseIndex == Index)
-            {
-                SetFont("BIGFONT");
-                HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, ((Type == IG_STORE && CanAfford) || Type == IG_LOCKER ? CR_WHITE : CR_RED), 24.1, 344.1, 0.05);
-            };
-            
-            // Increment X
-            BaseX += 48.0;
-        };
-        
-        // Increment Y
-        BaseY += 48.0;
-    };
-};
-
-function void DrawBar(str Fill, int X, int Y, int Amount, bool Pulse)
-{
-    for (int i = 0; i < Amount; i++)
-        if (Pulse)
-            PrintSpriteAlpha(Fill, 0, X + 0.1 + (i * 1.0), Y, 0.05, 0.75 + Sin((Timer() + i) / 32.0) * 0.25)
-        else
-            PrintSprite(Fill, 0, X + 0.1 + (i * 1.0), Y, 0.05);
-};
-
-// Computes n-th power of x
-function int Pow(int x, int n)
-{
-    int y = 1;
-    while (n-- > 0) y *= x;
-    return y;
-};
-
-// Return the absolute value of a negative integer
-function int Abs(int x)
-{
-    if (x < 0)
-        return -x;
-
-    return x;
-};
-
-// Rounds a fixed to the nearest integer
-function int Round(fixed fixedNumber)
-{
-    return (int)(fixedNumber + 0.5);
-};
-
-// Gets the distance between two TIDs
-function fixed Distance(int TID1, int TID2)
-{
-    fixed X = GetActorX(TID1) - GetActorX(TID2);
-    fixed Y = GetActorY(TID1) - GetActorY(TID2);
-    fixed Z = GetActorZ(TID1) - GetActorZ(TID2);
-    
-    return VectorLength(VectorLength(X, Y), Z);
-};
-
-// Gets the distance between two points on the HUD
-function fixed DistanceScreen(int X1, int Y1, int X2, int Y2)
-{
-    fixed X = X1 - X2;
-    fixed Y = Y1 - Y2;
-    
-    return VectorLength(X, Y);
-};
-
-function bool StartsWith(str InString, str Prefix, bool NoCase)
-{
-    if (NoCase)
-        return !StrICmp(InString, Prefix, StrLen(Prefix));
-    return !StrCmp(InString, Prefix, StrLen(Prefix));
-};
-
-function bool EndsWith(str InString, str Suffix, bool NoCase)
-{
-    if (StrLen(InString) < StrLen(Suffix))
-        return false;
-    
-    if (NoCase)
-        return !StrICmp(StrRight(InString, StrLen(Suffix)), Suffix);
-    return !StrCmp(StrRight(InString, StrLen(Suffix)), Suffix);
-};
-
-function bool Contains(str InString, str SubString, bool NoCase)
-{
-    int TargLen = StrLen(InString);
-    int SubLen = StrLen(SubString);
-    
-    if (TargLen < SubLen)
-        return false;
-    
-    for (int i = 0; i <= TargLen - SubLen; i++)
-    {
-        str Part = StrMid(InString, i, SubLen);
-        if ((!NoCase && !StrCmp(Part, SubString)) || (NoCase && !StrICmp(Part, SubString)))
-            return true;
-    };
-    
-    return false;
-};
-
-function bool IsPlayerMoving()
-{
-    return (GetPlayerInput(PlayerNumber(), MODINPUT_FORWARDMOVE) ||
-            GetPlayerInput(PlayerNumber(), MODINPUT_SIDEMOVE) ||
-            GetPlayerInput(PlayerNumber(), MODINPUT_UPMOVE));
-};
-
-function bool DropPlayerItem(str Item)
-{
-    fixed Angle = GetActorAngle(0);
-    fixed X = GetActorX(0) + Cos(Angle);
-    fixed Y = GetActorY(0) + Sin(Angle);
-    fixed Z = GetActorZ(0) + 16.0;
-    fixed XSpeed = Cos(Angle) * 4.0;
-    fixed YSpeed = Sin(Angle) * 4.0;
-    int TID = UniqueTID();
-    bool SpawnOK = Spawn(Item, X, Y, Z, TID, Angle);
-    bool SightOK = CheckSight(TID, 0, 0);
-    
-    // Remove the item if it fails the sight check
-    if (!SightOK)
-        Thing_Remove(TID);
-    
-    // Apply Velocity
-    if (SpawnOK && SightOK)
-        SetActorVelocity(TID, XSpeed, YSpeed, 0, false, false);
-    
-    return (SpawnOK && SightOK);
-};
-
-function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XAdd, fixed YAdd, fixed ZAdd, fixed XVelAdd, fixed YVelAdd, fixed ZVelAdd)
-{
-    // if this is an invalid killer, return
-    if (!(Killer > -1)) return 0;
-    
-    // Chance
-    if (!(Random(1, 256) <= Chance)) return 0;
-    
-    fixed Angle = GetActorAngle(TID);
-    fixed X = GetActorX(TID) + XAdd;
-    fixed Y = GetActorY(TID) + YAdd;
-    fixed Z = GetActorZ(TID) + (GetActorPropertyFixed(0, APROP_Height) / 2.0) + ZAdd;
-    fixed XSpeed = GetCVarFixed("drpg_monster_dropdist") + XVelAdd;
-    fixed YSpeed = GetCVarFixed("drpg_monster_dropdist") + YVelAdd;
-    fixed ZSpeed = 8.0 + ZVelAdd;
-    int ItemTID = UniqueTID();
-    bool Success = false;
-    
-    // Spawn the Item
-    Success = SpawnForced(Item, X, Y, Z, ItemTID, Angle);
-    
-    // Spawn successful
-    if (Success)
-    {
-        // Set Velocity
-        SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
-        
-        // Array has grown too big, resize it
-        if (Players(Killer).DropTID.Position == Players(Killer).DropTID.Size)
-            ArrayResize(&Players(Killer).DropTID);
-        
-        // Add item's TID to drop array
-        ((int *)Players(Killer).DropTID.Data)[Players(Killer).DropTID.Position++] = ItemTID;
-    };
-    
-    return ItemTID;
-};
-
-function bool HaveStatusEffect()
-{
-    for (int i = 0; i < SE_MAX; i++)
-        if (Player.StatusType[i])
-            return true;
-    
-    return false;
-};
-
-function int FindPlayerID(int TID)
-{
-    for (int i = 0; i < MAX_PLAYERS; i++)
-        if (Players(i).TID == TID)
-            return i;
-    
-    return -1;
-};
-
 function bool CheckInput(int Key, int State)
 {
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -1588,115 +1746,9 @@ function void LogMessage(str Message, int Level)
     Log("%s\n", Message);
 };
 
-acscript void CheckArmorStats()
-{
-    Log("\c[Orange]-- ARMOR STATS --\n");
-    Log("\c[Green]Class name: \c[White]%s\n", GetArmorInfoString(ARMORINFO_CLASSNAME));
-    Log("\c[Green]Durability: \c[LightBlue]%i%%\n", GetArmorInfo(ARMORINFO_SAVEAMOUNT));
-    Log("\c[Green]Protection: \c[Yellow]%k%%\n", GetArmorInfoFixed(ARMORINFO_SAVEPERCENT) * 100.0);
-    Log("\c[Green]Max Absorb: \c[Grey]%i%%\n", GetArmorInfo(ARMORINFO_MAXABSORB));
-    Log("\c[Green]Max Full Absorb: \c[Brick]%i%%\n", GetArmorInfo(ARMORINFO_MAXFULLABSORB));
-};
-
-// This function is specifically to avoid dividing by zero in the event that that can happen.
-function int CalcPercent(int Current, int Max)
-{
-    if (Max == 0)
-        return 100;
-    return Current * 100 / Max;
-};
-
-function bool PlayerHasAura(int PlayerNum)
-{
-    bool HaveAura = false;
-    
-    for (int i = 0; i < AURA_MAX; i++)
-        if (Players(PlayerNum).Aura.Type[i].Active)
-        {
-            HaveAura = true;
-            break;
-        };
-    
-    return HaveAura;
-};
-
-function bool MonsterHasAura(MonsterStatsPtr Stats)
-{
-    bool HaveAura = false;
-    
-    for (int i = 0; i < AURA_MAX; i++)
-        if (Stats->Aura.Type[i].Active)
-        {
-            HaveAura = true;
-            break;
-        };
-    
-    return HaveAura;
-};
-
-function bool PlayerHasShadowAura(int PlayerNum)
-{
-    int AuraCount;
-    
-    for (int i = 0; i < AURA_MAX; i++)
-        if (Player.Aura.Type[i].Active)
-            AuraCount++;
-    
-    if (AuraCount >= AURA_MAX)
-        return true
-    else
-        return false;
-};
-
-function bool MonsterHasShadowAura(MonsterStatsPtr Stats)
-{
-    int AuraCount;
-    
-    for (int i = 0; i < AURA_MAX; i++)
-        if (Stats->Aura.Type[i].Active)
-            AuraCount++;
-    
-    if (AuraCount >= AURA_MAX)
-        return true
-    else
-        return false;
-};
-
-acscript void PurgeDrops() net
-{
-    int *TID = (int *)Player.DropTID.Data;
-    for (int i = 0; i < Player.DropTID.Position; i++)
-    {
-        if (ClassifyActor(TID[i]) == ACTOR_NONE)
-            continue;
-        
-        SpawnSpot("TeleportFog", TID[i], 0, 0);
-        Thing_Remove(TID[i]);
-    };
-    
-    CleanDropTIDArray();
-    Print("\cdRemoved \cgall\cd monster-dropped items\n");
-};
-
-function int AveragePlayerLevel()
-{
-    int NumPlayers;
-    int TotalLevel;
-    
-    for (int i = 0; i < MAX_PLAYERS; i++)
-    {
-        // Skip player if they're not ingame
-        if (!PlayerInGame(i)) continue;
-        
-        TotalLevel += Players(i).Level;
-        NumPlayers++;
-    };
-    
-    return TotalLevel / NumPlayers;
-};
-
-// Dynamic Arrays
 // --------------------------------------------------
+// Dynamic Arrays
+// 
 
 function void ArrayCreate(DynamicArray *Array, char[5] Name, int InitSize, int ItemSize)
 {
