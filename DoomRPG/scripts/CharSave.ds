@@ -136,13 +136,6 @@ str[DRLA_MAX_ASSEMBLIES] DRLAAssemblies =
 
 acscript void SaveCharacter() net
 {
-    // !!! TEMPORARY !!!
-    // IN PROGRESS - WIP
-    SetFont("BIGFONT");
-    HudMessage("\cgERROR: \cjCurrently being rewritten\n", HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, 0.5, 3.0, 2.0);
-    ActivatorSound("menu/error", 127);
-    return;
-    
     // You need to be in the Outpost to do this
     if (!InBase)
     {
@@ -151,6 +144,11 @@ acscript void SaveCharacter() net
         ActivatorSound("menu/error", 127);
         return;
     };
+    
+    SetFont("BIGFONT");
+    HudMessage("===== Save In Progress =====\n", HUDMSG_PLAIN | HUDMSG_LOG, 70, CR_YELLOW, 0.5, 0.3, 0);
+    SetFont("SMALLFONT");
+    HudMessage("Do not quit the game or power off your console.\n", HUDMSG_PLAIN | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 0);
     
     // Bulk Deposit
     // TODO: Should be moved to a Locker function
@@ -164,14 +162,67 @@ acscript void SaveCharacter() net
             };
     };
     
+    Delay(1);
+    
     // Populate the data
-    auto CharSaveInfo Info = {};
+    auto CharSaveInfo Info;
     PopulateCharData(&Info);
     
-    // Saving Successful
-    ActivatorSound("charsave/save", 127);
-    SetFont("BIGFONT");
-    HudMessage("===== Character Saved =====\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
+    auto char const *SaveString = MakeSaveString(&Info);
+    auto char *EncodedSaveString = Z_Malloc(strlen(SaveString) + 1, PU_STATIC, NULL);
+    auto bool EncodeLock = false;
+    
+    EncodeRLE (SaveString, EncodedSaveString, &EncodeLock);
+    while (EncodeLock) Delay(1);
+    
+    EncodedSaveString = Z_Realloc(EncodedSaveString, strlen(EncodedSaveString) + 1, PU_STATIC, NULL);
+    //Log("Save Data: %s\n", EncodedSaveString);
+    int PartialStringsNeeded = strlen(EncodedSaveString) / 120;
+    if (strlen(EncodedSaveString) % 120 > 0)
+        PartialStringsNeeded++;
+    auto char *PartialSaveString = Z_Malloc(121, PU_STATIC, NULL);
+    PartialSaveString[120] = '\x00';
+    
+    for (int i = 0; i < 24; i++)
+        SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), "");
+
+    bool success = true;
+    
+    if (!SetUserCVar(PlayerNumber(), "drpg_char_data_len", PartialStringsNeeded))
+        success = false;
+    for (int i = 0; i < PartialStringsNeeded; i++)
+    {
+        strncpy(PartialSaveString, EncodedSaveString + (120 * i), 120);
+        if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), StrParam("%s\n", PartialSaveString)))
+        {
+            success = false;
+            break;
+        };
+    };
+    
+    Z_Free ((void *)SaveString);
+    Z_Free ((void *)EncodedSaveString);
+    Z_Free ((void *)PartialSaveString);
+    
+    if (success)
+    {
+        // Saving Successful
+        ActivatorSound("charsave/save", 127);
+        SetFont("BIGFONT");
+        HudMessage("===== Character Saved =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_WHITE, 0.5, 0.3, 1.0, 2.0);
+        HudMessage("\n", HUDMSG_FADEOUT, 71, CR_ORANGE, 0.5, 0.35, 1.0, 2.0);
+    }
+    else
+    {
+        // Saving Failed
+        ActivatorSound("charsave/fail", 127);
+        SetFont("BIGFONT");
+        HudMessage("===== Character Save Failed =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_RED, 0.5, 0.3, 1.0, 2.0);
+        SetFont("SMALLFONT");
+        HudMessage("A CVar could not be written to.\n", HUDMSG_FADEOUT | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 1.0, 2.0);
+        HudMessage("Perhaps your save is too large?\n", HUDMSG_FADEOUT | HUDMSG_LOG, 72, CR_ORANGE, 0.5, 0.4, 1.0, 2.0);
+        HudMessage("Post your ini if you see this.\n", HUDMSG_FADEOUT | HUDMSG_LOG, 73, CR_ORANGE, 0.5, 0.45, 1.0, 2.0);
+    };
 };
 
 acscript void LoadCharacter() net
@@ -223,7 +274,7 @@ function int FromHexChar(char c)
     return 0; // Default
 };
 
-function void PopulateCharData(CharSaveInfo *Info)
+script void PopulateCharData(CharSaveInfo *Info)
 {
     // 1. Version / Compatibility Flag
     Info->Version = CHARSAVE_VERSION;
@@ -234,17 +285,14 @@ function void PopulateCharData(CharSaveInfo *Info)
     Info->RankLevel = Player.RankLevel;
     
     // 3. Stats
-    Info->Stats =
-    {
-        Player.Strength;
-        Player.Defense;
-        Player.Vitality;
-        Player.Energy;
-        Player.Regeneration;
-        Player.Agility;
-        Player.Capacity;
-        Player.Luck;
-    };
+    Info->Stats[0] = Player.Strength;
+    Info->Stats[1] = Player.Defense;
+    Info->Stats[2] = Player.Vitality;
+    Info->Stats[3] = Player.Energy;
+    Info->Stats[4] = Player.Regeneration;
+    Info->Stats[5] = Player.Agility;
+    Info->Stats[6] = Player.Capacity;
+    Info->Stats[7] = Player.Luck;
     
     // 4. Skills
     for (int i = 0; i < MAX_CATEGORIES; i++)
@@ -256,6 +304,10 @@ function void PopulateCharData(CharSaveInfo *Info)
     {
         Info->SkillWheel[i][0] = Player.SkillCategory[i];
         Info->SkillWheel[i][1] = Player.SkillIndex[i];
+        if (Info->SkillWheel[i][0] == -1)
+            Info->SkillWheel[i][0] = 255;
+        if (Info->SkillWheel[i][1] == -1)
+            Info->SkillWheel[i][1] = 255;
     };
     
     // 6. Augmentations
@@ -275,14 +327,215 @@ function void PopulateCharData(CharSaveInfo *Info)
     
     // 9. Locker
     for (int i = 0; i < ITEM_CATEGORIES; i++)
-        for (int j = 0; i < ITEM_MAX; j++)
+        for (int j = 0; j < ITEM_MAX; j++)
             Info->Locker[i][j] = Player.Locker[i][j];
     
     // ----- COMPATIBILITY EXTENSIONS -----
     
     // 1. DRLA Assemblies
     for (int i = 0; i < DRLA_MAX_ASSEMBLIES; i++)
-        Info->DRLAAssemblies[i] = CheckInventory(DRLAAssemblies[i]);
+    {
+        if (CheckInventory(DRLAAssemblies[i]) && i < 16)
+            Info->DRLAAssemblies1 |= 1 << i
+        else if (CheckInventory(DRLAAssemblies[i]) && i < 32)
+            Info->DRLAAssemblies2 |= 1 << (i - 16)
+        else if (CheckInventory(DRLAAssemblies[i]) && i < 48)
+            Info->DRLAAssemblies3 |= 1 << (i - 32);
+    };
+};
+
+script char const *MakeSaveString(CharSaveInfo *Info)
+{
+    char *SaveString = Z_Malloc(65536, PU_STATIC, NULL);
+    unsigned int pos = 0;
+    
+    // Version
+    SaveString[pos + 3] = ToHexChar(Info->Version);
+    SaveString[pos + 2] = ToHexChar(Info->Version >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->Version >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->Version >> 12);
+    pos += 4;
+    
+    // Compatibility
+    SaveString[pos + 1] = ToHexChar(Info->CompatMode);
+    SaveString[pos + 0] = ToHexChar(Info->CompatMode >> 4);
+    pos += 2;
+    
+    // Level & Rank
+    SaveString[pos + 3] = ToHexChar(Info->RankLevel);
+    SaveString[pos + 2] = ToHexChar(Info->RankLevel >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->Level);
+    SaveString[pos + 0] = ToHexChar(Info->Level >> 4);
+    pos += 4;
+    
+    // Stats
+    for (int i = 0; i < STAT_MAX; i++)
+    {
+        SaveString[pos + 1] = ToHexChar(Info->Stats[i]);
+        SaveString[pos + 0] = ToHexChar(Info->Stats[i] >> 4);
+        pos += 2;
+    };
+    
+    // Skills
+    for (int i = 0; i < MAX_CATEGORIES; i++)
+        for (int j = 0; j < MAX_SKILLS; j++)
+        {
+            SaveString[pos + 1] = ToHexChar(Info->Skills[i][j]);
+            SaveString[pos + 0] = ToHexChar(Info->Skills[i][j] >> 4);
+            pos += 2;
+        };
+    
+    // Skill Wheel
+    for (int i = 0; i < MAX_SKILLKEYS; i++)
+    {
+        SaveString[pos + 3] = ToHexChar(Info->SkillWheel[i][1]);
+        SaveString[pos + 2] = ToHexChar(Info->SkillWheel[i][1] >> 4);
+        SaveString[pos + 1] = ToHexChar(Info->SkillWheel[i][0]);
+        SaveString[pos + 0] = ToHexChar(Info->SkillWheel[i][0] >> 4);
+        pos += 4;
+    };
+    
+    // Augs
+    for (int i = 0; i < MAX_AUGS; i++)
+    {
+        SaveString[pos + 1] = ToHexChar(Info->Augs[i]);
+        SaveString[pos + 0] = ToHexChar(Info->Augs[i] >> 4);
+        pos += 2;
+    };
+    
+    // Stims
+    for (int i = 0; i < MAX_COMPOUNDS; i++)
+    {
+        SaveString[pos + 7] = ToHexChar(Info->Stims[i]);
+        SaveString[pos + 6] = ToHexChar(Info->Stims[i] >> 4);
+        SaveString[pos + 5] = ToHexChar(Info->Stims[i] >> 8);
+        SaveString[pos + 4] = ToHexChar(Info->Stims[i] >> 12);
+        SaveString[pos + 3] = ToHexChar(Info->Stims[i] >> 16);
+        SaveString[pos + 2] = ToHexChar(Info->Stims[i] >> 20);
+        SaveString[pos + 1] = ToHexChar(Info->Stims[i] >> 24);
+        SaveString[pos + 0] = ToHexChar(Info->Stims[i] >> 28);
+        pos += 8;
+    };
+    
+    // Misc
+    
+    // Credits
+    SaveString[pos + 7] = ToHexChar(Info->Credits);
+    SaveString[pos + 6] = ToHexChar(Info->Credits >> 4);
+    SaveString[pos + 5] = ToHexChar(Info->Credits >> 8);
+    SaveString[pos + 4] = ToHexChar(Info->Credits >> 12);
+    SaveString[pos + 3] = ToHexChar(Info->Credits >> 16);
+    SaveString[pos + 2] = ToHexChar(Info->Credits >> 20);
+    SaveString[pos + 1] = ToHexChar(Info->Credits >> 24);
+    SaveString[pos + 0] = ToHexChar(Info->Credits >> 28);
+    pos += 8;
+    
+    // Aug Battery
+    SaveString[pos + 1] = ToHexChar(Info->Battery);
+    SaveString[pos + 0] = ToHexChar(Info->Battery >> 4);
+    pos += 2;
+    
+    // Toxicity
+    SaveString[pos + 1] = ToHexChar(Info->Toxicity);
+    SaveString[pos + 0] = ToHexChar(Info->Toxicity >> 4);
+    pos += 2;
+    
+    // Pay Bonus
+    SaveString[pos + 3] = ToHexChar(Info->PayBonus);
+    SaveString[pos + 2] = ToHexChar(Info->PayBonus >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->PayBonus >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->PayBonus >> 12);
+    pos += 4;
+    
+    // Arena Wave
+    SaveString[pos + 3] = ToHexChar(Info->ArenaWave);
+    SaveString[pos + 2] = ToHexChar(Info->ArenaWave >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->ArenaWave >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->ArenaWave >> 12);
+    pos += 4;
+
+    // Locker
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+        {
+            SaveString[pos + 3] = ToHexChar(Info->Locker[i][j]);
+            SaveString[pos + 2] = ToHexChar(Info->Locker[i][j] >> 4);
+            SaveString[pos + 1] = ToHexChar(Info->Locker[i][j] >> 8);
+            SaveString[pos + 0] = ToHexChar(Info->Locker[i][j] >> 12);
+            pos += 4;
+        };
+    
+    // DRLA Assemblies
+    SaveString[pos + 3] = ToHexChar(Info->DRLAAssemblies1);
+    SaveString[pos + 2] = ToHexChar(Info->DRLAAssemblies1 >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->DRLAAssemblies1 >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->DRLAAssemblies1 >> 12);
+    pos += 4;
+    SaveString[pos + 3] = ToHexChar(Info->DRLAAssemblies2);
+    SaveString[pos + 2] = ToHexChar(Info->DRLAAssemblies2 >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->DRLAAssemblies2 >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->DRLAAssemblies2 >> 12);
+    pos += 4;
+    SaveString[pos + 3] = ToHexChar(Info->DRLAAssemblies3);
+    SaveString[pos + 2] = ToHexChar(Info->DRLAAssemblies3 >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->DRLAAssemblies3 >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->DRLAAssemblies3 >> 12);
+    pos += 4;
+    
+    SaveString[pos] = '\x00';
+    
+    SaveString = Z_Realloc (SaveString, strlen(SaveString) + 1, PU_STATIC, NULL);
+    return SaveString;
+};
+
+script void EncodeRLE(char const *InString, char *OutString, bool *StringLock)
+{
+    *StringLock = true;
+    
+    int OutPos = 0;
+    int InLength = strlen(InString);
+    
+    char LastSeen = '\x00';
+    int LastCount = 0;
+    
+    for (int InPos = 0; InPos < InLength; InPos++)
+    {
+        char Seen = InString[InPos];
+        
+        if (Seen == LastSeen)
+            LastCount++
+        else
+        {
+            if (LastCount > 3)
+            {
+                str LastSize = StrParam("[%d]\n", LastCount - 1);
+                for (int i = 0; i < StrLen(LastSize); i++)
+                    OutString[OutPos++] = (char)LastSize[i];
+            }
+            else
+            {
+                for (int i = LastCount - 1; i > 0; i--)
+                    OutString[OutPos++] = LastSeen;
+            };
+            
+            LastSeen = Seen;
+            LastCount = 1;
+            if (Seen)
+                OutString[OutPos++] = Seen;
+        };
+        
+        if (InPos % 1000 == 0) Delay(1);
+    };
+    
+    if (LastCount > 1)
+    {
+        str LastSize = StrParam("[%d]\n", LastCount - 1);
+        for (int i = 0; i < StrLen(LastSize); i++)
+            OutString[OutPos++] = (char)LastSize[i];
+    };
+        
+    OutString[OutPos] = '\x00';
+    *StringLock = false;
 };
 
 function int CalculateChecksum(int Value)
