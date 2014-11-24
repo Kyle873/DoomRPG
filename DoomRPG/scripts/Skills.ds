@@ -1068,7 +1068,7 @@ acscript bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
     Player.Aura.Type[Index].Level = SkillLevel->CurrentLevel;
     
     // Aura Cost Multiplier
-    Player.Aura.CostMult += 0.1;
+    Player.Aura.CostMult += 10;
     
     ActivatorSound("skills/buff", 127);
     return true;
@@ -2084,20 +2084,15 @@ function void BuildSkillData()
 
 function int ScaleEPCost(int Cost)
 {
-    fixed ScaleCost;
-    
-    // Skills which cost nothing should always return nothing
-    if (Cost == 0) return 0;
+    int ScaleCost = Cost;
     
     // Multiplier CVAR
-    ScaleCost = (fixed)Cost * GetCVarFixed("drpg_skill_costscale");
+    ScaleCost *= (GetCVarFixed("drpg_skill_costscale") * 100);
+    ScaleCost /= 100;
     
     // Aura Multiplier
-    ScaleCost *= 1.0 + Player.Aura.CostMult;
-    
-    // Because ZDoom needs to lrn2math
     if (Player.Aura.CostMult > 0)
-        ScaleCost++;
+        ScaleCost += (Player.Aura.CostMult * ScaleCost) / 100;
     
     return ScaleCost;
 };
@@ -2349,7 +2344,7 @@ function void CheckAuras()
     // Decrease Aura Cost Multiplier
     if (Player.Aura.CostMult > 0)
         if ((Timer() % (35 * (30 + (GameSkill() * 5)))) == 0)
-            Player.Aura.CostMult -= 0.1;
+            Player.Aura.CostMult -= 10;
     
     // Reset Aura and Soul States
     if (Player.Aura.Time <= 0)
