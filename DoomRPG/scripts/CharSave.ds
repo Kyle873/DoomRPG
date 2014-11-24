@@ -177,27 +177,26 @@ acscript void SaveCharacter() net
     
     EncodedSaveString = Z_Realloc(EncodedSaveString, strlen(EncodedSaveString) + 1, PU_STATIC, NULL);
     //Log("Save Data: %s\n", EncodedSaveString);
-    int PartialStringsNeeded = strlen(EncodedSaveString) / 120;
-    if (strlen(EncodedSaveString) % 120 > 0)
+    int PartialStringsNeeded = strlen(EncodedSaveString) / CHARSAVE_MAXSIZE;
+    if (strlen(EncodedSaveString) % CHARSAVE_MAXSIZE > 0)
         PartialStringsNeeded++;
-    auto char *PartialSaveString = Z_Malloc(121, PU_STATIC, NULL);
-    PartialSaveString[120] = '\x00';
+    auto char *PartialSaveString = Z_Malloc(CHARSAVE_MAXSIZE + 1, PU_STATIC, NULL);
+    PartialSaveString[CHARSAVE_MAXSIZE] = '\x00';
     
-    for (int i = 0; i < 24; i++)
+    for (int i = 0; i < CHARSAVE_MAXCVARS; i++)
         SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), "");
 
     bool success = true;
     
-    if (!SetUserCVar(PlayerNumber(), "drpg_char_data_len", PartialStringsNeeded))
+    if (PartialStringsNeeded > CHARSAVE_MAXCVARS)
         success = false;
-    for (int i = 0; i < PartialStringsNeeded; i++)
+    if (success && !SetUserCVar(PlayerNumber(), "drpg_char_data_len", PartialStringsNeeded))
+        success = false;
+    for (int i = 0; success && i < PartialStringsNeeded; i++)
     {
-        strncpy(PartialSaveString, EncodedSaveString + (120 * i), 120);
+        strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
         if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), StrParam("%s\n", PartialSaveString)))
-        {
             success = false;
-            break;
-        };
     };
     
     Z_Free ((void *)SaveString);
