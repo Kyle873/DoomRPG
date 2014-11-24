@@ -66,8 +66,9 @@
     
     Checksum
         - Checksum is seperated out at the end via a |
-        - Checksum is determined by adding the value of each entry into a total buffer and doing the following:
-          ((Total * 8) / 2) << 8
+        - Checksum is determined by XOR'ing the value of each entry into a total buffer and doing the following:
+          (Total * 8) / 2
+          [KS] I removed the LShift because that only leaves us with 24 bits for comparison. Instead, we XOR (^) the values together.
     
     BASIC EXAMPLE
     - Each category is seperated onto a new line for readability
@@ -208,34 +209,160 @@ acscript void SaveCharacter() net
         // Saving Successful
         ActivatorSound("charsave/save", 127);
         SetFont("BIGFONT");
-        HudMessage("===== Character Saved =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_WHITE, 0.5, 0.3, 1.0, 2.0);
-        HudMessage("\n", HUDMSG_FADEOUT, 71, CR_ORANGE, 0.5, 0.35, 1.0, 2.0);
+        HudMessage("===== Character Saved =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_WHITE, 0.5, 0.3, 3.0, 2.0);
+        HudMessage("\n", HUDMSG_FADEOUT, 71, CR_ORANGE, 0.5, 0.35, 3.0, 2.0);
     }
     else
     {
         // Saving Failed
         ActivatorSound("charsave/fail", 127);
         SetFont("BIGFONT");
-        HudMessage("===== Character Save Failed =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_RED, 0.5, 0.3, 1.0, 2.0);
+        HudMessage("===== Character Save Failed =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_RED, 0.5, 0.3, 5.0, 2.0);
         SetFont("SMALLFONT");
-        HudMessage("A CVar could not be written to.\n", HUDMSG_FADEOUT | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 1.0, 2.0);
-        HudMessage("Perhaps your save is too large?\n", HUDMSG_FADEOUT | HUDMSG_LOG, 72, CR_ORANGE, 0.5, 0.4, 1.0, 2.0);
-        HudMessage("Post your ini if you see this.\n", HUDMSG_FADEOUT | HUDMSG_LOG, 73, CR_ORANGE, 0.5, 0.45, 1.0, 2.0);
+        HudMessage("A CVar could not be written to.\n", HUDMSG_FADEOUT | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 5.0, 2.0);
+        HudMessage("Perhaps your save is too large?\n", HUDMSG_FADEOUT | HUDMSG_LOG, 72, CR_ORANGE, 0.5, 0.4, 5.0, 2.0);
+        HudMessage("Post your ini if you see this.\n", HUDMSG_FADEOUT | HUDMSG_LOG, 73, CR_ORANGE, 0.5, 0.45, 5.0, 2.0);
     };
 };
 
 acscript void LoadCharacter() net
 {
-    // !!! TEMPORARY !!!
-    // IN PROGRESS - WIP
+    auto char *EncodedSaveString;
+    auto char *SaveString;
+    auto CharSaveInfo Info;
+    auto bool EncodeLock = false;
+    
+    EncodedSaveString = Z_Malloc(65536, PU_STATIC, NULL);
+    EncodedSaveString[0] = '\x00';
+    
+    int NumCVars = GetUserCVar(PlayerNumber(), "drpg_char_data_len");
+    if (NumCVars <= 0)
+    {
+        ActivatorSound("charsave/fail", 127);
+        SetFont("BIGFONT");
+        HudMessage("===== No Character Data =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_RED, 0.5, 0.3, 3.0, 2.0);
+        return;
+    };
+    
     SetFont("BIGFONT");
-    HudMessage("\cgERROR: \cjCurrently being rewritten\n", HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, 0.5, 3.0, 2.0);
-    ActivatorSound("menu/error", 127);
-    return;
+    HudMessage("===== Load In Progress =====\n", HUDMSG_PLAIN | HUDMSG_LOG, 70, CR_YELLOW, 0.5, 0.3, 0);
+    SetFont("SMALLFONT");
+    HudMessage("Make sure to withdraw your weapons from the shop!\n", HUDMSG_PLAIN | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 0);
+    
+    for (int i = 0; i < NumCVars; i++)
+    {
+        char *tmp = StringToCharP(GetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i)));
+        strcat(EncodedSaveString, tmp);
+        Z_Free((void *)tmp);
+    };
+    
+    EncodedSaveString = Z_Realloc(EncodedSaveString, strlen(EncodedSaveString) + 1, PU_STATIC, NULL);
+    //Log("Load Data (Encoded): %s\n", EncodedSaveString);
+    
+    SaveString = Z_Malloc(65536, PU_STATIC, NULL);
+    
+    DecodeRLE(EncodedSaveString, SaveString, &EncodeLock);
+    while (EncodeLock) Delay(1);
+    
+    SaveString = Z_Realloc(SaveString, strlen(SaveString) + 1, PU_STATIC, NULL);
+    //Log("Load Data (Raw): %s\n", SaveString);
+    Z_Free((void *)EncodedSaveString);
+    
+    LoadCharDataFromString(&Info, SaveString);
+    
+    Z_Free((void *)SaveString);
+    
+    if (Info.Version < 0)
+    {
+        auto str[3] ReasonStrings =
+        {
+            "You loaded this with different mods!";     // 1: Wrong CompatMode
+            "Your save version is outdated.";           // 2: SaveVersion is too old
+            "Your save was corrupted.";                 // 3: Bad checksum or something else went wrong
+        };
+        int Reason = -(Info.Version) - 1;
+        
+        ActivatorSound("charsave/fail", 127);
+        SetFont("BIGFONT");
+        HudMessage("===== Character Load Failed =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_RED, 0.5, 0.3, 3.0, 2.0);
+        SetFont("SMALLFONT");
+        HudMessage("%s (Error %d)\n", ReasonStrings[Reason], Reason + 1, HUDMSG_FADEOUT | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 3.0, 2.0);
+        return;
+    };
+    
+    Player.Level = Info.Level;
+    Player.XP = XPTable[Player.Level];
+
+    Player.RankLevel = Info.RankLevel;
+    Player.Rank = RankTable[Player.RankLevel];
+    
+    Player.Strength     = Info.Stats[0];
+    Player.Defense      = Info.Stats[1];
+    Player.Vitality     = Info.Stats[2];
+    Player.Energy       = Info.Stats[3];
+    Player.Regeneration = Info.Stats[4];
+    Player.Agility      = Info.Stats[5];
+    Player.Capacity     = Info.Stats[6];
+    Player.Luck         = Info.Stats[7];
+    
+    for (int i = 0; i < MAX_CATEGORIES; i++)
+        for (int j = 0; j < MAX_SKILLS; j++)
+            Player.SkillLevel[i][j].Level = Info.Skills[i][j];
+    
+    for (int i = 0; i < MAX_SKILLKEYS; i++)
+    {
+        Player.SkillCategory[i] = Info.SkillWheel[i][0];
+        Player.SkillIndex[i]    = Info.SkillWheel[i][1];
+        if (Info.SkillWheel[i][0] == 255 || Info.SkillWheel[i][1] == 255)
+        {
+            Player.SkillCategory[i] = -1;
+            Player.SkillIndex[i] = -1;
+        };
+    };
+    
+    for (int i = 0; i < MAX_AUGS; i++)
+        Player.Augs.Level[i] = Info.Augs[i];
+
+    for (int i = 0; i < MAX_COMPOUNDS; i++)
+        Player.Stim.Vials[i] = Info.Stims[i];
+    
+    SetInventory("DRPGCredits", Info.Credits);
+    Player.Augs.Battery = Info.Battery;
+    Player.Toxicity = Info.Toxicity;
+    Player.PayBonus = Info.PayBonus;
+    ArenaMaxWave = Info.ArenaWave;
+    
+    Delay(1);
+    
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+            Player.Locker[i][j] = Info.Locker[i][j];
+    
+    for (int i = 0; i < DRLA_MAX_ASSEMBLIES; i++)
+    {
+        if (Info.DRLAAssemblies1 & (1 << i) && i < 16)
+            SetInventory(DRLAAssemblies[i], 1)
+        else if (Info.DRLAAssemblies2 & 1 << (i - 16) && i < 32)
+            SetInventory(DRLAAssemblies[i], 1)
+        else if (Info.DRLAAssemblies3 & 1 << (i - 32) && i < 48)
+            SetInventory(DRLAAssemblies[i], 1);
+    };
     
     ActivatorSound("charsave/accept", 127);
     SetFont("BIGFONT");
-    HudMessage("===== Character Load Complete =====\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 1.0, 2.0);
+    HudMessage("===== Character Load Complete =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_GREEN, 0.5, 0.3, 3.0, 2.0);
+    HudMessage("Make sure to withdraw your weapons from the shop!\n", HUDMSG_FADEOUT, 71, CR_WHITE, 0.5, 0.35, 3.0, 2.0);
+};
+
+acscript void ClearCharacter() net
+{
+    SetUserCVar(PlayerNumber(), "drpg_char_data_len", 0);
+    for (int i = 0; i < CHARSAVE_MAXCVARS; i++)
+        SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), "");
+    
+    ActivatorSound("charsave/accept", 127);
+    SetFont("BIGFONT");
+    HudMessage("===== Character Cleared =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_YELLOW, 0.5, 0.5, 3.0, 2.0);
 };
 
 acscript void DumpCharacter()
@@ -340,6 +467,182 @@ script void PopulateCharData(CharSaveInfo *Info)
             Info->DRLAAssemblies2 |= 1 << (i - 16)
         else if (CheckInventory(DRLAAssemblies[i]) && i < 48)
             Info->DRLAAssemblies3 |= 1 << (i - 32);
+    };
+    
+    // Calc Checksum
+    Info->Checksum = 0;
+    Info->Checksum ^= Info->Version;
+    Info->Checksum ^= Info->CompatMode;
+    Info->Checksum ^= Info->Level;
+    Info->Checksum ^= Info->RankLevel;
+    for (int i = 0; i < STAT_MAX; i++)
+        Info->Checksum ^= Info->Stats[i];
+    for (int i = 0; i < MAX_CATEGORIES; i++)
+        for (int j = 0; j < MAX_SKILLS; j++)
+            Info->Checksum ^= Info->Skills[i][j];
+    for (int i = 0; i < MAX_SKILLKEYS; i++)
+    {
+        Info->Checksum ^= Info->SkillWheel[i][0];
+        Info->Checksum ^= Info->SkillWheel[i][1];
+    };
+    for (int i = 0; i < MAX_AUGS; i++)
+        Info->Checksum ^= Info->Augs[i];
+    for (int i = 0; i < MAX_COMPOUNDS; i++)
+        Info->Checksum ^= Info->Stims[i];
+    Info->Checksum ^= Info->Credits;
+    Info->Checksum ^= Info->Battery;
+    Info->Checksum ^= Info->Toxicity;
+    Info->Checksum ^= Info->PayBonus;
+    Info->Checksum ^= Info->ArenaWave;
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+            Info->Checksum ^= Info->Locker[i][j] + (i * 256) + j;
+    Info->Checksum ^= Info->DRLAAssemblies1;
+    Info->Checksum ^= Info->DRLAAssemblies2;
+    Info->Checksum ^= Info->DRLAAssemblies3;
+    
+    Info->Checksum = CalculateChecksum(Info->Checksum);
+};
+
+script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
+{
+    int StringPos = 0;
+    int Version = 0;
+    Info->Version = -3;
+    
+    // 1. Version / Compatibility Flag
+    Version = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
+    if (Version != CHARSAVE_VERSION)
+    {
+        Info->Version = -2;
+        return;
+    };
+    
+    Info->CompatMode = HexToInteger(String + StringPos, 2);
+    StringPos += 2;
+    if (Info->CompatMode != CompatMode)
+    {
+        Info->Version = -1;
+        return;
+    };
+    
+    // 2. Level / Rank Level
+    Info->Level = HexToInteger(String + StringPos, 2);
+    StringPos += 2;
+    Info->RankLevel = HexToInteger(String + StringPos, 2);
+    StringPos += 2;
+    
+    // 3. Stats
+    for (int i = 0; i < STAT_MAX; i++)
+    {
+        Info->Stats[i] = HexToInteger(String + StringPos, 2);
+        StringPos += 2;
+    };
+    
+    // 4. Skills
+    for (int i = 0; i < MAX_CATEGORIES; i++)
+        for (int j = 0; j < MAX_SKILLS; j++)
+        {
+            Info->Skills[i][j] = HexToInteger(String + StringPos, 2);
+            StringPos += 2;
+        };
+    
+    // 5. Skill Wheel
+    for (int i = 0; i < MAX_SKILLKEYS; i++)
+    {
+        Info->SkillWheel[i][0] = HexToInteger(String + StringPos,     2);
+        Info->SkillWheel[i][1] = HexToInteger(String + StringPos + 2, 2);
+        StringPos += 4;
+    };
+    
+    // 6. Augmentations
+    for (int i = 0; i < MAX_AUGS; i++)
+    {
+        Info->Augs[i] = HexToInteger(String + StringPos, 2);
+        StringPos += 2;
+    };
+    
+    // 7. Stims
+    for (int i = 0; i < MAX_COMPOUNDS; i++)
+    {
+        Info->Stims[i] = HexToInteger(String + StringPos, 8);
+        StringPos += 8;
+    };
+    
+    // 8. Misc
+    Info->Credits = HexToInteger(String + StringPos, 8);
+    StringPos += 8;
+    Info->Battery = HexToInteger(String + StringPos, 2);
+    StringPos += 2;
+    Info->Toxicity = HexToInteger(String + StringPos, 2);
+    StringPos += 2;
+    Info->PayBonus = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
+    Info->ArenaWave = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
+    
+    // 9. Locker
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+        {
+            Info->Locker[i][j] = HexToInteger(String + StringPos, 4);
+            StringPos += 4;
+        };
+    
+    // ----- COMPATIBILITY EXTENSIONS -----
+    
+    // 1. DRLA Assemblies
+    Info->DRLAAssemblies1 = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
+    Info->DRLAAssemblies2 = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
+    Info->DRLAAssemblies3 = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
+    
+    // Verify Checksum
+    Info->Checksum = HexToInteger(String + StringPos, 8);
+    StringPos += 8;
+    
+    Info->Version = Version;
+    
+    auto int MyChecksum = 0;
+    MyChecksum ^= Info->Version;
+    MyChecksum ^= Info->CompatMode;
+    MyChecksum ^= Info->Level;
+    MyChecksum ^= Info->RankLevel;
+    for (int i = 0; i < STAT_MAX; i++)
+        MyChecksum ^= Info->Stats[i];
+    for (int i = 0; i < MAX_CATEGORIES; i++)
+        for (int j = 0; j < MAX_SKILLS; j++)
+            MyChecksum ^= Info->Skills[i][j];
+    for (int i = 0; i < MAX_SKILLKEYS; i++)
+    {
+        MyChecksum ^= Info->SkillWheel[i][0];
+        MyChecksum ^= Info->SkillWheel[i][1];
+    };
+    for (int i = 0; i < MAX_AUGS; i++)
+        MyChecksum ^= Info->Augs[i];
+    for (int i = 0; i < MAX_COMPOUNDS; i++)
+        MyChecksum ^= Info->Stims[i];
+    MyChecksum ^= Info->Credits;
+    MyChecksum ^= Info->Battery;
+    MyChecksum ^= Info->Toxicity;
+    MyChecksum ^= Info->PayBonus;
+    MyChecksum ^= Info->ArenaWave;
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+            MyChecksum ^= Info->Locker[i][j] + (i * 256) + j;
+    MyChecksum ^= Info->DRLAAssemblies1;
+    MyChecksum ^= Info->DRLAAssemblies2;
+    MyChecksum ^= Info->DRLAAssemblies3;
+    
+    MyChecksum = CalculateChecksum(MyChecksum);
+    
+    if (MyChecksum != Info->Checksum)
+    {
+        Info->Version = -3;
+        return;
     };
 };
 
@@ -481,6 +784,17 @@ script char const *MakeSaveString(CharSaveInfo *Info)
     SaveString[pos + 0] = ToHexChar(Info->DRLAAssemblies3 >> 12);
     pos += 4;
     
+    // Checksum
+    SaveString[pos + 7] = ToHexChar(Info->Checksum);
+    SaveString[pos + 6] = ToHexChar(Info->Checksum >> 4);
+    SaveString[pos + 5] = ToHexChar(Info->Checksum >> 8);
+    SaveString[pos + 4] = ToHexChar(Info->Checksum >> 12);
+    SaveString[pos + 3] = ToHexChar(Info->Checksum >> 16);
+    SaveString[pos + 2] = ToHexChar(Info->Checksum >> 20);
+    SaveString[pos + 1] = ToHexChar(Info->Checksum >> 24);
+    SaveString[pos + 0] = ToHexChar(Info->Checksum >> 28);
+    pos += 8;
+    
     SaveString[pos] = '\x00';
     
     SaveString = Z_Realloc (SaveString, strlen(SaveString) + 1, PU_STATIC, NULL);
@@ -507,7 +821,7 @@ script void EncodeRLE(char const *InString, char *OutString, bool *StringLock)
         {
             if (LastCount > 3)
             {
-                str LastSize = StrParam("[%d]\n", LastCount - 1);
+                str LastSize = StrParam("[%X]\n", LastCount - 1);
                 for (int i = 0; i < StrLen(LastSize); i++)
                     OutString[OutPos++] = (char)LastSize[i];
             }
@@ -528,16 +842,94 @@ script void EncodeRLE(char const *InString, char *OutString, bool *StringLock)
     
     if (LastCount > 1)
     {
-        str LastSize = StrParam("[%d]\n", LastCount - 1);
+        str LastSize = StrParam("[%X]\n", LastCount - 1);
         for (int i = 0; i < StrLen(LastSize); i++)
             OutString[OutPos++] = (char)LastSize[i];
     };
-        
+    
     OutString[OutPos] = '\x00';
     *StringLock = false;
 };
 
+script void DecodeRLE(char const *InString, char *OutString, bool *StringLock)
+{
+    *StringLock = true;
+    
+    int OutPos = 0;
+    int InLength = strlen(InString);
+    
+    char LastSeen = '\x00';
+    char *CountString = Z_Malloc (8, PU_STATIC, NULL);
+    int CountStringLength = 0;
+    int RepeatCount = 0;
+    bool InBrackets = false;
+    
+    for (int InPos = 0; InPos < InLength; InPos++)
+    {
+        if (InString[InPos] == '[')
+        {
+            CountStringLength = 0;
+            
+            InBrackets = true;
+        }
+        else if (InString[InPos] == ']')
+        {
+            for (RepeatCount = HexToInteger(CountString, CountStringLength); RepeatCount > 0; RepeatCount--)
+            {
+                OutString[OutPos++] = LastSeen;
+                if (OutPos % 1000 == 0) Delay(1);
+            };
+            
+            InBrackets = false;
+        }
+        else if (InBrackets)
+        {
+            CountString[CountStringLength++] = InString[InPos];
+        }
+        else
+        {
+            LastSeen = InString[InPos];
+            OutString[OutPos++] = LastSeen;
+        };
+        
+        if (InPos % 1000 == 0) Delay(1);
+    };
+    
+    Z_Free (CountString);
+    OutString[OutPos] = '\x00';
+    *StringLock = false;
+};
+
+function int HexToInteger(char const *SourceStr, int Length)
+{
+    int NumDigits = Length;
+    int Result = 0;
+
+    if (Length <= 0)
+        NumDigits = strlen(SourceStr);
+    
+    for (int i = NumDigits - 1; i >= 0; i--)
+    {
+        Result += FromHexChar(SourceStr[i]) << 4 * ((NumDigits - 1) - i);
+    };
+    
+    return Result;
+};
+
+function char *StringToCharP(str Source)
+{
+    int Length = StrLen(Source);
+    
+    char *Destination = Z_Malloc(Length + 1, PU_STATIC, NULL);
+    Destination[Length] = '\x00';
+    
+    for (int i = 0; i < Length; i++)
+        Destination[i] = Source[i];
+    
+    return Destination;
+};
+
 function int CalculateChecksum(int Value)
 {
-    return ((Value * 8) / 2) << 8;
+    return (Value * 8) / 2;
 };
