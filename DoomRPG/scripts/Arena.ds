@@ -44,6 +44,7 @@ str[MAX_BONUS] ArenaBonus =
     "\cjSelect Your Own!";
     "\cvFull EP";
     "\cfMoney Drop";
+    "\cfChip Drop";
     "\cuAmmo Drop";
     "\cgHealth Drop";
     "\cdArmor Drop";
@@ -270,10 +271,13 @@ acscript void ArenaChooseBonus()
         };
             
         // Drawing
-        for (int i = 1; i < MAX_BONUS - 1 + (CanChooseKey ? 1 : 0); i++)
+        for (int i = 1; i < MAX_BONUS; i++)
         {
             // Skip Mod Drop if DRLA extension isn't enabled
             if (i == 10 && CompatMode != COMPAT_DRLA) continue;
+            
+            // Skip Key Drop if the randomizer hates you
+            if (i == 11 && !CanChooseKey) continue;
             
             // Cursor
             if (i == BonusChoice)
@@ -318,22 +322,19 @@ function void ArenaGetBonus(int Bonus)
     case 2: // Money Drop
         SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
         for (int i = 0; i < ArenaWave * PlayerCount() * 5; i++)
-        {
             SpawnSpot("DRPGMoneyDropper", ArenaItemSpotTID, ArenaItemTID, 0);
-            SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-            Thing_ChangeTID(ArenaItemTID, 0);
-        };
         break;
-    case 3: // Ammo Drop
+    case 3: // Money Drop
         SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
         for (int i = 0; i < PlayerCount(); i++)
-        {
-            SpawnSpot("DRPGBackpackRandomizer", ArenaItemSpotTID, ArenaItemTID, 0);
-            SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-            Thing_ChangeTID(ArenaItemTID, 0);
-        };
+            SpawnSpot("DRPGChipDropper", ArenaItemSpotTID, ArenaItemTID, 0);
         break;
-    case 4: // Health Drop
+    case 4: // Ammo Drop
+        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+        for (int i = 0; i < PlayerCount(); i++)
+            SpawnSpot("DRPGBackpackRandomizer", ArenaItemSpotTID, ArenaItemTID, 0);
+        break;
+    case 5: // Health Drop
         SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
         for (int i = 0; i < PlayerCount(); i++)
         {
@@ -344,11 +345,9 @@ function void ArenaGetBonus(int Bonus)
             else
                 SpawnItem = "DRPGHealthDropper";
             SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
-            SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-            Thing_ChangeTID(ArenaItemTID, 0);
         };
         break;
-    case 5: // Armor Drop
+    case 6: // Armor Drop
         SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
         for (int i = 0; i < PlayerCount(); i++)
         {
@@ -357,59 +356,37 @@ function void ArenaGetBonus(int Bonus)
             else
                 SpawnItem = "DRPGBlueArmorRandomizer";
             SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
-            SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-            Thing_ChangeTID(ArenaItemTID, 0);
         };
         break;
-    case 6: // Weapon Drop
+    case 7: // Weapon Drop
         SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
         for (int i = 0; i < PlayerCount(); i++)
-        {
             SpawnSpot("DRPGWeaponDropper", ArenaItemSpotTID, ArenaItemTID, 0);
-            SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-            Thing_ChangeTID(ArenaItemTID, 0);
-        };
         break;
-    case 7: // Powerup Drop
+    case 8: // Powerup Drop
         SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
         for (int i = 0; i < PlayerCount(); i++)
-        {
             SpawnSpot("DRPGPowerupDropper", ArenaItemSpotTID, ArenaItemTID, 0);
-            SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-            Thing_ChangeTID(ArenaItemTID, 0);
-        };
         break;
-    case 8: // Stim Drop
+    case 9: // Stim Drop
         SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
         if (Random(1, 8) == 1)
         {
             for (int i = 0; i < PlayerCount(); i++)
-            {
                 SpawnSpot("DRPGStimDropper", ArenaItemSpotTID, ArenaItemTID, 0);
-                SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-                Thing_ChangeTID(ArenaItemTID, 0);
-            };
         }
         else
         {
             for (int i = 0; i < ArenaWave * PlayerCount() * 5; i++)
-            {
                 SpawnSpot("DRPGVialDropper", ArenaItemSpotTID, ArenaItemTID, 0);
-                SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-                Thing_ChangeTID(ArenaItemTID, 0);
-            };
         };
         break;
-    case 9: // Mod Drop (DRLA Only)
+    case 10: // Mod Drop (DRLA Only)
         if (CompatMode == COMPAT_DRLA)
         {
             SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             for (int i = 0; i < PlayerCount(); i++)
-            {
                 SpawnSpot("RLModPackSpawner", ArenaItemSpotTID, ArenaItemTID, 0);
-                SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-                Thing_ChangeTID(ArenaItemTID, 0);
-            };
         }
         else
         {
@@ -417,7 +394,7 @@ function void ArenaGetBonus(int Bonus)
             return;
         };
         break;
-    case 10: // Key Drop
+    case 11: // Key Drop
         SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
         if (ArenaKey == 0) SpawnItem = "DRPGRedCard";
         if (ArenaKey == 1) SpawnItem = "DRPGYellowCard";
@@ -431,11 +408,7 @@ function void ArenaGetBonus(int Bonus)
             return;
         };
         for (int i = 0; i < PlayerCount(); i++)
-        {
             SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
-            SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-            Thing_ChangeTID(ArenaItemTID, 0);
-        };
         if (ArenaKey < 6) ArenaKey++;
         ActivatorSound("arena/keydrop", 127);
         break;
@@ -444,6 +417,9 @@ function void ArenaGetBonus(int Bonus)
     // Bonus Message
     if (Bonus > 0)
     {
+        SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
+        Thing_ChangeTID(ArenaItemTID, 0);
+        
         SetHudSize(0, 0, false);
         SetFont("BIGFONT");
         HudMessageBold("%s\n", ArenaBonus[Bonus], HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
