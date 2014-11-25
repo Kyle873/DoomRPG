@@ -13,10 +13,7 @@
     
     --- Character Save Format ---
     
-    TODO: Rewriting
-    
     GENERAL NOTES
-    - Each section is seperated by a -, except the checksum which is seperated by a |
     - Items such as Tokens, Shield Parts and Stims will be stored in the Locker for retrieval instead of in the save data itself
     - Each byte will be stored with a leading 0 if necessary, so a level of 10 and a rank level of 5 will come out as 0A05
     
@@ -44,6 +41,11 @@
     Misc
         - Credits
           - Stored in 4 bytes
+        - Chips
+          - Gold Chip stored in 2 bytes
+          - Platinum Chip stored in 2 bytes
+        - UAC Card
+          - Stored in 1 byte
         - Augmentation Battery
           - Stored in 1 byte
         - Toxicity
@@ -69,31 +71,6 @@
         - Checksum is determined by XOR'ing the value of each entry into a total buffer and doing the following:
           (Total * 8) / 2
           [KS] I removed the LShift because that only leaves us with 24 bits for comparison. Instead, we XOR (^) the values together.
-    
-    BASIC EXAMPLE
-    - Each category is seperated onto a new line for readability
-    - Version 1, DRLA Compatibility mode
-    - Level 10, Rank 4
-    - Stats are Defaults
-    - First skill of each category learned at it's max level
-    - Skill wheel contains Heal and Red Aura on slots 1 and 2
-    - Augs are levels 1, 2, 3, 4, 1, 2, 3, 4, 1 respectively
-    - Each stim is 0 for brevity
-    - 1000 Credits, 100% Battery, 25% Toxicity, 10% Pay Bonus
-    - Locker and DRLA stuff are 0 and omitted for brevity
-    
-    0102
-    -0A04
-    -00000A0A00000A00
-    -[0400000000][020000000000000000][060000000000000000][0200000000][0700000000000000000000000000000000][0100000000000000]
-    -00000200FFFFFFFFFFFFFFFFFFFFFFFF
-    -010203040102030401-
-    -...
-    -03E864190A
-    -...
-    -...
-    -...
-    |42F0000
     
 */
 
@@ -342,6 +319,11 @@ acscript void LoadCharacter() net
     
     // Misc
     SetInventory("DRPGCredits", Info.Credits);
+    SetInventory("DRPGChipGold", Info.GoldChips);
+    SetInventory("DRPGChipPlatinum", Info.PlatinumChips);
+    SetInventory("DRPGUACCard", Info.ShopCard);
+    if (Info.ShopCard == 5)
+        SetInventory("DRPGDiamondUACCard", 1);
     Player.Augs.Battery = Info.Battery;
     Player.Toxicity = Info.Toxicity;
     Player.PayBonus = Info.PayBonus;
@@ -468,6 +450,9 @@ script void PopulateCharData(CharSaveInfo *Info)
     
     // Misc
     Info->Credits = CheckInventory("DRPGCredits");
+    Info->GoldChips = CheckInventory("DRPGChipGold");
+    Info->PlatinumChips = CheckInventory("DrpgChipPlatinum");
+    Info->ShopCard = Player.ShopCard;
     Info->Battery = Player.Augs.Battery;
     Info->Toxicity = Player.Toxicity;
     Info->PayBonus = Player.PayBonus;
@@ -595,6 +580,12 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     // Misc
     Info->Credits = HexToInteger(String + StringPos, 8);
     StringPos += 8;
+    Info->GoldChips = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
+    Info->PlatinumChips = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
+    Info->ShopCard = HexToInteger(String + StringPos, 1);
+    StringPos += 1;
     Info->Battery = HexToInteger(String + StringPos, 2);
     StringPos += 2;
     Info->Toxicity = HexToInteger(String + StringPos, 2);
@@ -753,6 +744,24 @@ script char const *MakeSaveString(CharSaveInfo *Info)
     SaveString[pos + 1] = ToHexChar(Info->Credits >> 24);
     SaveString[pos + 0] = ToHexChar(Info->Credits >> 28);
     pos += 8;
+    
+    // Gold Chips
+    SaveString[pos + 3] = ToHexChar(Info->GoldChips);
+    SaveString[pos + 2] = ToHexChar(Info->GoldChips >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->GoldChips >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->GoldChips >> 12);
+    pos += 4;
+    
+    // Platinum Chips
+    SaveString[pos + 3] = ToHexChar(Info->PlatinumChips);
+    SaveString[pos + 2] = ToHexChar(Info->PlatinumChips >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->PlatinumChips >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->PlatinumChips >> 12);
+    pos += 4;
+    
+    // UAC Card
+    SaveString[pos + 0] = ToHexChar(Info->ShopCard);
+    pos += 1;
     
     // Aug Battery
     SaveString[pos + 1] = ToHexChar(Info->Battery);
