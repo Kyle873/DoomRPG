@@ -304,6 +304,10 @@ script void Loop()
         SpawnForced("DRPGMenuIcon", X, Y, Z + Height + 8.0, 0, 0);
     };
     
+    // Display Stat HUD if enabled
+    if (GetUserCVar(PlayerNumber(), "drpg_stats_alwaysshow"))
+        StatHUD();
+    
     // Shop Special Handling
     if (Arbitrator) CheckShopSpecial(false);
     
@@ -554,16 +558,22 @@ script void StatRandomizer()
     Start:
     
     if (GetCVar("drpg_auto_spend") && !Player.Stim.Active)
-        while (CheckInventory("DRPGStatToken") > 0)
+    {
+        while (CheckInventory("DRPGStatToken") > 0 && !StatsCapped())
         {
-            if (Random(1, 2) == 1 && GetCVar("drpg_auto_spend_pref") > 0) // Select Preferred Stat
-                IncreaseStat(GetCVar("drpg_auto_spend_pref"))
-            else
-                IncreaseStat(Random(1, 8));
+            // Select Preferred Stat
+            if (Random(1, 2) == 1 && GetCVar("drpg_auto_spend_pref") > 0)
+                IncreaseStat(GetCVar("drpg_auto_spend_pref"));
             
-            // Should prevent runaway issues if you have a ton of Stat Tokens
+            // Select Random Stat
+            IncreaseStat(Random(1, STAT_MAX - 1));
+            
+            // Display Stat HUD
+            StatHUD();
+            
             Delay(1);
         };
+    };
     
     Delay(1);
     goto Start;
