@@ -20,28 +20,28 @@
     - Items such as Tokens, Shield Parts and Stims will be stored in the Locker for retrieval instead of in the save data itself
     - Each byte will be stored with a leading 0 if necessary, so a level of 10 and a rank level of 5 will come out as 0A05
     
-    1. Version / Compatibility Flag
+    Version / Compatibility Flag
         - Version is referenced from defs, stored in 2 bytes
         - Mirror of the CompatMode static, stored in 1 byte
-    2. Level / Rank Level
+    Level / Rank Level
         - Only Level and Rank Level are stored, the XP to give is determined from these
         - Both Level and Rank Level are stored in 1 byte each
-    3. Stats
+    Stats
         - Each stat will be stored in 1 byte since they will never go above 200 by normal means
-    4. Skills
+    Skills
         - Each skill level is stored in 1 byte
         - Each skill category will be wrapped in a set of []'s
         - Each skill within each category will be seperated by a -
-    5. Skill Wheel
+    Skill Wheel
         - 16 bytes total
         - Each slot is 2 bytes
         - First byte is the category, second byte is the index
         - Both bytes being 255 (FFFF) means it is blank
-    6. Augmentations
+    Augmentations
         - Each augmentation's level is stored in 1 byte
-    7. Stims
+    Stims
         - Each stim vial type is stored in 4 bytes
-    8. Misc
+    Misc
         - Credits
           - Stored in 4 bytes
         - Augmentation Battery
@@ -52,16 +52,16 @@
           - Stored in 2 bytes
         - Arena Wave
           - Stored in 2 bytes
-    9. Locker
+    Locker
         - Each item's count will be stored in 4 bytes
         - Each item category will be wrapped in a set of []'s
         - Each item within each category will be seperated by a -
         
     ----- COMPATIBILITY EXTENSIONS -----
     
-    1. DRLA Assemblies
+    DRLA Assemblies
         - Each assembly set can be stored in a 4-byte bitfield
-    2. DRLA Known Exotic Effects Info
+    DRLA Known Exotic Effects Info (TODO)
         - Each weapon can use a 1 byte bitfield to hold the known exoctic effects
     
     Checksum
@@ -137,22 +137,12 @@ str[DRLA_MAX_ASSEMBLIES] DRLAAssemblies =
 
 acscript void SaveCharacter() net
 {
-    // You need to be in the Outpost to do this
-    if (!InBase)
-    {
-        SetFont("BIGFONT");
-        HudMessage("\cgERROR: \cjYou must be in the Outpost to deposit your equipment\n", HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, 0.5, 3.0, 2.0);
-        ActivatorSound("menu/error", 127);
-        return;
-    };
-    
     SetFont("BIGFONT");
     HudMessage("===== Save In Progress =====\n", HUDMSG_PLAIN | HUDMSG_LOG, 70, CR_YELLOW, 0.5, 0.3, 0);
     SetFont("SMALLFONT");
     HudMessage("Do not quit the game or power off your console.\n", HUDMSG_PLAIN | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 0);
     
     // Bulk Deposit
-    // TODO: Should be moved to a Locker function
     for (int i = 0; i < ItemCategories; i++)
     {
         for (int j = 0; j < ItemMax[i]; j++)
@@ -173,11 +163,11 @@ acscript void SaveCharacter() net
     auto char *EncodedSaveString = Z_Malloc(strlen(SaveString) + 1, PU_STATIC, NULL);
     auto bool EncodeLock = false;
     
-    EncodeRLE (SaveString, EncodedSaveString, &EncodeLock);
+    EncodeRLE(SaveString, EncodedSaveString, &EncodeLock);
     while (EncodeLock) Delay(1);
     
     EncodedSaveString = Z_Realloc(EncodedSaveString, strlen(EncodedSaveString) + 1, PU_STATIC, NULL);
-    //Log("Save Data: %s\n", EncodedSaveString);
+    // Log("Save Data: %s\n", EncodedSaveString);
     int PartialStringsNeeded = strlen(EncodedSaveString) / CHARSAVE_MAXSIZE;
     if (strlen(EncodedSaveString) % CHARSAVE_MAXSIZE > 0)
         PartialStringsNeeded++;
@@ -187,24 +177,24 @@ acscript void SaveCharacter() net
     for (int i = 0; i < CHARSAVE_MAXCVARS; i++)
         SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), "");
 
-    bool success = true;
+    bool Success = true;
     
     if (PartialStringsNeeded > CHARSAVE_MAXCVARS)
-        success = false;
-    if (success && !SetUserCVar(PlayerNumber(), "drpg_char_data_len", PartialStringsNeeded))
-        success = false;
-    for (int i = 0; success && i < PartialStringsNeeded; i++)
+        Success = false;
+    if (Success && !SetUserCVar(PlayerNumber(), "drpg_char_data_len", PartialStringsNeeded))
+        Success = false;
+    for (int i = 0; Success && i < PartialStringsNeeded; i++)
     {
         strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
         if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), StrParam("%s\n", PartialSaveString)))
-            success = false;
+            Success = false;
     };
     
-    Z_Free ((void *)SaveString);
-    Z_Free ((void *)EncodedSaveString);
-    Z_Free ((void *)PartialSaveString);
+    Z_Free((void *)SaveString);
+    Z_Free((void *)EncodedSaveString);
+    Z_Free((void *)PartialSaveString);
     
-    if (success)
+    if (Success)
     {
         // Saving Successful
         ActivatorSound("charsave/save", 127);
@@ -247,7 +237,7 @@ acscript void LoadCharacter() net
     SetFont("BIGFONT");
     HudMessage("===== Load In Progress =====\n", HUDMSG_PLAIN | HUDMSG_LOG, 70, CR_YELLOW, 0.5, 0.3, 0);
     SetFont("SMALLFONT");
-    HudMessage("Make sure to withdraw your weapons from the shop!\n", HUDMSG_PLAIN | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 0);
+    HudMessage("Make sure to withdraw your items from the shop!\n", HUDMSG_PLAIN | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 0);
     
     for (int i = 0; i < NumCVars; i++)
     {
@@ -257,7 +247,7 @@ acscript void LoadCharacter() net
     };
     
     EncodedSaveString = Z_Realloc(EncodedSaveString, strlen(EncodedSaveString) + 1, PU_STATIC, NULL);
-    //Log("Load Data (Encoded): %s\n", EncodedSaveString);
+    // Log("Load Data (Encoded): %s\n", EncodedSaveString);
     
     SaveString = Z_Malloc(65536, PU_STATIC, NULL);
     
@@ -265,13 +255,14 @@ acscript void LoadCharacter() net
     while (EncodeLock) Delay(1);
     
     SaveString = Z_Realloc(SaveString, strlen(SaveString) + 1, PU_STATIC, NULL);
-    //Log("Load Data (Raw): %s\n", SaveString);
+    // Log("Load Data (Raw): %s\n", SaveString);
     Z_Free((void *)EncodedSaveString);
     
     LoadCharDataFromString(&Info, SaveString);
     
     Z_Free((void *)SaveString);
     
+    // Version / Compatibility Flag
     if (Info.Version < 0)
     {
         auto str[3] ReasonStrings =
@@ -290,12 +281,19 @@ acscript void LoadCharacter() net
         return;
     };
     
-    Player.Level = Info.Level;
-    Player.XP = XPTable[Player.Level];
-
-    Player.RankLevel = Info.RankLevel;
-    Player.Rank = RankTable[Player.RankLevel];
+    // Level / Rank Level
+    if (Info.Level > 0)
+    {
+        Player.Level = Info.Level;
+        Player.XP = XPTable[Player.Level];
+    };
+    if (Info.RankLevel > 0)
+    {
+        Player.RankLevel = Info.RankLevel;
+        Player.Rank = RankTable[Player.RankLevel];
+    };
     
+    // Stats
     Player.Strength     = Info.Stats[0];
     Player.Defense      = Info.Stats[1];
     Player.Vitality     = Info.Stats[2];
@@ -305,10 +303,12 @@ acscript void LoadCharacter() net
     Player.Capacity     = Info.Stats[6];
     Player.Luck         = Info.Stats[7];
     
+    // Skills
     for (int i = 0; i < MAX_CATEGORIES; i++)
         for (int j = 0; j < MAX_SKILLS; j++)
             Player.SkillLevel[i][j].Level = Info.Skills[i][j];
     
+    // Skill Wheel
     for (int i = 0; i < MAX_SKILLKEYS; i++)
     {
         Player.SkillCategory[i] = Info.SkillWheel[i][0];
@@ -320,12 +320,15 @@ acscript void LoadCharacter() net
         };
     };
     
+    // Augmentations
     for (int i = 0; i < MAX_AUGS; i++)
         Player.Augs.Level[i] = Info.Augs[i];
 
+    // Stims
     for (int i = 0; i < MAX_COMPOUNDS; i++)
         Player.Stim.Vials[i] = Info.Stims[i];
     
+    // Misc
     SetInventory("DRPGCredits", Info.Credits);
     Player.Augs.Battery = Info.Battery;
     Player.Toxicity = Info.Toxicity;
@@ -334,10 +337,12 @@ acscript void LoadCharacter() net
     
     Delay(1);
     
+    // Locker
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
             Player.Locker[i][j] = Info.Locker[i][j];
     
+    // DRLA Assemblies
     for (int i = 0; i < DRLA_MAX_ASSEMBLIES; i++)
     {
         if (Info.DRLAAssemblies1 & (1 << i) && i < 16)
@@ -367,6 +372,11 @@ acscript void ClearCharacter() net
 
 acscript void DumpCharacter()
 {
+    for (int i = 0; i < GetCVar("drpg_char_data_len"); i++)
+    {
+        str Data = GetCVarString(StrParam("drpg_char_data_%d\n", i));
+        Log("\cdData %d \c-- \ca%s\n", i, Data);
+    };
 };
 
 // Hexadecimal storage
@@ -402,15 +412,15 @@ function int FromHexChar(char c)
 
 script void PopulateCharData(CharSaveInfo *Info)
 {
-    // 1. Version / Compatibility Flag
+    // Version / Compatibility Flag
     Info->Version = CHARSAVE_VERSION;
     Info->CompatMode = CompatMode;
     
-    // 2. Level / Rank Level
+    // Level / Rank Level
     Info->Level = Player.Level;
     Info->RankLevel = Player.RankLevel;
     
-    // 3. Stats
+    // Stats
     Info->Stats[0] = Player.Strength;
     Info->Stats[1] = Player.Defense;
     Info->Stats[2] = Player.Vitality;
@@ -420,12 +430,12 @@ script void PopulateCharData(CharSaveInfo *Info)
     Info->Stats[6] = Player.Capacity;
     Info->Stats[7] = Player.Luck;
     
-    // 4. Skills
+    // Skills
     for (int i = 0; i < MAX_CATEGORIES; i++)
         for (int j = 0; j < MAX_SKILLS; j++)
             Info->Skills[i][j] = Player.SkillLevel[i][j].Level;
     
-    // 5. Skill Wheel
+    // Skill Wheel
     for (int i = 0; i < MAX_SKILLKEYS; i++)
     {
         Info->SkillWheel[i][0] = Player.SkillCategory[i];
@@ -436,29 +446,29 @@ script void PopulateCharData(CharSaveInfo *Info)
             Info->SkillWheel[i][1] = 255;
     };
     
-    // 6. Augmentations
+    // Augmentations
     for (int i = 0; i < MAX_AUGS; i++)
         Info->Augs[i] = Player.Augs.Level[i];
     
-    // 7. Stims
+    // Stims
     for (int i = 0; i < MAX_COMPOUNDS; i++)
         Info->Stims[i] = Player.Stim.Vials[i];
     
-    // 8. Misc
+    // Misc
     Info->Credits = CheckInventory("DRPGCredits");
     Info->Battery = Player.Augs.Battery;
     Info->Toxicity = Player.Toxicity;
     Info->PayBonus = Player.PayBonus;
     Info->ArenaWave = ArenaMaxWave;
     
-    // 9. Locker
+    // Locker
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
             Info->Locker[i][j] = Player.Locker[i][j];
     
     // ----- COMPATIBILITY EXTENSIONS -----
     
-    // 1. DRLA Assemblies
+    // DRLA Assemblies
     for (int i = 0; i < DRLA_MAX_ASSEMBLIES; i++)
     {
         if (CheckInventory(DRLAAssemblies[i]) && i < 16)
@@ -510,7 +520,7 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     int Version = 0;
     Info->Version = -3;
     
-    // 1. Version / Compatibility Flag
+    // Version / Compatibility Flag
     Version = HexToInteger(String + StringPos, 4);
     StringPos += 4;
     if (Version != CHARSAVE_VERSION)
@@ -527,20 +537,20 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
         return;
     };
     
-    // 2. Level / Rank Level
+    // Level / Rank Level
     Info->Level = HexToInteger(String + StringPos, 2);
     StringPos += 2;
     Info->RankLevel = HexToInteger(String + StringPos, 2);
     StringPos += 2;
     
-    // 3. Stats
+    // Stats
     for (int i = 0; i < STAT_MAX; i++)
     {
         Info->Stats[i] = HexToInteger(String + StringPos, 2);
         StringPos += 2;
     };
     
-    // 4. Skills
+    // Skills
     for (int i = 0; i < MAX_CATEGORIES; i++)
         for (int j = 0; j < MAX_SKILLS; j++)
         {
@@ -548,7 +558,7 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
             StringPos += 2;
         };
     
-    // 5. Skill Wheel
+    // Skill Wheel
     for (int i = 0; i < MAX_SKILLKEYS; i++)
     {
         Info->SkillWheel[i][0] = HexToInteger(String + StringPos,     2);
@@ -556,21 +566,21 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
         StringPos += 4;
     };
     
-    // 6. Augmentations
+    // Augmentations
     for (int i = 0; i < MAX_AUGS; i++)
     {
         Info->Augs[i] = HexToInteger(String + StringPos, 2);
         StringPos += 2;
     };
     
-    // 7. Stims
+    // Stims
     for (int i = 0; i < MAX_COMPOUNDS; i++)
     {
         Info->Stims[i] = HexToInteger(String + StringPos, 8);
         StringPos += 8;
     };
     
-    // 8. Misc
+    // Misc
     Info->Credits = HexToInteger(String + StringPos, 8);
     StringPos += 8;
     Info->Battery = HexToInteger(String + StringPos, 2);
@@ -582,7 +592,7 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     Info->ArenaWave = HexToInteger(String + StringPos, 4);
     StringPos += 4;
     
-    // 9. Locker
+    // Locker
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
@@ -592,7 +602,7 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     
     // ----- COMPATIBILITY EXTENSIONS -----
     
-    // 1. DRLA Assemblies
+    // DRLA Assemblies
     Info->DRLAAssemblies1 = HexToInteger(String + StringPos, 4);
     StringPos += 4;
     Info->DRLAAssemblies2 = HexToInteger(String + StringPos, 4);
@@ -797,7 +807,7 @@ script char const *MakeSaveString(CharSaveInfo *Info)
     
     SaveString[pos] = '\x00';
     
-    SaveString = Z_Realloc (SaveString, strlen(SaveString) + 1, PU_STATIC, NULL);
+    SaveString = Z_Realloc(SaveString, strlen(SaveString) + 1, PU_STATIC, NULL);
     return SaveString;
 };
 
@@ -859,7 +869,7 @@ script void DecodeRLE(char const *InString, char *OutString, bool *StringLock)
     int InLength = strlen(InString);
     
     char LastSeen = '\x00';
-    char *CountString = Z_Malloc (8, PU_STATIC, NULL);
+    char *CountString = Z_Malloc(8, PU_STATIC, NULL);
     int CountStringLength = 0;
     int RepeatCount = 0;
     bool InBrackets = false;
@@ -895,7 +905,7 @@ script void DecodeRLE(char const *InString, char *OutString, bool *StringLock)
         if (InPos % 1000 == 0) Delay(1);
     };
     
-    Z_Free (CountString);
+    Z_Free(CountString);
     OutString[OutPos] = '\x00';
     *StringLock = false;
 };
@@ -909,9 +919,7 @@ function int HexToInteger(char const *SourceStr, int Length)
         NumDigits = strlen(SourceStr);
     
     for (int i = NumDigits - 1; i >= 0; i--)
-    {
         Result += FromHexChar(SourceStr[i]) << 4 * ((NumDigits - 1) - i);
-    };
     
     return Result;
 };
