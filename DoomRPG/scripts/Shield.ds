@@ -1301,6 +1301,25 @@ script bool ActivateShield()
     GiveInventory("DRPGShieldOn", 1);
     PlaySound(0, "shield/on", 5, 1.0, false, 1.0);
     Player.Shield.Active = true;
+    if (GetCVar("drpg_shield_armorremove"))
+    {
+        Player.Shield.ArmorType = GetArmorInfoString(ARMORINFO_CLASSNAME);
+        Player.Shield.ArmorAmount = CheckInventory("Armor");
+        Player.Shield.ArmorMax = GetArmorInfo(ARMORINFO_SAVEAMOUNT);
+        
+        // DRLA Compatibility
+        if (CompatMode != COMPAT_DRLA)
+            TakeInventory("BasicArmor", Player.Shield.ArmorAmount);
+        if (CompatMode == COMPAT_DRLA && !Contains(Player.Shield.ArmorType, "Shield"))
+        {
+            TakeInventory("BasicArmor", Player.Shield.ArmorAmount);
+            TakeInventory(StrParam("%sToken\n", Player.Shield.ArmorType), 1);
+            TakeInventory("RL100ArmorWorn", 1);
+            TakeInventory("RL150ArmorWorn", 1);
+            TakeInventory("RL200ArmorWorn", 1);
+            TakeInventory("RLIndestructibleArmorWorn", 1);
+        };
+    };
     ShieldTimerReset();
     
     return true;
@@ -1320,6 +1339,26 @@ script void DeactivateShield()
     PlaySound(0, "shield/off", 5, 1.0, false, 1.0);
     Player.Shield.Active = false;
     Player.Shield.AccessoryBattery = 0;
+    if (GetCVar("drpg_shield_armorremove") && Player.Shield.ArmorType != "None" && !Contains(Player.Shield.ArmorType, "Shield"))
+    {
+        GiveInventory(Player.Shield.ArmorType, 1);
+        TakeInventory("BasicArmor", Player.Shield.ArmorMax - Player.Shield.ArmorAmount);
+                
+        // DRLA Compatibility
+        if (CompatMode == COMPAT_DRLA)
+        {
+            GiveInventory(StrParam("%sToken\n", Player.Shield.ArmorType), 1);
+            
+            if (Player.Shield.ArmorMax == 100)
+                GiveInventory("RL100ArmorWorn", 1)
+            else if (Player.Shield.ArmorMax == 150)
+                GiveInventory("RL150ArmorWorn", 1)
+            else if (Player.Shield.ArmorMax == 200)
+                GiveInventory("RL200ArmorWorn", 1)
+            else if (Player.Shield.ArmorMax == 99999)
+                GiveInventory("RLIndestructibleArmorWorn", 1);
+        };
+    };
     if (GetCVar("drpg_shield_reset") || Player.StatusType[SE_EMP])
         Player.Shield.Charge = 0;
 };
