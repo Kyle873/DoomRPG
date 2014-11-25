@@ -119,12 +119,12 @@ function void ShopLoop()
         
         // EP Cost/Inventory Count
         if (GetCVar("drpg_inv_capacity"))
-            HudMessage("\cn%d EP \c-(Inventory: %d/%d)\n",
-                       LOCKER_EPRATE, Player.InvItems, CheckInventoryMax(),
+            HudMessage("%s%d EP \c-(Inventory: %d/%d)\n",
+                       (InBase ? "\cc" : "\cn"), LOCKER_EPRATE, Player.InvItems, CheckInventoryMax(),
                        HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 38.0, 0.05)
         else
-            HudMessage("\cn%d EP\n",
-                       LOCKER_EPRATE,
+            HudMessage("%s%d EP\n",
+                       (InBase ? "\cc" : "\cn"), LOCKER_EPRATE,
                        HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 38.0, 0.05);
     }
     else
@@ -509,7 +509,8 @@ function void DepositItem()
         };
         
         TakeInventory(ItemPtr->Actor, 1);
-        Player.EP -= LOCKER_EPRATE;
+        if (!InBase)
+            Player.EP -= LOCKER_EPRATE;
         Player.Locker[Player.ShopPage][Player.ShopIndex]++;
         ActivatorSound("menu/move", 127);
     }
@@ -533,7 +534,8 @@ function void WithdrawItem()
         
         SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
         Player.Locker[Player.ShopPage][Player.ShopIndex]--;
-        Player.EP -= LOCKER_EPRATE;
+        if (!InBase)
+            Player.EP -= LOCKER_EPRATE;
         ActivatorSound("menu/move", 127);
     }
     else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
