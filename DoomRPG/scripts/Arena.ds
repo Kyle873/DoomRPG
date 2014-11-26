@@ -15,8 +15,6 @@ bool ArenaTimerActive = false;
 int ArenaState = ARENA_READY;
 int ArenaPlayerNumber = -1;
 int ArenaMonstersTID = 1099;
-int ArenaItemSpotTID = 1200;
-int ArenaItemTID = 1201;
 int ArenaSpotSpawns = 1100;
 int ArenaSectorTag = 100;
 int ArenaWave;
@@ -26,20 +24,21 @@ int ArenaMod;
 int ArenaEnvironment;
 int ArenaKey;
 
-str[MAX_MODS] ArenaMods =
+str[AMOD_MAX] ArenaMods =
 {
     "\cgNo Regeneration";
 };
 
-str[MAX_ENVIRONMENTS] ArenaEnvironments =
+str[AEVENT_MAX] ArenaEvents =
 {
+    "None";
     "\cmBlackout";
     "\cjFoggy";
     "\ciThe Floor is Lava";
     "\cuGrayscale";
 };
 
-str[MAX_BONUS] ArenaBonus =
+str[ABONUS_MAX] ArenaBonus =
 {
     "\cjSelect Your Own!";
     "\cvFull EP";
@@ -66,7 +65,7 @@ str[MAX_DEF_MONSTERS] Monsters =
 // Arena Script
 acscript void ArenaLoop()
 {
-    ArenaSetEnvironment(0);
+    ArenaSetEnvironment(AEVENT_NONE);
     
     // Arena Loop
     while (true)
@@ -84,11 +83,11 @@ acscript void ArenaLoop()
         // Arena Status Handling
         if (ArenaState == ARENA_INTERMISSION)
         {
-            int BonusRandomizer = Random(-10, MAX_BONUS - 1);
+            int BonusRandomizer = Random(-10, ABONUS_MAX - 1);
 
             ArenaMod = -1;
             ArenaGetBonus(BonusRandomizer);
-            ArenaSetEnvironment(0);
+            ArenaSetEnvironment(AEVENT_NONE);
             ArenaState = ARENA_WAITING;
         }
         else if (ArenaState == ARENA_WAITING)
@@ -160,7 +159,7 @@ acscript void ArenaLoop()
             if (ArenaWave >= ArenaMaxWave)
                 ArenaMaxWave = ArenaWave;
             
-            ArenaMod = Random(-10, MAX_MODS - 1);
+            ArenaMod = Random(-10, AMOD_MAX - 1);
             ArenaSetEnvironment(-1);
             ArenaSpawnMobs();
             ArenaState = ARENA_ACTIVE;
@@ -195,7 +194,7 @@ acscript void ArenaStop()
     ArenaPlayerNumber = -1;
     ArenaCount = 0;
     ArenaMod = -1;
-    ArenaSetEnvironment(0);
+    ArenaSetEnvironment(AEVENT_NONE);
     
     ResetOutpostMusic();
     
@@ -251,7 +250,7 @@ acscript void ArenaChooseBonus()
         {
             ActivatorSound("menu/move", 127);
             BonusChoice--;
-            if (BonusChoice < 1) BonusChoice = MAX_BONUS - (CanChooseKey ? 1 : 2);
+            if (BonusChoice < 1) BonusChoice = ABONUS_MAX - (CanChooseKey ? 1 : 2);
             if (BonusChoice == 10 && CompatMode != COMPAT_DRLA) BonusChoice--;
         };
         if (Buttons == BT_BACK && OldButtons != BT_BACK)
@@ -259,7 +258,7 @@ acscript void ArenaChooseBonus()
             ActivatorSound("menu/move", 127);
             BonusChoice++;
             if (BonusChoice == 10 && CompatMode != COMPAT_DRLA) BonusChoice++;
-            if (BonusChoice > MAX_BONUS - (CanChooseKey ? 1 : 2)) BonusChoice = 1;
+            if (BonusChoice > ABONUS_MAX - (CanChooseKey ? 1 : 2)) BonusChoice = 1;
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
@@ -271,13 +270,13 @@ acscript void ArenaChooseBonus()
         };
             
         // Drawing
-        for (int i = 1; i < MAX_BONUS; i++)
+        for (int i = 1; i < ABONUS_MAX; i++)
         {
             // Skip Mod Drop if DRLA extension isn't enabled
-            if (i == 10 && CompatMode != COMPAT_DRLA) continue;
+            if (i == ABONUS_MODDROP && CompatMode != COMPAT_DRLA) continue;
             
             // Skip Key Drop if the randomizer hates you
-            if (i == 11 && !CanChooseKey) continue;
+            if (i == ABONUS_KEYDROP && !CanChooseKey) continue;
             
             // Cursor
             if (i == BonusChoice)
@@ -300,11 +299,11 @@ function void ArenaGetBonus(int Bonus)
     
     switch (Bonus)
     {
-    case 0: // Choose Your Own!
+    case ABONUS_SELECT: // Choose Your Own!
         ActivatorSound("arena/pickbonus", 127);
         ArenaChooseBonus();
         break;
-    case 1: // Full EP
+    case ABONUS_FULLEP: // Full EP
         if (InMultiplayer)
             for (int i = 0; i < MAX_PLAYERS; i++)
                 Players(i).EP = Players(i).EPMax
@@ -312,30 +311,26 @@ function void ArenaGetBonus(int Bonus)
         {
             if (Player.EP >= Player.EPMax)
             {
-                ArenaGetBonus(Random(0, MAX_BONUS - 1));
+                ArenaGetBonus(Random(0, ABONUS_MAX - 1));
                 return;
             }
             else
                 Player.EP = Player.EPMax;
         };
         break;
-    case 2: // Money Drop
-        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+    case ABONUS_MONEYDROP: // Money Drop
         for (int i = 0; i < ArenaWave * PlayerCount() * 5; i++)
-            SpawnSpot("DRPGMoneyDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+            DropArenaItem("DRPGMoneyDropper");
         break;
-    case 3: // Money Drop
-        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+    case ABONUS_CHIPDROP: // Chip Drop
         for (int i = 0; i < PlayerCount(); i++)
-            SpawnSpot("DRPGChipDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+            DropArenaItem("DRPGChipDropper");
         break;
-    case 4: // Ammo Drop
-        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+    case ABONUS_AMMODROP: // Ammo Drop
         for (int i = 0; i < PlayerCount(); i++)
-            SpawnSpot("DRPGBackpackRandomizer", ArenaItemSpotTID, ArenaItemTID, 0);
+            DropArenaItem("DRPGBackpackRandomizer");
         break;
-    case 5: // Health Drop
-        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+    case ABONUS_HEALTHDROP: // Health Drop
         for (int i = 0; i < PlayerCount(); i++)
         {
             if (Random(1, 4) == 1)
@@ -344,58 +339,52 @@ function void ArenaGetBonus(int Bonus)
                 SpawnItem = "Soulsphere"
             else
                 SpawnItem = "DRPGHealthDropper";
-            SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
+            DropArenaItem(SpawnItem);
         };
         break;
-    case 6: // Armor Drop
-        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+    case ABONUS_ARMORDROP: // Armor Drop
         for (int i = 0; i < PlayerCount(); i++)
         {
             if (Random(1, 2) == 1)
                 SpawnItem = "DRPGGreenArmorRandomizer"
             else
                 SpawnItem = "DRPGBlueArmorRandomizer";
-            SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
+            DropArenaItem(SpawnItem);
         };
         break;
-    case 7: // Weapon Drop
-        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+    case ABONUS_WEAPONDROP: // Weapon Drop
         for (int i = 0; i < PlayerCount(); i++)
-            SpawnSpot("DRPGWeaponDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+            DropArenaItem("DRPGWeaponDropper");
         break;
-    case 8: // Powerup Drop
-        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+    case ABONUS_POWERUPDROP: // Powerup Drop
         for (int i = 0; i < PlayerCount(); i++)
-            SpawnSpot("DRPGPowerupDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+            DropArenaItem("DRPGPowerupDropper");
         break;
-    case 9: // Stim Drop
-        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+    case ABONUS_STIMDROP: // Stim Drop
         if (Random(1, 8) == 1)
         {
             for (int i = 0; i < PlayerCount(); i++)
-                SpawnSpot("DRPGStimDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+                DropArenaItem("DRPGStimDropper");
         }
         else
         {
             for (int i = 0; i < ArenaWave * PlayerCount() * 5; i++)
-                SpawnSpot("DRPGVialDropper", ArenaItemSpotTID, ArenaItemTID, 0);
+                DropArenaItem("DRPGVialDropper");
         };
         break;
-    case 10: // Mod Drop (DRLA Only)
+    case ABONUS_MODDROP: // Mod Drop (DRLA Only)
         if (CompatMode == COMPAT_DRLA)
         {
-            SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
             for (int i = 0; i < PlayerCount(); i++)
-                SpawnSpot("RLModPackSpawner", ArenaItemSpotTID, ArenaItemTID, 0);
+                DropArenaItem("RLModPackSpawner");
         }
         else
         {
-            ArenaGetBonus(Random(0, MAX_BONUS - 1));
+            ArenaGetBonus(Random(0, ABONUS_MAX - 1));
             return;
         };
         break;
-    case 11: // Key Drop
-        SpawnSpot("TeleportFog", ArenaItemSpotTID, 0, 0);
+    case ABONUS_KEYDROP: // Key Drop
         if (ArenaKey == 0) SpawnItem = "DRPGRedCard";
         if (ArenaKey == 1) SpawnItem = "DRPGYellowCard";
         if (ArenaKey == 2) SpawnItem = "DRPGBlueCard";
@@ -404,11 +393,11 @@ function void ArenaGetBonus(int Bonus)
         if (ArenaKey == 5) SpawnItem = "DRPGBlueSkull";
         if (ArenaKey == 6)
         { 
-            ArenaGetBonus(Random(0, MAX_BONUS - 1));
+            ArenaGetBonus(Random(0, ABONUS_MAX - 1));
             return;
         };
         for (int i = 0; i < PlayerCount(); i++)
-            SpawnSpot(SpawnItem, ArenaItemSpotTID, ArenaItemTID, 0);
+            DropArenaItem(SpawnItem);
         if (ArenaKey < 6) ArenaKey++;
         ActivatorSound("arena/keydrop", 127);
         break;
@@ -417,14 +406,44 @@ function void ArenaGetBonus(int Bonus)
     // Bonus Message
     if (Bonus > 0)
     {
-        SetActorVelocity(ArenaItemTID, Random(-8, 8), Random(-8, 8), Random(-8, 8), true, false);
-        Thing_ChangeTID(ArenaItemTID, 0);
-        
         SetHudSize(0, 0, false);
         SetFont("BIGFONT");
         HudMessageBold("%s\n", ArenaBonus[Bonus], HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 2.0, 1.0);
         if (Bonus != 10)
             ActivatorSound("arena/drop", 127);
+    };
+};
+
+function void DropArenaItem(str Item)
+{
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i)) continue;
+        
+        int TID = UniqueTID();
+        bool Success = false;
+        fixed X = GetActorX(Players(i).TID);
+        fixed Y = GetActorY(Players(i).TID);
+        fixed Z = GetActorCeilingZ(Players(i).TID) - 32.0;
+        fixed XSpeed = GetCVarFixed("drpg_monster_dropdist");
+        fixed YSpeed = GetCVarFixed("drpg_monster_dropdist");
+        fixed ZSpeed = 8.0;
+        
+        SpawnForced("TeleportFog", X, Y, Z, 0, 0);
+        Success = SpawnForced(Item, X, Y, Z, TID, 0);
+        
+        if (Success)
+        {
+            // Set Velocity
+            SetActorVelocity(TID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
+            
+            // Array has grown too big, resize it
+            if (Players(i).DropTID.Position == Players(i).DropTID.Size)
+                ArrayResize(&Players(i).DropTID);
+            
+            // Add item's TID to drop array
+            ((int *)Players(i).DropTID.Data)[Players(i).DropTID.Position++] = TID;
+        };
     };
 };
 
@@ -471,7 +490,7 @@ function void ArenaDrawHUD()
     // Environment
     if (ArenaEnvironment > 0)
     {
-        HudMessageBold("%s\n", ArenaEnvironments[ArenaEnvironment - 1],
+        HudMessageBold("%s\n", ArenaEvents[ArenaEnvironment - 1],
                        HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
         Y += 8.0;
     };
@@ -481,7 +500,7 @@ function void ArenaCheckMod()
 {
     switch (ArenaMod)
     {
-    case 0: // No Regeneration
+    case AMOD_NOREGEN: // No Regeneration
         Player.HPRate = 0;
         Player.EPRate = 0;
         break;
@@ -542,14 +561,14 @@ function void ArenaSetEnvironment(int ID)
 {
     if (ID == -1)
     {
-        int EnvironmentRandomizer = Random(-10, MAX_ENVIRONMENTS);
+        int EnvironmentRandomizer = Random(-10, AEVENT_MAX);
         if (EnvironmentRandomizer > 0)
             ID = EnvironmentRandomizer;
     };
 
     switch (ID)
     {
-    case 0: // Normal
+    case AEVENT_NONE: // Normal
         Light_Fade(ArenaSectorTag, 192, 35);
         Light_Fade(ArenaSectorTag + 1, 192, 35);
         Light_Fade(ArenaSectorTag + 2, 192, 35);
@@ -566,23 +585,23 @@ function void ArenaSetEnvironment(int ID)
         Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255);
         Sector_SetColor(ArenaSectorTag + 2, 255, 255, 255);
         break;
-    case 1: // Blackout
+    case AEVENT_BLACKOUT: // Blackout
         Light_Fade(ArenaSectorTag, 0, 35);
         Light_Fade(ArenaSectorTag + 1, 0, 35);
         Light_Fade(ArenaSectorTag + 2, 0, 35);
         break;
-    case 2: // Foggy
-        int r = Random(0, 255);
-        int g = Random(0, 255);
-        int b = Random(0, 255);
+    case AEVENT_FOGGY: // Foggy
+        int R = Random(0, 255);
+        int G = Random(0, 255);
+        int B = Random(0, 255);
         Light_Fade(ArenaSectorTag, 128, 35);
         Light_Fade(ArenaSectorTag + 1, 128, 35);
         Light_Fade(ArenaSectorTag + 2, 128, 35);
-        Sector_SetFade(ArenaSectorTag, r, g, b);
-        Sector_SetFade(ArenaSectorTag + 1, r, g, b);
-        Sector_SetFade(ArenaSectorTag + 2, r, g, b);
+        Sector_SetFade(ArenaSectorTag, R, G, B);
+        Sector_SetFade(ArenaSectorTag + 1, R, G, B);
+        Sector_SetFade(ArenaSectorTag + 2, R, G, B);
         break;
-    case 3: // The Floor is Lava
+    case AEVENT_LAVA: // The Floor is Lava
         ChangeFloor(ArenaSectorTag, "LAVA1");
         ChangeFloor(ArenaSectorTag + 1, "LAVA1");
         ChangeFloor(ArenaSectorTag + 2, "LAVA1");
@@ -590,7 +609,7 @@ function void ArenaSetEnvironment(int ID)
         Sector_SetDamage(ArenaSectorTag + 1, 1, MOD_SLIME);
         Sector_SetDamage(ArenaSectorTag + 2, 1, MOD_SLIME);
         break;
-    case 4: // Grayscale
+    case AEVENT_GRAYSCALE: // Grayscale
         Sector_SetColor(ArenaSectorTag, 255, 255, 255, 255);
         Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255, 255);
         Sector_SetColor(ArenaSectorTag + 2, 255, 255, 255, 255);
