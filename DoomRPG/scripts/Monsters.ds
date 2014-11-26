@@ -641,6 +641,10 @@ script void MonsterInitStats(int StatFlags)
         SetActorPropertyString(0, APROP_Nametag, GenerateName(GetActorClass(0), GetActorPropertyString(0, APROP_Nametag)));
         Stats->Named = true;
     };
+    
+    // Reinitialize the stats handler if recreation has occurred
+    if (StatFlags & SF_RECREATE)
+        MonsterStatsHandler();
 };
 
 script void MonsterStatsHandler()
@@ -747,18 +751,18 @@ script void MonsterStatsHandler()
         if (OldVitality == 0)
         {
             // This will trigger if the monster was previously dead and revived, so heal up fully
-            SetActorProperty (0, APROP_Health, Stats->HealthMax);
+            SetActorProperty(0, APROP_Health, Stats->HealthMax);
         }
         else if (Stats->Vitality > OldVitality)
         {
-            int healthcurr = GetActorProperty (0, APROP_Health);
+            int healthcurr = GetActorProperty(0, APROP_Health);
             int healthdiff = Stats->HealthMax - healthcurr;
-            SetActorProperty (0, APROP_Health, healthcurr + healthdiff / 2); // Heal half of the difference
+            SetActorProperty(0, APROP_Health, healthcurr + healthdiff / 2); // Heal half of the difference
         }
         else
              // Cap to new only if it's lower than current, so Weaken doesn't accidentally heal enemies
-            if (GetActorProperty (0, APROP_Health) > Stats->HealthMax)
-                SetActorProperty (0, APROP_Health, Stats->HealthMax);
+            if (GetActorProperty(0, APROP_Health) > Stats->HealthMax)
+                SetActorProperty(0, APROP_Health, Stats->HealthMax);
         
         OldVitality = Stats->Vitality;
     };
@@ -795,7 +799,6 @@ script void MonsterStatsHandler()
     };
     
     Delay(4);
-    
     goto Start;
 };
 
@@ -893,16 +896,20 @@ script void MonsterLevelupHandler()
         goto Start;
     };
     
-    // White Aura monsters levelup monsters near them
-    if (Stats->Aura.Type[AURA_WHITE].Active)
-        GiveInventory("DRPGMonsterLevelupGiver", 1);
-    
     // Loop back to the top if the monster is max level
     if (Stats->Level >= 1000)
         goto Start;
     
-    // Levelup
-    MonsterLevelup(Stats);
+    // White Aura monsters levelup monsters near them
+    if (Stats->Aura.Type[AURA_WHITE].Active)
+        for (int i = 0; i < MAX_PLAYERS; i++) // LOS Check on players
+            if (CheckSight(0, Players(i).TID, 0))
+            {
+                if (!PlayerInGame(i)) continue;
+                
+                GiveInventory("DRPGMonsterLevelupGiver", 1);
+                break;
+            };
     
     // Return here if the White Aura is no longer active
     if (!Stats->Aura.Type[AURA_WHITE].Active)

@@ -196,7 +196,7 @@ acscript void ArenaStop()
     ArenaMod = -1;
     ArenaSetEnvironment(AEVENT_NONE);
     
-    ResetOutpostMusic();
+    ResetOutpostMusic(false);
     
     Ceiling_RaiseByValue(ArenaSectorTag - 1, 64, 128);
     Thing_Remove(ArenaMonstersTID);
@@ -295,7 +295,12 @@ acscript void ArenaChooseBonus()
 
 function void ArenaGetBonus(int Bonus)
 {
+    int SpawnAmount = ArenaWave * 5;
     str SpawnItem;
+    
+    // Cap the spawn amount so the game doesn't lag and crash into oblivion
+    if (SpawnAmount > 1000)
+        SpawnAmount = 1000;
     
     switch (Bonus)
     {
@@ -319,65 +324,47 @@ function void ArenaGetBonus(int Bonus)
         };
         break;
     case ABONUS_MONEYDROP: // Money Drop
-        for (int i = 0; i < ArenaWave * PlayerCount() * 5; i++)
+        for (int i = 0; i < SpawnAmount; i++)
             DropArenaItem("DRPGMoneyDropper");
         break;
     case ABONUS_CHIPDROP: // Chip Drop
-        for (int i = 0; i < PlayerCount(); i++)
-            DropArenaItem("DRPGChipDropper");
+        DropArenaItem("DRPGChipDropper");
         break;
     case ABONUS_AMMODROP: // Ammo Drop
-        for (int i = 0; i < PlayerCount(); i++)
-            DropArenaItem("DRPGBackpackRandomizer");
+        DropArenaItem("DRPGBackpackRandomizer");
         break;
     case ABONUS_HEALTHDROP: // Health Drop
-        for (int i = 0; i < PlayerCount(); i++)
-        {
-            if (Random(1, 4) == 1)
-                SpawnItem = "Megasphere"
-            else if (Random(1, 2) == 1)
-                SpawnItem = "Soulsphere"
-            else
-                SpawnItem = "DRPGHealthDropper";
-            DropArenaItem(SpawnItem);
-        };
+        if (Random(1, 4) == 1)
+            SpawnItem = "Megasphere"
+        else if (Random(1, 2) == 1)
+            SpawnItem = "Soulsphere"
+        else
+            SpawnItem = "DRPGHealthDropper";
+        DropArenaItem(SpawnItem);
         break;
     case ABONUS_ARMORDROP: // Armor Drop
-        for (int i = 0; i < PlayerCount(); i++)
-        {
-            if (Random(1, 2) == 1)
-                SpawnItem = "DRPGGreenArmorRandomizer"
-            else
-                SpawnItem = "DRPGBlueArmorRandomizer";
-            DropArenaItem(SpawnItem);
-        };
+        if (Random(1, 2) == 1)
+            SpawnItem = "DRPGBlueArmorRandomizer"
+        else
+            SpawnItem = "DRPGGreenArmorRandomizer";
+        DropArenaItem(SpawnItem);
         break;
     case ABONUS_WEAPONDROP: // Weapon Drop
-        for (int i = 0; i < PlayerCount(); i++)
-            DropArenaItem("DRPGWeaponDropper");
+        DropArenaItem("DRPGWeaponDropper");
         break;
     case ABONUS_POWERUPDROP: // Powerup Drop
-        for (int i = 0; i < PlayerCount(); i++)
-            DropArenaItem("DRPGPowerupDropper");
+        DropArenaItem("DRPGPowerupDropper");
         break;
     case ABONUS_STIMDROP: // Stim Drop
-        if (Random(1, 8) == 1)
-        {
-            for (int i = 0; i < PlayerCount(); i++)
-                DropArenaItem("DRPGStimDropper");
-        }
-        else
-        {
-            for (int i = 0; i < ArenaWave * PlayerCount() * 5; i++)
-                DropArenaItem("DRPGVialDropper");
-        };
+        if (Random(1, 4) == 1)
+            DropArenaItem("DRPGStimPackageStat")
+        else if (Random(1, 8) == 1)
+            DropArenaItem("DRPGStimPackagePowerup");
+        DropArenaItem("DRPGStimDropper");
         break;
     case ABONUS_MODDROP: // Mod Drop (DRLA Only)
         if (CompatMode == COMPAT_DRLA)
-        {
-            for (int i = 0; i < PlayerCount(); i++)
-                DropArenaItem("RLModPackSpawner");
-        }
+            DropArenaItem("RLModPackSpawner")
         else
         {
             ArenaGetBonus(Random(0, ABONUS_MAX - 1));
@@ -396,8 +383,7 @@ function void ArenaGetBonus(int Bonus)
             ArenaGetBonus(Random(0, ABONUS_MAX - 1));
             return;
         };
-        for (int i = 0; i < PlayerCount(); i++)
-            DropArenaItem(SpawnItem);
+        DropArenaItem(SpawnItem);
         if (ArenaKey < 6) ArenaKey++;
         ActivatorSound("arena/keydrop", 127);
         break;
