@@ -799,12 +799,22 @@ function void FlanExplosion() // This gets called on full charge too
 
 function void SpaghettiShieldBreak()
 {
-    if (CheckInventory("Armor") == 0 || CheckInventory("Armor") >= GetArmorInfo(ARMORINFO_SAVEAMOUNT) || !Player.Shield.AccessoryBattery)
-        return;
+    if (GetCVar("drpg_shield_armorremove"))
+    {
+        if (Player.Shield.ArmorType == "None" || !Player.Shield.AccessoryBattery)
+            return;
+    }
+    else
+    {
+        if (CheckInventory("Armor") == 0 || CheckInventory("Armor") >= GetArmorInfo(ARMORINFO_SAVEAMOUNT) || !Player.Shield.AccessoryBattery)
+            return;
+    };
     
     FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0, 1.0);
-    GiveInventory(GetArmorInfoString(ARMORINFO_CLASSNAME), 1);
-    
+    if (GetCVar("drpg_shield_armorremove"))
+        Player.Shield.ArmorAmount = Player.Shield.ArmorMax
+    else
+        GiveInventory(GetArmorInfoString(ARMORINFO_CLASSNAME), 1);
     ActivatorSound("skills/repair", 127);
     Player.Shield.AccessoryBattery = 0;
 };
