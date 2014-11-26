@@ -1310,10 +1310,14 @@ script bool ActivateShield()
         // DRLA Compatibility
         if (CompatMode != COMPAT_DRLA)
             TakeInventory("BasicArmor", Player.Shield.ArmorAmount);
-        if (CompatMode == COMPAT_DRLA && !Contains(Player.Shield.ArmorType, "Shield"))
+        if (CompatMode == COMPAT_DRLA && !Contains(Player.Shield.ArmorType, "Shield") && !Contains(Player.Shield.ArmorType, "Cybernetic"))
         {
             TakeInventory("BasicArmor", Player.Shield.ArmorAmount);
-            TakeInventory(StrParam("%sToken\n", Player.Shield.ArmorType), 1);
+            if (PlayerClass(PlayerNumber()) == 3) // Renegade
+                TakeInventory(StrParam("%sToken\n", StrLeft(Player.Shield.ArmorType, StrLen(Player.Shield.ArmorType) - 8)), 1)
+            else
+                TakeInventory(StrParam("%sToken\n", Player.Shield.ArmorType), 1);
+            
             TakeInventory("RL100ArmorWorn", 1);
             TakeInventory("RL150ArmorWorn", 1);
             TakeInventory("RL200ArmorWorn", 1);
@@ -1339,7 +1343,7 @@ script void DeactivateShield()
     PlaySound(0, "shield/off", 5, 1.0, false, 1.0);
     Player.Shield.Active = false;
     Player.Shield.AccessoryBattery = 0;
-    if (GetCVar("drpg_shield_armorremove") && Player.Shield.ArmorType != "None" && !Contains(Player.Shield.ArmorType, "Shield"))
+    if (GetCVar("drpg_shield_armorremove") && Player.Shield.ArmorType != "None" && !Contains(Player.Shield.ArmorType, "Shield") && !Contains(Player.Shield.ArmorType, "Cybernetic"))
     {
         GiveInventory(Player.Shield.ArmorType, 1);
         TakeInventory("BasicArmor", Player.Shield.ArmorMax - Player.Shield.ArmorAmount);
@@ -1347,7 +1351,10 @@ script void DeactivateShield()
         // DRLA Compatibility
         if (CompatMode == COMPAT_DRLA)
         {
-            GiveInventory(StrParam("%sToken\n", Player.Shield.ArmorType), 1);
+            if (PlayerClass(PlayerNumber()) == 3) // Renegade
+                GiveInventory(StrParam("%sToken\n", StrLeft(Player.Shield.ArmorType, StrLen(Player.Shield.ArmorType) - 8)), 1)
+            else
+                GiveInventory(StrParam("%sToken\n", Player.Shield.ArmorType), 1);
             
             if (Player.Shield.ArmorMax == 100)
                 GiveInventory("RL100ArmorWorn", 1)
