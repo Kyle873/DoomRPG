@@ -228,8 +228,6 @@ script void Init() enter
 // Loop Script
 script void Loop()
 {
-    int OldDamage;
-    
     Start:
     
     // If the player's dead, terminate
@@ -314,28 +312,15 @@ script void Loop()
     // Regeneration
     DoRegen();
     
-    // Give the Strength boosting item
-    if (Player.TotalDamage != OldDamage)
-    {
-        if (OldDamage)
-            TakeInventory(StrParam("DRPGStrength%d\n", OldDamage), 1);
-        
-        if (Player.TotalDamage >= 32000)
-            GiveInventory("DRPGStrength32000", 1)
-        else if (Player.TotalDamage > 0)
-            GiveInventory(StrParam("DRPGStrength%d\n", Player.TotalDamage), 1);
-        
-        OldDamage = Player.TotalDamage;
-    };
-    
     // Set mass stupid high when Invulnerable to prevent knockback
     if (CheckInventory("PowerInvulnerable"))
         Player.Mass *= 128;
     
     // Apply Stats
-    SetActorProperty(Player.TID, APROP_SpawnHealth, Player.HealthMax);
+    SetActorPropertyFixed(Player.TID, APROP_DamageMultiplier, 1.0 + ((fixed)Player.TotalDamage / 100.0));
     SetActorPropertyFixed(Player.TID, APROP_DamageFactor, Player.DamageFactor);
     SetActorProperty(Player.TID, APROP_Mass, Player.Mass);
+    SetActorProperty(Player.TID, APROP_SpawnHealth, Player.HealthMax);
     SetActorPropertyFixed(Player.TID, APROP_Speed, Player.Speed);
     SetActorPropertyFixed(Player.TID, APROP_JumpZ, Player.JumpHeight);
     
