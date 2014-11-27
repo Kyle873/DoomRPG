@@ -75,7 +75,7 @@ echo    - Utils
 %ACC% -c %SRC%\Utils.ds -o %OBJ%\Utils.o
 
 echo Linking RPG.lib
-%ACC% %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\ItemData.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Turret.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
+%ACC% %OBJ%\Arena.o %OBJ%\Augs.o %OBJ%\CharSave.o %OBJ%\HealthBars.o %OBJ%\HUD.o %OBJ%\ItemData.o %OBJ%\Map.o %OBJ%\Menu.o %OBJ%\Minigame.o %OBJ%\Mission.o %OBJ%\Monsters.o %OBJ%\Namegen.o %OBJ%\Outpost.o %OBJ%\Popoffs.o %OBJ%\RPG.o %OBJ%\Shield.o %OBJ%\Shop.o %OBJ%\Skills.o %OBJ%\Stats.o %OBJ%\Stims.o %OBJ%\Turret.o %OBJ%\Utils.o -o %OBJ%\RPG.lib
 
 echo Cleaning up Object Files
 del %OBJ%\*.o
