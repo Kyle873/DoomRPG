@@ -401,123 +401,117 @@ script void MonsterInitStats(int StatFlags)
     int MonsterAgility = Stats->Agility;
     int MonsterCapacity = Stats->Capacity;
     int MonsterLuck = Stats->Luck;
+    int LevelType = GetCVar("drpg_monster_levels");
+    fixed LevelWeight = GetCVarFixed("drpg_monster_level_weight");
+    fixed MapWeight = GetCVarFixed("drpg_monster_map_weight");
+    fixed RandomMinWeight = GetCVarFixed("drpg_monster_random_min_mult");
+    fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
+    int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
     int NumPlayers;
     int[8] StatEffect;
     
-    // Monster Stats System
-    if (GetCVar("drpg_monster_levels") > 0 && !(StatFlags & SF_RECREATE))
+    // Cap Level Number to 100
+    if (LevelNum > 100)
+        LevelNum = 100;
+    
+    // If the Arena is active, base the Monster Levels Map Number portion on the current wave
+    if (InBase && ArenaActive)
+        LevelNum = ArenaWave / 3;
+    
+    // Calculate Monster Level
+    if (LevelType == 1 || LevelType == 3) // Player Level
+        MonsterLevel += (int)((fixed)AveragePlayerLevel() * LevelWeight);
+    if (LevelType == 2 || LevelType == 3) // Map Number
+        MonsterLevel += (int)((fixed)LevelNum * MapWeight);
+    
+    // Randomization Weight
+    if (RandomMinWeight > RandomMaxWeight)
+        Log("\cgERROR: \c-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!\n")
+    else
+        MonsterLevel = (int)(MonsterLevel * RandomFixed(RandomMinWeight, RandomMaxWeight));
+    
+    // If the monster is friendly, it has the average level of all players in the game
+    if (GetActorProperty(0, APROP_Friendly))
+        MonsterLevel = AveragePlayerLevel();
+    
+    // Special case for Bosses
+    if (Stats->Flags & MF_BOSS)
+        MonsterLevel += (GameSkill() * 10);
+    
+    // Special case for Megabosses
+    if (Stats->Flags & MF_MEGABOSS)
+        MonsterLevel += ((1000 / MAX_PLAYERS) * PlayerCount());
+    
+    // Special case for Powersuit Mk. II
+    if (GetActorClass(0) == "DRPGSuperPowerSuit")
+        MonsterLevel = 1000;
+    
+    // Calculate the monster's cut and special stats
+    if (GetCVar("drpg_monster_specialize"))
     {
-        // level
-        int LevelType = GetCVar("drpg_monster_levels");
-        fixed LevelWeight = GetCVarFixed("drpg_monster_level_weight");
-        fixed MapWeight = GetCVarFixed("drpg_monster_map_weight");
-        fixed RandomMinWeight = GetCVarFixed("drpg_monster_random_min_mult");
-        fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
-        int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+        // [KS] Here's a fun and fast little way of doing it:
         
-        // Cap Level Number to 100
-        if (LevelNum > 100)
-            LevelNum = 100;
+        // 2 specialized stats
+        StatEffect[0] = 2;
+        StatEffect[1] = 2;
         
-        // If the Arena is active, base the Monster Levels Map Number portion on the current wave
-        if (InBase && ArenaActive)
-            LevelNum = ArenaWave / 3;
+        // 2 normal stats
+        StatEffect[2] = 0;
+        StatEffect[3] = 0;
         
-        // Calculate Monster Level
-        if (LevelType == 1 || LevelType == 3) // Player Level
-            MonsterLevel += (int)((fixed)AveragePlayerLevel() * LevelWeight);
-        if (LevelType == 2 || LevelType == 3) // Map Number
-            MonsterLevel += (int)((fixed)LevelNum * MapWeight);
+        // 4 cut stats
+        StatEffect[4] = 1;
+        StatEffect[5] = 1;
+        StatEffect[6] = 1;
+        StatEffect[7] = 1;
         
-        // Randomization Weight
-        if (RandomMinWeight > RandomMaxWeight)
-            Log("\cgERROR: \c-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!\n")
-        else
-            MonsterLevel = (int)(MonsterLevel * RandomFixed(RandomMinWeight, RandomMaxWeight));
-        
-        // If the monster is friendly, it has the average level of all players in the game
-        if (GetActorProperty(0, APROP_Friendly))
-            MonsterLevel = AveragePlayerLevel();
-        
-        // Special case for Bosses
-        if (Stats->Flags & MF_BOSS)
-            MonsterLevel += (GameSkill() * 10);
-        
-        // Special case for Megabosses
-        if (Stats->Flags & MF_MEGABOSS)
-            MonsterLevel += ((1000 / MAX_PLAYERS) * PlayerCount());
-        
-        // Special case for Powersuit Mk. II
-        if (GetActorClass(0) == "DRPGSuperPowerSuit")
-            MonsterLevel = 1000;
-        
-        // Calculate the monster's cut and special stats
-        if (GetCVar("drpg_monster_specialize"))
+        // And shuffle 'em up!
+        for (int i = 0; i < STAT_MAX; i++)
         {
-            // [KS] Here's a fun and fast little way of doing it:
+            int SwapWith = Random(0, STAT_MAX - 1);
+            int Temp = StatEffect[i];
             
-            // 2 specialized stats
-            StatEffect[0] = 2;
-            StatEffect[1] = 2;
-            
-            // 2 normal stats
-            StatEffect[2] = 0;
-            StatEffect[3] = 0;
-            
-            // 4 cut stats
-            StatEffect[4] = 1;
-            StatEffect[5] = 1;
-            StatEffect[6] = 1;
-            StatEffect[7] = 1;
-            
-            // And shuffle 'em up!
-            for (int i = 0; i < STAT_MAX; i++)
-            {
-                int SwapWith = Random(0, STAT_MAX - 1);
-                int Temp = StatEffect[i];
-                
-                StatEffect[i] = StatEffect[SwapWith];
-                StatEffect[SwapWith] = Temp;
-            };
+            StatEffect[i] = StatEffect[SwapWith];
+            StatEffect[SwapWith] = Temp;
         };
-        
-        // Calculate Monster Stats
-        MonsterStrength = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterDefense = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterVitality = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterEnergy = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterRegeneration = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterAgility = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterCapacity = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterLuck = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        
-        if (GetCVar("drpg_monster_specialize"))
-        {
-            // Cut Stats
-            if (StatEffect[0] == 1) MonsterStrength /= 2;
-            if (StatEffect[1] == 1) MonsterDefense /= 2;
-            if (StatEffect[2] == 1) MonsterVitality /= 2;
-            if (StatEffect[3] == 1) MonsterEnergy /= 2;
-            if (StatEffect[4] == 1) MonsterRegeneration /= 2;
-            if (StatEffect[5] == 1) MonsterAgility /= 2;
-            if (StatEffect[6] == 1) MonsterCapacity /= 2;
-            if (StatEffect[7] == 1) MonsterLuck /= 2;
-            
-            // Specialized Stats
-            if (StatEffect[0] == 2) MonsterStrength *= Random(2, 4);
-            if (StatEffect[1] == 2) MonsterDefense *= Random(2, 4);
-            if (StatEffect[2] == 2) MonsterVitality *= Random(2, 4);
-            if (StatEffect[3] == 2) MonsterEnergy *= Random(2, 4);
-            if (StatEffect[4] == 2) MonsterRegeneration *= Random(2, 4);
-            if (StatEffect[5] == 2) MonsterAgility *= Random(2, 4);
-            if (StatEffect[6] == 2) MonsterCapacity *= Random(2, 4);
-            if (StatEffect[7] == 2) MonsterLuck *= Random(2, 4);
-        };
-        
-        // Map Event - RAINBOWS!
-        if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
-            MonsterCapacity *= Random(2, 4);
     };
+    
+    // Calculate Monster Stats
+    MonsterStrength = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+    MonsterDefense = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+    MonsterVitality = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+    MonsterEnergy = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+    MonsterRegeneration = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+    MonsterAgility = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+    MonsterCapacity = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+    MonsterLuck = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+    
+    if (GetCVar("drpg_monster_specialize"))
+    {
+        // Cut Stats
+        if (StatEffect[0] == 1) MonsterStrength /= 2;
+        if (StatEffect[1] == 1) MonsterDefense /= 2;
+        if (StatEffect[2] == 1) MonsterVitality /= 2;
+        if (StatEffect[3] == 1) MonsterEnergy /= 2;
+        if (StatEffect[4] == 1) MonsterRegeneration /= 2;
+        if (StatEffect[5] == 1) MonsterAgility /= 2;
+        if (StatEffect[6] == 1) MonsterCapacity /= 2;
+        if (StatEffect[7] == 1) MonsterLuck /= 2;
+        
+        // Specialized Stats
+        if (StatEffect[0] == 2) MonsterStrength *= Random(2, 4);
+        if (StatEffect[1] == 2) MonsterDefense *= Random(2, 4);
+        if (StatEffect[2] == 2) MonsterVitality *= Random(2, 4);
+        if (StatEffect[3] == 2) MonsterEnergy *= Random(2, 4);
+        if (StatEffect[4] == 2) MonsterRegeneration *= Random(2, 4);
+        if (StatEffect[5] == 2) MonsterAgility *= Random(2, 4);
+        if (StatEffect[6] == 2) MonsterCapacity *= Random(2, 4);
+        if (StatEffect[7] == 2) MonsterLuck *= Random(2, 4);
+    };
+    
+    // Map Event - RAINBOWS!
+    if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
+        MonsterCapacity *= Random(2, 4);
     
     // Apply Aura
     if (!GetActorProperty(0, APROP_Friendly) && !(Stats->Flags & MF_NOAURA) && !StatFlags)
@@ -612,23 +606,19 @@ script void MonsterInitStats(int StatFlags)
     CapMonsterStats(Stats);
     
     // We need to make sure we only pass the speed to the monster if it's being initially created
-    if (!(StatFlags & SF_RECREATE))
-        MonsterSpeed = GetActorPropertyFixed(0, APROP_Speed);
+    MonsterSpeed = GetActorPropertyFixed(0, APROP_Speed);
     
     // Apply the stats to the monster
-    if (!(StatFlags & SF_RECREATE))
-    {
-        Stats->Level = MonsterLevel;
-        Stats->Speed = MonsterSpeed;
-        Stats->Strength = MonsterStrength;
-        Stats->Defense = MonsterDefense;
-        Stats->Vitality = MonsterVitality;
-        Stats->Energy = MonsterEnergy;
-        Stats->Regeneration = MonsterRegeneration;
-        Stats->Agility = MonsterAgility;
-        Stats->Capacity = MonsterCapacity;
-        Stats->Luck = MonsterLuck;
-    };
+    Stats->Level = MonsterLevel;
+    Stats->Speed = MonsterSpeed;
+    Stats->Strength = MonsterStrength;
+    Stats->Defense = MonsterDefense;
+    Stats->Vitality = MonsterVitality;
+    Stats->Energy = MonsterEnergy;
+    Stats->Regeneration = MonsterRegeneration;
+    Stats->Agility = MonsterAgility;
+    Stats->Capacity = MonsterCapacity;
+    Stats->Luck = MonsterLuck;
     
     // [KS] We only need to do a health check here since the other checks are handled below.
     // Calculate Health
