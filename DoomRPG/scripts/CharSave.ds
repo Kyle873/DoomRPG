@@ -56,7 +56,9 @@
     Locker
         - Each item's count will be stored in 4 bytes
         - Each weapon's associated DRLA Modpacks will be stored in 1 byte after the amount
-        
+    Auto-Sell
+        - Each item is stored in a 1 byte boolean
+    
     ----- COMPATIBILITY EXTENSIONS -----
     
     DRLA Assemblies
@@ -113,7 +115,7 @@ str[DRLA_MAX_ASSEMBLIES] DRLAAssemblies =
 acscript void SaveCharacter() net
 {
     // You need to be in the Outpost to do this
-    if (!InBase)
+    if (!InBase && !GetCVar("drpg_debug"))
     {
         SetFont("BIGFONT");
         HudMessage("\cgERROR: \cjYou must be in the Outpost to save and deposit your equipment\n", HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, 0.5, 3.0, 2.0);
@@ -341,7 +343,7 @@ acscript void LoadCharacter() net
         {
             Player.Locker[i][j] = Info.Locker[i][j];
             
-            if (CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
+            if (Info.CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
             {
                 Player.WeaponMods[j].Total = Info.WeaponMods[j][0];
                 Player.WeaponMods[j].Power = Info.WeaponMods[j][1];
@@ -354,6 +356,13 @@ acscript void LoadCharacter() net
                 Player.WeaponMods[j].Artifacts = Info.WeaponMods[j][8];
             };
         };
+    
+    // Auto-Sell
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+            Player.AutoSell[i][j] = Info.AutoSell[i][j];
+    
+    // ----- COMPATIBILITY EXTENSIONS -----
     
     // DRLA Assemblies
     for (int i = 0; i < DRLA_MAX_ASSEMBLIES; i++)
@@ -484,7 +493,7 @@ script void PopulateCharData(CharSaveInfo *Info)
         {
             Info->Locker[i][j] = Player.Locker[i][j];
             
-            if (CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
+            if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
             {
                 Info->WeaponMods[j][0] = Player.WeaponMods[j].Total;
                 Info->WeaponMods[j][1] = Player.WeaponMods[j].Power;
@@ -497,6 +506,11 @@ script void PopulateCharData(CharSaveInfo *Info)
                 Info->WeaponMods[j][8] = Player.WeaponMods[j].Artifacts;
             };
         };
+    
+    // Auto-Sell
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+            Info->AutoSell[i][j] = Player.AutoSell[i][j];
     
     // ----- COMPATIBILITY EXTENSIONS -----
     
@@ -511,38 +525,8 @@ script void PopulateCharData(CharSaveInfo *Info)
             Info->DRLAAssemblies3 |= 1 << (i - 32);
     };
     
-    // Calc Checksum
-    Info->Checksum = 0;
-    Info->Checksum ^= Info->Version;
-    Info->Checksum ^= Info->CompatMode;
-    Info->Checksum ^= Info->Level;
-    Info->Checksum ^= Info->RankLevel;
-    for (int i = 0; i < STAT_MAX; i++)
-        Info->Checksum ^= Info->Stats[i];
-    for (int i = 0; i < MAX_CATEGORIES; i++)
-        for (int j = 0; j < MAX_SKILLS; j++)
-            Info->Checksum ^= Info->Skills[i][j];
-    for (int i = 0; i < MAX_SKILLKEYS; i++)
-    {
-        Info->Checksum ^= Info->SkillWheel[i][0];
-        Info->Checksum ^= Info->SkillWheel[i][1];
-    };
-    for (int i = 0; i < MAX_AUGS; i++)
-        Info->Checksum ^= Info->Augs[i];
-    for (int i = 0; i < MAX_COMPOUNDS; i++)
-        Info->Checksum ^= Info->Stims[i];
-    Info->Checksum ^= Info->Credits;
-    Info->Checksum ^= Info->Battery;
-    Info->Checksum ^= Info->Toxicity;
-    Info->Checksum ^= Info->PayBonus;
-    Info->Checksum ^= Info->ArenaWave;
-    for (int i = 0; i < ITEM_CATEGORIES; i++)
-        for (int j = 0; j < ITEM_MAX; j++)
-            Info->Checksum ^= Info->Locker[i][j] + (i * 256) + j;
-    Info->Checksum ^= Info->DRLAAssemblies1;
-    Info->Checksum ^= Info->DRLAAssemblies2;
-    Info->Checksum ^= Info->DRLAAssemblies3;
-    
+    // Calculate Checksum
+    Info->Checksum = CreateChecksum(Info);
     Info->Checksum = CalculateChecksum(Info->Checksum);
 };
 
@@ -637,27 +621,20 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
             Info->Locker[i][j] = HexToInteger(String + StringPos, 4);
             StringPos += 4;
             
-            if (CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
-            {
-                Info->WeaponMods[j][0] = HexToInteger(String + StringPos, 1);
-                StringPos += 1;
-                Info->WeaponMods[j][1] = HexToInteger(String + StringPos, 1);
-                StringPos += 1;
-                Info->WeaponMods[j][2] = HexToInteger(String + StringPos, 1);
-                StringPos += 1;
-                Info->WeaponMods[j][3] = HexToInteger(String + StringPos, 1);
-                StringPos += 1;
-                Info->WeaponMods[j][4] = HexToInteger(String + StringPos, 1);
-                StringPos += 1;
-                Info->WeaponMods[j][5] = HexToInteger(String + StringPos, 1);
-                StringPos += 1;
-                Info->WeaponMods[j][6] = HexToInteger(String + StringPos, 1);
-                StringPos += 1;
-                Info->WeaponMods[j][7] = HexToInteger(String + StringPos, 1);
-                StringPos += 1;
-                Info->WeaponMods[j][8] = HexToInteger(String + StringPos, 1);
-                StringPos += 1;
-            };
+            if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
+                for (int k = 0; k < DRLA_MODPACK_SIZE; k++)
+                {
+                    Info->WeaponMods[j][k] = HexToInteger(String + StringPos, 1);
+                    StringPos += 1;
+                };
+        };
+    
+    // Auto-Sell
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+        {
+            Info->AutoSell[i][j] = HexToInteger(String + StringPos, 1);
+            StringPos += 1;
         };
     
     // ----- COMPATIBILITY EXTENSIONS -----
@@ -676,40 +653,11 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     
     Info->Version = Version;
     
-    auto int MyChecksum = 0;
-    MyChecksum ^= Info->Version;
-    MyChecksum ^= Info->CompatMode;
-    MyChecksum ^= Info->Level;
-    MyChecksum ^= Info->RankLevel;
-    for (int i = 0; i < STAT_MAX; i++)
-        MyChecksum ^= Info->Stats[i];
-    for (int i = 0; i < MAX_CATEGORIES; i++)
-        for (int j = 0; j < MAX_SKILLS; j++)
-            MyChecksum ^= Info->Skills[i][j];
-    for (int i = 0; i < MAX_SKILLKEYS; i++)
-    {
-        MyChecksum ^= Info->SkillWheel[i][0];
-        MyChecksum ^= Info->SkillWheel[i][1];
-    };
-    for (int i = 0; i < MAX_AUGS; i++)
-        MyChecksum ^= Info->Augs[i];
-    for (int i = 0; i < MAX_COMPOUNDS; i++)
-        MyChecksum ^= Info->Stims[i];
-    MyChecksum ^= Info->Credits;
-    MyChecksum ^= Info->Battery;
-    MyChecksum ^= Info->Toxicity;
-    MyChecksum ^= Info->PayBonus;
-    MyChecksum ^= Info->ArenaWave;
-    for (int i = 0; i < ITEM_CATEGORIES; i++)
-        for (int j = 0; j < ITEM_MAX; j++)
-            MyChecksum ^= Info->Locker[i][j] + (i * 256) + j;
-    MyChecksum ^= Info->DRLAAssemblies1;
-    MyChecksum ^= Info->DRLAAssemblies2;
-    MyChecksum ^= Info->DRLAAssemblies3;
+    // Calculate Checksum
+    auto int Checksum = CreateChecksum(Info);
+    Checksum = CalculateChecksum(Checksum);
     
-    MyChecksum = CalculateChecksum(MyChecksum);
-    
-    if (MyChecksum != Info->Checksum)
+    if (Checksum != Info->Checksum)
     {
         Info->Version = -3;
         return;
@@ -854,29 +802,23 @@ script char const *MakeSaveString(CharSaveInfo *Info)
             SaveString[pos + 0] = ToHexChar(Info->Locker[i][j] >> 12);
             pos += 4;
             
-            // TODO
-            if (CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
-            {
-                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][0]);
-                pos += 1;
-                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][1]);
-                pos += 1;
-                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][2]);
-                pos += 1;
-                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][3]);
-                pos += 1;
-                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][4]);
-                pos += 1;
-                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][5]);
-                pos += 1;
-                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][6]);
-                pos += 1;
-                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][7]);
-                pos += 1;
-                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][8]);
-                pos += 1;
-            };
+            if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
+                for (int k = 0; k < DRLA_MODPACK_SIZE; k++)
+                {
+                    SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][k]);
+                    pos += 1;
+                };
         };
+    
+    // Auto-Sell
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+        {
+            SaveString[pos + 0] = ToHexChar(Info->AutoSell[i][j]);
+            pos += 1;
+        };
+    
+    // ----- COMPATIBILITY EXTENSIONS -----
     
     // DRLA Assemblies
     SaveString[pos + 3] = ToHexChar(Info->DRLAAssemblies1);
@@ -1038,7 +980,73 @@ function char *StringToCharP(str Source)
     return Destination;
 };
 
+function int CreateChecksum(CharSaveInfo *Info)
+{
+    auto int Checksum = 0;
+    
+    Checksum ^= Info->Version;
+    Checksum ^= Info->CompatMode;
+    
+    Checksum ^= Info->Level;
+    Checksum ^= Info->RankLevel;
+    
+    for (int i = 0; i < STAT_MAX; i++)
+        Checksum ^= Info->Stats[i];
+    
+    for (int i = 0; i < MAX_CATEGORIES; i++)
+        for (int j = 0; j < MAX_SKILLS; j++)
+            Checksum ^= Info->Skills[i][j];
+    
+    for (int i = 0; i < MAX_SKILLKEYS; i++)
+    {
+        Checksum ^= Info->SkillWheel[i][0];
+        Checksum ^= Info->SkillWheel[i][1];
+    };
+    
+    for (int i = 0; i < MAX_AUGS; i++)
+        Checksum ^= Info->Augs[i];
+    
+    for (int i = 0; i < MAX_COMPOUNDS; i++)
+        Checksum ^= Info->Stims[i];
+    
+    Checksum ^= Info->Credits;
+    Checksum ^= Info->Battery;
+    Checksum ^= Info->Toxicity;
+    Checksum ^= Info->PayBonus;
+    Checksum ^= Info->ArenaWave;
+    
+    /* TODO: This entire section will not fucking checksum properly no matter how hard I try
+    Log("\caChecksum: %d\n", Checksum);
+    
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+        {
+            Checksum ^= Info->Locker[i][j] + (i * 256) + j;
+            
+            /* BROKEN AS FUUUUUUUUUUUUUUU
+            if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
+                for (int k = 0; k < DRLA_MODPACK_SIZE; k++)
+                    Checksum ^= Info->WeaponMods[j][k] + (i * 256) + j;
+        };
+    
+    for (int i = 0; i < ITEM_CATEGORIES; i++)
+        for (int j = 0; j < ITEM_MAX; j++)
+            Checksum ^= Info->AutoSell[i][j] + (i * 256) + j;
+    
+    Log("\cdChecksum: %d\n", Checksum);
+    */
+    
+    Checksum ^= Info->DRLAAssemblies1;
+    Checksum ^= Info->DRLAAssemblies2;
+    Checksum ^= Info->DRLAAssemblies3;
+    
+    return Checksum;
+};
+
 function int CalculateChecksum(int Value)
 {
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-Passed Checksum is %d, Calculated Checksum is %d (%X)\n", Value, (Value * 8) / 2, (Value * 8) / 2);
+    
     return (Value * 8) / 2;
 };
