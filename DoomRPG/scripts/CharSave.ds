@@ -74,6 +74,10 @@
     
 */
 
+bool Depositing = false;
+int DepositItems = 0;
+int DepositTotal = 0;
+
 str[DRLA_MAX_ASSEMBLIES] DRLAAssemblies =
 {
     "RLChainswordAssemblyLearntToken";
@@ -123,24 +127,19 @@ acscript void SaveCharacter() net
         return;
     };
     
+    // Bulk Deposit
+    DepositInventory();
+    while (Depositing)
+    {
+        SetFont("BIGFONT");
+        HudMessage("\ckDepositing Items: \cd%d \c-/ \cd%d\n", DepositItems, DepositTotal, HUDMSG_FADEOUT, DEPOSIT_ID, CR_WHITE, 0.5, 0.5, 0.05, 0.5);
+        Delay(1);
+    };
+    
     SetFont("BIGFONT");
     HudMessage("===== Save In Progress =====\n", HUDMSG_PLAIN | HUDMSG_LOG, 70, CR_YELLOW, 0.5, 0.3, 0);
     SetFont("SMALLFONT");
     HudMessage("Do not quit the game or power off your console.\n", HUDMSG_PLAIN | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 0);
-    
-    // Bulk Deposit
-    for (int i = 0; i < ItemCategories; i++)
-        for (int j = 0; j < ItemMax[i]; j++)
-            if (CheckInventory(ItemData[i][j].Actor) > 0)
-            {
-                Player.ShopPage = i;
-                Player.ShopIndex = j;
-                DepositItem();
-            };
-    Player.ShopPage = 0;
-    Player.ShopIndex = 0;
-    
-    Delay(1);
     
     // Populate the data
     auto CharSaveInfo Info;
@@ -186,7 +185,7 @@ acscript void SaveCharacter() net
         // Saving Successful
         ActivatorSound("charsave/save", 127);
         SetFont("BIGFONT");
-        HudMessage("===== Character Saved =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_WHITE, 0.5, 0.3, 3.0, 2.0);
+        HudMessage("===== Character Saved =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_GREEN, 0.5, 0.3, 3.0, 2.0);
         HudMessage("\n", HUDMSG_FADEOUT, 71, CR_ORANGE, 0.5, 0.35, 3.0, 2.0);
     }
     else
@@ -400,6 +399,36 @@ acscript void DumpCharacter()
         str Data = GetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i));
         Log("\cdData %d \c-- \ca%s\n", i, Data);
     };
+};
+
+acscript void DepositInventory()
+{
+    // Reset deposit vars
+    DepositItems = 0;
+    DepositTotal = 0;
+    
+    // Start the depositing process
+    Depositing = true;
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+    
+    // Calculate Item Total
+    for (int i = 0; i < ItemCategories; i++)
+        for (int j = 0; j < ItemMax[i]; j++)
+            DepositTotal += CheckInventory(ItemData[i][j].Actor);
+    
+    for (int i = 0; i < ItemCategories; i++)
+        for (int j = 0; j < ItemMax[i]; j++)
+            if (CheckInventory(ItemData[i][j].Actor) > 0)
+                while (CheckInventory(ItemData[i][j].Actor) > 0)
+                {
+                    DepositItem(i, j, true);
+                    DepositItems++;
+                    Delay(1);
+                };
+    
+    // Stop the depositing process
+    Depositing = false;
+    SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
 };
 
 // Hexadecimal storage

@@ -240,14 +240,14 @@ function void ShopLoop()
         if (Buttons & BT_SPEED)
         {
             if (Player.LockerMode)
-                WithdrawItem()
+                WithdrawItem(Player.ShopPage, Player.ShopIndex)
             else
                 SellItem(ItemPtr->Actor, false, false);
         }
         else
         {
             if (Player.LockerMode)
-                DepositItem()
+                DepositItem(Player.ShopPage, Player.ShopIndex, false)
             else if (!Player.AutoSell[Player.ShopPage][Player.ShopIndex])
                 BuyItem(ItemPtr->Actor);
         };
@@ -465,26 +465,27 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     return SellCost;
 };
 
-function void DepositItem()
+function void DepositItem(int Page, int Index, bool CharSave)
 {
-    ItemInfoPtr ItemPtr = &ItemData[Player.ShopPage][Player.ShopIndex];
+    ItemInfoPtr ItemPtr = &ItemData[Page][Index];
+    int *LockerAmount = &Player.Locker[Page][Index];
     
-    if (Player.EP >= LOCKER_EPRATE && CheckInventory(ItemPtr->Actor) > 0)
+    if ((Player.EP >= LOCKER_EPRATE || CharSave) && CheckInventory(ItemPtr->Actor) > 0)
     {
        // DoomRL Compatibility
        if (CompatMode == COMPAT_DRLA)
        {
-           if (Player.ShopPage == 0) // Weapons
+           if (Page == 0) // Weapons
            {
                 // You can only store one of a weapon type
-                if (Player.Locker[Player.ShopPage][Player.ShopIndex] > 0)
+                if (*LockerAmount > 0 && !CharSave)
                 {
                     ActivatorSound("menu/error", 127);
                     return;
                 };
                 
                 // Store the weapons modpack data
-                Player.WeaponMods[Player.ShopIndex] =
+                Player.WeaponMods[Index] =
                 {
                     CheckInventory(StrParam("%sModLimit\n", ItemPtr->Actor));
                     CheckInventory(StrParam("%sPowerMod\n", ItemPtr->Actor));
@@ -524,11 +525,11 @@ function void DepositItem()
                 if (!CheckInventory("RLTristarBlaster") || !CheckInventory("RLHighPowerTristarBlaster") || !CheckInventory("RLNanomanufactureAmmoTristarBlaster"))
                     TakeInventory("RLCerberusSetBonusTristarBlaster", 1);
             }
-            else if (Player.ShopPage == 3) // Armor
+            else if (Page == 3) // Armor
                 TakeInventory("RLArmorInInventory", 1)
             else if (Player.ShopPage == 9) // Mod Packs
             {
-                if (Player.ShopIndex == 8) // Special handling case for Armor Modpack
+                if (Index == 8) // Special handling case for Armor Modpack
                     TakeInventory("RLArmorModItemInInventory", 1)
                 else
                 {
@@ -538,28 +539,32 @@ function void DepositItem()
                         TakeInventory("RLModLimit", 1);
                 };
             }
-            else if (Player.ShopPage == 10) // Boots
+            else if (Page == 10) // Boots
                 TakeInventory("RLBootsInInventory", 1);
         };
         
         TakeInventory(ItemPtr->Actor, 1);
         if (!InBase)
             Player.EP -= LOCKER_EPRATE;
-        Player.Locker[Player.ShopPage][Player.ShopIndex]++;
-        ActivatorSound("menu/move", 127);
+        (*LockerAmount)++;
+        if (CharSave && CompatMode == COMPAT_DRLA && Page == 0 && *LockerAmount > 1) // Prevent dumping multiple weapons in the locker in DRLA saves
+            *LockerAmount = 1;
+        if (!CharSave)
+            ActivatorSound("menu/move", 127);
     }
     else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         ActivatorSound("menu/error", 127);
 };
 
-function void WithdrawItem()
+function void WithdrawItem(int Page, int Index)
 {
-    ItemInfoPtr ItemPtr = &ItemData[Player.ShopPage][Player.ShopIndex];
+    ItemInfoPtr ItemPtr = &ItemData[Page][Index];
+    int *LockerAmount = &Player.Locker[Page][Index];
     
     // Spawning
-    if (Player.EP >= LOCKER_EPRATE && Player.Locker[Player.ShopPage][Player.ShopIndex] > 0)
+    if (Player.EP >= LOCKER_EPRATE && *LockerAmount > 0)
     {
-        if (CompatMode == COMPAT_DRLA && Player.ShopPage == 0) // Weapons
+        if (CompatMode == COMPAT_DRLA && Page == 0) // Weapons
         {
             // Don't let you withdraw the weapon if you're already holding one
             if (CheckInventory(ItemPtr->Actor))
@@ -581,13 +586,13 @@ function void WithdrawItem()
             
             SpawnForced(StrParam("%sPickup\n", ItemPtr->Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
         }
-        else if (Player.ShopPage == 1) // Ammo
+        else if (Page == 1) // Ammo
             GiveInventory(ItemPtr->Actor, 1)
         else // Everything else
             SpawnForced(ItemPtr->Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
         
         SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
-        Player.Locker[Player.ShopPage][Player.ShopIndex]--;
+        (*LockerAmount)--;
         if (!InBase)
             Player.EP -= LOCKER_EPRATE;
         ActivatorSound("menu/move", 127);
