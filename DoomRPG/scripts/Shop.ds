@@ -106,7 +106,7 @@ function void ShopLoop()
     // Set the HUD Size
     SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 
-    // Force Locker mode if the Shop Anywhere CVAR is off_type
+    // Force Locker mode if the Shop Anywhere CVAR is off
     if (!GetCVar("drpg_shoptype"))
         Player.LockerMode = true;
     
@@ -476,6 +476,39 @@ function void DepositItem()
        {
            if (Player.ShopPage == 0) // Weapons
            {
+                // You can only store one of a weapon type
+                if (Player.Locker[Player.ShopPage][Player.ShopIndex] > 0)
+                {
+                    ActivatorSound("menu/error", 127);
+                    return;
+                };
+                
+                // Store the weapons modpack data
+                Player.WeaponMods[Player.ShopIndex] =
+                {
+                    CheckInventory(StrParam("%sModLimit\n", ItemPtr->Actor));
+                    CheckInventory(StrParam("%sPowerMod\n", ItemPtr->Actor));
+                    CheckInventory(StrParam("%sBulkMod\n", ItemPtr->Actor));
+                    CheckInventory(StrParam("%sAgilityMod\n", ItemPtr->Actor));
+                    CheckInventory(StrParam("%sTechnicalMod\n", ItemPtr->Actor));
+                    CheckInventory(StrParam("%sSniperMod\n", ItemPtr->Actor));
+                    CheckInventory(StrParam("%sFirestormMod\n", ItemPtr->Actor));
+                    CheckInventory(StrParam("%sNanoMod\n", ItemPtr->Actor));
+                    CheckInventory(StrParam("%sDemonArtifacts\n", ItemPtr->Actor));
+                };
+                
+                // Wipe the modpacks off the weapon
+                SetInventory(StrParam("%sModLimit\n", ItemPtr->Actor), 0);
+                SetInventory(StrParam("%sPowerMod\n", ItemPtr->Actor), 0);
+                SetInventory(StrParam("%sBulkMod\n", ItemPtr->Actor), 0);
+                SetInventory(StrParam("%sAgilityMod\n", ItemPtr->Actor), 0);
+                SetInventory(StrParam("%sTechnicalMod\n", ItemPtr->Actor), 0);
+                SetInventory(StrParam("%sSniperMod\n", ItemPtr->Actor), 0);
+                SetInventory(StrParam("%sFirestormMod\n", ItemPtr->Actor), 0);
+                SetInventory(StrParam("%sNanoMod\n", ItemPtr->Actor), 0);
+                SetInventory(StrParam("%sDemonArtifacts\n", ItemPtr->Actor), 0);
+                
+                // Decrease DRLA's weapon total
                 TakeInventory("RLWeaponLimit", 1);
                 
                 // Weapon portion of Nuclear Set Bonus Checking
@@ -527,7 +560,27 @@ function void WithdrawItem()
     if (Player.EP >= LOCKER_EPRATE && Player.Locker[Player.ShopPage][Player.ShopIndex] > 0)
     {
         if (CompatMode == COMPAT_DRLA && Player.ShopPage == 0) // Weapons
-            SpawnForced(StrParam("%sPickup\n", ItemPtr->Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0)
+        {
+            // Don't let you withdraw the weapon if you're already holding one
+            if (CheckInventory(ItemPtr->Actor))
+            {
+                ActivatorSound("menu/error", 127);
+                return;
+            };
+            
+            // Re-add the mods onto the weapon
+            SetInventory(StrParam("%sModLimit\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Total);
+            SetInventory(StrParam("%sPowerMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Power);
+            SetInventory(StrParam("%sBulkMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Bulk);
+            SetInventory(StrParam("%sAgilityMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Agility);
+            SetInventory(StrParam("%sTechnicalMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Technical);
+            SetInventory(StrParam("%sSniperMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Sniper);
+            SetInventory(StrParam("%sFirestormMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Firestorm);
+            SetInventory(StrParam("%sNanoMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Nano);
+            SetInventory(StrParam("%sDemonArtifacts\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Artifacts);
+            
+            SpawnForced(StrParam("%sPickup\n", ItemPtr->Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+        }
         else if (Player.ShopPage == 1) // Ammo
             GiveInventory(ItemPtr->Actor, 1)
         else // Everything else
@@ -618,6 +671,20 @@ function void DrawItemGrid()
             // Auto-Sell Icon
             if (Player.AutoSell[Player.ShopPage][Index])
                 PrintSpritePulse("SELLICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
+            
+            // Mod Info
+            if (CompatMode == COMPAT_DRLA && Player.LockerMode && Player.Locker[Player.ShopPage][Index] > 0)
+            {
+                SetFont("SMALLFONT");
+                HudMessage("%d\n", Player.WeaponMods[Index].Power, HUDMSG_PLAIN, 0, CR_RED, X + 4.0, Y + 38.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Bulk, HUDMSG_PLAIN, 0, CR_BLUE, X + 12.0, Y + 38.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Agility, HUDMSG_PLAIN, 0, CR_GREEN, X + 20.0, Y + 38.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Technical, HUDMSG_PLAIN, 0, CR_YELLOW, X + 28.0, Y + 38.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Sniper, HUDMSG_PLAIN, 0, CR_PURPLE, X + 4.0, Y + 46.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Firestorm, HUDMSG_PLAIN, 0, CR_ORANGE, X + 12.0, Y + 46.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Nano, HUDMSG_PLAIN, 0, CR_WHITE, X + 20.0, Y + 46.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Artifacts, HUDMSG_PLAIN, 0, CR_DARKRED, X + 28.0, Y + 46.2, 0.05);
+            };
             
             // Icon
             SetHudClipRect(X, Y, 44, 44);
