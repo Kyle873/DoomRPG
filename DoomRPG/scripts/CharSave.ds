@@ -416,6 +416,12 @@ acscript void DepositInventory()
         for (int j = 0; j < ItemMax[i]; j++)
             DepositTotal += CheckInventory(ItemData[i][j].Actor);
     
+    // Delay handler
+    int TimeDivide = DepositTotal / (35 * 3);
+    if (TimeDivide < 1)
+        TimeDivide = 1;
+    
+    int Count = 0;
     for (int i = 0; i < ItemCategories; i++)
         for (int j = 0; j < ItemMax[i]; j++)
             if (CheckInventory(ItemData[i][j].Actor) > 0)
@@ -423,10 +429,12 @@ acscript void DepositInventory()
                 {
                     DepositItem(i, j, true);
                     DepositItems++;
-                    Delay(1);
+                    if ((Count++ % TimeDivide) == 0) Delay(1);
                 };
     
     // Stop the depositing process
+    DepositItems = DepositTotal;
+    Delay(1);
     Depositing = false;
     SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
 };
