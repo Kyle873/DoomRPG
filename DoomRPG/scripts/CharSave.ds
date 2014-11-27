@@ -1052,26 +1052,19 @@ function int CreateChecksum(CharSaveInfo *Info)
     Checksum ^= Info->PayBonus;
     Checksum ^= Info->ArenaWave;
     
-    /* TODO: This entire section will not fucking checksum properly no matter how hard I try
-    Log("\caChecksum: %d\n", Checksum);
-    
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
             Checksum ^= Info->Locker[i][j] + (i * 256) + j;
             
-            /* BROKEN AS FUUUUUUUUUUUUUUU
             if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
                 for (int k = 0; k < DRLA_MODPACK_SIZE; k++)
-                    Checksum ^= Info->WeaponMods[j][k] + (i * 256) + j;
+                    Checksum ^= Info->WeaponMods[j][k] + j;
         };
     
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
-            Checksum ^= Info->AutoSell[i][j] + (i * 256) + j;
-    
-    Log("\cdChecksum: %d\n", Checksum);
-    */
+            Checksum ^= (Info->AutoSell[i][j]? 1 : 0) << (j % 32);
     
     Checksum ^= Info->DRLAAssemblies1;
     Checksum ^= Info->DRLAAssemblies2;
