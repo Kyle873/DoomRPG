@@ -5,6 +5,7 @@
 #include "CharSave.dh"
 #include "ItemData.dh"
 #include "Shield.dh"
+#include "Shop.dh"
 #include "Skills.dh"
 #include "Stats.dh"
 #include "Utils.dh"
@@ -27,8 +28,6 @@
         - Each stat will be stored in 1 byte since they will never go above 200 by normal means
     Skills
         - Each skill level is stored in 1 byte
-        - Each skill category will be wrapped in a set of []'s
-        - Each skill within each category will be seperated by a -
     Skill Wheel
         - 16 bytes total
         - Each slot is 2 bytes
@@ -56,8 +55,7 @@
           - Stored in 2 bytes
     Locker
         - Each item's count will be stored in 4 bytes
-        - Each item category will be wrapped in a set of []'s
-        - Each item within each category will be seperated by a -
+        - Each weapon's associated DRLA Modpacks will be stored in 1 byte after the amount
         
     ----- COMPATIBILITY EXTENSIONS -----
     
@@ -130,14 +128,15 @@ acscript void SaveCharacter() net
     
     // Bulk Deposit
     for (int i = 0; i < ItemCategories; i++)
-    {
         for (int j = 0; j < ItemMax[i]; j++)
             if (CheckInventory(ItemData[i][j].Actor) > 0)
             {
-                Player.Locker[i][j] += CheckInventory(ItemData[i][j].Actor);
-                SetInventory(ItemData[i][j].Actor, 0);
+                Player.ShopPage = i;
+                Player.ShopIndex = j;
+                DepositItem();
             };
-    };
+    Player.ShopPage = 0;
+    Player.ShopIndex = 0;
     
     Delay(1);
     
@@ -339,7 +338,22 @@ acscript void LoadCharacter() net
     // Locker
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
+        {
             Player.Locker[i][j] = Info.Locker[i][j];
+            
+            if (CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
+            {
+                Player.WeaponMods[j].Total = Info.WeaponMods[j][0];
+                Player.WeaponMods[j].Power = Info.WeaponMods[j][1];
+                Player.WeaponMods[j].Bulk = Info.WeaponMods[j][2];
+                Player.WeaponMods[j].Agility = Info.WeaponMods[j][3];
+                Player.WeaponMods[j].Technical = Info.WeaponMods[j][4];
+                Player.WeaponMods[j].Sniper = Info.WeaponMods[j][5];
+                Player.WeaponMods[j].Firestorm = Info.WeaponMods[j][6];
+                Player.WeaponMods[j].Nano = Info.WeaponMods[j][7];
+                Player.WeaponMods[j].Artifacts = Info.WeaponMods[j][8];
+            };
+        };
     
     // DRLA Assemblies
     for (int i = 0; i < DRLA_MAX_ASSEMBLIES; i++)
@@ -467,7 +481,22 @@ script void PopulateCharData(CharSaveInfo *Info)
     // Locker
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
+        {
             Info->Locker[i][j] = Player.Locker[i][j];
+            
+            if (CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
+            {
+                Info->WeaponMods[j][0] = Player.WeaponMods[j].Total;
+                Info->WeaponMods[j][1] = Player.WeaponMods[j].Power;
+                Info->WeaponMods[j][2] = Player.WeaponMods[j].Bulk;
+                Info->WeaponMods[j][3] = Player.WeaponMods[j].Agility;
+                Info->WeaponMods[j][4] = Player.WeaponMods[j].Technical;
+                Info->WeaponMods[j][5] = Player.WeaponMods[j].Sniper;
+                Info->WeaponMods[j][6] = Player.WeaponMods[j].Firestorm;
+                Info->WeaponMods[j][7] = Player.WeaponMods[j].Nano;
+                Info->WeaponMods[j][8] = Player.WeaponMods[j].Artifacts;
+            };
+        };
     
     // ----- COMPATIBILITY EXTENSIONS -----
     
@@ -607,6 +636,28 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
         {
             Info->Locker[i][j] = HexToInteger(String + StringPos, 4);
             StringPos += 4;
+            
+            if (CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
+            {
+                Info->WeaponMods[j][0] = HexToInteger(String + StringPos, 1);
+                StringPos += 1;
+                Info->WeaponMods[j][1] = HexToInteger(String + StringPos, 1);
+                StringPos += 1;
+                Info->WeaponMods[j][2] = HexToInteger(String + StringPos, 1);
+                StringPos += 1;
+                Info->WeaponMods[j][3] = HexToInteger(String + StringPos, 1);
+                StringPos += 1;
+                Info->WeaponMods[j][4] = HexToInteger(String + StringPos, 1);
+                StringPos += 1;
+                Info->WeaponMods[j][5] = HexToInteger(String + StringPos, 1);
+                StringPos += 1;
+                Info->WeaponMods[j][6] = HexToInteger(String + StringPos, 1);
+                StringPos += 1;
+                Info->WeaponMods[j][7] = HexToInteger(String + StringPos, 1);
+                StringPos += 1;
+                Info->WeaponMods[j][8] = HexToInteger(String + StringPos, 1);
+                StringPos += 1;
+            };
         };
     
     // ----- COMPATIBILITY EXTENSIONS -----
@@ -802,6 +853,29 @@ script char const *MakeSaveString(CharSaveInfo *Info)
             SaveString[pos + 1] = ToHexChar(Info->Locker[i][j] >> 8);
             SaveString[pos + 0] = ToHexChar(Info->Locker[i][j] >> 12);
             pos += 4;
+            
+            // TODO
+            if (CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
+            {
+                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][0]);
+                pos += 1;
+                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][1]);
+                pos += 1;
+                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][2]);
+                pos += 1;
+                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][3]);
+                pos += 1;
+                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][4]);
+                pos += 1;
+                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][5]);
+                pos += 1;
+                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][6]);
+                pos += 1;
+                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][7]);
+                pos += 1;
+                SaveString[pos + 0] = ToHexChar(Info->WeaponMods[j][8]);
+                pos += 1;
+            };
         };
     
     // DRLA Assemblies
