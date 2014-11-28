@@ -13,7 +13,6 @@
 
 bool Overdrive;
 int BulletTimeTimer;
-int ForceFieldTID = 1998;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
@@ -381,10 +380,9 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Force Wall"; 100; 2; ForceWall;
+            "Force Wall"; 100; 1; ForceWall;
             {
-                "Creates a small force wall in front of you to reflect projectiles";
-                "Creates a large force wall in front of you to reflect projectiles";
+                "Creates a wall of force in front of you which blocks hitscans, projectiles and monsters\nHealth is determined by your Energy";
             };
         };
         {
@@ -1618,34 +1616,32 @@ acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript bool ForceWall(SkillLevelInfo *SkillLevel, void *Data)
 {
+    int TID = UniqueTID();
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
     fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
     fixed Z = GetActorZ(0);
     
-    Thing_Remove(ForceFieldTID + PlayerNumber());
-    
-    switch (SkillLevel->CurrentLevel)
+    if (Spawn("DRPGForceWall", X, Y, Z, TID, Angle))
     {
-    case 1:
-        if (!Spawn("DRPGForceField", X, Y, Z, ForceFieldTID + PlayerNumber(), Angle) == 0) {return true;}
-        else
-        {
-            ActivatorSound("menu/error", 127);
-            return false;
-        };
-        break;
-    case 2:
-        if (!Spawn("DRPGForceField2", X, Y, Z, ForceFieldTID + PlayerNumber(), Angle) == 0) {return true;}
-        else
-        {
-            ActivatorSound("menu/error", 127);
-            return false;
-        };
-        break;
+        Delay(4);
+        
+        MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
+        
+        // Determine Defense and Health
+        Stats->SpawnHealth = GetActorProperty(0, APROP_SpawnHealth);
+        Stats->Defense = Player.Energy * 5;
+        Stats->Vitality = Player.Energy * 5;
+        Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
+        SetActorProperty(TID, APROP_Health, Stats->HealthMax);
+        
+        return true;
+    }
+    else
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
     };
-
-    return false;
 };
 
 acscript bool Rally(SkillLevelInfo *SkillLevel, void *Data)
@@ -2116,18 +2112,6 @@ function void CheckSkills()
             Player.SummonTID[i] = 0;
             Player.Summons--;
         };
-    
-    // Force Wall Handling
-    if (GetActorProperty(ForceFieldTID + PlayerNumber(), APROP_Alpha) > 0)
-    {
-        fixed WallAngle = GetActorAngle(0);
-        fixed WallX = GetActorX(0) + Cos(WallAngle) * 48;
-        fixed WallY = GetActorY(0) + Sin(WallAngle) * 48;
-        fixed WallZ = GetActorZ(0);
-        
-        SetActorPosition(ForceFieldTID + PlayerNumber(), WallX, WallY, WallZ, false);
-        SetActorAngle(ForceFieldTID + PlayerNumber(), WallAngle);
-    };
     
     // Bullet-Time timer handling
     if (BulletTimeTimer > 0)
