@@ -25,18 +25,19 @@ AugSpace AugInfo[MAX_AUGS] AugData =
     {
         "Dermal Armor"; 5;
         {
-            "-10% Damage Taken";
-            "-20% Damage Taken";
-            "-30% Damage Taken";
-            "-40% Damage Taken";
-            "-50% Damage Taken";
+            "+5% Damage Reduction";
+            "+10% Damage Reduction";
+            "+15% Damage Reduction";
+            "+20% Damage Reduction";
+            "+25% Damage Reduction";
         };
     };
     {
-        "Pain Inhibitor"; 2;
+        "Pain Inhibitor"; 3;
         {
             "2x Max Health";
             "2x Health Regen";
+            "+25% Status Effect Resist";
         };
     };
     {
@@ -50,12 +51,13 @@ AugSpace AugInfo[MAX_AUGS] AugData =
         };
     };
     {
-        "Adrenaline Booster"; 4;
+        "Adrenaline Booster"; 5;
         {
             "2x HP/EP Regen Amounts";
             "-2x HP/EP Regen Timers";
             "4x HP/EP Regen Amounts";
             "-4x HP/EP Regen Timers";
+            "+10 Second Toxicity Regen Time";
         };
     };
     {
@@ -269,18 +271,7 @@ function void CheckAugs()
     
     // Defense Aug
     if (Player.Augs.Active[AUG_DEFENSE])
-    {
-        if (Player.Augs.Level[AUG_DEFENSE] == 1)
-            Player.DamageFactor -= 0.1;
-        if (Player.Augs.Level[AUG_DEFENSE] == 2)
-            Player.DamageFactor -= 0.2;
-        if (Player.Augs.Level[AUG_DEFENSE] == 3)
-            Player.DamageFactor -= 0.3;
-        if (Player.Augs.Level[AUG_DEFENSE] == 4)
-            Player.DamageFactor -= 0.4;
-        if (Player.Augs.Level[AUG_DEFENSE] >= 5)
-            Player.DamageFactor -= 0.5;
-    };
+        Player.DamageFactor -= (fixed)Player.Augs.Level[AUG_DEFENSE] / 20.0;
     
     // Vitality Aug
     if (Player.Augs.Active[AUG_VITALITY])
@@ -289,6 +280,8 @@ function void CheckAugs()
             Player.HealthMax *= 2;
         if (Player.Augs.Level[AUG_VITALITY] >= 2)
             Player.HPAmount *= 2;
+        if (Player.Augs.Level[AUG_VITALITY] >= 3)
+            Player.StatusEffectResist += 25.0;
     };
     
     // Energy Aug
@@ -327,6 +320,8 @@ function void CheckAugs()
             Player.HPTime /= 2;
             Player.EPTime /= 2;
         };
+        if (Player.Augs.Level[AUG_REGENERATION] >= 5)
+            Player.ToxicityRegenBonus += 10;
     };
 
     // Agility Aug
