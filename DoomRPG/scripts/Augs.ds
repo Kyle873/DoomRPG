@@ -207,28 +207,29 @@ function void CheckAugs()
     };
     
     // Battery Handling
-    if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
+    if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
     {
-        fixed Drain;
+        // Reset drain
+        Player.Augs.BatteryDrain = 0;
         
         // Calculate Battery Drain
         for (int i = 0; i < MAX_AUGS; i++)
             if (Player.Augs.Active[i] && i != AUG_BATTERY)
-                Drain += Player.Augs.Level[i];
+                Player.Augs.BatteryDrain += Player.Augs.Level[i];
         
         // Battery Management checks
         if (Player.Augs.Active[AUG_BATTERY])
         {
             if (Player.Augs.Level[AUG_BATTERY] == 3)
-                Drain /= 1.33;
+                Player.Augs.BatteryDrain /= 1.33;
             if (Player.Augs.Level[AUG_BATTERY] >= 4)
-                Drain /= 2;
+                Player.Augs.BatteryDrain /= 2;
         };
         
         // Decrease Battery
-        if (Player.Augs.SlotsUsed > 0 && (Timer() % (35 * 30)) == 0)
+        if (Player.Augs.SlotsUsed > 0 && (Timer() % 35) == 0)
         {
-            Player.Augs.Battery -= (int)Drain;
+            Player.Augs.Battery -= (Player.Augs.BatteryDrain / 10);
             DrawBattery();
         };
         
@@ -246,10 +247,10 @@ function void CheckAugs()
         Player.Augs.Battery = Player.Augs.BatteryMax;
     
     // Battery Management Recharging
-    if (Player.Augs.Active[AUG_BATTERY] && Player.Augs.Level[AUG_BATTERY] >= 5 && ((Timer() % (35 * 10)) == 0) && Player.Augs.Battery < Player.Augs.BatteryMax)
-        if (!IsPlayerMoving() && !CheckInventory("DRPGMenuFreezer"))
+    if (Player.Augs.Active[AUG_BATTERY] && Player.Augs.Level[AUG_BATTERY] >= 5 && Player.Augs.Battery < Player.Augs.BatteryMax)
+        if ((Timer() % 35) == 0 && !IsPlayerMoving() && !CheckInventory("DRPGMenuFreezer"))
         {
-            Player.Augs.Battery++;
+            Player.Augs.Battery += 0.1;
             DrawBattery();
         };
     
