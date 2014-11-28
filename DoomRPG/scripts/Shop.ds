@@ -13,7 +13,7 @@ static int GlobalShopCard;
 int ShopSpotID = 1000;
 
 // Open the Shop
-acscript void OpenShop(bool FromBase) net
+acscript void OpenShop(bool OpenLocker) net
 {
     // If you're dead, return
     if (GetActorProperty(0, APROP_Health) <= 0) return;
@@ -27,11 +27,11 @@ acscript void OpenShop(bool FromBase) net
     // Close the main menu if it's open
     Player.InMenu = false;
     
+    // Sanity check for pressing use while the shop is open in front of the counter in the Outpost
+    if (Player.InShop && GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_USE) return;
+    
     if (Player.InShop)
     {
-        // Sanity Check to prevent the shop closing itself after buying an item in the Outpost Shop
-        if (!FromBase) return;
-        
         ActivatorSound("menu/leave", 127);
         SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
         Player.InShop = false;
@@ -40,6 +40,8 @@ acscript void OpenShop(bool FromBase) net
     {
         ActivatorSound("menu/shop", 127);
         Player.InShop = true;
+        if (OpenLocker)
+            Player.LockerMode = true;
     };
 };
 
