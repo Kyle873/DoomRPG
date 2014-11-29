@@ -278,7 +278,10 @@ function void ShopLoop()
                 TakeInventory(ItemPtr->Actor, 1);
         }
         else
+        {
+            PrintError("You cannot drop this item here");
             ActivatorSound("menu/error", 127);
+        };
     if (Buttons & BT_USE || (Buttons & BT_USE && Buttons & BT_SPEED))
         Player.DelayTimer++;
     if (Buttons == BT_ATTACK && OldButtons != BT_ATTACK)
@@ -320,9 +323,7 @@ function void BuyItem(str Item)
     {
         if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         {
-            SetHudSize(0, 0, false);
-            SetFont("BIGFONT");
-            HudMessage("You are not a high enough Rank to buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            PrintError("You are not a high enough Rank to buy this item");
             ActivatorSound("menu/error", 127);
         };
         
@@ -334,9 +335,7 @@ function void BuyItem(str Item)
     {
         if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         {
-            SetHudSize(0, 0, false);
-            SetFont("BIGFONT");
-            HudMessage("You cannot buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            PrintError("You cannot buy this item");
             ActivatorSound("menu/error", 127);
         };
         
@@ -348,9 +347,7 @@ function void BuyItem(str Item)
     {
         if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         {
-            SetHudSize(0, 0, false);
-            SetFont("BIGFONT");
-            HudMessage("You don't have enough Credits to buy this item\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            PrintError("You don't have enough Credits to buy this item");
             ActivatorSound("menu/error", 127);
         };
         
@@ -385,7 +382,10 @@ function void BuyItem(str Item)
         TakeInventory("DRPGCredits", Cost);
     }
     else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+    {
+        PrintError("Could not teleport the requested item to your location");
         ActivatorSound("menu/error", 127);
+    };
 };
 
 function int GetSellPrice(str Item, int Amount)
@@ -432,9 +432,7 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     {
         if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         {
-            SetHudSize(0, 0, false);
-            SetFont("BIGFONT");
-            HudMessage("You cannot sell items outside the Outpost until you reach the first rank\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
+            PrintError("You cannot sell items outside the Outpost until you reach the first rank");
             ActivatorSound("menu/error", 127);
         };
         
@@ -445,7 +443,10 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     if (!AutoSold && (CheckInventory(Item) == 0 || CategoryFlags[Player.ShopPage] & CF_NOSELL))
     {
         if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        {
+            PrintError("You cannot sell these items");
             ActivatorSound("menu/error", 127);
+        };
         
         return 0;
     };
@@ -472,7 +473,10 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
         GiveInventory("DRPGCredits", SellCost);
     }
     else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+    {
+        PrintError("You are not carrying any of the specified item");
         ActivatorSound("menu/error", 127);
+    };
     
     return SellCost;
 };
@@ -492,6 +496,7 @@ function void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
                 // You can only store one of a weapon type
                 if (*LockerAmount > 0 && !CharSave)
                 {
+                    PrintError("You can only store one of a weapon type in the Locker");
                     ActivatorSound("menu/error", 127);
                     return;
                 };
@@ -555,7 +560,13 @@ function void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
             ActivatorSound("menu/move", 127);
     }
     else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat") && !NoSound)
+    {
+        if (Player.EP < LOCKER_EPRATE)
+            PrintError("Not enough EP to deposit this item")
+        else
+            PrintError("You're not carrying any of the specified item");
         ActivatorSound("menu/error", 127);
+    };
 };
 
 function void WithdrawItem(int Page, int Index)
@@ -571,6 +582,7 @@ function void WithdrawItem(int Page, int Index)
             // Don't let you withdraw the weapon if you're already holding one
             if (CheckInventory(ItemPtr->Actor))
             {
+                PrintError("You are already carrying this type of weapon");
                 ActivatorSound("menu/error", 127);
                 return;
             };
@@ -600,7 +612,13 @@ function void WithdrawItem(int Page, int Index)
         ActivatorSound("menu/move", 127);
     }
     else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+    {
+        if (Player.EP < LOCKER_EPRATE)
+            PrintError("Not enough EP to withdraw this item")
+        else
+            PrintError("Locker does not contain any of the specified item");
         ActivatorSound("menu/error", 127);
+    };
 };
 
 function void DrawItemGrid()

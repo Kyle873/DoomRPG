@@ -768,6 +768,7 @@ acscript bool Heal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If your health is max or above at levels lower than 3 or you don't have a status effect
     if ((SkillLevel->CurrentLevel < 3 && Player.ActualHealth >= Player.HealthMax) && !HaveStatusEffect())
     {
+        PrintError("You are already at max health");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -851,6 +852,7 @@ acscript bool HealSummons(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If you have no summoned monsters
     if (Player.Summons == 0)
     {
+        PrintError("You have no summoned friendlies");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -873,6 +875,7 @@ acscript bool Decontaminate(SkillLevelInfo *SkillLevel, void *Data)
 {
     if (Player.Toxicity <= 0)
     {
+        PrintError("You have no toxicity");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -890,6 +893,7 @@ acscript bool Repair(SkillLevelInfo *SkillLevel, void *Data)
 {
     if (CheckInventory("Armor") == 0 || CheckInventory("Armor") >= GetArmorInfo(ARMORINFO_SAVEAMOUNT))
     {
+        PrintError("You aren't wearing any armor");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1003,6 +1007,7 @@ acscript bool DropWeapon(SkillLevelInfo *SkillLevel, void *Data)
     }
     else
     {
+        PrintError("You cannot drop weapons here");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1036,6 +1041,7 @@ acscript bool DropAmmo(SkillLevelInfo *SkillLevel, void *Data)
     }
     else
     {
+        PrintError("You cannot drop ammo here");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1087,6 +1093,7 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the Player has no target
     if (ActivatorTID() == Players(PlayerNum).TID)
     {
+        PrintError("You have no target");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1094,6 +1101,7 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the target isn't actually a valid monster
     if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
     {
+        PrintError("Target is not a valid enemy");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
@@ -1101,6 +1109,7 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the target is immune to Weaken
     if (Stats->Flags & MF_NOWEAKEN)
     {
+        PrintError("Target is immune to weakening");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
@@ -1157,6 +1166,7 @@ acscript bool Translocate(SkillLevelInfo *SkillLevel, void *Data)
 {
     if (InBase)
     {
+        PrintError("Cannot translocate here");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1187,6 +1197,7 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the Player has no target
     if (ActivatorTID() == Players(PlayerNum).TID)
     {
+        PrintError("You have no target");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1194,6 +1205,7 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the target isn't actually a valid monster
     if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
     {
+        PrintError("Target is not a valid enemy");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
@@ -1201,6 +1213,7 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the target doesn't have an Aura
     if (!MonsterHasAura(Stats))
     {
+        PrintError("Target does not have any auras");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
@@ -1259,6 +1272,7 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the Player has no target
     if (ActivatorTID() == Players(PlayerNum).TID)
     {
+        PrintError("You have no target");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1266,6 +1280,7 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the target isn't actually a valid monster
     if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
     {
+        PrintError("Target is not a valid enemy");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
@@ -1273,6 +1288,7 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the target is a boss or can never have an aura to begin with
     if (Stats->Flags & MF_BOSS || Stats->Flags & MF_NOAURA || CheckFlag(0, "BOSS"))
     {
+        PrintError("Target has no soul");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
@@ -1329,6 +1345,7 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Late Refund - If we did no damage to the target at all
     if (!LeechAmount)
     {
+        PrintError("No damage was dealt to the target");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
@@ -1488,8 +1505,7 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
     // Stop if you're in the Outpost
     if (InBase)
     {
-        SetFont("BIGFONT");
-        HudMessage("You cannot summon friendlies here\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+        PrintError("You cannot summon friendlies here");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1497,8 +1513,7 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
     // Stop if you already have the maximum amount of summons
     if (Player.Summons >= MAX_SUMMONS)
     {
-        SetFont("BIGFONT");
-        HudMessage("You cannot summon any more friendlies\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+        PrintError("You cannot summon any more friendlies");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1573,6 +1588,7 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
     }
     else
     {
+        PrintError("You cannot summon a friendly here");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1583,8 +1599,9 @@ acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
     int Armor = CheckInventory("BasicArmor");
     
     // Kind of hackish to prevent breaking down Armors that use high values for indestructibleness
-    if (Armor > 1000)
+    if (Armor >= 99999)
     {
+        PrintError("You cannot breakdown indestructible armors");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1610,6 +1627,7 @@ acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
     }
     else
     {
+        PrintError("You're not wearing any armor");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1642,6 +1660,7 @@ acscript bool ForceWall(SkillLevelInfo *SkillLevel, void *Data)
     }
     else
     {
+        PrintError("Cannot place a force wall here");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1657,6 +1676,7 @@ acscript bool Rally(SkillLevelInfo *SkillLevel, void *Data)
     // Fail if you have no summons active
     if (Player.Summons == 0)
     {
+        PrintError("You have no summoned friendlies");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1678,6 +1698,7 @@ acscript bool Unsummon(SkillLevelInfo *SkillLevel, void *Data)
     // Fail if you have no summons active
     if (Player.Summons == 0)
     {
+        PrintError("You have no summoned friendlies");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1718,6 +1739,7 @@ acscript bool Recall(SkillLevelInfo *SkillLevel, void *Data)
     // Fail if you're in the Arena or Marines are hostile
     if (ArenaActive || MarinesHostile)
     {
+        PrintError("You cannot recall from this location");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1780,6 +1802,7 @@ acscript bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If there are no items in the array
     if (Player.DropTID.Position == 0 && CreditCount == 0)
     {
+        PrintError("No magnetizeable items detected");
         ActivatorSound("menu/error", 127);
         return false;
     };
@@ -1826,6 +1849,7 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
     // Don't allow Transport while the arena is active, if the Marines are hostile, or you're in an Outpost-related menu
     if (ArenaActive || MarinesHostile || Player.OutpostMenu > 0)
     {
+        PrintError("There was a malfunction with the transporter system");
         ActivatorSound("menu/error", 127);
         return false;
     };
