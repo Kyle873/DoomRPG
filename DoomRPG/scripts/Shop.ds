@@ -45,17 +45,18 @@ acscript void OpenShop(bool OpenLocker) net
     };
 };
 
-script void AutoSellHandler()
+script void ShopItemAutoHandler()
 {
     while (true)
     {
+        // Auto-Sell
         if (Player.RankLevel > 0 || InBase)
             for (int i = 0; i < ItemCategories; i++)
                 for (int j = 0; j < ItemMax[i]; j++)
                 {
                     ItemInfoPtr Item = &ItemData[i][j];
                     
-                    if (Player.AutoSell[i][j] && CheckInventory(Item->Actor) > 0)
+                    if (Player.ItemAutoMode[i][j] == AT_SELL && CheckInventory(Item->Actor) > 0)
                     {
                         // DoomRL Compatibility
                         if (CompatMode == COMPAT_DRLA)
@@ -82,6 +83,46 @@ script void AutoSellHandler()
                     };
                 };
         
+        // Auto-Store
+        if (Player.EP >= LOCKER_EPRATE)
+            for (int i = 0; i < ItemCategories; i++)
+                for (int j = 0; j < ItemMax[i]; j++)
+                {
+                    ItemInfoPtr Item = &ItemData[i][j];
+                    
+                    if (Player.ItemAutoMode[i][j] == AT_STORE && CheckInventory(Item->Actor) > 0)
+                    {
+                        // DoomRL Compatibility
+                        if (CompatMode == COMPAT_DRLA)
+                        {
+                            if (i == 0) // Weapons
+                                TakeInventory("RLWeaponLimit", CheckInventory(Item->Actor));
+                            if (i == 3) // Armor
+                                TakeInventory("RLArmorInInventory", CheckInventory(Item->Actor));
+                            if (i == 9) // Mod Packs
+                                if (j == 8) // Special handling case for Armor Modpack
+                                    TakeInventory("RLArmorModItemInInventory", CheckInventory(Item->Actor))
+                                else
+                                    if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
+                                        TakeInventory("RLScavengerModLimit", CheckInventory(Item->Actor))
+                                    else
+                                        TakeInventory("RLModLimit", CheckInventory(Item->Actor));
+                            if (i == 10) // Boots
+                                TakeInventory("RLBootsInInventory", CheckInventory(Item->Actor));
+                        };
+                        
+                        while (CheckInventory(Item->Actor) > 0)
+                        {
+                            if (Player.EP < LOCKER_EPRATE)
+                                Delay(1);
+                            
+                            DepositItem(i, j, false, true);
+                        };
+                        ActivatorSound("shop/autostore", 127);
+                    };
+                };
+        
+        // Reset Auto-Sell timer and pay counter
         if (Player.AutoSellTimer <= 0)
             Player.AutoSellPay = 0;
         
@@ -249,8 +290,8 @@ function void ShopLoop()
         else
         {
             if (Player.LockerMode)
-                DepositItem(Player.ShopPage, Player.ShopIndex, false)
-            else if (!Player.AutoSell[Player.ShopPage][Player.ShopIndex])
+                DepositItem(Player.ShopPage, Player.ShopIndex, false, false)
+            else if (Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] != AT_SELL)
                 BuyItem(ItemPtr->Actor);
         };
     if (Buttons & BT_JUMP && !(OldButtons & BT_JUMP) && (GetCVar("drpg_shoptype") || InBase))
@@ -270,11 +311,24 @@ function void ShopLoop()
     if (Buttons & BT_USE || (Buttons & BT_USE && Buttons & BT_SPEED))
         Player.DelayTimer++;
     if (Buttons == BT_ATTACK && OldButtons != BT_ATTACK)
-        if (!(CategoryFlags[Player.ShopPage] & CF_NOSELL) && !Player.LockerMode)
+    {
+        if (Player.LockerMode)
         {
-            Player.AutoSell[Player.ShopPage][Player.ShopIndex] = !Player.AutoSell[Player.ShopPage][Player.ShopIndex];
+            if (Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] != AT_STORE)
+                Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_STORE
+            else
+                Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_NONE;
+            ActivatorSound("menu/move", 127);
+        }
+        else if (!(CategoryFlags[Player.ShopPage] & CF_NOSELL))
+        {
+            if (Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] != AT_SELL)
+                Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_SELL
+            else
+                Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_NONE;
             ActivatorSound("menu/move", 127);
         };
+    };
     
     // Reset the Delay Timer if no buttons are pressed
     if (Buttons == 0 && OldButtons == 0)
@@ -455,7 +509,7 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     if (CheckInventory(Item) >= Amount)
     {
         if (AutoSold)
-            ActivatorSound("credits/autosell", 127)
+            ActivatorSound("shop/autosell", 127)
         else
             ActivatorSound("credits/payout", 127);
         TakeInventory(Item, Amount);
@@ -467,7 +521,7 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     return SellCost;
 };
 
-function void DepositItem(int Page, int Index, bool CharSave)
+function void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
 {
     ItemInfoPtr ItemPtr = &ItemData[Page][Index];
     int *LockerAmount = &Player.Locker[Page][Index];
@@ -551,10 +605,10 @@ function void DepositItem(int Page, int Index, bool CharSave)
         (*LockerAmount)++;
         if (CharSave && CompatMode == COMPAT_DRLA && Page == 0 && *LockerAmount > 1) // Prevent dumping multiple weapons in the locker in DRLA saves
             *LockerAmount = 1;
-        if (!CharSave)
+        if (!NoSound)
             ActivatorSound("menu/move", 127);
     }
-    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat") && !NoSound)
         ActivatorSound("menu/error", 127);
 };
 
@@ -644,7 +698,6 @@ function void DrawItemGrid()
             bool Unlocked = !((Rank > 0 && Player.RankLevel < Rank));
             bool CanBuy = !(Rank == -1);
             bool CanAfford = (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100);
-            bool AutoSell = Player.AutoSell[Player.ShopPage][Index];
             
             // Stop if we're at the end of the list
             if (Index > ItemMax[Player.ShopPage] - 1) break;
@@ -675,9 +728,11 @@ function void DrawItemGrid()
                 HudMessage("%d\n", Stored, HUDMSG_PLAIN, 0, CR_YELLOW, X + 44.2, Y + 12.2, 0.05);
             };
             
-            // Auto-Sell Icon
-            if (Player.AutoSell[Player.ShopPage][Index])
-                PrintSpritePulse("SELLICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
+            // Auto-Sell/Auto-Store Icon
+            if (Player.ItemAutoMode[Player.ShopPage][Index] == AT_SELL)
+                PrintSpritePulse("SELLICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false)
+            else if (Player.ItemAutoMode[Player.ShopPage][Index] == AT_STORE)
+                PrintSpritePulse("STORICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
             
             // Mod Info
             if (CompatMode == COMPAT_DRLA && Player.LockerMode && Player.ShopPage == 0 && Player.Locker[Player.ShopPage][Index] > 0)
