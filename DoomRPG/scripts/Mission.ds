@@ -73,20 +73,27 @@ script void InitMission()
         
         for (int i = 1; i < MonsterID; i++)
         {
-            str ActorToCheck = StrParam("DRPG%s\n", Player.Mission.Monster->Actor);
+            str ActorToCheck;
             
-            if (CompatMode == COMPAT_DRLA)
-                ActorToCheck = Player.Mission.Monster->Actor;
-            
-            if (StartsWith(Monsters[i].Actor, ActorToCheck))
+            for (int j = 0; j < MAX_PLAYERS; j++)
             {
-                if (PotentialTargets.Position == PotentialTargets.Size)
-                    ArrayResize(&PotentialTargets);
+                if (!PlayerInGame(j)) continue;
                 
-                ((int *)PotentialTargets.Data)[PotentialTargets.Position++] = i;
+                ActorToCheck = StrParam("DRPG%s\n", Players(j).Mission.Monster->Actor);
+                
+                if (CompatMode == COMPAT_DRLA)
+                    ActorToCheck = Players(j).Mission.Monster->Actor;
+                
+                if (StartsWith(Monsters[i].Actor, ActorToCheck))
+                {
+                    if (PotentialTargets.Position == PotentialTargets.Size)
+                        ArrayResize(&PotentialTargets);
+                    
+                    ((int *)PotentialTargets.Data)[PotentialTargets.Position++] = i;
+                };
+                
+                if (!(i % 1000)) Delay(1);
             };
-            
-            if (!(i % 1000)) Delay(1);
         };
         
         if (PotentialTargets.Position)
@@ -121,54 +128,50 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
 {
     if ((GetCVar("drpg_mission_monsterkillscount") ? Killer >= -1 : Killer > -1) && !InBase && !GetActorProperty(0, APROP_Friendly))
     {
-        // Determine actor name
-        str Actor = GetActorClass(0);
-        str NeededActor = StrParam("DRPG%s\n", Players(Killer).Mission.Monster->Actor);
-        int Match = StrCmp(Actor, NeededActor);
-        
-        // DoomRL Compatibility
-        if (CompatMode == COMPAT_DRLA)
-        {
-            NeededActor = StrParam("%sRPG\n", Players(Killer).Mission.Monster->Actor);
-            
-            // Special handling for Humans
-            for (int i = 0; i < MAX_HUMANS; i++)
-                if (StrCmp(StrLeft(Actor, StrLen(Actor) - 3), MonsterHumanData[i][0]) == 0)
-                {
-                    Actor = StrParam("%sRPG\n", MonsterHumanData[i][1]);
-                    break;
-                };
-            
-            // Re-check the match
-            Match = StrCmp(Actor, NeededActor);
-        }
-        // Extras Compatibility
-        else if (CompatMode == COMPAT_EXTRAS)
-        {
-            NeededActor = StrParam("DRPG%sExtras\n", Players(Killer).Mission.Monster->Actor);
-            Match = StrCmp(Actor, NeededActor);
-        }
-        // Brutal Doom Compatibility
-        else if (CompatMode == COMPAT_BRUTAL)
-        {
-            NeededActor = StrParam("%sBD\n", Players(Killer).Mission.Monster->Actor);
-            Match = StrCmp(Actor, NeededActor);
-        };
-        
         // Collection Mission
         if (Players(Killer).Mission.Type == MT_COLLECT)
             if (Random(1, 1 << ((Players(Killer).Mission.Difficulty + 1))) == 1)
                 DropMonsterItem(Killer, 0, Players(Killer).Mission.Item->Actor, 256);
         
         // Kill Mission
-        if (Match == 0)
+        for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            for (int i = 0; i < MAX_PLAYERS; i++)
+            // Determine actor name
+            str Actor = GetActorClass(0);
+            str NeededActor;
+            int Match;
+            
+            if (!PlayerInGame(i)) continue;
+            
+            // DoomRL Compatibility
+            if (CompatMode == COMPAT_DRLA)
             {
-                if (!PlayerInGame(i)) continue;
+                NeededActor = StrParam("%sRPG\n", Players(i).Mission.Monster->Actor);
+                
+                // Special handling for Humans
+                for (int i = 0; i < MAX_HUMANS; i++)
+                    if (StrCmp(StrLeft(Actor, StrLen(Actor) - 3), MonsterHumanData[i][0]) == 0)
+                    {
+                        Actor = StrParam("%sRPG\n", MonsterHumanData[i][1]);
+                        break;
+                    };
+            }
+            // Extras Compatibility
+            else if (CompatMode == COMPAT_EXTRAS)
+                NeededActor = StrParam("DRPG%sExtras\n", Players(i).Mission.Monster->Actor)
+            // Brutal Doom Compatibility
+            else if (CompatMode == COMPAT_BRUTAL)
+                NeededActor = StrParam("%sBD\n", Players(i).Mission.Monster->Actor)
+            else // Vanilla
+                NeededActor = StrParam("DRPG%s\n", Players(i).Mission.Monster->Actor);
+            
+            // Check to see if we match
+            Match = StrCmp(Actor, NeededActor);
+            
+            // Perform actor -> needed actor match checking
+            if (Match == 0)
                 if (Players(i).Mission.Active && Players(i).Mission.Type == MT_KILL)
                     Players(i).Mission.Current++;
-            };
         };
         
         // Kill Auras Mission
@@ -199,7 +202,7 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
             for (int i = 0; i < MAX_PLAYERS; i++)
             {
                 if (!PlayerInGame(i)) continue;
-                if (Players(i).Mission.Active && Players(i).Mission.Type == MT_ASSASSINATION && Players(i).Mission.Monster->Actor == Players(Stats->Target - 1).Mission.Monster->Actor)
+                if (Players(i).Mission.Active && Players(i).Mission.Type == MT_ASSASSINATION)
                     Players(i).Mission.Current++;
             };
         };

@@ -284,7 +284,7 @@ acscript void MonsterInit(int Flags)
     MonsterDeathCheck();
     
     // Environmental Hazard Map Event
-    if (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && Random(1, 8) == 1)
+    if (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && (Random(1, 8) == 1 || Stats->Flags & MF_BOSS || Stats->Flags & MF_MEGABOSS))
     {
         GiveInventory("DRPGMonsterRadiationProtection", 1);
         GiveInventory("DRPGMonsterRadSuit", 1);
@@ -1390,18 +1390,15 @@ script void MonsterDeath()
             // Luck-based Drops
             if (Killer > -1 && !(Stats->Flags & MF_MEGABOSS))
             {
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).HealthChance) DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).EPChance)     DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).ArmorChance)  DropMonsterItem(Killer, DropTID, "DRPGArmorDropper", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).PowerupChance)DropMonsterItem(Killer, DropTID, "DRPGPowerupDropper", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance) DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance) DropMonsterItem(Killer, DropTID, "RLModpackSpawner", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).TokenChance)  DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).AugChance)    DropMonsterItem(Killer, DropTID, "DRPGAugDropper", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).ShieldChance) DropMonsterItem(Killer, DropTID, "DRPGShieldDropper", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)   DropMonsterItem(Killer, DropTID, "DRPGStimDropper", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)   DropMonsterItem(Killer, DropTID, "DRPGVialDropper", 256);
-                    if (RandomFixed(0.0, 100.0) < Players(Killer).StimChance)   DropMonsterItem(Killer, DropTID, "DRPGVialDropperRare", 256);
+                    if (Player.HealthDrop && RandomFixed(0.0, 100.0) < Players(Killer).HealthChance)    DropMonsterItem(Killer, DropTID, "DRPGHealthDropper", 256);
+                    if (Player.EPDrop && RandomFixed(0.0, 100.0) < Players(Killer).EPChance)            DropMonsterItem(Killer, DropTID, "DRPGEPCapsule", 256);
+                    if (Player.ArmorDrop && RandomFixed(0.0, 100.0) < Players(Killer).ArmorChance)      DropMonsterItem(Killer, DropTID, "DRPGArmorDropper", 256);
+                    if (Player.WeaponDrop && RandomFixed(0.0, 100.0) < Players(Killer).WeaponChance)    DropMonsterItem(Killer, DropTID, "DRPGWeaponDropper", 256);
+                    if (Player.PowerupDrop && RandomFixed(0.0, 100.0) < Players(Killer).PowerupChance)  DropMonsterItem(Killer, DropTID, "DRPGPowerupDropper", 256);
+                    if (Player.TokenDrop && RandomFixed(0.0, 100.0) < Players(Killer).TokenChance)      DropMonsterItem(Killer, DropTID, "DRPGSmallTokenDropper", 256);
+                    if (Player.AugDrop && RandomFixed(0.0, 100.0) < Players(Killer).AugChance)          DropMonsterItem(Killer, DropTID, "DRPGAugDropper", 256);
+                    if (Player.ShieldDrop && RandomFixed(0.0, 100.0) < Players(Killer).ShieldChance)    DropMonsterItem(Killer, DropTID, "DRPGShieldDropper", 256);
+                    if (Player.StimDrop && RandomFixed(0.0, 100.0) < Players(Killer).StimChance)        DropMonsterItem(Killer, DropTID, "DRPGStimDropper", 256);
             };
             
             Delay(1);
@@ -1448,7 +1445,18 @@ script void MonsterDeath()
     
     // Drop Credits
     if (!(Stats->Flags & MF_NODROPS) && CheckInventory("DRPGCredits") > 0)
-        DropMoney(Killer, 0, Random(CheckInventory("DRPGCredits") / 2, CheckInventory("DRPGCredits") * (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS ? 4 : 1)));
+    {
+        fixed LuckMult = 1.0 + ((fixed)Players(Killer).Luck / 100.0);
+        int CreditsMin = (CheckInventory("DRPGCredits") * LuckMult) / 10;
+        int CreditsMax = (CheckInventory("DRPGCredits") * LuckMult);
+        int CreditsAmount = Random(CreditsMin, CreditsMax);
+        
+        // RAINBOWS Event
+        if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
+            CreditsAmount *= 4;
+        
+        DropMoney(Killer, 0, CreditsAmount);
+    };
     
     // Drop stolen ammo
     int Count = 0;
@@ -1521,7 +1529,7 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
     
     if (!MonsterListLength)
     {
-        Log("\cgWARNING: \caReinforcement Mission on %s\ca has no monsters!\n", MissionDifficulties[Difficulty]);
+        Log("\ciWARNING: \caReinforcement Mission on %s\ca has no monsters!\n", MissionDifficulties[Difficulty]);
         return;
     };
     
@@ -1540,6 +1548,9 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
         bool Success;
         int SpawnTries;
         int CurrentRadius;
+        
+        // Stop spawning if time is frozen
+        while (IsTimeFrozen()) Delay(1);
         
         // Check to see if the mission is complete
         for (int i = 0; i < MAX_PLAYERS; i++)

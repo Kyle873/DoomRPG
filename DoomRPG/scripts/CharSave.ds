@@ -562,9 +562,10 @@ script void PopulateCharData(CharSaveInfo *Info)
             Info->DRLAAssemblies3 |= 1 << (i - 32);
     };
     
-    // Calculate Checksum
+    /* Calculate Checksum - TODO: Broken
     Info->Checksum = CreateChecksum(Info);
     Info->Checksum = CalculateChecksum(Info->Checksum);
+    */
 };
 
 script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
@@ -690,7 +691,7 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     
     Info->Version = Version;
     
-    // Calculate Checksum
+    /* Calculate Checksum - TODO: Broken
     auto int Checksum = CreateChecksum(Info);
     Checksum = CalculateChecksum(Checksum);
     
@@ -699,6 +700,7 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
         Info->Version = -3;
         return;
     };
+    */
 };
 
 script char const *MakeSaveString(CharSaveInfo *Info)
@@ -1052,26 +1054,19 @@ function int CreateChecksum(CharSaveInfo *Info)
     Checksum ^= Info->PayBonus;
     Checksum ^= Info->ArenaWave;
     
-    /* TODO: This entire section will not fucking checksum properly no matter how hard I try
-    Log("\caChecksum: %d\n", Checksum);
-    
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
             Checksum ^= Info->Locker[i][j] + (i * 256) + j;
             
-            /* BROKEN AS FUUUUUUUUUUUUUUU
             if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
                 for (int k = 0; k < DRLA_MODPACK_SIZE; k++)
-                    Checksum ^= Info->WeaponMods[j][k] + (i * 256) + j;
+                    Checksum ^= Info->WeaponMods[j][k] + j;
         };
     
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
-            Checksum ^= Info->AutoSell[i][j] + (i * 256) + j;
-    
-    Log("\cdChecksum: %d\n", Checksum);
-    */
+            Checksum ^= (Info->AutoSell[i][j] ? 1 : 0) << (j % 32);
     
     Checksum ^= Info->DRLAAssemblies1;
     Checksum ^= Info->DRLAAssemblies2;

@@ -464,7 +464,7 @@ acscript void SkillComputer()
 
         // Text
         SetFont("BIGFONT");
-        HudMessage("Skill Level: \cg%d (%s)\n", SkillChoice + 1, SkillLevels[SkillChoice],
+        HudMessage("Skill Level: \cj%d (%s\cj)\n", SkillChoice + 1, SkillLevels[SkillChoice],
                    HUDMSG_FADEOUT, MENU_ID, CR_GOLD, 0.5, 0.5, 0.05, 0.5);
         
         // Input
@@ -772,19 +772,8 @@ acscript void TokenConverter()
     // if you're already in a menu, terminate
     if (Player.OutpostMenu == OMENU_TOKENCONVERTER) return;
     
-    int StatWorth = 1;
-    int StatCapWorth = 10;
-    int SkillWorth = 5;
-    int InAmount = 1;
-    int Amount1;
-    int Amount2;
-    int MaxAmount;
-    int Type;
-    int Cost;
-    str Text;
-    
     // Rank Check
-    if (Player.RankLevel == 0)
+    if (Player.RankLevel == 0 && !GetCVar("drpg_debug"))
     {
         SetFont("BIGFONT");
         HudMessage("\cgYou must be at least Rank 1 to use the Token Converter\n", HUDMSG_FADEOUT, 0, CR_RED, 1.5, 0.5, 2.0, 1.0);
@@ -792,144 +781,80 @@ acscript void TokenConverter()
         return;
     };
     
+    int Index;
+    int StatAmount;
+    int SkillAmount;
+    int WildcardAmount;
+    
     SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     ActivatorSound("menu/move", 127);
     Player.OutpostMenu = OMENU_TOKENCONVERTER;
 
     while (true)
     {
-        int StatTokens = CheckInventory("DRPGStatToken");
-        int StatCapTokens = CheckInventory("DRPGStatCapToken");
-        int SkillTokens = CheckInventory("DRPGSkillToken");
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-        
+        int StatTokens = CheckInventory("DRPGStatToken");
+        int SkillTokens = CheckInventory("DRPGSkillToken");
+        int WildcardTokens = CheckInventory("DRPGWildcardToken");
+
         // Draw the background
         if (GetCVar("drpg_menudim"))
             FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
         
-        switch (Type)
-        {
-        case 0: // Stat -> Skill
-            Amount1 = InAmount * SkillWorth;
-            Amount2 = InAmount;
-            MaxAmount = StatTokens / SkillWorth;
-            Cost = 5000 * Amount1;
-            Text = StrParam("Convert: \cf%d C\n\cg%d Stat Tokens \cj-> \cd%d Skill Tokens\n", Cost, Amount1, Amount2);
-            break;
-        case 1: // Stat -> Stat Cap
-            Amount1 = InAmount * StatCapWorth;
-            Amount2 = InAmount;
-            MaxAmount = StatTokens / StatCapWorth;
-            Cost = 1000 * Amount1;
-            Text = StrParam("Convert: \cf%d C\n\cg%d Stat Tokens \cj-> \ck%d Stat Cap Tokens\n", Cost, Amount1, Amount2);
-            break;
-        case 2: // Skill -> Stat
-            Amount1 = InAmount * StatWorth;
-            Amount2 = InAmount * SkillWorth;
-            MaxAmount = SkillTokens;
-            Cost = 25000 * Amount1;
-            Text = StrParam("Convert: \cf%d C\n\cd%d Skill Tokens \cj-> \cg%d Stat Tokens\n", Cost, Amount1, Amount2);
-            break;
-        case 3: // Skill -> Stat Cap
-            Amount1 = InAmount * (StatCapWorth / SkillWorth);
-            Amount2 = InAmount;
-            MaxAmount = SkillTokens / 2;
-            Cost = 12500 * Amount1;
-            Text = StrParam("Convert: \cf%d C\n\cd%d Skill Tokens \cj-> \ck%d Stat Cap Tokens\n", Cost, Amount1, Amount2);
-            break;
-        case 4: // Stat Cap -> Stat
-            Amount1 = InAmount;
-            Amount2 = InAmount * StatCapWorth;
-            MaxAmount = StatCapTokens;
-            Cost = 25000 * Amount1;
-            Text = StrParam("Convert: \cf%d C\n\ck%d Stat Cap Tokens \cj-> \cg%d Stat Tokens\n", Cost, Amount1, Amount2);
-            break;
-        case 5: // Stat Cap -> Skill
-            Amount1 = InAmount;
-            Amount2 = InAmount * (StatCapWorth / SkillWorth);
-            MaxAmount = StatCapTokens;
-            Cost = 10000 * Amount1;
-            Text = StrParam("Convert: \cf%d C\n\ck%d Stat Cap Tokens \cj-> \cd%d Skill Tokens\n", Cost, Amount1, Amount2);
-            break;
-        };
-
         // Input
-        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && Type > 0)
+        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD)
         {
+            Index++;
             ActivatorSound("menu/move", 127);
-            InAmount = 1;
-            Type--;
+            if (Index > 1) Index = 0;
         };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && Type < 5)
+        if (Buttons == BT_BACK && OldButtons != BT_BACK)
         {
+            Index--;
             ActivatorSound("menu/move", 127);
-            InAmount = 1;
-            Type++;
+            if (Index < 0) Index = 1;
         };
         if ((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
-            (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT)
-            && InAmount > 1)
+            (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
         {
-            ActivatorSound("menu/move", 127);
-            InAmount--;
+            if (Index == 0 && StatAmount > 0)
+            {
+                StatAmount--;
+                ActivatorSound("menu/move", 127);
+            };
+            if (Index == 1 && SkillAmount > 0)
+            {
+                SkillAmount--;
+                ActivatorSound("menu/move", 127);
+            };
         };
         if ((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
-            (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT)
-            && InAmount <= MaxAmount - 1)
+            (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
         {
-            ActivatorSound("menu/move", 127);
-            InAmount++;
+            if (WildcardAmount > 0)
+            {
+                if (Index == 0)
+                {
+                    StatAmount++;
+                    ActivatorSound("menu/move", 127);
+                };
+                if (Index == 1)
+                {
+                    SkillAmount++;
+                    ActivatorSound("menu/move", 127);
+                };
+            };
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
-            str InItem;
-            str OutItem;
-            
-            switch (Type)
-            {
-            case 0: InItem = "DRPGStatToken";       OutItem = "DRPGSkillToken";     break;
-            case 1: InItem = "DRPGStatToken";       OutItem = "DRPGStatCapToken";   break;
-            case 2: InItem = "DRPGSkillToken";      OutItem = "DRPGStatToken";      break;
-            case 3: InItem = "DRPGSkillToken";      OutItem = "DRPGStatCapToken";   break;
-            case 4: InItem = "DRPGStatCapToken";    OutItem = "DRPGStatToken";      break;
-            case 5: InItem = "DRPGStatCapToken";    OutItem = "DRPGSkillToken";     break;
-            };
-            
-            if (CheckInventory("DRPGCredits") >= Cost)
-            {
-                if ((Type == 0 || Type == 1) && StatTokens >= Amount1)
-                {
-                    InAmount = 1;
-                    GiveInventory(OutItem, Amount2);
-                    TakeInventory(InItem, Amount1);
-                    TakeInventory("DRPGCredits", Cost);
-                    ActivatorSound("misc/tokenconvert", 127);
-                    Player.OutpostMenu = 0;
-                }
-                else if ((Type == 2 || Type == 3) && SkillTokens >= Amount1)
-                {
-                    InAmount = 1;
-                    GiveInventory(OutItem, Amount2);
-                    TakeInventory(InItem, Amount1);
-                    TakeInventory("DRPGCredits", Cost);
-                    ActivatorSound("misc/tokenconvert", 127);
-                    Player.OutpostMenu = 0;
-                }
-                else if ((Type == 4 || Type == 5) && StatCapTokens >= Amount1)
-                {
-                    InAmount = 1;
-                    GiveInventory(OutItem, Amount2);
-                    TakeInventory(InItem, Amount1);
-                    TakeInventory("DRPGCredits", Cost);
-                    ActivatorSound("misc/tokenconvert", 127);
-                    Player.OutpostMenu = 0;
-                }
-                else
-                    ActivatorSound("menu/error", 127);
-            }
-            else
-                ActivatorSound("menu/error", 127);
+            GiveInventory("DRPGStatToken", StatAmount);
+            GiveInventory("DRPGSkillToken", SkillAmount);
+            TakeInventory("DRPGWildcardToken", StatAmount + SkillAmount);
+            StatAmount = 0;
+            SkillAmount = 0;
+            WildcardAmount = 0;
+            ActivatorSound("misc/tokenconvert", 127);
         };
         if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
         {
@@ -939,18 +864,19 @@ acscript void TokenConverter()
             return;
         };
         
+        // Calculate the current wildcard amount
+        WildcardAmount = WildcardTokens - (StatAmount + SkillAmount);
+        
         // Drawing
         SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
-        PrintSpriteFade("TOKAA0", 0, 16.1, 188.1, 0.05, 0.5);
-        PrintSpriteFade("TOKBA0", 0, 16.1, 208.1, 0.05, 0.5);
-        PrintSpriteFade("TOKCA0", 0, 16.1, 228.1, 0.05, 0.5);
+        PrintSprite("TOKEN1", 0, 16.1, 188.1, 0.05);
+        PrintSprite("TOKEN2", 0, 16.1, 208.1, 0.05);
+        PrintSprite("TOKEN3", 0, 16.1, 228.1, 0.05);
         SetFont("BIGFONT");
-        HudMessage("%d\n", StatTokens,      HUDMSG_FADEOUT, 0, CR_RED,          40.1, 178.0, 0.05, 0.5);
-        HudMessage("%d\n", StatCapTokens,   HUDMSG_FADEOUT, 0, CR_YELLOW,       40.1, 198.0, 0.05, 0.5);
-        HudMessage("%d\n", SkillTokens,     HUDMSG_FADEOUT, 0, CR_DARKGREEN,    40.1, 218.0, 0.05, 0.5);
-        SetFont("SMALLFONT");
-        HudMessage("%s\n", Text,            HUDMSG_FADEOUT, MENU_ID, CR_WHITE,  140.1, 178.0, 0.05, 0.5);
-
+        HudMessage("%d --> %d\n", StatTokens, StatAmount, HUDMSG_PLAIN, 0, (Index == 0 ? MenuCursorColor : CR_RED), 40.1, 178.0, 0.05);
+        HudMessage("%d --> %d\n", SkillTokens, SkillAmount, HUDMSG_PLAIN, 0, (Index == 1 ? MenuCursorColor : CR_DARKGREEN), 40.1, 198.0, 0.05);
+        HudMessage("%d --> %d\n", WildcardTokens, WildcardAmount, HUDMSG_PLAIN, 0, CR_YELLOW, 40.1, 218.0, 0.05);
+        
         Delay(1);
     };
 };

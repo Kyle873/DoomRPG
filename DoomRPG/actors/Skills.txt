@@ -121,36 +121,50 @@ actor DRPGSkillBlast4 : DRPGSkillBlast1
 }
 
 // Force Field
-actor DRPGForceField
+actor DRPGForceWall
 {
     Radius 32
     Height 64
     
+    Health 100
+    PainChance 256
+    Mass 0x7FFFFFF
+    
+    Species "Player"
+    
+    Monster
+    -COUNTKILL
     +SOLID
+    +NOBLOOD
     +BRIGHT
-    +NOCLIP
     +REFLECTIVE
     +DEFLECT
+    +THRUSPECIES
     
     RenderStyle Add
     Alpha 0.5
     
+    Tag "Force Wall"
+    
+    var int user_step;
+    
     States
     {
     Spawn:
-        FFLD A 0
-    FadeOut:
-        FFLD A 3 A_FadeOut(0.001, true)
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOXP | MF_NOSTATS | MF_NOAURA | MF_NOPAYKILL | MF_NODROPS | MF_NOWEAKEN)
+    Pulse:
+        FFLD A 1
+        TNT1 A 0 A_SetTranslucent(0.5 + (0.25 * Sin(user_step)), 1)
+        TNT1 A 0 A_SetUserVar("user_step", user_step + 2.5714285)
+        Loop
+    Pain: // Temporary effect?
+        TNT1 A 0 A_SpawnItemEx("DRPGBlingParticle", FRandom(-Radius, Radius), FRandom(-Radius, Radius), Height / 2, FRandom(-4.0, 4.0), FRandom(-4.0, 4.0), FRandom(-4.0, 4.0))
+        Goto Pulse
+    Death: // Temporary effect?
+        TNT1 AAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx("DRPGBlingParticle", FRandom(-Radius, Radius), FRandom(-Radius, Radius), Height * 2, FRandom(-4.0, 4.0), FRandom(-4.0, 4.0), FRandom(-4.0, 4.0))
+        FFLD A 1 A_FadeOut(0.01, true)
         Loop
     }
-}
-
-actor DRPGForceField2 : DRPGForceField
-{
-    Radius 64
-    Height 128
-    
-    Scale 2.0
 }
 
 actor DRPGTranslocateBall : TelOtherFX1

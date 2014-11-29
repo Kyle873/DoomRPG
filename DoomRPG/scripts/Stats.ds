@@ -221,7 +221,7 @@ function void CheckLevel()
         };
         if (GetCVar("drpg_levelup_type") == 1) // Static
         {
-            StatTokens = 5 + (Player.Level / 10);
+            StatTokens = 3 + (Player.Level / 10);
             SkillTokens = 1;
         };
         
@@ -379,10 +379,10 @@ function void CheckStats()
     Player.LevelDamage = Player.Level * (10 - GameSkill());
     Player.BonusDamage = Player.Strength;
     Player.TotalDamage = Player.LevelDamage + Player.BonusDamage;
-    Player.DamageFactor = 1.0 - 0.25 * ((fixed)Player.Defense / 100);
+    Player.DamageFactor = 1.0 - 0.25 * ((fixed)Player.Defense / 100.0);
     Player.Mass = 100 + (Player.Defense * 10);
     Player.HealthMax = Player.Vitality * 10;
-    Player.StatusEffectResist = Player.Vitality / 4.0;
+    Player.StatusEffectResist = (fixed)Player.Vitality / 4.0;
     Player.EPMax = Player.Energy * 10;
     Player.Aura.Range = Player.Energy * 16;
     Player.ToxicityRegenBonus = Player.Regeneration / 10;
@@ -569,7 +569,7 @@ function void ResetRegen()
 // Keep stats capped at certain values
 function void CheckStatCaps()
 {
-    Player.StatCap = SoftStatCap + CheckInventory("DRPGStatCapToken");
+    Player.StatCap = SoftStatCap + Player.Level;
 
     if (Player.Strength > Player.StatCap)       Player.Strength = Player.StatCap;
     if (Player.Defense > Player.StatCap)        Player.Defense = Player.StatCap;
@@ -615,8 +615,8 @@ function void CheckStatBounds()
         Player.StatusEffectResist = 100.0;
     
     // Cap Toxicity Regen Bonus
-    if (Player.ToxicityRegenBonus > 20)
-        Player.ToxicityRegenBonus = 20;
+    if (Player.ToxicityRegenBonus > 25)
+        Player.ToxicityRegenBonus = 25;
     
     // Prevent Shield Capacity from under/overflowing
     if (Player.Shield.Charge < 0)
@@ -643,8 +643,8 @@ function void CheckStatBounds()
     // Cap chances at 100%
     if (Player.HealthChance > 100)  Player.HealthChance = 100;
     if (Player.EPChance > 100)      Player.EPChance = 100;
-    if (Player.ArmorChance > 100)   Player.ArmorChance = 100;
     if (Player.PowerupChance > 100) Player.PowerupChance = 100;
+    if (Player.ArmorChance > 100)   Player.ArmorChance = 100;
     if (Player.WeaponChance > 100)  Player.WeaponChance = 100;
     if (Player.TokenChance > 100)   Player.TokenChance = 100;
     if (Player.AugChance > 100)     Player.AugChance = 100;
@@ -663,15 +663,25 @@ function void CheckStatBounds()
 // Luck Chances
 function void CheckLuck()
 {
-    Player.HealthChance = Player.Luck * LUCK_HEALTHCHANCE;
-    Player.EPChance = Player.Luck * LUCK_EPCHANCE;
-    Player.ArmorChance = Player.Luck * LUCK_ARMORCHANCE;
-    Player.PowerupChance = Player.Luck * LUCK_POWERUPCHANCE;
-    Player.WeaponChance = Player.Luck * LUCK_WEAPONCHANCE;
-    Player.TokenChance = Player.Luck * LUCK_TOKENCHANCE;
-    Player.AugChance = Player.Luck * LUCK_AUGCHANCE;
-    Player.ShieldChance = Player.Luck * LUCK_SHIELDCHANCE;
-    Player.StimChance = Player.Luck * LUCK_STIMCHANCE;
+    Player.HealthDrop =     (Player.Luck >= LUCK_HEALTHDROP ? true : false);
+    Player.EPDrop =         (Player.Luck >= LUCK_EPDROP ? true : false);
+    Player.ArmorDrop =      (Player.Luck >= LUCK_ARMORDROP ? true : false);
+    Player.WeaponDrop =     (Player.Luck >= LUCK_WEAPONDROP ? true : false);
+    Player.PowerupDrop =    (Player.Luck >= LUCK_POWERUPDROP ? true : false);
+    Player.TokenDrop =      (Player.Luck >= LUCK_TOKENDROP ? true : false);
+    Player.AugDrop =        (Player.Luck >= LUCK_AUGDROP ? true : false);
+    Player.ShieldDrop =     (Player.Luck >= LUCK_SHIELDDROP ? true : false);
+    Player.StimDrop =       (Player.Luck >= LUCK_STIMDROP ? true : false);
+    
+    Player.HealthChance =   LUCK_HEALTHCHANCE + (Player.Luck / 1000);
+    Player.EPChance =       LUCK_EPCHANCE + (Player.Luck / 1000);
+    Player.ArmorChance =    LUCK_ARMORCHANCE + (Player.Luck / 1000);
+    Player.WeaponChance =   LUCK_WEAPONCHANCE + (Player.Luck / 1000);
+    Player.PowerupChance =  LUCK_POWERUPCHANCE + (Player.Luck / 1000);
+    Player.TokenChance =    LUCK_TOKENCHANCE + (Player.Luck / 1000);
+    Player.AugChance =      LUCK_AUGCHANCE + (Player.Luck / 1000);
+    Player.ShieldChance =   LUCK_SHIELDCHANCE + (Player.Luck / 1000);
+    Player.StimChance =     LUCK_STIMCHANCE + (Player.Luck / 1000);
     
     // Hell Unleashed Map Event
     if (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED)
@@ -679,8 +689,8 @@ function void CheckLuck()
         Player.HealthChance += CurrentLevel->RareAdd;
         Player.EPChance += CurrentLevel->RareAdd;
         Player.ArmorChance += CurrentLevel->RareAdd;
-        Player.PowerupChance += CurrentLevel->RareAdd;
         Player.WeaponChance += CurrentLevel->RareAdd;
+        Player.PowerupChance += CurrentLevel->RareAdd;
         Player.TokenChance += CurrentLevel->RareAdd;
         Player.AugChance += CurrentLevel->RareAdd;
         Player.ShieldChance += CurrentLevel->RareAdd;

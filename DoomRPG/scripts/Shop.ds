@@ -13,7 +13,7 @@ static int GlobalShopCard;
 int ShopSpotID = 1000;
 
 // Open the Shop
-acscript void OpenShop(bool FromBase) net
+acscript void OpenShop(bool OpenLocker) net
 {
     // If you're dead, return
     if (GetActorProperty(0, APROP_Health) <= 0) return;
@@ -27,11 +27,11 @@ acscript void OpenShop(bool FromBase) net
     // Close the main menu if it's open
     Player.InMenu = false;
     
+    // Sanity check for pressing use while the shop is open in front of the counter in the Outpost
+    if (Player.InShop && GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_USE) return;
+    
     if (Player.InShop)
     {
-        // Sanity Check to prevent the shop closing itself after buying an item in the Outpost Shop
-        if (!FromBase) return;
-        
         ActivatorSound("menu/leave", 127);
         SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
         Player.InShop = false;
@@ -40,6 +40,8 @@ acscript void OpenShop(bool FromBase) net
     {
         ActivatorSound("menu/shop", 127);
         Player.InShop = true;
+        if (OpenLocker)
+            Player.LockerMode = true;
     };
 };
 
@@ -107,7 +109,7 @@ function void ShopLoop()
     SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 
     // Force Locker mode if the Shop Anywhere CVAR is off
-    if (!GetCVar("drpg_shoptype"))
+    if (!GetCVar("drpg_shoptype") && !InBase)
         Player.LockerMode = true;
     
     SetFont("BIGFONT");
@@ -251,7 +253,7 @@ function void ShopLoop()
             else if (!Player.AutoSell[Player.ShopPage][Player.ShopIndex])
                 BuyItem(ItemPtr->Actor);
         };
-    if (Buttons & BT_JUMP && !(OldButtons & BT_JUMP) && GetCVar("drpg_shoptype"))
+    if (Buttons & BT_JUMP && !(OldButtons & BT_JUMP) && (GetCVar("drpg_shoptype") || InBase))
     {
         Player.LockerMode = !Player.LockerMode;
         ActivatorSound("menu/move", 127);

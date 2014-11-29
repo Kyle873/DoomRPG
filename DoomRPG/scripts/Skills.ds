@@ -13,7 +13,6 @@
 
 bool Overdrive;
 int BulletTimeTimer;
-int ForceFieldTID = 1998;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
@@ -137,11 +136,13 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Green Aura"; 100; 3; UseAura;
+            "Green Aura"; 100; 5; UseAura;
             {
-                "-25% Damage Taken";
-                "-50% Damage Taken";
-                "-75% Damage Taken\nDamage Floor Protection";
+                "+5% Damage Reduction";
+                "+10% Damage Reduction";
+                "+15% Damage Reduction\nDamage Floor Protection";
+                "+20% Damage Reduction\nDamage Floor Protection";
+                "+25% Damage Reduction\nDamage Floor Protection";
             };
         };
         {
@@ -381,10 +382,9 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Force Wall"; 100; 2; ForceWall;
+            "Force Wall"; 100; 1; ForceWall;
             {
-                "Creates a small force wall in front of you to reflect projectiles";
-                "Creates a large force wall in front of you to reflect projectiles";
+                "Creates a wall of force in front of you which blocks hitscans, projectiles and monsters\nHealth is determined by your Energy";
             };
         };
         {
@@ -1597,6 +1597,7 @@ acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
         // DoomRL Compatibility
         if (CompatMode == COMPAT_DRLA)
         {
+            RemoveDRLAArmorToken(GetArmorInfoString(ARMORINFO_CLASSNAME));
             TakeInventory("RL100ArmorWorn", 1);
             TakeInventory("RL150ArmorWorn", 1);
             TakeInventory("RL200ArmorWorn", 1);
@@ -1618,34 +1619,32 @@ acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript bool ForceWall(SkillLevelInfo *SkillLevel, void *Data)
 {
+    int TID = UniqueTID();
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
     fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
     fixed Z = GetActorZ(0);
     
-    Thing_Remove(ForceFieldTID + PlayerNumber());
-    
-    switch (SkillLevel->CurrentLevel)
+    if (Spawn("DRPGForceWall", X, Y, Z, TID, Angle))
     {
-    case 1:
-        if (!Spawn("DRPGForceField", X, Y, Z, ForceFieldTID + PlayerNumber(), Angle) == 0) {return true;}
-        else
-        {
-            ActivatorSound("menu/error", 127);
-            return false;
-        };
-        break;
-    case 2:
-        if (!Spawn("DRPGForceField2", X, Y, Z, ForceFieldTID + PlayerNumber(), Angle) == 0) {return true;}
-        else
-        {
-            ActivatorSound("menu/error", 127);
-            return false;
-        };
-        break;
+        Delay(4);
+        
+        MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
+        
+        // Determine Defense and Health
+        Stats->SpawnHealth = GetActorProperty(0, APROP_SpawnHealth);
+        Stats->Defense = Player.Energy * 5;
+        Stats->Vitality = Player.Energy * 5;
+        Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
+        SetActorProperty(TID, APROP_Health, Stats->HealthMax);
+        
+        return true;
+    }
+    else
+    {
+        ActivatorSound("menu/error", 127);
+        return false;
     };
-
-    return false;
 };
 
 acscript bool Rally(SkillLevelInfo *SkillLevel, void *Data)
@@ -1915,10 +1914,27 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
             }
             
             // Draw
-            else if (PlayersApprove == PlayersDeny)
+            else if (PlayersApprove > 0 && PlayersDeny > 0 && PlayersApprove == PlayersDeny)
             {
                 SetFont("BIGFONT");
                 HudMessageBold("\cjDraw!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
+                return false;
+            }
+            
+            // Error
+            else
+            {
+                SetFont("BIGFONT");
+                HudMessageBold("\cgAn error has occured with the Transport System!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 2.0);
+                if (GetCVar("drpg_debug")) // Output EVERYTHING for investigation
+                {
+                    Output Players;
+                    Output Ready;
+                    Output Force;
+                    Output Voted;
+                    Output PlayersApprove;
+                    Output PlayersDeny;
+                };
                 return false;
             };
         };
@@ -2117,18 +2133,6 @@ function void CheckSkills()
             Player.Summons--;
         };
     
-    // Force Wall Handling
-    if (GetActorProperty(ForceFieldTID + PlayerNumber(), APROP_Alpha) > 0)
-    {
-        fixed WallAngle = GetActorAngle(0);
-        fixed WallX = GetActorX(0) + Cos(WallAngle) * 48;
-        fixed WallY = GetActorY(0) + Sin(WallAngle) * 48;
-        fixed WallZ = GetActorZ(0);
-        
-        SetActorPosition(ForceFieldTID + PlayerNumber(), WallX, WallY, WallZ, false);
-        SetActorAngle(ForceFieldTID + PlayerNumber(), WallAngle);
-    };
-    
     // Bullet-Time timer handling
     if (BulletTimeTimer > 0)
     {
@@ -2196,19 +2200,14 @@ function void CheckAuras()
         // Green Aura
         if (Player.Aura.Type[AURA_GREEN].Active)
         {
-            if (Player.Aura.Type[AURA_GREEN].Level == 1)
-                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.25;
-            if (Player.Aura.Type[AURA_GREEN].Level == 2)
-                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.5;
+            if (Player.Aura.Type[AURA_GREEN].Level >= 1)
+                Player.DamageFactor -= (fixed)Player.Aura.Type[AURA_GREEN].Level / 20.0;
             if (Player.Aura.Type[AURA_GREEN].Level >= 3 || Player.SoulActive[SOUL_GREEN])
-            {
-                Player.DamageFactor = Player.DamageFactor - Player.DamageFactor * 0.75;
                 GiveInventory("DRPGGreenAuraIronFeet", 1);
-            };
         };
         
         // White Aura
-        if (Player.Aura.Type[AURA_WHITE].Active)
+        if (Player.Aura.Type[AURA_WHITE].Active && !CheckInventory("DRPGMenuFreezer"))
         {
             if (Player.Aura.Type[AURA_WHITE].Level >= 2 || Player.SoulActive[SOUL_WHITE])
             {
@@ -2278,7 +2277,7 @@ function void CheckAuras()
         };
 
         // Dark Blue Aura
-        if (Player.Aura.Type[AURA_DARKBLUE].Active)
+        if (Player.Aura.Type[AURA_DARKBLUE].Active && !CheckInventory("DRPGMenuFreezer"))
         {
             if (Player.Aura.Type[AURA_DARKBLUE].Level == 5)
                 AmmoRegenMult = 2;
@@ -2301,7 +2300,7 @@ function void CheckAuras()
         };
         
         // Yellow Aura
-        if (Player.Aura.Type[AURA_YELLOW].Active)
+        if (Player.Aura.Type[AURA_YELLOW].Active && !CheckInventory("DRPGMenuFreezer"))
         {
             if ((Timer() % (35 * (6 - Player.Aura.Type[AURA_YELLOW].Level))) == 1)
                 GiveInventory("DRPGCredits", (Player.RankLevel + 1));
@@ -2319,8 +2318,8 @@ function void CheckAuras()
             Player.HealthChance *= LuckMult;
             Player.EPChance *= LuckMult;
             Player.ArmorChance *= LuckMult;
-            Player.PowerupChance *= LuckMult;
             Player.WeaponChance *= LuckMult;
+            Player.PowerupChance *= LuckMult;
             Player.TokenChance *= LuckMult;
             Player.AugChance *= LuckMult;
             Player.ShieldChance *= LuckMult;

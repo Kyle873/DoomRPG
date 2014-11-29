@@ -25,18 +25,19 @@ AugSpace AugInfo[MAX_AUGS] AugData =
     {
         "Dermal Armor"; 5;
         {
-            "-10% Damage Taken";
-            "-20% Damage Taken";
-            "-30% Damage Taken";
-            "-40% Damage Taken";
-            "-50% Damage Taken";
+            "+5% Damage Reduction";
+            "+10% Damage Reduction";
+            "+15% Damage Reduction";
+            "+20% Damage Reduction";
+            "+25% Damage Reduction";
         };
     };
     {
-        "Pain Inhibitor"; 2;
+        "Pain Inhibitor"; 3;
         {
             "2x Max Health";
             "2x Health Regen";
+            "+25% Status Effect Resist";
         };
     };
     {
@@ -50,12 +51,13 @@ AugSpace AugInfo[MAX_AUGS] AugData =
         };
     };
     {
-        "Adrenaline Booster"; 4;
+        "Adrenaline Booster"; 5;
         {
             "2x HP/EP Regen Amounts";
             "-2x HP/EP Regen Timers";
             "4x HP/EP Regen Amounts";
             "-4x HP/EP Regen Timers";
+            "+10 Second Toxicity Regen Time";
         };
     };
     {
@@ -207,28 +209,29 @@ function void CheckAugs()
     };
     
     // Battery Handling
-    if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
+    if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
     {
-        fixed Drain;
+        // Reset drain
+        Player.Augs.BatteryDrain = 0;
         
         // Calculate Battery Drain
         for (int i = 0; i < MAX_AUGS; i++)
             if (Player.Augs.Active[i] && i != AUG_BATTERY)
-                Drain += Player.Augs.Level[i];
+                Player.Augs.BatteryDrain += Player.Augs.Level[i];
         
         // Battery Management checks
         if (Player.Augs.Active[AUG_BATTERY])
         {
             if (Player.Augs.Level[AUG_BATTERY] == 3)
-                Drain /= 1.33;
+                Player.Augs.BatteryDrain /= 1.33;
             if (Player.Augs.Level[AUG_BATTERY] >= 4)
-                Drain /= 2;
+                Player.Augs.BatteryDrain /= 2;
         };
         
         // Decrease Battery
-        if (Player.Augs.SlotsUsed > 0 && (Timer() % (35 * 30)) == 0)
+        if (Player.Augs.SlotsUsed > 0 && (Timer() % 35) == 0)
         {
-            Player.Augs.Battery -= (int)Drain;
+            Player.Augs.Battery -= (Player.Augs.BatteryDrain / 10);
             DrawBattery();
         };
         
@@ -246,12 +249,10 @@ function void CheckAugs()
         Player.Augs.Battery = Player.Augs.BatteryMax;
     
     // Battery Management Recharging
-    if (Player.Augs.Active[AUG_BATTERY] && Player.Augs.Level[AUG_BATTERY] >= 5 && ((Timer() % (35 * 10)) == 0) && Player.Augs.Battery < Player.Augs.BatteryMax)
-        if (!GetPlayerInput(PlayerNumber(), MODINPUT_FORWARDMOVE) &&
-            !GetPlayerInput(PlayerNumber(), MODINPUT_SIDEMOVE) &&
-            !GetPlayerInput(PlayerNumber(), MODINPUT_UPMOVE))
+    if (Player.Augs.Active[AUG_BATTERY] && Player.Augs.Level[AUG_BATTERY] >= 5 && Player.Augs.Battery < Player.Augs.BatteryMax)
+        if ((Timer() % 35) == 0 && !IsPlayerMoving() && !CheckInventory("DRPGMenuFreezer"))
         {
-            Player.Augs.Battery++;
+            Player.Augs.Battery += 0.1;
             DrawBattery();
         };
     
@@ -270,18 +271,7 @@ function void CheckAugs()
     
     // Defense Aug
     if (Player.Augs.Active[AUG_DEFENSE])
-    {
-        if (Player.Augs.Level[AUG_DEFENSE] == 1)
-            Player.DamageFactor -= 0.1;
-        if (Player.Augs.Level[AUG_DEFENSE] == 2)
-            Player.DamageFactor -= 0.2;
-        if (Player.Augs.Level[AUG_DEFENSE] == 3)
-            Player.DamageFactor -= 0.3;
-        if (Player.Augs.Level[AUG_DEFENSE] == 4)
-            Player.DamageFactor -= 0.4;
-        if (Player.Augs.Level[AUG_DEFENSE] >= 5)
-            Player.DamageFactor -= 0.5;
-    };
+        Player.DamageFactor -= (fixed)Player.Augs.Level[AUG_DEFENSE] / 20.0;
     
     // Vitality Aug
     if (Player.Augs.Active[AUG_VITALITY])
@@ -290,6 +280,8 @@ function void CheckAugs()
             Player.HealthMax *= 2;
         if (Player.Augs.Level[AUG_VITALITY] >= 2)
             Player.HPAmount *= 2;
+        if (Player.Augs.Level[AUG_VITALITY] >= 3)
+            Player.StatusEffectResist += 25.0;
     };
     
     // Energy Aug
@@ -328,6 +320,8 @@ function void CheckAugs()
             Player.HPTime /= 2;
             Player.EPTime /= 2;
         };
+        if (Player.Augs.Level[AUG_REGENERATION] >= 5)
+            Player.ToxicityRegenBonus += 10;
     };
 
     // Agility Aug
@@ -380,8 +374,8 @@ function void CheckAugs()
         Player.HealthChance *= LuckMult;
         Player.EPChance *= LuckMult;
         Player.ArmorChance *= LuckMult;
-        Player.PowerupChance *= LuckMult;
         Player.WeaponChance *= LuckMult;
+        Player.PowerupChance *= LuckMult;
         Player.TokenChance *= LuckMult;
         Player.AugChance *= LuckMult;
         Player.ShieldChance *= LuckMult;

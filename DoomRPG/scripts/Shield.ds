@@ -1217,6 +1217,12 @@ script void ShieldTimer()
             SetInventory("DRPGShieldCharge", Player.Shield.Charge);
             SetInventory("DRPGShieldChargeMax", Player.Shield.Capacity);
             
+            // !! TEMPORARY !!
+            // Remove this when DRLA Beta 8 releases!
+            // This is a stopgap in the meantime to prevent you from equipping armors while the shield is active if you have that CVAR enabled
+            if (GetCVar("drpg_shield_armorremove") && CompatMode == COMPAT_DRLA)
+                TakeInventory("RLEquippingArmor", 1);
+            
             if (Player.Shield.Charge < Player.Shield.Capacity)
                 Player.Shield.Full = false;
             
@@ -1323,14 +1329,12 @@ script bool ActivateShield()
         if (CompatMode == COMPAT_DRLA && !Contains(Player.Shield.ArmorType, "Shield") && !Contains(Player.Shield.ArmorType, "Cybernetic"))
         {
             TakeInventory("BasicArmor", Player.Shield.ArmorAmount);
-            if (PlayerClass(PlayerNumber()) == 3) // Renegade
-                TakeInventory(StrParam("%sToken\n", StrLeft(Player.Shield.ArmorType, StrLen(Player.Shield.ArmorType) - 8)), 1)
-            else
-                TakeInventory(StrParam("%sToken\n", Player.Shield.ArmorType), 1);
+            RemoveDRLAArmorToken(Player.Shield.ArmorType);
             
             TakeInventory("RL100ArmorWorn", 1);
             TakeInventory("RL150ArmorWorn", 1);
             TakeInventory("RL200ArmorWorn", 1);
+            TakeInventory("RL100RegenArmorWorn", 1);
             TakeInventory("RLIndestructibleArmorWorn", 1);
         };
     };
@@ -1361,10 +1365,7 @@ script void DeactivateShield()
         // DRLA Compatibility
         if (CompatMode == COMPAT_DRLA)
         {
-            if (PlayerClass(PlayerNumber()) == 3) // Renegade
-                GiveInventory(StrParam("%sToken\n", StrLeft(Player.Shield.ArmorType, StrLen(Player.Shield.ArmorType) - 8)), 1)
-            else
-                GiveInventory(StrParam("%sToken\n", Player.Shield.ArmorType), 1);
+            GiveDRLAArmorToken(Player.Shield.ArmorType);
             
             if (Player.Shield.ArmorMax == 100)
                 GiveInventory("RL100ArmorWorn", 1)
@@ -1372,6 +1373,10 @@ script void DeactivateShield()
                 GiveInventory("RL150ArmorWorn", 1)
             else if (Player.Shield.ArmorMax == 200)
                 GiveInventory("RL200ArmorWorn", 1)
+            else if (Contains(Player.Shield.ArmorType, "Ablative") ||
+                     Contains(Player.Shield.ArmorType, "Tactical") ||
+                     Contains(Player.Shield.ArmorType, "PowerArmor"))
+                GiveInventory("RL100RegenArmorWorn", 1)
             else if (Player.Shield.ArmorMax == 99999)
                 GiveInventory("RLIndestructibleArmorWorn", 1);
         };
