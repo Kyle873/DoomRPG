@@ -56,8 +56,8 @@
     Locker
         - Each item's count will be stored in 4 bytes
         - Each weapon's associated DRLA Modpacks will be stored in 1 byte after the amount
-    Auto-Sell
-        - Each item is stored in a 1 byte boolean
+    Shop Auto Mode
+        - Each item is stored in 1 byte
     
     ----- COMPATIBILITY EXTENSIONS -----
     
@@ -121,8 +121,7 @@ acscript void SaveCharacter() net
     // You need to be in the Outpost to do this
     if (!InBase && !GetCVar("drpg_debug"))
     {
-        SetFont("BIGFONT");
-        HudMessage("\cgERROR: \cjYou must be in the Outpost to save and deposit your equipment\n", HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, 0.5, 3.0, 2.0);
+        PrintError("\cgERROR: \cjYou must be in the Outpost to save and deposit your equipment");
         ActivatorSound("menu/error", 127);
         return;
     };
@@ -359,7 +358,7 @@ acscript void LoadCharacter() net
     // Auto-Sell
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
-            Player.AutoSell[i][j] = Info.AutoSell[i][j];
+            Player.ItemAutoMode[i][j] = Info.ItemAutoMode[i][j];
     
     // ----- COMPATIBILITY EXTENSIONS -----
     
@@ -427,7 +426,7 @@ acscript void DepositInventory()
             if (CheckInventory(ItemData[i][j].Actor) > 0)
                 while (CheckInventory(ItemData[i][j].Actor) > 0)
                 {
-                    DepositItem(i, j, true);
+                    DepositItem(i, j, true, true);
                     DepositItems++;
                     if ((Count++ % TimeDivide) == 0) Delay(1);
                 };
@@ -547,7 +546,7 @@ script void PopulateCharData(CharSaveInfo *Info)
     // Auto-Sell
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
-            Info->AutoSell[i][j] = Player.AutoSell[i][j];
+            Info->ItemAutoMode[i][j] = Player.ItemAutoMode[i][j];
     
     // ----- COMPATIBILITY EXTENSIONS -----
     
@@ -671,7 +670,7 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            Info->AutoSell[i][j] = HexToInteger(String + StringPos, 1);
+            Info->ItemAutoMode[i][j] = HexToInteger(String + StringPos, 1);
             StringPos += 1;
         };
     
@@ -853,7 +852,7 @@ script char const *MakeSaveString(CharSaveInfo *Info)
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            SaveString[pos + 0] = ToHexChar(Info->AutoSell[i][j]);
+            SaveString[pos + 0] = ToHexChar(Info->ItemAutoMode[i][j]);
             pos += 1;
         };
     
@@ -1066,7 +1065,7 @@ function int CreateChecksum(CharSaveInfo *Info)
     
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
-            Checksum ^= (Info->AutoSell[i][j] ? 1 : 0) << (j % 32);
+            Checksum ^= Info->ItemAutoMode[i][j] << (j % 32);
     
     Checksum ^= Info->DRLAAssemblies1;
     Checksum ^= Info->DRLAAssemblies2;
