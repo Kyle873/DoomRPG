@@ -31,37 +31,6 @@ str[6] StatusNumerals =
     "IV";
     "V";
 };
-
-script void StatHUD()
-{
-    fixed X = GetCVarFixed("drpg_stats_x");
-    fixed Y = GetCVarFixed("drpg_stats_y");
-    fixed Offset = 11.0;
-    
-    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
-    
-    // Stat Amounts
-    SetFont("BIGFONT");
-    HudMessage("%d\n", Player.Strength, HUDMSG_FADEOUT, STAT_ID, CR_RED, X - 96.0 - Offset, Y + 39.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Defense, HUDMSG_FADEOUT, STAT_ID + 1, CR_GREEN, X - 64.0 - Offset, Y + 39.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Vitality, HUDMSG_FADEOUT, STAT_ID + 2, CR_BRICK, X - 32.0 - Offset, Y + 39.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Energy, HUDMSG_FADEOUT, STAT_ID + 3, CR_LIGHTBLUE, X - 0.0 - Offset, Y + 39.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Regeneration, HUDMSG_FADEOUT, STAT_ID + 4, CR_PURPLE, X - 96.0 - Offset, Y + 58.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Agility, HUDMSG_FADEOUT, STAT_ID + 5, CR_ORANGE, X - 64.0 - Offset, Y + 58.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Capacity, HUDMSG_FADEOUT, STAT_ID + 6, CR_BLUE, X - 32.0 - Offset, Y + 58.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Luck, HUDMSG_FADEOUT, STAT_ID + 7, CR_YELLOW, X - 0.0 - Offset, Y + 58.0, 5.0, 5.0);
-    
-    // Stat Icons
-    PrintSpriteFade("STAT1S", STAT_ID + 8, X - 96.0, Y + 54.0, 5.0, 5.0);
-    PrintSpriteFade("STAT2S", STAT_ID + 9, X - 64.0, Y + 54.0, 5.0, 5.0);
-    PrintSpriteFade("STAT3S", STAT_ID + 10, X - 32.0, Y + 54.0, 5.0, 5.0);
-    PrintSpriteFade("STAT4S", STAT_ID + 11, X - 0.0, Y + 54.0, 5.0, 5.0);
-    PrintSpriteFade("STAT5S", STAT_ID + 12, X - 96.0, Y + 74.0, 5.0, 5.0);
-    PrintSpriteFade("STAT6S", STAT_ID + 13, X - 64.0, Y + 74.0, 5.0, 5.0);
-    PrintSpriteFade("STAT7S", STAT_ID + 14, X - 32.0, Y + 74.0, 5.0, 5.0);
-    PrintSpriteFade("STAT8S", STAT_ID + 15, X - 0.0, Y + 74.0, 5.0, 5.0);
-};
-
 script void StatusEffectHUD() enter
 {
     static int[SE_MAX] StatusColors =
@@ -353,6 +322,209 @@ script void AuraTimerHUD() enter
     
     Delay(1);
     goto Start;
+};
+
+script void PowerupHUD() enter
+{
+    Start:
+    
+    fixed BaseX = GetCVarFixed("drpg_powerup_x");
+    fixed BaseY = GetCVarFixed("drpg_powerup_y");
+    fixed X = BaseX;
+    fixed Y = BaseY;
+    int GridCount = 0;
+    
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+    
+    // Invulnerability
+    int InvulnTime = GetActorPowerupTics(0, "PowerInvulnerable");
+    if (InvulnTime > 0)
+    {
+        SetFont("SMALLFONT");
+        HudMessage("%s\n", FormatTime(InvulnTime), HUDMSG_PLAIN, 0, CR_GREEN, X, Y , 0.05);
+        PrintSpritePulse("PINVA0", 0, X + 10.0, Y + 22.0, 0.75, 32.0, 0.25);
+        X += 36.0;
+        GridCount++;
+        if ((GridCount % 4) == 0)
+        {
+            X = BaseX;
+            Y += 32.0;
+        };
+    };
+    
+    // Invisibility
+    int InvisTime = GetActorPowerupTics(0, "PowerInvisibility");
+    int ShadowTime = GetActorPowerupTics(0, "PowerShadow");
+    int GhostTime = GetActorPowerupTics(0, "PowerGhost");
+    if (InvisTime > 0 || ShadowTime > 0 || GhostTime > 0)
+    {
+        int ActualInvisTime;
+        if (InvisTime > 0)
+            ActualInvisTime = InvisTime
+        else if (ShadowTime > 0)
+            ActualInvisTime = ShadowTime
+        else if (GhostTime > 0)
+            ActualInvisTime = GhostTime;
+        
+        SetFont("SMALLFONT");
+        HudMessage("%s\n", FormatTime(ActualInvisTime), HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X, Y, 0.05);
+        PrintSpritePulse("PINSA0", 0, X + 10.0, Y + 38.0, 0.75, 32.0, 0.25);
+        X += 36.0;
+        GridCount++;
+        if ((GridCount % 4) == 0)
+        {
+            X = BaseX;
+            Y += 32.0;
+        };
+    };
+    
+    // Time Freeze
+    int FreezeTime = GetActorPowerupTics(0, "PowerTimeFreezer");
+    if (FreezeTime > 0)
+    {
+        SetFont("SMALLFONT");
+        HudMessage("%s\n", FormatTime(FreezeTime), HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
+        PrintSpritePulse("TIMEA0", 0, X + 17.0, Y + 44.0, 0.75, 32.0, 0.25);
+        X += 36.0;
+        GridCount++;
+        if ((GridCount % 4) == 0)
+        {
+            X = BaseX;
+            Y += 32.0;
+        };
+    };
+    
+    // Regeneration Sphere
+    if (Player.RegenBoostTimer > 0)
+    {
+        SetFont("SMALLFONT");
+        HudMessage("%s\n", FormatTime(Player.RegenBoostTimer), HUDMSG_PLAIN, 0, CR_PURPLE, X, Y, 0.05);
+        PrintSpritePulse("REGNA0", 0, X + 12.0, Y + 37.0, 0.75, 32.0, 0.25);
+        X += 36.0;
+        GridCount++;
+        if ((GridCount % 4) == 0)
+        {
+            X = BaseX;
+            Y += 32.0;
+        };
+    };
+    
+    // Light Amp
+    int LightAmpTime = GetActorPowerupTics(0, "PowerLightAmp");
+    if (LightAmpTime > 0)
+    {
+        SetFont("SMALLFONT");
+        HudMessage("%s\n", FormatTime(LightAmpTime), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
+        PrintSpritePulse("PVISA0", 0, X + 13.0, Y + 8.0, 0.75, 32.0, 0.25);
+        X += 36.0;
+        GridCount++;
+        if ((GridCount % 4) == 0)
+        {
+            X = BaseX;
+            Y += 32.0;
+        };
+    };
+    
+    // Computer Map/Scanner
+    if (CheckInventory("PowerScanner"))
+    {
+        PrintSpritePulse("PMAPA0", 0, X + 14.0, Y + 22.0, 0.75, 32.0, 0.25);
+        X += 36.0;
+        GridCount++;
+        if ((GridCount % 4) == 0)
+        {
+            X = BaseX;
+            Y += 32.0;
+        };
+    };
+    
+    // Berserk
+    if (CheckInventory("PowerStrength"))
+    {
+        PrintSpritePulse("PSTRA0", 0, X + 12.0, Y + 13.0, 0.75, 32.0, 0.25);
+        X += 36.0;
+        GridCount++;
+        if ((GridCount % 4) == 0)
+        {
+            X = BaseX;
+            Y += 32.0;
+        };
+    };
+    
+    // Wings
+    if (CheckInventory("PowerFlight"))
+    {
+        PrintSpritePulse("WINGA0", 0, X + 13.0, Y + 35.0, 0.75, 32.0, 0.25);
+        X += 36.0;
+        GridCount++;
+        if ((GridCount % 4) == 0)
+        {
+            X = BaseX;
+            Y += 32.0;
+        };
+    };
+    
+    // Iron Feet
+    bool HaveIronFeet = false;
+    int IronFeetTime = GetActorPowerupTics(0, "PowerIronFeet");
+    if (IronFeetTime > 0)
+    {
+        if (GridCount > 0)
+        {
+            X = BaseX - 36.0;
+            Y = BaseY;
+        };
+        SetFont("SMALLFONT");
+        HudMessage("%s\n", FormatTime(IronFeetTime), HUDMSG_PLAIN, 0, CR_WHITE, X, Y + 16.0, 0.05);
+        PrintSpritePulse("SUITA0", 0, X + 10.0, Y + 66.0, 0.75, 32.0, 0.25);
+        HaveIronFeet = true;
+    };
+    
+    // Continues
+    int Continues = CheckInventory("DRPGContinue");
+    if (Continues > 0)
+    {
+        if (HaveIronFeet)
+            X -= 40.0
+        else if (GridCount > 0)
+            X = BaseX - 40.0;
+        SetFont("SMALLFONT");
+        HudMessage("%d\n", Continues, HUDMSG_PLAIN, 0, CR_GOLD, X, Y + 16.0  , 0.05);
+        PrintSpritePulse("CONTA0", 0, X + 17.0, Y + 63.0, 0.75, 32.0, 0.25);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
+script void StatHUD()
+{
+    fixed X = GetCVarFixed("drpg_stats_x");
+    fixed Y = GetCVarFixed("drpg_stats_y");
+    fixed Offset = 11.0;
+    
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+    
+    // Stat Amounts
+    SetFont("BIGFONT");
+    HudMessage("%d\n", Player.Strength, HUDMSG_FADEOUT, STAT_ID, CR_RED, X - 96.0 - Offset, Y + 39.0, 5.0, 5.0);
+    HudMessage("%d\n", Player.Defense, HUDMSG_FADEOUT, STAT_ID + 1, CR_GREEN, X - 64.0 - Offset, Y + 39.0, 5.0, 5.0);
+    HudMessage("%d\n", Player.Vitality, HUDMSG_FADEOUT, STAT_ID + 2, CR_BRICK, X - 32.0 - Offset, Y + 39.0, 5.0, 5.0);
+    HudMessage("%d\n", Player.Energy, HUDMSG_FADEOUT, STAT_ID + 3, CR_LIGHTBLUE, X - 0.0 - Offset, Y + 39.0, 5.0, 5.0);
+    HudMessage("%d\n", Player.Regeneration, HUDMSG_FADEOUT, STAT_ID + 4, CR_PURPLE, X - 96.0 - Offset, Y + 58.0, 5.0, 5.0);
+    HudMessage("%d\n", Player.Agility, HUDMSG_FADEOUT, STAT_ID + 5, CR_ORANGE, X - 64.0 - Offset, Y + 58.0, 5.0, 5.0);
+    HudMessage("%d\n", Player.Capacity, HUDMSG_FADEOUT, STAT_ID + 6, CR_BLUE, X - 32.0 - Offset, Y + 58.0, 5.0, 5.0);
+    HudMessage("%d\n", Player.Luck, HUDMSG_FADEOUT, STAT_ID + 7, CR_YELLOW, X - 0.0 - Offset, Y + 58.0, 5.0, 5.0);
+    
+    // Stat Icons
+    PrintSpriteFade("STAT1S", STAT_ID + 8, X - 96.0, Y + 54.0, 5.0, 5.0);
+    PrintSpriteFade("STAT2S", STAT_ID + 9, X - 64.0, Y + 54.0, 5.0, 5.0);
+    PrintSpriteFade("STAT3S", STAT_ID + 10, X - 32.0, Y + 54.0, 5.0, 5.0);
+    PrintSpriteFade("STAT4S", STAT_ID + 11, X - 0.0, Y + 54.0, 5.0, 5.0);
+    PrintSpriteFade("STAT5S", STAT_ID + 12, X - 96.0, Y + 74.0, 5.0, 5.0);
+    PrintSpriteFade("STAT6S", STAT_ID + 13, X - 64.0, Y + 74.0, 5.0, 5.0);
+    PrintSpriteFade("STAT7S", STAT_ID + 14, X - 32.0, Y + 74.0, 5.0, 5.0);
+    PrintSpriteFade("STAT8S", STAT_ID + 15, X - 0.0, Y + 74.0, 5.0, 5.0);
 };
 
 script void DamageHUD(int Loss)
