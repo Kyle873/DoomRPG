@@ -1302,6 +1302,31 @@ function void DrawBar(str Fill, int X, int Y, int Amount, bool Pulse)
 // Compatibility/Extensions
 // 
 
+function void CheckDRLATotals(int Category, int Index)
+{
+    if (Category == 0) // Weapons
+    {
+        TakeInventory("RLWeaponLimit", 1);
+        CheckDRLASetWeapons();
+    }
+    else if (Category == 3) // Armor
+        TakeInventory("RLArmorInInventory", 1)
+    else if (Category == 9) // Mod Packs
+    {
+        if (Index == 8) // Special handling case for Armor Modpack
+            TakeInventory("RLArmorModItemInInventory", 1)
+        else
+        {
+            if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
+                TakeInventory("RLScavengerModLimit", 1)
+            else
+                TakeInventory("RLModLimit", 1);
+        };
+    }
+    else if (Category == 10) // Boots
+        TakeInventory("RLBootsInInventory", 1);
+};
+
 function void GiveDRLAArmorToken(str ArmorType)
 {
     if (PlayerClass(PlayerNumber()) == 3) // Renegade
@@ -1316,6 +1341,59 @@ function void RemoveDRLAArmorToken(str ArmorType)
         TakeInventory(StrParam("%sToken\n", StrLeft(ArmorType, StrLen(ArmorType) - 8)), 1)
     else
         TakeInventory(StrParam("%sToken\n", ArmorType), 1);
+};
+
+function void CheckDRLASetWeapons()
+{
+    static str[15] NuclearWeapons =
+    {
+        // Nuclear Plasma Pistol
+        "RLNuclearPlasmaPistol";
+        "RLHighPowerNuclearPlasmaPistol";
+        "RLStormNuclearPlasmaPistol";
+        "RLSuperchargedNuclearPlasmaPistol";
+        
+        // Nuclear Plasma Shotgun
+        "RLNuclearPlasmaShotgun";
+        
+        // Nuclear Plasma Rifle
+        "RLNuclearPlasmaRifle";
+        "RLHighPowerNuclearPlasmaRifle";
+        "RLAssaultRifleNuclearPlasmaRifle";
+        "RLBurstCannonNuclearPlasmaRifle";
+        
+        // Nuclear Plasma RIfle Mk II
+        "RLNuclearPlasmaRifleMkII";
+        
+        // Nuclear BFG 9000
+        "RLNuclearBFG9000";
+        "RLHighPowerNuclearBFG9000";
+        
+        // Nuclear VBFG 9000
+        "RLNuclearVBFG9000";
+        
+        // Nuclear Biggest Fucking Gun
+        "RLNuclearBiggestFuckingGun";
+        
+        // Onslought
+        "RLNuclearOnslaught";
+    };
+    
+    // Weapon portion of Nuclear Set Bonus Checking
+    for (int i = 0; i < 15; i++)
+        if (!CheckInventory(NuclearWeapons[i]))
+        {
+            TakeInventory("RLNuclearWeaponSetBonusWeapon", 1);
+            TakeInventory("RLNuclearWeaponSetBonusActive", 1);
+            break;
+        };
+    
+    // Tristar blaster Set Bonus Checking
+    if (!CheckInventory("RLTristarBlaster") || !CheckInventory("RLHighPowerTristarBlaster") || !CheckInventory("RLNanomanufactureAmmoTristarBlaster"))
+    {
+        TakeInventory("RLCerberusSetBonusTristarBlaster", 1);
+        TakeInventory("RLCerberusSetBonusActive", 1);
+    };
 };
 
 // --------------------------------------------------
