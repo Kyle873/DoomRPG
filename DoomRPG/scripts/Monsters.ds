@@ -642,7 +642,10 @@ script void MonsterInitStats(int StatFlags)
     
     // Reinitialize the stats handler if recreation has occurred
     if (StatFlags & SF_RECREATE)
+    {
+        Stats->NeedReinit = false;
         MonsterStatsHandler();
+    };
 };
 
 script void MonsterStatsHandler()
@@ -685,7 +688,6 @@ script void MonsterStatsHandler()
     if (Stats->NeedReinit)
     {
         MonsterInitStats(SF_RECREATE);
-        Stats->NeedReinit = false;
         return;
     };
     
@@ -840,7 +842,7 @@ script void MonsterAuraDisplayHandler()
     };
     
     // Spawn Auras
-    if (MonsterHasAura(Stats))
+    if (MonsterHasAura(Stats) || (GetActorProperty(0, APROP_Friendly) && !InBase))
         SpawnAuras(0, false);
     
     // Shadow Aura Effects
@@ -1488,8 +1490,8 @@ script void MonsterDeath()
     
     // [KS] We killed this monster now, so if an Arch-vile resurrects it, it doesn't count anymore to re-kill
     // TODO: Need to maybe make sure that for Kill Missions, we can't just gimp Arch-vile resurrection.
-    Stats->Flags |= MF_NODROPS;
     Stats->Flags |= MF_NOXP;
+    Stats->Flags |= MF_NODROPS;
     SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle); // In case of Shadow Aura
     Stats->Target = false;
     Stats->Reinforcement = false;

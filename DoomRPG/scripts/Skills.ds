@@ -276,7 +276,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Summon Zombieman"; 25; 1; Summon;
+            "Summon Zombieman"; 10; 1; Summon;
             {
                 "Summons a Zombieman";
             };
@@ -288,7 +288,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Summon Chaingun Guy"; 75; 1; Summon;
+            "Summon Chaingun Guy"; 100; 1; Summon;
             {
                 "Summons a Chaingun Guy";
             };
@@ -324,13 +324,13 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Summon Lost Soul"; 100; 1; Summon;
+            "Summon Lost Soul"; 25; 1; Summon;
             {
                 "Summons a Lost Soul";
             };
         };
         {
-            "Summon Pain Elemental"; 500; 1; Summon;
+            "Summon Pain Elemental"; 250; 1; Summon;
             {
                 "Summons a Pain Elemental";
             };
@@ -348,7 +348,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Summon Arachnotron"; 500; 1; Summon;
+            "Summon Arachnotron"; 250; 1; Summon;
             {
                 "Summons a Arachnotron";
             };
@@ -755,7 +755,7 @@ acscript void UseSkill(int Key) net
     else // Not enough EP
     {
         SetFont("BIGFONT");
-        HudMessage("Not enough EP to use this skill!\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+        PrintError("Not enough EP to use this skill!");
         ActivatorSound("skills/fail", 127);
     };
 };
@@ -1370,7 +1370,7 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
         "SpiderMastermind";
     };
     
-    str[][] DRLASummons =
+    str[][6] DRLASummons =
     {
         // Former Human
         {
@@ -1539,24 +1539,8 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
         SetActorProperty(NewID, APROP_MasterTID, Player.TID);
         SetActorPropertyString(NewID, APROP_Species, "Player");
         GiveActorInventory(NewID, "DRPGFriendlyBooster", 1);
-        SetActorState(NewID, "See");
-        
-        // Setup Stats
-        Delay(4); // We need this initial delay to make sure the ID is valid
-        MonsterStatsPtr Stats = &Monsters[GetMonsterID(NewID)];
-        fixed Modifier = 1.0 + (fixed)Player.Level * ((fixed)Player.Energy / 20.0);
-        Stats->Level = Modifier;
-        Stats->Strength = Modifier + Random(0, Stats->Level / GameSkill());
-        Stats->Defense = Modifier + Random(0, Stats->Level / GameSkill());
-        Stats->Vitality = Modifier + Random(0, Stats->Level / GameSkill());
-        Stats->Energy = Modifier + Random(0, Stats->Level / GameSkill());
-        Stats->Regeneration = Modifier + Random(0, Stats->Level / GameSkill());
-        Stats->Agility = Modifier + Random(0, Stats->Level / GameSkill());
-        Stats->Capacity = Modifier + Random(0, Stats->Level / GameSkill());
-        Stats->Luck = Modifier + Random(0, Stats->Level / GameSkill());
-        Stats->Threat = CalculateMonsterThreatLevel(&Monsters[GetMonsterID(NewID)]);
-        Stats->Flags |= MF_NODROPS;
-        Stats->NeedReinit = true;
+        if (Index != 0) // Marines need to run their Spawn state
+            SetActorState(NewID, "See");
         
         // Add summon to your summon array
         for (int i = 0; i < MAX_SUMMONS; i++)
@@ -1564,8 +1548,28 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
             {
                 Player.SummonTID[i] = NewID;
                 Player.Summons++;
-                return true;
+                break;
             };
+        
+        // Setup Stats
+        Delay(4); // We need this initial delay to make sure the ID is valid
+        MonsterStatsPtr Stats = &Monsters[GetMonsterID(NewID)];
+        fixed Modifier = 1.0 + (fixed)Player.Level * ((fixed)Player.Energy / 20.0);
+        Stats->Level = (int)Modifier;
+        Stats->Strength = (int)Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Defense = (int)Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Vitality = (int)Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Energy = (int)Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Regeneration = (int)Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Agility = (int)Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Capacity = (int)Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Luck = (int)Modifier + Random(0, Stats->Level / GameSkill());
+        Stats->Threat = CalculateMonsterThreatLevel(&Monsters[GetMonsterID(NewID)]);
+        Stats->Flags |= MF_NOXP;
+        Stats->Flags |= MF_NODROPS;
+        Stats->NeedReinit = true;
+        
+        return true;
     }
     else
     {
