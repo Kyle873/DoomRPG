@@ -1,0 +1,87 @@
+#include "RPG.dh"
+
+#include "PDA.dh"
+#include "Utils.dh"
+
+static bool PDAOpen = false;
+static bool PDABooted = false;
+int PDAID = MAKE_ID('U', 'P', 'D', 'A');
+
+script void PDARender()
+{
+    while (PDAOpen)
+    {
+        // Display Back
+        SetHudSize(800, 600, false);
+        if (PDABooted)
+            PrintSprite("PDABCK2", PDAID + 10, 400.0, 300.0, 0.05)
+        else
+            PrintSprite("PDABCK1", PDAID + 10, 400.0, 300.0, 0.05);
+        Delay(1);
+    };
+};
+
+acscript void PDABoot()
+{
+    static MessageInfo[] Messages =
+    {
+        { "Initializing...";                    133.0;  32.0;   PDAID;      };
+        { "- Preparing Weapon Definition";      200.1;  120.0;  PDAID + 1;  };
+        { "- Scanning Current Inventory";       200.1;  132.0;  PDAID + 2;  };
+        { "- Predicting Movements";             200.1;  144.0;  PDAID + 3;  };
+        { "- Connecting to UAC Maps Database";  200.1;  156.0;  PDAID + 4;  };
+    };
+    
+    PDAOpen = true;
+    
+    // Render the back
+    PDARender();
+    
+    // Initializing Text
+    SetHudSize(800 / 3, 600 / 3, false);
+    SetFont("PDAFONT");
+    HudMessage("%s\n", Messages[0].Text, HUDMSG_TYPEON, PDAID, CR_RED, Messages[0].X, Messages[0].Y, 1.0, 0.15, 4.0);
+    Delay(StrLen(Messages[0].Text) * 5);
+    
+    // Bootup Text
+    SetHudSize(640, 480, false);
+    for (int i = 1; i <= 4; i++)
+    {
+        HudMessage("%s\n", Messages[i].Text, HUDMSG_TYPEON, Messages[i].ID, CR_RED, Messages[i].X, Messages[i].Y, 15.0, 0.05, 0.0);
+        Delay(StrLen(Messages[i].Text));
+    };
+    
+    Delay(35);
+    
+    // Logo Animation
+    fixed Y = 400.0;
+    fixed Alpha = 0;
+    while (Y > 300.0)
+    {
+        SetHudSize(800, 600, false);
+        
+        PrintSpriteAlpha("PDALOGO", PDAID + 5, 400.0, Y -= 2, 10.0, Alpha += 0.02);
+        Delay(1);
+    };
+    ActivatorSound("pda/boot", 127);
+    
+    Delay(35);
+    
+    // Scanline Animation
+    Y = 50.0;
+    PrintSpriteFade("PDALOGO", PDAID + 5, 400.0, 300.0, 0.0, 1.0);
+    while (Y <= 460)
+    {
+        SetHudSize(800, 600, false);
+        for (int i = 1; i <= 4; i++)
+            if (Y >= Messages[i].Y)
+                ClearMessage(Messages[i].ID);
+        PrintSpriteFade("PDASCAN", PDAID + 6 + Y, 241.1, Y += 10, 0.25, 0.75);
+        Delay(1);
+    };
+    
+    // Setup wallpaper and finish booting
+    PDABooted = true;
+    Delay(35 * 3);
+    PDAOpen = false;
+};
