@@ -562,6 +562,7 @@ script void MonsterInitStats(int StatFlags)
     {
         MonsterStrength *= 2;
         GiveInventory("DRPGRedAuraGiver", 1);
+        MonsterDamageRetaliationHandler();
     };
     if (Stats->Aura.Type[AURA_GREEN].Active) // Green Aura - Defense
     {
@@ -1030,6 +1031,99 @@ acscript void MonsterRegenHealer()
     
     GiveInventory("DRPGMonsterHealEffect", 1);
     SetActorProperty(0, APROP_Health, Health + HealAmount);
+};
+
+script void MonsterDamageRetaliationHandler()
+{
+    // Delay Stagger
+    Delay(GetMonsterID(0) % 4);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    int Health = GetActorProperty(0, APROP_Health);
+    int OldHealth = GetActorProperty(0, APROP_Health);
+    
+    Start:
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        return;
+    
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
+    
+    if (!Stats->Aura.Type[AURA_RED].Active)
+    {
+        Delay(35);
+        goto Start;
+    };
+    
+    Health = GetActorProperty(0, APROP_Health);
+    
+    if (Health < OldHealth)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i)) continue;
+            if (!CheckSight(0, Players(i).TID, 0))  continue;
+            
+            fixed CurseChance = ((fixed)Stats->Strength / 10.0) - (Distance(0, Players(i).TID) / 5.12);
+            
+            if (CurseChance <= 0)
+                continue;
+            
+            if (CurseChance >= 100.0 || RandomFixed(0.0, 100.0) <= CurseChance)
+            {
+                int Intensity = ((fixed)Stats->Strength / 200.0) - (Distance(0, Players(i).TID) / 102.4);
+                if (Intensity < 1) Intensity = 1;
+                int OrigTID = ActivatorTID();
+                int NewTID = UniqueTID(0, 0);
+                Thing_ChangeTID(0, NewTID);
+                SetActivator(Players(i).TID);
+                FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0.0, 0.5);
+                TryStatusEffect(SE_CURSE, Random(30,90), Intensity);
+                SetActivator(NewTID);
+                Thing_ChangeTID(0, OrigTID);
+            };
+        };
+    };
+    
+    if (CheckInventory("DRPGMonsterEPAttacked"))
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i)) continue;
+            if (!CheckSight(0, Players(i).TID, 0)) continue;
+            
+            fixed SilenceChance = (Stats->Strength / 5) - (Distance(0, Players(i).TID) / 10.24);
+            
+            if (SilenceChance <= 0)
+                continue;
+            
+            if (SilenceChance >= 100.0 || RandomFixed(0.0, 100.0) <= SilenceChance)
+            {
+                int Intensity = (Stats->Strength / 200) - (Distance(0, Players(i).TID) / 102.4);
+                if (Intensity < 1) Intensity = 1;
+                int OrigTID = ActivatorTID();
+                int NewTID = UniqueTID(0, 0);
+                Thing_ChangeTID(0, NewTID);
+                SetActivator(Players(i).TID);
+                FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0.0, 0.5);
+                TryStatusEffect(SE_SILENCE, Random(30,90), Intensity);
+                SetActivator(NewTID);
+                Thing_ChangeTID(0, OrigTID);
+            };
+        };
+        
+        SetInventory("DRPGMonsterEPAttacked", 0);
+    };
+    
+    Delay(4);
+    
+    OldHealth = Health;
+    
+    goto Start;
 };
 
 script void MonsterMoneyDrainHandler()

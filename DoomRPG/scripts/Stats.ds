@@ -82,6 +82,22 @@ acscript void StatusEffect(int Type, int Time, int Intensity)
     };
 };
 
+acscript void TryStatusEffect(int Type, int Time, int Intensity)
+{
+    // Can't get Status Effects if Pink Aura is active
+    if (Player.Aura.Type[AURA_PINK].Active || Player.SoulActive[SOUL_PINK]) return;
+    
+    // Status Effect Resist check
+    if (RandomFixed(0.0, 100.0) <= Player.StatusEffectResist)
+        ActivatorSound("health/statuseffect2", 127)
+    else // Apply status effect
+    {
+        ActivatorSound("health/statuseffect", 127);
+        Player.StatusTypeHUD = Type;
+        StatusEffect(Type, Time, Intensity);
+    };
+};
+
 // Add XP
 acscript void AddXP(int PlayerNum, long int XP, long int Rank, bool Reduced)
 {
@@ -1189,15 +1205,5 @@ function void StatusDamage(int Amount)
     };
     
     if (Type > 0)
-    {
-        // Status Effect Resist check
-        if (RandomFixed(0.0, 100.0) <= Player.StatusEffectResist)
-            ActivatorSound("health/statuseffect2", 127)
-        else // Apply status effect
-        {
-            ActivatorSound("health/statuseffect", 127);
-            Player.StatusTypeHUD = Type;
-            StatusEffect(Type, Time, Intensity);
-        };
-    };
+        TryStatusEffect(Type, Time, Intensity);
 };
