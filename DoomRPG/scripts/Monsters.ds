@@ -740,7 +740,9 @@ script void MonsterStatsHandler()
     {
         StatsChanged = true;
         
-        // Different effect depending on up or down
+        int HealthPercentage = 100;
+        if (Stats->HealthMax > 0)
+            HealthPercentage = (long long)GetActorProperty(0, APROP_Health) * 100 / Stats->HealthMax;
         Stats->HealthMax = CalculateMonsterMaxHealth(Stats);
         
         if (OldVitality == 0)
@@ -748,16 +750,10 @@ script void MonsterStatsHandler()
             // This will trigger if the monster was previously dead and revived, so heal up fully
             SetActorProperty(0, APROP_Health, Stats->HealthMax);
         }
-        else if (Stats->Vitality > OldVitality)
-        {
-            int healthcurr = GetActorProperty(0, APROP_Health);
-            int healthdiff = Stats->HealthMax - healthcurr;
-            SetActorProperty(0, APROP_Health, healthcurr + healthdiff / 2); // Heal half of the difference
-        }
         else
-             // Cap to new only if it's lower than current, so Weaken doesn't accidentally heal enemies
-            if (GetActorProperty(0, APROP_Health) > Stats->HealthMax)
-                SetActorProperty(0, APROP_Health, Stats->HealthMax);
+        {
+            SetActorProperty(0, APROP_Health, (long long)Stats->HealthMax * HealthPercentage / 100);
+        };
         
         OldVitality = Stats->Vitality;
     };
@@ -1005,12 +1001,35 @@ script void MonsterRegenerationHandler()
     //    Log("\cdDEBUG: \ctRegeneration of %s: %d\n", GetActorClass(0), RegenAmount);
     SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + RegenAmount);
     
+    if (Stats->Aura.Type[AURA_PURPLE].Active)
+        GiveInventory("DRPGMonsterRadiusHealer", 1);
+    
     // Prevent going over 100%
     if (GetActorProperty(0, APROP_Health) > Stats->HealthMax)
         SetActorProperty(0, APROP_Health, Stats->HealthMax);
     
     Delay(35 * (30 - (Stats->Aura.Type[AURA_PURPLE].Active ? 20 : 0)));
     goto Start;
+};
+
+acscript void MonsterRegenHealer()
+{
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    int Health = GetActorProperty(0, APROP_Health);
+    
+    int HealAmount = Stats->HealthMax / 10;
+    if (HealAmount < 1)
+        HealAmount = 1;
+    
+    if (Health + HealAmount > Stats->HealthMax)
+        HealAmount = Stats->HealthMax - Health;
+    
+    if (HealAmount <= 0)
+        return;
+    
+    GiveInventory("DRPGMonsterHealEffect", 1);
+    SetActorProperty(0, APROP_Health, Health + HealAmount);
 };
 
 script void MonsterMoneyDrainHandler()
