@@ -593,6 +593,7 @@ script void MonsterInitStats(int StatFlags)
     {
         MonsterAgility *= 2;
         GiveInventory("DRPGOrangeAuraGiver", 1);
+        MonsterEpicVisitTimeHandler();
     };
     if (Stats->Aura.Type[AURA_DARKBLUE].Active) // Dark Blue Aura - Capacity
     {
@@ -1294,6 +1295,89 @@ script void MonsterFellowResurrectionHandler()
     Thing_ChangeTID(ReviverTID, 0);
     
     Delay(35 * 5);
+    
+    goto Start;
+};
+
+script void MonsterEpicVisitTimeHandler()
+{
+    // Delay Stagger
+    Delay(GetMonsterID(0) % 4);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    Start:
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        return;
+    
+    if (ClassifyActor(0) & ACTOR_DEAD)
+    {
+        Delay(35);
+        goto Start;
+    };
+    
+    if (!Stats->Aura.Type[AURA_ORANGE].Active)
+    {
+        Delay(35);
+        goto Start;
+    };
+    
+    fixed TeleportDistance = 0;
+    int TeleportPlayer = -1;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i)) continue;
+        if (!CheckSight(0, Players(i).TID, 0)) continue;
+        if (Distance(0, Players(i).TID) <= TeleportDistance) continue;
+        
+        TeleportDistance = Distance(0, Players(i).TID);
+        TeleportPlayer = i;
+    };
+    
+    fixed TeleportChance = (fixed)TeleportDistance / 40.96;
+    
+    if (RandomFixed(0.0, 100.0) <= TeleportChance)
+    {
+        int TeleportSpotTID = UniqueTID();
+        int TargetPlayerTID = Players(TeleportPlayer).TID;
+        
+        bool Success = false;
+        fixed TeleportAngle;
+        fixed TeleportDistance;
+        fixed X, Y, Z, Angle;
+        
+        for (int i = 0; i < 10; i++)
+        {
+            fixed TeleportAngle = RandomFixed(0, 1);
+            fixed TeleportDistance = RandomFixed(128, 384);
+            
+            X = GetActorX(TargetPlayerTID) + (Cos(TeleportAngle) * TeleportDistance);
+            Y = GetActorY(TargetPlayerTID) + (Sin(TeleportAngle) * TeleportDistance);
+            Z = GetActorZ(TargetPlayerTID);
+            Angle = TeleportAngle + 0.5;
+            Angle %= 1.0;
+            
+            Success = Spawn("MapSpot", X, Y, Z, TeleportSpotTID, Angle);
+            if (Success && !SetActorPosition(TeleportSpotTID, GetActorX(TeleportSpotTID), GetActorY(TeleportSpotTID), GetActorFloorZ(TeleportSpotTID), false)) Success = false;
+            if (Success && !CheckSight(TargetPlayerTID, TeleportSpotTID, 0)) Success = false;
+            if (Success)
+                break;
+        };
+        
+        if (Success)
+        {
+            // Surprise!!
+            SpawnSpotFacingForced("TeleportFog", 0, 0);
+            SetActorPosition(0, GetActorX(TeleportSpotTID), GetActorY(TeleportSpotTID), GetActorZ(TeleportSpotTID), false);
+            SetActorAngle(0, Angle);
+            SpawnSpotFacingForced("TeleportFog", 0, 0);
+            Thing_Remove(TeleportSpotTID);
+        };
+    };
+    
+    Delay(35 * 10);
     
     goto Start;
 };
