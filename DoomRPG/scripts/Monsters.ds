@@ -667,22 +667,25 @@ script void MonsterStatsHandler()
     
     Start:
     
-    if (ClassifyActor(0) & ACTOR_WORLD)
-        return;
-    
-    if (ClassifyActor(0) & ACTOR_DEAD)
+    if (GetActorProperty(0, APROP_Health) <= 0)
     {
-        OldStrength = 0;
-        OldDefense = 0;
-        OldCapacity = 0;
-        OldVitality = 0;
-        OldAgility = 0;
-        OldRegeneration = 0;
-        OldEnergy = 0;
-        OldLuck = 0;
+        if (OldStrength)
+        {
+            OldStrength = 0;
+            OldDefense = 0;
+            OldCapacity = 0;
+            OldVitality = 0;
+            OldAgility = 0;
+            OldRegeneration = 0;
+            OldEnergy = 0;
+            OldLuck = 0;
+        };
         Delay(35);
         goto Start;
     };
+
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        return;
     
     if (Stats->NeedReinit)
     {
@@ -807,26 +810,31 @@ script void MonsterAuraDisplayHandler()
     
     Start:
     
-    if (ClassifyActor(0) & ACTOR_WORLD)
-        return;
-    
-    if (ClassifyActor(0) & ACTOR_DEAD)
+    if (GetActorProperty(0, APROP_Health) <= 0)
     {
         Delay(35);
         goto Start;
     };
 
-    VisibleToPlayers = false;
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        return;
     
-    for (int i = 0; i < MAX_PLAYERS; i++)
+    if (GetCVar("drpg_simple_auras"))
+        VisibleToPlayers = true
+    else
     {
-        if (!PlayerInGame(i))
-            continue;
+        VisibleToPlayers = false;
         
-        if (CheckSight(Players(i).TID, 0, CSF_NOBLOCKALL))
+        for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            VisibleToPlayers = true;
-            break;
+            if (!PlayerInGame(i))
+                continue;
+            
+            if (CheckSight(Players(i).TID, 0, CSF_NOBLOCKALL))
+            {
+                VisibleToPlayers = true;
+                break;
+            };
         };
     };
     
@@ -986,14 +994,14 @@ script void MonsterRegenerationHandler()
     
     Start:
     
-    if (ClassifyActor(0) & ACTOR_WORLD)
-        return;
-    
-    if (ClassifyActor(0) & ACTOR_DEAD)
+    if (GetActorProperty(0, APROP_Health) <= 0)
     {
         Delay(35);
         goto Start;
     };
+
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        return;
     
     long long RegenAmount = (long long)Stats->HealthMax * (long long)Stats->Regeneration;
     RegenAmount /= 1000;
@@ -1395,12 +1403,12 @@ script void MonsterDeathCheck()
     if (ClassifyActor(0) & ACTOR_WORLD)
         goto Disappeared;
     
-    if (ClassifyActor(0) & ACTOR_ALIVE)
+    if (GetActorProperty(0, APROP_Health) > 0)
     {
         Delay(4);
         goto Start;
     };
-    
+
     MonsterDeath();
     
     PostDeathWait:
@@ -1410,7 +1418,7 @@ script void MonsterDeathCheck()
     if (ClassifyActor(0) & ACTOR_WORLD)
         goto Disappeared;
     
-    if (ClassifyActor(0) & ACTOR_ALIVE)
+    if (GetActorProperty(0, APROP_Health) > 0)
         goto Start;
     
     goto PostDeathWait;
