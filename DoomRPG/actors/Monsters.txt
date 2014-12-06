@@ -385,6 +385,25 @@ actor DRPGFriendlyBooster : CustomInventory
     }
 }
 
+actor DRPGFriendlyRemover : CustomInventory
+{
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_ChangeFlag("COUNTKILL", true)
+        TNT1 A 0 A_ChangeFlag("ALWAYSFAST", false)
+        TNT1 A 0 A_ChangeFlag("QUICKTORETALIATE", false)
+        TNT1 A 0 A_ChangeFlag("MISSILEMORE", false)
+        TNT1 A 0 A_ChangeFlag("NOBLOCKMONST", false)
+        TNT1 A 0 A_ChangeFlag("NOTELESTOMP", false)
+        TNT1 A 0 A_ChangeFlag("NOFEAR", false)
+        TNT1 A 0 A_ChangeFlag("DONTDRAIN", false)
+        TNT1 A 0 A_ChangeFlag("SEEINVISIBLE", false)
+        TNT1 A 0 A_ChangeFlag("THRUSPECIES", false)
+        Stop
+    }
+}
+
 // Red Aura Giver
 actor DRPGRedAuraGiver : CustomInventory
 {
@@ -545,38 +564,32 @@ actor DRPGMonsterLevelupGiver : CustomInventory
     States
     {
     Pickup:
-        TNT1 A 0 A_RadiusGive("DRPGMonsterLevelup", 512, RGF_GIVESELF | RGF_MONSTERS)
+        TNT1 A 0 A_RadiusGive("DRPGMonsterLevelup", radius + 512, RGF_GIVESELF | RGF_MONSTERS | RGF_CUBE)
         Stop
     }
 }
 
 // Resurrect Monsters, used with Pink Aura
-actor DRPGMonsterReviver
+actor DRPGMonsterRadiusResurrection : CustomInventory
 {
-    Radius 20
-    Height 56
-    Speed 20
-    
-    +ISMONSTER
-    +NOBLOCKMAP
-    +NOGRAVITY
-    +FLOAT
-    
-    ReactionTime 10
-    
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
     States
     {
-    Spawn:
-        TNT1 A 1
-        TNT1 A 1 A_Look
+    Pickup:
+        TNT1 A 0 A_RadiusGive("DRPGMonsterResurrect", radius + 128, RGF_MONSTERS | RGF_CORPSES | RGF_CUBE)
         Stop
-    See:
-        TNT1 A 0 A_Chase("", "", CHF_RESURRECT)
-        TNT1 A 1 A_Wander
-        TNT1 A 0 A_CountDown
-        Loop
-    Heal:
-        TNT1 A 1
+    }
+}
+
+actor DRPGMonsterResurrect : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    States
+    {
+    Pickup:
+        TNT1 A 0 Thing_Raise(0)
         Stop
     }
 }
@@ -589,7 +602,7 @@ actor DRPGMonsterRadiusHealer : CustomInventory
     States
     {
     Pickup:
-        TNT1 A 0 A_RadiusGive("DRPGMonsterHeal", 512, RGF_MONSTERS)
+        TNT1 A 0 A_RadiusGive("DRPGMonsterHeal", radius + 512, RGF_MONSTERS | RGF_CUBE)
         Stop
     }
 }
