@@ -26,12 +26,13 @@ int ArenaKey;
 
 str[AMOD_MAX] ArenaMods =
 {
+	"None";
     "\cgNo Regeneration";
 };
 
 str[AEVENT_MAX] ArenaEvents =
 {
-    "None";
+	"None";
     "\cmBlackout";
     "\cjFoggy";
     "\ciThe Floor is Lava";
@@ -160,7 +161,7 @@ acscript void ArenaLoop()
                 ArenaMaxWave = ArenaWave;
             
             ArenaMod = Random(-10, AMOD_MAX - 1);
-            ArenaSetEnvironment(-1);
+            ArenaSetEnvironment(AEVENT_RANDOM);
             ArenaSpawnMobs();
             ArenaState = ARENA_ACTIVE;
         }
@@ -476,7 +477,7 @@ function void ArenaDrawHUD()
     // Environment
     if (ArenaEnvironment > 0)
     {
-        HudMessageBold("%s\n", ArenaEvents[ArenaEnvironment - 1],
+        HudMessageBold("%s\n", ArenaEvents[ArenaEnvironment],
                        HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
         Y += 8.0;
     };
@@ -486,7 +487,7 @@ function void ArenaCheckMod()
 {
     switch (ArenaMod)
     {
-    case AMOD_NOREGEN: // No Regeneration
+    case AMOD_NOREGEN:
         Player.HPRate = 0;
         Player.EPRate = 0;
         break;
@@ -545,7 +546,7 @@ function void ArenaSpawnMobs()
 
 function void ArenaSetEnvironment(int ID)
 {
-    if (ID == -1)
+    if (ID == AEVENT_RANDOM)
     {
         int EnvironmentRandomizer = Random(-10, AEVENT_MAX);
         if (EnvironmentRandomizer > 0)
@@ -554,7 +555,7 @@ function void ArenaSetEnvironment(int ID)
 
     switch (ID)
     {
-    case AEVENT_NONE: // Normal
+    case AEVENT_NONE:
         Light_Fade(ArenaSectorTag, 192, 35);
         Light_Fade(ArenaSectorTag + 1, 192, 35);
         Light_Fade(ArenaSectorTag + 2, 192, 35);
@@ -571,12 +572,12 @@ function void ArenaSetEnvironment(int ID)
         Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255);
         Sector_SetColor(ArenaSectorTag + 2, 255, 255, 255);
         break;
-    case AEVENT_BLACKOUT: // Blackout
+    case AEVENT_BLACKOUT:
         Light_Fade(ArenaSectorTag, 0, 35);
         Light_Fade(ArenaSectorTag + 1, 0, 35);
         Light_Fade(ArenaSectorTag + 2, 0, 35);
         break;
-    case AEVENT_FOGGY: // Foggy
+    case AEVENT_FOGGY:
         int R = Random(0, 255);
         int G = Random(0, 255);
         int B = Random(0, 255);
@@ -587,7 +588,7 @@ function void ArenaSetEnvironment(int ID)
         Sector_SetFade(ArenaSectorTag + 1, R, G, B);
         Sector_SetFade(ArenaSectorTag + 2, R, G, B);
         break;
-    case AEVENT_LAVA: // The Floor is Lava
+    case AEVENT_LAVA:
         ChangeFloor(ArenaSectorTag, "LAVA1");
         ChangeFloor(ArenaSectorTag + 1, "LAVA1");
         ChangeFloor(ArenaSectorTag + 2, "LAVA1");
@@ -595,7 +596,7 @@ function void ArenaSetEnvironment(int ID)
         Sector_SetDamage(ArenaSectorTag + 1, 1, MOD_SLIME);
         Sector_SetDamage(ArenaSectorTag + 2, 1, MOD_SLIME);
         break;
-    case AEVENT_GRAYSCALE: // Grayscale
+    case AEVENT_GRAYSCALE:
         Sector_SetColor(ArenaSectorTag, 255, 255, 255, 255);
         Sector_SetColor(ArenaSectorTag + 1, 255, 255, 255, 255);
         Sector_SetColor(ArenaSectorTag + 2, 255, 255, 255, 255);
