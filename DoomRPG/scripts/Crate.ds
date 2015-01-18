@@ -1,0 +1,247 @@
+#include "RPG.dh"
+
+#include "Crate.dh"
+#include "Mission.dh"
+#include "Utils.dh"
+
+int CrateID = 0;
+ItemSpace CrateInfo[CRATE_MAX] Crates;
+
+acscript void InitCrate()
+{
+    if (CrateID >= CRATE_MAX)
+    {
+        Log("\cgERROR:\c- Crate ID maximum exceeded!\n");
+        return;
+    };
+    
+    SetUserVariable(0, "user_id", CrateID++);
+};
+
+acscript void UseCrate(int ID)
+{
+    SetActivator(GetActorProperty(0, APROP_TargetTID));
+    
+    // Initialize the Crate if it is empty
+    if (!Crates[ID].Init)
+    {
+        int LuckMod = Player.Luck / 20;
+        int Rarity = 0;
+        int Amount = 3;
+        
+        // Calculate Rarity
+        for (int i = Rarity; i < MAX_DIFFICULTIES - 1; i++)
+            if (Random(0, (MAX_DIFFICULTIES + (MAX_DIFFICULTIES / 3)) - LuckMod) <= 0)
+                Rarity++;
+        
+        // Calculate Amount
+        for (int i = Amount; i < CRATE_MAX_ITEMS - 1; i++)
+            if (Random(0, i) <= 0)
+                Amount++;
+        Amount += PlayerCount() - 1;  // Add +1 per extra player in-game
+        if (Amount > CRATE_MAX_ITEMS) // Make sure we don't overflow
+            Amount = CRATE_MAX_ITEMS;
+        
+        Crates[ID].Init = true;
+        Crates[ID].Rarity = Rarity;
+        
+        GenerateCrate(ID, Amount);
+    };
+    
+    if (Player.CrateOpen) return;
+    
+    Player.CrateOpen = true;
+    Player.CrateID = ID;
+    ActivatorSound("crate/open", 127);
+    
+    Delay(1);
+    
+    while (Player.CrateOpen)
+    {
+        SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+        
+        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        
+        DrawCrate();
+        CrateInput();
+    
+        Delay(1);
+    };
+    
+    SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+};
+
+function void GenerateCrate(int ID, int Amount)
+{
+    for (int i = 0; i < Amount; i++)
+    {
+        Crates[ID].Active[i] = true;
+        Crates[ID].Item[i] = GetRewardItem(Crates[ID].Rarity);
+    };
+};
+
+function void CrateTakeItem()
+{
+    bool Spawned = Spawn(Crates[Player.CrateID].Item[Player.CrateIndex]->Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+    SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
+    
+    if (Spawned)
+    {
+        Crates[Player.CrateID].Active[Player.CrateIndex] = false;
+        Crates[Player.CrateID].Item[Player.CrateIndex] = nullptr;
+    };
+};
+
+function void DrawCrate()
+{
+    // Rarity Names
+    static str[MAX_DIFFICULTIES] RarityNames =
+    {
+        "\cjBasic";
+        "\cjCommon";
+        "\cdUncommon";
+        "\cdSuperior";
+        "\cnRare";
+        "\cnVery Rare";
+        "\ciElite";
+        "\ctLegendary";
+        "\cfSupreme";
+    };
+    
+    // Width/Height
+    int Width = 9;
+    int Height = 6;
+    
+    // Coordinates
+    fixed BaseX;
+    fixed BaseY;
+    fixed BoxX;
+    fixed BoxY;
+    fixed X;
+    fixed Y;
+    fixed IconX;
+    fixed IconY;
+    
+    // Title
+    SetFont("BIGFONT");
+    HudMessage("UAC Supply Crate (%s\c-)\n", RarityNames[Crates[Player.CrateID].Rarity], HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
+    
+    for (int i = 0; i < Height; i++)
+    {
+        // Reset base X
+        BaseX = 0.0;
+        
+        for (int j = 0; j < Width; j++)
+        {
+            int Index = j + (i * Width);
+            
+            ItemInfoPtr ItemSpace *Item = &Crates[Player.CrateID].Item[Index];
+            bool Active = Crates[Player.CrateID].Active[Index];
+            str Icon = (* Item)->Sprite.Name;
+            str Name = (* Item)->Name;
+            int IconXOff = (* Item)->Sprite.XOff;
+            int IconYOff = (* Item)->Sprite.YOff;
+            
+            // Placeholder Icon
+            if (StrLen(Icon) == 0)
+                Icon = "SprNone";
+            
+            // Setup X and Y
+            X = 26.0 + BaseX;
+            Y = 50.0 + BaseY;
+            BoxX = 48.0 + BaseX;
+            BoxY = 72.0 + BaseY;
+            IconX = 48.0 + BaseX;
+            IconY = 72.0 + BaseY;
+            IconX += IconXOff;
+            IconY += IconYOff;
+            
+            // Icon
+            SetHudClipRect(X, Y, 44, 44);
+            if (Active)
+                if (Player.CrateIndex == Index)
+                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.75, 32.0, 0.25)
+                else
+                    PrintSprite(Icon, 0, IconX, IconY, 0.05);
+            SetHudClipRect(0, 0, 0, 0);
+            
+            // Box
+            if (Player.CrateIndex == Index)
+            {
+                if (Active)
+                    PrintSprite("ItemBoxH", 0, BoxX, BoxY, 0.05)
+                else
+                    PrintSprite("ItemBoxR", 0, BoxX, BoxY, 0.05);
+            };
+            PrintSprite("ItemBoxB", 0, BoxX, BoxY, 0.05);
+            
+            // Item Name
+            if (Player.CrateIndex == Index && Active)
+            {
+                SetFont("BIGFONT");
+                HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 344.1, 0.05);
+            };
+            
+            // Increment X
+            BaseX += 48.0;
+        };
+        
+        // Increment Y
+        BaseY += 48.0;
+    };
+};
+
+function void CrateInput()
+{
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+    
+    if (Buttons & BT_SPEED && !(OldButtons & BT_SPEED))
+    {
+        ActivatorSound("crate/close", 127);
+        Player.CrateOpen = false;
+    };
+    if (Buttons & BT_USE && !(OldButtons & BT_USE))
+        CrateTakeItem();
+    if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD))
+    {
+        ActivatorSound("menu/move", 127);
+        Player.CrateIndex -= 9;
+        if (Player.CrateIndex < 0) Player.CrateIndex = 0;
+    };
+    if (Buttons & BT_BACK && !(OldButtons & BT_BACK))
+    {
+        ActivatorSound("menu/move", 127);
+        Player.CrateIndex += 9;
+        if (Player.CrateIndex > CRATE_MAX_ITEMS - 1) Player.CrateIndex = CRATE_MAX_ITEMS - 1;
+    };
+    if ((Buttons & BT_LEFT && !(OldButtons & BT_LEFT)) ||
+        (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT)))
+    {
+        ActivatorSound("menu/move", 127);
+        Player.CrateIndex--;
+        if (Player.CrateIndex < 0) Player.CrateIndex = 0;
+    };
+    if ((Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT)) ||
+        (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT)))
+    {
+        ActivatorSound("menu/move", 127);
+        Player.CrateIndex++;
+        if (Player.CrateIndex > CRATE_MAX_ITEMS - 1) Player.CrateIndex = CRATE_MAX_ITEMS - 1;
+    };
+};
+
+acscript void DumpCrate()
+{
+    for (int i = 0; i < CrateID; i++)
+    {
+        Log("\cd===== Crate %d =====\n", i);
+        
+        for (int j = 0; j < CRATE_MAX_ITEMS; j++)
+        {
+            if (!Crates[i].Active[j]) continue;
+            
+            Log("  %s\n", Crates[i].Item[j]->Name);
+        };
+    };
+};
