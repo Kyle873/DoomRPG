@@ -1409,11 +1409,11 @@ function void CheckDRLASetWeapons()
 // 
 
 // This function is specifically to avoid dividing by zero in the event that that can happen.
-function int CalcPercent(int Current, int Max)
+function int CalcPercent(int Current, int Maximum)
 {
-    if (Max == 0)
+    if (Maximum == 0)
         return 100;
-    return Current * 100 / Max;
+    return Current * 100 / Maximum;
 };
 
 // Computes n-th power of x
@@ -1434,9 +1434,25 @@ function int Abs(int x)
 };
 
 // Rounds a fixed to the nearest integer
-function int Round(fixed fixedNumber)
+function int Round(fixed x)
 {
-    return (int)(fixedNumber + 0.5);
+    return (int)(x + 0.5);
+};
+
+function fixed Min(fixed x, fixed y)
+{
+    if (x < y)
+        return x;
+    
+    return y;
+};
+
+function fixed Max(fixed x, fixed y)
+{
+    if (x > y)
+        return x;
+    
+    return y;
 };
 
 // Gets the distance between two TIDs
@@ -1456,6 +1472,40 @@ function fixed DistanceScreen(int X1, int Y1, int X2, int Y2)
     fixed Y = Y1 - Y2;
     
     return VectorLength(X, Y);
+};
+
+function fixed Lerp(fixed x, fixed y, fixed Value, fixed MaxValue)
+{
+    return (MaxValue - Value) * x + Value * y;
+};
+
+/* Super SidDoyle Math Functions(TM)
+   
+   I'm not quite sure how I came up with this. I have to use this myself, now.
+   Thank you for asking me to do this. :D
+
+   Example: Say you have a stat value ranging from 1-200 that you want to
+   produce a gradual curve from. Say we want that curve to start at 1 and
+   end at 75. Now let's say we need a value from this curve -- maybe we
+   have a defense value of 67 and need to know what percent damage that
+   absorbs. You would call the following:
+ 
+   fixed result = curve(67, 1, 200, 1, 75);
+   
+   Coincidentally, that value is close to 42, if you round up. Have fun.
+*/
+
+function fixed Map(fixed Value, fixed Low1, fixed High1, fixed Low2, fixed High2)
+{
+    fixed Ratio = (Value - Low1) / (High1 - Low1);
+    return (High2 - Low2) * Ratio + Low2;
+};
+
+function fixed Curve(fixed Value, fixed Low1, fixed High1, fixed Low2, fixed High2)
+{
+    fixed Constant = High2 / High1;
+    fixed CurveLow = Map(Value * Constant, Low1 * Constant, High1 * Constant, Low2, High1 * Constant);
+    return Map(Value, Low1, High1, CurveLow, High2);
 };
 
 // --------------------------------------------------

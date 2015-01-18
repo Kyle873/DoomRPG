@@ -15,33 +15,38 @@ acscript void InitCrate()
         return;
     };
     
-    int Randomizer = 0;
-    
-    // Calculate Rarity
-    int Rarity = 0;
-    Randomizer = 0;
-    for (int i = 0; i < MAX_DIFFICULTIES - 1; i++)
-        if (Random(1, 4 + Randomizer++) == 1)
-            Rarity++;
-    
-    // Calculate Amount
-    int Amount = 3;
-    Randomizer = 0;
-    for (int i = 0; i < CRATE_MAX_ITEMS / 3 - 1; i++)
-        if (Random(1, 4 + Randomizer++) == 1)
-            Amount += 3;
-    
-    SetUserVariable(0, "user_id", CrateID);
-    Crates[CrateID].Rarity = Rarity;
-    GenerateCrate(CrateID, Amount);
-    
-    // Increment ID
-    CrateID++;
+    SetUserVariable(0, "user_id", CrateID++);
 };
 
 acscript void UseCrate(int ID)
 {
     SetActivator(GetActorProperty(0, APROP_TargetTID));
+    
+    // Initialize the Crate if it is empty
+    if (!Crates[ID].Init)
+    {
+        int LuckMod = Player.Luck / 20;
+        int Rarity = 0;
+        int Amount = 3;
+        
+        // Calculate Rarity
+        for (int i = Rarity; i < MAX_DIFFICULTIES - 1; i++)
+            if (Random(0, (MAX_DIFFICULTIES + (MAX_DIFFICULTIES / 3)) - LuckMod) <= 0)
+                Rarity++;
+        
+        // Calculate Amount
+        for (int i = Amount; i < CRATE_MAX_ITEMS - 1; i++)
+            if (Random(0, i) <= 0)
+                Amount++;
+        Amount += PlayerCount() - 1;  // Add +1 per extra player in-game
+        if (Amount > CRATE_MAX_ITEMS) // Make sure we don't overflow
+            Amount = CRATE_MAX_ITEMS;
+        
+        Crates[ID].Init = true;
+        Crates[ID].Rarity = Rarity;
+        
+        GenerateCrate(ID, Amount);
+    };
     
     if (Player.CrateOpen) return;
     
