@@ -398,14 +398,37 @@ function void CheckStats()
 {
     // VERY IMPORTANT CODE RIGHT HERE
     // If you're reading this and you'd like to modify stat curves, this is where you'd do it
+	 Player.HealthMax = Player.Vitality * 10;
+    Player.EPMax = Player.Energy * 10;
+	 
+    if (Player.PrevVitality != Player.Vitality)
+    {
+		if (Player.ActualHealth <= Player.HealthMax)
+		{
+			fixed ratio = ((fixed)Player.ActualHealth + 0.5) / (Player.PrevVitality * 10);
+			Player.ActualHealth = ratio * Player.HealthMax;
+		};
+		
+		Player.PrevVitality = Player.Vitality;
+    };
+	 
+	 if (Player.PrevEnergy != Player.Energy)
+    {
+		if (Player.EP <= Player.EPMax)
+		{
+			fixed ratio = ((fixed)Player.EP + 0.5) / (Player.PrevEnergy * 10);
+			Player.EP = ratio * Player.EPMax;
+		};
+		
+		Player.PrevEnergy = Player.Energy;
+    };
+	 
     Player.LevelDamage = Player.Level * (10 - GameSkill());
     Player.BonusDamage = Player.Strength;
     Player.TotalDamage = Player.LevelDamage + Player.BonusDamage;
     Player.DamageFactor = (Player.Defense > 200 ? 0.25 : 1.0 - Curve((fixed)Player.Defense, 1, 200, 0.01, 0.75));
     Player.Mass = 100 + (Player.Defense * 10);
-    Player.HealthMax = Player.Vitality * 10;
     Player.StatusEffectResist = (fixed)Player.Vitality / 4.0;
-    Player.EPMax = Player.Energy * 10;
     Player.Aura.Range = Player.Energy * 16;
     Player.ToxicityRegenBonus = Player.Regeneration / 10;
     Player.Speed = 1.0 + 0.25 * ((fixed)Player.Agility / 100);
@@ -699,15 +722,15 @@ function void CheckLuck()
     Player.AugDrop =        (Player.Luck >= LUCK_AUGDROP ? true : false);
     Player.ShieldDrop =     (Player.Luck >= LUCK_SHIELDDROP ? true : false);
     
-    Player.HealthChance =   LUCK_HEALTHCHANCE + (Player.Luck * LUCK_HEALTHINC);
-    Player.EPChance =       LUCK_EPCHANCE + (Player.Luck * LUCK_EPINC);
-    Player.ArmorChance =    LUCK_ARMORCHANCE + (Player.Luck * LUCK_ARMORINC);
-    Player.WeaponChance =   LUCK_WEAPONCHANCE + (Player.Luck * LUCK_WEAPONINC);
-    Player.PowerupChance =  LUCK_POWERUPCHANCE + (Player.Luck * LUCK_POWERUPINC);
-    Player.StimChance =     LUCK_STIMCHANCE + (Player.Luck * LUCK_STIMINC);
-    Player.TokenChance =    LUCK_TOKENCHANCE + (Player.Luck * LUCK_TOKENINC);
-    Player.AugChance =      LUCK_AUGCHANCE + (Player.Luck * LUCK_AUGINC);
-    Player.ShieldChance =   LUCK_SHIELDCHANCE + (Player.Luck * LUCK_SHIELDINC);
+    Player.HealthChance =   Curve(Player.Luck, LUCK_HEALTHDROP, 200, LUCK_HEALTHCHANCE, 225 * LUCK_HEALTHCHANCE);
+    Player.EPChance =       Curve(Player.Luck, LUCK_EPDROP, 200, LUCK_EPCHANCE, 200 * LUCK_EPCHANCE);
+    Player.ArmorChance =    Curve(Player.Luck, LUCK_ARMORDROP, 200, LUCK_ARMORCHANCE, 175 * LUCK_ARMORCHANCE);
+    Player.WeaponChance =   Curve(Player.Luck, LUCK_WEAPONDROP, 200, LUCK_WEAPONCHANCE, 150 * LUCK_WEAPONCHANCE);
+    Player.PowerupChance =  Curve(Player.Luck, LUCK_POWERUPDROP, 200, LUCK_POWERUPCHANCE, 125 * LUCK_POWERUPCHANCE);
+    Player.StimChance =     Curve(Player.Luck, LUCK_STIMDROP, 200, LUCK_STIMCHANCE, 100 * LUCK_STIMCHANCE);
+    Player.TokenChance =    Curve(Player.Luck, LUCK_TOKENDROP, 200, LUCK_TOKENCHANCE, 75 * LUCK_TOKENCHANCE);
+    Player.AugChance =      Curve(Player.Luck, LUCK_AUGDROP, 200, LUCK_AUGCHANCE, 50 * LUCK_AUGCHANCE);
+    Player.ShieldChance =   Curve(Player.Luck, LUCK_SHIELDDROP, 200, LUCK_SHIELDCHANCE, 25 * LUCK_SHIELDCHANCE);
     
     // Hell Unleashed Map Event
     if (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED)
