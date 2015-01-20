@@ -1590,7 +1590,7 @@ acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
     int Armor = CheckInventory("BasicArmor");
     
     // Kind of hackish to prevent breaking down Armors that use high values for indestructibleness
-    if (Armor >= 99999)
+    if (CompatMode == COMPAT_DRLA && Armor >= 99999)
     {
         PrintError("You cannot breakdown indestructible armors");
         ActivatorSound("menu/error", 127);
@@ -1599,9 +1599,6 @@ acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
     
     if (Armor > 0)
     {
-        TakeInventory("BasicArmor", Armor);
-        GiveInventory("DRPGCredits", Armor);
-        
         // DoomRL Compatibility
         if (CompatMode == COMPAT_DRLA)
         {
@@ -1612,6 +1609,9 @@ acscript bool BreakdownArmor(SkillLevelInfo *SkillLevel, void *Data)
             TakeInventory("RL100RegenArmorWorn", 1);
             TakeInventory("RLIndestructibleArmorWorn", 1);
         };
+        
+        TakeInventory("BasicArmor", Armor);
+        GiveInventory("DRPGCredits", Armor);
         
         ActivatorSound("skills/breakdown", 127);
         return true;
