@@ -398,37 +398,14 @@ function void CheckStats()
 {
     // VERY IMPORTANT CODE RIGHT HERE
     // If you're reading this and you'd like to modify stat curves, this is where you'd do it
-	 Player.HealthMax = Player.Vitality * 10;
-    Player.EPMax = Player.Energy * 10;
-	 
-    if (Player.PrevVitality != Player.Vitality)
-    {
-		if (Player.ActualHealth <= Player.HealthMax)
-		{
-			fixed ratio = ((fixed)Player.ActualHealth + 0.5) / (Player.PrevVitality * 10);
-			Player.ActualHealth = ratio * Player.HealthMax;
-		};
-		
-		Player.PrevVitality = Player.Vitality;
-    };
-	 
-	 if (Player.PrevEnergy != Player.Energy)
-    {
-		if (Player.EP <= Player.EPMax)
-		{
-			fixed ratio = ((fixed)Player.EP + 0.5) / (Player.PrevEnergy * 10);
-			Player.EP = ratio * Player.EPMax;
-		};
-		
-		Player.PrevEnergy = Player.Energy;
-    };
-	 
     Player.LevelDamage = Player.Level * (10 - GameSkill());
     Player.BonusDamage = Player.Strength;
     Player.TotalDamage = Player.LevelDamage + Player.BonusDamage;
     Player.DamageFactor = (Player.Defense > 200 ? 0.25 : 1.0 - Curve((fixed)Player.Defense, 1, 200, 0.01, 0.75));
     Player.Mass = 100 + (Player.Defense * 10);
+	Player.HealthMax = Player.Vitality * 10;
     Player.StatusEffectResist = (fixed)Player.Vitality / 4.0;
+    Player.EPMax = Player.Energy * 10;
     Player.Aura.Range = Player.Energy * 16;
     Player.ToxicityRegenBonus = Player.Regeneration / 10;
     Player.Speed = 1.0 + 0.25 * ((fixed)Player.Agility / 100);
@@ -440,6 +417,30 @@ function void CheckStats()
     SetAmmoCapacity("Cell", Player.Capacity * 30);
     Player.Stim.VialMax = Player.Capacity * 10;
     Player.SurvivalBonus = (fixed)Player.Agility / 10.0;
+    
+    // Scale Health with Vitality Changes
+    if (Player.PrevVitality != Player.Vitality)
+    {
+        if (Player.ActualHealth <= Player.HealthMax)
+        {
+            fixed Ratio = ((fixed)Player.ActualHealth + 0.5) / (Player.PrevVitality * 10);
+            Player.ActualHealth = Ratio * Player.HealthMax;
+        };
+        
+        Player.PrevVitality = Player.Vitality;
+    };
+	
+    // Scale EP with Energy changes
+    if (Player.PrevEnergy != Player.Energy)
+    {
+        if (Player.EP <= Player.EPMax)
+        {
+            fixed Ratio = ((fixed)Player.EP + 0.5) / (Player.PrevEnergy * 10);
+            Player.EP = Ratio * Player.EPMax;
+        };
+        
+        Player.PrevEnergy = Player.Energy;
+    };
     
     // Status Effect Checking
     if (Player.StatusType[SE_FATIGUE]) // Fatigue
