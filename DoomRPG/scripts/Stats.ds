@@ -221,6 +221,8 @@ function void CheckLevel()
     // Now check for a level up
     if (Player.XP >= XPTable[Player.Level] && Player.Level < MAX_LEVEL)
     {
+        bool NaturalStats = GetCVar("drpg_levelup_natural");
+        
         int StatTokens;
         int SkillTokens;
         int WildcardTokens;
@@ -245,6 +247,8 @@ function void CheckLevel()
         {
             WildcardTokens = 3 + (Player.Level / 10);
         };
+        if (GetCVar("drpg_levelup_natural"))
+            StatTokens /= 3;
         
         // Level Up
         ActivatorSound("misc/levelup", 96);
@@ -418,57 +422,60 @@ function void CheckStats()
     Player.Stim.VialMax = Player.Capacity * 10;
     Player.SurvivalBonus = (fixed)Player.Agility / 10.0;
     
-    // Per-stat leveling
-    if (Player.StrengthXP >= XPTable[Player.Strength] && Player.Strength < 1000)
-        Player.Strength++;
-    
-    if (Player.DefenseXP >= XPTable[Player.Defense] && Player.Defense < 1000)
-        Player.Defense++;
-    
-    if (Player.VitalityXP >= XPTable[Player.Vitality] && Player.Vitality < 1000)
-        Player.Vitality++;
-    
-    if (Player.EnergyXP >= XPTable[Player.Energy] && Player.Energy < 1000)
-        Player.Energy++;
-    
-    if (Player.RegenerationXP >= XPTable[Player.Regeneration] && Player.Regeneration < 1000)
-        Player.Regeneration++;
-    
-    if (Player.AgilityXP >= XPTable[Player.Agility] && Player.Agility < 1000)
-        Player.Agility++;
-    
-    if (Player.CapacityXP >= XPTable[Player.Capacity] && Player.Capacity < 1000)
-        Player.Capacity++;
-    
-    if (Player.LuckXP >= XPTable[Player.Luck] && Player.Luck < 1000)
-        Player.Luck++;
-    
-    // Add Defense and Vitality XP for decreases in Health
-    if (Player.PrevHealth != Player.ActualHealth)
+    if (GetCVar("drpg_levelup_natural"))
     {
-        if (Player.ActualHealth < Player.PrevHealth)
+        // Per-stat leveling
+        if (Player.StrengthXP >= XPTable[Player.Strength] && Player.Strength < 1000)
+            Player.Strength++;
+        
+        if (Player.DefenseXP >= XPTable[Player.Defense] && Player.Defense < 1000)
+            Player.Defense++;
+        
+        if (Player.VitalityXP >= XPTable[Player.Vitality] && Player.Vitality < 1000)
+            Player.Vitality++;
+        
+        if (Player.EnergyXP >= XPTable[Player.Energy] && Player.Energy < 1000)
+            Player.Energy++;
+        
+        if (Player.RegenerationXP >= XPTable[Player.Regeneration] && Player.Regeneration < 1000)
+            Player.Regeneration++;
+        
+        if (Player.AgilityXP >= XPTable[Player.Agility] && Player.Agility < 1000)
+            Player.Agility++;
+        
+        if (Player.CapacityXP >= XPTable[Player.Capacity] && Player.Capacity < 1000)
+            Player.Capacity++;
+        
+        if (Player.LuckXP >= XPTable[Player.Luck] && Player.Luck < 1000)
+            Player.Luck++;
+        
+        // Add Defense and Vitality XP for decreases in Health
+        if (Player.PrevHealth != Player.ActualHealth)
         {
-            int Factor = Player.PrevHealth - Player.ActualHealth;
-            Player.DefenseXP += Factor * 10;
-            Player.VitalityXP += (int)((fixed)Factor / Player.HealthMax * 7500);
+            if (Player.ActualHealth < Player.PrevHealth)
+            {
+                int Factor = Player.PrevHealth - Player.ActualHealth;
+                Player.DefenseXP += Factor * 10;
+                Player.VitalityXP += (int)((fixed)Factor / Player.HealthMax * 1000);
+            };
+            
+            Player.PrevHealth = Player.ActualHealth;
         };
         
-        Player.PrevHealth = Player.ActualHealth;
+        // Add Luck XP for increases in Credits
+        if (Player.PrevCredits != CheckInventory("DRPGCredits"))
+        {
+            if (CheckInventory("DRPGCredits") > Player.PrevCredits)
+                Player.LuckXP += (CheckInventory("DRPGCredits") - Player.PrevCredits) * 5;
+                
+            Player.PrevCredits = CheckInventory("DRPGCredits");
+        };
+        
+        // Add Agility XP for maintaining high X/Y velocity
+        fixed Velocity = AbsFixed(GetActorVelX(0))+AbsFixed(GetActorVelX(0));
+        if (Timer() % 7 == 0)
+            Player.AgilityXP += (int)(Velocity * 7 / 32);
     };
-    
-    // Add Luck XP for increases in Credits
-    if (Player.PrevCredits != CheckInventory("DRPGCredits"))
-    {
-        if (CheckInventory("DRPGCredits") > Player.PrevCredits)
-            Player.LuckXP += (CheckInventory("DRPGCredits") - Player.PrevCredits) * 5;
-            
-        Player.PrevCredits = CheckInventory("DRPGCredits");
-    };
-    
-    // Add Agility XP for maintaining high X/Y velocity
-    fixed Velocity = AbsFixed(GetActorVelX(0))+AbsFixed(GetActorVelX(0));
-    if (Timer() % 7 == 0)
-        Player.AgilityXP += (int)(Velocity * 7 / 32);
     
     // Scale Health with Vitality Changes
     if (Player.PrevVitality != Player.Vitality)
