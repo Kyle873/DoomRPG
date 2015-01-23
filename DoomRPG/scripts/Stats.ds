@@ -440,6 +440,16 @@ function void CheckStats()
         
         if (Player.LuckXP >= XPTable[Player.Luck] && Player.Luck < 1000)
             Player.Luck++;
+            
+        // Add Regeneration XP for having low Health and/or EP
+        if (Player.ActualHealth < Player.HealthMax || Player.EP < Player.EPMax)
+        {
+            if (Timer() % 7 == 0)
+            {
+                int Factor = 2 - ((fixed)Player.ActualHealth / Player.HealthMax) + ((fixed)Player.EP / Player.EPMax);
+                Player.RegenerationXP += ScaleXP((int)(Factor * 8.333));
+            };
+        };
         
         // Add Defense and Vitality XP for decreases in Health
         if (Player.PrevHealth != Player.ActualHealth)
@@ -447,8 +457,8 @@ function void CheckStats()
             if (Player.ActualHealth < Player.PrevHealth)
             {
                 int Factor = Player.PrevHealth - Player.ActualHealth;
-                Player.DefenseXP += ScaleXP(Factor * 10);
-                Player.VitalityXP += ScaleXP((int)((fixed)Factor / Player.HealthMax * 1000));
+                Player.DefenseXP += ScaleXP((int)(Factor * 22.5));
+                Player.VitalityXP += ScaleXP((int)((fixed)Factor / Player.HealthMax * 2250));
             };
             
             Player.PrevHealth = Player.ActualHealth;
@@ -458,7 +468,7 @@ function void CheckStats()
         if (Player.PrevCredits != CheckInventory("DRPGCredits"))
         {
             if (CheckInventory("DRPGCredits") > Player.PrevCredits)
-                Player.LuckXP += ScaleXP((CheckInventory("DRPGCredits") - Player.PrevCredits) * 5);
+                Player.LuckXP += ScaleXP((int)((CheckInventory("DRPGCredits") - Player.PrevCredits) * 2.25));
                 
             Player.PrevCredits = CheckInventory("DRPGCredits");
         };
@@ -466,7 +476,7 @@ function void CheckStats()
         // Add Agility XP for maintaining high X/Y velocity
         fixed Velocity = AbsFixed(GetActorVelX(0))+AbsFixed(GetActorVelX(0));
         if (Timer() % 7 == 0)
-            Player.AgilityXP += ScaleXP((int)(Velocity * 7 / 32));
+            Player.AgilityXP += ScaleXP((int)(Velocity * 0.78125));
     };
     
     // Scale Health with Vitality Changes
@@ -561,16 +571,12 @@ function void DoRegen()
     
     // HP Regen
     if (Player.HPRate >= Player.HPTime && ClassifyActor(Player.TID) & ACTOR_ALIVE)
-    {
         HealThing(Player.HPAmount);
-        Player.RegenerationXP += ScaleXP(100);
-    };
     
     // EP Regen
     if (Player.EPRate >= Player.EPTime && Player.EP < Player.EPMax)
     {
         Player.EP += Player.EPAmount;
-        Player.RegenerationXP += ScaleXP(100);
         Overflow = 0;
         
         if (Player.EP > Player.EPMax)
