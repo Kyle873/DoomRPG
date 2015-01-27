@@ -102,7 +102,7 @@ acscript void TryStatusEffect(int Type, int Time, int Intensity)
 acscript void AddXP(int PlayerNum, long int XP, long int Rank, bool Reduced)
 {
     // Scale XP/Rank Gains using the XP Scaling Option
-    XP = ScaleXP(XP);
+    XP = (int)(XP * GetCVarFixed("drpg_scalexp"));
     
     Players(PlayerNum).ComboTimer = COMBO_MAX;
     Players(PlayerNum).Combo++;
@@ -484,8 +484,8 @@ function void CheckStats()
         {
             if (Timer() % 7 == 0)
             {
-                int Factor = 2 - ((fixed)Player.ActualHealth / Player.HealthMax) + ((fixed)Player.EP / Player.EPMax);
-                Player.RegenerationXP += ScaleXP((int)(Factor * 8.333));
+                fixed Factor = 2.0 - (((fixed)Player.ActualHealth / Player.HealthMax) + ((fixed)Player.EP / Player.EPMax));
+                Player.RegenerationXP += (int)FixedMul(Factor, FixedMul(8.333, GetCVarFixed("drpg_regeneration_scalexp")));
             };
         };
         
@@ -495,8 +495,8 @@ function void CheckStats()
             if (Player.ActualHealth < Player.PrevHealth)
             {
                 int Factor = Player.PrevHealth - Player.ActualHealth;
-                Player.DefenseXP += ScaleXP((int)(Factor * 22.5));
-                Player.VitalityXP += ScaleXP((int)((fixed)Factor / Player.HealthMax * 2250));
+                Player.DefenseXP += (int)(Factor * FixedMul(22.5, GetCVarFixed("drpg_defense_scalexp")));
+                Player.VitalityXP += (int)(Factor * GetCVarFixed("drpg_vitality_scalexp") / Player.HealthMax * 2250);
             };
             
             Player.PrevHealth = Player.ActualHealth;
@@ -506,7 +506,7 @@ function void CheckStats()
         if (Player.PrevCredits != CheckInventory("DRPGCredits"))
         {
             if (CheckInventory("DRPGCredits") > Player.PrevCredits)
-                Player.LuckXP += ScaleXP((int)((CheckInventory("DRPGCredits") - Player.PrevCredits) * 2.25));
+                Player.LuckXP += (int)((CheckInventory("DRPGCredits") - Player.PrevCredits) * FixedMul(2.25, GetCVarFixed("drpg_luck_scalexp")));
                 
             Player.PrevCredits = CheckInventory("DRPGCredits");
         };
@@ -514,7 +514,7 @@ function void CheckStats()
         // Add Agility XP for maintaining high X/Y velocity
         fixed Velocity = AbsFixed(GetActorVelX(0)) + AbsFixed(GetActorVelX(0));
         if (Timer() % 7 == 0)
-            Player.AgilityXP += ScaleXP((int)(Velocity * 0.78125));
+            Player.AgilityXP += (int)(Velocity * FixedMul(0.390625, GetCVarFixed("drpg_agility_scalexp")));
     };
     
     // Scale Health with Vitality Changes
