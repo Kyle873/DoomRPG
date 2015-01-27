@@ -484,8 +484,14 @@ function void CheckStats()
         {
             if (Timer() % 7 == 0)
             {
+                fixed Scale = GetCVarFixed("drpg_regeneration_scalexp");
+                if (GetCVar("drpg_allow_spec"))
+                {
+                    if (GetCVar("drpg_character_spec") == 5)
+                        Scale *= 2;
+                };
                 fixed Factor = 2.0 - (((fixed)Player.ActualHealth / Player.HealthMax) + ((fixed)Player.EP / Player.EPMax));
-                Player.RegenerationXP += (int)FixedMul(Factor, FixedMul(8.333, GetCVarFixed("drpg_regeneration_scalexp")));
+                Player.RegenerationXP += (int)FixedMul(Factor, FixedMul(8.333, Scale));
             };
         };
         
@@ -494,9 +500,18 @@ function void CheckStats()
         {
             if (Player.ActualHealth < Player.PrevHealth)
             {
+                fixed DefScale = GetCVarFixed("drpg_defense_scalexp");
+                fixed VitScale = GetCVarFixed("drpg_vitality_scalexp");
+                if (GetCVar("drpg_allow_spec"))
+                {
+                    if (GetCVar("drpg_character_spec") == 2)
+                        DefScale *= 2;
+                    if (GetCVar("drpg_character_spec") == 3)
+                        VitScale *= 2;
+                };
                 int Factor = Player.PrevHealth - Player.ActualHealth;
-                Player.DefenseXP += (int)(Factor * FixedMul(22.5, GetCVarFixed("drpg_defense_scalexp")));
-                Player.VitalityXP += (int)(Factor * GetCVarFixed("drpg_vitality_scalexp") / Player.HealthMax * 2250);
+                Player.DefenseXP += (int)(Factor * FixedMul(22.5, DefScale));
+                Player.VitalityXP += (int)(Factor * VitScale / Player.HealthMax * 2250);
             };
             
             Player.PrevHealth = Player.ActualHealth;
@@ -506,7 +521,15 @@ function void CheckStats()
         if (Player.PrevCredits != CheckInventory("DRPGCredits"))
         {
             if (CheckInventory("DRPGCredits") > Player.PrevCredits)
-                Player.LuckXP += (int)((CheckInventory("DRPGCredits") - Player.PrevCredits) * FixedMul(2.25, GetCVarFixed("drpg_luck_scalexp")));
+            {
+                fixed Scale = GetCVarFixed("drpg_luck_scalexp");
+                if (GetCVar("drpg_allow_spec"))
+                {
+                    if (GetCVar("drpg_character_spec") == 8)
+                        Scale *= 2;
+                };
+                Player.LuckXP += (int)((CheckInventory("DRPGCredits") - Player.PrevCredits) * FixedMul(2.25, Scale));
+            };
                 
             Player.PrevCredits = CheckInventory("DRPGCredits");
         };
@@ -514,7 +537,15 @@ function void CheckStats()
         // Add Agility XP for maintaining high X/Y velocity
         fixed Velocity = AbsFixed(GetActorVelX(0)) + AbsFixed(GetActorVelX(0));
         if (Timer() % 7 == 0)
-            Player.AgilityXP += (int)(Velocity * FixedMul(0.390625, GetCVarFixed("drpg_agility_scalexp")));
+        {
+            fixed Scale = GetCVarFixed("drpg_agility_scalexp");
+            if (GetCVar("drpg_allow_spec"))
+            {
+                if (GetCVar("drpg_character_spec") == 6)
+                    Scale *= 2;
+            };
+            Player.AgilityXP += (int)(Velocity * FixedMul(0.390625, Scale));
+        };
     };
     
     // Scale Health with Vitality Changes

@@ -122,7 +122,15 @@ acscript int CheckCapacity()
     int MaxItems = CheckInventoryMax();
     
     if (GetCVar("drpg_levelup_natural") && Timer() % 7 == 0)
-        Player.CapacityXP += (int)(Player.InvItems * GetCVarFixed("drpg_capacity_scalexp") / MaxItems * 30);
+    {
+        fixed Scale = GetCVarFixed("drpg_capacity_scalexp");
+        if (GetCVar("drpg_allow_spec"))
+        {
+            if (GetCVar("drpg_character_spec") == 7)
+                Scale *= 2;
+        };
+        Player.CapacityXP += (int)(Player.InvItems * Scale / MaxItems * 30);
+    };
     
     // Don't do checks if you have the system disabled
     if (!GetCVar("drpg_inv_capacity")) return true;
