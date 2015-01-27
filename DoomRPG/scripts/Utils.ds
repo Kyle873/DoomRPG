@@ -121,6 +121,9 @@ acscript int CheckCapacity()
     int Items = 0;
     int MaxItems = CheckInventoryMax();
     
+    if (GetCVar("drpg_levelup_natural") && Timer() % 7 == 0)
+        Player.CapacityXP += ScaleXP((int)((fixed)Player.InvItems / MaxItems * 30));
+    
     // Don't do checks if you have the system disabled
     if (!GetCVar("drpg_inv_capacity")) return true;
     
@@ -364,6 +367,22 @@ function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XA
 // Players
 // 
 
+// Modifies the given int by the current XP multiplier
+function int ScaleXP(int XP)
+{
+    switch (GetCVar("drpg_scalexp"))
+    {
+    case 2: XP *= 2;                break;  // 2x
+    case 3: XP *= 4;                break;  // 4x
+    case 4: XP *= 8;                break;  // 8x
+    case 5: XP = XP * 3 / 4;        break;  // 0.75x
+    case 6: XP /= 2;                break;  // 0.5x
+    case 7: XP /= 4;                break;  // 0.25x
+    };
+    
+    return XP;
+};
+
 // Used by the RegenSphere to temporarily increase regen rates
 acscript void RegenBoost()
 {
@@ -423,6 +442,16 @@ acscript void Respec(bool DoStats, bool DoSkills) net
         Player.Agility = 0;
         Player.Capacity = 10;
         Player.Luck = 0;
+        
+        // Reset Stat XP
+        Player.StrengthXP = 0;
+        Player.DefenseXP = 0;
+        Player.VitalityXP = XPTable[9];
+        Player.EnergyXP = XPTable[9];
+        Player.RegenerationXP = 0;
+        Player.AgilityXP = 0;
+        Player.CapacityXP = XPTable[9];
+        Player.LuckXP = 0;
 
         // Give Respecced Stat Tokens back
         GiveInventory("DRPGStatToken", StatPoints);
@@ -1438,6 +1467,15 @@ function int Round(fixed x)
     return (int)(x + 0.5);
 };
 
+// Return the absolute value of a fixed-point value
+function fixed AbsFixed(fixed x)
+{
+    if (x < 0.0)
+        return -x;
+    
+    return x;
+};
+
 function fixed Min(fixed x, fixed y)
 {
     if (x < y)
@@ -1687,6 +1725,12 @@ acscript void ModStat(int Stat, int Value)
     case STAT_CAPACITY + 1:     Player.Capacity = Value;        break;
     case STAT_LUCK + 1:         Player.Luck = Value;            break;
     };
+};
+
+// Look up a value on the XP Table
+acscript void LookupXPTable(int index)
+{
+    Log("%d\n", XPTable[index]);
 };
 
 // Give Credits
