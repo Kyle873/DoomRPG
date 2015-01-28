@@ -121,6 +121,17 @@ acscript int CheckCapacity()
     int Items = 0;
     int MaxItems = CheckInventoryMax();
     
+    if (GetCVar("drpg_levelup_natural") && Timer() % 7 == 0)
+    {
+        fixed Scale = GetCVarFixed("drpg_capacity_scalexp");
+        if (GetCVar("drpg_allow_spec"))
+        {
+            if (GetCVar("drpg_character_spec") == 7)
+                Scale *= 2;
+        };
+        Player.CapacityXP += (int)(Player.InvItems * Scale / MaxItems * 30);
+    };
+    
     // Don't do checks if you have the system disabled
     if (!GetCVar("drpg_inv_capacity")) return true;
     
@@ -423,6 +434,16 @@ acscript void Respec(bool DoStats, bool DoSkills) net
         Player.Agility = 0;
         Player.Capacity = 10;
         Player.Luck = 0;
+        
+        // Reset Stat XP
+        Player.StrengthXP = 0;
+        Player.DefenseXP = 0;
+        Player.VitalityXP = XPTable[9];
+        Player.EnergyXP = XPTable[9];
+        Player.RegenerationXP = 0;
+        Player.AgilityXP = 0;
+        Player.CapacityXP = XPTable[9];
+        Player.LuckXP = 0;
 
         // Give Respecced Stat Tokens back
         GiveInventory("DRPGStatToken", StatPoints);
@@ -1235,6 +1256,76 @@ script void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fixed H
     };
 };
 
+script void DrawStatUp(int Stat)
+{
+    static int[STAT_MAX] StatColors =
+    {
+        CR_RED;         // Strength
+        CR_GREEN;       // Defense
+        CR_BRICK;       // Vitality
+        CR_LIGHTBLUE;   // Energy
+        CR_PURPLE;      // Regeneration
+        CR_ORANGE;      // Agility
+        CR_BLUE;        // Capacity
+        CR_GOLD;        // Luck
+    };
+    
+    static str[STAT_MAX] StatNames =
+    {
+        "Strength";
+        "Defense";
+        "Vitality";
+        "Energy";
+        "Regeneration";
+        "Agility";
+        "Capacity";
+        "Luck";
+    };
+    
+    // Fade
+    switch (Stat)
+    {
+        case STAT_STRENGTH:     FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0.0, 0.5);        break;
+        case STAT_DEFENSE:      FadeRange(0, 255, 0, 0.25, 0, 255, 0, 0.0, 0.5);        break;
+        case STAT_VITALITY:     FadeRange(255, 0, 255, 0.25, 255, 0, 255, 0.0, 0.5);    break;
+        case STAT_ENERGY:       FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0.0, 0.5);    break;
+        case STAT_REGENERATION: FadeRange(128, 0, 128, 0.25, 128, 0, 128, 0.0, 0.5);    break;
+        case STAT_AGILITY:      FadeRange(255, 128, 0, 0.25, 255, 128, 0, 0.0, 0.5);    break;
+        case STAT_CAPACITY:     FadeRange(0, 0, 255, 0.25, 0, 0, 255, 0.0, 0.5);        break;
+        case STAT_LUCK:         FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 0.5);    break;
+    };
+    
+    // Don't overlap animations if one is already running
+    if (Player.StatUp) return;
+    
+    Player.StatUp = true;
+    
+    int Time = 35 * 5;
+    int DisplayTime = Time;
+    fixed Radius = 0.25;
+    
+    // Text and whooshy icon
+    while (DisplayTime > 0)
+    {
+        fixed Angle = (fixed)Timer() / 64.0;
+        fixed XOff = Cos(Angle) * Radius;
+        fixed YOff = Sin(Angle) * Radius;
+        fixed Alpha = (fixed)DisplayTime / (fixed)Time;
+        
+        SetHudSize(0, 0, false);
+        
+        SetFont("BIGFONT");
+        HudMessage("%s +\n", StatNames[Stat], HUDMSG_ALPHA, STAT_LEVELUP_ID, StatColors[Stat], 0.5, 0.75, 0.05, Alpha);
+        PrintSpriteAlpha(StrParam("STAT%d\n", Stat + 1), STAT_LEVELUP_ID + 1, 0.525 + XOff, 0.5 + YOff, 0.05, Alpha);
+        
+        DisplayTime--;
+        Radius -= 0.0025;
+        Delay(1);
+    };
+    
+    Player.StatUp = false;
+};
+
 // PrintSprite Utility Function
 function void PrintSprite(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime)
 {
@@ -1438,6 +1529,15 @@ function int Round(fixed x)
     return (int)(x + 0.5);
 };
 
+// Return the absolute value of a fixed-point value
+function fixed AbsFixed(fixed x)
+{
+    if (x < 0.0)
+        return -x;
+    
+    return x;
+};
+
 function fixed Min(fixed x, fixed y)
 {
     if (x < y)
@@ -1505,6 +1605,14 @@ function fixed Curve(fixed Value, fixed Low1, fixed High1, fixed Low2, fixed Hig
     fixed Constant = High2 / High1;
     fixed CurveLow = Map(Value * Constant, Low1 * Constant, High2, Low2, High2);
     return Map(Value, Low1, High1, CurveLow, High2);
+};
+
+// Here's an alternative curve that starts gradually and accelerates. --SidDoyle
+function fixed AltCurve(fixed Value, fixed Low1, fixed High1, fixed Low2, fixed High2)
+{
+    fixed Constant = High2 / High1;
+    fixed CurveHigh = Map(Value * Constant, Low1 * Constant, High1 * Constant, Low1 * Constant, High2);
+    return Map(Value, Low1, High1, Low2, CurveHigh);
 };
 
 // --------------------------------------------------
@@ -1679,6 +1787,12 @@ acscript void ModStat(int Stat, int Value)
     case STAT_CAPACITY + 1:     Player.Capacity = Value;        break;
     case STAT_LUCK + 1:         Player.Luck = Value;            break;
     };
+};
+
+// Look up a value on the XP Table
+acscript void LookupXPTable(int index)
+{
+    Log("%d\n", XPTable[index]);
 };
 
 // Give Credits
