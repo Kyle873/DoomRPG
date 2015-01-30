@@ -252,14 +252,11 @@ function void CheckLevel()
         if (GetCVar("drpg_levelup_heal"))
         {
             if (Player.EP < 0) Player.EP = 0 else Player.EP = Player.EPMax;
-            HealThing(1000000);
+            HealThing(SHIELD_HEALTH);
         };
         
         FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0, 2.0);
-        SetFont("BIGFONT");
-        SetHudSize(0, 0, false);
-        HudMessage("You have reached level %d\n", Player.Level,
-                    HUDMSG_FADEOUT | HUDMSG_LOG, MENU_ID, CR_WHITE, 0.5, 0.4, 2.0, 2.0);
+        PrintMessage(StrParam("You have reached level %d\n", Player.Level), LEVELUP_ID, 0, -32);
         
         SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(Player.TID, APROP_Height), 0, 0);
     };
@@ -289,11 +286,7 @@ function void CheckRank()
         Player.RankLevel--;
         FadeRange(255, 0, 64, 0.25, 255, 0, 64, 0, 2.0);
         
-        SetFont("BIGFONT");
-        SetHudSize(0, 0, false);
-        HudMessage("You have been demoted to rank %d: %s\n",
-                   Player.RankLevel, LongRanks[Player.RankLevel],
-                   HUDMSG_FADEOUT | HUDMSG_LOG, MENU_ID + 1, CR_BRICK, 1.5, 0.5, 4.0, 2.0);
+        PrintMessage(StrParam("\caYou have been demoted to rank %d: %s\n", Player.RankLevel, LongRanks[Player.RankLevel]), RANKUP_ID, 0, 32);
     };
     
     // Rank Promotion
@@ -312,20 +305,13 @@ function void CheckRank()
                 if (ItemData[i][j].Rank == Player.RankLevel)
                     NewItems++;
         
-        SetFont("BIGFONT");
-        SetHudSize(0, 0, false);
-        HudMessage("You have been promoted to rank %d: %s\n",
-                   Player.RankLevel, LongRanks[Player.RankLevel],
-                   HUDMSG_FADEOUT | HUDMSG_LOG, MENU_ID + 1, CR_GOLD, 1.5, 0.5, 4.0, 2.0);
+        PrintMessage(StrParam("\ckYou have been promoted to rank %d: %s\n", Player.RankLevel, LongRanks[Player.RankLevel]), RANKUP_ID, 0, 32);
         
         SpawnForced("DRPGRankUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(Player.TID, APROP_Height), 0, 0);
         
         // Tells you if you've unlocked new items in the Shop
         if (NewItems > 0)
-        {
-            SetFont("SMALLFONT");
-            HudMessage("You have unlocked %d new items in the shop\n", NewItems, HUDMSG_FADEOUT | HUDMSG_LOG, MENU_ID + 2, CR_GOLD, 0.5, 0.6, 4.0, 2.0);
-        };
+            PrintMessage(StrParam("\ccYou have unlocked \cf%d\cc new items in the shop\n", NewItems), RANKUP_ID + 1, 0, 96);
     };
     
     // Payment
@@ -491,27 +477,23 @@ function void CheckStats()
                         Scale *= 2;
                 };
                 fixed Factor = 2.0 - (((fixed)Player.ActualHealth / Player.HealthMax) + ((fixed)Player.EP / Player.EPMax));
-                Player.RegenerationXP += (int)FixedMul(Factor, FixedMul(8.333, Scale));
+                Player.RegenerationXP += (int)FixedMul(Factor, FixedMul(8.25, Scale));
             };
         };
         
-        // Add Defense and Vitality XP for decreases in Health
+        // Add Defense XP for decreases in Health
         if (Player.PrevHealth != Player.ActualHealth)
         {
             if (Player.ActualHealth < Player.PrevHealth)
             {
-                fixed DefScale = GetCVarFixed("drpg_defense_scalexp");
-                fixed VitScale = GetCVarFixed("drpg_vitality_scalexp");
+                fixed Scale = GetCVarFixed("drpg_defense_scalexp");
                 if (GetCVar("drpg_allow_spec"))
                 {
                     if (GetCVar("drpg_character_spec") == 2)
-                        DefScale *= 2;
-                    if (GetCVar("drpg_character_spec") == 3)
-                        VitScale *= 2;
+                        Scale *= 2;
                 };
                 int Factor = Player.PrevHealth - Player.ActualHealth;
-                Player.DefenseXP += (int)(Factor * FixedMul(22.5, DefScale));
-                Player.VitalityXP += (int)(Factor * VitScale / Player.HealthMax * 2250);
+                Player.DefenseXP += (int)(Factor * FixedMul(11.25, Scale));
             };
             
             Player.PrevHealth = Player.ActualHealth;
@@ -544,7 +526,7 @@ function void CheckStats()
                 if (GetCVar("drpg_character_spec") == 6)
                     Scale *= 2;
             };
-            Player.AgilityXP += (int)(Velocity * FixedMul(0.390625, Scale));
+            Player.AgilityXP += (int)(Velocity * FixedMul(0.333, Scale));
         };
     };
     

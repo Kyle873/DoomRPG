@@ -121,6 +121,7 @@ acscript int CheckCapacity()
     int Items = 0;
     int MaxItems = CheckInventoryMax();
     
+    // Add Capacity XP for total carried items
     if (GetCVar("drpg_levelup_natural") && Timer() % 7 == 0)
     {
         fixed Scale = GetCVarFixed("drpg_capacity_scalexp");
@@ -129,7 +130,7 @@ acscript int CheckCapacity()
             if (GetCVar("drpg_character_spec") == 7)
                 Scale *= 2;
         };
-        Player.CapacityXP += (int)(Player.InvItems * Scale / MaxItems * 30);
+        Player.CapacityXP += (int)(Player.InvItems * Scale / MaxItems * 20);
     };
     
     // Don't do checks if you have the system disabled
@@ -1267,7 +1268,7 @@ script void DrawStatUp(int Stat)
         CR_PURPLE;      // Regeneration
         CR_ORANGE;      // Agility
         CR_BLUE;        // Capacity
-        CR_GOLD;        // Luck
+        CR_YELLOW;      // Luck
     };
     
     static str[STAT_MAX] StatNames =
@@ -1276,7 +1277,7 @@ script void DrawStatUp(int Stat)
         "Defense";
         "Vitality";
         "Energy";
-        "Regeneration";
+        "Regen";
         "Agility";
         "Capacity";
         "Luck";
@@ -1295,11 +1296,6 @@ script void DrawStatUp(int Stat)
         case STAT_LUCK:         FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 0.5);    break;
     };
     
-    // Don't overlap animations if one is already running
-    if (Player.StatUp) return;
-    
-    Player.StatUp = true;
-    
     int Time = 35 * 5;
     int DisplayTime = Time;
     fixed Radius = 0.25;
@@ -1307,23 +1303,23 @@ script void DrawStatUp(int Stat)
     // Text and whooshy icon
     while (DisplayTime > 0)
     {
-        fixed Angle = (fixed)Timer() / 64.0;
+        fixed Angle = (0.1 * Stat) + (fixed)Timer() / 64.0;
         fixed XOff = Cos(Angle) * Radius;
         fixed YOff = Sin(Angle) * Radius;
         fixed Alpha = (fixed)DisplayTime / (fixed)Time;
+        fixed TextX = 0.1 + ((Stat % 4) * 0.25);
+        fixed TextY = 0.75 + (Stat >= 4 ? 0.05 : 0);
         
         SetHudSize(0, 0, false);
         
         SetFont("BIGFONT");
-        HudMessage("%s +\n", StatNames[Stat], HUDMSG_ALPHA, STAT_LEVELUP_ID, StatColors[Stat], 0.5, 0.75, 0.05, Alpha);
-        PrintSpriteAlpha(StrParam("STAT%d\n", Stat + 1), STAT_LEVELUP_ID + 1, 0.525 + XOff, 0.5 + YOff, 0.05, Alpha);
+        HudMessage("%s +\n", StatNames[Stat], HUDMSG_ALPHA, 0, StatColors[Stat], TextX, TextY, 0.05, Alpha);
+        PrintSpriteAlpha(StrParam("STAT%d\n", Stat + 1), 0, 0.525 + XOff, 0.5 + YOff, 0.05, Alpha);
         
         DisplayTime--;
         Radius -= 0.0025;
         Delay(1);
     };
-    
-    Player.StatUp = false;
 };
 
 // PrintSprite Utility Function
@@ -1355,11 +1351,24 @@ function void PrintSpritePulse(str Sprite, int ID, fixed X, fixed Y, fixed Alpha
         HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
 };
 
+function void PrintMessage(str Message, int ID, fixed X, fixed Y)
+{
+    int Width = GetCVar("drpg_hud_width");
+    int Height = GetCVar("drpg_hud_height");
+    
+    SetHudSize(Width, Height, false);
+    SetFont("BIGFONT");
+    HudMessage("%s\n", Message, HUDMSG_FADEOUT | HUDMSG_LOG, ID, CR_WHITE, Width / 2 + X, Height / 2 + Y, 3.0, 2.0);
+};
+
 function void PrintError(str Message)
 {
-    SetHudSize(0, 0, false);
+    int Width = GetCVar("drpg_hud_width");
+    int Height = GetCVar("drpg_hud_height");
+    
+    SetHudSize(Width, Height, false);
     SetFont("BIGFONT");
-    HudMessage("%s\n", Message, HUDMSG_FADEOUT, ERROR_ID, CR_RED, 1.5, 0.5, 2.0, 1.0);
+    HudMessage("%s\n", Message, HUDMSG_FADEOUT, ERROR_ID, CR_RED, Width / 2, Height / 2, 2.0, 1.0);
 };
 
 function void ClearMessage(int ID)
