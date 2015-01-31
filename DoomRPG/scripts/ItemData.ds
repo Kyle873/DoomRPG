@@ -182,7 +182,7 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
 };
 
 ItemSpace bool ItemRanksRemoved;
-ItemSpace ItemInfoPtr[ITEM_CATEGORIES * ITEM_MAX] RewardList;
+ItemSpace ItemInfo[ITEM_CATEGORIES * ITEM_MAX] RewardList;
 ItemSpace int MaxRewards;
 ItemSpace bool RewardsInit;
 
@@ -799,7 +799,12 @@ script void BuildItemData()
             if (ItemData[i][j].Price < 100)
                 continue;
             
-            RewardList[MaxRewards] = &ItemData[i][j];
+            RewardList[MaxRewards] = ItemData[i][j];
+            
+            // DoomRL Compatibility
+            if (CompatMode == COMPAT_DRLA)
+                if (i == 0) // Weapons
+                    RewardList[MaxRewards].Actor = StrParam("%sPickup\n", RewardList[MaxRewards].Actor);
             
             ++MaxRewards;
         };
@@ -812,10 +817,9 @@ script void BuildItemData()
     int Instructions = 0;
     while (RewardIndex < MaxRewards - 1)
     {
-        if (RewardList[RewardIndex] == NULL ||
-            RewardList[RewardIndex]->Price > RewardList[RewardIndex + 1]->Price)
+        if (RewardList[RewardIndex].Price > RewardList[RewardIndex + 1].Price)
         {
-            ItemInfoPtr Temp = RewardList[RewardIndex];
+            ItemInfo Temp = RewardList[RewardIndex];
             RewardList[RewardIndex] = RewardList[RewardIndex + 1];
             RewardList[RewardIndex + 1] = Temp;
             
