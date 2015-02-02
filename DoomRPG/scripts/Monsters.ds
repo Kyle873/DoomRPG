@@ -1014,12 +1014,17 @@ script void MonsterRegenerationHandler()
         return;
     
     long long RegenAmount = (long long)Stats->HealthMax * (long long)Stats->Regeneration;
-    RegenAmount /= 1000;
-    if (RegenAmount > 2147483647) // INT_MAX
-        RegenAmount = 2147483647;
-    //if (GetCVar("drpg_debug"))
-    //    Log("\cdDEBUG: \ctRegeneration of %s: %d\n", GetActorClass(0), RegenAmount);
+    
+    if (Stats->RegenHealth >= Stats->HealthMax * 10)
+        RegenAmount /= 10000
+    else
+        RegenAmount /= 1000;
+    
+    if (RegenAmount > INT_MAX)
+        RegenAmount = INT_MAX;
+    
     SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + RegenAmount);
+    Stats->RegenHealth += RegenAmount;
     
     if (Stats->Aura.Type[AURA_PURPLE].Active)
         GiveInventory("DRPGMonsterRadiusHealer", 1);
@@ -1036,6 +1041,7 @@ acscript void MonsterRegenHealer()
 {
     // Pointer
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
     int Health = GetActorProperty(0, APROP_Health);
     
     int HealAmount = Stats->HealthMax / 10;
