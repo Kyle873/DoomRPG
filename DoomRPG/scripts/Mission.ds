@@ -403,7 +403,22 @@ function ItemInfoPtr GetRewardItem(int Difficulty)
     if (Difficulty == MAX_DIFFICULTIES - 1)
         SliceLength += MaxRewards % MAX_DIFFICULTIES;
     
-    return &RewardList[Random(SliceStart, (SliceStart + SliceLength) - 1)];
+    int Index = Random(SliceStart, (SliceStart + SliceLength) - 1);
+    ItemInfoPtr Reward = &RewardList[Index];
+    
+    // Some extra stuff to catch errors and spit out debug logging
+    if (GetCVar("drpg_debug"))
+    {
+        Log("\cdDEBUG: \c-Reward Item %s picked\n", Reward->Name);
+        
+        if (Index > MaxRewards)
+        {
+            Log("\cgERROR: \c-Tried to pick a reward past the max available reward index\n");
+            return nullptr;
+        };
+    };
+    
+    return Reward;
 };
 
 function void GetTargetMonster(MissionInfo *Mission)
