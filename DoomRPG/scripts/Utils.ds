@@ -4,6 +4,7 @@
 #include "Defs.dh"
 #include "ItemData.dh"
 #include "Map.dh"
+#include "Mission.dh"
 #include "Outpost.dh"
 #include "Shield.dh"
 #include "Shop.dh"
@@ -1397,6 +1398,122 @@ function void DrawBattery()
     HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, BATTERY_ID + 1, CR_YELLOW, X + 24.0, Y - 10.0, HoldTime, FadeTime);
 };
 
+function void DrawShieldInfo(int ID, fixed X, fixed Y)
+{
+    PlayerData *CurrentPlayer = (ID == -1 ? &Player : &Players(ID));
+    
+    if (CurrentPlayer->Shield.Body != 0 || CurrentPlayer->Shield.Battery != 0 || CurrentPlayer->Shield.Capacitor != 0)
+    {
+        // Epic Shield Name
+        str ShieldName = "";
+        if (CurrentPlayer->Shield.Capacitor) ShieldName = StrParam("%s %s\n", ShieldName, CurrentPlayer->Shield.Capacitor->Name);
+        if (CurrentPlayer->Shield.Battery)   ShieldName = StrParam("%s \c-%s\n", ShieldName, CurrentPlayer->Shield.Battery->Name);
+        if (CurrentPlayer->Shield.Body)      ShieldName = StrParam("%s \c-%s\n", ShieldName, CurrentPlayer->Shield.Body->Name);
+        if (CurrentPlayer->Shield.Accessory) ShieldName = StrParam("%s \c-%s\n", ShieldName, CurrentPlayer->Shield.Accessory->Name);
+        ShieldName = StrParam("%s\c- Shield\n", ShieldName);
+        
+        SetFont("SMALLFONT");
+        
+        // Shield Name
+        HudMessage("%s\n", ShieldName, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 0.1, 0.05);
+        
+        // Shield Stats
+        HudMessage(" \cvCapacity: %d / %d\n", CurrentPlayer->Shield.Charge, CurrentPlayer->Shield.Capacity, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 8.1, 0.05);
+        if (CurrentPlayer->Shield.Accessory && CurrentPlayer->Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
+            HudMessage(" \cgDoes not recharge automatically\n", HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05)
+        else
+        {
+            HudMessage(" \cdCharge: %d\n", CurrentPlayer->Shield.ChargeRate, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05);
+            HudMessage(" \caDelay: %k\n", CurrentPlayer->Shield.DelayRate, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 24.1, 0.05);
+        };
+        
+        // Draw Shield Model
+        DrawShieldModel(ID, X - 14.0, Y + 33.0);
+    };
+};
+
+function void DrawShieldModel(int ID, fixed X, fixed Y)
+{
+    PlayerData *CurrentPlayer = (ID == -1 ? &Player : &Players(ID));
+    
+    // [KS] These need to be reversed because 0 draws behind the last graphic printed
+
+    // Accessory
+    if (CurrentPlayer->Shield.Accessory)
+        PrintSprite(CurrentPlayer->Shield.Accessory->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+    
+    // Battery
+    if (CurrentPlayer->Shield.Battery)
+        PrintSprite(CurrentPlayer->Shield.Battery->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+    
+    // Capacitor
+    if (CurrentPlayer->Shield.Capacitor)
+        PrintSprite(CurrentPlayer->Shield.Capacitor->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+    
+    // Body
+    if (CurrentPlayer->Shield.Body)
+        PrintSprite(CurrentPlayer->Shield.Body->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+};
+
+function void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
+{
+    // Basic Info
+    SetFont("BIGFONT");
+    HudMessage("Type: %s\n", MissionTypes[Mission->Type], HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y, 0.05);
+    HudMessage("Difficulty: %s\n", MissionDifficulties[Mission->Difficulty], HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.0, 0.05);
+    HudMessage("XP: %d\n", Mission->RewardXP, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 32.0, 0.05);
+    HudMessage("Rank: %d\n", Mission->RewardRank, HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y + 48.0, 0.05);
+    HudMessage("Credits: %d\n", Mission->RewardCredits, HUDMSG_PLAIN, 0, CR_GOLD, X + 0.1, Y + 64.0, 0.05);
+    HudMessage("\ciItem: \c-%s\n", Mission->RewardItem->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 74.1, 0.05);
+    
+    // Mission Objective
+    switch (Mission->Type)
+    {
+    case MT_COLLECT:
+        HudMessage("Type: \ci%s\n", Mission->Item->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        if (Active)
+            HudMessage("Amount: \cd%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05)
+        else
+            HudMessage("Amount: \cd%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05);
+        break;
+    case MT_KILL:
+        HudMessage("Type: \cg%s\n", Mission->Monster->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        if (Active)
+            HudMessage("Amount: \ca%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05)
+        else
+            HudMessage("Amount: \ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05);
+        break;
+    case MT_KILLAURAS:
+    case MT_REINFORCEMENTS:
+        if (Active)
+            HudMessage("Amount: \ca%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+        else
+            HudMessage("Amount: \ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    case MT_ASSASSINATION:
+        HudMessage("Type: \cg%s\n", Mission->Monster->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    case MT_SECRETS:
+        if (Active)
+            HudMessage("Amount: \cf%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+        else
+            HudMessage("Amount: \cf%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    case MT_ITEMS:
+        if (Active)
+            HudMessage("Amount: \cn%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+        else
+            HudMessage("Amount: \cn%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    case MT_COMBO:
+        if (Active)
+            HudMessage("Amount: \ct%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+        else
+            HudMessage("Amount: \ct%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    };
+};
+
 function void DrawBar(str Fill, int X, int Y, int Amount, bool Pulse)
 {
     for (int i = 0; i < Amount; i++)
@@ -1850,7 +1967,7 @@ acscript void GiveAugs(int Canisters, int Upgrades, int Slots)
     GiveInventory("DRPGAugUpgradeCanister", Upgrades);
     GiveInventory("DRPGAugSlotUpgrade", Slots);
     
-    for (int i = 0; i < MAX_AUGS; i++)
+    for (int i = 0; i < AUG_MAX; i++)
     {
         AugInfoPtr AugPtr = &AugData[i];
         Player.Augs.Level[i] = AugPtr->MaxLevel;
@@ -1903,7 +2020,7 @@ acscript void FullLocker(int Amount)
 // Give all Stim Compounds
 acscript void GiveCompounds(int Amount)
 {
-    for (int i = 0; i < MAX_COMPOUNDS; i++)
+    for (int i = 0; i < STIM_MAX; i++)
         if (Amount == 0)
             Player.Stim.Vials[i] = Player.Capacity * 10
         else

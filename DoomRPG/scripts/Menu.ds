@@ -152,109 +152,84 @@ function void DrawMainMenu()
 
     // XP/Rank Display
     SetFont("BIGFONT");
-    HudMessage("Level: %d\n", Player.Level,                                             HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 100.0, 0.05);
-    HudMessage("XP: %lu / %lu\n", Player.XP, Player.XPNext,                             HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 112.0, 0.05);
-    HudMessage("Title: %s (%d/%d)\n", Ranks[Player.RankLevel], Player.RankLevel, 24,    HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 124.0, 0.05);
-    HudMessage("Rank: %lu / %lu\n", Player.Rank, Player.RankNext,                       HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 136.0, 0.05);
+    HudMessage("Level: %d\n", Player.Level,                                                     HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 100.0, 0.05);
+    HudMessage("XP: %lu / %lu\n", Player.XP, Player.XPNext,                                     HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 112.0, 0.05);
+    HudMessage("Title: %s (%d/%d)\n", Ranks[Player.RankLevel], Player.RankLevel, MAX_RANK,      HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 124.0, 0.05);
+    HudMessage("Rank: %lu / %lu\n", Player.Rank, Player.RankNext,                               HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 136.0, 0.05);
     if (Player.RankLevel > 0)
         HudMessage("Payout: %d C (%s) [%d%%]\n",
                    CalculatePay(), FormatTime(Player.PayTimer), Player.PayBonus,
                    HUDMSG_PLAIN, 0, CR_YELLOW, 40.1, 142.1, 0.05);
     
-    // Quick Reference
-    PrintSprite("TOKEN1", 0, 16.1, 188.1, 0.05);
-    PrintSprite("TOKEN2", 0, 16.1, 208.1, 0.05);
-    PrintSprite("TOKEN3", 0, 16.1, 228.1, 0.05);
-    PrintSprite("AUGCA0", 0, 16.1, 252.1, 0.05);
-    PrintSprite("AUGUA0", 0, 16.1, 264.1, 0.05);
-    PrintSprite("AUGUB0", 0, 16.1, 284.1, 0.05);
-    PrintSprite("AUGBATT", 0, 16.1, 296.1, 0.05);
-    PrintSprite("STIMB0", 0, 16.1, 348.1, 0.05);
-    SetFont("BIGFONT");
-    HudMessage("%d\n", StatTokens,                                                              HUDMSG_PLAIN, 0, CR_RED,            40.1, 178.0, 0.05);
-    HudMessage("%d\n", SkillTokens,                                                             HUDMSG_PLAIN, 0, CR_DARKGREEN,      40.1, 198.0, 0.05);
-    HudMessage("%d\n", WildcardTokens,                                                          HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 218.0, 0.05);
-    HudMessage("%d\n", AugCanisters,                                                            HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 240.0, 0.05);
-    HudMessage("%d\n", AugUpgradeCanisters,                                                     HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 257.0, 0.05);
-    HudMessage("%d / %d\n", Player.Augs.SlotsUsed, Player.Augs.Slots,                           HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 274.0, 0.05);
-    HudMessage("%d%%\n", Player.Augs.Battery,                                                   HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 295.0, 0.05);
-    HudMessage("S: %d\nM: %d\nL: %d\nXL: %d\n", SmallStims, MediumStims, LargeStims, XLStims,   HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 334.0, 0.05);
-    
-    // Level Stats
-    HudMessage("Monsters: %d / %d\n", CurrentKills, TotalKills,                 HUDMSG_PLAIN, 0, (AllKills ? MenuCursorColor : CR_BRICK),       180.1, 178.0, 0.05);
-    HudMessage("Items: %d / %d\n", CurrentItems, TotalItems,                    HUDMSG_PLAIN, 0, (AllItems ? MenuCursorColor : CR_LIGHTBLUE),   180.1, 193.0, 0.05);
-    HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound,    HUDMSG_PLAIN, 0, (AllSecrets ? MenuCursorColor : CR_GOLD),      180.1, 207.0, 0.05);
-    
-    // Chips
-    HudMessage("%d\n", GoldChips, HUDMSG_PLAIN, 0, CR_GOLD, 156.0, 182.1, 0.05);
-    HudMessage("%d\n", PlatinumChips, HUDMSG_PLAIN, 0, CR_WHITE, 156.0, 194.1, 0.05);
-    SetHudClipRect(140, 175, 16, 64);
-    PrintSprite("CHIPGOLD", 0, 140.1, 178.1, 0.05);
-    SetHudClipRect(156, 175, 16, 64);
-    PrintSprite("CHIPPLAT", 0, 140.1, 178.1, 0.05);
-    SetHudClipRect(0, 0, 0, 0);
-    
-    // Shield
-    if (Player.Shield.Body != 0 || Player.Shield.Battery != 0 || Player.Shield.Capacitor != 0)
+    if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED && Player.Mission.Active)
+        DrawMissionInfo(&Player.Mission, 16, 188, true)
+    else
     {
-        SetFont("SMALLFONT");
+        // Quick Reference
+        PrintSprite("TOKEN1", 0, 16.1, 188.1, 0.05);
+        PrintSprite("TOKEN2", 0, 16.1, 208.1, 0.05);
+        PrintSprite("TOKEN3", 0, 16.1, 228.1, 0.05);
+        PrintSprite("AUGCA0", 0, 16.1, 252.1, 0.05);
+        PrintSprite("AUGUA0", 0, 16.1, 264.1, 0.05);
+        PrintSprite("AUGUB0", 0, 16.1, 284.1, 0.05);
+        PrintSprite("AUGBATT", 0, 16.1, 296.1, 0.05);
+        PrintSprite("STIMB0", 0, 16.1, 348.1, 0.05);
+        SetFont("BIGFONT");
+        HudMessage("%d\n", StatTokens,                                                              HUDMSG_PLAIN, 0, CR_RED,            40.1, 178.0, 0.05);
+        HudMessage("%d\n", SkillTokens,                                                             HUDMSG_PLAIN, 0, CR_DARKGREEN,      40.1, 198.0, 0.05);
+        HudMessage("%d\n", WildcardTokens,                                                          HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 218.0, 0.05);
+        HudMessage("%d\n", AugCanisters,                                                            HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 240.0, 0.05);
+        HudMessage("%d\n", AugUpgradeCanisters,                                                     HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 257.0, 0.05);
+        HudMessage("%d / %d\n", Player.Augs.SlotsUsed, Player.Augs.Slots,                           HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 274.0, 0.05);
+        HudMessage("%d%%\n", Player.Augs.Battery,                                                   HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 295.0, 0.05);
+        HudMessage("S: %d\nM: %d\nL: %d\nXL: %d\n", SmallStims, MediumStims, LargeStims, XLStims,   HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 334.0, 0.05);
         
-        // Epic Shield Name
-        str ShieldName = "";
-        if (Player.Shield.Capacitor)        ShieldName = StrParam("%s %s\n", ShieldName, Player.Shield.Capacitor->Name);
-        if (Player.Shield.Battery)          ShieldName = StrParam("%s \c-%s\n", ShieldName, Player.Shield.Battery->Name);
-        if (Player.Shield.Body)             ShieldName = StrParam("%s \c-%s\n", ShieldName, Player.Shield.Body->Name);
-        if (Player.Shield.Accessory)        ShieldName = StrParam("%s \c-%s\n", ShieldName, Player.Shield.Accessory->Name);
-        ShieldName = StrParam("%s\c- Shield\n", ShieldName);
-        HudMessage("%s\n", ShieldName, HUDMSG_PLAIN, 0, CR_WHITE, 173.1, 226.1, 0.05);
+        // Level Stats
+        HudMessage("Monsters: %d / %d\n", CurrentKills, TotalKills,                 HUDMSG_PLAIN, 0, (AllKills ? MenuCursorColor : CR_BRICK),       180.1, 178.0, 0.05);
+        HudMessage("Items: %d / %d\n", CurrentItems, TotalItems,                    HUDMSG_PLAIN, 0, (AllItems ? MenuCursorColor : CR_LIGHTBLUE),   180.1, 193.0, 0.05);
+        HudMessage("Secrets: %d / %d\n", CurrentSecretsFound, TotalSecretsFound,    HUDMSG_PLAIN, 0, (AllSecrets ? MenuCursorColor : CR_GOLD),      180.1, 207.0, 0.05);
         
-        // Shield Stats
-        HudMessage("\cvCapacity: %d / %d\n", Player.Shield.Charge, Player.Shield.Capacity,  HUDMSG_PLAIN, 0, CR_WHITE,          176.1, 238.0, 0.05);
-        if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
+        // Chips
+        HudMessage("%d\n", GoldChips, HUDMSG_PLAIN, 0, CR_GOLD, 156.0, 182.1, 0.05);
+        HudMessage("%d\n", PlatinumChips, HUDMSG_PLAIN, 0, CR_WHITE, 156.0, 194.1, 0.05);
+        SetHudClipRect(140, 175, 16, 64);
+        PrintSprite("CHIPGOLD", 0, 140.1, 178.1, 0.05);
+        SetHudClipRect(156, 175, 16, 64);
+        PrintSprite("CHIPPLAT", 0, 140.1, 178.1, 0.05);
+        SetHudClipRect(0, 0, 0, 0);
+        
+        // Shield
+        DrawShieldInfo(-1, 173, 232);
+        
+        // Current Stim
+        if (Player.Stim.Size > 0)
         {
-            HudMessage("\cgDoes not recharge automatically\n",                                  HUDMSG_PLAIN, 0, CR_WHITE,          176.1, 246.0, 0.05);
-        }
-        else
-        {
-            HudMessage("\cdCharge: %d\n", Player.Shield.ChargeRate,                             HUDMSG_PLAIN, 0, CR_WHITE,          176.1, 246.0, 0.05);
-            HudMessage("\caDelay: %k\n", Player.Shield.DelayRate,                               HUDMSG_PLAIN, 0, CR_WHITE,          176.1, 254.0, 0.05);
+            SetFont("BIGFONT");
+            
+            // Draw Stim selection
+            if (Player.Stim.Size == 1)
+                HudMessage("Small Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05)
+            else if (Player.Stim.Size == 2)
+                HudMessage("Medium Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05)
+            else if (Player.Stim.Size == 3)
+                HudMessage("Large Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05)
+            else if (Player.Stim.Size == 4)
+                HudMessage("Extra-Large Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05);
+
+            // Stim Compound Bar
+            if (Player.Stim.Size > 0)
+                for (int i = 0; i < STIM_MAX; i++)
+                    if (Player.Stim.Current[i] > 0)
+                    {
+                        DrawBar(StrParam("Stim%d\n", i + 1), 177 + X, 300, Player.Stim.Current[i], true);
+                        X += Player.Stim.Current[i];
+                    };
         };
         
-        // Draw Shield Model
-        DrawShieldModel(-1, 158, 258);
+        // Toxicity
+        if (Player.Toxicity > 0 || Player.Stim.Size > 0)
+            DrawToxicityBar(176, 320);
     };
-    
-    // Current Stim
-    if (Player.Stim.Size > 0)
-    {
-        SetFont("BIGFONT");
-        
-        // Draw Stim selection
-        if (Player.Stim.Size == 1)
-            HudMessage("Small Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05)
-        else if (Player.Stim.Size == 2)
-            HudMessage("Medium Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05)
-        else if (Player.Stim.Size == 3)
-            HudMessage("Large Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05)
-        else if (Player.Stim.Size == 4)
-            HudMessage("Extra-Large Stim: %d/%d\n", Player.Stim.Amount, Player.Stim.Capacity, HUDMSG_PLAIN, 0, CR_GREEN, 176.1, 290.0, 0.05);
-
-        // Stim Compound Bar
-        if (Player.Stim.Size > 0)
-            for (int i = 0; i < MAX_COMPOUNDS; i++)
-                if (Player.Stim.Current[i] > 0)
-                {
-                    DrawBar(StrParam("Stim%d\n", i + 1), 177 + X, 300, Player.Stim.Current[i], true);
-                    X += Player.Stim.Current[i];
-                };
-    };
-    
-    // Toxicity
-    if (Player.Toxicity > 0 || Player.Stim.Size > 0)
-        DrawToxicityBar(176, 320);
-    
-    // Mission Information
-    DrawMissionInfo();
 };
 
 function void DrawStatsMenu()
@@ -313,19 +288,6 @@ function void DrawStatsMenu()
         int MaxRockets = GetAmmoCapacity("RocketAmmo");
         int Cells = CheckInventory("Cell");
         int MaxCells = GetAmmoCapacity("Cell");
-        
-        // Brutal Doom Compatibility
-        if (CompatMode == COMPAT_BRUTAL)
-        {
-            Bullets = CheckInventory("NewClip");
-            MaxBullets = GetAmmoCapacity("NewClip");
-            Shells = CheckInventory("NewShell");
-            MaxShells = GetAmmoCapacity("NewShell");
-            Rockets = CheckInventory("NewRocket");
-            MaxRockets = GetAmmoCapacity("NewRocket");
-            Cells = CheckInventory("NewCell");
-            MaxCells = GetAmmoCapacity("NewCell");
-        };
         
         // Secondary Stats
         SetFont("SMALLFONT");
@@ -648,7 +610,7 @@ function void DrawStatsMenu()
         PrintSprite("STAT8S", 0, 228.0, 277.0, 0.05);
         
         // Augs
-        for (int i = 0; i < MAX_AUGS; i++)
+        for (int i = 0; i < AUG_MAX; i++)
         {
             AugInfoPtr AugPtr = &AugData[i];
             
@@ -675,18 +637,7 @@ function void DrawStatsMenu()
         HudMessage("%d%%\n", PlayerPtr->Augs.Battery, HUDMSG_PLAIN, 0, CR_YELLOW, 320.1, 240.0, 0.05);
         
         // Shield
-        if (PlayerPtr->Shield.Body != 0 || PlayerPtr->Shield.Battery != 0 || PlayerPtr->Shield.Capacitor != 0)
-        {
-            SetFont("SMALLFONT");
-            
-            // Shield Stats
-            HudMessage("\cvCapacity: %d / %d\n", PlayerPtr->Shield.Charge, PlayerPtr->Shield.Capacity, HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 281.0, 0.05);
-            HudMessage("\cdCharge: %d\n", PlayerPtr->Shield.ChargeRate, HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 289.0, 0.05);
-            HudMessage("\caDelay: %k\n", PlayerPtr->Shield.DelayRate, HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 297.0, 0.05);
-            
-            // Draw Shield Model
-            DrawShieldModel(PlayerNum, 218, 304);
-        };
+        DrawShieldInfo(Player.MenuIndex, 232, 281);
         
         // Toxicity
         if (PlayerPtr->Toxicity > 0 || PlayerPtr->Stim.Size > 0)
@@ -774,7 +725,7 @@ function void DrawAugsMenu()
             AugInfoPtr AugPtr = &AugData[Index];
             
             // Catch to make sure unimplemented stuff isn't drawn
-            if (Index > MAX_AUGS - 1) continue;
+            if (Index > AUG_MAX - 1) continue;
             
             // Draw the augs that we have
             SetFont("SMALLFONT");
@@ -1129,31 +1080,12 @@ function void DrawShieldMenu()
         };
     };
     
-    SetFont("SMALLFONT");
-    
-    // Epic Shield Name
-    if (Player.Shield.Body || Player.Shield.Battery || Player.Shield.Capacitor)
-    {
-        str ShieldName = "";
-        if (Player.Shield.Capacitor)    ShieldName = StrParam("%s %s\n", ShieldName, Player.Shield.Capacitor->Name);
-        if (Player.Shield.Battery)      ShieldName = StrParam("%s \c-%s\n", ShieldName, Player.Shield.Battery->Name);
-        if (Player.Shield.Body)         ShieldName = StrParam("%s \c-%s\n", ShieldName, Player.Shield.Body->Name);
-        if (Player.Shield.Accessory)    ShieldName = StrParam("%s \c-%s\n", ShieldName, Player.Shield.Accessory->Name);
-        ShieldName = StrParam("%s\c- Shield\n", ShieldName);
-        HudMessage("%s\n", ShieldName, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 312.1, 0.05);
-    };
+    // Shield Stats/Model
+    DrawShieldInfo(-1, 32, 272);
     
     // Component Description
     SetFont("SMALLFONT");
-    HudMessage("%s\n", Description, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 332.1, 0.05);
-
-    // Shield Stats
-    HudMessage("\cvCapacity: %d / %d\n", Player.Shield.Charge, Player.Shield.Capacity,  HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 286.0, 0.05);
-    HudMessage("\cdCharge: %d\n", Player.Shield.ChargeRate,                             HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 294.0, 0.05);
-    HudMessage("\caDelay: %k\n", Player.Shield.DelayRate,                               HUDMSG_PLAIN, 0, CR_WHITE, 36.1, 302.0, 0.05);
-    
-    // Draw Shield Model
-    DrawShieldModel(-1, 18, 308);
+    HudMessage("%s\n", Description, HUDMSG_PLAIN, 0, CR_WHITE, 8.1, 320.1, 0.05);
 };
 
 function void DrawStimsMenu()
@@ -1201,14 +1133,14 @@ function void DrawStimsMenu()
     
     // Draw Current Stim Bar
     if (Player.Stim.Size > 0)
-        for (int i = 0; i < MAX_COMPOUNDS; i++)
+        for (int i = 0; i < STIM_MAX; i++)
             if (Player.Stim.Current[i] > 0)
             {
                 DrawBar(StrParam("Stim%d\n", i + 1), X, 34, Player.Stim.Current[i], true);
                 X += Player.Stim.Current[i];
             };
     
-    for (int i = 1; i <= MAX_COMPOUNDS; i++)
+    for (int i = 1; i <= STIM_MAX; i++)
     {
         // Reset X
         X = 32.1;
@@ -1376,11 +1308,11 @@ function void MenuInput()
             Player.MenuIndex -= 5;
             if (Player.MenuIndex < 0) Player.MenuIndex = 0;
         };
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && Player.MenuIndex < MAX_AUGS - 1)
+        if (Buttons == BT_BACK && OldButtons != BT_BACK && Player.MenuIndex < AUG_MAX - 1)
         {
             ActivatorSound("menu/move", 127);
             Player.MenuIndex += 5;
-            if (Player.MenuIndex > MAX_AUGS - 1) Player.MenuIndex = MAX_AUGS - 1;
+            if (Player.MenuIndex > AUG_MAX - 1) Player.MenuIndex = AUG_MAX - 1;
         };
         if (((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
             (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
@@ -1391,7 +1323,7 @@ function void MenuInput()
         };
         if (((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
             (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
-            && Player.MenuIndex < MAX_AUGS - 1)
+            && Player.MenuIndex < AUG_MAX - 1)
         {
             ActivatorSound("menu/move", 127);
             Player.MenuIndex++;
@@ -1595,7 +1527,7 @@ function void MenuInput()
         {
             Player.MenuIndex--;
             ActivatorSound("menu/move", 127);
-            if (Player.MenuIndex < 0) Player.MenuIndex = MAX_COMPOUNDS;
+            if (Player.MenuIndex < 0) Player.MenuIndex = STIM_MAX;
         };
         if (Buttons == BT_FORWARD)
             Player.DelayTimer++;
@@ -1603,7 +1535,7 @@ function void MenuInput()
         {
             Player.MenuIndex++;
             ActivatorSound("menu/move", 127);
-            if (Player.MenuIndex > MAX_COMPOUNDS) Player.MenuIndex = 0;
+            if (Player.MenuIndex > STIM_MAX) Player.MenuIndex = 0;
         };
         if (Buttons == BT_BACK)
             Player.DelayTimer++;
@@ -1829,8 +1761,8 @@ function void MenuHelp()
         switch (Player.Menu)
         {
         case MENUPAGE_MAIN:
-            HudMessage("\cd%K and %K\c- to navigate\n\cd%K\c- to select\n",
-                       "+forward", "+back", "+use",
+            HudMessage("\cd%K and %K\c- to navigate\n\cd%K\c- to select\nHold \cd%K\c- to show current Mission Info\n",
+                       "+forward", "+back", "+use", "+speed",
                        HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
             break;
         case MENUPAGE_STATS:
@@ -1947,56 +1879,6 @@ function void DrawPlayerSprite(int PlayerNum, fixed X, fixed Y)
     }
     else
         PrintSprite("PLAYA1", 0, X, Y + 2.0, 0.05);
-};
-
-function void DrawMissionInfo()
-{
-    SetFont("BIGFONT");
-    
-    if (Player.Mission.Active)
-        switch (Player.Mission.Type)
-        {
-        case MT_COLLECT:
-            HudMessage("Mission: %s\nDifficulty: %s\n", MissionTypes[MT_COLLECT], MissionDifficulties[Player.Mission.Difficulty], HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 20.1, 0.05);
-            HudMessage("%d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_PLAIN, 0, CR_GREEN, 320.1, 64.0, 0.05);
-            PrintSprite(Player.Mission.Item->Sprite.Name, 0, 290.0 + Player.Mission.Item->Sprite.XOff + 0.4, 64.0 + Player.Mission.Item->Sprite.YOff + 0.4, 0.05);
-            break;
-        case MT_KILL:
-            HudMessage("Mission: %s\nDifficulty: %s\nKilled: \ca%d / %d\n\cg%s\n",
-                       MissionTypes[MT_KILL], MissionDifficulties[Player.Mission.Difficulty], Player.Mission.Current, Player.Mission.Amount, Player.Mission.Monster->Name,
-                       HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 20.1, 0.05);
-            break;
-        case MT_KILLAURAS:
-            HudMessage("Mission: %s\nDifficulty: %s\nKilled: \ca%d / %d\n",
-                       MissionTypes[MT_KILLAURAS], MissionDifficulties[Player.Mission.Difficulty], Player.Mission.Current, Player.Mission.Amount,
-                       HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 20.1, 0.05);
-            break;
-        case MT_REINFORCEMENTS:
-            HudMessage("Mission: %s\nDifficulty: %s\nKilled: \ca%d / %d\n",
-                       MissionTypes[MT_REINFORCEMENTS], MissionDifficulties[Player.Mission.Difficulty], Player.Mission.Current, Player.Mission.Amount,
-                       HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 20.1, 0.05);
-            break;
-        case MT_ASSASSINATION:
-            HudMessage("Mission: %s\nDifficulty: %s\n\cg%s\n",
-                       MissionTypes[MT_ASSASSINATION], MissionDifficulties[Player.Mission.Difficulty], Player.Mission.Monster->Name,
-                       HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 20.1, 0.05);
-            break;
-        case MT_SECRETS:
-            HudMessage("Mission: %s\nDifficulty: %s\nFound: \cf%d / %d\n",
-                       MissionTypes[MT_SECRETS], MissionDifficulties[Player.Mission.Difficulty], Player.Mission.Current, Player.Mission.Amount,
-                       HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 20.1, 0.05);
-            break;
-        case MT_ITEMS:
-            HudMessage("Mission: %s\nDifficulty: %s\nFound: \cn%d / %d\n",
-                       MissionTypes[MT_ITEMS], MissionDifficulties[Player.Mission.Difficulty], Player.Mission.Current, Player.Mission.Amount,
-                       HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 20.1, 0.05);
-            break;
-        case MT_COMBO:
-            HudMessage("Mission: %s\nDifficulty: %s\nLargest: \ct%d / %d\n",
-                       MissionTypes[MT_COMBO], MissionDifficulties[Player.Mission.Difficulty], Player.Mission.Current, Player.Mission.Amount,
-                       HUDMSG_PLAIN, 0, CR_WHITE, 240.1, 20.1, 0.05);
-            break;
-        };
 };
 
 function void DrawToxicityBar(int X, int Y)

@@ -38,27 +38,6 @@ MonsterSpace MonsterInfo[MAX_DEF_MONSTERS] MonsterData =
     { "SpiderMastermind";                   "Spider Mastermind";        95;     0; "You've stumbled into a hive of the deadliest kind!"; };
 };
 
-MonsterSpace MonsterInfo[MAX_DEF_MONSTERS] MonsterDataBrutal =
-{
-    { "Zombie_Man";                         "Former Human";             1;      0; "You hear shuffling footsteps and moans!"; };
-    { "ShotgunGuy1";                        "Former Sergeant";          2;      0; "You hear the sound of shotguns pumping!"; };
-    { "ChaingunGuy1";                       "Former Commando";          5;      0; "Quiet mutters and whirring set you on edge!"; };
-    { "Imp";                                "Imp";                      4;      0; "The walls are scratched and flame-scorched!"; };
-    { "BullDemon";                          "Demon";                    3;      0; "Hungry growls echo around you!"; };
-    { "Spectro";                            "Spectre";                  3;      0; "It's dark, you are likely to be eaten by a... Spectre?"; };
-    { "TehLostSoul";                        "Lost Soul";                3;      0; "The sound of many flames echo about!"; };
-    { "Cacodemon_";                         "Cacodemon";                10;     0; "Screeches drown out all other sound!"; };
-    { "HellKnight2";                        "Hell Knight";              20;     0; "A battle cry chants in the distance!"; };
-    { "BaronOfHell2";                       "Baron of Hell";            30;     0; "Seems you've found Hell's nobility!"; };
-    { "PainElemental1";                     "Pain Elemental";           40;     0; "You feel you are being watched!"; };
-    { "Revenant1";                          "Revenant";                 50;     0; "Bones clatter all around you!"; };
-    { "Mancubus";                           "Mancubus";                 60;     0; "You hear deep, guttural noises!"; };
-    { "Arachnotron1";                       "Arachnotron";              60;     0; "Leg servos squeak and whirr nearby!"; };
-    { "TehArchVile";                        "Arch-Vile";                70;     0; "You hear crackling flames!"; };
-    { "TheCyberdemon";                      "Cyberdemon";               85;     0; "Suddenly you have a great urge to turn back! You scream in TERROR!"; };
-    { "TheSpiderMastermind";                "Spider Mastermind";        95;     0; "You've stumbled into a hive of the deadliest kind!"; };
-};
-
 MonsterSpace MonsterInfo[MAX_DEF_MONSTERS_DRLA] MonsterDataDRLA =
 {
     // Normal
@@ -359,6 +338,7 @@ acscript void MonsterDump()
         Log(" Threat: %d\n", Stats->Threat);
         Log(" Spawn Health: %d\n", Stats->SpawnHealth);
         Log(" Health Max: %d\n", Stats->HealthMax);
+        Log(" Health Regenerated: %d\n", Stats->RegenHealth);
         Log(" Base Speed: %d\n", Stats->Speed);
         Log(" \cgStrength: %d\n", Stats->Strength);
         Log(" \cdDefense: %d\n", Stats->Defense);
@@ -1033,7 +1013,7 @@ script void MonsterRegenerationHandler()
     if (GetActorProperty(0, APROP_Health) > Stats->HealthMax)
         SetActorProperty(0, APROP_Health, Stats->HealthMax);
     
-    Delay(35 * (30 - (Stats->Aura.Type[AURA_PURPLE].Active ? 20 : 0)));
+    Delay(35 * (Stats->Aura.Type[AURA_PURPLE].Active ? 10 : 30));
     goto Start;
 };
 
@@ -1724,7 +1704,6 @@ script void MonsterDeath()
 acscript void MonsterTransport(int Difficulty, int Time, int Radius)
 {
     bool DRLA = (CompatMode == COMPAT_DRLA);
-    bool Brutal = (CompatMode == COMPAT_BRUTAL);
     int MonsterDataAmount;
     MonsterInfoPtr[64] MonsterList;
     int MonsterListLength;
@@ -1741,8 +1720,6 @@ acscript void MonsterTransport(int Difficulty, int Time, int Radius)
         MonsterInfoPtr TempMonster;
         if (DRLA)
             TempMonster = &MonsterDataDRLA[i]
-        else if (Brutal)
-            TempMonster = &MonsterDataBrutal[i]
         else
             TempMonster = &MonsterData[i];
     
