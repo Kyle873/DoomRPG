@@ -4,6 +4,7 @@
 #include "Defs.dh"
 #include "ItemData.dh"
 #include "Map.dh"
+#include "Mission.dh"
 #include "Outpost.dh"
 #include "Shield.dh"
 #include "Shop.dh"
@@ -1395,6 +1396,65 @@ function void DrawBattery()
     PrintSpriteFade("AUGBATT", BATTERY_ID, X + 0.4, Y + 0.4, HoldTime, FadeTime);
     SetFont("BIGFONT");
     HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, BATTERY_ID + 1, CR_YELLOW, X + 24.0, Y - 10.0, HoldTime, FadeTime);
+};
+
+function void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
+{
+    // Basic Info
+    SetFont("BIGFONT");
+    HudMessage("Type: %s\n", MissionTypes[Mission->Type], HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y, 0.05);
+    HudMessage("Difficulty: %s\n", MissionDifficulties[Mission->Difficulty], HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.0, 0.05);
+    HudMessage("XP: %d\n", Mission->RewardXP, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 32.0, 0.05);
+    HudMessage("Rank: %d\n", Mission->RewardRank, HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y + 48.0, 0.05);
+    HudMessage("Credits: %d\n", Mission->RewardCredits, HUDMSG_PLAIN, 0, CR_GOLD, X + 0.1, Y + 64.0, 0.05);
+    HudMessage("\ciItem: \c-%s\n", Mission->RewardItem->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 80.0, 0.05);
+    
+    // Mission Objective
+    switch (Mission->Type)
+    {
+    case MT_COLLECT:
+        HudMessage("Type: \ci%s\n", Mission->Item->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        if (Active)
+            HudMessage("Amount: \cd%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05)
+        else
+            HudMessage("Amount: \cd%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05);
+        break;
+    case MT_KILL:
+        HudMessage("Type: \cg%s\n", Mission->Monster->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        if (Active)
+            HudMessage("Amount: \ca%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05)
+        else
+            HudMessage("Amount: \ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05);
+        break;
+    case MT_KILLAURAS:
+    case MT_REINFORCEMENTS:
+        if (Active)
+            HudMessage("Amount: \ca%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+        else
+            HudMessage("Amount: \ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    case MT_ASSASSINATION:
+        HudMessage("Type: \cg%s\n", Mission->Monster->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    case MT_SECRETS:
+        if (Active)
+            HudMessage("Amount: \cf%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+        else
+            HudMessage("Amount: \cf%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    case MT_ITEMS:
+        if (Active)
+            HudMessage("Amount: \cn%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+        else
+            HudMessage("Amount: \cn%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    case MT_COMBO:
+        if (Active)
+            HudMessage("Amount: \ct%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+        else
+            HudMessage("Amount: \ct%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
+        break;
+    };
 };
 
 function void DrawBar(str Fill, int X, int Y, int Amount, bool Pulse)
