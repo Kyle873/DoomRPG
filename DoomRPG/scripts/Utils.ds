@@ -1398,6 +1398,63 @@ function void DrawBattery()
     HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, BATTERY_ID + 1, CR_YELLOW, X + 24.0, Y - 10.0, HoldTime, FadeTime);
 };
 
+function void DrawShieldInfo(int ID, fixed X, fixed Y)
+{
+    PlayerData *CurrentPlayer = (ID == -1 ? &Player : &Players(ID));
+    
+    if (CurrentPlayer->Shield.Body != 0 || CurrentPlayer->Shield.Battery != 0 || CurrentPlayer->Shield.Capacitor != 0)
+    {
+        // Epic Shield Name
+        str ShieldName = "";
+        if (CurrentPlayer->Shield.Capacitor) ShieldName = StrParam("%s %s\n", ShieldName, CurrentPlayer->Shield.Capacitor->Name);
+        if (CurrentPlayer->Shield.Battery)   ShieldName = StrParam("%s \c-%s\n", ShieldName, CurrentPlayer->Shield.Battery->Name);
+        if (CurrentPlayer->Shield.Body)      ShieldName = StrParam("%s \c-%s\n", ShieldName, CurrentPlayer->Shield.Body->Name);
+        if (CurrentPlayer->Shield.Accessory) ShieldName = StrParam("%s \c-%s\n", ShieldName, CurrentPlayer->Shield.Accessory->Name);
+        ShieldName = StrParam("%s\c- Shield\n", ShieldName);
+        
+        SetFont("SMALLFONT");
+        
+        // Shield Name
+        HudMessage("%s\n", ShieldName, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 0.1, 0.05);
+        
+        // Shield Stats
+        HudMessage(" \cvCapacity: %d / %d\n", CurrentPlayer->Shield.Charge, CurrentPlayer->Shield.Capacity, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 8.1, 0.05);
+        if (CurrentPlayer->Shield.Accessory && CurrentPlayer->Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
+            HudMessage(" \cgDoes not recharge automatically\n", HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05)
+        else
+        {
+            HudMessage(" \cdCharge: %d\n", CurrentPlayer->Shield.ChargeRate, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05);
+            HudMessage(" \caDelay: %k\n", CurrentPlayer->Shield.DelayRate, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 24.1, 0.05);
+        };
+        
+        // Draw Shield Model
+        DrawShieldModel(ID, X - 14.0, Y + 33.0);
+    };
+};
+
+function void DrawShieldModel(int ID, fixed X, fixed Y)
+{
+    PlayerData *CurrentPlayer = (ID == -1 ? &Player : &Players(ID));
+    
+    // [KS] These need to be reversed because 0 draws behind the last graphic printed
+
+    // Accessory
+    if (CurrentPlayer->Shield.Accessory)
+        PrintSprite(CurrentPlayer->Shield.Accessory->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+    
+    // Battery
+    if (CurrentPlayer->Shield.Battery)
+        PrintSprite(CurrentPlayer->Shield.Battery->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+    
+    // Capacitor
+    if (CurrentPlayer->Shield.Capacitor)
+        PrintSprite(CurrentPlayer->Shield.Capacitor->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+    
+    // Body
+    if (CurrentPlayer->Shield.Body)
+        PrintSprite(CurrentPlayer->Shield.Body->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+};
+
 function void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
 {
     // Basic Info
