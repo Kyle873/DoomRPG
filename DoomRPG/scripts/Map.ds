@@ -233,6 +233,8 @@ script void MapInit() open
         CurrentLevel->MonsterPositions = BLANKDYNAMICARRAY;
         CurrentLevel->SelectedMonster = nullptr;
         CurrentLevel->MegabossActor = nullptr;
+        CurrentLevel->HellUnleashedActive = false;
+        CurrentLevel->PandoraBoxTID = 0;
         CurrentLevel->LevelAdd = 0;
         CurrentLevel->RareAdd = 0;
         
@@ -671,16 +673,54 @@ script void OneMonsterEvent()
 
 script void HellUnleashedEvent()
 {
-    SetHudSize(640, 480, false);
     SetMusic("HellUnle");
     
-    while (true)
+    bool BoxSpawned = false;
+    
+    // Generate a TID for the box
+    CurrentLevel->PandoraBoxTID = UniqueTID();
+    
+    // Spawn Pandora's Box
+    while (!BoxSpawned && !CurrentLevel->HellUnleashedActive)
     {
-        // Spawn in new enemies
-        if ((Timer() % (35 * 60)) == 0)
+        fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
+        fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
+        fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
+        fixed Z = GetActorZ(Players(0).TID);
+        bool Spawned = Spawn("DRPGPandoraBox", X, Y, Z, CurrentLevel->PandoraBoxTID, 0);
+        
+        if (!CheckSight(CurrentLevel->PandoraBoxTID, Players(0).TID, 0) || !Spawned)
+        {
+            Thing_Remove(CurrentLevel->PandoraBoxTID);
+            BoxSpawned = false;
+        }
+        else
+            BoxSpawned = true;
+        
+        Delay(35);
+    };
+    
+    Start:
+    
+    while (CurrentLevel->HellUnleashedActive)
+    {
+        fixed ParTime = (fixed)GetLevelInfo(LEVELINFO_PAR_TIME);
+        fixed AddMult = 0.1 / ParTime;
+        
+        // Assign a default value to prevent divide-by-zero
+        if (ParTime <= 0)
+            ParTime = 35 * 60 * 5;
+        
+        // Cap this to make sure it isn't too low
+        if (AddMult < 0.01)
+            AddMult = 0.01;
+        
+        // Spawn in next wave of enemies
+        if ((Timer() % (35 * (int)ParTime)) == 0)
             HellUnleashedSpawnMonsters();
         
         // HUD
+        SetHudSize(640, 480, false);
         SetFont("MonLevel");
         HudMessageBold("A\n", HUDMSG_ALPHA, 0, CR_WHITE, 14.1, 100.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
         SetFont("STAT8S");
@@ -690,13 +730,7 @@ script void HellUnleashedEvent()
         HudMessageBold("+%k%%\n", CurrentLevel->RareAdd, HUDMSG_PLAIN, 0, CR_GOLD, 40.1, 116.0, 0.05);
         
         // Slowly increment the values
-        fixed ParTime = (fixed)GetLevelInfo(LEVELINFO_PAR_TIME);
-        if (ParTime <= 0) // Assign a default value to prevent divide-by-zero
-            ParTime = 35 * 60;
-        fixed AddMult = 0.1 / ParTime;
-        if (AddMult < 0.01)
-            AddMult = 0.01;
-        CurrentLevel->LevelAdd += RandomFixed(AddMult, AddMult * 10.0);
+        CurrentLevel->LevelAdd += RandomFixed(AddMult, AddMult * 1.0);
         CurrentLevel->RareAdd += RandomFixed(AddMult * 0.001, AddMult * 0.01);
         
         // Level Imposed Caps
@@ -713,6 +747,31 @@ script void HellUnleashedEvent()
         
         Delay(1);
     };
+    
+    Delay(1);
+    goto Start;
+};
+
+acscript void HellUnleashedStart()
+{
+    // Spit out a rare item for each player
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i)) continue;
+        
+        ItemInfoPtr Item = GetRewardItem(MAX_DIFFICULTIES - 1);
+        int ItemTID = UniqueTID();
+        fixed X = GetActorX(CurrentLevel->PandoraBoxTID);
+        fixed Y = GetActorY(CurrentLevel->PandoraBoxTID);
+        fixed Z = GetActorZ(CurrentLevel->PandoraBoxTID) + 16.0;
+        
+        SpawnForced(Item->Actor, X, Y, Z, ItemTID, 0);
+        SetActorVelocity(ItemTID, RandomFixed(-4.0, 4.0), RandomFixed(-4.0, 4.0), RandomFixed(2.0, 8.0), true, false);
+    };
+    
+    Delay(35 * 8);
+    
+    CurrentLevel->HellUnleashedActive = true;
 };
 
 script void HellUnleashedSpawnMonsters()
@@ -1003,17 +1062,21 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
     int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
     bool Waiting = true;
     
-    if (CurrentLevel->Event == MAPEVENT_MEGABOSS)
+    // Megabosses prevent you from leaving until they are killed
+    // Hell Unleashed prevents you from leaving until you have opened the box
+    if (CurrentLevel->Event == MAPEVENT_MEGABOSS || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
     {
         AmbientSound("mission/gottarget2", 127);
         
-        SetHudSize(640, 480, 0);
+        SetHudSize(640, 480, false);
         SetFont("BIGFONT");
         HudMessageBold("\cgA mysterious force prevents you from leaving!\n",
-            HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
-        SetHudSize(0, 0, 0);
+                       HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
+        SetHudSize(0, 0, false);
         
-        while (CurrentLevel->Event == MAPEVENT_MEGABOSS) Delay(1); // Wait until the event is over
+        // Wait until the event is over
+        while (CurrentLevel->Event == MAPEVENT_MEGABOSS || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
+            Delay(35 * 5);
     };
     
     // How long it took to reach the exit
@@ -1039,14 +1102,14 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
+            if (!PlayerInGame(i)) continue;
+            
             SetActivator(Players(i).TID);
             int RankBonus = RankTable[Players(i).RankLevel] / 20;
             
+            SetFont("SMALLFONT");
             FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
-            HudMessage("Par Time Beaten!\n%d Rank Bonus\n",
-                       RankBonus,
-                       HUDMSG_FADEOUT, 0, CR_GOLD, 1.5, 0.5, 3.0, 2.0);
-        
+            HudMessage("Par Time Beaten!\n%d Rank Bonus\n", RankBonus, HUDMSG_FADEOUT, 0, CR_GOLD, 1.5, 0.5, 3.0, 2.0);
             
             Players(i).Rank += RankBonus;
         };
