@@ -7,6 +7,9 @@
 static GUITooltip *Tooltip;
 static GUIContextMenu *ContextMenu;
 
+static fixed TestX = 0.0;
+static fixed TestY = 0.0;
+
 acscript void ToggleGUI()
 {
 	Player.GUIOpen = !Player.GUIOpen;
@@ -15,6 +18,18 @@ acscript void ToggleGUI()
 		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN)
 	else
 		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+};
+
+function void CreateTestWindow()
+{
+    GUIWindow *TestWindow = GUICreateWindow();
+    TestWindow->X = 100;
+    TestWindow->Y = 100;
+    TestWindow->Width = 200;
+    TestWindow->Height = 200;
+    TestWindow->CanClose = false;
+    TestWindow->Title = "Doorpeg GUI Test";
+    Player.Window[WINDOW_MAIN] = TestWindow;
 };
 
 script void CheckCursor()
@@ -88,6 +103,9 @@ script void CheckGUI()
 	Player.Mouse.X = Width / 2;
 	Player.Mouse.Y = Height / 2;
 	
+    // Create Test Window
+    CreateTestWindow();
+    
 	while (true)
 	{
 		if (Player.GUIOpen)
@@ -226,7 +244,7 @@ function void HandleLabel(GUILabel *Label)
 	if (!Label->Visible) return;
 	
 	str Text = Label->Text;
-	LabelAlignment Alignment = Label->Alignment;
+	int Alignment = Label->Alignment;
 	fixed X = Label->Window->X + Label->X + 2;
 	fixed Y = Label->Window->Y + Label->Y + 16;
 	int Width = Label->Width;
@@ -499,7 +517,7 @@ function void HandleList(GUIList *List)
 
 function void DrawTooltip(GUITooltip *Tooltip)
 {
-	TooltipType Type = Tooltip->Type;
+	int Type = Tooltip->Type;
 	str Title = Tooltip->Text;
 	str Text = Tooltip->Text;
 	int Color = Tooltip->Color;
@@ -840,8 +858,8 @@ function void FocusWindow(GUIWindow *Window)
 
 function bool InTitleBar(GUIWindow *Window)
 {
-	if (Player.Mouse.X > Window->X && Player.Mouse.X < Window->X + Window->Width - 32 &&
-		Player.Mouse.Y > Window->Y && Player.Mouse.Y < Window->Y + 20)
+	if (Player.Mouse.X > Window->X + 4 && Player.Mouse.X < Window->X + Window->Width - 32 &&
+		Player.Mouse.Y > Window->Y + 8 && Player.Mouse.Y < Window->Y + 24)
 		return true
 	else
 		return false;
