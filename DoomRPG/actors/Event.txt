@@ -5,20 +5,31 @@ actor DRPGThermonuclearBomb : SwitchableDecoration
 {
     var int user_disarmed;
     
+    Health 50
     Radius 16
     Height 32
+    Mass 50
     
     Scale 0.75
     
-    -SOLID
-    +USESPECIAL
+    +SOLID
+    -SHOOTABLE
+    +NOBLOOD
+    +PUSHABLE
+    -USESPECIAL
     
     Activation THINGSPEC_ThingTargets | THINGSPEC_Activate | THINGSPEC_Switch
     
     States
     {
     Spawn:
-        TNT1 A 0 NoDelay A_PlaySound("nuke/idle", CHAN_6, 1.0, true, ATTN_NORM)
+        TNT1 A 0 A_PlaySound("nuke/idle", CHAN_6, 1.0, true, ATTN_NORM)
+        TBOM AB 6 Bright
+        Loop
+    SpawnActive:
+        TNT1 A 0 A_ChangeFlag("SHOOTABLE", true)
+        TNT1 A 0 A_ChangeFlag("USESPECIAL", true)
+        TNT1 A 0 A_PlaySound("nuke/idle", CHAN_6, 1.0, true, ATTN_NORM)
         TBOM AB 6 Bright
         Loop
     Inactive:
@@ -26,14 +37,16 @@ actor DRPGThermonuclearBomb : SwitchableDecoration
         TNT1 A 0 A_JumpIf(user_disarmed == 1, "Disarmed")
         TNT1 A 0 A_PlaySound("nuke/use", CHAN_5, 1.0, false, ATTN_NORM)
         TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombActivate", 0)
-        Goto Spawn
+        Goto SpawnActive
     Disarmed:
         TNT1 A 0 A_StopSound(CHAN_6)
         TBOM C -1
         Stop
-    Explode: // TODO
+    Death:
+    Explode:
+        TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombExplode", 0)
         TNT1 A 0 A_StopSound(CHAN_6)
-        TNT1 A 0
+        MISL BCD 6 Bright
         Stop
     }
 }
