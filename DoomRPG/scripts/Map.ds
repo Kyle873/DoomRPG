@@ -230,8 +230,19 @@ script void MapInit() open
         
         CurrentLevel->Event = MAPEVENT_NONE;
         CurrentLevel->MonsterPositions = BLANKDYNAMICARRAY;
+        
         CurrentLevel->SelectedMonster = nullptr;
+        
         CurrentLevel->MegabossActor = nullptr;
+
+        CurrentLevel->NukeAnnouncing = false;
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        {
+            CurrentLevel->NukeKeyActive[i] = false;
+            CurrentLevel->NukeKeyDisarming[i] = false;
+            CurrentLevel->NukeKeyTimer[i] = 0;
+        };
+        
         CurrentLevel->HellUnleashedActive = false;
         CurrentLevel->PandoraBoxTID = 0;
         CurrentLevel->LevelAdd = 0;
@@ -585,50 +596,260 @@ script void EnvironmentalHazard()
 // TODO: The ability to defuse the bomb and set one up yourself
 script void ThermonuclearBomb()
 {
-    SetHudSize(640, 480, false);
+    static str[MAX_NUKE_KEYS] KeySprites =
+    {
+        "NKEYA0";
+        "NKEYB0";
+        "NKEYC0";
+        "NKEYD0";
+        "NKEYE0";
+        "NKEYF0";
+        "NKEYG0";
+        "NKEYH0";
+        "NKEYI0";
+    };
     
-    int BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300);
-    BombTime *= 35;
+    int BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300) * 35;
+    int BombTID = UniqueTID();
+    int MaxKeys = GameSkill() + 3;
+    bool BombSpawned = false;
+    bool BombDisarmed = false;
+    
+    // Reset key states
+    for (int i = 0; i < MAX_NUKE_KEYS; i++)
+    {
+        CurrentLevel->NukeKeyActive[i] = false;
+        CurrentLevel->NukeKeyDisarming[i] = false;
+    };
+    
+    // Setup Keys
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-Generating %d keys for bomb\n", MaxKeys);
+    while (MaxKeys > 0)
+    {
+        int RandomKey = Random(0, MAX_NUKE_KEYS - 1);
+        
+        if (!CurrentLevel->NukeKeyActive[RandomKey])
+        {
+            CurrentLevel->NukeKeyActive[RandomKey] = true;
+            CurrentLevel->NukeKeyTimer[RandomKey] = BombTime / MAX_NUKE_KEYS * 2;
+            MaxKeys--;
+        };
+        
+        Delay(1);
+    };
+    
+    while (!BombSpawned)
+    {
+        fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
+        fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
+        fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
+        fixed Z = GetActorZ(Players(0).TID);
+        bool Spawned = Spawn("DRPGThermonuclearBomb", X, Y, Z, BombTID, 0);
+        
+        if (!CheckSight(BombTID, Players(0).TID, 0) || !Spawned)
+        {
+            Thing_Remove(BombTID);
+            BombSpawned = false;
+        }
+        else
+            BombSpawned = true;
+        
+        Delay(1);
+    };
     
     SetMusic("");
     
     Delay(35);
     
+    // Warning message
+    SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     HudMessageBold("\cgWARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\ciTIME UNTIL DETONATION: %s\n",
-        FormatTime(BombTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
-    AmbientSound("event/nukealert", 127);
+                   FormatTime(BombTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
+    AmbientSound("nuke/alert", 127);
     
     Delay(35 * 4);
     
     SetMusic("Bomb");
     
-    while (BombTime)
+    // Bomb HUD
+    while (BombTime > 0 && !BombDisarmed)
     {
         SetFont("BIGFONT");
-        HudMessageBold("\cgT - %s\n", FormatTime(BombTime), HUDMSG_FADEOUT, MAKE_ID('N', 'U', 'K', 'E'), CR_RED, 64.1, 64.1, 3.0, 0.5);
+        HudMessageBold("\cgT - %s\n", FormatTime(BombTime), HUDMSG_PLAIN, NUKE_ID, CR_RED, 64.1, 64.1, 0.05);
+        
+        // Announcements
+        ThermonuclearBombAnnounce(BombTime);
+        
+        // HUD
+        int KeyOffset = 0;
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        {
+            // Skip drawing this key if it's disabled
+            if (!CurrentLevel->NukeKeyActive[i]) continue;
+            
+            // Timer
+            SetFont("BIGFONT");
+            HudMessageBold("%s\n", FormatTime(CurrentLevel->NukeKeyTimer[i]), HUDMSG_PLAIN, 0, (CurrentLevel->NukeKeyDisarming[i] ? CR_RED : CR_WHITE), 74.0 + (KeyOffset % 3 * 48.0), 112.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            // Key
+            for (int j = 0; j < MAX_PLAYERS; j++)
+            {
+                if (CheckActorInventory(Players(j).TID, StrParam("DRPGNukeKey%d\n", i + 1)))
+                {
+                    SetFont(StrParam("%s\n", KeySprites[i]));
+                    HudMessageBold("A\n", HUDMSG_PLAIN, 0, CR_WHITE, 56.0 + (KeyOffset % 3 * 48.0), 116.0 + (KeyOffset / 3 * 48.0), 0.05);
+                };
+            };
+            
+            // Icon
+            SetFont(StrParam("E_NKEY%d\n", i + 1));
+            HudMessageBold("A\n", HUDMSG_PLAIN, 0, CR_WHITE, 74.0 + (KeyOffset % 3 * 48.0), 96.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            KeyOffset++;
+        };
+        
+        // Decrease key timers if the key is being disarmed, also disarm the specified lock if disarming is finished
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        {
+            if (CurrentLevel->NukeKeyDisarming[i])
+                CurrentLevel->NukeKeyTimer[i]--;
+            
+            if (CurrentLevel->NukeKeyDisarming[i] && CurrentLevel->NukeKeyTimer[i] <= 0)
+            {
+                CurrentLevel->NukeKeyActive[i] = false;
+                CurrentLevel->NukeKeyDisarming[i] = false;
+                AmbientSound("nuke/unlock", 127);
+            };
+        };
+        
+        // Disarm the bomb if all keys are disarmed
+        int DisarmCount = 0;
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+            if (!CurrentLevel->NukeKeyActive[i])
+                DisarmCount++;
+        if (DisarmCount >= MAX_NUKE_KEYS)
+            BombDisarmed = true;
         
         BombTime--;
-        
         Delay(1);
     };
     
-    // Explosion
-    AmbientSound("event/nukedetonate", 127);
-    Thing_Destroy(0, 1);
-    for (int i = 0; i < MAX_PLAYERS; i++)
+    // Successful disarm
+    if (BombDisarmed)
     {
-        if (!PlayerInGame(i))
-            continue;
+        CurrentLevel->Event = MAPEVENT_NONE;
         
-        Thing_Damage2(Players(i).TID, 12500, "Fire");
-        Thing_Damage2(Players(i).TID, 12500, "Melee");
+        SetActorState(BombTID, "Disarmed");
+        SetUserVariable(BombTID, "user_disarmed", 1);
+        ActivatorSound("nuke/disarmed", 127);
+        SetMusic("*");
+        
+        // Level/Rank up
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (Players(i).Level < MAX_LEVELS)
+                Players(i).XP = XPTable[Player.Level];
+            if (Players(i).RankLevel < MAX_RANK)
+                Players(i).Rank = RankTable[Player.RankLevel];
+        };
+    }
+    else // Epic failure, explode everyone to die
+    {
+        AmbientSound("nuke/detonate", 127);
+        
+        SetActorState(BombTID, "Explode");
+        
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            Thing_Damage2(Players(i).TID, 12500, "Fire");
+            Thing_Damage2(Players(i).TID, 12500, "Melee");
+        };
+        
+        CurrentLevel->Event = MAPEVENT_NONE;
+        
+        SetMusic("");
+        
+        Delay(35 * 5);
+        SetMusic("*");
     };
-    CurrentLevel->Event = MAPEVENT_NONE;
-    SetMusic("");
     
-    Delay(35 * 5);
-    SetMusic("*");
+    // Remove all keys from the players
+    while (true)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            for (int j = 0; j < MAX_NUKE_KEYS; j++)
+                SetActorInventory(Players(i).TID, StrParam("DRPGNukeKey%d\n", j + 1), 0);
+        
+        Delay(1);
+    };
+};
+
+script void ThermonuclearBombAnnounce(int Time)
+{
+    int Minutes = Time / 60 / 35;
+    int Seconds = Time / 35 % 60;
+    bool ValidMinutes = (Minutes == 1 || Minutes == 2 || Minutes == 3 || Minutes == 4 || Minutes == 5 || Minutes == 10 || Minutes == 20);
+    bool ValidSeconds = (Seconds == 0 || Seconds == 1 || Seconds == 2 || Seconds == 3 || Seconds == 4 || Seconds == 5 || Seconds == 10 || Seconds == 20 || Seconds == 30);
+    
+    // Return if there is currently an announcement playing
+    if (CurrentLevel->NukeAnnouncing) return;
+    
+    if (ValidMinutes || ValidSeconds)
+    {
+        CurrentLevel->NukeAnnouncing = true;
+        
+        // Initial announcement lines
+        if (Minutes > 0 && Seconds == 0)
+        {
+            AmbientSound("nuke/announce1", 127);
+            Delay(35 * 1.9);
+            AmbientSound("nuke/announce2", 127);
+            Delay(35 * 1.4);
+        };
+        
+        // Minutes
+        if (Minutes > 0 && Seconds == 0)
+            AmbientSound(StrParam("nuke/minutes/%d\n", Minutes), 127);
+        
+        // Seconds
+        if (Minutes == 0 && ValidSeconds)
+        {
+            AmbientSound(StrParam("nuke/seconds/%d\n", Seconds), 127);
+            Delay(35);
+        };
+    };
+    
+    CurrentLevel->NukeAnnouncing = false;
+};
+
+acscript void ThermonuclearBombActivate()
+{
+    SetActivator(GetActorProperty(0, APROP_TargetTID));
+    
+    for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        if (CheckInventory(StrParam("DRPGNukeKey%d\n", i + 1)))
+        {
+            CurrentLevel->NukeKeyActive[i] = false;
+            TakeInventory(StrParam("DRPGNukeKey%d\n", i + 1), 1);
+        };
+    
+    for (int i = 0; i < MAX_NUKE_KEYS; i++)
+    {
+        if (!CurrentLevel->NukeKeyActive[i]) continue;
+        
+        if (!CurrentLevel->NukeKeyDisarming[i])
+        {
+            CurrentLevel->NukeKeyDisarming[i] = true;
+            break;
+        }
+        else
+            break;
+    };
 };
 
 // TODO: Calculate which monster should spawn based on their base threat level and average player levels
