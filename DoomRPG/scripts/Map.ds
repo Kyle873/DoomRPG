@@ -231,8 +231,22 @@ script void MapInit() open
         
         CurrentLevel->Event = MAPEVENT_NONE;
         CurrentLevel->MonsterPositions = BLANKDYNAMICARRAY;
+        
         CurrentLevel->SelectedMonster = nullptr;
+        
         CurrentLevel->MegabossActor = nullptr;
+
+        CurrentLevel->BombExplode = false;
+        CurrentLevel->BombAnnouncing = false;
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        {
+            CurrentLevel->BombKeyActive[i] = false;
+            CurrentLevel->BombKeyDisarming[i] = false;
+            CurrentLevel->BombKeyTimer[i] = 0;
+        };
+        
+        CurrentLevel->PowerGeneratorActive = false;
+        
         CurrentLevel->HellUnleashedActive = false;
         CurrentLevel->PandoraBoxTID = 0;
         CurrentLevel->LevelAdd = 0;
@@ -383,18 +397,12 @@ script void SetupMapEvent()
         
         case MAPEVENT_NUCLEARBOMB:
             // Thermonuclear Bomb: A Thermonuclear Bomb spawns next to you on map start. You have PAR * 3 to escape before it explodes.
-            ThermonuclearBomb();
+            ThermonuclearBombEvent();
             break;
         
         case MAPEVENT_LOWPOWER:
             // Low Power: Light levels are extremely diminished. IR goggles recommended.
-            AmbientSound("misc/poweroff", 127);
-            SetMusic("LowPower");
-            for (int i = 0; i < 65536; i++)
-            {
-                Light_Flicker(i, 48, 96);
-                Sector_SetColor(i, 64, 96, 255, 0);
-            };
+            LowPowerEvent();
             break;
         
         case MAPEVENT_ALLAURAS:
@@ -583,53 +591,326 @@ script void EnvironmentalHazard()
     goto Start;
 };
 
-// TODO: The ability to defuse the bomb and set one up yourself
-script void ThermonuclearBomb()
+script void ThermonuclearBombEvent()
 {
-    SetHudSize(640, 480, false);
+    static str[MAX_NUKE_KEYS] KeySprites =
+    {
+        "NKEYA0";
+        "NKEYB0";
+        "NKEYC0";
+        "NKEYD0";
+        "NKEYE0";
+        "NKEYF0";
+        "NKEYG0";
+        "NKEYH0";
+        "NKEYI0";
+    };
     
-    int BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300);
-    BombTime *= 35;
+    int BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300) * 35;
+    int BombTID = UniqueTID();
+    int MaxKeys = GameSkill() + 3;
+    bool BombSpawned = false;
+    bool BombDisarmed = false;
+    
+    // Reset key states
+    for (int i = 0; i < MAX_NUKE_KEYS; i++)
+    {
+        CurrentLevel->BombKeyActive[i] = false;
+        CurrentLevel->BombKeyDisarming[i] = false;
+    };
+    
+    // Setup Keys
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-Generating %d keys for bomb\n", MaxKeys);
+    while (MaxKeys > 0)
+    {
+        int RandomKey = Random(0, MAX_NUKE_KEYS - 1);
+        
+        if (!CurrentLevel->BombKeyActive[RandomKey])
+        {
+            CurrentLevel->BombKeyActive[RandomKey] = true;
+            CurrentLevel->BombKeyTimer[RandomKey] = BombTime / MAX_NUKE_KEYS * 2;
+            MaxKeys--;
+        };
+        
+        Delay(1);
+    };
+    
+    // Spawn the Bomb
+    while (!BombSpawned)
+    {
+        BombSpawned = SpawnEventActor("DRPGThermonuclearBomb", BombTID);
+        Delay(1);
+    };
     
     SetMusic("");
     
     Delay(35);
     
+    // Warning message
+    SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     HudMessageBold("\cgWARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\ciTIME UNTIL DETONATION: %s\n",
-        FormatTime(BombTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
-    AmbientSound("event/nukealert", 127);
+                   FormatTime(BombTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
+    AmbientSound("nuke/alert", 127);
     
     Delay(35 * 4);
     
     SetMusic("Bomb");
     
-    while (BombTime)
+    // Set bomb's active state
+    SetActorState(BombTID, "SpawnActive");
+    
+    // Bomb HUD
+    while (BombTime > 0 && !BombDisarmed && !CurrentLevel->BombExplode)
     {
         SetFont("BIGFONT");
-        HudMessageBold("\cgT - %s\n", FormatTime(BombTime), HUDMSG_FADEOUT, MAKE_ID('N', 'U', 'K', 'E'), CR_RED, 64.1, 64.1, 3.0, 0.5);
+        HudMessageBold("\cgT - %s\n", FormatTime(BombTime), HUDMSG_PLAIN, NUKE_ID, CR_RED, 64.1, 64.1, 0.05);
+        
+        // Announcements
+        ThermonuclearBombAnnounce(BombTime);
+        
+        // HUD
+        int KeyOffset = 0;
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        {
+            // Skip drawing this key if it's disabled
+            if (!CurrentLevel->BombKeyActive[i]) continue;
+            
+            // Timer
+            SetFont("BIGFONT");
+            HudMessageBold("%s\n", FormatTime(CurrentLevel->BombKeyTimer[i]), HUDMSG_PLAIN, 0, (CurrentLevel->BombKeyDisarming[i] ? CR_RED : CR_WHITE), 74.0 + (KeyOffset % 3 * 48.0), 112.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            // Key
+            for (int j = 0; j < MAX_PLAYERS; j++)
+            {
+                if (CheckActorInventory(Players(j).TID, StrParam("DRPGNukeKey%d\n", i + 1)))
+                {
+                    SetFont(StrParam("%s\n", KeySprites[i]));
+                    HudMessageBold("A\n", HUDMSG_PLAIN, 0, CR_WHITE, 56.0 + (KeyOffset % 3 * 48.0), 116.0 + (KeyOffset / 3 * 48.0), 0.05);
+                };
+            };
+            
+            // Icon
+            SetFont(StrParam("E_NKEY%d\n", i + 1));
+            HudMessageBold("A\n", HUDMSG_PLAIN, 0, CR_WHITE, 74.0 + (KeyOffset % 3 * 48.0), 96.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            KeyOffset++;
+        };
+        
+        // Acceleration handling
+        fixed Velocity = AbsFixed(GetActorVelX(BombTID)) + AbsFixed(GetActorVelX(BombTID));
+        if (Velocity > 0)
+            PlaySound(BombTID, "nuke/beep", CHAN_BODY, 1.0, true, ATTN_NORM)
+        else
+            StopSound(BombTID, CHAN_BODY);
+        if (Velocity > 7.5) // WHOOPS, you made it angry, now die
+            CurrentLevel->BombExplode = true;
+        
+        // Decrease key timers if the key is being disarmed, also disarm the specified lock if disarming is finished
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        {
+            if (CurrentLevel->BombKeyDisarming[i])
+                CurrentLevel->BombKeyTimer[i]--;
+            
+            if (CurrentLevel->BombKeyDisarming[i] && CurrentLevel->BombKeyTimer[i] <= 0)
+            {
+                CurrentLevel->BombKeyActive[i] = false;
+                CurrentLevel->BombKeyDisarming[i] = false;
+                PlaySound(BombTID, "nuke/unlock", CHAN_ITEM, 1.0, false, ATTN_NORM);
+            };
+        };
+        
+        // Disarm the bomb if all keys are disarmed
+        int DisarmCount = 0;
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+            if (!CurrentLevel->BombKeyActive[i])
+                DisarmCount++;
+        if (DisarmCount >= MAX_NUKE_KEYS)
+            BombDisarmed = true;
         
         BombTime--;
-        
         Delay(1);
     };
     
-    // Explosion
-    AmbientSound("event/nukedetonate", 127);
-    Thing_Destroy(0, 1);
-    for (int i = 0; i < MAX_PLAYERS; i++)
+    // Successful disarm
+    if (BombDisarmed)
     {
-        if (!PlayerInGame(i))
-            continue;
+        CurrentLevel->Event = MAPEVENT_NONE;
         
-        Thing_Damage2(Players(i).TID, 12500, "Fire");
-        Thing_Damage2(Players(i).TID, 12500, "Melee");
+        SetActorState(BombTID, "Disarmed");
+        SetUserVariable(BombTID, "user_disarmed", 1);
+        ActivatorSound("nuke/disarmed", 127);
+        SetMusic("*");
+        
+        // Level/Rank up
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (Players(i).Level < MAX_LEVELS)
+                Players(i).XP = XPTable[Players(i).Level];
+            if (Players(i).RankLevel < MAX_RANK)
+                Players(i).Rank = RankTable[Players(i).RankLevel];
+        };
+    }
+    else if (!BombDisarmed || CurrentLevel->BombExplode) // Epic failure, explode everyone to die
+    {
+        StopSound(BombTID, CHAN_BODY);
+        AmbientSound("nuke/detonate", 127);
+        
+        SetActorState(BombTID, "Explode");
+        
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            Thing_Damage2(Players(i).TID, 12500, "Melee");
+            Thing_Damage2(Players(i).TID, 12500, "Fire");
+        };
+        
+        CurrentLevel->Event = MAPEVENT_NONE;
+        
+        SetMusic("");
+        
+        Delay(35 * 5);
+        SetMusic("*");
     };
-    CurrentLevel->Event = MAPEVENT_NONE;
-    SetMusic("");
     
-    Delay(35 * 5);
-    SetMusic("*");
+    // Remove all keys from the players
+    while (true)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            for (int j = 0; j < MAX_NUKE_KEYS; j++)
+                SetActorInventory(Players(i).TID, StrParam("DRPGNukeKey%d\n", j + 1), 0);
+        
+        Delay(1);
+    };
+};
+
+script void ThermonuclearBombAnnounce(int Time)
+{
+    int Minutes = Time / 60 / 35;
+    int Seconds = Time / 35 % 60;
+    bool ValidMinutes = (Minutes == 1 || Minutes == 2 || Minutes == 3 || Minutes == 4 || Minutes == 5 || Minutes == 10 || Minutes == 20);
+    bool ValidSeconds = (Seconds == 0 || Seconds == 1 || Seconds == 2 || Seconds == 3 || Seconds == 4 || Seconds == 5 || Seconds == 10 || Seconds == 20 || Seconds == 30);
+    
+    // Return if there is currently an announcement playing
+    if (CurrentLevel->BombAnnouncing) return;
+    
+    if (ValidMinutes || ValidSeconds)
+    {
+        CurrentLevel->BombAnnouncing = true;
+        
+        // Minutes
+        if (Minutes > 0 && ValidMinutes && Seconds == 0)
+        {
+            AmbientSound("nuke/announce1", 127);
+            Delay(35 * 1.9);
+            AmbientSound("nuke/announce2", 127);
+            Delay(35 * 1.4);
+            AmbientSound(StrParam("nuke/minutes/%d\n", Minutes), 127);
+        };
+        
+        // Seconds
+        if (Minutes == 0 && ValidSeconds)
+        {
+            AmbientSound(StrParam("nuke/seconds/%d\n", Seconds), 127);
+            Delay(35);
+        };
+    };
+    
+    CurrentLevel->BombAnnouncing = false;
+};
+
+acscript void ThermonuclearBombActivate()
+{
+    SetActivator(GetActorProperty(0, APROP_TargetTID));
+    
+    for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        if (CheckInventory(StrParam("DRPGNukeKey%d\n", i + 1)))
+        {
+            CurrentLevel->BombKeyActive[i] = false;
+            TakeInventory(StrParam("DRPGNukeKey%d\n", i + 1), 1);
+        };
+    
+    for (int i = 0; i < MAX_NUKE_KEYS; i++)
+    {
+        if (!CurrentLevel->BombKeyActive[i]) continue;
+        
+        if (!CurrentLevel->BombKeyDisarming[i])
+        {
+            CurrentLevel->BombKeyDisarming[i] = true;
+            break;
+        }
+        else
+            break;
+    };
+};
+
+acscript void ThermonuclearBombExplode()
+{
+    CurrentLevel->BombExplode = true;
+};
+
+script void LowPowerEvent()
+{
+    int GeneratorTID = UniqueTID();
+    bool GeneratorSpawned = false;
+    
+    AmbientSound("misc/poweroff", 127);
+    SetMusic("LowPower");
+    
+    // Darken all the sectors
+    for (int i = 0; i <= SHORT_MAX; i++)
+    {
+        Light_Flicker(i, 48, 96);
+        Sector_SetColor(i, 64, 96, 255, 0);
+    };
+    
+    // Spawn the Generator
+    while (!GeneratorSpawned)
+    {
+        GeneratorSpawned = SpawnEventActor("DRPGGenerator", GeneratorTID);
+        Delay(1);
+    };
+    
+    // Wait until the generator is powered back up
+    while (!CurrentLevel->PowerGeneratorActive)
+        Delay(1);
+    
+    // Generator is now active - Activate emergency lighting
+    CurrentLevel->Event = MAPEVENT_NONE;
+    AmbientSound("misc/poweron", 127);
+    SetActorState(GeneratorTID, "PoweredUp");
+    SetUserVariable(GeneratorTID, "user_powered", 1);
+    for (int i = 0; i <= SHORT_MAX; i++)
+    {
+        Light_Glow(i, 160, 96, 35 * 3);
+        Sector_SetColor(i, 255, 128, 32, 0);
+    };
+    
+    // Remove generator power cells from the players
+    while (true)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            SetActorInventory(Players(i).TID, "DRPGGeneratorCell", 0);
+            SetActorInventory(Players(i).TID, "DRPGGeneratorCellDead", 0);
+        };
+        
+        Delay(1);
+    };
+};
+
+acscript void PowerGeneratorActivate()
+{
+    SetActivator(GetActorProperty(0, APROP_TargetTID));
+    
+    if (CheckInventory("DRPGGeneratorCell"))
+    {
+        CurrentLevel->PowerGeneratorActive = true;
+        TakeInventory("DRPGGeneratorCell", 1);
+    };
 };
 
 // TODO: Calculate which monster should spawn based on their base threat level and average player levels
@@ -662,7 +943,7 @@ script void OneMonsterEvent()
             Monsters[i].ReplaceActor = StrParam("DRPG%s\n", CurrentLevel->SelectedMonster->Actor);
         
         // if (GetCVar("drpg_debug"))
-        //     Log("\cdDEBUG: Monster Actor: \cg%s\n", Monsters[i].ReplaceActor);
+            // Log("\cdDEBUG: Monster Actor: \cg%s\n", Monsters[i].ReplaceActor);
     };
     
     // Level feeling
@@ -683,20 +964,7 @@ script void HellUnleashedEvent()
     // Spawn Pandora's Box
     while (!BoxSpawned && !CurrentLevel->HellUnleashedActive)
     {
-        fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
-        fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
-        fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
-        fixed Z = GetActorZ(Players(0).TID);
-        bool Spawned = Spawn("DRPGPandoraBox", X, Y, Z, CurrentLevel->PandoraBoxTID, 0);
-        
-        if (!CheckSight(CurrentLevel->PandoraBoxTID, Players(0).TID, 0) || !Spawned)
-        {
-            Thing_Remove(CurrentLevel->PandoraBoxTID);
-            BoxSpawned = false;
-        }
-        else
-            BoxSpawned = true;
-        
+        BoxSpawned = SpawnEventActor("DRPGPandoraBox", CurrentLevel->PandoraBoxTID);
         Delay(35);
     };
     
@@ -1122,6 +1390,10 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Delay(35 * 5);
     };
     
+    // Remove the Hell Unleashed event
+    if (CurrentLevel && CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && CurrentLevel->HellUnleashedActive)
+        CurrentLevel->Event = MAPEVENT_NONE;
+    
     // Remove the RAINBOWS event
     if (CurrentLevel && CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
         CurrentLevel->Event = MAPEVENT_NONE;
@@ -1131,6 +1403,23 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Exit_Secret(0)
     else
         Exit_Normal(0);
+};
+
+function bool SpawnEventActor(str Actor, int TID)
+{
+    fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
+    fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
+    fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
+    fixed Z = GetActorZ(Players(0).TID);
+    bool Spawned = Spawn(Actor, X, Y, Z, TID, 0);
+    
+    if (!CheckSight(TID, Players(0).TID, 0) || !Spawned)
+    {
+        Thing_Remove(TID);
+        return false;
+    }
+    else
+        return true;
 };
 
 function int FindLevelInfoIndex(int LevelNum)
@@ -1152,13 +1441,13 @@ function int FindLevelInfoIndex(int LevelNum)
 
 script void CalculateBonusMaps()
 {
-    int count = 0;
+    int Count = 0;
     
     for (int i = 0; i < KnownLevels.Position; i++)
         if (((LevelInfo *)KnownLevels.Data)[i].AllBonus)
-            count++;
+            Count++;
     
-    AllBonusMaps = count;
+    AllBonusMaps = Count;
 };
 
 acscript void SetMapEvent(int Level, int ID)

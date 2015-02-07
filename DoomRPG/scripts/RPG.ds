@@ -2,8 +2,7 @@
 
 #include "Arena.dh"
 #include "Augs.dh"
-// #include "GUI.dh"
-// #include "GUIMenu.dh"
+#include "GUI.dh"
 #include "HealthBars.dh"
 #include "HUD.dh"
 #include "ItemData.dh"
@@ -148,8 +147,10 @@ script void Init() enter
     if (Player.ActualHealth <= 0)
         Player.ActualHealth = Player.HealthMax;
     
-    // Apply camera textures
+    // Apply camera textures and vars
     SetCameraToTexture(Player.TID, StrParam("P%iVIEW\n", PlayerNumber() + 1), 110);
+    SetCameraToTexture(Player.TID, StrParam("P%iSVIEW\n", PlayerNumber() + 1), 90);
+    Player.PlayerView = PlayerNumber();
     
     // Remove Aura if the keep Aura CVAR is off
     if (!GetCVar("drpg_skill_keepauras"))
@@ -196,9 +197,9 @@ script void Init() enter
     ShopItemAutoHandler();
     
     // GUI
-	// CheckCursor();
-	// CheckGUI();
-	// MenuUpdate();
+	CheckGUI();
+	CheckCursor();
+    // UpdateMenu();
     
     // Spawn Turret if it's active
     if (Player.Turret.Init && Player.Turret.Active)
@@ -774,8 +775,10 @@ script void Respawn() respawn
             SetInventory("Cell", GetAmmoAmount("Cell") * (Player.Capacity / 10));
     };
     
-    // Apply camera textures
+    // Apply camera textures and vars
     SetCameraToTexture(Player.TID, StrParam("P%iVIEW\n", PlayerNumber() + 1), 110);
+    SetCameraToTexture(Player.TID, StrParam("P%iSVIEW\n", PlayerNumber() + 1), 90);
+    Player.PlayerView = PlayerNumber();
     
     // Run Scripts
     Loop();
@@ -784,6 +787,11 @@ script void Respawn() respawn
     InfoPopoffs();
     HealthBars();
     ShieldTimer();
+    
+    // GUI
+	CheckGUI();
+	CheckCursor();
+    UpdateMenu();
     
     // NU-YU Accessory
     if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_HYPERION)

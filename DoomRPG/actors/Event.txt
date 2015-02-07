@@ -1,47 +1,201 @@
 // Map Event - Termonuclear Bomb
 // --------------------------------------------------
 
-actor DRPGThermonuclearBomb
+actor DRPGThermonuclearBomb : SwitchableDecoration
 {
+    var int user_disarmed;
+    
+    Health 50
     Radius 16
     Height 32
+    Mass 50
     
     Scale 0.75
     
     +SOLID
+    -SHOOTABLE
+    +NOBLOOD
+    +DONTBLAST
+    +DONTDRAIN
+    +PUSHABLE
+    -USESPECIAL
+    
+    Activation THINGSPEC_ThingTargets | THINGSPEC_Activate | THINGSPEC_Switch
     
     States
     {
     Spawn:
-    Active:
+        TNT1 A 0 A_PlaySound("nuke/idle", CHAN_6, 1.0, true, ATTN_NORM)
+        TBOM AB 6 Bright
+        Loop
+    SpawnActive:
+        TNT1 A 0 A_ChangeFlag("SHOOTABLE", true)
+        TNT1 A 0 A_ChangeFlag("USESPECIAL", true)
+        TNT1 A 0 A_PlaySound("nuke/idle", CHAN_6, 1.0, true, ATTN_NORM)
         TBOM AB 6 Bright
         Loop
     Inactive:
-        TNT1 A 0 A_ChangeFlag("SOLID", false)
+    Active:
+        TNT1 A 0 A_JumpIf(user_disarmed, "Disarmed")
+        TNT1 A 0 A_PlaySound("nuke/use", CHAN_5, 1.0, false, ATTN_NORM)
+        TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombActivate", 0)
+        Goto SpawnActive
+    Disarmed:
+        TNT1 A 0 A_StopSound(CHAN_6)
         TBOM C -1
         Stop
+    Death:
+    Explode:
+        TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombExplode", 0)
+        TNT1 A 0 A_StopSound(CHAN_6)
+        MISL BCD 6 Bright
+        Stop
+    }
+}
+
+actor DRPGNukeKey : Inventory
+{
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+    Inventory.PickupMessage "You got a Thermonuclear Bomb key."
+    Inventory.PickupSound "arena/keydrop"
+    
+    Scale 0.5
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0
+        Stop
+    }
+}
+
+actor DRPGNukeKey1 : DRPGNukeKey
+{
+    States
+    {
+    Spawn:
+        NKEY A 6
+        NKEY A 6 Bright
+        Loop
+    }
+}
+
+actor DRPGNukeKey2 : DRPGNukeKey
+{
+    States
+    {
+    Spawn:
+        NKEY B 6
+        NKEY B 6 Bright
+        Loop
+    }
+}
+
+actor DRPGNukeKey3 : DRPGNukeKey
+{
+    States
+    {
+    Spawn:
+        NKEY C 6
+        NKEY C 6 Bright
+        Loop
+    }
+}
+
+actor DRPGNukeKey4 : DRPGNukeKey
+{
+    States
+    {
+    Spawn:
+        NKEY D 6
+        NKEY D 6 Bright
+        Loop
+    }
+}
+
+actor DRPGNukeKey5 : DRPGNukeKey
+{
+    States
+    {
+    Spawn:
+        NKEY E 6
+        NKEY E 6 Bright
+        Loop
+    }
+}
+
+actor DRPGNukeKey6 : DRPGNukeKey
+{
+    States
+    {
+    Spawn:
+        NKEY F 6
+        NKEY F 6 Bright
+        Loop
+    }
+}
+
+actor DRPGNukeKey7 : DRPGNukeKey
+{
+    States
+    {
+    Spawn:
+        NKEY G 6
+        NKEY G 6 Bright
+        Loop
+    }
+}
+
+actor DRPGNukeKey8 : DRPGNukeKey
+{
+    States
+    {
+    Spawn:
+        NKEY H 6
+        NKEY H 6 Bright
+        Loop
+    }
+}
+
+actor DRPGNukeKey9 : DRPGNukeKey
+{
+    States
+    {
+    Spawn:
+        NKEY I 6
+        NKEY I 6 Bright
+        Loop
     }
 }
 
 // Map Event - Low Power
 // --------------------------------------------------
 
-actor DRPGGenerator
+actor DRPGGenerator : SwitchableDecoration
 {
+    var int user_powered;
+    
     Radius 24
     Height 80
     
     Scale 0.5
     
     +SOLID
+    +USESPECIAL
+    
+    Activation THINGSPEC_ThingTargets | THINGSPEC_Activate | THINGSPEC_Switch
     
     States
     {
     Spawn:
     Inactive:
-        GENR B 1
-        Loop
     Active:
+        TNT1 A 0 A_JumpIf(user_powered, "PoweredUp")
+        TNT1 A 0 ACS_NamedExecuteAlways("PowerGeneratorActivate", 0)
+        GENR B -1
+        Stop
+    PoweredUp:
         GENR A 1 Bright
         Loop
     }
@@ -53,6 +207,7 @@ actor DRPGGeneratorCell : Inventory
     
     -INVBAR
     
+    Inventory.Amount 1
     Inventory.MaxAmount 1
     Inventory.PickupMessage "You got a Generator Power Cell."
     Inventory.PickupSound "items/vial"
@@ -87,7 +242,7 @@ actor DRPGGeneratorCellDead : Inventory
 // Map Event - Hell Unleashed
 // --------------------------------------------------
 
-actor DRPGPandoraBox : SwitchingDecoration
+actor DRPGPandoraBox : SwitchableDecoration
 {
     Radius 16
     
