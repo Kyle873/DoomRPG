@@ -36,7 +36,7 @@ actor DRPGThermonuclearBomb : SwitchableDecoration
         Loop
     Inactive:
     Active:
-        TNT1 A 0 A_JumpIf(user_disarmed == 1, "Disarmed")
+        TNT1 A 0 A_JumpIf(user_disarmed, "Disarmed")
         TNT1 A 0 A_PlaySound("nuke/use", CHAN_5, 1.0, false, ATTN_NORM)
         TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombActivate", 0)
         Goto SpawnActive
@@ -172,22 +172,30 @@ actor DRPGNukeKey9 : DRPGNukeKey
 // Map Event - Low Power
 // --------------------------------------------------
 
-actor DRPGGenerator
+actor DRPGGenerator : SwitchableDecoration
 {
+    var int user_powered;
+    
     Radius 24
     Height 80
     
     Scale 0.5
     
     +SOLID
+    +USESPECIAL
+    
+    Activation THINGSPEC_ThingTargets | THINGSPEC_Activate | THINGSPEC_Switch
     
     States
     {
     Spawn:
     Inactive:
-        GENR B 1
-        Loop
     Active:
+        TNT1 A 0 A_JumpIf(user_powered, "PoweredUp")
+        TNT1 A 0 ACS_NamedExecuteAlways("PowerGeneratorActivate", 0)
+        GENR B -1
+        Stop
+    PoweredUp:
         GENR A 1 Bright
         Loop
     }
@@ -199,6 +207,7 @@ actor DRPGGeneratorCell : Inventory
     
     -INVBAR
     
+    Inventory.Amount 1
     Inventory.MaxAmount 1
     Inventory.PickupMessage "You got a Generator Power Cell."
     Inventory.PickupSound "items/vial"

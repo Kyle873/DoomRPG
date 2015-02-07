@@ -244,6 +244,8 @@ script void MapInit() open
             CurrentLevel->BombKeyTimer[i] = 0;
         };
         
+        CurrentLevel->PowerGeneratorActive = false;
+        
         CurrentLevel->HellUnleashedActive = false;
         CurrentLevel->PandoraBoxTID = 0;
         CurrentLevel->LevelAdd = 0;
@@ -394,18 +396,12 @@ script void SetupMapEvent()
         
         case MAPEVENT_NUCLEARBOMB:
             // Thermonuclear Bomb: A Thermonuclear Bomb spawns next to you on map start. You have PAR * 3 to escape before it explodes.
-            ThermonuclearBomb();
+            ThermonuclearBombEvent();
             break;
         
         case MAPEVENT_LOWPOWER:
             // Low Power: Light levels are extremely diminished. IR goggles recommended.
-            AmbientSound("misc/poweroff", 127);
-            SetMusic("LowPower");
-            for (int i = 0; i < 65536; i++)
-            {
-                Light_Flicker(i, 48, 96);
-                Sector_SetColor(i, 64, 96, 255, 0);
-            };
+            LowPowerEvent();
             break;
         
         case MAPEVENT_ALLAURAS:
@@ -594,7 +590,7 @@ script void EnvironmentalHazard()
     goto Start;
 };
 
-script void ThermonuclearBomb()
+script void ThermonuclearBombEvent()
 {
     static str[MAX_NUKE_KEYS] KeySprites =
     {
@@ -853,6 +849,67 @@ acscript void ThermonuclearBombActivate()
 acscript void ThermonuclearBombExplode()
 {
     CurrentLevel->BombExplode = true;
+};
+
+script void LowPowerEvent()
+{
+    int GeneratorTID = UniqueTID();
+    bool GeneratorSpawned = false;
+    
+    AmbientSound("misc/poweroff", 127);
+    SetMusic("LowPower");
+    
+    // Darken all the sectors
+    for (int i = 0; i <= SHORT_MAX; i++)
+    {
+        Light_Flicker(i, 48, 96);
+        Sector_SetColor(i, 64, 96, 255, 0);
+    };
+    
+    // Spawn the Generator
+    while (!GeneratorSpawned)
+    {
+        GeneratorSpawned = SpawnEventActor("DRPGGenerator", GeneratorTID);
+        Delay(1);
+    };
+    
+    // Wait until the generator is powered back up
+    while (!CurrentLevel->PowerGeneratorActive)
+        Delay(1);
+    
+    // Generator is now active - Activate emergency lighting
+    CurrentLevel->Event = MAPEVENT_NONE;
+    AmbientSound("misc/poweron", 127);
+    SetActorState(GeneratorTID, "PoweredUp");
+    SetUserVariable(GeneratorTID, "user_powered", 1);
+    for (int i = 0; i <= SHORT_MAX; i++)
+    {
+        Light_Glow(i, 160, 96, 35 * 3);
+        Sector_SetColor(i, 255, 128, 32, 0);
+    };
+    
+    // Remove generator power cells from the players
+    while (true)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            SetActorInventory(Players(i).TID, "DRPGGeneratorCell", 0);
+            SetActorInventory(Players(i).TID, "DRPGGeneratorCellDead", 0);
+        };
+        
+        Delay(1);
+    };
+};
+
+acscript void PowerGeneratorActivate()
+{
+    SetActivator(GetActorProperty(0, APROP_TargetTID));
+    
+    if (CheckInventory("DRPGGeneratorCell"))
+    {
+        CurrentLevel->PowerGeneratorActive = true;
+        TakeInventory("DRPGGeneratorCell", 1);
+    };
 };
 
 // TODO: Calculate which monster should spawn based on their base threat level and average player levels
