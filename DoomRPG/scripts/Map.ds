@@ -639,22 +639,10 @@ script void ThermonuclearBomb()
         Delay(1);
     };
     
+    // Spawn the Bomb
     while (!BombSpawned)
     {
-        fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
-        fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
-        fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
-        fixed Z = GetActorZ(Players(0).TID);
-        bool Spawned = Spawn("DRPGThermonuclearBomb", X, Y, Z, BombTID, 0);
-        
-        if (!CheckSight(BombTID, Players(0).TID, 0) || !Spawned)
-        {
-            Thing_Remove(BombTID);
-            BombSpawned = false;
-        }
-        else
-            BombSpawned = true;
-        
+        BombSpawned = SpawnEventActor("DRPGThermonuclearBomb", BombTID);
         Delay(1);
     };
     
@@ -897,7 +885,7 @@ script void OneMonsterEvent()
             Monsters[i].ReplaceActor = StrParam("DRPG%s\n", CurrentLevel->SelectedMonster->Actor);
         
         // if (GetCVar("drpg_debug"))
-        //     Log("\cdDEBUG: Monster Actor: \cg%s\n", Monsters[i].ReplaceActor);
+            // Log("\cdDEBUG: Monster Actor: \cg%s\n", Monsters[i].ReplaceActor);
     };
     
     // Level feeling
@@ -918,20 +906,7 @@ script void HellUnleashedEvent()
     // Spawn Pandora's Box
     while (!BoxSpawned && !CurrentLevel->HellUnleashedActive)
     {
-        fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
-        fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
-        fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
-        fixed Z = GetActorZ(Players(0).TID);
-        bool Spawned = Spawn("DRPGPandoraBox", X, Y, Z, CurrentLevel->PandoraBoxTID, 0);
-        
-        if (!CheckSight(CurrentLevel->PandoraBoxTID, Players(0).TID, 0) || !Spawned)
-        {
-            Thing_Remove(CurrentLevel->PandoraBoxTID);
-            BoxSpawned = false;
-        }
-        else
-            BoxSpawned = true;
-        
+        BoxSpawned = SpawnEventActor("DRPGPandoraBox", CurrentLevel->PandoraBoxTID);
         Delay(35);
     };
     
@@ -1372,6 +1347,23 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Exit_Normal(0);
 };
 
+function bool SpawnEventActor(str Actor, int TID)
+{
+    fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
+    fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
+    fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
+    fixed Z = GetActorZ(Players(0).TID);
+    bool Spawned = Spawn(Actor, X, Y, Z, TID, 0);
+    
+    if (!CheckSight(TID, Players(0).TID, 0) || !Spawned)
+    {
+        Thing_Remove(TID);
+        return false;
+    }
+    else
+        return true;
+};
+
 function int FindLevelInfoIndex(int LevelNum)
 {
     if (LevelNum == 0)
@@ -1391,13 +1383,13 @@ function int FindLevelInfoIndex(int LevelNum)
 
 script void CalculateBonusMaps()
 {
-    int count = 0;
+    int Count = 0;
     
     for (int i = 0; i < KnownLevels.Position; i++)
         if (((LevelInfo *)KnownLevels.Data)[i].AllBonus)
-            count++;
+            Count++;
     
-    AllBonusMaps = count;
+    AllBonusMaps = Count;
 };
 
 acscript void SetMapEvent(int Level, int ID)
