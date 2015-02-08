@@ -1,6 +1,7 @@
 #include "RPG.dh"
 
 #include "Arena.dh"
+#include "Crate.dh"
 #include "Map.dh"
 #include "Menu.dh"
 #include "Monsters.dh"
@@ -16,7 +17,7 @@ int BulletTimeTimer;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
-    4; 9; 9; 5; 17; 7;
+    4; 8; 9; 5; 17; 7;
 };
 
 AddressSpace MapArray SkillSpace;
@@ -101,23 +102,10 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Weapon Drop"; 100; 7; DropWeapon;
+            "Supply Drop"; 200; 10; DropSupply;
             {
-                "Drops a Weapon at your location\n\cjPistol";
-                "Drops a Weapon at your location\n\cjShotgun";
-                "Drops a Weapon at your location\n\cjSuper Shotgun";
-                "Drops a Weapon at your location\n\cjChaingun";
-                "Drops a Weapon at your location\n\cjRocket Launcher";
-                "Drops a Weapon at your location\n\cjPlasma Rifle";
-                "Drops a Weapon at your location\n\cjBFG9000";
-            };
-        };
-        {
-            "Ammo Drop"; 100; 3; DropAmmo;
-            {
-                "Drops a Small Backpack full of ammo at your location";
-                "Drops a Backpack full of ammo at your location";
-                "Drops a Large Backpack full of ammo at your location";
+                "Drop a Large Backpack full of Ammo at your location";
+                // Crate Drop Description is generated dynamically
             };
         };
     };
@@ -1007,25 +995,28 @@ acscript bool DropWeapon(SkillLevelInfo *SkillLevel, void *Data)
     return false;
 };
 
-acscript bool DropAmmo(SkillLevelInfo *SkillLevel, void *Data)
+// TODO: Rename
+acscript bool DropSupply(SkillLevelInfo *SkillLevel, void *Data)
 {
     fixed Angle = GetActorAngle(0);
     fixed X = GetActorX(0) + Cos(Angle) * 96.0;
     fixed Y = GetActorY(0) + Sin(Angle) * 96.0;
     fixed Z = GetActorZ(0) + 48.0;
-    str Ammo;
+    bool Spawned = false;
     
-    switch (SkillLevel->CurrentLevel)
-    {
-    case 1:         Ammo = "DRPGSmallBackpack"; break;
-    case 2:         Ammo = "DRPGBackpack";      break;
-    case 3: case 4: Ammo = "DRPGBigBackpack";   break;
-    };
+    if (SkillLevel->CurrentLevel > 1)
+        Spawned = Spawn("DRPGBigBackpack", X, Y, Z, 0, Angle) && Spawn("DRPGCrate", X, Y, Z, 0, Angle)
+    else
+        Spawned = Spawn("DRPGBigBackpack", X, Y, Z, 0, Angle);
     
-    if (Spawn(Ammo, X, Y, Z, 0, Angle))
+    if (Spawned)
     {
-        if (SkillLevel->CurrentLevel == 4 && CompatMode == COMPAT_DRLA)
-            Spawn("RLSupplyCrate", X, Y, Z, 0, Angle);
+        // Set Crate's rarity level based on skill level
+        if (SkillLevel->CurrentLevel > 1)
+        {
+            Delay(1);
+            Crates[CrateID - 1].Rarity = SkillLevel->CurrentLevel - 2;
+        };
         
         ActivatorSound("skills/drop", 127);
         Spawn("TeleportFog", X, Y, Z, 0, Angle);
@@ -1033,11 +1024,11 @@ acscript bool DropAmmo(SkillLevelInfo *SkillLevel, void *Data)
     }
     else
     {
-        PrintError("You cannot drop ammo here");
+        PrintError("A supply drop cannot be performed at your current location");
         ActivatorSound("menu/error", 127);
         return false;
     };
-
+    
     return false;
 };
 
@@ -1368,7 +1359,7 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
     fixed Radius;
     str Name;
     
-    str[] Summons =
+    static str[] Summons =
     {
         "ZombieMan";
         "ShotgunGuy";
@@ -1388,7 +1379,7 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
         "SpiderMastermind";
     };
     
-    str[][6] DRLASummons =
+    static str[][6] DRLASummons =
     {
         // Former Human
         {
@@ -2050,13 +2041,13 @@ script void CleanDropTIDArray()
 
 function void BuildSkillData()
 {
+    // Generate the description for the Supply Drop
+    for (int i = 1; i < Skills[1][7].MaxLevel; i++)
+        Skills[1][7].Description[i] = StrParam("%s\nDrop a UAC Supply Crate at your location\n\cjRarity Level: %s\n", Skills[1][7].Description[0], CrateRarityNames[i - 1]);
+    
     // DoomRL Compatibility
     if (CompatMode == COMPAT_DRLA)
     {
-        // Add an extra level to the Ammo Drop to drop Supply Crates
-        Skills[1][8].MaxLevel = 4;
-        Skills[1][8].Description[3] = "Drops a Large Backpack full of ammo at your location\nDrops a Supply Crate at your location";
-        
         // DoomRL Marines use slightly different weapons
         Skills[4][0].Description[2] = "Summons a Marine\n\cjDouble Shotgun";
         Skills[4][0].Description[3] = "Summons a Marine\n\cjBattle Rifle";

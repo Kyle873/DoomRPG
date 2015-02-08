@@ -4,6 +4,19 @@
 #include "ItemData.dh"
 #include "Utils.dh"
 
+static str[MAX_DIFFICULTIES] CrateRarityNames =
+{
+    "\cjBasic";
+    "\cjCommon";
+    "\cdUncommon";
+    "\cdSuperior";
+    "\cnRare";
+    "\cnVery Rare";
+    "\ciElite";
+    "\ctLegendary";
+    "\cfSupreme";
+};
+
 int CrateID = 0;
 ItemSpace CrateInfo[CRATE_MAX] Crates;
 
@@ -11,11 +24,17 @@ acscript void InitCrate()
 {
     if (CrateID >= CRATE_MAX)
     {
-        Log("\cgERROR:\c- Crate ID maximum exceeded!\n");
+        Log("\cgERROR:\c- Maximum Crate ID exceeded!\n");
+        Thing_Remove(0);
         return;
     };
     
-    SetUserVariable(0, "user_id", CrateID++);
+    SetUserVariable(0, "user_id", CrateID);
+    
+    // Default Rarity
+    Crates[CrateID].Rarity = -1;
+    
+    CrateID++;
 };
 
 acscript void UseCrate(int ID)
@@ -29,13 +48,14 @@ acscript void UseCrate(int ID)
     if (!Crates[ID].Init)
     {
         int LuckMod = Player.Luck / 20;
-        int Rarity = 0;
+        int Rarity = (Crates[ID].Rarity == -1 ? -1 : Crates[ID].Rarity);
         int Amount = 3;
         
         // Calculate Rarity
-        for (int i = Rarity; i < MAX_DIFFICULTIES - 1; i++)
-            if (Random(0, (MAX_DIFFICULTIES + (MAX_DIFFICULTIES / 3)) - LuckMod) <= 0)
-                Rarity++;
+        if (Rarity == -1)
+            for (int i = Rarity; i < MAX_DIFFICULTIES - 1; i++)
+                if (Random(0, (MAX_DIFFICULTIES + (MAX_DIFFICULTIES / 3)) - LuckMod) <= 0)
+                    Rarity++;
         
         // Calculate Amount
         for (int i = Amount; i < CRATE_MAX_ITEMS - 1; i++)
@@ -97,20 +117,6 @@ function void CrateTakeItem()
 
 function void DrawCrate()
 {
-    // Rarity Names
-    static str[MAX_DIFFICULTIES] RarityNames =
-    {
-        "\cjBasic";
-        "\cjCommon";
-        "\cdUncommon";
-        "\cdSuperior";
-        "\cnRare";
-        "\cnVery Rare";
-        "\ciElite";
-        "\ctLegendary";
-        "\cfSupreme";
-    };
-    
     // Width/Height
     int Width = 9;
     int Height = 6;
@@ -127,7 +133,7 @@ function void DrawCrate()
     
     // Title
     SetFont("BIGFONT");
-    HudMessage("UAC Supply Crate (%s\c-)\n", RarityNames[Crates[Player.CrateID].Rarity], HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
+    HudMessage("UAC Supply Crate (%s\c-)\n", CrateRarityNames[Crates[Player.CrateID].Rarity], HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
     
     for (int i = 0; i < Height; i++)
     {
