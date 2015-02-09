@@ -1287,29 +1287,35 @@ script void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fixed H
 
 script void DrawStatUp(int Stat)
 {
-    static int[STAT_MAX] StatColors =
-    {
-        CR_RED;         // Strength
-        CR_GREEN;       // Defense
-        CR_BRICK;       // Vitality
-        CR_LIGHTBLUE;   // Energy
-        CR_PURPLE;      // Regeneration
-        CR_ORANGE;      // Agility
-        CR_BLUE;        // Capacity
-        CR_GOLD;        // Luck
-    };
-    
     static str[STAT_MAX] StatNames =
     {
-        "Strength";
-        "Defense";
-        "Vitality";
-        "Energy";
-        "Regen";
-        "Agility";
-        "Capacity";
-        "Luck";
+        "\cgStrength";
+        "\cdDefense";
+        "\caVitality";
+        "\cnEnergy";
+        "\ctRegen";
+        "\ciAgility";
+        "\chCapacity";
+        "\ckLuck";
     };
+    
+    int[STAT_MAX] StatAmount =
+    {
+        Player.Strength;
+        Player.Defense;
+        Player.Vitality;
+        Player.Energy;
+        Player.Regeneration;
+        Player.Agility;
+        Player.Capacity;
+        Player.Luck;
+    };
+    
+    // Log
+    if (InMultiplayer)
+        Log("%N\c-'s %s\c- has increased to \c%c%d\n", PlayerNumber() + 1, StatNames[Stat], StatNames[Stat][1], StatAmount[Stat])
+    else
+        Log("Your %s\c- has increased to \c%c%d\n", StatNames[Stat], StatNames[Stat][1], StatAmount[Stat]);
     
     // Fade
     switch (Stat)
@@ -1341,7 +1347,7 @@ script void DrawStatUp(int Stat)
         SetHudSize(0, 0, false);
         
         SetFont("BIGFONT");
-        HudMessage("%s +\n", StatNames[Stat], HUDMSG_ALPHA, 0, StatColors[Stat], TextX, TextY, 0.05, Alpha);
+        HudMessage("%s +\n", StatNames[Stat], HUDMSG_ALPHA, 0, CR_WHITE, TextX, TextY, 0.05, Alpha);
         PrintSpriteAlpha(StrParam("STAT%d\n", Stat + 1), 0, 0.525 + XOff, 0.5 + YOff, 0.05, Alpha);
         
         DisplayTime--;
