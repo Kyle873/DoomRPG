@@ -172,17 +172,18 @@ actor DRPGOutpostTurretExplosion
 // PORTABLE TURRET
 // --------------------------------------------------
 
-ACTOR DRPGPortableTurret : DRPGOutpostTurret
+ACTOR DRPGPortableTurret
 {
-    var int user_tid;
-    
     Health 100
+    Radius 16
+    Height 16
+    Speed 0
+    Painchance 256
+    Mass 0x7FFFFFFF
     
     Species "Player"
     
     -SOLID
-    -SPAWNCEILING
-    -CEILINGHUGGER
     +NOCLIP
     +NOBLOCKMAP
     +FLOATBOB
@@ -191,15 +192,29 @@ ACTOR DRPGPortableTurret : DRPGOutpostTurret
     States
     {
     Spawn:
-        TNT1 A 0 A_SetUservar("user_tid", CallACS("GetUniqueTID"))
-        TNT1 A 0 Thing_ChangeTID(0, user_tid)
-        TNT1 A 0 ACS_NamedExecuteAlways("TurretInit", 0, user_tid)
-        Goto Super::See
-    GotShot:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("TurretInit", 0)
         Goto See
-    DeathHatred:
-        TNT1 A 0
-        Stop
+    See:
+        TNT1 A 0 A_PlaySound("drpgturret/hum", CHAN_6, 1.0, 1, 1.25)
+        PTUR AAAAAAAAAAAAAAAAAAAA 1 A_Chase("", "Missile")
+        TNT1 A 0 A_Jump(230, "See")
+        TNT1 A 0 A_PlaySound("drpgturret/beep", 7)
+        Loop
+    Missile:
+        TNT1 A 0 A_PlaySound("drpgturret/targeting", CHAN_7)
+        PTUR AAAAAAAAAAAAAAA 2 A_FaceTarget(15)
+    MissileLoop:
+        TNT1 A 0 A_FaceTarget
+        TNT1 A 0 A_PlaySound("drpgturret/fire", CHAN_WEAPON, 1.0, 0, 0.6)
+        PTUR B 0 Bright A_CustomBulletAttack(16, 0, 2, Random(1,5) * 3, "DRPGMarineBulletPuff", 0, CBAF_NORANDOM)
+        PTUR B 2 Bright
+        PTUR A 5 A_FaceTarget
+        TNT1 A 0 A_MonsterRefire(0, "MissileEnd")
+        Loop
+    MissileEnd:
+        TNT1 A 0 A_PlaySound("drpgturret/cooldown", CHAN_5)
+        PTUR AAAAA 3 A_FaceTarget
+        Goto See
     Despawn:
         TNT1 A 0 A_SpawnItemEx("TeleportFog")
         Stop
@@ -215,8 +230,8 @@ ACTOR DRPGPortableTurretPickup : CustomInventory
     States
     {
     Spawn:
-        OTUR A 6 Bright
-        OTUR A 6
+        PTUR A 6 Bright
+        PTUR A 6
         Loop
     Pickup:
         TNT1 A 0 A_SpawnItemEx("DRPGPortableTurret", 0, 0, 32, 0, 0, 0, 0, SXF_SETMASTER | SXF_TRANSFERTRANSLATION)

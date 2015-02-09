@@ -60,10 +60,12 @@ acscript void TurretSetOffset(int Angle, int LookAngle, int DistanceOffset)
     Player.Turret.DistanceOffset += (fixed)DistanceOffset;
 };
 
-acscript void TurretInit(int TID)
+acscript void TurretInit()
 {
+    int TID = UniqueTID();
     int PlayerTID = GetActorProperty(0, APROP_MasterTID);
     
+    Thing_ChangeTID(0, TID);
     SetActivator(PlayerTID);
     
     // You already have a turret
@@ -117,19 +119,14 @@ acscript void TurretInit(int TID)
 
 script void TurretLoop()
 {
-    bool Spawned;
-
-    while (true)
+    int PlayerTID = GetActorProperty(0, APROP_MasterTID);
+    int PlayerID = FindPlayerID(PlayerTID);
+    
+    while (Players(PlayerID).Turret.Active)
     {
-        int PlayerTID = GetActorProperty(0, APROP_MasterTID);
-        int PlayerID = FindPlayerID(PlayerTID);
-        
-        // Turret is ded or inactive
-        if (GetActorProperty(0, APROP_Health) <= 0 || !Players(PlayerID).Turret.Active)
-        {
-            Player.Turret.Active = false;
-            return;
-        };
+        // Turret is ded
+        if (GetActorProperty(0, APROP_Health) <= 0)
+            Players(PlayerID).Turret.Active = false;
         
         // Offset
         fixed Angle = GetActorAngle(PlayerTID) + Players(PlayerID).Turret.AngleOffset;
@@ -141,13 +138,6 @@ script void TurretLoop()
         // Set Position/Angle
         SetActorPosition(Players(PlayerID).Turret.TID, X, Y, Z, false);
         SetActorAngle(Players(PlayerID).Turret.TID, LookAngle);
-        
-        // Teleport Fog
-        if (!Spawned)
-        {
-            SpawnForced("TeleportFog", X, Y, Z, 0, Angle);
-            Spawned = true;
-        };
         
         /* Drain Battery
            No point in having this active right now with no way to restore the battery implemented yet
@@ -165,7 +155,7 @@ script void TurretLoop()
 
 function void TurretSpawn()
 {
-    Player.Turret.Active = false;
+    Player.Turret.Active = true;
     GiveInventory("DRPGPortableTurretPickup", 1);
 };
 
