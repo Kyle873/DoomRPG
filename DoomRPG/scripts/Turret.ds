@@ -3,11 +3,13 @@
 #include "Turret.dh"
 #include "Utils.dh"
 
-TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
+AddressSpace MapArray TurretSpace;
+
+TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
 {
     // Build
     {
-        "Build Turret"; 1; 0;
+        "Build Turret"; 1; 10;
         "Build the portable turret";
     };
     
@@ -379,6 +381,78 @@ TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     };
 };
 
+script void TurretLoop() enter
+{
+    // Level Entry - Spawn Turret if it's active
+    if (Player.Turret.Init && Player.Turret.Active)
+    {
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: \c-Turret was active, Respawning...\n");
+        TurretSpawn();
+    };
+    
+    Start:
+    
+    if (Player.Turret.Upgrade[TU_BUILD] && !Player.Turret.Init)
+    {
+        // Spawn the Turret
+        TurretSpawn();
+        
+        // Setup stats
+        Player.Turret.BatteryMax = 60 * 2;
+        Player.Turret.Battery = Player.Turret.BatteryMax;
+        
+        Player.Turret.ClipMax = 200;
+        Player.Turret.ShellMax = 50;
+        Player.Turret.RocketMax = 50;
+        Player.Turret.PlasmaMax = 300;
+        
+        Player.Turret.AngleOffset = -0.125;
+        Player.Turret.LookAngleOffset = 0;
+        Player.Turret.DistanceOffset = 48;
+        
+        // Nametag
+        SetActorPropertyString(Player.Turret.TID, APROP_Nametag, StrParam("%N\c-'s Turret\n", PlayerNumber() + 1));
+        
+        // Set Active and TID
+        Player.Turret.Init = true;
+        Player.Turret.Active = true;
+    };
+    
+    while (Player.Turret.Active)
+    {
+        // Turret is ded
+        if (GetActorProperty(Player.Turret.TID, APROP_Health) <= 0)
+            Player.Turret.Active = false;
+        
+        // Offset
+        fixed Angle = GetActorAngle(0) + Player.Turret.AngleOffset;
+        fixed LookAngle = GetActorAngle(0) + Player.Turret.LookAngleOffset;
+        fixed X = GetActorX(0) + Cos(Angle) * Player.Turret.DistanceOffset;
+        fixed Y = GetActorY(0) + Sin(Angle) * Player.Turret.DistanceOffset;
+        fixed Z = GetActorZ(0) + 32.0;
+        
+        // Set Position/Angle
+        SetActorPosition(Player.Turret.TID, X, Y, Z, false);
+        SetActorAngle(Player.Turret.TID, LookAngle);
+        
+        /* Drain Battery
+           No point in having this active right now with no way to restore the battery implemented yet
+        if ((Timer() % 35) == 0)
+            Players(PlayerID).Turret.Battery--;
+        */
+        
+        // Battery is drained
+        if (Player.Turret.Battery <= 0)
+            TurretDespawn();
+        
+        Delay(1);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
 script void TurretMenu() enter
 {
     Start:
@@ -434,107 +508,30 @@ acscript void TurretSetOffset(int Angle, int LookAngle, int DistanceOffset)
     Player.Turret.DistanceOffset += (fixed)DistanceOffset;
 };
 
-acscript void TurretInit()
+function void BuildTurretData()
 {
-    int TID = UniqueTID();
-    int PlayerTID = GetActorProperty(0, APROP_MasterTID);
     
-    Thing_ChangeTID(0, TID);
-    SetActivator(PlayerTID);
-    
-    // You already have a turret
-    if (Player.Turret.Init && Player.Turret.Active)
-    {
-        // TODO: If you picked up an extra turret and you already have one, give random parts
-        
-        Thing_Remove(TID);
-        return;
-    };
-    
-    // Turret Init
-    if (!Player.Turret.Init)
-    {
-        Player.Turret.Active = false;
-        
-        Player.Turret.TID = 0;
-        
-        Player.Turret.BatteryMax = 60 * 2;
-        Player.Turret.Battery = Player.Turret.BatteryMax;
-        
-        Player.Turret.Clip = 100;
-        Player.Turret.ClipMax = 200;
-        Player.Turret.Shell = 0;
-        Player.Turret.ShellMax = 50;
-        Player.Turret.Rocket = 0;
-        Player.Turret.RocketMax = 50;
-        Player.Turret.Plasma = 0;
-        Player.Turret.PlasmaMax = 300;
-        
-        Player.Turret.RefitTimer = 0;
-        
-        Player.Turret.AngleOffset = -0.125;
-        Player.Turret.LookAngleOffset = 0;
-        Player.Turret.DistanceOffset = 48;
-        
-        Player.Turret.Init = true;
-    };
-    
-    // Nametag
-    SetActorPropertyString(TID, APROP_Nametag, StrParam("%N\c-'s Turret\n", PlayerNumber() + 1));
-    
-    // Set Active and TID
-    Player.Turret.Active = true;
-    Player.Turret.TID = TID;
-    
-    // Enter Loop
-    SetActivator(TID);
-    TurretLoop();
 };
 
-script void TurretLoop()
+function int TurretUpgradeCost(int Index)
 {
-    int PlayerTID = GetActorProperty(0, APROP_MasterTID);
-    int PlayerID = FindPlayerID(PlayerTID);
-    
-    while (Players(PlayerID).Turret.Active)
-    {
-        // Turret is ded
-        if (GetActorProperty(0, APROP_Health) <= 0)
-            Players(PlayerID).Turret.Active = false;
-        
-        // Offset
-        fixed Angle = GetActorAngle(PlayerTID) + Players(PlayerID).Turret.AngleOffset;
-        fixed LookAngle = GetActorAngle(PlayerTID) + Players(PlayerID).Turret.LookAngleOffset;
-        fixed X = GetActorX(PlayerTID) + Cos(Angle) * Players(PlayerID).Turret.DistanceOffset;
-        fixed Y = GetActorY(PlayerTID) + Sin(Angle) * Players(PlayerID).Turret.DistanceOffset;
-        fixed Z = GetActorZ(PlayerTID) + 32.0;
-        
-        // Set Position/Angle
-        SetActorPosition(Players(PlayerID).Turret.TID, X, Y, Z, false);
-        SetActorAngle(Players(PlayerID).Turret.TID, LookAngle);
-        
-        /* Drain Battery
-           No point in having this active right now with no way to restore the battery implemented yet
-        if ((Timer() % 35) == 0)
-            Players(PlayerID).Turret.Battery--;
-        */
-        
-        // Battery is drained
-        if (Players(PlayerID).Turret.Battery <= 0)
-            TurretDespawn();
-        
-        Delay(1);
-    };
+    return (TurretUpgradeData[Index].Cost * (Player.Turret.Upgrade[Index] + 1));
 };
 
 function void TurretSpawn()
 {
+    int TID = UniqueTID();
+    
+    SpawnForced("DRPGPortableTurret", GetActorX(0), GetActorY(0), GetActorZ(0), TID, 0);
+    SpawnForced("TeleportFog", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+    
     Player.Turret.Active = true;
-    GiveInventory("DRPGPortableTurretPickup", 1);
+    Player.Turret.TID = TID;
 };
 
 function void TurretDespawn()
 {
+    SpawnForced("TeleportFog", GetActorX(Player.Turret.TID), GetActorY(Player.Turret.TID), GetActorZ(Player.Turret.TID), 0, 0);
+    
     Player.Turret.Active = false;
-    SetActorState(Player.Turret.TID, "Despawn");
 };

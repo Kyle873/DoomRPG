@@ -10,6 +10,7 @@
 #include "Skills.dh"
 #include "Stats.dh"
 #include "Stims.dh"
+#include "Turret.dh"
 #include "Utils.dh"
 
 str[MAX_MENU] MainMenu =
@@ -1193,19 +1194,79 @@ function void DrawStimsMenu()
     DrawToxicityBar(32, 224);
 };
 
+// This was written while I am sick and messed up on medication
+// Good luck figuring it out
 function void DrawTurretMenu()
 {
+    int Parts = CheckInventory("DRPGTurretPart");
+    int Color = CR_RED;
+    int PageMax = MAX_UPGRADES / TURRET_PAGE_MAX;
+    int Page = Player.MenuIndex / TURRET_PAGE_MAX;
+    TurretUpgradePtr Upgrade = &TurretUpgradeData[Player.MenuIndex];
+    
     // Title
     SetFont("BIGFONT");
-    HudMessage("Turret\n", HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
+    HudMessage("Turret (%d/%d)\n", Page + 1, PageMax + 1, HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
     
     // Icon
-    PrintSprite("PTURA3A7", 0, 20.1, 48.0, 0.05);
+    if (Player.Turret.Init)
+        PrintSprite("PTURA3A7", 0, 32.1, 46.0 + (int)(Sin((fixed)Timer() / 64.0) * 8.0), 0.05);
     
     // Parts
     PrintSprite("TPRTA0", 0, 96.1, 56.0, 0.05);
     SetFont("BIGFONT");
-    HudMessage("%d\n", CheckInventory("DRPGTurretPart"), HUDMSG_PLAIN, 0, CR_WHITE, 148.1, 36.0, 0.05);
+    if (Player.Turret.Upgrade[Player.MenuIndex] < Upgrade->MaxLevel)
+        HudMessage("%d \cg(-%d)\n", Parts, TurretUpgradeCost(Player.MenuIndex), HUDMSG_PLAIN, 0, CR_WHITE, 148.1, 36.0, 0.05)
+    else
+        HudMessage("%d\n", Parts, HUDMSG_PLAIN, 0, CR_WHITE, 148.1, 36.0, 0.05);
+    
+    // Upgrades
+    int Count = 0;
+    while (Count < TURRET_PAGE_MAX)
+    {
+        int Index = (Page * TURRET_PAGE_MAX) + Count;
+        fixed X = 24.0 + ((Count % (TURRET_PAGE_MAX / 4)) * 48.0);
+        fixed Y = 80.0 + ((Count / (TURRET_PAGE_MAX / 4)) * 48.0);
+        TurretUpgradePtr UpgradeIter = &TurretUpgradeData[Index];
+        
+        // Stop if we've hit the page or upgrade max limit
+        if (Index >= MAX_UPGRADES) break;
+        
+        // Highlight
+        if (Index == Player.MenuIndex)
+        {
+            if (Parts >= UpgradeIter->Cost)
+                PrintSprite("ItemBoxH", 0, X, Y, 0.05)
+            else
+                PrintSprite("ItemBoxR", 0, X, Y, 0.05);
+        };
+        
+        // Upgrade Level
+        if (Player.Turret.Upgrade[Index] >= UpgradeIter->MaxLevel)
+            Color = CR_GREEN
+        else if (Player.Turret.Upgrade[Index] > 0)
+            Color = CR_WHITE
+        else
+            Color = CR_RED;
+        SetFont("SMALLFONT");
+        HudMessage("%d/%d\n", Player.Turret.Upgrade[Index], UpgradeIter->MaxLevel, HUDMSG_PLAIN, 0, Color, X, Y + 18.0, 0.05);
+        
+        // Icon
+        PrintSprite("SprNone", 0, X, Y, 0.05);
+        
+        // Box
+        PrintSprite("ItemBoxB", 0, X, Y, 0.05);
+        
+        Count++;
+    };
+    
+    // Upgrade Name
+    SetFont("BIGFONT");
+    HudMessage("%s\n", Upgrade->Name, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 256.1, 0.05);
+    
+    // Upgrade Description
+    SetFont("SMALLFONT");
+    HudMessage("\ck%s\n\cd%s\n", Upgrade->Description, Upgrade->UpgradeInfo, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 284.1, 0.05);
 };
 
 function void MenuInput()
@@ -1615,6 +1676,39 @@ function void MenuInput()
             Player.DelayTimer++;
     };
     
+    // Turret Menu
+    if (Player.Menu == MENUPAGE_TURRET && !Player.MenuBlock)
+    {
+        if (Buttons == BT_FORWARD && OldButtons != BT_FORWARD && Player.MenuIndex > 0)
+        {
+            Player.MenuIndex -= TURRET_PAGE_MAX / 4;
+            if (Player.MenuIndex < 0) Player.MenuIndex = 0;
+            ActivatorSound("menu/move", 127);
+        };
+        if (Buttons == BT_BACK && OldButtons != BT_BACK && Player.MenuIndex < MAX_UPGRADES - 1)
+        {
+            Player.MenuIndex += TURRET_PAGE_MAX / 4;
+            if (Player.MenuIndex >= MAX_UPGRADES - 1) Player.MenuIndex = MAX_UPGRADES - 1;
+            ActivatorSound("menu/move", 127);
+        };
+        if (((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
+            (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT))
+            && Player.MenuIndex > 0)
+        {
+            Player.MenuIndex--;
+            ActivatorSound("menu/move", 127);
+        };
+        if (((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
+            (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT))
+            && Player.MenuIndex < MAX_UPGRADES - 1)
+        {
+            Player.MenuIndex++;
+            ActivatorSound("menu/move", 127);
+        };
+        if (Buttons == BT_USE && OldButtons != BT_USE)
+            UpgradeTurret(Player.MenuIndex);
+    };
+    
     // Reset the Delay Timer if no buttons are pressed
     if (Buttons == 0 && OldButtons == 0)
         Player.DelayTimer = 0;
@@ -1778,6 +1872,24 @@ function void IncreaseSkill()
     {
         PrintError("You don't have enough Skill Tokens");
         ActivatorSound("menu/error", 127);
+    };
+};
+
+function void UpgradeTurret(int Index)
+{
+    if (Player.Turret.Upgrade[Index] < TurretUpgradeData[Index].MaxLevel)
+    {
+        if (CheckInventory("DRPGTurretPart") >= TurretUpgradeData[Index].Cost)
+        {
+            Player.Turret.Upgrade[Index]++;
+            TakeInventory("DRPGTurretPart", TurretUpgradeData[Index].Cost);
+            ActivatorSound("menu/move", 127);
+        }
+        else
+        {
+            PrintError("You don't have enough Turret Parts to perform this upgrade");
+            ActivatorSound("menu/error", 127);
+        };
     };
 };
 
