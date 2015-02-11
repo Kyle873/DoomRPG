@@ -1,5 +1,4 @@
 // Railbot base code by Captain Toenail
-
 ACTOR DRPGOutpostTurret 19997
 {
     Health 150
@@ -174,16 +173,36 @@ actor DRPGOutpostTurretExplosion
 
 ACTOR DRPGPortableTurret
 {
+    // Upgrades
+    var int user_upgrade[128];
+    
+    // Weapons
+    var int user_weapon;
+    var int user_bullet_damage;
+    var int user_bullet_rof;
+    var int user_pellet_damage;
+    var int user_pellet_rof;
+    var int user_pellet_spread;
+    var int user_pellet_amount;
+    var int user_rocket_damage;
+    var int user_rocket_rof;
+    var int user_plasma_damage;
+    var int user_plasma_rof;
+    var int user_railgun_damage;
+    var int user_railgun_rof;
+    
     Health 100
     Radius 16
     Height 16
-    Speed 0
+    Speed 10
     Painchance 256
     Mass 0x7FFFFFFF
     
     Species "Player"
     
     -SOLID
+    +SHOOTABLE
+    +NOBLOOD
     +NOCLIP
     +NOBLOCKMAP
     +FLOATBOB
@@ -194,26 +213,46 @@ ACTOR DRPGPortableTurret
     Spawn:
     See:
         TNT1 A 0 A_PlaySound("drpgturret/hum", CHAN_6, 1.0, 1, 1.25)
-        PTUR AAAAAAAAAAAAAAAAAAAA 1 A_Chase("", "Missile")
-        TNT1 A 0 A_Jump(230, "See")
+        PTUR A 1 A_Chase("", "Missile")
+        TNT1 A 0 A_Jump(255, "See")
         TNT1 A 0 A_PlaySound("drpgturret/beep", 7)
         Loop
     Missile:
+        TNT1 A 0 A_JumpIf(user_weapon == TW_NONE, "See")
+        TNT1 A 0 A_JumpIf(user_weapon == TW_BULLET, "Missile.Bullet")
+        TNT1 A 0 A_JumpIf(user_weapon == TW_PELLET, "Missile.Pellet")
+        TNT1 A 0 A_JumpIf(user_weapon == TW_ROCKET, "Missile.Rocket")
+        TNT1 A 0 A_JumpIf(user_weapon == TW_PLASMA, "Missile.Plasma")
+        TNT1 A 0 A_JumpIf(user_weapon == TW_RAILGUN, "Missile.Railgun")
+    Missile.Bullet:
         TNT1 A 0 A_PlaySound("drpgturret/targeting", CHAN_7)
-        PTUR AAAAAAAAAAAAAAA 2 A_FaceTarget(15)
-    MissileLoop:
+        PTUR A 2 A_FaceTarget
+    Missile.BulletLoop:
         TNT1 A 0 A_FaceTarget
         TNT1 A 0 A_PlaySound("drpgturret/fire", CHAN_WEAPON, 1.0, 0, 0.6)
-        PTUR B 0 Bright A_CustomBulletAttack(16, 0, 2, Random(1, 5) * 3, "DRPGMarineBulletPuff", 0, CBAF_NORANDOM)
+        PTUR B 0 Bright A_CustomBulletAttack(16, 0, 1, Random(5, 10) * (user_bullet_damage + 1), "BulletPuff", 0, CBAF_NORANDOM)
         PTUR B 2 Bright
-        PTUR A 5 A_FaceTarget
+        PTUR A 0 A_SetTics(6 - user_bullet_rof)
+        PTUR A 0 A_FaceTarget
+        TNT1 A 0 A_MonsterRefire(0, "MissileEnd")
+        Loop
+    Missile.Pellet:
+        TNT1 A 0 A_PlaySound("drpgturret/targeting", CHAN_7)
+        PTUR A 2 A_FaceTarget
+    Missile.PelletLoop:
+        TNT1 A 0 A_FaceTarget
+        TNT1 A 0 A_PlaySound("drpgturret/fire", CHAN_WEAPON, 1.0, 0, 0.6)
+        PTUR B 0 Bright A_CustomBulletAttack(16 - (user_pellet_spread * 3), 16 - (user_pellet_spread * 3), 3 * (user_pellet_amount + 1), Random(10, 20) * (user_pellet_damage + 1), "BulletPuff", 0, CBAF_NORANDOM)
+        PTUR B 10 Bright
+        PTUR A 0 A_SetTics(35 - (user_pellet_rof * 5))
+        PTUR A 0 A_FaceTarget
         TNT1 A 0 A_MonsterRefire(0, "MissileEnd")
         Loop
     MissileEnd:
         TNT1 A 0 A_PlaySound("drpgturret/cooldown", CHAN_5)
-        PTUR AAAAA 3 A_FaceTarget
+        PTUR A 2 A_FaceTarget
         Goto See
-    Despawn:
+    Death:
         TNT1 A 0 A_SpawnItemEx("TeleportFog")
         Stop
     }
@@ -233,4 +272,29 @@ actor DRPGTurretPart : Inventory
         TPRT ABCD 6 Bright
         Loop
     }
+}
+
+actor DRPGTurretAmmoBullet : Inventory
+{
+    Inventory.MaxAmount 0x7FFFFFFF
+}
+
+actor DRPGTurretAmmoShell : Inventory
+{
+    Inventory.MaxAmount 0x7FFFFFFF
+}
+
+actor DRPGTurretAmmoRocket : Inventory
+{
+    Inventory.MaxAmount 0x7FFFFFFF
+}
+
+actor DRPGTurretAmmoCell : Inventory
+{
+    Inventory.MaxAmount 0x7FFFFFFF
+}
+
+actor DRPGTurretAmmoRail : Inventory
+{
+    Inventory.MaxAmount 0x7FFFFFFF
 }
