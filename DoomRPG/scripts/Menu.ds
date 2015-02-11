@@ -1213,12 +1213,22 @@ function void DrawTurretMenu()
         PrintSprite("PTURA3A7", 0, 32.1, 46.0 + (int)(Sin((fixed)Timer() / 64.0) * 8.0), 0.05);
     
     // Parts
-    PrintSprite("TPRTA0", 0, 96.1, 56.0, 0.05);
     SetFont("BIGFONT");
     if (Player.Turret.Upgrade[Player.MenuIndex] < Upgrade->MaxLevel)
-        HudMessage("%d \cg(-%d)\n", Parts, TurretUpgradeCost(Player.MenuIndex), HUDMSG_PLAIN, 0, CR_WHITE, 148.1, 36.0, 0.05)
+        HudMessage("%d \cg(-%d)\n", Parts, TurretUpgradeCost(Player.MenuIndex), HUDMSG_PLAIN, 0, CR_WHITE, 96.0, 38.0, 0.05)
     else
-        HudMessage("%d\n", Parts, HUDMSG_PLAIN, 0, CR_WHITE, 148.1, 36.0, 0.05);
+        HudMessage("%d\n", Parts, HUDMSG_PLAIN, 0, CR_WHITE, 96.0, 38.0, 0.05);
+    PrintSprite("TPRTA0", 0, 96.1, 56.0, 0.05);
+    
+    // Ammo
+    SetFont("BIGFONT");
+    HudMessage("Ammo\n", HUDMSG_PLAIN, 0, CR_WHITE, 344.1, 64.0, 0.05);
+    HudMessage("%d/%d\n", Player.Turret.BulletAmmo, Player.Turret.BulletAmmoMax, HUDMSG_PLAIN, 0, CR_BRICK, 344.1, 76.0, 0.05);
+    HudMessage("%d/%d\n", Player.Turret.ShellAmmo, Player.Turret.ShellAmmoMax, HUDMSG_PLAIN, 0, CR_ORANGE, 344.1, 88.0, 0.05);
+    HudMessage("%d/%d\n", Player.Turret.RocketAmmo, Player.Turret.RocketAmmoMax, HUDMSG_PLAIN, 0, CR_GREY, 344.1, 100.0, 0.05);
+    HudMessage("%d/%d\n", Player.Turret.PlasmaAmmo, Player.Turret.PlasmaAmmoMax, HUDMSG_PLAIN, 0, CR_CYAN, 344.1, 112.0, 0.05);
+    HudMessage("%d/%d\n", Player.Turret.RailAmmo, Player.Turret.RailAmmoMax, HUDMSG_PLAIN, 0, CR_GREEN, 344.1, 124.0, 0.05);
+    PrintSprite("T_UPG27", 0, 320.0, 80.0, 0.05);
     
     // Upgrades
     int Count = 0;
@@ -1264,7 +1274,7 @@ function void DrawTurretMenu()
     
     // Upgrade Description
     SetFont("SMALLFONT");
-    HudMessage("\ck%s\n\cd%s\n", Upgrade->Description, Upgrade->UpgradeInfo, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 284.1, 0.05);
+    HudMessage("\ck%s\n\cd%s\n\ca%s\n", Upgrade->Description, Upgrade->UpgradeInfo, Upgrade->CommandInfo, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 284.1, 0.05);
 };
 
 function void MenuInput()
@@ -1705,6 +1715,8 @@ function void MenuInput()
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
             UpgradeTurret(Player.MenuIndex);
+        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+            TurretCommand(Player.MenuIndex);
     };
     
     // Reset the Delay Timer if no buttons are pressed
@@ -1875,6 +1887,14 @@ function void IncreaseSkill()
 
 function void UpgradeTurret(int Index)
 {
+    /* Uncomment when ready
+    if (Index > 0 && !Player.Turret.Upgrade[TU_BUILD])
+    {
+        PrintError("You haven't built the turret yet");
+        ActivatorSound("menu/error", 127);
+        return;
+    }; */
+    
     if (Player.Turret.Upgrade[Index] < TurretUpgradeData[Index].MaxLevel)
     {
         if (CheckInventory("DRPGTurretPart") >= TurretUpgradeData[Index].Cost)
