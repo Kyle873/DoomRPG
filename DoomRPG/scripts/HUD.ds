@@ -665,7 +665,56 @@ script void CoopViewHUD() enter
         Delay(1);
     };
 };
+
+script void TurretHUD() enter
+{
+    Start:
     
+    while (Player.Turret.Active)
+    {
+        fixed X = GetCVarFixed("drpg_turret_x");
+        fixed Y = GetCVarFixed("drpg_turret_y");
+        int Health = GetActorProperty(Player.Turret.TID, APROP_Health);
+        int[TW_MAX] Ammo =
+        {
+            Player.Turret.BulletAmmo;
+            Player.Turret.ShellAmmo;
+            Player.Turret.RocketAmmo;
+            Player.Turret.PlasmaAmmo;
+            Player.Turret.RailAmmo;
+        };
+        str AmmoIcon = "";
+        
+        SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+        
+        // Determine Ammo Icon
+        switch (Player.Turret.Weapon)
+        {
+            case TW_BULLET:                     AmmoIcon = "CLIPA0";    break;
+            case TW_PELLET:                     AmmoIcon = "SHELA0";    break;
+            case TW_ROCKET:                     AmmoIcon = "ROCKA0";    break;
+            case TW_PLASMA: case TW_RAILGUN:    AmmoIcon = "CELLA0";    break;
+        };
+        
+        // Icons
+        PrintSprite("PTURA3A7", 0, X + 0.1, Y + (int)(Sin((fixed)Timer() / 64.0) * 8.0), 0.05);
+        if (Player.Turret.Weapon > 0)
+            PrintSprite(AmmoIcon, 0, X + 0.1, Y + 24.0, 0.05);
+        
+        // Health, Battery, Ammo
+        SetFont("BIGFONT");
+        HudMessage("%d\n", Health, HUDMSG_PLAIN, 0, CR_RED, X + 24.1, Y - 16.0, 0.05);
+        HudMessage("%s\n", FormatTime(Player.Turret.Battery * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 24.1, Y, 0.05);
+        if (Player.Turret.Weapon > 0)
+            HudMessage("%d\n", Ammo[Player.Turret.Weapon - 1], HUDMSG_PLAIN, 0, CR_WHITE, X + 24.1, Y + 16.0, 0.05);
+        
+        Delay(1);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
 script void StatHUD()
 {
     fixed X = GetCVarFixed("drpg_stats_x");
