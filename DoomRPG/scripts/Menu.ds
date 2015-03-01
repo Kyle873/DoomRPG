@@ -1727,16 +1727,35 @@ function void MenuInput()
         Player.DelayTimer = 0;
 };
 
-// TODO: This entire function needs a rewrite, it's fucking terrible
-// TODO: Should probably use stat type enum in here
 function void IncreaseStat(int Stat)
 {
-    int StatAmount;
+    int *[STAT_MAX] Stats =
+    {
+        &Player.Strength;
+        &Player.Defense;
+        &Player.Vitality;
+        &Player.Energy;
+        &Player.Regeneration;
+        &Player.Agility;
+        &Player.Capacity;
+        &Player.Luck;
+    };
+    long int *[STAT_MAX] StatXP =
+    {
+        &Player.StrengthXP;
+        &Player.DefenseXP;
+        &Player.VitalityXP;
+        &Player.EnergyXP;
+        &Player.RegenerationXP;
+        &Player.AgilityXP;
+        &Player.CapacityXP;
+        &Player.LuckXP;
+    };
     
     // Don't allow increasing of stats while you have a stim active
     if (Player.Stim.Active)
     {
-        if (Stat == 0)
+        if (!GetCVar("drpg_auto_spend"))
         {
             PrintError("You cannot increase stats while a stim is active");
             ActivatorSound("menu/error", 127);
@@ -1745,36 +1764,8 @@ function void IncreaseStat(int Stat)
         return;
     };
     
-    // Determine which Stat we're working with for Stat amount calculation on upgrade
-    if (Stat > 0)
-    {
-        switch (Stat)
-        {
-        case 1: StatAmount = Player.Strength;        break;
-        case 2: StatAmount = Player.Defense;         break;
-        case 3: StatAmount = Player.Vitality;        break;
-        case 4: StatAmount = Player.Energy;          break;
-        case 5: StatAmount = Player.Regeneration;    break;
-        case 6: StatAmount = Player.Agility;         break;
-        case 7: StatAmount = Player.Capacity;        break;
-        case 8: StatAmount = Player.Luck;            break;
-        };
-    }
-    else
-    {
-        switch (Player.MenuIndex)
-        {
-        case 0: StatAmount = Player.Strength;        break;
-        case 1: StatAmount = Player.Defense;         break;
-        case 2: StatAmount = Player.Vitality;        break;
-        case 3: StatAmount = Player.Energy;          break;
-        case 4: StatAmount = Player.Regeneration;    break;
-        case 5: StatAmount = Player.Agility;         break;
-        case 6: StatAmount = Player.Capacity;        break;
-        case 7: StatAmount = Player.Luck;            break;
-        };
-    };
-    
+    // Determine the cost of the stat upgrade
+    int StatAmount = 0;
     if (GetCVar("drpg_statcost") == 0) // Normal Costs
         StatAmount = 1;
     if (GetCVar("drpg_statcost") == 1) // Progressive Costs
@@ -1785,82 +1776,37 @@ function void IncreaseStat(int Stat)
     // Make sure you have enough Stat Tokens
     if (CheckInventory("DRPGStatToken") < StatAmount && Stat == 0)
     {
-        if (Player.DelayTimer > 0) return;
-        PrintError("You don't have enough Stat Tokens");
-        ActivatorSound("menu/error", 127);
+        if (Stat == 0) // From the menu
+        {
+            if (Player.DelayTimer > 0) return;
+            PrintError("You don't have enough Stat Tokens");
+            ActivatorSound("menu/error", 127);
+        };
+        
         return;
-    }
-    else if (CheckInventory("DRPGStatToken") < StatAmount && Stat > 0)
-        return;
+    };
     
     // Check Stat Caps
     CheckStatCaps();
     
     // Upgrade the Stat
-    if (Stat > 0)
+    int Type = (Stat > 0 ? Stat - 1 : Stat);
+    if (*Stats[Type] < Player.StatCap)
     {
-        if (GetCVar("drpg_levelup_natural"))
-        {
-            switch (Stat)
-            {
-            case 1: if (Player.Strength >= Player.StatCap)      { return; } else Player.StrengthXP = XPTable[Player.Strength];          break;
-            case 2: if (Player.Defense >= Player.StatCap)       { return; } else Player.DefenseXP = XPTable[Player.Defense];            break;
-            case 3: if (Player.Vitality >= Player.StatCap)      { return; } else Player.VitalityXP = XPTable[Player.Vitality];          break;
-            case 4: if (Player.Energy >= Player.StatCap)        { return; } else Player.EnergyXP = XPTable[Player.Energy];              break;
-            case 5: if (Player.Regeneration >= Player.StatCap)  { return; } else Player.RegenerationXP = XPTable[Player.Regeneration];  break;
-            case 6: if (Player.Agility >= Player.StatCap)       { return; } else Player.AgilityXP = XPTable[Player.Agility];            break;
-            case 7: if (Player.Capacity >= Player.StatCap)      { return; } else Player.CapacityXP = XPTable[Player.Capacity];          break;
-            case 8: if (Player.Luck >= Player.StatCap)          { return; } else Player.LuckXP = XPTable[Player.Luck];                  break;
-            };
-        }
+        if (GetCVar("drpg_levelup_natural")) // Natural Leveling
+            *StatXP[Type] = StatTable[*Stats[Type]]
         else
-        {
-            switch (Stat)
-            {
-            case 1: if (Player.Strength >= Player.StatCap)      { return; } else Player.Strength++;     break;
-            case 2: if (Player.Defense >= Player.StatCap)       { return; } else Player.Defense++;      break;
-            case 3: if (Player.Vitality >= Player.StatCap)      { return; } else Player.Vitality++;     break;
-            case 4: if (Player.Energy >= Player.StatCap)        { return; } else Player.Energy++;       break;
-            case 5: if (Player.Regeneration >= Player.StatCap)  { return; } else Player.Regeneration++; break;
-            case 6: if (Player.Agility >= Player.StatCap)       { return; } else Player.Agility++;      break;
-            case 7: if (Player.Capacity >= Player.StatCap)      { return; } else Player.Capacity++;     break;
-            case 8: if (Player.Luck >= Player.StatCap)          { return; } else Player.Luck++;         break;
-            };
-        };
+            (*Stats[Type])++;
     }
     else
     {
-        if (GetCVar("drpg_levelup_natural"))
-        {
-            switch (Player.MenuIndex)
-            {
-            case 0: if (Player.Strength >= Player.StatCap)      { return; } else Player.StrengthXP = XPTable[Player.Strength];          break;
-            case 1: if (Player.Defense >= Player.StatCap)       { return; } else Player.DefenseXP = XPTable[Player.Defense];            break;
-            case 2: if (Player.Vitality >= Player.StatCap)      { return; } else Player.VitalityXP = XPTable[Player.Vitality];          break;
-            case 3: if (Player.Energy >= Player.StatCap)        { return; } else Player.EnergyXP = XPTable[Player.Energy];              break;
-            case 4: if (Player.Regeneration >= Player.StatCap)  { return; } else Player.RegenerationXP = XPTable[Player.Regeneration];  break;
-            case 5: if (Player.Agility >= Player.StatCap)       { return; } else Player.AgilityXP = XPTable[Player.Agility];            break;
-            case 6: if (Player.Capacity >= Player.StatCap)      { return; } else Player.CapacityXP = XPTable[Player.Capacity];          break;
-            case 7: if (Player.Luck >= Player.StatCap)          { return; } else Player.LuckXP = XPTable[Player.Luck];                  break;
-            };
-        }
-        else
-        {
-            switch (Player.MenuIndex)
-            {
-            case 0: if (Player.Strength >= Player.StatCap)      { PrintStatError();     return; }   else Player.Strength++;     break;
-            case 1: if (Player.Defense >= Player.StatCap)       { PrintStatError();     return; }   else Player.Defense++;      break;
-            case 2: if (Player.Vitality >= Player.StatCap)      { PrintStatError();     return; }   else Player.Vitality++;     break;
-            case 3: if (Player.Energy >= Player.StatCap)        { PrintStatError();     return; }   else Player.Energy++;       break;
-            case 4: if (Player.Regeneration >= Player.StatCap)  { PrintStatError();     return; }   else Player.Regeneration++; break;
-            case 5: if (Player.Agility >= Player.StatCap)       { PrintStatError();     return; }   else Player.Agility++;      break;
-            case 6: if (Player.Capacity >= Player.StatCap)      { PrintStatError();     return; }   else Player.Capacity++;     break;
-            case 7: if (Player.Luck >= Player.StatCap)          { PrintStatError();     return; }   else Player.Luck++;         break;
-            };
-        };
+        if (Stat == 0) // From the menu
+            PrintStatError();
+        
+        return;
     };
     
-    if (Stat == 0)
+    if (Stat == 0) // Spent the point in the menu, make a sound
         ActivatorSound("menu/move", 127);
     
     TakeInventory("DRPGStatToken", StatAmount);
