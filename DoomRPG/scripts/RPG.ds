@@ -239,6 +239,7 @@ script void Loop()
     CheckShopCard();
     CheckMission();
     CheckHUD();
+    CheckKeys();
     
     // Handle the menu cursor color
     MenuCursorColor = CursorColors[(Timer() / 3) % 6];
@@ -839,6 +840,35 @@ function void CheckHUD()
     // Items
     Credits[PlayerNum] = CheckInventory("DRPGCredits");
     Continues[PlayerNum] = CheckInventory("DRPGContinue");
+};
+
+function void CheckKeys()
+{
+    static str[6] Keycards =
+    {
+        "DRPGRedCard";
+        "DRPGYellowCard";
+        "DRPGBlueCard";
+        "DRPGRedSkull";
+        "DRPGYellowSkull";
+        "DRPGBlueSkull";
+    };
+    
+    // Don't bother if we're not in multiplayer
+    if (!InMultiplayer) return;
+    
+    for (int i = 0; i < 6; i++)
+    {
+        if (CheckInventory(Keycards[i]))
+        {
+            for (int j = 0; j < MAX_PLAYERS; j++)
+            {
+                if (!PlayerInGame(j)) continue;
+                if (CheckActorInventory(Players(j).TID, Keycards[i])) continue;
+                SetActorInventory(Players(j).TID, Keycards[i], 1);
+            };
+        };
+    };
 };
 
 function void DefaultLoadout()
