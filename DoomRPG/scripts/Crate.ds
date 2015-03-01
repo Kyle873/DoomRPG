@@ -73,7 +73,11 @@ acscript void UseCrate(int ID)
         GenerateCrate(ID, Amount);
     };
     
+    // Check if you're in a menu
     if (Player.InMenu || Player.InShop || Player.CrateOpen) return;
+    
+    // Check if the crate is empty
+    if (CrateEmpty(ID)) return;
     
     Player.CrateOpen = true;
     Player.CrateID = ID;
@@ -115,6 +119,16 @@ function void CrateTakeItem()
         Crates[Player.CrateID].Active[Player.CrateIndex] = false;
         Crates[Player.CrateID].Item[Player.CrateIndex] = nullptr;
     };
+};
+
+function bool CrateEmpty(int ID)
+{
+    int Items = 0;
+    for (int i = 0; i < CRATE_MAX_ITEMS; i++)
+        if (Crates[ID].Active[i])
+            Items++;
+    
+    return !(Items > 0);
 };
 
 function void DrawCrate()
