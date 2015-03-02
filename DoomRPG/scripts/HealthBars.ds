@@ -21,6 +21,7 @@ function void DrawBarText(HUDBarInfo *Info, str Text)
         int Height = 600;
         fixed Dist;
         fixed DrawDist;
+        fixed DrawScale;
         fixed Angle;
         fixed VAngle;
         fixed Pitch;
@@ -35,12 +36,12 @@ function void DrawBarText(HUDBarInfo *Info, str Text)
             DrawDist = 1024.0;
         if (DrawDist < 128.0)
             DrawDist = 128.0;
-        DrawDist /= 256;
-        SetHudSize(Width * DrawDist, Height * DrawDist, true);
+        DrawScale = DrawDist / 256;
+        SetHudSize(Width * DrawScale, Height * DrawScale, true);
         
         // Calculate angles
         VAngle = VectorAngle(X, Y);
-        Angle = (VAngle - GetActorAngle(0) + 1.0) % 1.0;
+        Angle = (VAngle - GetActorAngle(0));
         
         if (((VAngle + 0.125) % 0.5) > 0.25)
             Dist = Y / Sin(VAngle)
@@ -50,14 +51,14 @@ function void DrawBarText(HUDBarInfo *Info, str Text)
         if ((Angle < 0.2 || Angle > 0.8))
         {
             Pitch = VectorAngle(Dist, Info->Z + (GetActorZ(0) + 64.0));
-            Pitch = (Pitch + GetActorPitch(0) + 1.0) % 1.0;
+            Pitch = (Pitch - GetActorPitch(0));
             
-            X = Width / 2 - ((Width / 2) * Sin(Angle) / Cos(Angle));
-            Y = Height / 2 - ((Height / 2) * Sin(Pitch) / Cos(Pitch));
+            X = (Width / 2 + ((Width / 2) * Sin(Angle)/2)) * DrawScale;
+            Y = (Height / 2 - ((Height / 2) * Sin(Pitch)/2)) * DrawScale;
             
             if (HealthBarClipEnabled)
-                SetHudClipRect(X + HealthBarClipX, (Y - 32) + HealthBarClipY, HealthBarClipWidth, HealthBarClipHeight);
-            HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, CR_UNTRANSLATED, (int)X + HealthBarX, (int)Y + (HealthBarY - 32), 0.05);
+                SetHudClipRect(X + HealthBarClipX, Y + HealthBarClipY, HealthBarClipWidth, HealthBarClipHeight);
+            HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, CR_UNTRANSLATED, (int)X + HealthBarX, (int)Y + HealthBarY, 0.05);
             SetHudClipRect(0, 0, 0, 0);
         }
         else
