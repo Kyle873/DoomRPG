@@ -4,6 +4,7 @@
 #include "Monsters.dh"
 #include "Utils.dh"
 
+int HealthBarID;
 fixed HealthBarX;
 fixed HealthBarY;
 
@@ -19,6 +20,8 @@ function void DrawBarText(HUDBarInfo *Info, str Text)
     {
         int Width = 800;
         int Height = 600;
+        fixed BaseViewHeight = (CompatMode == COMPAT_DRLA ? 48 : 41);
+        fixed HeightAdd;
         fixed Dist;
         fixed DrawDist;
         fixed DrawScale;
@@ -27,7 +30,6 @@ function void DrawBarText(HUDBarInfo *Info, str Text)
         fixed Pitch;
         fixed X;
         fixed Y;
-        fixed BaseViewHeight = (CompatMode == COMPAT_DRLA ? 48 : 41);
         
         // Calculate X/Y and distance
         X = Info->X - GetActorX(0);
@@ -43,17 +45,35 @@ function void DrawBarText(HUDBarInfo *Info, str Text)
         // Calculate angles
         VAngle = VectorAngle(X, Y);
         Angle = (VAngle - GetActorAngle(0));
-
+        
+        // Special height adjustments because most monsters heights are just flat out wrong
+        if (Contains(Info->Actor, "Cacodemon"))
+            HeightAdd = 16.0
+        else if (Contains(Info->Actor, "HellKnight") || Contains(Info->Actor, "BaronOfHell"))
+            HeightAdd = 16.0
+        else if (Contains(Info->Actor, "PainElemental"))
+            HeightAdd = 16.0
+        else if (Contains(Info->Actor, "Fatso") || Contains(Info->Actor, "Mancubus"))
+            HeightAdd = 8.0
+        else if (Contains(Info->Actor, "Revenant"))
+            HeightAdd = 40.0
+        else if (Contains(Info->Actor, "Archvile"))
+            HeightAdd = 24.0
+        else if (Contains(Info->Actor, "Cyberdemon"))
+            HeightAdd = 16.0
+        else if (Contains(Info->Actor, "SpiderMastermind"))
+            HeightAdd = 24.0;
+        
         if ((Angle < 0.2 || Angle > 0.8))
         {
-            Pitch = VectorAngle(VectorLength(X,Y), Info->Z + 80.0 - (GetActorZ(0) - BaseViewHeight + GetActorViewHeight(0)));
+            Pitch = VectorAngle(VectorLength(X, Y), Info->Z + Info->Height + 24.0 + HeightAdd - (GetActorZ(0) - BaseViewHeight + GetActorViewHeight(0)));
             
             X = (Width / 2 - ((Width / 2) * Sin(Angle))) * DrawScale;
-            Y = (Height / 2 - ((Height / 2) * Sin(Pitch)*3/2) - ((Height / 2) * Sin(GetActorPitch(0))*3/2)) * DrawScale;
+            Y = (Height / 2 - ((Height / 2) * Sin(Pitch) * 3 / 2) - ((Height / 2) * Sin(GetActorPitch(0)) * 3 / 2)) * DrawScale;
             
             if (HealthBarClipEnabled)
                 SetHudClipRect(X + HealthBarClipX, Y + HealthBarClipY, HealthBarClipWidth, HealthBarClipHeight);
-            HudMessage("%s\n", Text, HUDMSG_PLAIN, 0, CR_UNTRANSLATED, (int)X + HealthBarX, (int)Y + HealthBarY, 0.05);
+            HudMessage("%s\n", Text, HUDMSG_FADEOUT, HBAR_ID + HealthBarID++, CR_UNTRANSLATED, (int)X + HealthBarX, (int)Y + HealthBarY, 0.05, 0.1);
             SetHudClipRect(0, 0, 0, 0);
         }
         else
@@ -109,12 +129,15 @@ script void HealthBars()
         auto HUDBarInfo Info =
         {
             false; false;               // Is Player? / Is Friendly?
-            ""; "";                     // Name
+            ""; ""; "";                 // Actor/Name
             0; 0; {};                   // Level/Rank/Auras
             0; 0; 0; 0; 0; false; 0; 0; // Health/Armor/Shield
             0; 0; 0; 0; 0; 0; 0; 0;     // Stats
             0.0; 0.0; 0.0; 0.0;         // Position
         };
+        
+        // Actor
+        Info.Actor = GetActorClass(0);
         
         // Friendly
         if (GetActorProperty(0, APROP_Friendly))
@@ -202,6 +225,9 @@ script void HealthBars()
         if (ActivatorTID() != Players(PlayerNum).TID && ClassifyActor(0) & ACTOR_ALIVE && !(ClassifyActor(0) & ACTOR_WORLD))
         {
             SetActivator(Players(PlayerNum).TID);
+            
+            // Reset the health bar drawing ID
+            HealthBarID = 0;
             
             // Draw the bar's components
             DrawBarBase(&Info);
