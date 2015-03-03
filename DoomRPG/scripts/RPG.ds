@@ -327,7 +327,7 @@ script void PlayerDamage()
 {
     int BeforeDamage;
     int DamageTaken;
-    int ShieldDamageAmt;
+    int ShieldDamageAmount;
     bool CanSurvive;
     
     Start:
@@ -360,10 +360,10 @@ script void PlayerDamage()
     {
         SetPlayerProperty(0, 0, PROP_BUDDHA);
         
-        SetActorProperty(0, APROP_Health, 1000000);
+        SetActorProperty(0, APROP_Health, SHIELD_HEALTH);
         
         // Hilarious hack to allow healing detection
-        SetActorProperty(0, APROP_SpawnHealth, Player.ActualHealth < Player.HealthMax? 2000000 : 1000000);
+        SetActorProperty(0, APROP_SpawnHealth, Player.ActualHealth < Player.HealthMax ? SHIELD_HEALTH * 2 : SHIELD_HEALTH);
     };
     
     BeforeDamage = GetActorProperty(Player.TID, APROP_Health);
@@ -372,7 +372,7 @@ script void PlayerDamage()
     Delay(1);
     
     DamageTaken = BeforeDamage - GetActorProperty(Player.TID, APROP_Health);
-    ShieldDamageAmt = 0;
+    ShieldDamageAmount = 0;
     
     if (DamageTaken > 0)
     {
@@ -386,20 +386,18 @@ script void PlayerDamage()
     };
     
     if (DamageTaken > 0 && Player.Shield.Active)
-    {
         ShieldTimerReset();
-    };
     
     if (DamageTaken > 0 && Player.Shield.Active && Player.Shield.Charge)
     {
-        ShieldDamageAmt = DamageTaken; // For callback
-        if (ShieldDamageAmt > Player.Shield.Charge)
-            ShieldDamageAmt = Player.Shield.Charge;
+        ShieldDamageAmount = DamageTaken; // For callback
+        if (ShieldDamageAmount > Player.Shield.Charge)
+            ShieldDamageAmount = Player.Shield.Charge;
         
         Player.Shield.Charge -= DamageTaken;
         Player.Shield.Full = false;
         
-        ShieldDamage(ShieldDamageAmt);
+        ShieldDamage(ShieldDamageAmount);
         
         if (Player.Shield.Charge <= 0)
         {
@@ -495,6 +493,7 @@ acscript int AddHealth(int HealthPercent, int MaxPercent)
             if (GetCVar("drpg_character_spec") == 3)
                 Scale *= 2;
         };
+        
         int Factor = CalcPercent(HealthAmount, Player.HealthMax);
         Player.VitalityXP += (int)(Factor * Scale * 10);
     };
@@ -522,6 +521,7 @@ acscript int AddHealthDirect(int HealthAmount, int MaxPercent)
             if (GetCVar("drpg_character_spec") == 3)
                 Scale *= 2;
         };
+        
         int Factor = CalcPercent(HealthAmount, Player.HealthMax);
         Player.VitalityXP += (int)(Factor * Scale * 10);
     };
@@ -534,6 +534,7 @@ acscript int AddHealthDirect(int HealthAmount, int MaxPercent)
 script void WeaponSpeed()
 {
     Start:
+    
     int Time;
     
     if (Player.Agility <= 100)
