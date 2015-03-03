@@ -1402,7 +1402,7 @@ function void MenuInput()
         };
         if (Buttons == BT_USE && (OldButtons != BT_USE || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
             if (Player.StatPage == STATPAGE_STATS && CheckInventory("DRPGStatToken") > 0)
-                IncreaseStat(0)
+                IncreaseStat(Player.MenuIndex)
             else if (Player.StatPage == STATPAGE_TEAM && Player.MenuIndex != PlayerNumber())
             {
                 PlayerTeleport(Player.MenuIndex);
@@ -1793,23 +1793,22 @@ function void IncreaseStat(int Stat)
     CheckStatCaps();
     
     // Upgrade the Stat
-    int Type = (Stat > 0 ? Stat - 1 : Stat);
-    if (*Stats[Type] < Player.StatCap)
+    if (*Stats[Stat] < Player.StatCap)
     {
         if (GetCVar("drpg_levelup_natural")) // Natural Leveling
-            *StatXP[Type] = StatTable[*Stats[Type]]
+            *StatXP[Stat] = StatTable[*Stats[Stat]]
         else
-            (*Stats[Type])++;
+            (*Stats[Stat])++;
     }
     else
     {
-        if (Stat == 0) // From the menu
+        if (Player.InMenu) // From the menu
             PrintStatError();
         
         return;
     };
     
-    if (Stat == 0) // Spent the point in the menu, make a sound
+    if (Player.InMenu) // Spent the point in the menu, make a sound
         ActivatorSound("menu/move", 127);
     
     TakeInventory("DRPGStatToken", StatAmount);
