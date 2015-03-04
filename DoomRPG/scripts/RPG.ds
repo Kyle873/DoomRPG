@@ -20,7 +20,7 @@
 #include "Utils.dh"
 
 // Version
-const str Version = "v0.9.12 Beta - Maximum Frisbee DLC: Now with 125% more Shield Accessories";
+const str Version = "v0.9.13 Beta - Phat Lewt Edition";
 
 // Flags
 static bool InBase;
@@ -67,8 +67,12 @@ script void GlobalInit() open
         // Get the XP Curve from the CVAR
         XPCurve = GetCVar("drpg_xp_curve");
         
-        // Initialize XP & Rank Tables
-        InitTables();
+        // Initialize XP, Stat and Rank Tables
+        InitXPTable();
+        Delay(1);
+        InitStatXPTable();
+        Delay(1);
+        InitRankTable();
         
         // Arena Wave
         ArenaMaxWave = 1;
@@ -180,6 +184,10 @@ script void Init() enter
     // Mission Initialization
     InitMission();
     
+    // Initialize the Dynamic Loot Generator
+    if (GetCVar("drpg_loot_system") && PlayerNumber() == 0 && !InBase) // This should only run once on the first player
+        DynamicLootGenerator();
+    
     // Small delay before initializing the scripts for mod compatibility
     Delay(4);
     
@@ -239,6 +247,7 @@ script void Loop()
     CheckShopCard();
     CheckMission();
     CheckHUD();
+    CheckKeys();
     
     // Handle the menu cursor color
     MenuCursorColor = CursorColors[(Timer() / 3) % 6];
@@ -322,7 +331,7 @@ script void PlayerDamage()
 {
     int BeforeDamage;
     int DamageTaken;
-    int ShieldDamageAmt;
+    int ShieldDamageAmount;
     bool CanSurvive;
     
     Start:
@@ -355,10 +364,10 @@ script void PlayerDamage()
     {
         SetPlayerProperty(0, 0, PROP_BUDDHA);
         
-        SetActorProperty(0, APROP_Health, 1000000);
+        SetActorProperty(0, APROP_Health, SHIELD_HEALTH);
         
         // Hilarious hack to allow healing detection
-        SetActorProperty(0, APROP_SpawnHealth, Player.ActualHealth < Player.HealthMax? 2000000 : 1000000);
+        SetActorProperty(0, APROP_SpawnHealth, Player.ActualHealth < Player.HealthMax ? SHIELD_HEALTH * 2 : SHIELD_HEALTH);
     };
     
     BeforeDamage = GetActorProperty(Player.TID, APROP_Health);
@@ -367,7 +376,7 @@ script void PlayerDamage()
     Delay(1);
     
     DamageTaken = BeforeDamage - GetActorProperty(Player.TID, APROP_Health);
-    ShieldDamageAmt = 0;
+    ShieldDamageAmount = 0;
     
     if (DamageTaken > 0)
     {
@@ -381,20 +390,18 @@ script void PlayerDamage()
     };
     
     if (DamageTaken > 0 && Player.Shield.Active)
-    {
         ShieldTimerReset();
-    };
     
     if (DamageTaken > 0 && Player.Shield.Active && Player.Shield.Charge)
     {
-        ShieldDamageAmt = DamageTaken; // For callback
-        if (ShieldDamageAmt > Player.Shield.Charge)
-            ShieldDamageAmt = Player.Shield.Charge;
+        ShieldDamageAmount = DamageTaken; // For callback
+        if (ShieldDamageAmount > Player.Shield.Charge)
+            ShieldDamageAmount = Player.Shield.Charge;
         
         Player.Shield.Charge -= DamageTaken;
         Player.Shield.Full = false;
         
-        ShieldDamage(ShieldDamageAmt);
+        ShieldDamage(ShieldDamageAmount);
         
         if (Player.Shield.Charge <= 0)
         {
@@ -490,6 +497,7 @@ acscript int AddHealth(int HealthPercent, int MaxPercent)
             if (GetCVar("drpg_character_spec") == 3)
                 Scale *= 2;
         };
+        
         int Factor = CalcPercent(HealthAmount, Player.HealthMax);
         Player.VitalityXP += (int)(Factor * Scale * 10);
     };
@@ -517,6 +525,7 @@ acscript int AddHealthDirect(int HealthAmount, int MaxPercent)
             if (GetCVar("drpg_character_spec") == 3)
                 Scale *= 2;
         };
+        
         int Factor = CalcPercent(HealthAmount, Player.HealthMax);
         Player.VitalityXP += (int)(Factor * Scale * 10);
     };
@@ -529,6 +538,7 @@ acscript int AddHealthDirect(int HealthAmount, int MaxPercent)
 script void WeaponSpeed()
 {
     Start:
+    
     int Time;
     
     if (Player.Agility <= 100)
@@ -553,11 +563,10 @@ script void StatRandomizer()
         while (CheckInventory("DRPGStatToken") > 0 && !StatsCapped())
         {
             // Select Preferred Stat
-            if (Random(1, 2) == 1 && GetCVar("drpg_auto_spend_pref") > 0)
-                IncreaseStat(GetCVar("drpg_auto_spend_pref"));
-            
-            // Select Random Stat
-            IncreaseStat(Random(1, STAT_MAX - 1));
+            if (Random(1, 2) == 1 && GetCVar("drpg_auto_spend_pref") >= 0)
+                IncreaseStat(GetCVar("drpg_auto_spend_pref"))
+            else // Select Random Stat
+                IncreaseStat(Random(0, STAT_MAX - 1));
             
             // Display Stat HUD
             StatHUD();
@@ -611,6 +620,68 @@ script void AutosaveHandler()
             --SaveTimer;
         
         Delay(1);
+    };
+};
+
+// Dynamic Loot Generation System
+acscript void DynamicLootGenerator()
+{
+    fixed BaseX = GetActorX(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
+    fixed BaseY = GetActorY(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
+    fixed BaseZ = GetActorZ(0) + 32.0;
+    fixed Boundary = 0;
+    int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+    int MaxRolls = Random(0, LevelNum) + (GetItemDropLuck() + AveragePlayerLevel() / 2) + Random(GameSkill(), GameSkill() * 2);
+    int Rolls = 0;
+    
+    // Find the furthest monster from the player to determine some approximate boundaries to work with
+    for (int i = 0; i < MonsterID; i++)
+    {
+        fixed Dist = Distance3D(GetActorX(0), GetActorY(0), GetActorZ(0), Monsters[i].Position.X, Monsters[i].Position.Y, Monsters[i].Position.Z);
+        if (Dist > Boundary)
+            Boundary = Dist;
+    };
+    
+    while (Rolls < MaxRolls)
+    {
+        int TID = UniqueTID();
+        fixed X = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
+        fixed Y = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
+        fixed Z = BaseZ + Random(-Boundary / 64, Boundary / 64);
+        
+        bool Spawned = Spawn("DRPGGenericDropper", X, Y, Z, TID, 0);
+        if (Spawned)
+        {
+            bool Remove = true;
+            
+            for (int i = 0; i < MonsterID; i++)
+            {
+                // If this spot is blank, skip it
+                if (Monsters[i].TID == 0) continue;
+                
+                // Randomly continue for variance
+                if (Random(1, 4) == 1) continue;
+                
+                bool CanSee = CheckSight(TID, Monsters[i].TID, 0);
+                if (CanSee)
+                {
+                    Remove = false;
+                    Rolls++;
+                    break;
+                };
+            };
+            
+            if (Remove)
+                Thing_Remove(TID);
+        };
+        
+        if (GetCVar("drpg_debug"))
+        {
+            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\ciBoundary: %k\nX: %k\nY: %k\nZ: %k\n", Rolls, MaxRolls, Boundary, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 0.5, 0.5);
+            Delay(1);
+        }
+        else if ((Timer() % 5) == 0)
+            Delay(1);
     };
 };
 
@@ -839,6 +910,35 @@ function void CheckHUD()
     // Items
     Credits[PlayerNum] = CheckInventory("DRPGCredits");
     Continues[PlayerNum] = CheckInventory("DRPGContinue");
+};
+
+function void CheckKeys()
+{
+    static str[6] Keycards =
+    {
+        "DRPGRedCard";
+        "DRPGYellowCard";
+        "DRPGBlueCard";
+        "DRPGRedSkull";
+        "DRPGYellowSkull";
+        "DRPGBlueSkull";
+    };
+    
+    // Don't bother if we're not in multiplayer
+    if (!InMultiplayer) return;
+    
+    for (int i = 0; i < 6; i++)
+    {
+        if (CheckInventory(Keycards[i]))
+        {
+            for (int j = 0; j < MAX_PLAYERS; j++)
+            {
+                if (!PlayerInGame(j)) continue;
+                if (CheckActorInventory(Players(j).TID, Keycards[i])) continue;
+                SetActorInventory(Players(j).TID, Keycards[i], 1);
+            };
+        };
+    };
 };
 
 function void DefaultLoadout()

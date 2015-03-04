@@ -537,14 +537,14 @@ acscript void CheckArmorStats()
 // Returns whether your stats are all currently capped or not1
 function bool StatsCapped()
 {
-    return (Player.Strength >= SoftStatCap &&
-            Player.Defense >= SoftStatCap &&
-            Player.Vitality >= SoftStatCap &&
-            Player.Energy >= SoftStatCap &&
-            Player.Regeneration >= SoftStatCap &&
-            Player.Agility >= SoftStatCap &&
-            Player.Capacity >= SoftStatCap &&
-            Player.Luck >= SoftStatCap);
+    return (Player.Strength >= Player.StatCap &&
+            Player.Defense >= Player.StatCap &&
+            Player.Vitality >= Player.StatCap &&
+            Player.Energy >= Player.StatCap &&
+            Player.Regeneration >= Player.StatCap &&
+            Player.Agility >= Player.StatCap &&
+            Player.Capacity >= Player.StatCap &&
+            Player.Luck >= Player.StatCap);
 };
 
 // Calculates pay for the Rank Payout
@@ -766,10 +766,6 @@ acscript int GetItemDropLuck()
     // Average the Luck
     TotalLuck /= NumPlayers;
     TotalLuck = (int)((fixed)TotalLuck / 6.25);
-    
-    // Prevent overflow from Luck total being too high
-    if (TotalLuck > 32)
-        TotalLuck = 32;
     
     return TotalLuck;
 };
@@ -1296,7 +1292,7 @@ script void DrawStatUp(int Stat)
         "\ctRegen";
         "\ciAgility";
         "\chCapacity";
-        "\ckLuck";
+        "\cfLuck";
     };
     
     int[STAT_MAX] StatAmount =
@@ -1356,7 +1352,7 @@ script void DrawStatUp(int Stat)
     };
 };
 
-// PrintSprite Utility Function
+// PrintSprite Utility Functions
 function void PrintSprite(str Sprite, int ID, fixed X, fixed Y, fixed DelayTime)
 {
     SetFont(Sprite);
@@ -1724,8 +1720,18 @@ function fixed Distance(int TID1, int TID2)
     return VectorLength(VectorLength(X, Y), Z);
 };
 
-// Gets the distance between two points on the HUD
-function fixed DistanceScreen(int X1, int Y1, int X2, int Y2)
+// Gets the distance between two points
+function fixed Distance3D(fixed X1, fixed Y1, fixed Z1, fixed X2, fixed Y2, fixed Z2)
+{
+    fixed X = X1 - X2;
+    fixed Y = Y1 - Y2;
+    fixed Z = Z1 - Z2;
+    
+    return VectorLength(VectorLength(X, Y), Z);
+};
+
+// Gets the distance between two points
+function fixed Distance2D(int X1, int Y1, int X2, int Y2)
 {
     fixed X = X1 - X2;
     fixed Y = Y1 - Y2;

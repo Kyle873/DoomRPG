@@ -18,6 +18,7 @@ int HardStatCap = 1000;
 
 // XP & Rank Tables
 static long int[MAX_LEVEL] XPTable;
+static long int[MAX_LEVEL * 2] StatTable;
 static long int[MAX_RANK] RankTable;
 
 // Rank strings
@@ -98,7 +99,6 @@ acscript void TryStatusEffect(int Type, int Time, int Intensity)
     };
 };
 
-// Add XP
 acscript void AddXP(int PlayerNum, long int XP, long int Rank, bool Reduced)
 {
     // Scale XP/Rank Gains using the XP Scaling Option
@@ -128,14 +128,22 @@ acscript void AddXP(int PlayerNum, long int XP, long int Rank, bool Reduced)
     };
 };
 
-function void InitTables()
+function void InitXPTable()
 {
-    // XP
     XPTable[0] = 200 + XPCurve;
     for (int i = 1; i < MAX_LEVEL; i++)
         XPTable[i] = ((XPTable[i - 1] / 2000) + 1) * (200 + XPCurve) + XPTable[i - 1];
-    
-    // Rank
+};
+
+function void InitStatXPTable()
+{
+    StatTable[0] = 200 + XPCurve;
+    for (int i = 1; i < MAX_LEVEL * 2; i++)
+        StatTable[i] = ((StatTable[i - 1] / 2000) + 1) * (200 + XPCurve) + StatTable[i - 1];
+};
+
+function void InitRankTable()
+{
     RankTable[0] = 7500 + (XPCurve * 50);
     for (int i = 1; i < MAX_RANK; i++)
         RankTable[i] = ((RankTable[i - 1] / 20000) + 1) * (7500 + (XPCurve * 50)) + RankTable[i - 1];
@@ -398,59 +406,62 @@ function void CheckStats()
     Player.Stim.VialMax = Player.Capacity * 10;
     Player.SurvivalBonus = (fixed)Player.Agility / 10.0;
     
+    // Determine current stat cap
+    Player.StatCap = SoftStatCap + Player.Level;
+    
     // Per-stat leveling
     if (GetCVar("drpg_levelup_natural"))
     {
-        if (Player.StrengthXP >= XPTable[Player.Strength] && Player.Strength < SoftStatCap)
+        if (Player.StrengthXP >= StatTable[Player.Strength] && Player.Strength < Player.StatCap)
         {
             Player.Strength++;
             ActivatorSound("misc/statup", 127);
             DrawStatUp(STAT_STRENGTH);
         };
         
-        if (Player.DefenseXP >= XPTable[Player.Defense] && Player.Defense < SoftStatCap)
+        if (Player.DefenseXP >= StatTable[Player.Defense] && Player.Defense < Player.StatCap)
         {
             Player.Defense++;
             ActivatorSound("misc/statup", 127);
             DrawStatUp(STAT_DEFENSE);
         };
         
-        if (Player.VitalityXP >= XPTable[Player.Vitality] && Player.Vitality < SoftStatCap)
+        if (Player.VitalityXP >= StatTable[Player.Vitality] && Player.Vitality < Player.StatCap)
         {
             Player.Vitality++;
             ActivatorSound("misc/statup", 127);
             DrawStatUp(STAT_VITALITY);
         };
         
-        if (Player.EnergyXP >= XPTable[Player.Energy] && Player.Energy < SoftStatCap)
+        if (Player.EnergyXP >= StatTable[Player.Energy] && Player.Energy < Player.StatCap)
         {
             Player.Energy++;
             ActivatorSound("misc/statup", 127);
             DrawStatUp(STAT_ENERGY);
         };
         
-        if (Player.RegenerationXP >= XPTable[Player.Regeneration] && Player.Regeneration < SoftStatCap)
+        if (Player.RegenerationXP >= StatTable[Player.Regeneration] && Player.Regeneration < Player.StatCap)
         {
             Player.Regeneration++;
             ActivatorSound("misc/statup", 127);
             DrawStatUp(STAT_REGENERATION);
         };
         
-        if (Player.AgilityXP >= XPTable[Player.Agility] && Player.Agility < SoftStatCap)
+        if (Player.AgilityXP >= StatTable[Player.Agility] && Player.Agility < Player.StatCap)
         {
             Player.Agility++;
             ActivatorSound("misc/statup", 127);
             DrawStatUp(STAT_AGILITY);
         };
         
-        if (Player.CapacityXP >= XPTable[Player.Capacity] && Player.Capacity < SoftStatCap)
+        if (Player.CapacityXP >= StatTable[Player.Capacity] && Player.Capacity < Player.StatCap)
         {
             Player.Capacity++;
             ActivatorSound("misc/statup", 127);
             DrawStatUp(STAT_CAPACITY);
         };
         
-        if (Player.LuckXP >= XPTable[Player.Luck] && Player.Luck < SoftStatCap)
+        if (Player.LuckXP >= StatTable[Player.Luck] && Player.Luck < Player.StatCap)
         {
             Player.Luck++;
             ActivatorSound("misc/statup", 127);
@@ -522,13 +533,14 @@ function void CheckStats()
         };
     };
     
-    // Scale Health with Vitality Changes
+    // Scale Health with Vitality changes
     if (Player.PrevVitality != Player.Vitality)
     {
         if (Player.ActualHealth <= Player.HealthMax)
         {
-            fixed Ratio = ((fixed)Player.ActualHealth + 0.5) / (Player.PrevVitality * 10);
-            Player.ActualHealth = Ratio * Player.HealthMax;
+            int HealthMax = Player.Vitality * 10;
+            fixed Ratio = ((fixed)Player.ActualHealth + 0.5) / ((fixed)Player.PrevVitality * 10);
+            Player.ActualHealth = Ratio * HealthMax;
         };
         
         Player.PrevVitality = Player.Vitality;
@@ -539,8 +551,9 @@ function void CheckStats()
     {
         if (Player.EP <= Player.EPMax)
         {
-            fixed Ratio = ((fixed)Player.EP + 0.5) / (Player.PrevEnergy * 10);
-            Player.EP = Ratio * Player.EPMax;
+            int EPMax = Player.Energy * 10;
+            fixed Ratio = ((fixed)Player.EP + 0.5) / ((fixed)Player.PrevEnergy * 10);
+            Player.EP = Ratio * EPMax;
         };
         
         Player.PrevEnergy = Player.Energy;
@@ -709,8 +722,6 @@ function void ResetRegen()
 // Keep stats capped at certain values
 function void CheckStatCaps()
 {
-    Player.StatCap = SoftStatCap + Player.Level;
-
     if (Player.Strength > Player.StatCap)       Player.Strength = Player.StatCap;
     if (Player.Defense > Player.StatCap)        Player.Defense = Player.StatCap;
     if (Player.Vitality > Player.StatCap)       Player.Vitality = Player.StatCap;

@@ -4,8 +4,99 @@
 #include "Monsters.dh"
 #include "Utils.dh"
 
+int HealthBarID;
 fixed HealthBarX;
 fixed HealthBarY;
+
+bool HealthBarClipEnabled;
+int HealthBarClipX;
+int HealthBarClipY;
+int HealthBarClipHeight;
+int HealthBarClipWidth;
+
+function void DrawBarText(HUDBarInfo *Info, str Text)
+{
+    if (GetCVar("drpg_healthbars_world"))
+    {
+        int Width = 800;
+        int Height = 600;
+        fixed BaseViewHeight = (CompatMode == COMPAT_DRLA ? 48 : 41);
+        fixed HeightAdd;
+        fixed Dist;
+        fixed DrawDist;
+        fixed DrawScale;
+        fixed Angle;
+        fixed VAngle;
+        fixed Pitch;
+        fixed X;
+        fixed Y;
+        
+        // Calculate X/Y and distance
+        X = Info->X - GetActorX(0);
+        Y = Info->Y - GetActorY(0);
+        DrawDist = Distance3D(Info->X, Info->Y, Info->Z, GetActorX(0), GetActorY(0), GetActorZ(0));
+        if (DrawDist > 1024.0)
+            DrawDist = 1024.0;
+        if (DrawDist < 128.0)
+            DrawDist = 128.0;
+        DrawScale = DrawDist / 256;
+        SetHudSize(Width * DrawScale, Height * DrawScale, true);
+        
+        // Calculate angles
+        VAngle = VectorAngle(X, Y);
+        Angle = (VAngle - GetActorAngle(0));
+        
+        // Special height adjustments because most monsters heights are just flat out wrong
+        if (Contains(Info->Actor, "Cacodemon"))
+            HeightAdd = 16.0
+        else if (Contains(Info->Actor, "HellKnight") || Contains(Info->Actor, "BaronOfHell"))
+            HeightAdd = 16.0
+        else if (Contains(Info->Actor, "PainElemental"))
+            HeightAdd = 16.0
+        else if (Contains(Info->Actor, "Fatso") || Contains(Info->Actor, "Mancubus"))
+            HeightAdd = 8.0
+        else if (Contains(Info->Actor, "Revenant"))
+            HeightAdd = 40.0
+        else if (Contains(Info->Actor, "Archvile"))
+            HeightAdd = 24.0
+        else if (Contains(Info->Actor, "Cyberdemon"))
+            HeightAdd = 16.0
+        else if (Contains(Info->Actor, "SpiderMastermind"))
+            HeightAdd = 24.0;
+        
+        if ((Angle < 0.2 || Angle > 0.8))
+        {
+            Pitch = VectorAngle(VectorLength(X, Y), Info->Z + Info->Height + 24.0 + HeightAdd - (GetActorZ(0) - BaseViewHeight + GetActorViewHeight(0)));
+            
+            X = (Width / 2 - ((Width / 2) * Sin(Angle))) * DrawScale;
+            Y = (Height / 2 - ((Height / 2) * Sin(Pitch) * 3 / 2) - ((Height / 2) * Sin(GetActorPitch(0)) * 3 / 2)) * DrawScale;
+            
+            if (HealthBarClipEnabled)
+                SetHudClipRect(X + HealthBarClipX, Y + HealthBarClipY, HealthBarClipWidth, HealthBarClipHeight);
+            HudMessage("%s\n", Text, HUDMSG_FADEOUT, HBAR_ID + HealthBarID++, CR_UNTRANSLATED, (int)X + HealthBarX, (int)Y + HealthBarY, 0.05, 0.1);
+            SetHudClipRect(0, 0, 0, 0);
+        }
+        else
+            HudMessage("\n", HUDMSG_PLAIN, 0, CR_UNTRANSLATED, 0, 0, 0);
+    }
+    else
+    {
+        fixed X = GetCVar("drpg_healthbars_x");
+        fixed Y = GetCVar("drpg_healthbars_y");
+        
+        SetHudSize(GetCVar("drpg_healthbars_width"), GetCVar("drpg_healthbars_height"), false);
+        if (HealthBarClipEnabled)
+            SetHudClipRect(X + HealthBarClipX, Y + HealthBarClipY, HealthBarClipWidth, HealthBarClipHeight);
+        HudMessage("%s\n", Text, HUDMSG_FADEOUT, HBAR_ID + HealthBarID++, CR_UNTRANSLATED, X + HealthBarX, Y + HealthBarY, 0.05, 0.1);
+        SetHudClipRect(0, 0, 0, 0);
+    };
+};
+
+function void DrawBarSprite(HUDBarInfo *Info, str Sprite)
+{
+    SetFont(Sprite);
+    DrawBarText(Info, "A");
+};
 
 // Handles HUD Health Bars
 script void HealthBars()
@@ -27,8 +118,9 @@ script void HealthBars()
             goto Start;
         };
         
-        HealthBarX = GetUserCVar(PlayerNum, "drpg_healthbars_x");
-        HealthBarY = GetUserCVar(PlayerNum, "drpg_healthbars_y");
+        // Reset X and Y
+        HealthBarX = 0; // GetUserCVar(PlayerNum, "drpg_healthbars_x");
+        HealthBarY = 0; // GetUserCVar(PlayerNum, "drpg_healthbars_y");
         
         bool HideBar = false;
         bool DrawStats = true;
@@ -37,11 +129,15 @@ script void HealthBars()
         auto HUDBarInfo Info =
         {
             false; false;               // Is Player? / Is Friendly?
-            ""; "";                     // Name
+            ""; ""; "";                 // Actor/Name
             0; 0; {};                   // Level/Rank/Auras
             0; 0; 0; 0; 0; false; 0; 0; // Health/Armor/Shield
             0; 0; 0; 0; 0; 0; 0; 0;     // Stats
+            0.0; 0.0; 0.0; 0.0;         // Position
         };
+        
+        // Actor
+        Info.Actor = GetActorClass(0);
         
         // Friendly
         if (GetActorProperty(0, APROP_Friendly))
@@ -77,6 +173,11 @@ script void HealthBars()
             Info.Agility = Players(ID).Agility;
             Info.Capacity = Players(ID).Capacity;
             Info.Luck = Players(ID).Luck;
+            
+            Info.X = GetActorX(0);
+            Info.Y = GetActorY(0);
+            Info.Z = GetActorZ(0);
+            Info.Height = GetActorPropertyFixed(0, APROP_Height);
         }
         else
         {
@@ -113,6 +214,11 @@ script void HealthBars()
             Info.Agility = MonStats->Agility;
             Info.Capacity = MonStats->Capacity;
             Info.Luck = MonStats->Luck;
+            
+            Info.X = GetActorX(0);
+            Info.Y = GetActorY(0);
+            Info.Z = GetActorZ(0);
+            Info.Height = GetActorPropertyFixed(0, APROP_Height);
         };
         
         // Valid target
@@ -120,7 +226,8 @@ script void HealthBars()
         {
             SetActivator(Players(PlayerNum).TID);
             
-            SetHudSize(GetCVar("drpg_healthbars_width"), GetCVar("drpg_healthbars_height"), false);
+            // Reset the health bar drawing ID
+            HealthBarID = 0;
             
             // Draw the bar's components
             DrawBarBase(&Info);
@@ -130,7 +237,7 @@ script void HealthBars()
                 DrawBarEmblems(&Info);
                 DrawBarStats(&Info);
             };
-            DrawBarAuras(&Info);
+            // DrawBarAuras(&Info);
         };
         
         // Terminate if the player is dead
@@ -143,18 +250,20 @@ script void HealthBars()
 
 function void DrawBarBase(HUDBarInfo *Info)
 {
-    // Bar Type
-    if (Info->Friendly)
-        PrintSprite("HPBar2", 0, HealthBarX, HealthBarY, 0.05)
-    else
-        PrintSprite("HPBar", 0, HealthBarX, HealthBarY, 0.05);
-    
     // Name
     if (GetCVar("drpg_healthbars_names"))
     {
         SetFont("BIGFONT");
-        HudMessage("%s%s\n", Info->NameColor, Info->Name, HUDMSG_PLAIN, 0, CR_GRAY, HealthBarX, HealthBarY - 24.0, 0.05);
+        DrawBarText(Info, StrParam("%s%s\n", Info->NameColor, Info->Name));
     };
+    
+    HealthBarY += 24.0;
+    
+    // Bar Type
+    if (Info->Friendly)
+        DrawBarSprite(Info, "HPBar2")
+    else
+        DrawBarSprite(Info, "HPBar");
     
     // HP/Max HP and Armor
     // TODO: Do this better? It's kinda shit atm, build up a string instead maybe?
@@ -163,47 +272,54 @@ function void DrawBarBase(HUDBarInfo *Info)
     {
         if (Info->IsPlayer && Info->Armor > 0)
             if (Info->ArmorMax >= 10000) // Indestructible Armor
-                HudMessage("%d/%d \ca[Indestructible]\n", Info->Shield, Info->ShieldMax, HUDMSG_PLAIN, 0, CR_CYAN, HealthBarX, HealthBarY, 0.05)
+                DrawBarText(Info, StrParam("\cd%d/%d \ca[Indestructible]\n", Info->Shield, Info->ShieldMax))
             else
-                HudMessage("%d/%d \cd[%d/%d]\n", Info->Shield, Info->ShieldMax, Info->Armor, Info->ArmorMax, HUDMSG_PLAIN, 0, CR_CYAN, HealthBarX, HealthBarY, 0.05)
+                DrawBarText(Info, StrParam("\cd%d/%d \cd[%d/%d]\n", Info->Shield, Info->ShieldMax, Info->Armor, Info->ArmorMax))
         else
-            HudMessage("%d/%d\n", Info->Shield, Info->ShieldMax, HUDMSG_PLAIN, 0, CR_CYAN, HealthBarX, HealthBarY, 0.05);
+            DrawBarText(Info, StrParam("\cd%d/%d\n", Info->Shield, Info->ShieldMax));
     }
     else
     {
         if (Info->IsPlayer && Info->Armor > 0)
             if (Info->ArmorMax >= 10000) // Indestructible Armor
-                HudMessage("%d/%d \ca[Indestructible]\n", Info->Health, Info->HealthMax, HUDMSG_PLAIN, 0, CR_GREEN, HealthBarX, HealthBarY, 0.05)
+                DrawBarText(Info, StrParam("\cd%d/%d \ca[Indestructible]\n", Info->Health, Info->HealthMax))
             else
-                HudMessage("%d/%d \cd[%d/%d]\n", Info->Health, Info->HealthMax, Info->Armor, Info->ArmorMax, HUDMSG_PLAIN, 0, CR_GREEN, HealthBarX, HealthBarY, 0.05)
+                DrawBarText(Info, StrParam("\cd%d/%d \cd[%d/%d]\n", Info->Health, Info->HealthMax, Info->Armor, Info->ArmorMax))
         else
-            HudMessage("%d/%d\n", Info->Health, Info->HealthMax, HUDMSG_PLAIN, 0, CR_GREEN, HealthBarX, HealthBarY, 0.05);
+            DrawBarText(Info, StrParam("\cd%d/%d\n", Info->Health, Info->HealthMax));
     };
 };
 
 function void DrawBarEmblems(HUDBarInfo *Info)
 {
+    HealthBarY = 48.0;
+    
     if (Info->IsPlayer)
     {
         for (int i = 0; i < Info->Rank; i++)
-            PrintSprite("RankEmb", 0, HealthBarX - 55.0 + (i * 7.0), HealthBarY + 22.0, 0.05);
+        {
+            HealthBarX = 55.0 + (i * 7.0);
+            DrawBarSprite(Info, "RankEmb");
+        };
     }
     else
     {
         for (int i = 1; i <= Info->Rank; i++)
         {
+            HealthBarX = 36.0 + (i * 7.0);
+            
             if (i == 1)
-                PrintSprite("RankEmb1", 0, HealthBarX + 36.0 + (i * 7.0), HealthBarY + 22.0, 0.05)
+                DrawBarSprite(Info, "RankEmb1")
             else if (i >= 2 && i <= 4)
-                PrintSprite("RankEmb2", 0, HealthBarX + 36.0 + (i * 7.0), HealthBarY + 22.0, 0.05)
+                DrawBarSprite(Info, "RankEmb2")
             else if (i == 5 || i == 6)
-                PrintSprite("RankEmb3", 0, HealthBarX + 36.0 + (i * 7.0), HealthBarY + 22.0, 0.05)
+                DrawBarSprite(Info, "RankEmb3")
             else if (i == 7 || i == 8)
-                PrintSprite("RankEmb4", 0, HealthBarX + 36.0 + (i * 7.0), HealthBarY + 22.0, 0.05)
+                DrawBarSprite(Info, "RankEmb4")
             else if (i == 9)
-                PrintSprite("RankEmb5", 0, HealthBarX + 36.0 + (i * 7.0), HealthBarY + 22.0, 0.05)
+                DrawBarSprite(Info, "RankEmb5")
             else if (i == 10)
-                PrintSprite("RankEmb6", 0, HealthBarX + 36.0 + (i * 7.0), HealthBarY + 22.0, 0.05);
+                DrawBarSprite(Info, "RankEmb6");
         };
     };
 };
@@ -226,50 +342,92 @@ function void DrawBarFill(HUDBarInfo *Info)
     if (HealthPercent > 1000)
         HealthPercent = 1000;
     
+    // Position the X coordinate for fill drawing
+    HealthBarX = -97.1;
+    
     // Shield Fill
     if (Info->ShieldActive)
     {
         int ShieldPercent = (Info->Shield * 100) / Info->ShieldMax;
-        SetHudClipRect((int)HealthBarX - 97, (int)(HealthBarY - 6), ShieldPercent * 203 / 100, (int)(HealthBarY + 6));
-        PrintSprite("FillShld", 0, HealthBarX - 97.0 + 0.1, HealthBarY, 0.05);
+        HealthBarClipEnabled = true;
+        HealthBarClipX = (int)HealthBarX;
+        HealthBarClipY = (int)(HealthBarY - 6);
+        HealthBarClipWidth = ShieldPercent * 203 / 100;
+        HealthBarClipHeight = (int)(HealthBarY + 6);
+        
+        DrawBarSprite(Info, "FillShld");
     };
     
     // Health fills
     for (int i = 9; i >= 0; i--)
         if (HealthPercent > 100 * i)
         {
-            SetHudClipRect((int)HealthBarX - 97, (int)(HealthBarY - 6), (HealthPercent - (100 * i)) * 203 / 100, (int)(HealthBarY + 6));
-            PrintSprite(StrParam("Fill%d\n", i + 1), 0, HealthBarX - 97.0 + 0.1, HealthBarY, 0.05);
+            HealthBarClipEnabled = true;
+            HealthBarClipX = (int)HealthBarX;
+            HealthBarClipY = (int)(HealthBarY - 6);
+            HealthBarClipWidth = (HealthPercent - (100 * i)) * 203 / 100;
+            HealthBarClipHeight = (int)(HealthBarY + 6);
+            
+            DrawBarSprite(Info, StrParam("Fill%d\n", i + 1));
         };
     
     // Reset Clipping Rectangle
-    SetHudClipRect(0, 0, 0, 0);
+    HealthBarClipEnabled = false;
+    HealthBarClipX = 0;
+    HealthBarClipY = 0;
+    HealthBarClipWidth = 0;
+    HealthBarClipHeight = 0;
 };
 
 function void DrawBarStats(HUDBarInfo *Info)
 {
+    HealthBarX = -96.1;
+    HealthBarY = 48.0;
+    
     // Stat Amounts
     SetFont("BIGFONT");
-    HudMessage("%d\n", Info->Level, HUDMSG_PLAIN, 0, CR_WHITE, HealthBarX - 96.1, HealthBarY + 21.0, 0.05);
-    HudMessage("%d\n", Info->Strength, HUDMSG_PLAIN, 0, CR_RED, HealthBarX - 96.1, HealthBarY + 39.0, 0.05);
-    HudMessage("%d\n", Info->Defense, HUDMSG_PLAIN, 0, CR_GREEN, HealthBarX - 40.1, HealthBarY + 39.0, 0.05);
-    HudMessage("%d\n", Info->Vitality, HUDMSG_PLAIN, 0, CR_BRICK, HealthBarX + 16.1, HealthBarY + 39.0, 0.05);
-    HudMessage("%d\n", Info->Energy, HUDMSG_PLAIN, 0, CR_LIGHTBLUE, HealthBarX + 72.1, HealthBarY + 39.0, 0.05);
-    HudMessage("%d\n", Info->Regeneration, HUDMSG_PLAIN, 0, CR_PURPLE, HealthBarX - 96.1, HealthBarY + 58.0, 0.05);
-    HudMessage("%d\n", Info->Agility, HUDMSG_PLAIN, 0, CR_ORANGE, HealthBarX - 40.1, HealthBarY + 58.0, 0.05);
-    HudMessage("%d\n", Info->Capacity, HUDMSG_PLAIN, 0, CR_BLUE, HealthBarX + 16.1, HealthBarY + 58.0, 0.05);
-    HudMessage("%d\n", Info->Luck, HUDMSG_PLAIN, 0, CR_YELLOW, HealthBarX + 72.1, HealthBarY + 58.0, 0.05);
+    DrawBarText(Info, StrParam("\cj%d\n", Info->Level));
+    HealthBarY += 16.0;
+    DrawBarText(Info, StrParam("\cg%d\n", Info->Strength));
+    HealthBarX += 56.0;
+    DrawBarText(Info, StrParam("\cd%d\n", Info->Defense));
+    HealthBarX += 56.0;
+    DrawBarText(Info, StrParam("\ca%d\n", Info->Vitality));
+    HealthBarX += 56.0;
+    DrawBarText(Info, StrParam("\cn%d\n", Info->Energy));
+    HealthBarX = -96.1;
+    HealthBarY += 20.0;
+    DrawBarText(Info, StrParam("\ct%d\n", Info->Regeneration));
+    HealthBarX += 56.0;
+    DrawBarText(Info, StrParam("\ci%d\n", Info->Agility));
+    HealthBarX += 56.0;
+    DrawBarText(Info, StrParam("\ch%d\n", Info->Capacity));
+    HealthBarX += 56.0;
+    DrawBarText(Info, StrParam("\cf%d\n", Info->Luck));
+    
+    HealthBarX = -107.0;
+    HealthBarY = 48.0;
     
     // Stat Icons
-    PrintSprite("MonLevel", 0, HealthBarX - 107.0, HealthBarY + 21.0, 0.05);
-    PrintSprite("STAT1S", 0, HealthBarX - 96.0, HealthBarY + 54.0, 0.05);
-    PrintSprite("STAT2S", 0, HealthBarX - 40.0, HealthBarY + 54.0, 0.05);
-    PrintSprite("STAT3S", 0, HealthBarX + 16.0, HealthBarY + 54.0, 0.05);
-    PrintSprite("STAT4S", 0, HealthBarX + 72.0, HealthBarY + 54.0, 0.05);
-    PrintSprite("STAT5S", 0, HealthBarX - 96.0, HealthBarY + 74.0, 0.05);
-    PrintSprite("STAT6S", 0, HealthBarX - 40.0, HealthBarY + 74.0, 0.05);
-    PrintSprite("STAT7S", 0, HealthBarX + 16.0, HealthBarY + 74.0, 0.05);
-    PrintSprite("STAT8S", 0, HealthBarX + 71.0, HealthBarY + 74.0, 0.05);
+    DrawBarSprite(Info, "MonLevel");
+    HealthBarX = -96.0;
+    HealthBarY += 32.0;
+    DrawBarSprite(Info, "STAT1S");
+    HealthBarX += 56.0;
+    DrawBarSprite(Info, "STAT2S");
+    HealthBarX += 56.0;
+    DrawBarSprite(Info, "STAT3S");
+    HealthBarX += 56.0;
+    DrawBarSprite(Info, "STAT4S");
+    HealthBarX = -96.0;
+    HealthBarY += 20.0;
+    DrawBarSprite(Info, "STAT5S");
+    HealthBarX += 56.0;
+    DrawBarSprite(Info, "STAT6S");
+    HealthBarX += 56.0;
+    DrawBarSprite(Info, "STAT7S");
+    HealthBarX += 56.0;
+    DrawBarSprite(Info, "STAT8S");
 };
 
 function void DrawBarAuras(HUDBarInfo *Info)
