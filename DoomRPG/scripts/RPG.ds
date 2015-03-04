@@ -20,7 +20,7 @@
 #include "Utils.dh"
 
 // Version
-const str Version = "v0.9.12 Beta - Maximum Frisbee DLC: Now with 125% more Shield Accessories";
+const str Version = "v0.9.13 Beta - Phat Lewt Edition";
 
 // Flags
 static bool InBase;
@@ -183,6 +183,10 @@ script void Init() enter
     
     // Mission Initialization
     InitMission();
+    
+    // Initialize the Dynamic Loot Generator
+    if (GetCVar("drpg_loot_system") && PlayerNumber() == 0 && !InBase) // This should only run once on the first player
+        DynamicLootGenerator();
     
     // Small delay before initializing the scripts for mod compatibility
     Delay(4);
@@ -617,6 +621,68 @@ script void AutosaveHandler()
             --SaveTimer;
         
         Delay(1);
+    };
+};
+
+// Dynamic Loot Generation System
+acscript void DynamicLootGenerator()
+{
+    fixed BaseX = GetActorX(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
+    fixed BaseY = GetActorY(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
+    fixed BaseZ = GetActorZ(0) + 32.0;
+    fixed Boundary = 0;
+    int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+    int MaxRolls = Random(0, LevelNum) + (GetItemDropLuck() + AveragePlayerLevel() / 2) + Random(GameSkill(), GameSkill() * 2);
+    int Rolls = 0;
+    
+    // Find the furthest monster from the player to determine some approximate boundaries to work with
+    for (int i = 0; i < MonsterID; i++)
+    {
+        fixed Dist = Distance3D(GetActorX(0), GetActorY(0), GetActorZ(0), Monsters[i].Position.X, Monsters[i].Position.Y, Monsters[i].Position.Z);
+        if (Dist > Boundary)
+            Boundary = Dist;
+    };
+    
+    while (Rolls < MaxRolls)
+    {
+        int TID = UniqueTID();
+        fixed X = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
+        fixed Y = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
+        fixed Z = BaseZ + Random(-Boundary / 64, Boundary / 64);
+        
+        bool Spawned = Spawn("DRPGGenericDropper", X, Y, Z, TID, 0);
+        if (Spawned)
+        {
+            bool Remove = true;
+            
+            for (int i = 0; i < MonsterID; i++)
+            {
+                // If this spot is blank, skip it
+                if (Monsters[i].TID == 0) continue;
+                
+                // Randomly continue for variance
+                if (Random(1, 4) == 1) continue;
+                
+                bool CanSee = CheckSight(TID, Monsters[i].TID, 0);
+                if (CanSee)
+                {
+                    Remove = false;
+                    Rolls++;
+                    break;
+                };
+            };
+            
+            if (Remove)
+                Thing_Remove(TID);
+        };
+        
+        if (GetCVar("drpg_debug"))
+        {
+            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\ciBoundary: %k\nX: %k\nY: %k\nZ: %k\n", Rolls, MaxRolls, Boundary, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 0.5, 0.5);
+            Delay(1);
+        }
+        else if ((Timer() % 5) == 0)
+            Delay(1);
     };
 };
 
