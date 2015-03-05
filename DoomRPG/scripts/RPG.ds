@@ -628,18 +628,26 @@ acscript void DynamicLootGenerator()
 {
     fixed BaseX = GetActorX(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
     fixed BaseY = GetActorY(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
-    fixed BaseZ = GetActorZ(0) + 32.0;
+    fixed BaseZ = GetActorZ(0);
     fixed Boundary = 0;
+    fixed BoundaryZ = 0;
     int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
-    int MaxRolls = Random(0, LevelNum) + (GetItemDropLuck() + AveragePlayerLevel() / 2) + Random(GameSkill(), GameSkill() * 2);
+    int MaxRolls = Random(LevelNum / GameSkill(), LevelNum) + ((AveragePlayerLuck() + AveragePlayerLevel()) / (GameSkill() * 2));
     int Rolls = 0;
+    int Instructions = 0;
+    int Iterations = 0;
     
     // Find the furthest monster from the player to determine some approximate boundaries to work with
     for (int i = 0; i < MonsterID; i++)
     {
         fixed Dist = Distance3D(GetActorX(0), GetActorY(0), GetActorZ(0), Monsters[i].Position.X, Monsters[i].Position.Y, Monsters[i].Position.Z);
+        fixed ZDiff = AbsFixed(GetActorZ(0) - Monsters[i].Position.Z);
+        
         if (Dist > Boundary)
+        {
             Boundary = Dist;
+            BoundaryZ = ZDiff;
+        };
     };
     
     while (Rolls < MaxRolls)
@@ -647,7 +655,7 @@ acscript void DynamicLootGenerator()
         int TID = UniqueTID();
         fixed X = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
         fixed Y = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
-        fixed Z = BaseZ + Random(-Boundary / 64, Boundary / 64);
+        fixed Z = BaseZ + Random(-BoundaryZ, BoundaryZ);
         
         bool Spawned = Spawn("DRPGGenericDropper", X, Y, Z, TID, 0);
         if (Spawned)
@@ -669,6 +677,10 @@ acscript void DynamicLootGenerator()
                     Rolls++;
                     break;
                 };
+                
+                Instructions++;
+                if ((Instructions % 500) == 0)
+                    Delay(1);
             };
             
             if (Remove)
@@ -676,13 +688,13 @@ acscript void DynamicLootGenerator()
         };
         
         if (GetCVar("drpg_debug"))
-        {
-            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\ciBoundary: %k\nX: %k\nY: %k\nZ: %k\n", Rolls, MaxRolls, Boundary, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 0.5, 0.5);
-            Delay(1);
-        }
-        else if ((Timer() % 5) == 0)
-            Delay(1);
+            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\ccInstructions: %d\n\cdIteration: %d\n\ciBoundary: %k\n\nX: %k\nY: %k\nZ: %k\n", Rolls, MaxRolls, Instructions, Iterations, Boundary, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
+        
+        Iterations++;
     };
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDebug: \c-Dynamic Loot Generation created \cd%d\c- items\n", MaxRolls);
 };
 
 // Quick Heal
