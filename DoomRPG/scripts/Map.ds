@@ -1143,8 +1143,9 @@ script void MapLoop()
     
     Delay(5); // Allow Map Events to change the monster/item counts
     
-    Start:    
-    // MISSION TRACKERS
+    Start:
+    
+    // Mission Trackers
     ItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
     SecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
     
@@ -1182,26 +1183,27 @@ script void MapLoop()
         CurrentLevel->UniqueSecrets = SecretsFound;
     };
     
-    // KILL / ITEM / SECRET SPECIAL BONUSES
+    // Kills/Item/Secrets special bonuses
     if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS)
     {
         CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
-        CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
-        CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+        if (CurrentLevel->MaxMonstersKilled > CurrentLevel->MaxTotalMonsters)
+            CurrentLevel->MaxMonstersKilled = CurrentLevel->MaxTotalMonsters;
+        CurrentLevel->MaxMonsterPercentage = CalcPercent(CurrentLevel->MaxMonstersKilled, CurrentLevel->MaxTotalMonsters);
     };
-    
     if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS)) > CurrentLevel->MaxItemPercentage)
     {
         CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
-        CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
-        CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+        if (CurrentLevel->MaxItemsFound > CurrentLevel->MaxTotalItems)
+            CurrentLevel->MaxItemsFound = CurrentLevel->MaxTotalItems;
+        CurrentLevel->MaxItemPercentage = CalcPercent(CurrentLevel->MaxItemsFound, CurrentLevel->MaxTotalItems);
     };
-    
     if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS)) > CurrentLevel->MaxSecretPercentage)
     {
         CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
-        CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
-        CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
+        if (CurrentLevel->MaxSecretsFound > CurrentLevel->MaxTotalSecrets)
+            CurrentLevel->MaxSecretsFound = CurrentLevel->MaxTotalSecrets;
+        CurrentLevel->MaxSecretPercentage = CalcPercent(CurrentLevel->MaxSecretsFound, CurrentLevel->MaxTotalSecrets);
     };
     
     if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus)
@@ -1218,7 +1220,7 @@ script void MapLoop()
             XPBonus = XPTable[Players(i).Level] / 100;
             Player.XP += XPBonus;
             
-            HudMessage("100%% Monsters Killed!\n%d XP Bonus\n", XPBonus,
+            HudMessage("Monsters Killed Bonus!\n%d XP Bonus\n", XPBonus,
                        HUDMSG_FADEOUT, 0, CR_BRICK, 1.5, 0.4, 3.0, 3.0);
         };
         
@@ -1241,7 +1243,7 @@ script void MapLoop()
             Players(i).EP = Players(i).EPMax;
             HealThing(SHIELD_HEALTH);
             
-            HudMessage("100%% Items Found!\nFull HP/EP Restore\n",
+            HudMessage("Items Found Bonus!\nFull HP/EP Restore\n",
                        HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 3.0);
         };
         
@@ -1264,7 +1266,7 @@ script void MapLoop()
             RankBonus = RankTable[Players(i).RankLevel] / 20;
             Players(i).Rank += RankBonus;
 
-            HudMessage("100%% Secrets Found!\n%d Rank Bonus\n", RankBonus,
+            HudMessage("Secrets Found Bonus!\n%d Rank Bonus\n", RankBonus,
                        HUDMSG_FADEOUT, 0, CR_YELLOW, 1.5, 0.8, 3.0, 3.0);
         };
         
@@ -1291,9 +1293,9 @@ script void MapLoop()
             Players(i).Rank += RankBonus;
             
             Players(i).EP = Players(i).EPMax;
-            HealThing(1000000);
+            HealThing(SHIELD_HEALTH);
             
-            HudMessage("\ca100%% Monsters killed!\n\cn100%% Items Found!\n\ck100%% Secrets Found!\n\n\cj%d XP Bonus\n\ck%d Rank Bonus\n\cnFull HP/EP Restore\n",
+            HudMessage("\caMonsters Killed Bonus!\n\cnItems Found Bonus!\n\ckSecrets Found Bonus!\n\n\cj%d XP Bonus\n\ck%d Rank Bonus\n\cnFull HP/EP Restore\n",
                        XPBonus, RankBonus,
                        HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.2, 5.0, 5.0);
             
@@ -1316,6 +1318,7 @@ script void MapLoop()
             HudMessageBold("Everything falls silent.\n",
                 HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
         };
+        
         CurrentLevel->Event = MAPEVENT_NONE;
         CurrentLevel->SelectedMonster = nullptr;
     };
