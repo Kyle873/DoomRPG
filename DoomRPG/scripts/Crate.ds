@@ -112,6 +112,237 @@ function void GenerateCrate(int ID, int Amount)
         Crates[ID].Active[i] = true;
         Crates[ID].Item[i] = GetRewardItem(Crates[ID].Rarity);
     };
+    
+    // DRLA Set shenanigans
+    if (CompatMode == COMPAT_DRLA)
+    {
+        struct SetInfo
+        {
+            str Name;
+            str Token;
+            
+            struct SetItemInfo
+            {
+                str Name;
+                fixed Chance;
+            } [32] Items;
+        };
+        
+        static SetInfo[MAX_DRLA_SETS] SetItems =
+        {
+            {
+                "Death From Above"; "RLDeathFromAboveSetBonusActive";
+                {
+                    { "RLAntigravSteelBoots";               40; };
+                    { "RLAntigravProtectiveBoots";          30; };
+                    { "RLAntigravPlasteelBoots";            20; };
+                    { "RLJetpackArmor";                     40; };    
+                    { nullptr; };
+                };
+            };
+            {
+                "Demonic"; "RLDemonicSetBonusActive";
+                {
+                    { "RLDemonicCarapaceArmor";             40; };
+                    { "RLDemonicBoots";                     40; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Tactical"; "RLTacticalSetBonusActive";
+                {
+                    { "RLTacticalArmor";                    40; };
+                    { "RLTacticalBoots";                    40; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Gothic"; "RLGothicSetBonusActive";
+                {
+                    { "RLGothicArmor";                      40; };
+                    { "RLGothicBoots";                      40; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Phaseshift"; "RLPhaseshiftSetBonusActive";
+                {
+                    { "RLPhaseshiftArmor";                  40; };
+                    { "RLPhaseshiftBoots";                  40; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Roysten"; "RLRoystenSetBonusActive";
+                {
+                    { "RLRoystensCommandArmor";             25; };
+                    { "RLRoystensCombatBoots";              25; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Architect"; "RLArchitectSetBonusActive";
+                {
+                    { "RLSoloOperativeSuitArmor";           25; };
+                    { "RLSoloOperativeBoots";               25; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Torgue"; "RLTorgueSetBonusActive";
+                {
+                    { "RLTorgueBlastplateArmor";            25; };
+                    { "RLTorgueBlastBoots";                 25; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Enclave"; "RLEnclaveSetBonusActive";
+                {
+                    { "RLNuclearPowerArmor";                25; };
+                    { "RLNuclearPowerBoots";                25; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Sentry Sentinel"; "RLSentrySentinelSetBonusActive";
+                {
+                    { "RLTacticalAssemblerSuitArmor";       25; };
+                    { "RLTacticalAssemblerBoots";           25; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Sensible Strategist"; "RLSensibleStrategistSetBonusActive";
+                {
+                    { "RLTacticalAssemblerSuitArmor";       25; };
+                    { "RLTacticalAssemblerBoots";           25; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Lava"; "RLLavaSetBonusActive";
+                {
+                    { "RLLavaArmor";                        20; };
+                    { "RLLavaBoots";                        20; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Inquisitor"; "RLInquisitorsSetBonusActive";
+                {
+                    { "RLMaleksArmor";                      20; };
+                    { "RLNyarlaptotepsBoots";               20; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Cerberus"; "RLCerberusSetBonusActive";
+                {
+                    { "RLTristarBlaster";                   25; };
+                    { "RLCerberusArmor";                    25; };
+                    { "RLCerberusBoots";                    25; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Angelic"; "RLAngelicAttireSetBonusActive";
+                {
+                    { "RLAngelicArmor";                     10; };
+                    { "RLAngelicBoots";                     10; };
+                    { nullptr; };
+                };
+            };
+            {
+                "Nuclear"; "RLNuclearWeaponSetBonusActive";
+                {
+                    { "RLNuclearPlasmaPistol";              25; };
+                    { "RLNuclearPlasmaRifle";               15; };
+                    { "RLNuclearBFG9000";                   10; };
+                    { "RLNuclearOnslaught";                 0.2; };
+                    { "RLNuclearArmor";                     20; };
+                    { "RLNuclearPowerArmor";                3; };
+                    { "RLHighPowerNuclearPlasmaPistol";     0; };
+                    { "RLStormNuclearPlasmaPistol";         0; };
+                    { "RLSuperchargedNuclearPlasmaPistol";  0; };
+                    { "RLNuclearPlasmaShotgun";             0; };
+                    { "RLNuclearPlasmaRifleMkII";           0; };
+                    { "RLAssaultRifleNuclearPlasmaRifle";   0; };
+                    { "RLBurstCannonNuclearPlasmaRifle";    0; };
+                    { "RLHighPowerNuclearPlasmaRifle";      0; };
+                    { "RLHighPowerNuclearBFG9000";          0; };
+                    { "RLNuclearVBFG9000";                  0; };
+                    { "RLNuclearBiggestFuckingGun";         0; };
+                    { nullptr; };
+                };
+            };
+        };
+        
+        int SetAmount = Amount;
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: \c-Checking DRLA sets...\n");
+        
+        for (int i = 0; i < MAX_DRLA_SETS; i++)
+        {
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \c-Set \cd%d\c-: \cd%s\n", i + 1, SetItems[i].Name);
+            
+            // Skip this set if you already have it
+            if (CheckInventory(SetItems[i].Token)) continue;
+            
+            bool HaveItem = false;
+            for (int j = 0; SetItems[i].Items[j].Name != nullptr; j++)
+            {
+                if (GetCVar("drpg_debug"))
+                    Log("\cdDEBUG: \c-Set \cd%d \c-Item \cd%d\c-: \cd%s\n", i + 1, j + 1, SetItems[i].Items[j].Name);
+                
+                if (CheckInventory(SetItems[i].Items[j].Name) || CheckInventory(StrParam("%sToken\n", SetItems[i].Items[j].Name)))
+                {
+                    HaveItem = true;
+                    if (GetCVar("drpg_debug"))
+                        Log("\cdDEBUG: \c-Have this item, continue...\n");
+                    break;
+                };
+            };
+            
+            if (HaveItem)
+            {
+                for (int j = 0; SetItems[i].Items[j].Name != nullptr; j++)
+                {
+                    ItemInfoPtr ItemPtr = FindItem(SetItems[i].Items[j].Name);
+                    
+                    if (GetCVar("drpg_debug"))
+                        Log("\cdDEBUG: \c-Set \cd%d \c-Item \cd%d\c-: \cd%s \c-(Chance: \cf%k%%\c-)\n", i + 1, j + 1, SetItems[i].Items[j].Name, SetItems[i].Items[j].Chance);
+                    
+                    // Stop checking items if we've filled the crate
+                    if (SetAmount >= CRATE_MAX_ITEMS)
+                    {
+                        if (GetCVar("drpg_debug"))
+                            Log("\cdDEBUG: \c-Crate is full! Stopping set checks\n");
+                        return;
+                    };
+                    
+                    // Skip this item if you have it
+                    if (CheckInventory(SetItems[i].Items[j].Name) || CheckInventory(StrParam("%sToken\n", SetItems[i].Items[j].Name))) continue;
+                    
+                    if (RandomFixed(0.0, 100.0) <= SetItems[i].Items[j].Chance)
+                    {
+                        // Couldn't find the item
+                        if (ItemPtr == nullptr) continue;
+                        
+                        Crates[ID].Active[SetAmount] = true;
+                        Crates[ID].Item[SetAmount] = ItemPtr;
+                        
+                        if (GetCVar("drpg_debug"))
+                            Log("\cdDEBUG: \cfSet Item Spawned!\n");
+                        
+                        SetAmount++;
+                    };
+                };
+            };
+        };
+    };
 };
 
 function void CrateTakeItem()
