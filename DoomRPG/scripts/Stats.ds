@@ -388,6 +388,7 @@ function void CheckStats()
     // If you're reading this and you'd like to modify stat curves, this is where you'd do it
     Player.LevelDamage = Player.Level * (10 - GameSkill());
     Player.BonusDamage = Player.Strength;
+    Player.DamageMult = 0;
     Player.TotalDamage = Player.LevelDamage + Player.BonusDamage;
     Player.DamageFactor = (Player.Defense > 200 ? 0.25 : 1.0 - Curve((fixed)Player.Defense, 0, 200, 0, 0.75));
     Player.Mass = 100 + (Player.Defense * 10);
@@ -895,7 +896,7 @@ function void CheckPerks()
     if (Player.Capacity >= 100)     Player.Perks[STAT_CAPACITY] = true      else Player.Perks[STAT_CAPACITY] = false;
     if (Player.Luck >= 100)         Player.Perks[STAT_LUCK] = true          else Player.Perks[STAT_LUCK] = false;
     
-    fixed StrengthPercent = ((fixed)Player.HealthMax / (fixed)Player.ActualHealth);
+    fixed StrengthPercent = ((fixed)Player.ActualHealth / (fixed)Player.HealthMax * 100);
     fixed DefensePercent = ((fixed)Player.ActualHealth / (fixed)Player.HealthMax);
     
     // Cap Strength Percent
@@ -909,8 +910,8 @@ function void CheckPerks()
         DefensePercent = 1.0;
     
     // Strength Perk - Exponentially increase Strength as Health Decreases
-    if (Player.Perks[STAT_STRENGTH] && StrengthPercent >= 1)
-        Player.TotalDamage = (fixed)Player.TotalDamage * StrengthPercent;
+    if (Player.Perks[STAT_STRENGTH] && StrengthPercent < 100)
+        Player.DamageMult += ((100 - StrengthPercent) / 12.5);
     
     // Defense Perk - Exponentially increase Defense as Health Decreases
     if (Player.Perks[STAT_DEFENSE] && DefensePercent > 0)
