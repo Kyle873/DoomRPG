@@ -31,6 +31,7 @@ str[6] StatusNumerals =
     "IV";
     "V";
 };
+
 script void StatusEffectHUD() enter
 {
     static int[SE_MAX] StatusColors =
@@ -72,9 +73,13 @@ script void StatusEffectHUD() enter
         case SE_RADIATION:  Icon = "SE_Radi";   Fill = "BARSRadi";    break;
         };
         
-        if (Player.StatusType[i])
+        if (Player.StatusType[i] || GetCVar("drpg_hud_preview"))
         {
             TimerPercent = (int)(((fixed)Player.StatusTimer[i] / (fixed)Player.StatusTimerMax[i]) * 100.0);
+            
+            // Preview
+            if (GetCVar("drpg_hud_preview"))
+                TimerPercent = 100;
             
             SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
             
@@ -107,9 +112,13 @@ script void ComboHUD() enter
     fixed Y = GetCVarFixed("drpg_combo_y");
     SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
     
-    if (Player.Combo > 0)
+    if (Player.Combo > 0 || GetCVar("drpg_hud_preview"))
     {
         int TimerPercent = (int)(((fixed)Player.ComboTimer / (fixed)COMBO_MAX) * 100.0);
+        
+        // Preview
+        if (GetCVar("drpg_hud_preview"))
+            TimerPercent = 100;
         
         // Bar
         DrawBar("Stim2", X, Y, (TimerPercent > 50 ? 50 : TimerPercent), true);
@@ -118,11 +127,11 @@ script void ComboHUD() enter
         // Combo Info
         SetFont("BIGFONT");
         HudMessage("%d\n", Player.Combo, HUDMSG_PLAIN, 0, CR_PURPLE, X + 0.1, Y + 10.0, 0.05);
-        if (Player.XPGained > 0)
+        if (Player.XPGained > 0 || GetCVar("drpg_hud_preview"))
             HudMessage("%d\n", Player.XPGained, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 22.0, 0.05);
-        if (Player.RankGained > 0)
+        if (Player.RankGained > 0 || GetCVar("drpg_hud_preview"))
             HudMessage("%d\n", Player.RankGained, HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y + 34.0, 0.05);
-        if (Player.BonusGained > 0)
+        if (Player.BonusGained > 0 || GetCVar("drpg_hud_preview"))
             HudMessage("%d\n", Player.BonusGained, HUDMSG_PLAIN, 0, CR_GREEN, X + 0.1, Y + 46.0, 0.05);
     };
     
@@ -185,9 +194,13 @@ script void StimHUD() enter
     SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
     
     // Stat Boosts
-    if (Player.Stim.Timer > 0)
+    if (Player.Stim.Timer > 0 || GetCVar("drpg_hud_preview"))
     {
         int TimerPercent = (int)(((fixed)Player.Stim.Timer / (fixed)Player.Stim.TimerMax) * 100.0);
+        
+        // Preview
+        if (GetCVar("drpg_hud_preview"))
+            TimerPercent = 100;
         
         // Time Bar
         DrawBar("Stim10", X, Y, TimerPercent, true);
@@ -198,7 +211,7 @@ script void StimHUD() enter
         
         // Icons
         for (int i = 0; i < StimStatsEnd; i++)
-            if (Player.Stim.ActiveBonus[i])
+            if (Player.Stim.ActiveBonus[i] || GetCVar("drpg_hud_preview"))
             {
                 SetFont("BIGFONT");
                 HudMessage("+%d\n", Player.Stim.Last[i], HUDMSG_PLAIN | HUDMSG_ALPHA, 0, StatColors[i], X + 8.0 + ((i % 4) * 36.0), Y + 16.0 + ((i / 4) * 24.0), 0.05, 0.75);
@@ -208,12 +221,18 @@ script void StimHUD() enter
         
     // Powerups
     for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
-        if (Player.Stim.ActiveBonus[i] && Player.Stim.PowerupTimer[i] > 0)
+        if ((Player.Stim.ActiveBonus[i] && Player.Stim.PowerupTimer[i] > 0) || GetCVar("drpg_hud_preview"))
         {
             int TimerPercent = (int)(((fixed)Player.Stim.PowerupTimer[i] / (fixed)Player.Stim.PowerupTimerMax[i]) * 100.0);
+            
+            // Preview
+            if (GetCVar("drpg_hud_preview"))
+                TimerPercent = 100;
+            
             SetFont("SMALLFONT");
             HudMessage("%s\n", FormatTime(Player.Stim.PowerupTimer[i]), HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CompoundColors[i], X + 112.1, Y + 56.0, 0.05, 0.75);
             DrawBar(StrParam("Stim%d\n", i + 1), X, Y + 56.0, TimerPercent, true);
+            
             Y += 8.0;
         };
     
@@ -231,35 +250,43 @@ script void MissionHUD() enter
     
     Delay(1);
     
-    if (Player.Mission.Active && Player.Mission.Current != OldAmount)
+    if (Player.Mission.Active && Player.Mission.Current != OldAmount || GetCVar("drpg_hud_preview"))
     {
         SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
         SetFont("BIGFONT");
         
-        switch (Player.Mission.Type)
+        if (GetCVar("drpg_hud_preview")) // Preview
         {
-        case MT_COLLECT:
-            HudMessage("%d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_GREEN, X + 0.1, Y, 2.0, 1.0);
-            PrintSpriteFade(Player.Mission.Item->Sprite.Name, MISSION_ID + 1, X + Player.Mission.Item->Sprite.XOff - 40.0 + 0.4, Y + Player.Mission.Item->Sprite.YOff + 0.4, 2.0, 1.0);
-            break;
-        case MT_KILL:
-            HudMessage("\cg%s\n\c-%d / %d\n", Player.Mission.Monster->Name, Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_BRICK, X + 0.4, Y, 2.0, 1.0);
-            break;
-        case MT_KILLAURAS:
-            HudMessage("Auras: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_BRICK, X, Y, 2.0, 1.0);
-            break;
-        case MT_REINFORCEMENTS:
-            HudMessage("Reinforcements: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_BRICK, X, Y, 2.0, 1.0);
-            break;
-        case MT_SECRETS:
-            HudMessage("Secrets: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_GOLD, X, Y, 2.0, 1.0);
-            break;
-        case MT_ITEMS:
-            HudMessage("Items: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_LIGHTBLUE, X, Y, 2.0, 1.0);
-            break;
-        case MT_COMBO:
-            HudMessage("Combo: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_PURPLE, X, Y, 2.0, 1.0);
-            break;
+            HudMessage("0 / 0\n", HUDMSG_FADEOUT, MISSION_ID, CR_GREEN, X + 0.1, Y, 2.0, 1.0);
+            PrintSpriteFade("PISTA0", MISSION_ID + 1, X + 11.0 - 40.0 + 0.4, Y + 15.0 + 0.4, 2.0, 1.0);
+        }
+        else
+        {
+            switch (Player.Mission.Type)
+            {
+            case MT_COLLECT:
+                HudMessage("%d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_GREEN, X + 0.1, Y, 2.0, 1.0);
+                PrintSpriteFade(Player.Mission.Item->Sprite.Name, MISSION_ID + 1, X + Player.Mission.Item->Sprite.XOff - 40.0 + 0.4, Y + Player.Mission.Item->Sprite.YOff + 0.4, 2.0, 1.0);
+                break;
+            case MT_KILL:
+                HudMessage("\cg%s\n\c-%d / %d\n", Player.Mission.Monster->Name, Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_BRICK, X + 0.4, Y, 2.0, 1.0);
+                break;
+            case MT_KILLAURAS:
+                HudMessage("Auras: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_BRICK, X, Y, 2.0, 1.0);
+                break;
+            case MT_REINFORCEMENTS:
+                HudMessage("Reinforcements: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_BRICK, X, Y, 2.0, 1.0);
+                break;
+            case MT_SECRETS:
+                HudMessage("Secrets: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_GOLD, X, Y, 2.0, 1.0);
+                break;
+            case MT_ITEMS:
+                HudMessage("Items: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_LIGHTBLUE, X, Y, 2.0, 1.0);
+                break;
+            case MT_COMBO:
+                HudMessage("Combo: %d / %d\n", Player.Mission.Current, Player.Mission.Amount, HUDMSG_FADEOUT, MISSION_ID, CR_PURPLE, X, Y, 2.0, 1.0);
+                break;
+            };
         };
     };
     
@@ -272,7 +299,7 @@ script void AuraTimerHUD() enter
     
     fixed Offset = 0;
     
-    while (PlayerHasAura(PlayerNumber()))
+    while (PlayerHasAura(PlayerNumber()) || GetCVar("drpg_hud_preview"))
     {
         fixed X = GetCVarFixed("drpg_auratimer_x");
         fixed Y = GetCVarFixed("drpg_auratimer_y");
@@ -287,8 +314,12 @@ script void AuraTimerHUD() enter
             if (Player.Aura.Type[i].Active)
                 AuraCount++;
         
+        // Preview
+        if (GetCVar("drpg_hud_preview"))
+            AuraCount = AURA_MAX;
+        
         // Timer
-        if (Player.Aura.Time > 0)
+        if (Player.Aura.Time > 0 || GetCVar("drpg_hud_preview"))
         {
             SetFont("BIGFONT");
             HudMessage("%s\n", FormatTime(Player.Aura.Time), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
@@ -306,7 +337,7 @@ script void AuraTimerHUD() enter
         
         // Orbiting Icons
         for (int i = 0; i < AURA_MAX; i++)
-            if (Player.Aura.Type[i].Active)
+            if (Player.Aura.Type[i].Active || GetCVar("drpg_hud_preview"))
             {
                 fixed Angle = -0.25 + ((1.0 / AuraCount) * AuraAdd++) + Offset;
                 fixed XOff = X + (Radius * Cos(Angle));
@@ -338,7 +369,7 @@ script void PowerupHUD() enter
     
     // Invulnerability
     int InvulnTime = GetActorPowerupTics(0, "PowerInvulnerable");
-    if (InvulnTime > 0)
+    if (InvulnTime > 0 || GetCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
         HudMessage("%s\n", FormatTime(InvulnTime), HUDMSG_PLAIN, 0, CR_GREEN, X, Y , 0.05);
@@ -356,7 +387,7 @@ script void PowerupHUD() enter
     int InvisTime = GetActorPowerupTics(0, "PowerInvisibility");
     int ShadowTime = GetActorPowerupTics(0, "PowerShadow");
     int GhostTime = GetActorPowerupTics(0, "PowerGhost");
-    if (InvisTime > 0 || ShadowTime > 0 || GhostTime > 0)
+    if (InvisTime > 0 || ShadowTime > 0 || GhostTime > 0 || GetCVar("drpg_hud_preview"))
     {
         int ActualInvisTime;
         if (InvisTime > 0)
@@ -380,7 +411,7 @@ script void PowerupHUD() enter
     
     // Time Freeze
     int FreezeTime = GetActorPowerupTics(0, "PowerTimeFreezer");
-    if (FreezeTime > 0)
+    if (FreezeTime > 0 || GetCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
         HudMessage("%s\n", FormatTime(FreezeTime), HUDMSG_PLAIN, 0, CR_GREEN, X, Y, 0.05);
@@ -395,7 +426,7 @@ script void PowerupHUD() enter
     };
     
     // Regeneration Sphere
-    if (Player.RegenBoostTimer > 0)
+    if (Player.RegenBoostTimer > 0 || GetCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
         HudMessage("%s\n", FormatTime(Player.RegenBoostTimer), HUDMSG_PLAIN, 0, CR_PURPLE, X, Y, 0.05);
@@ -411,7 +442,7 @@ script void PowerupHUD() enter
     
     // Light Amp
     int LightAmpTime = GetActorPowerupTics(0, "PowerLightAmp");
-    if (LightAmpTime > 0)
+    if (LightAmpTime > 0 || GetCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
         HudMessage("%s\n", FormatTime(LightAmpTime), HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
@@ -426,7 +457,7 @@ script void PowerupHUD() enter
     };
     
     // Computer Map/Scanner
-    if (CheckInventory("PowerScanner"))
+    if (CheckInventory("PowerScanner") || GetCVar("drpg_hud_preview"))
     {
         PrintSpritePulse("PMAPA0", 0, X + 14.0, Y + 22.0, 0.75, 32.0, 0.25);
         X += 36.0;
@@ -439,7 +470,7 @@ script void PowerupHUD() enter
     };
     
     // Berserk
-    if (CheckInventory("PowerStrength"))
+    if (CheckInventory("PowerStrength") || GetCVar("drpg_hud_preview"))
     {
         PrintSpritePulse("PSTRA0", 0, X + 12.0, Y + 13.0, 0.75, 32.0, 0.25);
         X += 36.0;
@@ -452,7 +483,7 @@ script void PowerupHUD() enter
     };
     
     // Wings
-    if (CheckInventory("PowerFlight"))
+    if (CheckInventory("PowerFlight") || GetCVar("drpg_hud_preview"))
     {
         PrintSpritePulse("WINGA0", 0, X + 13.0, Y + 35.0, 0.75, 32.0, 0.25);
         X += 36.0;
@@ -467,7 +498,7 @@ script void PowerupHUD() enter
     // Iron Feet
     bool HaveIronFeet = false;
     int IronFeetTime = GetActorPowerupTics(0, "PowerIronFeet");
-    if (IronFeetTime > 0)
+    if (IronFeetTime > 0 || GetCVar("drpg_hud_preview"))
     {
         if (GridCount > 0)
         {
@@ -482,7 +513,7 @@ script void PowerupHUD() enter
     
     // Continues
     int Continues = CheckInventory("DRPGContinue");
-    if (Continues > 0)
+    if (Continues > 0 || GetCVar("drpg_hud_preview"))
     {
         if (HaveIronFeet)
             X -= 40.0
@@ -733,7 +764,7 @@ script void TurretHUD() enter
 {
     Start:
     
-    while (Player.Turret.Active)
+    while (Player.Turret.Active || (GetCVar("drpg_hud_preview") && GetCVar("drpg_debug")))
     {
         fixed X = GetCVarFixed("drpg_turret_x");
         fixed Y = GetCVarFixed("drpg_turret_y");
