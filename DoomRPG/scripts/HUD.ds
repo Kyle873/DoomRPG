@@ -543,6 +543,9 @@ script void DRLAHUD() enter
     if (CompatMode != COMPAT_DRLA) return;
     
     Start:
+    
+    fixed Offset;
+    
     while (true)
     {
         fixed X = GetCVarFixed("drpg_drla_x");
@@ -653,47 +656,93 @@ script void DRLAHUD() enter
                 SetFont("RLFONT");
                 HudMessage("%s%s\n", Color, Name, HUDMSG_PLAIN, 0, CR_WHITE, X, Y - 20.0, 0.05);
                 
-                // Mod Packs
-                /* TODO: Turn this into a loop
-                 * Maybe I'll bring these back if I can come up with a decent way to get the actual total mods the weapon can ahve
-                   otherwise right now it's just too inaccurate to be useful
-                if (Total[0] > 0 && Total[0] >= TotalMax)
-                    HudMessage("%d\n", Total[0], HUDMSG_ALPHA, 0, CR_GOLD, X - 50.0, Y, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
-                else if (Total[0] > 0)
-                    HudMessage("%d\n", Total[0], HUDMSG_PLAIN, 0, CR_WHITE, X - 50.0, Y, 0.05);
-                if (Total[1] > 0 && Total[0] >= TotalMax)
-                    HudMessage("%d\n", Total[1], HUDMSG_ALPHA, 0, CR_GOLD, X - 50.0, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
-                else if (Total[1] > 0)
-                    HudMessage("%d\n", Total[1], HUDMSG_PLAIN, 0, CR_WHITE, X - 50.0, Y + 12.0, 0.05);
-                */
-                if (Power[0] > 0)
-                    HudMessage("%d\n", Power[0], HUDMSG_PLAIN, 0, CR_RED, X - 30.0, Y + 20.0, 0.05);
-                if (Bulk[0] > 0)
-                    HudMessage("%d\n", Bulk[0], HUDMSG_PLAIN, 0, CR_BLUE, X - 20.0, Y + 20.0, 0.05);
-                if (Agility[0] > 0)
-                    HudMessage("%d\n", Agility[0], HUDMSG_PLAIN, 0, CR_GREEN, X - 10.0, Y + 20.0, 0.05);
-                if (Tech[0] > 0)
-                    HudMessage("%d\n", Tech[0], HUDMSG_PLAIN, 0, CR_YELLOW, X, Y + 20.0, 0.05);
-                if (Sniper[0] > 0)
-                    HudMessage("%d\n", Sniper[0], HUDMSG_PLAIN, 0, CR_PURPLE, X + 10.0, Y + 20.0, 0.05);
-                if (Firestorm[0] > 0)
-                    HudMessage("%d\n", Firestorm[0], HUDMSG_PLAIN, 0, CR_ORANGE, X + 20.0, Y + 20.0, 0.05);
-                if (Nano[0] > 0)
-                    HudMessage("%d\n", Nano[0], HUDMSG_PLAIN, 0, CR_WHITE, X + 30.0, Y + 20.0, 0.05);
-                if (Power[1] > 0)
-                    HudMessage("%d\n", Power[1], HUDMSG_PLAIN, 0, CR_RED, X - 30.0, Y + 32.0, 0.05);
-                if (Bulk[1] > 0)
-                    HudMessage("%d\n", Bulk[1], HUDMSG_PLAIN, 0, CR_BLUE, X - 20.0, Y + 32.0, 0.05);
-                if (Agility[1] > 0)
-                    HudMessage("%d\n", Agility[1], HUDMSG_PLAIN, 0, CR_GREEN, X - 10.0, Y + 32.0, 0.05);
-                if (Tech[1] > 0)
-                    HudMessage("%d\n", Tech[1], HUDMSG_PLAIN, 0, CR_YELLOW, X, Y + 32.0, 0.05);
-                if (Sniper[1] > 0)
-                    HudMessage("%d\n", Sniper[1], HUDMSG_PLAIN, 0, CR_PURPLE, X + 10.0, Y + 32.0, 0.05);
-                if (Firestorm[1] > 0)
-                    HudMessage("%d\n", Firestorm[1], HUDMSG_PLAIN, 0, CR_ORANGE, X + 20.0, Y + 32.0, 0.05);
-                if (Nano[1] > 0)
-                    HudMessage("%d\n", Nano[1], HUDMSG_PLAIN, 0, CR_WHITE, X + 30.0, Y + 32.0, 0.05);
+                // Duke 2 RIfle special icon fancyness
+                if (CheckWeapon("RLDuke2Rifle"))
+                {
+                    static str[5] DukeModIcons =
+                    {
+                        "DN2PAICO";
+                        "DN2PBICO";
+                        "DN2PCICO";
+                        "DN2PDICO";
+                        "DN2PEICO";
+                    };
+                    
+                    int[5] Mods =
+                    {
+                        1; // You always have the default shot
+                        Sniper[0];
+                        Firestorm[0];
+                        Nano[0];
+                        (GetActorPowerupTics(0, "PowerRLDuke2RifleRapidFire") > 0);
+                    };
+                    
+                    int Count = 0;
+                    int ModAdd = 0;
+                    int Radius = 24;
+                    
+                    // Count the mods
+                    for (int i = 0; i < 5; i++)
+                        if (Mods[i])
+                            Count++;
+                    
+                    // Draw the mods
+                    for (int i = 0; i < 5; i++)
+                        if (Mods[i])
+                        {
+                            fixed Angle = -0.25 + ((1.0 / Count) * ModAdd++) + Offset;
+                            fixed XOff = X + (Radius * Cos(Angle));
+                            fixed YOff = Y + (Radius * Sin(Angle));
+                            PrintSprite(DukeModIcons[i], 0, (int)XOff + ItemPtr->Sprite.XOff - 12.0, (int)YOff + ItemPtr->Sprite.YOff + 8.0, 0.05);
+                        };
+                    
+                    // Offset
+                    Offset += 0.005;
+                }
+                else // Everything else
+                {
+                    // Mod Packs
+                    /* TODO: Turn this into a loop
+                     * Maybe I'll bring these back if I can come up with a decent way to get the actual total mods the weapon can ahve
+                       otherwise right now it's just too inaccurate to be useful
+                    if (Total[0] > 0 && Total[0] >= TotalMax)
+                        HudMessage("%d\n", Total[0], HUDMSG_ALPHA, 0, CR_GOLD, X - 50.0, Y, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
+                    else if (Total[0] > 0)
+                        HudMessage("%d\n", Total[0], HUDMSG_PLAIN, 0, CR_WHITE, X - 50.0, Y, 0.05);
+                    if (Total[1] > 0 && Total[0] >= TotalMax)
+                        HudMessage("%d\n", Total[1], HUDMSG_ALPHA, 0, CR_GOLD, X - 50.0, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
+                    else if (Total[1] > 0)
+                        HudMessage("%d\n", Total[1], HUDMSG_PLAIN, 0, CR_WHITE, X - 50.0, Y + 12.0, 0.05);
+                    */
+                    if (Power[0] > 0)
+                        HudMessage("%d\n", Power[0], HUDMSG_PLAIN, 0, CR_RED, X - 30.0, Y + 20.0, 0.05);
+                    if (Bulk[0] > 0)
+                        HudMessage("%d\n", Bulk[0], HUDMSG_PLAIN, 0, CR_BLUE, X - 20.0, Y + 20.0, 0.05);
+                    if (Agility[0] > 0)
+                        HudMessage("%d\n", Agility[0], HUDMSG_PLAIN, 0, CR_GREEN, X - 10.0, Y + 20.0, 0.05);
+                    if (Tech[0] > 0)
+                        HudMessage("%d\n", Tech[0], HUDMSG_PLAIN, 0, CR_YELLOW, X, Y + 20.0, 0.05);
+                    if (Sniper[0] > 0)
+                        HudMessage("%d\n", Sniper[0], HUDMSG_PLAIN, 0, CR_PURPLE, X + 10.0, Y + 20.0, 0.05);
+                    if (Firestorm[0] > 0)
+                        HudMessage("%d\n", Firestorm[0], HUDMSG_PLAIN, 0, CR_ORANGE, X + 20.0, Y + 20.0, 0.05);
+                    if (Nano[0] > 0)
+                        HudMessage("%d\n", Nano[0], HUDMSG_PLAIN, 0, CR_WHITE, X + 30.0, Y + 20.0, 0.05);
+                    if (Power[1] > 0)
+                        HudMessage("%d\n", Power[1], HUDMSG_PLAIN, 0, CR_RED, X - 30.0, Y + 32.0, 0.05);
+                    if (Bulk[1] > 0)
+                        HudMessage("%d\n", Bulk[1], HUDMSG_PLAIN, 0, CR_BLUE, X - 20.0, Y + 32.0, 0.05);
+                    if (Agility[1] > 0)
+                        HudMessage("%d\n", Agility[1], HUDMSG_PLAIN, 0, CR_GREEN, X - 10.0, Y + 32.0, 0.05);
+                    if (Tech[1] > 0)
+                        HudMessage("%d\n", Tech[1], HUDMSG_PLAIN, 0, CR_YELLOW, X, Y + 32.0, 0.05);
+                    if (Sniper[1] > 0)
+                        HudMessage("%d\n", Sniper[1], HUDMSG_PLAIN, 0, CR_PURPLE, X + 10.0, Y + 32.0, 0.05);
+                    if (Firestorm[1] > 0)
+                        HudMessage("%d\n", Firestorm[1], HUDMSG_PLAIN, 0, CR_ORANGE, X + 20.0, Y + 32.0, 0.05);
+                    if (Nano[1] > 0)
+                        HudMessage("%d\n", Nano[1], HUDMSG_PLAIN, 0, CR_WHITE, X + 30.0, Y + 32.0, 0.05);
+                };
                 
                 // Icon
                 if (Duel) // Duel-wielding
