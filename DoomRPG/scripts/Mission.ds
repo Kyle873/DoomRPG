@@ -210,20 +210,34 @@ function MissionInfo *CreateMission(int Difficulty)
 {
     int Type = Random(0, MT_MAX - 1);
     int NumPlayers = 0;
-    int RewardXP = 0;
-    int RewardRank = 0;
+    long int RewardXP = 0;
+    long int RewardRank = 0;
     int RewardCredits = 0;
     ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
     static MissionInfo Mission;
     
     // Calculate the rewards based on all Player's average Level and Rank
+    // XPTable[Player.Level + 1] / (3 + MAX_DIFFICULTIES - Difficulty) + Random(0, XPTable[Player.Level + 1] / GameSkill());
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
+        long int XPNext;
+        long int RankNext;
+        
         if (!PlayerInGame(i)) continue;
         
-        RewardXP += (Difficulty + 2) * (XPTable[Players(i).Level] / 100);
-        RewardRank += (Difficulty + 2) * (RankTable[Players(i).RankLevel] / 100);
-        RewardCredits += (Difficulty + Players(i).RankLevel + 1) * 100 * Random(1, 4);
+        // Prevent overflows due to trying to check for a null table index
+        if (Players(i).Level >= MAX_LEVEL)
+            XPNext = XPTable[MAX_LEVEL - 1]
+        else
+            XPNext = XPTable[Players(i).Level];
+        if (Players(i).RankLevel >= MAX_RANK)
+            RankNext = RankTable[MAX_RANK - 1]
+        else
+            RankNext = RankTable[Players(i).Level];
+        
+        RewardXP += XPNext / (1 + MAX_DIFFICULTIES - Difficulty);
+        RewardRank += RankNext / (1 + MAX_DIFFICULTIES - Difficulty);;
+        RewardCredits += Random(100 * (Difficulty + 1) * (Players(i).Level + 1), 100 * (Difficulty + 1)  * (Players(i).Level + 1) * 2);
         
         NumPlayers++;
     };
