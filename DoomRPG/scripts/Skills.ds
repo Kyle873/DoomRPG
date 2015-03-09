@@ -1057,10 +1057,45 @@ acscript bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
     if (Player.Aura.Type[Index].Active)
         Stack = true;
     
-    // Remove all other Auras first if you don't have the Energy
-    if (!Player.Perks[STAT_ENERGY])
-        for (int i = 0; i < AURA_MAX; i++)
-            Player.Aura.Type[i].Active = false;
+    if (!Stack)
+    {
+        // Aura stacking handling with Energy perk
+        if (Player.Perks[STAT_ENERGY])
+        {
+            int StackMax = 1 + ((Player.Energy - 100) / 10);
+            int Auras = 0;
+            
+            Log("\cnAura Max Stack: %d\n", StackMax);
+            
+            // Count the current Auras
+            for (int i = 0; i < AURA_MAX; i++)
+                if (Player.Aura.Type[i].Active)
+                    Auras++;
+            
+            // Make sure the proper Aura stack is maintained
+            while (Auras >= StackMax)
+            {
+                for (int i = 0; i < AURA_MAX; i++)
+                {
+                    // Variance
+                    if (Random(1, 2) == 1) continue;
+                    
+                    if (Player.Aura.Type[i].Active)
+                    {
+                        Player.Aura.Type[i].Active = false;
+                        Auras--;
+                        break;
+                    };
+                };
+                
+                if ((Timer() % 5) == 0)
+                    Delay(1);
+            };
+        }
+        else // Remove all other Auras first if you don't have the Energy
+            for (int i = 0; i < AURA_MAX; i++)
+                Player.Aura.Type[i].Active = false;
+    };
     
     // Should the timer be stacked because you used the same Aura?
     if (Stack || Player.Perks[STAT_ENERGY])
@@ -2392,8 +2427,8 @@ function void CheckAuras()
     
     // Decrease Aura Cost Multiplier
     if (Player.Aura.CostMult > 0)
-        if ((Timer() % (35 * (30 + (GameSkill() * 5)))) == 0)
-            Player.Aura.CostMult -= 10;
+        if ((Timer() % (35 * (5 + GameSkill()))) == 0)
+            Player.Aura.CostMult--;
     
     // Reset Aura and Soul States
     if (Player.Aura.Time <= 0 || !Player.Aura.Team)
