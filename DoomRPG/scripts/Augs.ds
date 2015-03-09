@@ -94,13 +94,16 @@ AugSpace AugInfo[AUG_MAX] AugData =
         };
     };
     {
-        "Battery Management"; 5;
+        "Battery Recharger"; 8;
         {
-            "+50% Battery Capacity";
-            "+100% Battery Capacity";
-            "25% Augmentation Cost Reduction";
-            "50% Augmentation Cost Reduction";
-            "Rechargeable Battery";
+            "+0.5 Recharge Rate";
+            "+1 Recharge Rate";
+            "+1.5 Recharge Rate";
+            "+2 Recharge Rate";
+            "+2.5 Recharge Rate";
+            "+3 Recharge Rate";
+            "+3.5 Recharge Rate";
+            "+4 Recharge Rate";
         };
     };
 };
@@ -189,15 +192,7 @@ function void CheckAugs()
         Player.Augs.SlotsUsed = 0;
     
     // Determine max Battery
-    if (Player.Augs.Active[AUG_BATTERY])
-    {
-        if (Player.Augs.Level[AUG_BATTERY] == 1)
-            Player.Augs.BatteryMax = 150;
-        if (Player.Augs.Level[AUG_BATTERY] >= 2)
-            Player.Augs.BatteryMax = 200;
-    }
-    else
-        Player.Augs.BatteryMax = 100;
+    Player.Augs.BatteryMax = Player.Capacity * 10;
     
     // Play energy drained sound
     if (Player.Augs.Battery <= 0 && Player.Augs.SlotsUsed > 0)
@@ -225,15 +220,6 @@ function void CheckAugs()
             if (Player.Augs.Active[i] && i != AUG_BATTERY)
                 Player.Augs.BatteryDrain += Player.Augs.Level[i];
         
-        // Battery Management checks
-        if (Player.Augs.Active[AUG_BATTERY])
-        {
-            if (Player.Augs.Level[AUG_BATTERY] == 3)
-                Player.Augs.BatteryDrain /= 1.33;
-            if (Player.Augs.Level[AUG_BATTERY] >= 4)
-                Player.Augs.BatteryDrain /= 2;
-        };
-        
         // Decrease Battery
         if (Player.Augs.SlotsUsed > 0 && (Timer() % 35) == 0)
         {
@@ -254,11 +240,11 @@ function void CheckAugs()
     if (Player.Augs.Battery > Player.Augs.BatteryMax)
         Player.Augs.Battery = Player.Augs.BatteryMax;
     
-    // Battery Management Recharging
-    if (Player.Augs.Active[AUG_BATTERY] && Player.Augs.Level[AUG_BATTERY] >= 5 && Player.Augs.Battery < Player.Augs.BatteryMax)
+    // Battery Recharging
+    if (Player.Augs.Active[AUG_BATTERY] && Player.Augs.Battery < Player.Augs.BatteryMax)
         if ((Timer() % 35) == 0 && !IsPlayerMoving() && !CheckInventory("DRPGMenuFreezer"))
         {
-            Player.Augs.Battery += 0.1;
+            Player.Augs.Battery += Player.Augs.Level[AUG_BATTERY] / 2;
             DrawBattery();
         };
     
@@ -404,6 +390,14 @@ function void AugDamage(int Amount)
 
 function void EquipAug(int Aug)
 {
+    // If you don't have this aug yet, return
+    if (Player.Augs.Level[Aug] == 0)
+    {
+        PrintError("This aug has not been activated yet");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
     // If battery is dead, return
     if (Player.Augs.Battery <= 0)
     {
@@ -457,10 +451,11 @@ function void LevelUpAug(int AugIndex)
         }
         else 
         {
-            if (CheckInventory("DRPGAugUpgradeCanister"))
+            if (CheckInventory("DRPGAugCanister") && CheckInventory("DRPGAugUpgradeCanister") >= Player.Augs.Level[AugIndex] + 1)
             {
                 ActivatorSound("aug/levelup", 127);
-                TakeInventory("DRPGAugUpgradeCanister", 1);
+                TakeInventory("DRPGAugCanister", 1);
+                TakeInventory("DRPGAugUpgradeCanister", Player.Augs.Level[AugIndex] + 1);
             }
             else
                 CanLevel = false;
@@ -468,7 +463,7 @@ function void LevelUpAug(int AugIndex)
         
         if (!CanLevel)
         {
-            PrintError("This aug has not been activated yet");
+            PrintError("Cannot upgrade this aug");
             ActivatorSound("menu/error", 127);
             return;
         };
