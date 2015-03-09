@@ -836,8 +836,8 @@ function void DrawSkillMenu()
     
     SkillPtr CurrentSkill = &Skills[Player.SkillPage][Player.MenuIndex];
     SkillLevelInfo *SkillLevel = &Player.SkillLevel[Player.SkillPage][Player.MenuIndex];
-    int SkillCost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel * Player.SkillCostMult);
-    int SkillCostNext = ScaleEPCost(CurrentSkill->Cost * (SkillLevel->CurrentLevel + 1) * Player.SkillCostMult);
+    int SkillCost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel);
+    int SkillCostNext = ScaleEPCost(CurrentSkill->Cost * (SkillLevel->CurrentLevel + 1));
     
     // Title
     SetFont("BIGFONT");
@@ -869,13 +869,17 @@ function void DrawSkillMenu()
         HudMessage("%d\n", SkillCost,
                    HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 256.1, 74.1, 0.05);
     
-    // Aura Cost Multiplier
-    if (Player.Aura.CostMult > 0)
+    // Aura Cost Multiplier/Refund
+    if (Player.Aura.CostMult > 0 || Player.SkillRefundMult > 0)
     {
         PrintSpritePulse("Aura", 0, 232.0, 111.0, 0.75, 64.0, 0.25);
         SetFont("BIGFONT");
-        HudMessage("+%d%% Skill Cost\n", Player.Aura.CostMult,
-                   HUDMSG_PLAIN, 0, CR_CYAN, 256.1, 112.0, 0.05);
+        if (Player.SkillRefundMult > 0)
+            HudMessage("+%d%% Skill Cost\n%d%% Skill Cost Refund\n", Player.Aura.CostMult, Round(Player.SkillRefundMult * 100),
+                       HUDMSG_PLAIN, 0, CR_CYAN, 256.1, 112.0, 0.05)
+        else
+            HudMessage("+%d%% Skill Cost\n", Player.Aura.CostMult,
+                       HUDMSG_PLAIN, 0, CR_CYAN, 256.1, 112.0, 0.05);
     };
     
     // Active Aura Levels
