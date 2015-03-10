@@ -37,12 +37,25 @@ int StimPowerupEnd = STIM_MAX;
 acscript void UseStim() net
 {
     // If you're dead, terminate
-    if (ClassifyActor(0) & ACTOR_DEAD) return;
+    if (GetActorProperty(0, APROP_Health) <= 0) return;
     
-    // If you don't have a stim ready or components in it, terminate
-    if (Player.Stim.Active || Player.Stim.Size == 0 || Player.Stim.Amount == 0)
+    if (Player.Stim.Active)
+    {
+        PrintError("You already have a stim active");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    if (Player.Stim.Size == 0)
     {
         PrintError("You don't have an injector ready");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    if (Player.Stim.Amount == 0)
+    {
+        PrintError("Your current injector is empty");
         ActivatorSound("menu/error", 127);
         return;
     };
@@ -190,6 +203,13 @@ function void CheckStim()
 
 function void MixStim(int Type)
 {
+    if (Player.Stim.Size == 0)
+    {
+        PrintError("You don't have an injector ready");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
     if (Player.Stim.Vials[Type] <= 0)
     {
         PrintError("You don't have any vials of this type left");
@@ -218,6 +238,13 @@ function void SetStim(int Type)
         (Type == 3 && !CheckInventory("DRPGStimXL")))
     {
         PrintError("You have no injectors of this type");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    if (Player.Stim.Size > 0)
+    {
+        PrintError("You already have a stim ready");
         ActivatorSound("menu/error", 127);
         return;
     };
