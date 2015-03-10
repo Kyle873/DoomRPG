@@ -391,6 +391,11 @@ acscript void LoadCharacter() net
             SetInventory(DRLAAssemblies[i], 1);
     };
     
+    // Set Health and EP to their proper max values
+    Log("\caHealthMax: %d \cj: \cnEPMax: %d\n", Player.HealthMax, Player.EPMax);
+    Player.ActualHealth = Player.HealthMax;
+    Player.EP = Player.EPMax;
+    
     ActivatorSound("charsave/accept", 127);
     SetFont("BIGFONT");
     HudMessage("===== Character Load Complete =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_GREEN, 0.5, 0.3, 3.0, 2.0);
@@ -660,8 +665,8 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     StringPos += 4;
     Info->ShopCard = HexToInteger(String + StringPos, 1);
     StringPos += 1;
-    Info->Battery = HexToInteger(String + StringPos, 2);
-    StringPos += 2;
+    Info->Battery = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
     Info->Toxicity = HexToInteger(String + StringPos, 2);
     StringPos += 2;
     Info->PayBonus = HexToInteger(String + StringPos, 4);
@@ -825,9 +830,11 @@ script char const *MakeSaveString(CharSaveInfo *Info)
     pos += 1;
     
     // Aug Battery
-    SaveString[pos + 1] = ToHexChar(Info->Battery);
-    SaveString[pos + 0] = ToHexChar(Info->Battery >> 4);
-    pos += 2;
+    SaveString[pos + 3] = ToHexChar(Info->Battery);
+    SaveString[pos + 2] = ToHexChar(Info->Battery >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->Battery >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->Battery >> 12);
+    pos += 4;
     
     // Toxicity
     SaveString[pos + 1] = ToHexChar(Info->Toxicity);
