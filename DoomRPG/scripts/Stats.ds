@@ -1187,16 +1187,22 @@ function void StatusDamage(int Amount)
     int Type;
     int Time;
     int Intensity;
-    int Count;
     int Chance;
     
     // Can't get Status Effects if Pink Aura is active
     if (Player.Aura.Type[AURA_PINK].Active || Player.SoulActive[SOUL_PINK]) return;
     
     // Calculate the chance
-    Chance = Random(0.0, 100.0);
+    Chance = RandomFixed(0.0, 100.0);
     
-    // Criticals boost 2.5x
+    // Calculate the intensity
+    Intensity = (Amount * Player.HealthMax) / 1000;
+    if (Intensity < 1)
+        Intensity = 1;
+    if (Intensity > 5)
+        Intensity = 5;
+    
+    // Criticals boost chance 2.5x
     if (Amount >= Player.HealthMax / 2)
         Chance *= 2.5;
     
@@ -1210,17 +1216,14 @@ function void StatusDamage(int Amount)
             {
             case 1:
                 Type = SE_POISON;
-                Intensity = Random(1, 5);
-                Time = Random(1, 5);
+                Time = Random(1, 10);
                 break;
             case 2:
-                Type == SE_CORROSION;
-                Intensity = Random(1, 5);
-                Time = Random(1, 5);
+                Type = SE_CORROSION;
+                Time = Random(1, 10);
                 break;
             case 3:
                 Type = SE_RADIATION;
-                Intensity = Random(1, 5);
                 Time = Random(1, 10);
                 break;
             };
@@ -1230,7 +1233,6 @@ function void StatusDamage(int Amount)
         if (Chance <= 10.0) // 1 in 10
         {
             Type = SE_RADIATION;
-            Intensity = Random(1, 5);
             Time = Random(1, 10);
         };
         break;
@@ -1241,17 +1243,14 @@ function void StatusDamage(int Amount)
             {
             case 1:
                 Type = SE_BLIND;
-                Intensity = Random(1, 5);
                 Time = Random(5, 10);
                 break;
             case 2:
                 Type = SE_CONFUSION;
-                Intensity = Random(1, 5);
                 Time = Random(5, 10);
                 break;
             case 3:
                 Type = SE_FATIGUE;
-                Intensity = Random(1, 5);
                 Time = Random(5, 30);
                 break;
             };
@@ -1264,27 +1263,23 @@ function void StatusDamage(int Amount)
             {
             case 1:
                 Type = SE_POISON;
-                Intensity = Random(1, 5);
                 Time = Random(5, 20);
                 break;
             case 2:
-                Type == SE_CORROSION;
-                Intensity = Random(1, 5);
+                Type = SE_CORROSION;
                 Time = Random(5, 20);
                 break;
             case 3:
                 Type = SE_VIRUS;
-                Intensity = Random(1, 5);
                 Time = Random(60, 180);
                 break;
             case 4:
-                Type == SE_SILENCE;
-                Intensity = 1;
-                Time = Random(30, 60);
+                Type = SE_SILENCE;
+                Intensity = 1; // Only has one level of intensity
+                Time = Random(60, 180);
                 break;
             case 5:
-                Type == SE_CURSE;
-                Intensity = Random(1, 5);
+                Type = SE_CURSE;
                 Time = Random(10, 60);
                 break;
             };
@@ -1297,22 +1292,19 @@ function void StatusDamage(int Amount)
             {
             case 1:
                 Type = SE_BLIND;
-                Intensity = Random(1, 5);
                 Time = Random(1, 10);
                 break;
             case 2:
-                Type == SE_SILENCE;
-                Intensity = Random(1, 5);
-                Time = Random(10 * Intensity, 30 * Intensity);
+                Type = SE_SILENCE;
+                Intensity = 1; // Only has one level of intensity
+                Time = Random(60, 180);
                 break;
             case 3:
                 Type = SE_EMP;
-                Intensity = Random(1, 5);
                 Time = Random(5, 30);
                 break;
             case 4:
                 Type = SE_RADIATION;
-                Intensity = Random(1, 5);
                 Time = Random(5, 20);
                 break;
             };
@@ -1325,12 +1317,10 @@ function void StatusDamage(int Amount)
             {
             case 1:
                 Type = SE_BLIND;
-                Intensity = Random(1, 5);
                 Time = Random(1, 10);
                 break;
             case 2:
                 Type = SE_FATIGUE;
-                Intensity = Random(1, 5);
                 Time = Random(5, 30);
                 break;
             };
