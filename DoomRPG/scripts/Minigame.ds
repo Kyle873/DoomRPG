@@ -13,7 +13,7 @@ acscript void ItemRoulette(int Difficulty, fixed Speed, int Size)
     ItemInfoPtr ItemNone = &NoItem;
     bool Finished = false;
     bool Spinning = true;
-    int Amount = (Size > 0 ? Amount = Size : 8 + (4 * Random(0, 3)));
+    int Amount = (Size > 0 ? Size : 8 + (4 * Random(0, 3)));
     int Radius = 128 + (Amount * 3);
     int Selection = 0;
     fixed Offset;
@@ -22,13 +22,17 @@ acscript void ItemRoulette(int Difficulty, fixed Speed, int Size)
     
     // Prevent under/overflow
     if (Difficulty <= 0)
-        Difficulty = Random(1, 7);
-    if (Difficulty > 7)
-        Difficulty = 7;
+        Difficulty = Random(0, MAX_DIFFICULTIES - 1);
+    if (Difficulty > MAX_DIFFICULTIES - 1)
+        Difficulty = MAX_DIFFICULTIES - 1;
     if (Speed <= 0)
         Speed = Random(1, 9);
     if (Speed > 9)
         Speed = 9;
+    if (Size < 4)
+        Size = 4;
+    if (Amount > 20)
+        Amount = 20;
     
     // Setup blank item
     ItemNone->Name = "\caNothing";
@@ -39,10 +43,10 @@ acscript void ItemRoulette(int Difficulty, fixed Speed, int Size)
     // Populate Wheel Items
     for (int i = 0; i < Amount; i++)
     {
-        WheelItems[i] = GetRewardItem(Difficulty + 1);
+        WheelItems[i] = GetRewardItem(Difficulty);
         
         // Place a dud
-        if (Random(0, 3) == 0)
+        if (Difficulty < 5 && Random(0, 3) == 0)
             if (Random(0, 4 - (Player.Luck / 50)) > 0)
                 WheelItems[i] = ItemNone;
     };
