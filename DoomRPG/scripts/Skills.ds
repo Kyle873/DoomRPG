@@ -1029,8 +1029,15 @@ acscript bool DropSupply(SkillLevelInfo *SkillLevel, void *Data)
     fixed Z = GetActorZ(0) + 48.0;
     bool Spawned = false;
     
+    if (SkillLevel->CurrentLevel > 1 && Player.SkillSupplyCooldown > 0)
+    {
+        PrintError(StrParam("You must wait %s before calling in new supplies\n", FormatTime(Player.SkillSupplyCooldown)));
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
     if (SkillLevel->CurrentLevel > 1)
-        Spawned = Spawn("DRPGBigBackpack", X, Y, Z, 0, Angle) && Spawn("DRPGCrate", X, Y, Z, 0, Angle)
+        Spawned = Spawn("DRPGCrate", X, Y, Z, 0, Angle)
     else
         Spawned = Spawn("DRPGBigBackpack", X, Y, Z, 0, Angle);
     
@@ -1039,7 +1046,11 @@ acscript bool DropSupply(SkillLevelInfo *SkillLevel, void *Data)
         // Set Crate's rarity level based on skill level
         if (SkillLevel->CurrentLevel > 1)
         {
+            // Cooldown timer
+            Player.SkillSupplyCooldown = 35 * 60 * 5;
+            
             Delay(1);
+            Crates[CrateID - 1].SupplyDrop = true;
             Crates[CrateID - 1].Rarity = SkillLevel->CurrentLevel - 2;
         };
         
@@ -2198,6 +2209,7 @@ function void CheckSkills()
     
     // Level 4 and 5 of the Energy Augmentation increase skill refund rate
     if (Player.Augs.Active[AUG_ENERGY])
+    {
         if (Player.Augs.Level[AUG_ENERGY] == 4)
             Player.SkillRefundMult += 0.05
         else if (Player.Augs.Level[AUG_ENERGY] == 5)
@@ -2208,6 +2220,7 @@ function void CheckSkills()
             Player.SkillRefundMult += 0.2
         else if (Player.Augs.Level[AUG_ENERGY] >= 8)
             Player.SkillRefundMult += 0.25;
+    };
     
     // Summoned Monsters Handling
     for (int i = 0; i < MAX_SUMMONS; i++)
@@ -2220,6 +2233,10 @@ function void CheckSkills()
     // Powerup cooldown timer handling
     if (Player.SkillPowerupCooldown > 0)
         Player.SkillPowerupCooldown--;
+    
+    // Supply Drop cooldown timer handling
+    if (Player.SkillSupplyCooldown > 0)
+        Player.SkillSupplyCooldown--;
     
     // Bullet-Time timer handling
     if (BulletTimeTimer > 0)
@@ -2445,7 +2462,7 @@ function void CheckAuras()
             };
     
     // Decrease Aura Cost Multiplier
-    if (Player.Aura.CostMult > 0)
+    if (Player.Aura.CostMult > 0 && !PlayerHasAura(PlayerNumber()))
         if ((Timer() % (35 * (5 + GameSkill()))) == 0)
             Player.Aura.CostMult--;
     
