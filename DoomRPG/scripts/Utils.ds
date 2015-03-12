@@ -361,7 +361,8 @@ function int DropMonsterItem(int Killer, int TID, str Item, int Chance, fixed XA
     if (Success)
     {
         // Set Velocity
-        SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
+        if (Players(Killer).Stim.PowerupTimer[STIM_MAGNETIC] <= 0) // Don't toss the item if we're Magnetic, it'll just confuse things
+            SetActorVelocity(ItemTID, RandomFixed(-XSpeed, XSpeed), RandomFixed(-YSpeed, YSpeed), ZSpeed, false, false);
         
         // Array has grown too big, resize it
         if (Players(Killer).DropTID.Position == Players(Killer).DropTID.Size)
@@ -1736,9 +1737,9 @@ function fixed Distance2D(int X1, int Y1, int X2, int Y2)
     return VectorLength(X, Y);
 };
 
-function fixed Lerp(fixed x, fixed y, fixed Value, fixed MaxValue)
+function fixed Lerp(fixed a, fixed b, fixed t)
 {
-    return (MaxValue - Value) * x + Value * y;
+    return ((1.0 - t) * a) + (t * b);
 };
 
 /* Super SidDoyle Math Functions(TM)

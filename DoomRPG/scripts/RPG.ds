@@ -33,7 +33,10 @@ static str[MAX_PLAYERS] PlayerWeapon;
 
 // Structs
 static PlayerData[MAX_PLAYERS] _PlayerData;
-// static MinigameData[MAX_PLAYERS] _MinigameData;
+
+// Items
+bool ItemsInitialized;
+int[MAX_ITEMS] ItemTIDs;
 
 // --------------------------------------------------
 // Multiplayer HUD
@@ -89,6 +92,9 @@ script void GlobalInit() open
     
     // Initial build of TurretUpgradeData
     BuildTurretData();
+    
+    // Initialize the Item handling script
+    ItemHandler();
 };
 
 // Init Script
@@ -617,6 +623,118 @@ script void AutosaveHandler()
         
         Delay(1);
     };
+};
+
+// Handles the Items dynamic array and associated behavior
+script void ItemHandler()
+{
+    // Create the Items Array
+    for (int i = 0; i < MAX_ITEMS; i++)
+    {
+        ItemTIDs[i] = -1;
+        
+        if ((Timer() % 5) == 0)
+            Delay(1);
+    };
+    
+    // Items array initialization complete
+    ItemsInitialized = true;
+    
+    // No magnetizing in the Outpost
+    if (InBase) return;
+    
+    while (ItemsInitialized)
+    {
+        for (int i = 0; i < MAX_ITEMS; i++)
+        {
+            // We've hit the end of the array
+            if (ItemTIDs[i] == -1) break;
+            
+            // Invalid item, continue
+            if (ItemTIDs[i] == 0) continue;
+            
+            // Iterate players and check distances
+            bool NoClip = false;
+            for (int j = 0; j < MAX_PLAYERS; j++)
+            {
+                // Skip this player if they aren't in the game
+                if (!PlayerInGame(j)) continue;
+                
+                // Skip this player if they aren't Magnetic
+                if (Players(j).Stim.PowerupTimer[STIM_MAGNETIC] <= 0) continue;
+                
+                fixed Dist = Distance(ItemTIDs[i], Players(j).TID);
+                fixed Height = GetActorPropertyFixed(Players(j).TID, APROP_Height);
+                fixed Divisor = (Dist - 16.0) + Dist;
+                fixed Amount;
+                fixed X;
+                fixed Y;
+                fixed Z;
+                
+                // Calculate the amount based on close versus far distance
+                if (Dist < 16.0)
+                    Amount = 1.0
+                else
+                    Amount = 16.0 / Divisor;
+                
+                // Calculate the lerped positions
+                X = Lerp(GetActorX(ItemTIDs[i]), GetActorX(Players(j).TID), Amount);
+                Y = Lerp(GetActorY(ItemTIDs[i]), GetActorY(Players(j).TID), Amount);
+                Z = Lerp(GetActorZ(ItemTIDs[i]), GetActorZ(Players(j).TID) + 32.0, Amount);
+                
+                SetActorPosition(ItemTIDs[i], X, Y, Z, false);
+                NoClip = true;
+            };
+            
+            // Enable/Disable clipping on this item
+            if (NoClip)
+                SetActorInventory(ItemTIDs[i], "DRPGItemNoClip", 1)
+            else
+                SetActorInventory(ItemTIDs[i], "DRPGItemNoClipOff", 1);
+        };
+        
+        Delay(1);
+    };
+};
+
+// Initializes an item and adds it to the Items array
+acscript void ItemInit()
+{
+    // Delay while the Items array is being initialized
+    while (!ItemsInitialized) Delay(4);
+    
+    // Add to Items array
+    for (int i = 0; i < MAX_ITEMS; i++)
+        if (ItemTIDs[i] == -1)
+        {
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \c-Item \cd%s\c- added (Index \cd%d\c-)\n", GetActorClass(0), i);
+            
+            // Doesn't have a TID, so assign it one
+            if (ActivatorTID() == 0)
+            {
+                int TID = UniqueTID();
+                ItemTIDs[i] = TID;
+                Thing_ChangeTID(0, TID);
+            }
+            else
+                ItemTIDs[i] = ActivatorTID();
+            
+            break;
+        };
+};
+
+acscript void ItemDump()
+{
+    Log("\cd  ===== ITEM ARRAY DATA =====\n");
+    
+    for (int i = 0; i < MAX_ITEMS; i++)
+    {
+        if (ItemTIDs[i] == -1) break;
+        Log("\cd%d\c-: \cd%s\n", i, GetActorClass(ItemTIDs[i]));
+    };
+    
+    Log("\cd  ===== ITEM ARRAY DATA END =====\n");
 };
 
 // Dynamic Loot Generation System
