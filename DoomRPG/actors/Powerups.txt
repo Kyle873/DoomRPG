@@ -440,3 +440,94 @@ ACTOR DRPGMegasphere : CustomInventory Replaces MegaSphere
         Stop
     }
 }   
+
+// Immunity Crystal
+actor DRPGImmunityCrystal : CustomInventory
+{
+    var int user_type;
+	
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.PickupMessage "Got an Immunity Crystal!"
+	Inventory.PickupSound "powerups/crystal"
+	Inventory.Icon "CRYS"
+    
+    +INVBAR
+    +FLOATBOB
+    +BRIGHT
+    +THRUACTORS
+    -SPECIAL
+    
+    RenderStyle Add
+    
+    Tag "Immunity Crystal"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_SetUserVar("user_type", CallACS("ImmunityCrystalCheck"))
+		TNT1 A 0 A_JumpIf(Abs(VelZ) <= 0.01, "FloorHit")
+        CRYS ABCD 1
+        Goto Spawn+1
+    FloorHit:
+		TNT1 A 0 A_ChangeFlag("SPECIAL", true)
+		TNT1 A 0 A_ChangeFlag("THRUACTORS", false)
+    Spawn2:
+        TNT1 A 0 A_JumpIf(user_type == IC_RANDOM, "RandomPick")
+        TNT1 A 0 A_JumpIf(user_type == IC_BULLET, "BulletMode")
+        TNT1 A 0 A_JumpIf(user_type == IC_MELEE, "MeleeMode")
+        TNT1 A 0 A_JumpIf(user_type == IC_FIRE, "FireMode")
+        TNT1 A 0 A_JumpIf(user_type == IC_PLASMA, "PlasmaMode")
+        Stop
+    RandomPick:
+        TNT1 A 0 A_Jump(256, "BulletMode", "MeleeMode", "FireMode", "PlasmaMode")
+        Stop
+    BulletMode:
+        CRYS A 1 A_RadiusGive("DRPGPowerImmunityBullet", 512.0, RGF_PLAYERS)
+        Loop
+    MeleeMode:
+        CRYS B 1 A_RadiusGive("DRPGPowerImmunityMelee", 512.0, RGF_PLAYERS)
+        Loop
+    FireMode:
+        CRYS C 1 A_RadiusGive("DRPGPowerImmunityFire", 512.0, RGF_PLAYERS)
+        Loop
+    PlasmaMode:
+        CRYS D 1 A_RadiusGive("DRPGPowerImmunityPlasma", 512.0, RGF_PLAYERS)
+        Loop
+    Use:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystal", 0, 0, 40, 16, 0, 0, 0, SXF_SETMASTER)
+        Stop
+    }
+}
+
+actor DRPGPowerImmunityBullet : PowerProtection
+{
+    +INVENTORY.AUTOACTIVATE
+    
+    DamageFactor "Bullet", 0
+	Powerup.Duration 35
+}
+
+actor DRPGPowerImmunityMelee : PowerProtection
+{
+    +INVENTORY.AUTOACTIVATE
+    
+    DamageFactor "Melee", 0
+	Powerup.Duration 35
+}
+
+actor DRPGPowerImmunityFire : PowerProtection
+{
+    +INVENTORY.AUTOACTIVATE
+    
+    DamageFactor "Fire", 0
+	Powerup.Duration 35
+}
+
+actor DRPGPowerImmunityPlasma : PowerProtection
+{
+    +INVENTORY.AUTOACTIVATE
+    
+    DamageFactor "Plasma", 0
+	Powerup.Duration 35
+}
