@@ -1,0 +1,419 @@
+// Outpost Decorations
+// --------------------------------------------------
+
+actor OutpostAdminLamp 12100
+{
+    Height 48
+    Radius 12
+    
+    +SOLID
+    
+    States
+    {
+    Spawn:
+        COLU B -1 Light("OutpostLamp1")
+        Stop
+    }
+}
+
+Actor DRPGOutpostAlarm : SwitchableDecoration 11012
+{
+    +SpawnCeiling
+    +NoGravity
+    
+    States
+    {
+    Spawn:
+        OALM C 0 NoDelay Thing_ChangeTID (0, 1600)
+    Inactive:
+        OALM C -1
+        Stop
+    Active:
+        OALM A 0 A_Jump (256, 1, 2, 3)
+        OALM AAA 1 Light ("OUTPOSTALARM")
+    AlarmLoop:
+        OALM A 4 Light ("OUTPOSTALARM") A_PlaySound ("misc/alarm", CHAN_VOICE, 1.0, 1, ATTN_NORM)
+        OALM BCD 4 Light ("OUTPOSTALARM")
+        Loop
+    }
+}
+
+// Outpost Particle Effects
+// --------------------------------------------------
+
+Actor DRPGOutpostLevelTransportParticleSpawner 11011
+{
+    +NoBlockmap
+    +NoSector
+    +NoGravity
+    RenderStyle None
+    
+    var int user_angle;
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_SpawnItemEx ("DRPGOutpostLevelTransportParticle", 32,  0, 0, 0, 0, 0,  user_angle)
+        TNT1 A 0         A_SpawnItemEx ("DRPGOutpostLevelTransportParticle", 64,  0, 0, 0, 0, 0, -user_angle)
+        TNT1 A 0         A_SpawnItemEx ("DRPGOutpostLevelTransportParticle", 96,  0, 0, 0, 0, 0,  user_angle)
+        TNT1 A 0         A_SpawnItemEx ("DRPGOutpostLevelTransportParticle", 128, 0, 0, 0, 0, 0, -user_angle)
+        TNT1 A 3 A_SetUserVar ("user_angle", user_angle + 6)
+        Loop
+    }
+}
+
+Actor DRPGOutpostLevelTransportParticle
+{
+    +NoInteraction
+    
+    RenderStyle Add
+    Alpha 1.0
+    Scale 0.05
+    
+    States
+    {
+    Spawn:
+        PTCL A 1 Bright A_SetScale (ScaleX - (0.05 / 70))
+        TNT1 A 0 A_ChangeVelocity (0, 0, 0.1)
+        TNT1 A 0 A_JumpIf (ScaleX <= 0, "Death")
+        Loop
+    Death:
+        TNT1 A 0
+        Stop
+    }
+}
+
+Actor DRPGOutpostHealthPadParticleSpawner 11013
+{
+    +NoBlockmap
+    +NoSector
+    +NoGravity
+    RenderStyle None
+    
+    var int user_angle;
+    var int user_angleofs;
+    var int user_radius;
+    
+    States
+    {
+    Spawn:
+        TNT1 A 3
+    MakeCircle:
+        TNT1 A 0 A_SpawnItemEx ("DRPGOutpostHealthPadParticle", user_radius, 0, 0, 0, 0, 0, user_angle + user_angleofs)
+        TNT1 A 0 A_SetUserVar ("user_angle", user_angle + 60)
+        TNT1 A 0 A_JumpIf (user_angle >= 360, "Advance")
+        Loop
+    Advance:
+        TNT1 A 0 A_SetUserVar ("user_angle", 0)
+        TNT1 A 0 A_SetUserVar ("user_angleofs", user_angleofs + 6)
+        TNT1 A 0 A_SetUserVar ("user_radius", user_radius - 8)
+        TNT1 A 0 A_JumpIf (user_radius < 8, 1)
+        Goto Spawn
+        
+        TNT1 A 0 A_SetUserVar ("user_radius", 128)
+        Goto Spawn
+    }
+}
+
+Actor DRPGOutpostHealthPadParticle
+{
+    +NoInteraction
+    
+    RenderStyle Add
+    Alpha 0.5
+    Scale 0.05
+    
+    States
+    {
+    Spawn:
+        AUEF F 1 Bright A_SetScale (ScaleX - (0.05 / 70))
+        TNT1 A 0 A_ChangeVelocity (0, 0, 0.05)
+        TNT1 A 0 A_FadeOut (0.5 / 70)
+        TNT1 A 0 A_JumpIf (ScaleX <= 0, "Death")
+        Loop
+    Death:
+        TNT1 A 0
+        Stop
+    }
+}
+
+Actor DRPGOutpostEPPadParticleSpawner 11014
+{
+    +NoBlockmap
+    +NoSector
+    +NoGravity
+    RenderStyle None
+    
+    var int user_angle;
+    var int user_angleofs;
+    var int user_radius;
+    
+    States
+    {
+    Spawn:
+        TNT1 A 3
+    MakeCircle:
+        TNT1 A 0 A_SpawnItemEx ("DRPGOutpostEPPadParticle", user_radius, 0, 0, 0, 0, 0, user_angle + user_angleofs)
+        TNT1 A 0 A_SetUserVar ("user_angle", user_angle + 60)
+        TNT1 A 0 A_JumpIf (user_angle >= 360, "Advance")
+        Loop
+    Advance:
+        TNT1 A 0 A_SetUserVar ("user_angle", 0)
+        TNT1 A 0 A_SetUserVar ("user_angleofs", user_angleofs + 6)
+        TNT1 A 0 A_SetUserVar ("user_radius", user_radius - 8)
+        TNT1 A 0 A_JumpIf (user_radius < 8, 1)
+        Goto Spawn
+        
+        TNT1 A 0 A_SetUserVar ("user_radius", 128)
+        Goto Spawn
+    }
+}
+
+Actor DRPGOutpostEPPadParticle
+{
+    +NoInteraction
+    
+    RenderStyle Add
+    Alpha 0.5
+    Scale 0.05
+    
+    States
+    {
+    Spawn:
+        AUEF G 1 Bright A_SetScale (ScaleX - (0.05 / 70))
+        TNT1 A 0 A_ChangeVelocity (0, 0, 0.05)
+        TNT1 A 0 A_FadeOut (0.5 / 70)
+        TNT1 A 0 A_JumpIf (ScaleX <= 0, "Death")
+        Loop
+    Death:
+        TNT1 A 0
+        Stop
+    }
+}
+
+Actor DRPGOutpostArmorPadParticleSpawner 11015
+{
+    +NoBlockmap
+    +NoSector
+    +NoGravity
+    RenderStyle None
+    
+    var int user_angle;
+    var int user_angleofs;
+    var int user_radius;
+    
+    States
+    {
+    Spawn:
+        TNT1 A 3
+    MakeCircle:
+        TNT1 A 0 A_SpawnItemEx ("DRPGOutpostArmorPadParticle", user_radius, 0, 0, 0, 0, 0, user_angle + user_angleofs)
+        TNT1 A 0 A_SetUserVar ("user_angle", user_angle + 60)
+        TNT1 A 0 A_JumpIf (user_angle >= 360, "Advance")
+        Loop
+    Advance:
+        TNT1 A 0 A_SetUserVar ("user_angle", 0)
+        TNT1 A 0 A_SetUserVar ("user_angleofs", user_angleofs + 6)
+        TNT1 A 0 A_SetUserVar ("user_radius", user_radius - 8)
+        TNT1 A 0 A_JumpIf (user_radius < 8, 1)
+        Goto Spawn
+        
+        TNT1 A 0 A_SetUserVar ("user_radius", 128)
+        Goto Spawn
+    }
+}
+
+Actor DRPGOutpostArmorPadParticle
+{
+    +NoInteraction
+    
+    RenderStyle Add
+    Alpha 1.0
+    Scale 0.05
+    
+    States
+    {
+    Spawn:
+        AUEF E 1 Bright A_SetScale (ScaleX - (0.05 / 70))
+        TNT1 A 0 A_ChangeVelocity (0, 0, 0.05)
+        TNT1 A 0 A_FadeOut (1.0 / 70)
+        TNT1 A 0 A_JumpIf (ScaleX <= 0, "Death")
+        Loop
+    Death:
+        TNT1 A 0
+        Stop
+    }
+}
+
+Actor DRPGOutpostBatteryPadParticleSpawner 11016
+{
+    +NoBlockmap
+    +NoSector
+    +NoGravity
+    RenderStyle None
+    
+    var int user_angle;
+    var int user_angleofs;
+    var int user_radius;
+    
+    States
+    {
+    Spawn:
+        TNT1 A 3
+    MakeCircle:
+        TNT1 A 0 A_SpawnItemEx ("DRPGOutpostBatteryPadParticle", user_radius, 0, 0, 0, 0, 0, user_angle + user_angleofs)
+        TNT1 A 0 A_SetUserVar ("user_angle", user_angle + 60)
+        TNT1 A 0 A_JumpIf (user_angle >= 360, "Advance")
+        Loop
+    Advance:
+        TNT1 A 0 A_SetUserVar ("user_angle", 0)
+        TNT1 A 0 A_SetUserVar ("user_angleofs", user_angleofs + 6)
+        TNT1 A 0 A_SetUserVar ("user_radius", user_radius - 8)
+        TNT1 A 0 A_JumpIf (user_radius < 8, 1)
+        Goto Spawn
+        
+        TNT1 A 0 A_SetUserVar ("user_radius", 128)
+        Goto Spawn
+    }
+}
+
+Actor DRPGOutpostBatteryPadParticle
+{
+    +NoInteraction
+    
+    RenderStyle Add
+    Alpha 1.0
+    Scale 0.05
+    
+    States
+    {
+    Spawn:
+        PTCL B 1 Bright A_SetScale (ScaleX - (0.05 / 70))
+        TNT1 A 0 A_ChangeVelocity (0, 0, 0.05)
+        TNT1 A 0 A_FadeOut (1.0 / 70)
+        TNT1 A 0 A_JumpIf (ScaleX <= 0, "Death")
+        Loop
+    Death:
+        TNT1 A 0
+        Stop
+    }
+}
+
+// Automap Markers
+// --------------------------------------------------
+
+Actor OutpostMarker : MapMarker
+{
+    Scale 0.25
+    RenderStyle Add
+}
+
+Actor OutpostMarker_ArmorPad : OutpostMarker 12000
+{
+    States
+    {
+    Spawn:
+        OMRK A -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_AugBatteryPad : OutpostMarker 12001
+{
+    States
+    {
+    Spawn:
+        OMRK B -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_EPPad : OutpostMarker 12002
+{
+    States
+    {
+    Spawn:
+        OMRK C -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_HealthPad : OutpostMarker 12003
+{
+    States
+    {
+    Spawn:
+        OMRK D -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_ItemLockers : OutpostMarker 12004
+{
+    States
+    {
+    Spawn:
+        OMRK E -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_MissionBBS : OutpostMarker 12005
+{
+    States
+    {
+    Spawn:
+        OMRK F -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_Shop : OutpostMarker 12006
+{
+    States
+    {
+    Spawn:
+        OMRK G -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_LevelTransporter : OutpostMarker 12007
+{
+    States
+    {
+    Spawn:
+        OMRK H -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_SkillComputer : OutpostMarker 12008
+{
+    States
+    {
+    Spawn:
+        OMRK I -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_TokenConverter : OutpostMarker 12009
+{
+    States
+    {
+    Spawn:
+        OMRK J -1
+        Stop
+    }
+}
+
+Actor OutpostMarker_GamesTable : OutpostMarker 12010
+{
+    States
+    {
+    Spawn:
+        OMRK K -1
+        Stop
+    }
+}
