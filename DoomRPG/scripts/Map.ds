@@ -195,9 +195,6 @@ script void MapInit() open
         CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
         CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
         
-        // Delay here so we can allow time for all monsters/items to spawn in for proper counting
-        Delay(4);
-        
         CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
         CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
         CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
@@ -1129,7 +1126,7 @@ script void DRLAReplaceMonsters(DRLAEventMonsterReplacement *Replacements, str M
 
 script void SetupOutpostEvent()
 {
-    // TODO: Outpost Invasions, Power Fluctuations
+    // TODO: Outpost Invasions, Power Fluctuations, etc
     return;
 };
 
@@ -1189,23 +1186,20 @@ script void MapLoop()
     if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS)
     {
         CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
-        if (CurrentLevel->MaxMonstersKilled > CurrentLevel->MaxTotalMonsters)
-            CurrentLevel->MaxMonstersKilled = CurrentLevel->MaxTotalMonsters;
-        CurrentLevel->MaxMonsterPercentage = CalcPercent(CurrentLevel->MaxMonstersKilled, CurrentLevel->MaxTotalMonsters);
+        CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+        CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
     };
     if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS)) > CurrentLevel->MaxItemPercentage)
     {
         CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
-        if (CurrentLevel->MaxItemsFound > CurrentLevel->MaxTotalItems)
-            CurrentLevel->MaxItemsFound = CurrentLevel->MaxTotalItems;
-        CurrentLevel->MaxItemPercentage = CalcPercent(CurrentLevel->MaxItemsFound, CurrentLevel->MaxTotalItems);
+        CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+        CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
     };
     if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS)) > CurrentLevel->MaxSecretPercentage)
     {
         CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
-        if (CurrentLevel->MaxSecretsFound > CurrentLevel->MaxTotalSecrets)
-            CurrentLevel->MaxSecretsFound = CurrentLevel->MaxTotalSecrets;
-        CurrentLevel->MaxSecretPercentage = CalcPercent(CurrentLevel->MaxSecretsFound, CurrentLevel->MaxTotalSecrets);
+        CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
     };
     
     if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus)
@@ -1242,8 +1236,8 @@ script void MapLoop()
             
             FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
             
-            Players(i).EP = Players(i).EPMax;
             HealThing(SHIELD_HEALTH);
+            Players(i).EP = Players(i).EPMax;
             
             HudMessage("Items Found Bonus!\nFull HP/EP Restore\n",
                        HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 3.0);
@@ -1294,8 +1288,8 @@ script void MapLoop()
             Players(i).XP += XPBonus;
             Players(i).Rank += RankBonus;
             
-            Players(i).EP = Players(i).EPMax;
             HealThing(SHIELD_HEALTH);
+            Players(i).EP = Players(i).EPMax;
             
             HudMessage("\caMonsters Killed Bonus!\n\cnItems Found Bonus!\n\ckSecrets Found Bonus!\n\n\cj%d XP Bonus\n\ck%d Rank Bonus\n\cnFull HP/EP Restore\n",
                        XPBonus, RankBonus,

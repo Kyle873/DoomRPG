@@ -991,14 +991,17 @@ actor DRPGLostSoulExtras : LostSoul replaces LostSoul
 {
     Tag "Lost Soul"
     +FLOATBOB
+    -COUNTKILL
     states
     {
     Spawn:
-        SKUL A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOXP | MF_NOAURA | MF_NODROPS)
+        SKUL A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NODROPS)
+        TNT1 A 0
         SKUL AB 10 BRIGHT A_Look
         Goto Spawn+1
     See:
-        SKUL A 0 ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOXP | MF_NOAURA | MF_NODROPS)
+        SKUL A 0 ACS_NamedExecuteAlways("MonsterInit", 0, MF_NODROPS)
+        TNT1 A 0
         Goto Super::See
     Death:
         SKUL F 6 bright
@@ -1007,6 +1010,40 @@ actor DRPGLostSoulExtras : LostSoul replaces LostSoul
         SKUL I 6 bright A_Explode(5)
         SKUL JK 6
         stop
+    }
+}
+
+actor DRPGLostSoulExtrasPE : DRPGLostSoulExtras
+{
+    states
+    {
+    Spawn:
+        SKUL A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOXP | MF_NOAURA | MF_NODROPS)
+        Goto Super::Spawn+1
+    See:
+        SKUL A 0 ACS_NamedExecuteAlways("MonsterInit", 0, MF_NOXP | MF_NOAURA | MF_NODROPS)
+        Goto Super::See+1
+    }
+}
+
+actor DRPGPainElementalExtras : PainElemental Replaces PainElemental
+{
+    Tag "Pain Elemental"
+    
+    States
+    {
+    Spawn:
+        PAIN A 0 NoDelay ACS_NamedExecuteAlways("MonsterInit", 0)
+        Goto Super::Spawn
+    See:
+        PAIN A 0 ACS_NamedExecuteAlways("MonsterInit", 0)
+        Goto Super::See
+	Missile:
+		PAIN D 5 A_FaceTarget
+		PAIN E 5 A_FaceTarget
+		PAIN F 4 Bright A_FaceTarget
+		PAIN F 1 Bright A_PainAttack("DRPGLostSoulExtrasPE")
+		Goto See
     }
 }
 
