@@ -1,6 +1,7 @@
 #include "RPG.dh"
 
 #include "HUD.dh"
+#include "Map.dh"
 #include "Mission.dh"
 #include "Shield.dh"
 #include "Skills.dh"
@@ -104,38 +105,227 @@ script void StatusEffectHUD() enter
     goto Start;
 };
 
+script void CreditHUD() enter
+{
+    static str[6] CreditSprites =
+    {
+        "CREDA0";
+        "CREDB0";
+        "CREDC0";
+        "CREDD0";
+        "CREDE0";
+        "CREDF0";
+    };
+    
+    int Credits;
+    int CreditColor;
+    
+    int OldCredits = CheckInventory("DRPGCredits");
+    
+    // Roller
+    int StartCredits = CheckInventory("DRPGCredits");
+    int DisplayCredits = CheckInventory("DRPGCredits");
+    int CreditsTimer = 0;
+    int CreditsTimerMax = 0;
+
+    // Collection Timer
+    int CreditsCollected = 0;
+    int CollectionTimer = 0;
+    
+    Start:
+    
+    Credits = CheckInventory("DRPGCredits");
+    CreditColor = (Timer() / (35 * 60)) % 6;
+    fixed X = GetCVarFixed("drpg_credits_x");
+    fixed Y = GetCVarFixed("drpg_credits_y");
+    
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+    
+    if (Credits > 0 || GetCVar("drpg_hud_preview"))
+    {
+        // Update the collected Credits - Roller and Display Timer
+        if (Credits != OldCredits)
+        {
+            CreditsCollected += (Credits - OldCredits);
+            CollectionTimer = 35 * 6;
+            
+            StartCredits = DisplayCredits;
+            CreditsTimerMax = Abs(Credits - DisplayCredits) * 2;
+            if (CreditsTimerMax > 35 * 2)
+                CreditsTimerMax = 35 * 2;
+            CreditsTimer = CreditsTimerMax;
+        };
+        
+        // Count up until the display Credits reaches the actual Credits
+        if (CreditsTimer > 0)
+        {
+            long int Percent = (CreditsTimerMax * CreditsTimerMax) - (CreditsTimer * CreditsTimer);
+            DisplayCredits = StartCredits + (int)((long int)(Credits - StartCredits) * Percent / (CreditsTimerMax * CreditsTimerMax));
+            CreditsTimer--;
+        }
+        else
+            DisplayCredits = Credits;
+        
+        PrintSprite(CreditSprites[CreditColor], 0, X, Y + 12.0, 0.05);
+        SetFont("BIGFONT");
+        HudMessage("%d\n", DisplayCredits, HUDMSG_PLAIN, 0, CR_GOLD, X + 16.1, Y, 0.05);
+        if (CreditsCollected != 0)
+            HudMessage("%c%d\n", (CreditsCollected > 0 ? '+' : '@'), CreditsCollected, HUDMSG_FADEOUT, PAY_ID, (CreditsCollected > 0 ? CR_WHITE : CR_RED), X + 16.1, Y + 16.0, 0.05, 2.0, 1.0);
+    };
+    
+    // Collected Credits timer handling
+    if (CollectionTimer > 0)
+        CollectionTimer--
+    else
+        CreditsCollected = 0;
+    
+    OldCredits = CheckInventory("DRPGCredits");
+    Delay(1);
+    
+    goto Start;
+};
+
 script void ComboHUD() enter
 {
+    int TimerPercent;
+    int Combo;
+    int XP;
+    int Rank;
+    int Bonus;
+    int OldCombo;
+    int OldXP;
+    int OldRank;
+    int OldBonus;
+    
+    // Rollers
+    int StartCombo = 0;
+    int DisplayCombo = 0;
+    int ComboTimer = 0;
+    int ComboTimerMax = 0;
+    int StartXP = 0;
+    int DisplayXP = 0;
+    int XPTimer = 0;
+    int XPTimerMax = 0;
+    int StartRank = 0;
+    int DisplayRank = 0;
+    int RankTimer = 0;
+    int RankTimerMax = 0;
+    int StartBonus = 0;
+    int DisplayBonus = 0;
+    int BonusTimer = 0;
+    int BonusTimerMax = 0;
+    
     Start:
     
     fixed X = GetCVarFixed("drpg_combo_x");
     fixed Y = GetCVarFixed("drpg_combo_y");
+    
     SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
     
-    if (Player.Combo > 0 || GetCVar("drpg_hud_preview"))
+    Combo = Player.Combo;
+    XP = Player.XPGained;
+    Rank = Player.RankGained;
+    Bonus = Player.BonusGained;
+    
+    // Roller timer updating
+    if (Combo != OldCombo)
     {
-        int TimerPercent = (int)(((fixed)Player.ComboTimer / (fixed)COMBO_MAX) * 100.0);
-        
-        // Preview
-        if (GetCVar("drpg_hud_preview"))
-            TimerPercent = 100;
-        
-        // Bar
-        DrawBar("CBar1", X, Y, (TimerPercent > 50 ? 50 : TimerPercent), true);
-        DrawBar("CBar2", X + 50, Y, TimerPercent - 50, true);
-        
-        // Combo Info
-        SetFont("BIGFONT");
-        HudMessage("%d\n", Player.Combo, HUDMSG_PLAIN, 0, CR_PURPLE, X + 0.1, Y + 10.0, 0.05);
-        if (Player.XPGained > 0 || GetCVar("drpg_hud_preview"))
-            HudMessage("%d\n", Player.XPGained, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 22.0, 0.05);
-        if (Player.RankGained > 0 || GetCVar("drpg_hud_preview"))
-            HudMessage("%d\n", Player.RankGained, HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y + 34.0, 0.05);
-        if (Player.BonusGained > 0 || GetCVar("drpg_hud_preview"))
-            HudMessage("%d\n", Player.BonusGained, HUDMSG_PLAIN, 0, CR_GREEN, X + 0.1, Y + 46.0, 0.05);
+        StartCombo = DisplayCombo;
+        ComboTimerMax = Abs(Combo - DisplayCombo);
+        if (ComboTimerMax > 35)
+            ComboTimerMax = 35;
+        ComboTimer = ComboTimerMax;
+    };
+    if (XP != OldXP)
+    {
+        StartXP = DisplayXP;
+        XPTimerMax = Abs(XP - DisplayXP);
+        if (XPTimerMax > 35)
+            XPTimerMax = 35;
+        XPTimer = XPTimerMax;
+    };
+    if (Rank != OldRank)
+    {
+        StartRank = DisplayRank;
+        RankTimerMax = Abs(Rank - DisplayRank);
+        if (RankTimerMax > 35)
+            RankTimerMax = 35;
+        RankTimer = RankTimerMax;
+    };
+    if (Bonus != OldBonus)
+    {
+        StartBonus = DisplayBonus;
+        BonusTimerMax = Abs(Bonus - DisplayBonus);
+        if (BonusTimerMax > 35)
+            BonusTimerMax = 35;
+        BonusTimer = BonusTimerMax;
     };
     
+    // Roller counting
+    if (ComboTimer > 0)
+    {
+        long int Percent = (ComboTimerMax * ComboTimerMax) - (ComboTimer * ComboTimer);
+        DisplayCombo = StartCombo + (int)((long int)(Combo - StartCombo) * Percent / (ComboTimerMax * ComboTimerMax));
+        ComboTimer--;
+    }
+    else
+        DisplayCombo = Combo;
+    if (XPTimer > 0)
+    {
+        long int Percent = (XPTimerMax * XPTimerMax) - (XPTimer * XPTimer);
+        DisplayXP = StartXP + (int)((long int)(XP - StartXP) * Percent / (XPTimerMax * XPTimerMax));
+        XPTimer--;
+    }
+    else
+        DisplayXP = XP;
+    if (RankTimer > 0)
+    {
+        long int Percent = (RankTimerMax * RankTimerMax) - (RankTimer * RankTimer);
+        DisplayRank = StartRank + (int)((long int)(Rank - StartRank) * Percent / (RankTimerMax * RankTimerMax));
+        RankTimer--;
+    }
+    else
+        DisplayRank = Rank;
+    if (BonusTimer > 0)
+    {
+        long int Percent = (BonusTimerMax * BonusTimerMax) - (BonusTimer * BonusTimer);
+        DisplayBonus = StartBonus + (int)((long int)(Bonus - StartBonus) * Percent / (BonusTimerMax * BonusTimerMax));
+        BonusTimer--;
+    }
+    else
+        DisplayBonus = Bonus;
+    
+    if (Player.ComboTimer < COMBO_MAX)
+        TimerPercent = (int)(((fixed)Player.ComboTimer / (fixed)COMBO_MAX) * 100.0)
+    else if (GetCVar("drpg_hud_preview"))
+        TimerPercent = 100
+    else
+        TimerPercent = 0;
+    
+    // Bar
+    if (TimerPercent > 0)
+    {
+        DrawBar("CBar1", X, Y, (TimerPercent > 50 ? 50 : TimerPercent), true);
+        DrawBar("CBar2", X + 50, Y, TimerPercent - 50, true);
+    };
+    
+    // Combo Info
+    SetFont("BIGFONT");
+    if (DisplayCombo > 0 || GetCVar("drpg_hud_preview"))
+        HudMessage("%d\n", DisplayCombo, HUDMSG_PLAIN, 0, CR_PURPLE, X + 0.1, Y + 10.0, 0.05);
+    if (DisplayXP > 0 || GetCVar("drpg_hud_preview"))
+        HudMessage("%d\n", DisplayXP, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 22.0, 0.05);
+    if (DisplayRank > 0 || GetCVar("drpg_hud_preview"))
+        HudMessage("%d\n", DisplayRank, HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y + 34.0, 0.05);
+    if (DisplayBonus > 0 || GetCVar("drpg_hud_preview"))
+        HudMessage("%d\n", DisplayBonus, HUDMSG_PLAIN, 0, CR_GREEN, X + 0.1, Y + 46.0, 0.05);
+    
+    OldCombo = Player.Combo;
+    OldXP = Player.XPGained;
+    OldRank = Player.RankGained;
+    OldBonus = Player.BonusGained;
     Delay(1);
+    
     goto Start;
 };
 
@@ -441,7 +631,9 @@ script void PowerupHUD() enter
     };
     
     // Light Amp
-    int LightAmpTime = GetActorPowerupTics(0, "PowerLightAmp");
+    int LightAmpPowerupTime = GetActorPowerupTics(0, "PowerLightAmp");
+    int LightAmpSkillTime = GetActorPowerupTics(0, "DRPGSkillLightAmp");
+    int LightAmpTime = (LightAmpPowerupTime > LightAmpSkillTime ? LightAmpPowerupTime : LightAmpSkillTime);
     if (LightAmpTime > 0 || GetCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
@@ -497,7 +689,9 @@ script void PowerupHUD() enter
     
     // Iron Feet
     bool HaveIronFeet = false;
-    int IronFeetTime = GetActorPowerupTics(0, "PowerIronFeet");
+    int IronFeetPowerTime = GetActorPowerupTics(0, "PowerIronFeet");
+    int IronFeetSkillTime = GetActorPowerupTics(0, "DRPGSkillIronFeet");
+    int IronFeetTime = (IronFeetPowerTime > IronFeetSkillTime ? IronFeetPowerTime : IronFeetSkillTime);
     if (IronFeetTime > 0 || GetCVar("drpg_hud_preview"))
     {
         if (GridCount > 0)
@@ -522,6 +716,150 @@ script void PowerupHUD() enter
         SetFont("SMALLFONT");
         HudMessage("%d\n", Continues, HUDMSG_PLAIN, 0, CR_GOLD, X, Y + 16.0  , 0.05);
         PrintSpritePulse("CONTA0", 0, X + 17.0, Y + 63.0, 0.75, 32.0, 0.25);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
+script void EventHUD() enter
+{
+    static str[MAX_NUKE_KEYS] KeySprites =
+    {
+        "NKEYA0";
+        "NKEYB0";
+        "NKEYC0";
+        "NKEYD0";
+        "NKEYE0";
+        "NKEYF0";
+        "NKEYG0";
+        "NKEYH0";
+        "NKEYI0";
+    };
+    
+    Start:
+    
+    fixed X = GetCVarFixed("drpg_event_x");
+    fixed Y = GetCVarFixed("drpg_event_y");
+    
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+    
+    // Thermonuclear Bomb
+    if (CurrentLevel->Event == MAPEVENT_NUCLEARBOMB && CurrentLevel->BombTime > 0)
+    {
+        SetFont("BIGFONT");
+        HudMessage("\cgT - %s\n", FormatTime(CurrentLevel->BombTime), HUDMSG_PLAIN, NUKE_ID, CR_RED, X + 0.1, Y + 0.1, 0.05);
+        
+        int KeyOffset = 0;
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        {
+            // Skip drawing this key if it's disabled
+            if (!CurrentLevel->BombKeyActive[i]) continue;
+            
+            // Timer
+            SetFont("BIGFONT");
+            HudMessage("%s\n", FormatTime(CurrentLevel->BombKeyTimer[i]), HUDMSG_PLAIN, 0, (CurrentLevel->BombKeyDisarming[i] ? CR_RED : CR_WHITE), X + (KeyOffset % 3 * 48.0), Y + 48.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            // Key
+            for (int j = 0; j < MAX_PLAYERS; j++)
+                if (CheckActorInventory(Players(j).TID, StrParam("DRPGNukeKey%d\n", i + 1)))
+                    PrintSprite(StrParam("%s\n", KeySprites[i]), 0, X - 12.0 + (KeyOffset % 3 * 48.0), Y + 52.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            // Icon
+            PrintSprite(StrParam("E_NKEY%d\n", i + 1), 0, X + (KeyOffset % 3 * 48.0), Y + 34.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            KeyOffset++;
+        };
+    };
+    
+    // Low Power
+    if (CurrentLevel->Event == MAPEVENT_LOWPOWER && !CurrentLevel->PowerGeneratorActive)
+    {
+        // Draw if someone has a working power cell
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            if (CheckActorInventory(Players(i).TID, "DRPGGeneratorCell") > 0)
+                PrintSprite("GCELA0", 0, X, Y, 0.05);
+    };
+    
+    // Hell Unleashed
+    if ((CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && CurrentLevel->HellUnleashedActive) || GetCVar("drpg_hud_preview"))
+    {
+        PrintSpritePulse("MonLevel", 0, X + 0.1, Y, 0.75, 32.0, 0.25);
+        PrintSpritePulse("STAT8S", 0, X + 8.1, Y + 38.0, 0.75, 32.0, 0.25);
+        
+        SetFont("BIGFONT");
+        HudMessageBold("+%k\n", CurrentLevel->LevelAdd, HUDMSG_PLAIN, 0, CR_WHITE, X + 24.1, Y, 0.05);
+        HudMessageBold("+%k%%\n", CurrentLevel->RareAdd, HUDMSG_PLAIN, 0, CR_GOLD, X + 24.1, Y + 18.0, 0.05);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
+script void CoopViewHUD() enter
+{
+    Start:
+    while (Player.PlayerView != PlayerNumber())
+    {
+        fixed X = GetCVarFixed("drpg_coopview_x");
+        fixed Y = GetCVarFixed("drpg_coopview_y");
+        
+        SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+        
+        if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && !Player.InMinigame)
+        {
+            SetFont("BIGFONT");
+            HudMessage("%N\n", PlayerNumber() + 1, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 8.0, 0.05);
+            PrintSprite(StrParam("P%dSVIEW\n", Player.PlayerView + 1), 0, X + 0.1, Y + 0.1, 0.05);
+        };
+        
+        Delay(1);
+    };
+};
+
+script void TurretHUD() enter
+{
+    Start:
+    
+    while (Player.Turret.Active || (GetCVar("drpg_hud_preview") && GetCVar("drpg_debug")))
+    {
+        fixed X = GetCVarFixed("drpg_turret_x");
+        fixed Y = GetCVarFixed("drpg_turret_y");
+        int Health = GetActorProperty(Player.Turret.TID, APROP_Health);
+        int[TW_MAX] Ammo =
+        {
+            Player.Turret.BulletAmmo;
+            Player.Turret.ShellAmmo;
+            Player.Turret.RocketAmmo;
+            Player.Turret.PlasmaAmmo;
+            Player.Turret.RailAmmo;
+        };
+        str AmmoIcon = "";
+        
+        SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+        
+        // Determine Ammo Icon
+        switch (Player.Turret.Weapon)
+        {
+            case TW_BULLET:                     AmmoIcon = "CLIPA0";    break;
+            case TW_PELLET:                     AmmoIcon = "SHELA0";    break;
+            case TW_ROCKET:                     AmmoIcon = "ROCKA0";    break;
+            case TW_PLASMA: case TW_RAILGUN:    AmmoIcon = "CELLA0";    break;
+        };
+        
+        // Icons
+        PrintSprite("PTURA3A7", 0, X + 0.1, Y + (int)(Sin((fixed)Timer() / 64.0) * 8.0), 0.05);
+        if (Player.Turret.Weapon > 0)
+            PrintSprite(AmmoIcon, 0, X + 0.1, Y + 24.0, 0.05);
+        
+        // Health, Battery, Ammo
+        SetFont("BIGFONT");
+        HudMessage("%d\n", Health, HUDMSG_PLAIN, 0, CR_RED, X + 24.1, Y - 16.0, 0.05);
+        HudMessage("%s\n", FormatTime(Player.Turret.Battery * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 24.1, Y, 0.05);
+        if (Player.Turret.Weapon > 0)
+            HudMessage("%d\n", Ammo[Player.Turret.Weapon - 1], HUDMSG_PLAIN, 0, CR_WHITE, X + 24.1, Y + 16.0, 0.05);
+        
+        Delay(1);
     };
     
     Delay(1);
@@ -783,79 +1121,6 @@ script void DRLAHUD() enter
         
         Delay(1);
     };
-    
-    Delay(1);
-    goto Start;
-};
-
-script void CoopViewHUD() enter
-{
-    Start:
-    while (Player.PlayerView != PlayerNumber())
-    {
-        fixed X = GetCVarFixed("drpg_coopview_x");
-        fixed Y = GetCVarFixed("drpg_coopview_y");
-        
-        SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
-        
-        if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && !Player.InMinigame)
-        {
-            SetFont("BIGFONT");
-            HudMessage("%N\n", PlayerNumber() + 1, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 8.0, 0.05);
-            PrintSprite(StrParam("P%dSVIEW\n", Player.PlayerView + 1), 0, X + 0.1, Y + 0.1, 0.05);
-        };
-        
-        Delay(1);
-    };
-};
-
-script void TurretHUD() enter
-{
-    Start:
-    
-    while (Player.Turret.Active || (GetCVar("drpg_hud_preview") && GetCVar("drpg_debug")))
-    {
-        fixed X = GetCVarFixed("drpg_turret_x");
-        fixed Y = GetCVarFixed("drpg_turret_y");
-        int Health = GetActorProperty(Player.Turret.TID, APROP_Health);
-        int[TW_MAX] Ammo =
-        {
-            Player.Turret.BulletAmmo;
-            Player.Turret.ShellAmmo;
-            Player.Turret.RocketAmmo;
-            Player.Turret.PlasmaAmmo;
-            Player.Turret.RailAmmo;
-        };
-        str AmmoIcon = "";
-        
-        SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
-        
-        // Determine Ammo Icon
-        switch (Player.Turret.Weapon)
-        {
-            case TW_BULLET:                     AmmoIcon = "CLIPA0";    break;
-            case TW_PELLET:                     AmmoIcon = "SHELA0";    break;
-            case TW_ROCKET:                     AmmoIcon = "ROCKA0";    break;
-            case TW_PLASMA: case TW_RAILGUN:    AmmoIcon = "CELLA0";    break;
-        };
-        
-        // Icons
-        PrintSprite("PTURA3A7", 0, X + 0.1, Y + (int)(Sin((fixed)Timer() / 64.0) * 8.0), 0.05);
-        if (Player.Turret.Weapon > 0)
-            PrintSprite(AmmoIcon, 0, X + 0.1, Y + 24.0, 0.05);
-        
-        // Health, Battery, Ammo
-        SetFont("BIGFONT");
-        HudMessage("%d\n", Health, HUDMSG_PLAIN, 0, CR_RED, X + 24.1, Y - 16.0, 0.05);
-        HudMessage("%s\n", FormatTime(Player.Turret.Battery * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 24.1, Y, 0.05);
-        if (Player.Turret.Weapon > 0)
-            HudMessage("%d\n", Ammo[Player.Turret.Weapon - 1], HUDMSG_PLAIN, 0, CR_WHITE, X + 24.1, Y + 16.0, 0.05);
-        
-        Delay(1);
-    };
-    
-    Delay(1);
-    goto Start;
 };
 
 script void StatHUD()
