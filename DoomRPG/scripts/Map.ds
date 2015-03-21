@@ -961,8 +961,6 @@ script void OneMonsterEvent()
 
 script void HellUnleashedEvent()
 {
-    SetMusic("HellUnle");
-    
     bool BoxSpawned = false;
     
     // Generate a TID for the box
@@ -980,15 +978,15 @@ script void HellUnleashedEvent()
     while (CurrentLevel->HellUnleashedActive)
     {
         fixed ParTime = (fixed)GetLevelInfo(LEVELINFO_PAR_TIME);
+        if (ParTime <= 0) // Assign a default value to prevent divide-by-zero
+            ParTime = 35 * 60 * 5; // 5 Minutes
         fixed AddMult = 0.1 / ParTime;
         
-        // Assign a default value to prevent divide-by-zero
-        if (ParTime <= 0)
-            ParTime = 35 * 60 * 5;
-        
         // Cap this to make sure it isn't too low
-        if (AddMult < 0.01)
-            AddMult = 0.01;
+        if (AddMult < 0.001)
+            AddMult = 0.001;
+        
+        Log("\cdAddMult: %k\n", AddMult);
         
         // Spawn in next wave of enemies
         if ((Timer() % (35 * (int)ParTime)) == 0)
@@ -1006,7 +1004,7 @@ script void HellUnleashedEvent()
         
         // Slowly increment the values
         CurrentLevel->LevelAdd += RandomFixed(AddMult, AddMult * 1.0);
-        CurrentLevel->RareAdd += RandomFixed(AddMult * 0.001, AddMult * 0.01);
+        CurrentLevel->RareAdd += RandomFixed(AddMult * 0.01, AddMult * 0.1);
         
         // Level Imposed Caps
         if (CurrentLevel->LevelAdd > (fixed)AveragePlayerLevel() * (fixed)GameSkill())
@@ -1047,6 +1045,8 @@ acscript void HellUnleashedStart()
     Delay(35 * 8);
     
     CurrentLevel->HellUnleashedActive = true;
+    
+    SetMusic("HellUnle");
 };
 
 script void HellUnleashedSpawnMonsters()
