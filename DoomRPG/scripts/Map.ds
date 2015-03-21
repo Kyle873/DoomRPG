@@ -239,7 +239,8 @@ script void MapInit() open
         CurrentLevel->SelectedMonster = nullptr;
         
         CurrentLevel->MegabossActor = nullptr;
-
+        
+        CurrentLevel->BombTime = 0;
         CurrentLevel->BombExplode = false;
         CurrentLevel->BombAnnouncing = false;
         for (int i = 0; i < MAX_NUKE_KEYS; i++)
@@ -597,24 +598,13 @@ script void EnvironmentalHazard()
 
 script void ThermonuclearBombEvent()
 {
-    static str[MAX_NUKE_KEYS] KeySprites =
-    {
-        "NKEYA0";
-        "NKEYB0";
-        "NKEYC0";
-        "NKEYD0";
-        "NKEYE0";
-        "NKEYF0";
-        "NKEYG0";
-        "NKEYH0";
-        "NKEYI0";
-    };
-    
-    int BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300) * 35;
     int BombTID = UniqueTID();
     int MaxKeys = GameSkill() + 3;
     bool BombSpawned = false;
     bool BombDisarmed = false;
+    
+    // Calculate bomb time
+    CurrentLevel->BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300) * 35;
     
     // Reset key states
     for (int i = 0; i < MAX_NUKE_KEYS; i++)
@@ -633,7 +623,7 @@ script void ThermonuclearBombEvent()
         if (!CurrentLevel->BombKeyActive[RandomKey])
         {
             CurrentLevel->BombKeyActive[RandomKey] = true;
-            CurrentLevel->BombKeyTimer[RandomKey] = BombTime / MAX_NUKE_KEYS * 2;
+            CurrentLevel->BombKeyTimer[RandomKey] = CurrentLevel->BombTime / MAX_NUKE_KEYS * 2;
             MaxKeys--;
         };
         
@@ -655,7 +645,7 @@ script void ThermonuclearBombEvent()
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     HudMessageBold("\cgWARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\ciTIME UNTIL DETONATION: %s\n",
-                   FormatTime(BombTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
+                   FormatTime(CurrentLevel->BombTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
     AmbientSound("nuke/alert", 127);
     
     Delay(35 * 4);
@@ -665,42 +655,11 @@ script void ThermonuclearBombEvent()
     // Set bomb's active state
     SetActorState(BombTID, "SpawnActive");
     
-    // Bomb HUD
-    while (BombTime > 0 && !BombDisarmed && !CurrentLevel->BombExplode)
+    // Bomb Loop
+    while (CurrentLevel->BombTime > 0 && !BombDisarmed && !CurrentLevel->BombExplode)
     {
-        SetFont("BIGFONT");
-        HudMessageBold("\cgT - %s\n", FormatTime(BombTime), HUDMSG_PLAIN, NUKE_ID, CR_RED, 64.1, 64.1, 0.05);
-        
         // Announcements
-        ThermonuclearBombAnnounce(BombTime);
-        
-        // HUD
-        int KeyOffset = 0;
-        for (int i = 0; i < MAX_NUKE_KEYS; i++)
-        {
-            // Skip drawing this key if it's disabled
-            if (!CurrentLevel->BombKeyActive[i]) continue;
-            
-            // Timer
-            SetFont("BIGFONT");
-            HudMessageBold("%s\n", FormatTime(CurrentLevel->BombKeyTimer[i]), HUDMSG_PLAIN, 0, (CurrentLevel->BombKeyDisarming[i] ? CR_RED : CR_WHITE), 74.0 + (KeyOffset % 3 * 48.0), 112.0 + (KeyOffset / 3 * 48.0), 0.05);
-            
-            // Key
-            for (int j = 0; j < MAX_PLAYERS; j++)
-            {
-                if (CheckActorInventory(Players(j).TID, StrParam("DRPGNukeKey%d\n", i + 1)))
-                {
-                    SetFont(StrParam("%s\n", KeySprites[i]));
-                    HudMessageBold("A\n", HUDMSG_PLAIN, 0, CR_WHITE, 56.0 + (KeyOffset % 3 * 48.0), 116.0 + (KeyOffset / 3 * 48.0), 0.05);
-                };
-            };
-            
-            // Icon
-            SetFont(StrParam("E_NKEY%d\n", i + 1));
-            HudMessageBold("A\n", HUDMSG_PLAIN, 0, CR_WHITE, 74.0 + (KeyOffset % 3 * 48.0), 96.0 + (KeyOffset / 3 * 48.0), 0.05);
-            
-            KeyOffset++;
-        };
+        ThermonuclearBombAnnounce(CurrentLevel->BombTime);
         
         // Acceleration handling
         fixed Velocity = AbsFixed(GetActorVelX(BombTID)) + AbsFixed(GetActorVelX(BombTID));
@@ -731,9 +690,12 @@ script void ThermonuclearBombEvent()
             if (!CurrentLevel->BombKeyActive[i])
                 DisarmCount++;
         if (DisarmCount >= MAX_NUKE_KEYS)
+        {
+            CurrentLevel->BombTime = 0;
             BombDisarmed = true;
+        };
         
-        BombTime--;
+        CurrentLevel->BombTime--;
         Delay(1);
     };
     
@@ -986,21 +948,9 @@ script void HellUnleashedEvent()
         if (AddMult < 0.001)
             AddMult = 0.001;
         
-        Log("\cdAddMult: %k\n", AddMult);
-        
         // Spawn in next wave of enemies
         if ((Timer() % (35 * (int)ParTime)) == 0)
             HellUnleashedSpawnMonsters();
-        
-        // HUD
-        SetHudSize(640, 480, false);
-        SetFont("MonLevel");
-        HudMessageBold("A\n", HUDMSG_ALPHA, 0, CR_WHITE, 14.1, 100.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-        SetFont("STAT8S");
-        HudMessageBold("A\n", HUDMSG_ALPHA, 0, CR_WHITE, 22.1, 133.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-        SetFont("BIGFONT");
-        HudMessageBold("+%k\n", CurrentLevel->LevelAdd, HUDMSG_PLAIN, 0, CR_WHITE, 40.1, 100.0, 0.05);
-        HudMessageBold("+%k%%\n", CurrentLevel->RareAdd, HUDMSG_PLAIN, 0, CR_GOLD, 40.1, 116.0, 0.05);
         
         // Slowly increment the values
         CurrentLevel->LevelAdd += RandomFixed(AddMult, AddMult * 1.0);

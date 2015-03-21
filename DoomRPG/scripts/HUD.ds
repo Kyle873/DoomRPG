@@ -1,6 +1,7 @@
 #include "RPG.dh"
 
 #include "HUD.dh"
+#include "Map.dh"
 #include "Mission.dh"
 #include "Shield.dh"
 #include "Skills.dh"
@@ -104,12 +105,74 @@ script void StatusEffectHUD() enter
     goto Start;
 };
 
+script void CreditHUD() enter
+{
+    static str[6] CreditSprites =
+    {
+        "CREDA0";
+        "CREDB0";
+        "CREDC0";
+        "CREDD0";
+        "CREDE0";
+        "CREDF0";
+    };
+    
+    int BeforeCredits = CheckInventory("DRPGCredits");
+    int AfterCredits = CheckInventory("DRPGCredits");
+    int CreditsCurrent = CheckInventory("DRPGCredits");
+    int CreditsCollected = 0;
+    int CollectionTimer = 0;
+    
+    Start:
+    
+    int Credits = CheckInventory("DRPGCredits");
+    int CreditColor = (Timer() / (35 * 60)) % 6;
+    fixed X = GetCVarFixed("drpg_credits_x");
+    fixed Y = GetCVarFixed("drpg_credits_y");
+    
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+    
+    if (Credits > 0 || GetCVar("drpg_hud_preview"))
+    {
+        // Count up until the display Credits reaches the actual Credits
+        if (CreditsCurrent < Credits)
+            CreditsCurrent++;
+        
+        // Update the collected Credits
+        if (BeforeCredits != AfterCredits)
+        {
+            CreditsCollected += (AfterCredits - BeforeCredits);
+            CollectionTimer = 35 * 5;
+        };
+        
+        PrintSprite(CreditSprites[CreditColor], 0, X, Y + 12.0, 0.05);
+        SetFont("BIGFONT");
+        HudMessage("%d\n", CreditsCurrent, HUDMSG_PLAIN, 0, CR_GOLD, X + 16.1, Y, 0.05);
+        if (CreditsCollected != 0)
+            HudMessage("%c%d\n", (CreditsCollected > 0 ? '+' : '@'), CreditsCollected, HUDMSG_FADEOUT, PAY_ID, (CreditsCollected > 0 ? CR_WHITE : CR_RED), X + 16.1, Y + 16.0, 0.05, 2.0, 1.0);
+    };
+    
+    // Collected Credits timer handling
+    if (CollectionTimer > 0)
+        CollectionTimer--;
+    if (CollectionTimer <= 0)
+        CreditsCollected = 0;
+    
+    // Calculate before and after credits for collection display
+    BeforeCredits = CheckInventory("DRPGCredits");
+    Delay(1);
+    AfterCredits = CheckInventory("DRPGCredits");
+    
+    goto Start;
+};
+
 script void ComboHUD() enter
 {
     Start:
     
     fixed X = GetCVarFixed("drpg_combo_x");
     fixed Y = GetCVarFixed("drpg_combo_y");
+    
     SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
     
     if (Player.Combo > 0 || GetCVar("drpg_hud_preview"))
@@ -441,7 +504,9 @@ script void PowerupHUD() enter
     };
     
     // Light Amp
-    int LightAmpTime = GetActorPowerupTics(0, "PowerLightAmp");
+    int LightAmpPowerupTime = GetActorPowerupTics(0, "PowerLightAmp");
+    int LightAmpSkillTime = GetActorPowerupTics(0, "DRPGSkillLightAmp");
+    int LightAmpTime = (LightAmpPowerupTime > LightAmpSkillTime ? LightAmpPowerupTime : LightAmpSkillTime);
     if (LightAmpTime > 0 || GetCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
@@ -497,7 +562,9 @@ script void PowerupHUD() enter
     
     // Iron Feet
     bool HaveIronFeet = false;
-    int IronFeetTime = GetActorPowerupTics(0, "PowerIronFeet");
+    int IronFeetPowerTime = GetActorPowerupTics(0, "PowerIronFeet");
+    int IronFeetSkillTime = GetActorPowerupTics(0, "DRPGSkillIronFeet");
+    int IronFeetTime = (IronFeetPowerTime > IronFeetSkillTime ? IronFeetPowerTime : IronFeetSkillTime);
     if (IronFeetTime > 0 || GetCVar("drpg_hud_preview"))
     {
         if (GridCount > 0)
@@ -522,6 +589,80 @@ script void PowerupHUD() enter
         SetFont("SMALLFONT");
         HudMessage("%d\n", Continues, HUDMSG_PLAIN, 0, CR_GOLD, X, Y + 16.0  , 0.05);
         PrintSpritePulse("CONTA0", 0, X + 17.0, Y + 63.0, 0.75, 32.0, 0.25);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
+script void EventHUD() enter
+{
+    static str[MAX_NUKE_KEYS] KeySprites =
+    {
+        "NKEYA0";
+        "NKEYB0";
+        "NKEYC0";
+        "NKEYD0";
+        "NKEYE0";
+        "NKEYF0";
+        "NKEYG0";
+        "NKEYH0";
+        "NKEYI0";
+    };
+    
+    Start:
+    
+    fixed X = GetCVarFixed("drpg_event_x");
+    fixed Y = GetCVarFixed("drpg_event_y");
+    
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+    
+    // Thermonuclear Bomb
+    if (CurrentLevel->Event == MAPEVENT_NUCLEARBOMB && CurrentLevel->BombTime > 0)
+    {
+        SetFont("BIGFONT");
+        HudMessage("\cgT - %s\n", FormatTime(CurrentLevel->BombTime), HUDMSG_PLAIN, NUKE_ID, CR_RED, X + 0.1, Y + 0.1, 0.05);
+        
+        int KeyOffset = 0;
+        for (int i = 0; i < MAX_NUKE_KEYS; i++)
+        {
+            // Skip drawing this key if it's disabled
+            if (!CurrentLevel->BombKeyActive[i]) continue;
+            
+            // Timer
+            SetFont("BIGFONT");
+            HudMessage("%s\n", FormatTime(CurrentLevel->BombKeyTimer[i]), HUDMSG_PLAIN, 0, (CurrentLevel->BombKeyDisarming[i] ? CR_RED : CR_WHITE), X + (KeyOffset % 3 * 48.0), Y + 48.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            // Key
+            for (int j = 0; j < MAX_PLAYERS; j++)
+                if (CheckActorInventory(Players(j).TID, StrParam("DRPGNukeKey%d\n", i + 1)))
+                    PrintSprite(StrParam("%s\n", KeySprites[i]), 0, X - 12.0 + (KeyOffset % 3 * 48.0), Y + 52.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            // Icon
+            PrintSprite(StrParam("E_NKEY%d\n", i + 1), 0, X + (KeyOffset % 3 * 48.0), Y + 34.0 + (KeyOffset / 3 * 48.0), 0.05);
+            
+            KeyOffset++;
+        };
+    };
+    
+    // Low Power
+    if (CurrentLevel->Event == MAPEVENT_LOWPOWER && !CurrentLevel->PowerGeneratorActive)
+    {
+        // Draw if someone has a working power cell
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            if (CheckActorInventory(Players(i).TID, "DRPGGeneratorCell") > 0)
+                PrintSprite("GCELA0", 0, X, Y, 0.05);
+    };
+    
+    // Hell Unleashed
+    if ((CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && CurrentLevel->HellUnleashedActive) || GetCVar("drpg_hud_preview"))
+    {
+        PrintSpritePulse("MonLevel", 0, X + 0.1, Y, 0.75, 32.0, 0.25);
+        PrintSpritePulse("STAT8S", 0, X + 8.1, Y + 38.0, 0.75, 32.0, 0.25);
+        
+        SetFont("BIGFONT");
+        HudMessageBold("+%k\n", CurrentLevel->LevelAdd, HUDMSG_PLAIN, 0, CR_WHITE, X + 24.1, Y, 0.05);
+        HudMessageBold("+%k%%\n", CurrentLevel->RareAdd, HUDMSG_PLAIN, 0, CR_GOLD, X + 24.1, Y + 18.0, 0.05);
     };
     
     Delay(1);
