@@ -117,16 +117,27 @@ script void CreditHUD() enter
         "CREDF0";
     };
     
-    int BeforeCredits = CheckInventory("DRPGCredits");
-    int AfterCredits = CheckInventory("DRPGCredits");
-    int CreditsCurrent = CheckInventory("DRPGCredits");
+    fixed X, Y;
+    
+    int Credits;
+    int CreditColor;
+    
+    int OldCredits = CheckInventory("DRPGCredits");
+    
+    // Roller
+    int StartCredits = CheckInventory("DRPGCredits");
+    int DisplayCredits = CheckInventory("DRPGCredits");
+    int CreditsTimer = 0;
+    int CreditsTimerMax = 0;
+
+    // Collection Timer
     int CreditsCollected = 0;
     int CollectionTimer = 0;
     
     Start:
     
-    int Credits = CheckInventory("DRPGCredits");
-    int CreditColor = (Timer() / (35 * 60)) % 6;
+    Credits = CheckInventory("DRPGCredits");
+    CreditColor = (Timer() / (35 * 60)) % 6;
     fixed X = GetCVarFixed("drpg_credits_x");
     fixed Y = GetCVarFixed("drpg_credits_y");
     
@@ -134,34 +145,45 @@ script void CreditHUD() enter
     
     if (Credits > 0 || GetCVar("drpg_hud_preview"))
     {
-        // Count up until the display Credits reaches the actual Credits
-        if (CreditsCurrent < Credits)
-            CreditsCurrent++;
-        
-        // Update the collected Credits
-        if (BeforeCredits != AfterCredits)
+        // Update the collected Credits - Roller and Display Timer
+        if (Credits != OldCredits)
         {
-            CreditsCollected += (AfterCredits - BeforeCredits);
-            CollectionTimer = 35 * 5;
+            CreditsCollected += (Credits - OldCredits);
+            CollectionTimer = 35 * 6;
+            
+            StartCredits = DisplayCredits;
+            CreditsTimerMax = Abs(Credits - DisplayCredits) * 2;
+            if (CreditsTimerMax > 35*2) CreditsTimerMax = 35*2;
+            CreditsTimer = CreditsTimerMax;
+        };
+        
+        // Count up until the display Credits reaches the actual Credits
+        if (CreditsTimer > 0)
+        {
+            long int Pct = (CreditsTimerMax*CreditsTimerMax) - (CreditsTimer*CreditsTimer);
+            DisplayCredits = StartCredits + (int)((long int)(Credits - StartCredits) * Pct / (CreditsTimerMax*CreditsTimerMax));
+            CreditsTimer--;
+        }
+        else
+        {
+            DisplayCredits = Credits;
         };
         
         PrintSprite(CreditSprites[CreditColor], 0, X, Y + 12.0, 0.05);
         SetFont("BIGFONT");
-        HudMessage("%d\n", CreditsCurrent, HUDMSG_PLAIN, 0, CR_GOLD, X + 16.1, Y, 0.05);
+        HudMessage("%d\n", DisplayCredits, HUDMSG_PLAIN, 0, CR_GOLD, X + 16.1, Y, 0.05);
         if (CreditsCollected != 0)
             HudMessage("%c%d\n", (CreditsCollected > 0 ? '+' : '@'), CreditsCollected, HUDMSG_FADEOUT, PAY_ID, (CreditsCollected > 0 ? CR_WHITE : CR_RED), X + 16.1, Y + 16.0, 0.05, 2.0, 1.0);
     };
     
     // Collected Credits timer handling
     if (CollectionTimer > 0)
-        CollectionTimer--;
-    if (CollectionTimer <= 0)
+        CollectionTimer--
+    else
         CreditsCollected = 0;
     
-    // Calculate before and after credits for collection display
-    BeforeCredits = CheckInventory("DRPGCredits");
+    OldCredits = CheckInventory("DRPGCredits");
     Delay(1);
-    AfterCredits = CheckInventory("DRPGCredits");
     
     goto Start;
 };
