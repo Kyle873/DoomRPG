@@ -184,9 +184,9 @@ function void DrawMainMenu()
     // XP/Rank Display
     SetFont("BIGFONT");
     HudMessage("Level: %d\n", Player.Level,                                                     HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 100.0, 0.05);
-    HudMessage("XP: %lu / %lu\n", Player.XP, Player.XPNext,                                     HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 112.0, 0.05);
+    HudMessage("XP: %ld / %ld\n", Player.XP, Player.XPNext,                                     HUDMSG_PLAIN, 0, CR_WHITE,          40.1, 112.0, 0.05);
     HudMessage("Title: %s (%d/%d)\n", Ranks[Player.RankLevel], Player.RankLevel, MAX_RANK,      HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 124.0, 0.05);
-    HudMessage("Rank: %lu / %lu\n", Player.Rank, Player.RankNext,                               HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 136.0, 0.05);
+    HudMessage("Rank: %ld / %ld\n", Player.Rank, Player.RankNext,                               HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 136.0, 0.05);
     if (Player.RankLevel > 0)
         HudMessage("Payout: %d C (%s) [%d%%]\n",
                    CalculatePay(), FormatTime(Player.PayTimer), Player.PayBonus,
@@ -479,18 +479,20 @@ function void DrawStatsMenu()
             // XP
             SetFont("BIGFONT");
             if (*Stats[i] < Player.StatCap)
-                HudMessage("%s: %d/%d (%d)\n", StatNames[i], *StatXP[i], StatTable[*Stats[i]], *Stats[i], HUDMSG_PLAIN, 0, StatColors[i], 40.1, 32.0 + (i * 44.0), 0.05)
+                HudMessage("%s: %ld/%ld (%d)\n", StatNames[i], *StatXP[i], StatTable[*Stats[i]], *Stats[i], HUDMSG_PLAIN, 0, StatColors[i], 40.1, 32.0 + (i * 44.0), 0.05)
             else
-                HudMessage("%s: %d (%d)\n", StatNames[i], *StatXP[i], *Stats[i], HUDMSG_PLAIN, 0, StatColors[i], 40.1, 32.0 + (i * 44.0), 0.05);
+                HudMessage("%s: %ld (%d)\n", StatNames[i], *StatXP[i], *Stats[i], HUDMSG_PLAIN, 0, StatColors[i], 40.1, 32.0 + (i * 44.0), 0.05);
             
             // Bar
-            fixed CurrentXP = (fixed)(*StatXP[i]);
-            fixed LastXP = (fixed)(StatTable[*Stats[i] - 1]);
-            fixed NextXP = (fixed)(StatTable[*Stats[i]]);
+            long int CurrentXP = *StatXP[i];
+            long int LastXP = StatTable[*Stats[i] - 1];
+            long int NextXP = StatTable[*Stats[i]];
             if (*Stats[i] == 0)
                 LastXP = 0;
-            int StatPercent = (int)((CurrentXP - LastXP) / (NextXP - LastXP) * 100.0);
+            long int StatPercent = ((CurrentXP - LastXP) * 100) / (NextXP - LastXP);
             if (*Stats[i] >= Player.StatCap)
+                StatPercent = 100;
+            if (StatPercent > 100)
                 StatPercent = 100;
             DrawBar(StrParam("StatBar%d\n", i + 1), 40.1, 48.0 + (i * 44.0), StatPercent * 3, true);
             DrawBar("StatBarB", 40.1, 48.0 + (i * 44.0), 100 * 3, false);
@@ -612,9 +614,9 @@ function void DrawStatsMenu()
         // XP/Rank
         SetFont("BIGFONT");
         HudMessage("Level: %d\n", PlayerPtr->Level, HUDMSG_PLAIN, 0, CR_WHITE, 208.1, 56.0, 0.05);
-        HudMessage("XP: %lu / %lu\n", PlayerPtr->XP, PlayerPtr->XPNext, HUDMSG_PLAIN, 0, CR_WHITE, 208.1, 68.0, 0.05);
+        HudMessage("XP: %ld / %ld\n", PlayerPtr->XP, PlayerPtr->XPNext, HUDMSG_PLAIN, 0, CR_WHITE, 208.1, 68.0, 0.05);
         HudMessage("Title: %s (%d/%d)\n", Ranks[PlayerPtr->RankLevel], PlayerPtr->RankLevel, MAX_RANK, HUDMSG_PLAIN, 0, CR_YELLOW, 208.1, 80.0, 0.05);
-        HudMessage("Rank: %lu / %lu\n", PlayerPtr->Rank, PlayerPtr->RankNext, HUDMSG_PLAIN, 0, CR_YELLOW, 208.1, 92.0, 0.05);
+        HudMessage("Rank: %ld / %ld\n", PlayerPtr->Rank, PlayerPtr->RankNext, HUDMSG_PLAIN, 0, CR_YELLOW, 208.1, 92.0, 0.05);
         if (PlayerPtr->RankLevel > 0)
             HudMessage("Payout: %d C (%s) [%d%%]\n",
                        CalculatePay(PlayerNum), FormatTime(Player.PayTimer), Player.PayBonus,
