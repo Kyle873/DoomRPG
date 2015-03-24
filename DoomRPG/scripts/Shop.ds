@@ -50,8 +50,19 @@ acscript void OpenShop(bool OpenLocker) net
 
 script void ShopItemAutoHandler()
 {
+    int[ITEM_CATEGORIES][ITEM_MAX] Items;
+    int[ITEM_CATEGORIES][ITEM_MAX] PrevItems;
+    
     while (true)
     {
+        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        
+        // Check Inventory of current items
+        if (GetCVar("drpg_pickup_behavior") > 0)
+            for (int i = 0; i < ItemCategories; i++)
+                for (int j = 0; j < ItemMax[i]; j++)
+                    Items[i][j] = CheckInventory(ItemData[i][j].Actor);
+        
         // Auto-Sell
         if (Player.RankLevel > 0 || InBase)
             for (int i = 0; i < ItemCategories; i++)
@@ -59,7 +70,7 @@ script void ShopItemAutoHandler()
                 {
                     ItemInfoPtr Item = &ItemData[i][j];
                     
-                    if (Player.ItemAutoMode[i][j] == AT_SELL && CheckInventory(Item->Actor) > 0)
+                    if ((Player.ItemAutoMode[i][j] == AT_SELL && CheckInventory(Item->Actor) > 0) || (GetCVar("drpg_pickup_behavior") == 1 && Buttons & BT_SPEED && Items[i][j] > PrevItems[i][j]))
                     {
                         // DoomRL Compatibility
                         if (CompatMode == COMPAT_DRLA)
@@ -80,7 +91,7 @@ script void ShopItemAutoHandler()
                 {
                     ItemInfoPtr Item = &ItemData[i][j];
                     
-                    if (Player.ItemAutoMode[i][j] == AT_STORE && CheckInventory(Item->Actor) > 0)
+                    if ((Player.ItemAutoMode[i][j] == AT_STORE && CheckInventory(Item->Actor) > 0) || (!Player.InShop && GetCVar("drpg_pickup_behavior") == 2 && Buttons & BT_SPEED && Items[i][j] > PrevItems[i][j]))
                     {
                         // Special handling for DRLA weapons since you can only keep one weapon with mods in the locker
                         if (CompatMode == COMPAT_DRLA && i == 0 && Player.Locker[i][j] > 0) continue;
@@ -98,6 +109,12 @@ script void ShopItemAutoHandler()
                 };
         
         Delay(1);
+        
+        // Transfer current items to previous items
+        if (GetCVar("drpg_pickup_behavior") > 0)
+            for (int i = 0; i < ItemCategories; i++)
+                for (int j = 0; j < ItemMax[i]; j++)
+                    PrevItems[i][j] = Items[i][j];
     };
 };
 
