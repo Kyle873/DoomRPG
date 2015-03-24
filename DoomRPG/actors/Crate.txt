@@ -1,6 +1,7 @@
 actor DRPGCrate : SwitchableDecoration
 {
     var int user_id;
+    var int user_firewall;
     
     Radius 16
     Height 8
@@ -16,26 +17,68 @@ actor DRPGCrate : SwitchableDecoration
     {
     Spawn:
         TNT1 A 0 NoDelay ACS_NamedExecuteAlways("InitCrate", 0)
-    Spawn2:
-        TNT1 A 0 A_PlaySound("crate/loop1", CHAN_AUTO, 0.75, true, 1.25)
+        TNT1 A 1
+    LoopPick:
+        TNT1 A 0 A_JumpIf(user_firewall == 0, "LoopNormal")
+        TNT1 A 0 A_JumpIf(user_firewall == 1, "LoopFirewall")
+        Stop
+    Normal:
+        TNT1 A 0 A_RemoveChildren(true)
+        TNT1 A 0 A_PlaySound("crate/loop1", CHAN_6, 0.75, true, 1.25)
+    LoopNormal:
         CRAT ABCDEFGHIJKLMNOPQRSTUVWXYZ 2 Bright
         CRA2 ABCDEFGHIJKLMNOPQRSTUVWXYZ 2 Bright
         CRA3 A 2 Bright
         Loop
+    Firewall:
+        TNT1 A 0 A_PlaySound("crate/loop2", CHAN_6, 0.75, true, 1.25)
+        TNT1 A 0 A_SpawnItemEx("DRPGCrateFirewallIcon", 0, 0, 0, 0, 0, 0, 0, SXF_SETMASTER)
+    LoopFirewall:
+        CRAT ABCDEFGHIJKLMNOPQRSTUVWXYZ 1 Bright
+        CRA2 ABCDEFGHIJKLMNOPQRSTUVWXYZ 1 Bright
+        CRA3 A 1 Bright
+        Loop
     Active:
     Inactive:
         TNT1 A 0 ACS_NamedExecuteAlways("UseCrate", 0, user_id)
-        Goto Spawn2
+        Goto LoopPick
     Empty:
-        TNT1 A 0 A_StopSound(CHAN_AUTO)
-        TNT1 A 0 A_PlaySound("crate/off", CHAN_AUTO, 0.75, false, 1.25)
+        TNT1 A 0 A_StopSound(CHAN_6)
+        TNT1 A 0 A_PlaySound("crate/off", CHAN_7, 0.75, false, 1.25)
         TNT1 A 0 A_ChangeFlag("USESPECIAL", false)
         CRA3 B -1
         Stop
     Explode:
-        TNT1 A 0 A_PlaySound("weapons/rocklx", CHAN_AUTO, 2.0, false, 0.5)
+        TNT1 A 0 A_RemoveChildren(true)
+        TNT1 A 0 A_PlaySound("weapons/rocklx", CHAN_7, 2.0, false, 0.5)
         TNT1 A 0 A_Explode
         MISL BCD 6 Bright
         Stop
+    }
+}
+
+actor DRPGCrateFirewallIcon
+{
+    var int user_step;
+    
+	-SOLID
+    +ISMONSTER // This is fucking retarded.jpg
+	+NOINTERACTION
+	+NOGRAVITY
+    +FORCEYBILLBOARD
+    +FLOATBOB
+	
+	RenderStyle Add
+    
+    States
+    {
+    Spawn:
+    FadeLoop:
+        CRFW A 1 Bright
+        TNT1 A 0 A_Warp(AAPTR_MASTER, 0, 0, 72, 0, WARPF_NOCHECKPOSITION | WARPF_COPYINTERPOLATION)
+        TNT1 A 0 A_SetTranslucent(0.5 + (0.25 * Sin(user_step)), 1)
+        TNT1 A 0 A_SetUserVar("user_step", user_step + 10.285714)
+        TNT1 A 0 A_Warp(AAPTR_MASTER, 0, 0, 0, 0, WARPF_NOCHECKPOSITION | WARPF_TESTONLY, "FadeLoop")
+        Loop
     }
 }
