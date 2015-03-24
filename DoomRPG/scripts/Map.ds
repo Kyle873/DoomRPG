@@ -11,7 +11,7 @@ static LevelInfo *CurrentLevel;
 static DynamicArray KnownLevels;
 static int LastVisitedLevel;
 static int AllBonusMaps; // For the OCD Shield
-static int CurrentSkill = -1; // Keeps track of skill changes based on events
+static int CurrentSkill; // Keeps track of skill changes based on events
 
 // Map Init Script
 script void MapInit() open
@@ -19,6 +19,7 @@ script void MapInit() open
     // Running the game for the first time
     if (KnownLevels.Data == nullptr)
     {
+        CurrentSkill = GameSkill() - 1;
         ArrayCreate(&KnownLevels, "LVLS\x00", 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
         
@@ -1229,7 +1230,6 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
     if (CurrentLevel && (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON))
     {
         ChangeSkill(CurrentSkill);
-        CurrentSkill = -1;
         CurrentLevel->Event = MAPEVENT_NONE;
     };
     
