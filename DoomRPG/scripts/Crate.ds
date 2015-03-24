@@ -7,7 +7,7 @@
 
 static str[MAX_DIFFICULTIES] CrateRarityNames =
 {
-    "\cjBasic";
+    "\ccBasic";
     "\cjCommon";
     "\cdUncommon";
     "\cdSuperior";
@@ -21,8 +21,36 @@ static str[MAX_DIFFICULTIES] CrateRarityNames =
 int CrateID = 0;
 ItemSpace CrateInfo[CRATE_MAX] Crates;
 
+script void CrateLoop() open
+{
+    while (true)
+    {
+        for (int i = 0; i < CrateID; i++)
+        {
+            // Hacking cooldown timer handling
+            if (Crates[i].HackingCooldown > 0)
+                Crates[i].HackingCooldown--;
+        
+            // Supply Drop spawned crates should never have a firewall
+            if (Crates[i].SupplyDrop && Crates[i].Firewall)
+            {
+                Crates[i].Firewall = false;
+                SetActorState(Crates[i].TID, "Normal");
+            };
+        };
+        
+        Delay(1);
+    };
+};
+
 acscript void InitCrate()
 {
+    int TID = UniqueTID();
+    int Amount = 3;
+    int LuckMod = (AveragePlayerLevel() + AveragePlayerLuck()) / 20;
+    int Rarity = 0;
+    int Firewall = 0;
+    
     if (CrateID >= CRATE_MAX)
     {
         Log("\cgERROR:\c- Maximum Crate ID exceeded!\n");
@@ -30,16 +58,43 @@ acscript void InitCrate()
         return;
     };
     
-    SetUserVariable(0, "user_id", CrateID);
+    // Calculate Rarity
+    for (int i = Rarity; i < MAX_DIFFICULTIES - 1; i++)
+        if (Random(0, (MAX_DIFFICULTIES + (MAX_DIFFICULTIES / 3)) - LuckMod) <= 0)
+            Rarity++;
+    if (Rarity < 0) // Make sure the Rarity still isn't -1, or else bad things will happen
+        Rarity = 0;
+    if (Rarity > MAX_DIFFICULTIES - 1)
+        Rarity = MAX_DIFFICULTIES - 1;
     
-    // TID
-    int TID = UniqueTID();
+    // Calculate Amount
+    for (int i = Amount; i < CRATE_MAX_ITEMS; i++)
+        if (Random(0, i) <= 0)
+            Amount++;
+    Amount += PlayerCount() - 1;      // Add +1 per extra player in-game
+    if (Amount > CRATE_MAX_ITEMS - 1) // Make sure we don't overflow
+        Amount = CRATE_MAX_ITEMS;
+    
+    // Calculate Firewall odds
+    Firewall = Rarity * 10;
+    if (Firewall <= 10)
+        Firewall = 10;
+    if (Firewall > 100)
+        Firewall = 100;
+    
+    // Setup Crate
+    Crates[CrateID].Firewall = (RandomFixed(0.0, 100.0) <= Firewall);
     Crates[CrateID].TID = TID;
-    Thing_ChangeTID(0, TID);
-    
-    // Defaults
-    Crates[CrateID].Rarity = -1;
+    Crates[CrateID].Amount = Amount;
+    Crates[CrateID].Rarity = Rarity;
     Crates[CrateID].Hacking = -1;
+    Thing_ChangeTID(0, TID);
+    SetUserVariable(0, "user_id", CrateID);
+    SetUserVariable(0, "user_firewall", (int)Crates[CrateID].Firewall);
+    if (Crates[CrateID].Firewall)
+        SetActorState(0, "Firewall")
+    else
+        SetActorState(0, "Normal");
     
     CrateID++;
 };
@@ -51,49 +106,51 @@ acscript void UseCrate(int ID)
     
     SetActivator(GetActorProperty(0, APROP_TargetTID));
     
-    // Initialize the Crate if it is empty
-    if (!Crates[ID].Init)
+    // Someone else is hacking the crate
+    if (Crates[ID].Hacking >= 0)
     {
-        int LuckMod = Player.Luck / 20;
-        int Rarity = (Crates[ID].Rarity == -1 ? -1 : Crates[ID].Rarity);
-        int Amount = 3;
+        if (Crates[ID].Hacking != PlayerNumber())
+        {
+            PrintError(StrParam("%N\c- is already hacking an item in this crate\n", Crates[Player.CrateID].Hacking + 1));
+            ActivatorSound("menu/error", 127);
+        };
         
-        // Calculate Rarity
-        if (Rarity == -1)
-            for (int i = Rarity; i < MAX_DIFFICULTIES - 1; i++)
-                if (Random(0, (MAX_DIFFICULTIES + (MAX_DIFFICULTIES / 3)) - LuckMod) <= 0)
-                    Rarity++;
-        if (Player.Augs.Active[AUG_LUCK])
-            Rarity += Player.Augs.Level[AUG_LUCK];
-        if (Player.Aura.Type[AURA_YELLOW].Active)
-            Rarity += Player.Aura.Type[AURA_YELLOW].Level;
-        if (Rarity < 0) // Make sure the Rarity still isn't -1, or else bad things will happen
-            Rarity = 0;
-        if (Rarity > MAX_DIFFICULTIES - 1)
-            Rarity = MAX_DIFFICULTIES - 1;
-        
-        // Calculate Amount
-        for (int i = Amount; i < CRATE_MAX_ITEMS - 1; i++)
-            if (Random(0, i) <= 0)
-                Amount++;
-        Amount += PlayerCount() - 1;  // Add +1 per extra player in-game
-        if (Amount > CRATE_MAX_ITEMS) // Make sure we don't overflow
-            Amount = CRATE_MAX_ITEMS;
-        
-        Crates[ID].Init = true;
-        Crates[ID].Rarity = Rarity;
-        
-        GenerateCrate(ID, Amount, false);
+        return;
     };
     
     // Check if you're in a menu
     if (Player.InMenu || Player.InShop || Player.CrateOpen) return;
     
     // Check if the crate is empty
-    if (CrateEmpty(ID)) return;
+    if (Crates[ID].Generated && CrateEmpty(ID)) return;
+    
+    // Check if the crate is firewalled, if so, initiate hacking
+    if (Crates[ID].Firewall)
+    {
+        if (Crates[ID].HackingCooldown > 0)
+        {
+            PrintError(StrParam("Security Lockdown Triggered\n\nYou must wait %s before reattemtping the hack\n", FormatTime(Crates[ID].HackingCooldown)));
+            ActivatorSound("menu/error", 127);
+        }
+        else
+        {
+            Player.CrateID = ID;
+            CrateHack();
+        };
+        return;
+    };
+    
+    // Generate the crate contents
+    if (!Crates[ID].Generated)
+    {
+        GenerateCrate(ID, Crates[ID].Amount);
+        Crates[ID].Generated = true;
+    };
     
     Player.CrateOpen = true;
     Player.CrateID = ID;
+    Player.CrateIndex = 0;
+    
     ActivatorSound("crate/open", 127);
     
     Delay(1);
@@ -104,11 +161,8 @@ acscript void UseCrate(int ID)
         
         SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
         
-        if (Crates[Player.CrateID].Hacking != PlayerNumber())
-        {
-            DrawCrate();
-            CrateInput();
-        };
+        DrawCrate();
+        CrateInput();
         
         Delay(1);
     };
@@ -118,9 +172,9 @@ acscript void UseCrate(int ID)
 
 acscript void CrateHack()
 {
-    static int[MAX_NODES] NodeMax =
+    static int[NODE_MAX] NodeMax =
     {
-        8; 8; 1; 2; 2; 1;
+        8; 8; 1; 2; 2; 1; 1; 1;
     };
     
     HackNode[MAX_NODES] Nodes;
@@ -131,14 +185,6 @@ acscript void CrateHack()
     int Tries = 3;
     int X = Random(25, 275);
     int Direction = (Random(1, 2) == 1 ? -1 : 1);
-    
-    // Don't allow multiple players to hack the same item
-    if (Crates[Player.CrateID].Hacking >= 0)
-    {
-        PrintError(StrParam("%N\c- is already hacking an item in this crate\n", Crates[Player.CrateID].Hacking + 1));
-        ActivatorSound("menu/error", 127);
-        return;
-    };
     
     // Initialize things
     for (int i = 0; i < MAX_NODES; i++)
@@ -191,6 +237,7 @@ acscript void CrateHack()
     
     ActivatorSound("hacking/begin", 127);
     
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     Crates[Player.CrateID].Hacking = PlayerNumber();
     
     while (Hacking)
@@ -215,7 +262,8 @@ acscript void CrateHack()
                 DrawBar(StrParam("HackNod%d\n", Nodes[i].Type + 1), 10 + Nodes[i].Start, 120, Nodes[i].End, true);
         
         // Back
-        DrawBar(StrParam("HackBak%d\n", Tries), 10, 120, 300, true);
+        DrawBar(StrParam("HackBor%d\n", Tries), 10, 120, 300, true);
+        PrintSprite("HackBack", 0, 10.1, 120.0, 0.05);
         
         // Move Cursor
         X += Direction;
@@ -249,20 +297,28 @@ acscript void CrateHack()
                         
                         switch (Nodes[i].Type)
                         {
-                        case NODE_DESTROY:
+                        case NODE_CRITFAIL:
                             ActivatorSound("hacking/critfail", 127);
-                            Crates[Player.CrateID].Active[Player.CrateIndex] = false;
+                            SetFont("SMALLFONT");
+                            HudMessage("Security Lockdown Triggered!\n", HUDMSG_FADEOUT, 0, CR_RED, 160.0, 140.0, 2.0, 1.0);
+                            Crates[Player.CrateID].HackingCooldown += 35 * 60;
                             Hacking = false;
                             break;
                         case NODE_EXPLODE:
                             ActivatorSound("hacking/critfail", 127);
+                            SetFont("SMALLFONT");
+                            HudMessage("Explosive Device Triggered!\n", HUDMSG_FADEOUT, 0, CR_ORANGE, 160.0, 140.0, 2.0, 1.0);
                             SetActorState(Crates[Player.CrateID].TID, "Explode");
                             Hacking = false;
                             Player.CrateOpen = false;
                             break;
                         case NODE_UNLOCK:
                             ActivatorSound("hacking/success", 127);
-                            Crates[Player.CrateID].Firewall[Player.CrateIndex] = false;
+                            SetFont("SMALLFONT");
+                            HudMessage("Hack Successful\n", HUDMSG_FADEOUT, 0, CR_GREEN, 160.0, 140.0, 2.0, 1.0);
+                            Crates[Player.CrateID].Firewall = false;
+                            SetActorState(Crates[Player.CrateID].TID, "Normal");
+                            SetUserVariable(Crates[Player.CrateID].TID, "user_firewall", (int)Crates[CrateID].Firewall);
                             Hacking = false;
                             break;
                         case NODE_XP:
@@ -280,9 +336,23 @@ acscript void CrateHack()
                         case NODE_RETRY:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Extra Try\n", HUDMSG_FADEOUT, 0, CR_CYAN, 160.0, 140.0, 2.0, 1.0);
+                            HudMessage("Extra Try\n", HUDMSG_FADEOUT, 0, CR_BLUE, 160.0, 140.0, 2.0, 1.0);
                             if (Tries < 3)
                                 Tries++;
+                            break;
+                        case NODE_ADD:
+                            ActivatorSound("hacking/select", 127);
+                            SetFont("SMALLFONT");
+                            HudMessage("Extra Item!\n", HUDMSG_FADEOUT, 0, CR_CYAN, 160.0, 140.0, 2.0, 1.0);
+                            if (Crates[Player.CrateID].Amount < CRATE_MAX_ITEMS - 1)
+                                Crates[Player.CrateID].Amount++;
+                            break;
+                        case NODE_RARITY:
+                            ActivatorSound("hacking/select", 127);
+                            SetFont("SMALLFONT");
+                            HudMessage("Rarity Upgrade!\n", HUDMSG_FADEOUT, 0, CR_PURPLE, 160.0, 140.0, 2.0, 1.0);
+                            if (Crates[Player.CrateID].Rarity < MAX_DIFFICULTIES - 1)
+                                Crates[Player.CrateID].Rarity++;
                             break;
                         };
                         
@@ -294,10 +364,11 @@ acscript void CrateHack()
                 ActivatorSound("hacking/select", 127);
                 Tries--;
                 
+                // You fail it
                 if (Tries <= 0)
                 {
                     ActivatorSound("hacking/fail", 127);
-                    Crates[Player.CrateID].Active[Player.CrateIndex] = false;
+                    Crates[Player.CrateID].HackingCooldown += 35 * 30;
                     Hacking = false;
                 };
             };
@@ -311,10 +382,13 @@ acscript void CrateHack()
         Delay(1);
     };
     
+    Delay(4);
+    
+    SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
     Crates[Player.CrateID].Hacking = -1;
 };
 
-function void GenerateCrate(int ID, int Amount, bool Add)
+function void GenerateCrate(int ID, int Amount)
 {
     int i;
     int Firewalls;
@@ -341,13 +415,6 @@ function void GenerateCrate(int ID, int Amount, bool Add)
     {
         Crates[ID].Active[i] = true;
         Crates[ID].Item[i] = GetRewardItem(Crates[ID].Rarity);
-        
-        // Firewall
-        if (!Crates[ID].SupplyDrop && (Crates[ID].Item[i]->Rank == -1 || Crates[ID].Item[i]->Rank >= 2 || Crates[ID].Item[i]->Price >= 1000) && Random(1, 2) == 1 && Firewalls < Amount / 3)
-        {
-            Crates[ID].Firewall[i] = true;
-            Firewalls++;
-        };
     };
 };
 
@@ -403,7 +470,6 @@ function void DrawCrate()
             
             ItemInfoPtr ItemSpace *Item = &Crates[Player.CrateID].Item[Index];
             bool Active = Crates[Player.CrateID].Active[Index];
-            bool Firewall = Crates[Player.CrateID].Firewall[Index];
             str Icon = (* Item)->Sprite.Name;
             str Name = (* Item)->Name;
             int IconXOff = (* Item)->Sprite.XOff;
@@ -418,10 +484,6 @@ function void DrawCrate()
             IconY = 72.0 + BaseY;
             IconX += IconXOff;
             IconY += IconYOff;
-            
-            // Firewall
-            if (Active && Firewall)
-                PrintSpritePulse("FIREICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 32.0, 0.25);
             
             // Icon
             SetHudClipRect(X, Y, 44, 44);
@@ -474,13 +536,8 @@ function void CrateInput()
     };
     if (Buttons & BT_USE && !(OldButtons & BT_USE))
     {
-        if (Crates[Player.CrateID].Active[Player.CrateIndex] && Crates[Player.CrateID].Firewall[Player.CrateIndex])
-            CrateHack()
-        else if (Crates[Player.CrateID].Active[Player.CrateIndex])
-        {
-            ActivatorSound("menu/move", 127);
-            CrateTakeItem();
-        };
+        ActivatorSound("menu/move", 127);
+        CrateTakeItem();
     };
     if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD))
     {
@@ -514,7 +571,9 @@ acscript void DumpCrate()
 {
     for (int i = 0; i < CrateID; i++)
     {
-        Log("\cd===== Crate %d =====\n", i);
+        Log("\cd  ===== Crate %d =====\n", i);
+        Log("Amount: %d\n", Crates[i].Amount);
+        Log("Rarity: %d\n", Crates[i].Rarity);
         
         for (int j = 0; j < CRATE_MAX_ITEMS; j++)
         {
