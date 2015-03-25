@@ -95,6 +95,10 @@ script void GlobalInit() open
     
     // Initialize the Item handling script
     ItemHandler();
+    
+    // Initialize the Dynamic Loot Generator
+    if (GetCVar("drpg_loot_system") && !InBase)
+        DynamicLootGenerator("DRPGGenericDropper");
 };
 
 // Init Script
@@ -185,10 +189,6 @@ script void Init() enter
     
     // Mission Initialization
     InitMission();
-    
-    // Initialize the Dynamic Loot Generator
-    if (GetCVar("drpg_loot_system") && PlayerNumber() == 0 && !InBase) // This should only run once on the first player
-        DynamicLootGenerator();
     
     // Small delay before initializing the scripts for mod compatibility
     Delay(4);
@@ -742,7 +742,7 @@ acscript void ItemDump()
 };
 
 // Dynamic Loot Generation System
-acscript void DynamicLootGenerator()
+script void DynamicLootGenerator(str Actor, int MaxItems)
 {
     fixed BaseX = GetActorX(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
     fixed BaseY = GetActorY(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
@@ -750,10 +750,13 @@ acscript void DynamicLootGenerator()
     fixed Boundary = 0;
     fixed BoundaryZ = 0;
     int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
-    int MaxRolls = Random(LevelNum / GameSkill(), LevelNum) + ((AveragePlayerLuck() + AveragePlayerLevel()) / (GameSkill() * 2));
-    int Rolls = 0;
+    int Items = 0;
     int Instructions = 0;
     int Iterations = 0;
+    
+    // Determine the max amount of items to create if it's not specifically specified
+    if (MaxItems == 0)
+        MaxItems = Random(LevelNum / GameSkill(), LevelNum) + ((AveragePlayerLuck() + AveragePlayerLevel()) / (GameSkill() * 2));
     
     // Stop if there are no monsters in the level
     if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) <= 0) return;
@@ -771,14 +774,14 @@ acscript void DynamicLootGenerator()
         };
     };
     
-    while (Rolls < MaxRolls)
+    while (Items < MaxItems)
     {
         int TID = UniqueTID();
         fixed X = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
         fixed Y = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
         fixed Z = BaseZ + Random(-BoundaryZ, BoundaryZ);
         
-        bool Spawned = Spawn("DRPGGenericDropper", X, Y, Z, TID, 0);
+        bool Spawned = Spawn(Actor, X, Y, Z, TID, 0);
         if (Spawned)
         {
             bool Remove = true;
@@ -795,7 +798,7 @@ acscript void DynamicLootGenerator()
                 if (CanSee)
                 {
                     Remove = false;
-                    Rolls++;
+                    Items++;
                     break;
                 };
                 
@@ -809,13 +812,13 @@ acscript void DynamicLootGenerator()
         };
         
         if (GetCVar("drpg_debug"))
-            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\ccInstructions: %d\n\cdIteration: %d\n\ciBoundary: %k\n\nX: %k\nY: %k\nZ: %k\n", Rolls, MaxRolls, Instructions, Iterations, Boundary, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
+            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\cdActor: \c-%s\n\ccInstructions: %d\n\cdIteration: %d\n\ciBoundary: %k\n\nX: %k\nY: %k\nZ: %k\n", Items, MaxItems, Actor, Instructions, Iterations, Boundary, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
         
         Iterations++;
     };
     
     if (GetCVar("drpg_debug"))
-        Log("\cdDebug: \c-Dynamic Loot Generation created \cd%d\c- items\n", MaxRolls);
+        Log("\cdDebug: \c-Dynamic Loot Generation created \cd%d\c- items of type \cd%s\n", MaxItems, Actor);
 };
 
 // Quick Heal
