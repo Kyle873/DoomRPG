@@ -227,6 +227,7 @@ actor DRPGGeneratorCell : Inventory
     {
     Spawn:
         TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
+    SpawnLoop:
         GCEL ABCDEFGFEDCB 6 Bright
         Loop
     }
@@ -291,5 +292,48 @@ actor DRPGPandoraBox : SwitchableDecoration
     ActiveLoop:
         PBOX MNOPQPON 4 Bright
         Loop
+    }
+}
+
+// Map Event - Environmental Hazard
+// --------------------------------------------------
+
+actor DRPGRadiationNeutralizer : SwitchableDecoration
+{
+    Radius 34
+    Height 40
+    
+    +SOLID
+    +USESPECIAL
+    
+    Activation THINGSPEC_ThingTargets | THINGSPEC_Activate | THINGSPEC_Switch
+    
+    States
+    {
+    Spawn:
+        RADM A -1
+        Stop
+    Inactive:
+    Active:
+        TNT1 A 0 ACS_NamedExecuteWithResult("EnvironmentalHazardRefillGenerator")
+        Goto Spawn
+    }
+}
+
+actor DRPGNeutralizerFuel : Inventory
+{
+    -INVBAR
+    
+    Inventory.Amount 1
+    Inventory.MaxAmount 5
+    Inventory.PickupMessage "You got a Radiation Neutralizer fuel tank."
+    Inventory.PickupSound "items/loot"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
+        RADM B -1
+        Stop
     }
 }

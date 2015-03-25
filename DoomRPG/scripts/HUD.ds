@@ -778,11 +778,25 @@ script void EventHUD() enter
         // Draw if someone has a working power cell
         for (int i = 0; i < MAX_PLAYERS; i++)
             if (CheckActorInventory(Players(i).TID, "DRPGGeneratorCell") > 0)
-                PrintSprite("GCELA0", 0, X, Y, 0.05);
+                PrintSprite("GCELA0", 0, X + 8.1, Y + 33.1, 0.05);
+    };
+    
+    // Environmental Hazard
+    if (CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
+    {
+        str GeneratorStatus = "\cgStopped\c-";
+        if (CurrentLevel->GeneratorFuel > 0)
+            GeneratorStatus = "\cdRunning\c-";
+        SetFont("BIGFONT");
+        HudMessage("\cdHazard Level %d\n", CurrentLevel->HazardLevel, HUDMSG_PLAIN, 0, CR_RED, X + 0.1, Y + 0.1, 0.05);
+        
+        PrintSprite("RADMA0", 0, X + 33.1, Y + 56.1, 0.05);
+        SetFont("SMALLFONT");
+        HudMessage("\cqToxicity: \cd%d%%\n\ccGenerator status: %s \ck(%s left)\n\cqSpare fuel tanks: \cd%d\n", ((CurrentLevel->HazardLevel - 1) * 100) + CurrentLevel->RadLeft, GeneratorStatus, FormatTime(CurrentLevel->GeneratorFuel), CheckInventory("DRPGNeutralizerFuel"), HUDMSG_PLAIN, 0, CR_RED, X + 71.1, Y + 16.1, 0.05);
     };
     
     // Hell Unleashed
-    if ((CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && CurrentLevel->HellUnleashedActive) || GetCVar("drpg_hud_preview"))
+    if ((CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && CurrentLevel->HellUnleashedActive >= 2) || GetCVar("drpg_hud_preview"))
     {
         PrintSpritePulse("MonLevel", 0, X + 0.1, Y, 0.75, 32.0, 0.25);
         PrintSpritePulse("STAT8S", 0, X + 8.1, Y + 38.0, 0.75, 32.0, 0.25);
