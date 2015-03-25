@@ -375,8 +375,14 @@ script void StimHUD() enter
 {
     static int[STAT_MAX] StatColors =
     {
-        CR_RED; CR_GREEN; CR_BRICK; CR_LIGHTBLUE;
-        CR_PURPLE; CR_ORANGE; CR_BLUE; CR_GOLD;
+        CR_RED;
+        CR_GREEN;
+        CR_BRICK;
+        CR_LIGHTBLUE;
+        CR_PURPLE;
+        CR_ORANGE;
+        CR_BLUE;
+        CR_GOLD;
     };
     
     Start:
@@ -816,6 +822,7 @@ script void EventHUD() enter
 script void CoopViewHUD() enter
 {
     Start:
+    
     while (Player.PlayerView != PlayerNumber())
     {
         fixed X = GetCVarFixed("drpg_coopview_x");
@@ -828,6 +835,55 @@ script void CoopViewHUD() enter
             SetFont("BIGFONT");
             HudMessage("%N\n", PlayerNumber() + 1, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 8.0, 0.05);
             PrintSprite(StrParam("P%dSVIEW\n", Player.PlayerView + 1), 0, X + 0.1, Y + 0.1, 0.05);
+        };
+        
+        Delay(1);
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
+script void MultiplayerHUD() enter
+{
+    Start:
+    
+    while ((InMultiplayer && GetCVar("drpg_multiplayer_hud")) || GetCVar("drpg_hud_preview"))
+    {
+        fixed X = GetCVarFixed("drpg_multiplayer_x");
+        fixed Y = GetCVarFixed("drpg_multiplayer_y");
+        
+        SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+        
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Skip this player if they aren't in-game
+            if (!PlayerInGame(i)) continue;
+            
+            int HealthPercent = (int)(((fixed)Players(i).ActualHealth / (fixed)Players(i).HealthMax) * 100.0);
+            int ShieldPercent = (int)(((fixed)Players(i).Shield.Charge / (fixed)Players(i).Shield.Capacity) * 100.0);
+            fixed Alpha = 1.0;
+            
+            // Health Critical
+            if (HealthPercent <= 10)
+            {
+                Alpha = 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25);
+                PrintSpritePulse("HLTHCRIT", 0, X - 8.0, Y + 5.0, 0.75, 32.0, 0.25);
+            };
+            
+            SetFont("SMALLFONT");
+            
+            if (Players(i).Shield.Active)
+            {
+                HudMessage("%N\c- (\cv%d/%d\c-)\n", i + 1, Players(i).Shield.Charge, Players(i).Shield.Capacity, HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_WHITE, X + 0.1, Y, 0.05, Alpha);
+                DrawBar("MPFill2", X, Y + 8.0, ShieldPercent, true);
+            }
+            else
+                HudMessage("%N\c- (\ca%d/%d\c-)\n", i + 1, Players(i).ActualHealth, Players(i).HealthMax, HUDMSG_PLAIN | HUDMSG_ALPHA, 0, CR_WHITE, X + 0.1, Y, 0.05, Alpha);
+            
+            DrawBar("MPFill", X, Y + 8.0, HealthPercent, true);
+            
+            Y += 16.0;
         };
         
         Delay(1);
