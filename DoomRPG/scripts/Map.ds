@@ -97,7 +97,7 @@ script void MapInit() open
         
         // For rank giving and mission counting
         CurrentLevel->UniqueSecrets = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
-
+        
         CurrentLevel->ShortestTime = 0x7FFFFFFF;
         
         // These never change so we don't need to update them
@@ -229,6 +229,11 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     // Megaboss
     TargetLevel->MegabossActor = nullptr;
     
+    // Environmental Hazard
+    TargetLevel->HazardLevel = 0;
+    TargetLevel->RadLeft = 0;
+    TargetLevel->GeneratorFuel = 0;
+    
     // Thermonuclear Bomb
     TargetLevel->BombTime = 0;
     TargetLevel->BombExplode = false;
@@ -248,11 +253,6 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     TargetLevel->PandoraBoxTID = 0;
     TargetLevel->LevelAdd = 0;
     TargetLevel->RareAdd = 0;
-    
-    // Environmental Hazard
-    TargetLevel->HazardLevel = 0;
-    TargetLevel->RadLeft = 0;
-    TargetLevel->GeneratorFuel = 0;
     
     if (RandomFixed(0.0, 99.9) > GetCVarFixed("drpg_mapevent_chance"))
     {
@@ -455,6 +455,9 @@ script void MegaBossEvent()
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
     
+    // Pick Boss
+    CurrentLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
+    
     // Replace them with nothing
     for (int i = 1; i < MAX_MONSTERS; i++)
     {
@@ -485,7 +488,7 @@ script void MegaBossEvent()
         Spawned = Spawn(CurrentLevel->MegabossActor->Actor, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
         
         if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", MegaBosses[BossType].Actor, Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
+            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", CurrentLevel->MegabossActor->Actor, Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
         
         // Successful spawn
         if (Spawned)
@@ -493,10 +496,13 @@ script void MegaBossEvent()
             SpawnForced("TeleportFog", ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, 0, 0);
             GiveActorInventory(TID, "DRPGWhiteAuraGiver", 1);
             if (GetCVar("drpg_debug"))
-                Log("\cdDEBUG: \cg%s MegaBoss successfully spawned\n", MegaBosses[BossType].Actor);
+                Log("\cdDEBUG: \cg%s MegaBoss successfully spawned\n", CurrentLevel->MegabossActor->Actor);
         };
         
         Index++;
+        if (Index > MonsterID)
+            Index = 0;
+        
         Delay(1);
     };
     
