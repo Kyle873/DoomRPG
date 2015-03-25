@@ -417,3 +417,80 @@ Actor OutpostMarker_GamesTable : OutpostMarker 12010
         Stop
     }
 }
+
+// Title Map Stuff
+// --------------------------------------------------
+
+// Borrowed from DRLA
+// WHAT A SHAME
+actor DRPGTeleportRift
+{
+    Health 5000
+    Radius 64
+    Height 64
+    Mass 0x7FFFFFFF
+    Speed 0
+    
+    Monster
+    +NOBLOCKMAP
+    +NOGRAVITY
+    +NOTELEPORT
+    +LOOKALLAROUND
+    +INVULNERABLE
+    
+    RenderStyle Add
+    Alpha 0.99
+    Scale 3.2
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_SpawnItemEx("DRPGTeleportRiftAlerter")
+    See:
+        TNT1 A 0 A_Chase
+        TFOG BBBBCCCCDDDDCCCC 1 Bright A_Jump(8, "MonsterSpawn")
+        Loop
+    MonsterSpawn:
+        TNT1 A 0 A_SpawnItemEx("TeleportFog", Random(-256, 256), Random(-256, 256), 0, 0, 0, 0, Random(0, 359))
+        TNT1 A 0 A_SpawnItemEx("DRPGTeleportRiftSpawner", Random(-256, 256), Random(-256, 256), 0, 0, 0, 0, Random(0, 359), SXF_TRANSFERPOINTERS | SXF_SETMASTER, 0, TID + 1)
+        Goto See
+    }
+}
+
+actor DRPGTeleportRiftAlerter
+{
+    Monster
+    +NOBLOCKMAP
+    +NOGRAVITY
+    +NOTELEPORT
+    
+    States
+    {
+    Spawn:
+    See:
+        TNT1 A 1 NoDelay A_AlertMonsters(1024)
+        Loop
+    }
+}
+
+actor DRPGTeleportRiftSpawner : RandomSpawner
+{
+    DropItem "ZombieMan"            255 50
+    DropItem "ShotgunGuy"           255 50
+    DropItem "ChaingunGuy"          255 50
+    DropItem "DoomImp"              255 50
+    DropItem "DoomImp"              255 50
+    DropItem "Demon"                255 35
+    DropItem "Spectre"              255 35
+    DropItem "LostSoul"             255 9
+    DropItem "Cacodemon"            255 30
+    DropItem "HellKnight"           128 26
+    DropItem "Revenant"             255 12
+    DropItem "Fatso"                255 15
+    DropItem "PainElemental"        255 3
+    DropItem "BaronOfHell"          64  15
+    DropItem "Arachnotron"          255 12
+    DropItem "Archvile"             255 2
+    DropItem "Cyberdemon"           255 1
+    DropItem "SpiderMastermind"     255 1
+}
