@@ -280,6 +280,34 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     
     if (GetCVar("drpg_debug") && TargetLevel->Event != MAPEVENT_NONE)
         Log("\cdDEBUG: Special Event on \cc%s\cd: \cg%s\n", TargetLevel->NiceName, EventNames[TargetLevel->Event]);
+    
+    // Initialize some basic info for the chosen event
+    
+    if (TargetLevel->Event == MAPEVENT_TOXICHAZARD)
+    {
+        TargetLevel->HazardLevel = Random (1, 5);
+        TargetLevel->RadLeft = 100;
+    }
+    else if (TargetLevel->Event == MAPEVENT_ONEMONSTER)
+    {
+        bool Extras = (CompatMode == COMPAT_EXTRAS);
+        bool DRLA = (CompatMode == COMPAT_DRLA);
+        
+        if (DRLA)
+            TargetLevel->SelectedMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA - 1)]
+        else
+            TargetLevel->SelectedMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS - 1)];
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Chosen Monster: \cg%s\n", TargetLevel->SelectedMonster->Name);
+    }
+    else if (TargetLevel->Event == MAPEVENT_MEGABOSS)
+    {
+        TargetLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Chosen Boss: \cg%s\n", TargetLevel->MegabossActor->Actor);
+    };
 };
 
 script void PassingEvents() open
@@ -409,14 +437,6 @@ script void MegaBossEvent()
     int Index;
     Position *ChosenPosition;
     
-    if (CurrentLevel->MegabossActor == nullptr)
-    {
-        CurrentLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
-        
-        if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
-            Log("\cdDEBUG: Chosen Boss: \cg%s\n", CurrentLevel->MegabossActor->Actor);
-    };
-
     // Ambient Music
     SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
     
@@ -662,12 +682,6 @@ script void EnvironmentalHazard()
     bool NeutralizerSpawned = false;
     int NeutralizerTID;
     SetMusic("EvHazard");
-    
-    if (CurrentLevel->HazardLevel < 1)
-    {
-        CurrentLevel->HazardLevel = Random (1, 5);
-        CurrentLevel->RadLeft = 100;
-    };
     
     Delay (1);
     
@@ -1034,17 +1048,6 @@ script void OneMonsterEvent()
     bool Extras = (CompatMode == COMPAT_EXTRAS);
     bool DRLA = (CompatMode == COMPAT_DRLA);
     
-    if (CurrentLevel->SelectedMonster == nullptr)
-    {
-        if (DRLA)
-            CurrentLevel->SelectedMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA - 1)]
-        else
-            CurrentLevel->SelectedMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS - 1)];
-        
-        if (GetCVar("drpg_debug") && CurrentLevel->Event > 0)
-            Log("\cdDEBUG: Chosen Monster: \cg%s\n", CurrentLevel->SelectedMonster->Name);
-    };
-
     for (int i = 0; i < MonsterID; i++)
     {
         if (!Monsters[i].Init)
