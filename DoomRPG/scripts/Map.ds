@@ -203,6 +203,24 @@ function bool CheckMapEvent(int Event)
 
 script void DecideMapEvent(LevelInfo *TargetLevel)
 {
+    static str[MAPEVENT_MAX] EventNames =
+    {
+        "None";
+        
+        "MegaBoss";
+        "Environmental Hazard";
+        "Thermonuclear Bomb";
+        "Low Power";
+        "All Auras";
+        "One-Monster";
+        "Hell Unleashed";
+        
+        "RAINBOWS!";
+        
+        "Skills - Hell";
+        "Skills - Armageddon";
+    };
+    
     // We need to clear all of the event data before choosing one
     
     // One-Monster
@@ -242,36 +260,21 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
         return; // No special event
     };
     
-    static str[MAPEVENT_MAX] EventNames =
-    {
-        "None";
-        
-        "MegaBoss";
-        "Environmental Hazard";
-        "Thermonuclear Bomb";
-        "Low Power";
-        "All Auras";
-        "One-Monster";
-        "Hell Unleashed";
-        
-        "RAINBOWS!";
-        
-        "Skills - Hell";
-        "Skills - Armageddon";
-    };
-    
     int Rerolls = 256; // Just in case *no* events are possible for some reason
     while (TargetLevel->Event == MAPEVENT_NONE && Rerolls)
     {
         TargetLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
+        
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: Trying \cj%s\n", EventNames[TargetLevel->Event]);
+        
         if (!CheckMapEvent(TargetLevel->Event))
         {
             if (GetCVar("drpg_debug"))
                 Log("\cdDEBUG: \cj%s\cg not possible\n", EventNames[TargetLevel->Event]);
             TargetLevel->Event = MAPEVENT_NONE;
         };
+        
         Rerolls--;
     };
     
@@ -285,7 +288,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     
     if (TargetLevel->Event == MAPEVENT_TOXICHAZARD)
     {
-        TargetLevel->HazardLevel = Random (1, 5);
+        TargetLevel->HazardLevel = Random(1, 5);
         TargetLevel->RadLeft = 100;
     }
     else if (TargetLevel->Event == MAPEVENT_ONEMONSTER)
@@ -314,16 +317,17 @@ script void PassingEvents() open
 {
     while (true)
     {
-        if (GetCVar ("drpg_mapevent_eventtime") == 0)
+        if (GetCVar("drpg_mapevent_eventtime") == 0)
             return;
         
-        Delay (1);
+        Delay(1);
         PassingEventTimer--;
         
         if (PassingEventTimer <= 0)
         {
             if (GetCVar("drpg_debug"))
                 Log("\cdDEBUG: \cfRe-rolling events for all inactive levels\n");
+            
             for (int i = 0; i < KnownLevels.Position; i++)
             {
                 LevelInfo *ThisLevel = &(((LevelInfo *)KnownLevels.Data)[i]);
