@@ -35,9 +35,11 @@ int ForcefieldGeneratorID = 1501;
 int GeneratorTID = 1510;
 int EntrySectorID = 200;
 int HallTeleportSpotID = 1601;
+int CameraTID = 1700;
+int RiftSpotTID = 1800;
 
 // Timers
-int ForcefieldTimer = 35 * 60 * GameSkill(); // 1 Minute per skill increment
+int ForcefieldTimer = 35 * 60 * GameSkill(); // 1 Minute per skill level
 
 // Choices
 int LevelChoice = 0;
@@ -78,6 +80,15 @@ acscript void EnterOutpost()
     
     // Get new Missions
     PopulateMissions();
+    
+    // Title map handling
+    if (InTitle)
+    {
+        ChangeCamera(CameraTID, true, false);
+        Thing_Activate(CameraTID);
+        Delay(35 * Random(3, 5));
+        PissOffMarines(false);
+    };
 };
 
 acscript void RegenArea(int ID)
@@ -654,16 +665,19 @@ acscript void PissOffMarines(bool Steal)
     // Pick combat music from Arena selection
     SetOutpostMusic(OUTPOST_MUSIC_COMBAT);
     
-    SetActorProperty(TurretTID, APROP_Friendly, false);
+    // Remove Friendly flag from turrets
+    if (!InTitle)
+        SetActorProperty(TurretTID, APROP_Friendly, false);
     
     // Iterate Marines post-Delay
     for (int i = MarineTID; i <= MarineMaxTID; i++)
     {
         // Remove Friendly flag
-        SetActorProperty(i, APROP_Friendly, false);
+        if (!InTitle)
+            SetActorProperty(i, APROP_Friendly, false);
         
         // Enrage Marines
-        if (GetActorProperty(i, APROP_Health) > 0)
+        if (GetActorProperty(i, APROP_Health) > 0 && !InTitle)
             SetActorState(i, "Enraged", false);
         
         // Give Credits to Marines
@@ -671,7 +685,7 @@ acscript void PissOffMarines(bool Steal)
     };
     
     // Enrage Turrets
-    if (ClassifyActor(TurretTID) & ACTOR_ALIVE)
+    if (ClassifyActor(TurretTID) & ACTOR_ALIVE && !InTitle)
     {
         SetActorState(TurretTID, "Enraged", false);
         
@@ -681,7 +695,8 @@ acscript void PissOffMarines(bool Steal)
     };
     
     // Enrage placeholder bosses
-    SetActorState(MarineBossTID - 1, "Enraged", false);
+    if (!InTitle)
+        SetActorState(MarineBossTID - 1, "Enraged", false);
     
     // Sector Lighting
     for (int i = 0; i <= MAX_OUTPOST_ID; i++)
@@ -697,10 +712,24 @@ acscript void PissOffMarines(bool Steal)
     SpawnBoss();
     
     // Raise Entry Forcefield
-    Line_SetBlocking(ForcefieldGeneratorID, BLOCKF_EVERYTHING | BLOCKF_SIGHT | BLOCKF_HITSCAN, 0);
-    SetLineTexture(ForcefieldGeneratorID, SIDE_FRONT, TEXTURE_MIDDLE, "FORCEFIE");
-    SpawnSpotForced("TeleportFog", GeneratorTID, 0, 0);
-    SpawnSpotForced("DRPGForcefieldGenerator", GeneratorTID, GeneratorTID, 0);
+    if (!InTitle)
+    {
+        Line_SetBlocking(ForcefieldGeneratorID, BLOCKF_EVERYTHING | BLOCKF_SIGHT | BLOCKF_HITSCAN, 0);
+        SetLineTexture(ForcefieldGeneratorID, SIDE_FRONT, TEXTURE_MIDDLE, "FORCEFIE");
+        SpawnSpotForced("TeleportFog", GeneratorTID, 0, 0);
+        SpawnSpotForced("DRPGForcefieldGenerator", GeneratorTID, GeneratorTID, 0);
+    };
+    
+    // Title Map Handling
+    if (InTitle)
+    {
+        // Create Hell Rifts
+        SpawnSpotForced("DRPGTeleportRift", RiftSpotTID, 0, 0);
+        
+        // Alert the Marines
+        for (int i = MarineTID; i <= MarineMaxTID; i++)
+            SetActorState(i, "See", false);
+    };
     
     // Synchronize delay with SpawnBoss()
     if (OutpostNotoriety >= 3)
@@ -710,7 +739,7 @@ acscript void PissOffMarines(bool Steal)
     while (true)
     {
         // Move all players outside the entry sector
-        if (!BossDead)
+        if (!BossDead && !InTitle)
             for (int i = 0; i < MAX_PLAYERS; i++)
                 if (ThingCountSector(0, Players(i).TID, EntrySectorID) > 0)
                     TeleportOther(Players(i).TID, HallTeleportSpotID + i, true);
@@ -719,15 +748,36 @@ acscript void PissOffMarines(bool Steal)
         if ((Timer() % (35 * 10)) == 0 && OutpostNotoriety <= 2)
         {
             SpawnSpotForced("TeleportFog", MarineSpotTID, 0, 0);
-            if (OutpostNotoriety == 2) // Special handling for Chasing Minigunners
-                SpawnSpotFacingForced("DRPGMarineMinigunHuntingYerAss", MarineSpotTID, MarineTID)
+            
+            if (InTitle)
+            {
+                for (int i = HallTeleportSpotID; i < HallTeleportSpotID + 8; i++)
+                {
+                    SpawnSpotForced("TeleportFog", i, 0, 0);
+                    if (CompatMode == COMPAT_DRLA)
+                        SpawnSpotFacingForced("DRPGMarineReinforcementDRLASpawner", i, MarineTID)
+                    else
+                        SpawnSpotFacingForced("DRPGMarineReinforcementSpawner", i, MarineTID);
+                };
+            }
             else
-                if (CompatMode == COMPAT_DRLA)
-                    SpawnSpotFacingForced("DRPGMarineReinforcementDRLASpawner", MarineSpotTID, MarineTID)
+            {
+                if (OutpostNotoriety == 2) // Special handling for Chasing Minigunners
+                    SpawnSpotFacingForced("DRPGMarineMinigunHuntingYerAss", MarineSpotTID, MarineTID)
                 else
-                    SpawnSpotFacingForced("DRPGMarineReinforcementSpawner", MarineSpotTID, MarineTID);
-            SetActorProperty(MarineTID, APROP_Friendly, false);
+                    if (CompatMode == COMPAT_DRLA)
+                        SpawnSpotFacingForced("DRPGMarineReinforcementDRLASpawner", MarineSpotTID, MarineTID)
+                    else
+                        SpawnSpotFacingForced("DRPGMarineReinforcementSpawner", MarineSpotTID, MarineTID);
+                
+                SetActorProperty(MarineTID, APROP_Friendly, false);
+            };
         };
+        
+        // Make the Marines hate the TID in title map
+        if (InTitle)
+            for (int i = MarineTID; i <= MarineMaxTID; i++)
+                Thing_Hate(RiftSpotTID + 1, i, 5);
         
         // Boss Timer
         if (ForcefieldTimer > 0 && OutpostNotoriety == 2)
