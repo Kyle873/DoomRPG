@@ -54,6 +54,7 @@ bool Invasion = false;
 
 acscript void EnterOutpost()
 {
+    SetHudSize(320, 240, true);
     InBase = true;
     
     // Assign the current level to the level choice
@@ -88,6 +89,13 @@ acscript void EnterOutpost()
         Thing_Activate(CameraTID);
         Delay(35 * Random(3, 5));
         PissOffMarines(false);
+        
+        ActivatorSound("misc/skillchange", 127);
+        while (InTitle)
+        {
+            PrintSpritePulse("M_DOOM", 1, 160.0 + 8.0, 80.0 - 8.0, 0.75, 64.0, 0.25);
+            Delay(1);
+        };
     };
 };
 
@@ -709,7 +717,8 @@ acscript void PissOffMarines(bool Steal)
     AlarmLoop();
     
     // Boss Spawning
-    SpawnBoss();
+    if (!InTitle) // These guys were absolutely massacring the monsters, ruining the cinematics
+        SpawnBoss();
     
     // Raise Entry Forcefield
     if (!InTitle)
@@ -724,7 +733,10 @@ acscript void PissOffMarines(bool Steal)
     if (InTitle)
     {
         // Create Hell Rifts
-        SpawnSpotForced("DRPGTeleportRift", RiftSpotTID, 0, 0);
+        SpawnSpotForced("DRPGTeleportRift", RiftSpotTID, RiftSpotTID, 0);
+        
+        Thing_Hate(TurretTID, RiftSpotTID + 1, 6);
+        SetActorState(TurretTID, "Enraged", false);
         
         // Alert the Marines
         for (int i = MarineTID; i <= MarineMaxTID; i++)
@@ -770,14 +782,23 @@ acscript void PissOffMarines(bool Steal)
                     else
                         SpawnSpotFacingForced("DRPGMarineReinforcementSpawner", MarineSpotTID, MarineTID);
                 
-                SetActorProperty(MarineTID, APROP_Friendly, false);
+                if (!InTitle)
+                    SetActorProperty(MarineTID, APROP_Friendly, false);
             };
         };
         
-        // Make the Marines hate the TID in title map
+        // Make the Marines fight enemies in title map
         if (InTitle)
+        {
             for (int i = MarineTID; i <= MarineMaxTID; i++)
-                Thing_Hate(RiftSpotTID + 1, i, 5);
+            {
+                SetActorProperty(i, APROP_Friendly, true);
+                Thing_ChangeTID(i, MarineTID);
+            };
+            
+            SetActorProperty(MarineBossTID, APROP_Friendly, true);
+            Thing_Hate(RiftSpotTID + 1, MarineTID, 6);
+        };
         
         // Boss Timer
         if (ForcefieldTimer > 0 && OutpostNotoriety == 2)
