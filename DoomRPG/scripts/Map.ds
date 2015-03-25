@@ -143,6 +143,11 @@ script void MapInit() open
         CurrentLevel->LevelAdd = 0;
         CurrentLevel->RareAdd = 0;
         
+        // Environmental Hazard
+        CurrentLevel->HazardLevel = 0;
+        CurrentLevel->RadLeft = 0;
+        CurrentLevel->GeneratorFuel = 0;
+        
         // Allocate the Monster Positions dynamic array
         ArrayCreate(&CurrentLevel->MonsterPositions, "MPOS\x00", 64, sizeof(Position));
         
@@ -279,11 +284,6 @@ script void SetupMapEvent()
         case MAPEVENT_TOXICHAZARD:
             // Environmental Hazard: Entire map is filled with damaging radiation. Monsters can drop extra Radiation Suits when killed.
             EnvironmentalHazard();
-            for (int i = 0; i <= SHORT_MAX; i++)
-            {
-                Light_ChangeToValue(i, 128);
-                Sector_SetFade(i, 63, 131, 47);
-            };
             break;
         
         case MAPEVENT_NUCLEARBOMB:
@@ -460,32 +460,238 @@ script void MegaBossEvent()
     };
 };
 
+script void EnvironmentalHazardSetColors()
+{
+    if (CurrentLevel->Event != MAPEVENT_TOXICHAZARD)
+    {
+        for (int i = 0; i <= SHORT_MAX; i++)
+        {
+            Sector_SetColor(i, 255, 255, 255);
+            Sector_SetFade(i, 0, 0, 0);
+        };
+        return;
+    };
+    
+    int FadeR = (63  * CurrentLevel->HazardLevel) / 5;
+    int FadeG = (131 * CurrentLevel->HazardLevel) / 5;
+    int FadeB = (47  * CurrentLevel->HazardLevel) / 5;
+    
+    int ColorR = 255 - ((192 * CurrentLevel->HazardLevel) / 5);
+    int ColorG = 255 - ((124 * CurrentLevel->HazardLevel) / 5);
+    int ColorB = 255 - ((208 * CurrentLevel->HazardLevel) / 5);
+    
+    for (int i = 0; i <= SHORT_MAX; i++)
+    {
+        Sector_SetColor(i, ColorR, ColorG, ColorB);
+        Sector_SetFade(i, FadeR, FadeG, FadeB);
+    };
+};
+
+script void EnvironmentalHazardDamage()
+{
+    while (CurrentLevel->HazardLevel)
+    {
+        int Damage = 20;
+        if (CurrentLevel->HazardLevel < 3)
+            Damage = 5
+        else if (CurrentLevel->HazardLevel < 5)
+            Damage = 10;
+        
+        for (int i = 0; i <= SHORT_MAX; i++)
+            SectorDamage(i, Damage, "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
+        
+        Delay(32);
+    };
+};
+
+// A variant of the dynamic loot generator that drops tanks for the neutralizer.
+acscript void EnvironmentalHazardDropTanks()
+{
+    SetActivator (0, AAPTR_PLAYER1);
+    fixed BaseX = GetActorX(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
+    fixed BaseY = GetActorY(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
+    fixed BaseZ = GetActorZ(0);
+    fixed Boundary = 0;
+    fixed BoundaryZ = 0;
+    int MaxRolls = (3 * GameSkill ()) + Random (1, 5);
+    int Rolls = 0;
+    int Instructions = 0;
+    int Iterations = 0;
+    
+    // Stop if there are no monsters in the level
+    if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) <= 0) return;
+    
+    // Find the furthest monster from the player to determine some approximate boundaries to work with
+    for (int i = 0; i < MonsterID; i++)
+    {
+        fixed Dist = Distance3D(GetActorX(0), GetActorY(0), GetActorZ(0), Monsters[i].Position.X, Monsters[i].Position.Y, Monsters[i].Position.Z);
+        fixed ZDiff = AbsFixed(GetActorZ(0) - Monsters[i].Position.Z);
+        
+        if (Dist > Boundary)
+        {
+            Boundary = Dist;
+            BoundaryZ = ZDiff;
+        };
+    };
+    
+    while (Rolls < MaxRolls)
+    {
+        int TID = UniqueTID();
+        fixed X = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
+        fixed Y = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
+        fixed Z = BaseZ + Random(-BoundaryZ, BoundaryZ);
+        
+        bool Spawned = Spawn("DRPGNeutralizerFuel", X, Y, Z, TID, 0);
+        if (Spawned)
+        {
+            bool Remove = true;
+            
+            for (int i = 0; i < MonsterID; i++)
+            {
+                // If this spot is blank, skip it
+                if (Monsters[i].TID == 0) continue;
+                
+                // Randomly continue for variance
+                if (Random(1, 4) == 1) continue;
+                
+                bool CanSee = CheckSight(TID, Monsters[i].TID, 0);
+                if (CanSee)
+                {
+                    Remove = false;
+                    Rolls++;
+                    break;
+                };
+                
+                Instructions++;
+                if ((Instructions % 500) == 0)
+                    Delay(1);
+            };
+            
+            if (Remove)
+                Thing_Remove(TID);
+        };
+        
+        if (GetCVar("drpg_debug"))
+            HudMessage("\cfDropping Radiation Tanks\n\cd%d \cj/ \cd%d\n\n\ccInstructions: %d\n\cdIteration: %d\n\ciBoundary: %k\n\nX: %k\nY: %k\nZ: %k\n", Rolls, MaxRolls, Instructions, Iterations, Boundary, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
+        
+        Iterations++;
+    };
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDebug: \c-Radiation Tanks dropped - \cd%d\c- items\n", MaxRolls);
+};
+
+acscript void EnvironmentalHazardRefillGenerator()
+{
+    SetActivator(0, AAPTR_TARGET);
+    
+    if (CurrentLevel->Event != MAPEVENT_TOXICHAZARD)
+        return;
+    
+    if (!CheckInventory ("DRPGNeutralizerFuel"))
+        return;
+    
+    TakeInventory ("DRPGNeutralizerFuel", 1);
+    CurrentLevel->GeneratorFuel = 35 * 30 * (6 - GameSkill ());
+    if (CurrentLevel->GeneratorFuel < 35 * 30)
+        CurrentLevel->GeneratorFuel = 35 * 30;
+    SetFont("BIGFONT");
+    HudMessageBold("Generator refuelled\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.25, 2.0, 1.0);
+};
+
+script void EnvironmentalHazardDisarm()
+{
+    if (CurrentLevel->Event != MAPEVENT_TOXICHAZARD)
+        return;
+    
+    EnvironmentalHazardSetColors();
+    AmbientSound("skills/decontaminate", 127);
+    CurrentLevel->Event = MAPEVENT_NONE;
+    SetMusic("*");
+    SetFont("BIGFONT");
+    HudMessageBold("Radiation cleared\n", HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_GREEN, 0.5, 0.25, 2.0, 1.0);
+};
+
 script void EnvironmentalHazard()
 {
-    // TODO: [02:47:04] <@Yholl> Have some sort of radiation device that sciences away the radiation
+    bool NeutralizerSpawned = false;
+    int NeutralizerTID;
     SetMusic("EvHazard");
+    
+    if (CurrentLevel->HazardLevel < 1)
+    {
+        CurrentLevel->HazardLevel = Random (1, 5);
+        CurrentLevel->RadLeft = 100;
+    };
+    
+    Delay (1);
     
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
-        // [KS] If the players are level 0 (ie just started the game) and the first map is an Environmental Hazard,
-        // give them some extra suits so they aren't instantly screwed.
         if (!PlayerInGame(i))
             continue;
         
-        if (Players(i).Level >= 1)
-            continue;
+        TakeActorInventory(Players(i).TID, "DRPGNeutralizerFuel", 5);
         
-        GiveActorInventory(Players(i).TID, "RadSuit", 2);
-        UseActorInventory(Players(i).TID, "RadSuit");
+        // [KS] If the players are level 0 (ie just started the game) and the first map is an Environmental Hazard,
+        // give a free suit so they have some minutes to find more.
+        
+        // BUG: Giving DRPGRadSuit directly doesn't do anything. Shouldn't it place suits in the inventory bar? Silly ZDoom.
+        
+        if (Players(i).Level < 1)
+            GiveActorInventory(Players(i).TID, "DRPGRadSuitPower", 1);
+        
+        UseActorInventory(Players(i).TID, "DRPGRadSuit");
     };
     
-    Start:
+    EnvironmentalHazardSetColors();
+    EnvironmentalHazardDamage();
+    EnvironmentalHazardDropTanks();
     
-    for (int i = 0; i <= SHORT_MAX; i++)
-        SectorDamage(i, Random(1, GameSkill()), "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_NONPLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
+    while (!NeutralizerSpawned)
+    {
+        NeutralizerTID = UniqueTID ();
+        NeutralizerSpawned = SpawnEventActor("DRPGRadiationNeutralizer", GeneratorTID);
+        Delay(1);
+    };
     
-    Delay(32);
-    goto Start;
+    int CheckPar = GetLevelInfo (LEVELINFO_PAR_TIME);
+    if (CheckPar == 0)
+        CheckPar = 3;
+    
+    CheckPar *= 35;
+    
+    int RadTimeRequired = CheckPar / 100;
+    while (CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
+    {
+        if (CurrentLevel->GeneratorFuel)
+        {
+            CurrentLevel->GeneratorFuel--;
+            
+            if (Timer() % RadTimeRequired == 0)
+            {
+                CurrentLevel->RadLeft--;
+                
+                if (CurrentLevel->RadLeft == 0)
+                {
+                    CurrentLevel->HazardLevel--;
+                    
+                    if (CurrentLevel->HazardLevel == 0)
+                    {
+                        EnvironmentalHazardDisarm();
+                        return;
+                    };
+                    
+                    CurrentLevel->RadLeft = 100;
+                    EnvironmentalHazardSetColors();
+                    AmbientSound("skills/decontaminate", 127);
+                    SetFont("BIGFONT");
+                    HudMessageBold("Radiation level reduced to %d\n", CurrentLevel->HazardLevel, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_YELLOW, 0.5, 0.25, 2.0, 1.0);
+                };
+            };
+        };
+        Delay (1);
+    };
 };
 
 script void ThermonuclearBombEvent()
