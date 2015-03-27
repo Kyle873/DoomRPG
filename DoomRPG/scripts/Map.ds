@@ -139,7 +139,7 @@ script void MapInit() open
     Delay(1);
     
     // Populate the positions array
-    for (int i = 1; i < MAX_MONSTERS; i++)
+    for (int i = 1; i < MonsterID; i++)
     {
         if (!Monsters[i].Init)
             continue;
@@ -155,11 +155,54 @@ script void MapInit() open
             Delay(1); //Prevent running away on gigantic maps (see holyhell.wad MAP05)
     };
     
+    // Reduce monster population based on difficulty settings
+    static bool WaitLock = true;
+    ReduceMonsterCount(&WaitLock);
+    while(WaitLock)
+        Delay(1);
+    
     // Set up the currently in-effect map event
     SetupMapEvent();
     
     if (CurrentLevel)
         MapLoop();
+};
+
+script void ReduceMonsterCount(bool *WaitLock)
+{
+    int TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+    if (TotalMonsters == 0)
+        return;
+    
+    if (TotalMonsters * GetCVar("drpg_monster_population") / 100 == TotalMonsters)
+        return; // No change
+    
+    int MonstersToRemove = TotalMonsters - (TotalMonsters * GetCVar("drpg_monster_population") / 100);
+    if(TotalMonsters <= MonstersToRemove)
+        MonstersToRemove = TotalMonsters - 1;
+    
+    if(GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \ccReducing monster count to \cd%d\cc from \cd%d\n", TotalMonsters - MonstersToRemove, TotalMonsters);
+    
+    int Iterations = 0;
+    while(MonstersToRemove)
+    {
+        for (int i = Random(1, MonsterID - 1); i < MonsterID; i++)
+        {
+            if (!Monsters[i].Init || ClassifyActor(Monsters[i].TID) == ACTOR_NONE || !(CheckFlag(Monsters[i].TID, "COUNTKILL")))
+                continue;
+            
+            Thing_Remove(Monsters[i].TID);
+            MonstersToRemove--;
+            break;
+        };
+        
+        Iterations++;
+            if (!(Iterations % 4096))
+        Delay(1);
+    };
+    
+    *WaitLock = false;
 };
 
 function bool CheckMapEvent(int Event)
