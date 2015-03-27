@@ -959,7 +959,7 @@ function void CheckToxicity()
         Player.Toxicity = 0;
     
     // Slowly decrease Toxicity
-    if (Player.Toxicity > 0 && Timer() % (35 * (30 - Player.ToxicityRegenBonus)) == 0)
+    if (Player.Toxicity > 0 && (Timer() % (35 * (30 - Player.ToxicityRegenBonus)) == 0 || (Player.RegenBoostTimer > 0 && (Player.RegenBoostTimer % 35) == 0)))
     {
         Player.Toxicity--;
         Player.ToxicTimer = 0;
@@ -987,7 +987,7 @@ function void CheckToxicity()
     // Death at 100% Toxicity
     if (Player.Toxicity >= 100)
     {
-        Thing_Damage2(Player.TID, 1000000000, "Toxicity");
+        Thing_Damage2(Player.TID, SHIELD_HEALTH, "Toxicity");
         Player.Toxicity = 0;
     };
 };
@@ -1180,7 +1180,7 @@ function void CheckStatusEffects()
                 StopSound(Player.TID, 7);
         }
         else if (Player.StatusTimer[i] > 0)
-            Player.StatusTimer[i]--;
+            Player.StatusTimer[i] -= 1 + (Player.RegenBoostTimer > 0 ? Player.RegenBoostTimer / 500 : 0);
     };
 };
 

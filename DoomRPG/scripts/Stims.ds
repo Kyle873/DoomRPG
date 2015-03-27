@@ -5,28 +5,61 @@
 #include "Stims.dh"
 #include "Utils.dh"
 
+// TODO: These two can be merged together by just includin the color code in the string itself
 str[STIM_MAX] CompoundNames =
 {
     // Stats
-    "Strength"; "Defense"; "Vitality"; "Energy"; "Regeneration"; "Agility"; "Capacity"; "Luck";
+    "Strength";
+    "Defense";
+    "Vitality";
+    "Energy";
+    "Regeneration";
+    "Agility";
+    "Capacity";
+    "Luck";
     
     // Boosters
-    "Purifier"; "Potency";
+    "Purifier";
+    "Potency";
     
     // Powerups
-    "Indestructible"; "Shadow"; "Infinity"; "Chrono"; "Adrenaline"; "Gravity"; "Vampire"; "Rage"; "Magnetic";
+    "Indestructible";
+    "Shadow";
+    "Infinity";
+    "Chrono";
+    "Adrenaline";
+    "Gravity";
+    "Vampire";
+    "Rage";
+    "Magnetic";
 };
 
 int[STIM_MAX] CompoundColors =
 {
     // Stats
-    CR_RED; CR_GREEN; CR_BRICK; CR_LIGHTBLUE; CR_PURPLE; CR_ORANGE; CR_BLUE; CR_YELLOW;
+    CR_RED;
+    CR_GREEN;
+    CR_BRICK;
+    CR_LIGHTBLUE;
+    CR_PURPLE;
+    CR_ORANGE;
+    CR_BLUE;
+    CR_YELLOW;
         
     // Boosters
-    CR_DARKGRAY; CR_WHITE;
+    CR_DARKGRAY;
+    CR_WHITE;
     
     // Powerups
-    CR_DARKGREEN; CR_DARKRED; CR_GOLD; CR_GREEN; CR_PURPLE; CR_ORANGE; CR_BRICK; CR_BLACK; CR_GRAY;
+    CR_DARKGREEN;
+    CR_DARKRED;
+    CR_GOLD;
+    CR_GREEN;
+    CR_PURPLE;
+    CR_ORANGE;
+    CR_BRICK;
+    CR_BLACK;
+    CR_GRAY;
 };
 
 int StimStatsStart = 0;
@@ -125,13 +158,13 @@ acscript void UseStim() net
     ClearToxicityMeter();
     ActivatorSound("items/stim", 127);
     FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
-    // TossStim();
+    TossStim();
 };
 
 acscript void TossStim()
 {
     int TID = UniqueTID();
-    str StimTossType;
+    str StimTossActor;
     fixed Angle = GetActorAngle(0);
     fixed VelX;
     fixed VelY;
@@ -140,45 +173,42 @@ acscript void TossStim()
     switch (Player.Stim.Size)
     {
     case 1: // Small
-        StimTossType = "DRPGStimSmallTossed";
+        StimTossActor = "DRPGStimSmallTossed";
         break;
     case 2: // Medium
-        StimTossType = "DRPGStimMediumTossed";
+        StimTossActor = "DRPGStimMediumTossed";
         break;
     case 3: // Large
-        StimTossType = "DRPGStimLargeTossed";
+        StimTossActor = "DRPGStimLargeTossed";
         break;
+    case 0: // Detox
     case 4: // XL
-        StimTossType = "DRPGStimXLTossed";  
-        break;
-    default: // Detox
-        StimTossType = "DRPGStimXLTossed";  
+        StimTossActor = "DRPGStimXLTossed";  
         break;
     };
     
     // Spawn the empty injector
-    SpawnForced(StimTossType, GetActorX(0), GetActorY(0), GetActorZ(0) + 48.0, TID, 0);
+    SpawnForced(StimTossActor, GetActorX(0), GetActorY(0), GetActorZ(0) + 48.0, TID, 0);
     
     // Toss direction
     switch (Random(1, 3))
     {
     case 1: // Left side
-        VelX = AbsFixed(Cos(Angle - 0.25)) % 1.0;
-        VelY = Sin(Angle);
+        Angle -= 0.25;
         break;
     case 2: // Right side
-        VelX = AbsFixed(Cos(Angle + 0.25)) % 1.0;
-        VelY = Sin(Angle);
+        Angle += 0.25;
         break;
     case 3: // Behind
-        VelX = Cos(Angle);
-        VelY = AbsFixed(Sin(Angle - 0.5)) % 1.0;
+        Angle -= 0.5;
         break;
     };
     
+    VelX = Cos(Angle);
+    VelY = Sin(Angle);
+    
     // Adjust the trajectory
-    SetActorVelocity(TID, VelX + RandomFixed(2.0, 4.0), VelY + RandomFixed(2.0, 4.0), 0.0, false, false);
-    Log("\cdvelx: %k : vely: %k\n", VelX, VelY);
+    SetActorVelocity(TID, VelX * RandomFixed(2.0, 4.0), VelY * RandomFixed(2.0, 4.0), 0.0, false, false);
 };
 
 acscript void AddCompound(int Type, int Amount)
