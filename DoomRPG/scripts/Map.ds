@@ -138,9 +138,6 @@ script void MapInit() open
     // Delay to allow monsters to register themselves (See Monsters.ds:199)
     Delay(1);
     
-    // Set up the currently in-effect map event
-    SetupMapEvent();
-    
     // Populate the positions array
     for (int i = 1; i < MAX_MONSTERS; i++)
     {
@@ -153,7 +150,13 @@ script void MapInit() open
         
         // Store position
         ((Position *)CurrentLevel->MonsterPositions.Data)[CurrentLevel->MonsterPositions.Position++] = Monsters[i].Position;
+        
+        if (!(i % 4096))
+            Delay(1); //Prevent running away on gigantic maps (see holyhell.wad MAP05)
     };
+    
+    // Set up the currently in-effect map event
+    SetupMapEvent();
     
     if (CurrentLevel)
         MapLoop();
