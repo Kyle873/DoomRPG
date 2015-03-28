@@ -142,7 +142,7 @@ script void MapInit() open
     // Reduce monster population based on difficulty settings
     static bool WaitLock = true;
     ReduceMonsterCount(&WaitLock);
-    while(WaitLock)
+    while (WaitLock)
         Delay(1);
     
     // Populate the positions array
@@ -158,8 +158,9 @@ script void MapInit() open
         // Store position
         ((Position *)CurrentLevel->MonsterPositions.Data)[CurrentLevel->MonsterPositions.Position++] = Monsters[i].Position;
         
-        if (!(i % 4096))
-            Delay(1); //Prevent running away on gigantic maps (see holyhell.wad MAP05)
+        // Prevent running away on gigantic maps (see holyhell.wad MAP05)
+        if ((i % 4096) == 0)
+            Delay(1);
     };
     
     // Set up the currently in-effect map event
@@ -174,6 +175,7 @@ script void MapInit() open
 script void ReduceMonsterCount(bool *WaitLock)
 {
     int TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+    
     if (TotalMonsters == 0)
     {
         *WaitLock = false;
@@ -187,14 +189,14 @@ script void ReduceMonsterCount(bool *WaitLock)
     };
     
     int MonstersToRemove = TotalMonsters - (TotalMonsters * GetCVar("drpg_monster_population") / 100);
-    if(TotalMonsters <= MonstersToRemove)
+    if (TotalMonsters <= MonstersToRemove)
         MonstersToRemove = TotalMonsters - 1;
     
-    if(GetCVar("drpg_debug"))
+    if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \ccReducing monster count to \cd%d\cc from \cd%d\n", TotalMonsters - MonstersToRemove, TotalMonsters);
     
     int Iterations = 0;
-    while(MonstersToRemove)
+    while (MonstersToRemove)
     {
         for (int i = Random(1, MonsterID - 1); i < MonsterID; i++)
         {
@@ -204,13 +206,16 @@ script void ReduceMonsterCount(bool *WaitLock)
             Thing_Remove(Monsters[i].TID);
             Monsters[i].Init = false;
             Monsters[i].TID = 0;
+            
             MonstersToRemove--;
+            
             break;
         };
         
         Iterations++;
-            if (!(Iterations % 4096))
-        Delay(1);
+        
+        if ((Iterations % 4096) == 0)
+            Delay(1);
     };
     
     *WaitLock = false;
@@ -534,12 +539,12 @@ script void MegaBossEvent()
     // Shuffle positions
     for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
     {
-        int x = Random(0, CurrentLevel->MonsterPositions.Position - 1);
+        int X = Random(0, CurrentLevel->MonsterPositions.Position - 1);
         Position TempPosition;
         
         TempPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
-        ((Position *)CurrentLevel->MonsterPositions.Data)[i] = ((Position *)CurrentLevel->MonsterPositions.Data)[x];
-        ((Position *)CurrentLevel->MonsterPositions.Data)[x] = TempPosition;
+        ((Position *)CurrentLevel->MonsterPositions.Data)[i] = ((Position *)CurrentLevel->MonsterPositions.Data)[X];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[X] = TempPosition;
     };
     
     // Spawning
