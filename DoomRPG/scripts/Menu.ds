@@ -135,9 +135,7 @@ function void DrawMainMenu()
     int TotalKills = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
     int TotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
     int TotalSecretsFound = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
-    int StatTokens = CheckInventory("DRPGStatToken");
-    int SkillTokens = CheckInventory("DRPGSkillToken");
-    int WildcardTokens = CheckInventory("DRPGWildcardToken");
+    int Modules = CheckInventory("DRPGModule");
     int AugCanisters = CheckInventory("DRPGAugCanister");
     int AugUpgradeCanisters = CheckInventory("DRPGAugUpgradeCanister");
     int SmallStims = CheckInventory("DRPGStimSmall");
@@ -198,18 +196,14 @@ function void DrawMainMenu()
     else
     {
         // Quick Reference
-        PrintSprite("TOKEN1", 0, 16.1, 188.1, 0.05);
-        PrintSprite("TOKEN2", 0, 16.1, 208.1, 0.05);
-        PrintSprite("TOKEN3", 0, 16.1, 228.1, 0.05);
+        PrintSprite("UMODA0", 0, 16.1, 198.1, 0.05);
         PrintSprite("AUGCA0", 0, 16.1, 252.1, 0.05);
         PrintSprite("AUGUA0", 0, 16.1, 264.1, 0.05);
         PrintSprite("AUGUB0", 0, 16.1, 284.1, 0.05);
         PrintSprite("AUGBATT", 0, 16.1, 296.1, 0.05);
         PrintSprite("STIMB0", 0, 16.1, 348.1, 0.05);
         SetFont("BIGFONT");
-        HudMessage("%d\n", StatTokens,                                                              HUDMSG_PLAIN, 0, CR_RED,            40.1, 178.0, 0.05);
-        HudMessage("%d\n", SkillTokens,                                                             HUDMSG_PLAIN, 0, CR_DARKGREEN,      40.1, 198.0, 0.05);
-        HudMessage("%d\n", WildcardTokens,                                                          HUDMSG_PLAIN, 0, CR_YELLOW,         40.1, 218.0, 0.05);
+        HudMessage("%d\n", Modules,                                                                 HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 188.0, 0.05);
         HudMessage("%d\n", AugCanisters,                                                            HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 240.0, 0.05);
         HudMessage("%d\n", AugUpgradeCanisters,                                                     HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 257.0, 0.05);
         HudMessage("%d / %d\n", Player.Augs.SlotsUsed, Player.Augs.Slots,                           HUDMSG_PLAIN, 0, CR_GREEN,          40.1, 274.0, 0.05);
@@ -269,6 +263,17 @@ function void DrawMainMenu()
 
 function void DrawStatsMenu()
 {
+    int *[STAT_MAX] Stats =
+    {
+        &Player.Strength;
+        &Player.Defense;
+        &Player.Vitality;
+        &Player.Energy;
+        &Player.Regeneration;
+        &Player.Agility;
+        &Player.Capacity;
+        &Player.Luck;
+    };
     static int[STAT_MAX] StatColors =
     {
         CR_RED;         // Strength
@@ -295,27 +300,21 @@ function void DrawStatsMenu()
     // Stats Page
     if (Player.StatPage == STATPAGE_STATS)
     {
-        // Stat Tokens
-        if (GetCVar("drpg_randomstatgrowth") < 2)
-        {
-            PrintSprite("TOKEN1", 0, 16.1, 260.1, 0.05);
-            SetFont("BIGFONT");
-            HudMessage("%d\n", CheckInventory("DRPGStatToken"), HUDMSG_PLAIN, 0, CR_RED, 32.1, 244.1, 0.05);
-        };
+        // Upgrade Modules
+        PrintSprite("UMODA0", 0, 16.1, 280.1, 0.05);
+        SetFont("BIGFONT");
+        HudMessage("%d\n", CheckInventory("DRPGModule"), HUDMSG_PLAIN, 0, CR_GREEN, 40.1, 264.1, 0.05);
+        HudMessage("-%d\n", (int)((((fixed)*Stats[Player.MenuIndex] + 1) * 100.0) * GetCVarFixed("drpg_module_statfactor")), HUDMSG_PLAIN, 0, CR_RED, 40.1, 278.1, 0.05);
         
-        // Stat Upgrade Cursor
-        if (CheckInventory("DRPGStatToken") > 0)
-        {
-            SetFont("BIGFONT");
-            if (Player.MenuIndex == 0)  HudMessage("Strength: %d\n", Player.Strength,                       HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    25.0,   0.05);
-            if (Player.MenuIndex == 1)  HudMessage("Defense: %d\n", Player.Defense,                         HUDMSG_PLAIN, 0, MenuCursorColor,   200.1,  25.0,   0.05);
-            if (Player.MenuIndex == 2)  HudMessage("Vitality: %d\n", Player.Vitality,                       HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    75.0,   0.05);
-            if (Player.MenuIndex == 3)  HudMessage("Energy: %d\n", Player.Energy,                           HUDMSG_PLAIN, 0, MenuCursorColor,   200.1,  75.0,   0.05);
-            if (Player.MenuIndex == 4)  HudMessage("Regen: %d\n", Player.Regeneration,                      HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    125.0,  0.05);
-            if (Player.MenuIndex == 5)  HudMessage("Agility: %d\n", Player.Agility,                         HUDMSG_PLAIN, 0, MenuCursorColor,   200.1,  125.0,  0.05);
-            if (Player.MenuIndex == 6)  HudMessage("Capacity: %d\n", Player.Capacity,                       HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    175.0,  0.05);
-            if (Player.MenuIndex == 7)  HudMessage("Luck: %d\n", Player.Luck,                               HUDMSG_PLAIN, 0, MenuCursorColor,   200.1,  175.0,  0.05);
-        };
+        SetFont("BIGFONT");
+        if (Player.MenuIndex == 0)  HudMessage("Strength: %d\n", Player.Strength,                       HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    25.0,   0.05);
+        if (Player.MenuIndex == 1)  HudMessage("Defense: %d\n", Player.Defense,                         HUDMSG_PLAIN, 0, MenuCursorColor,   200.1,  25.0,   0.05);
+        if (Player.MenuIndex == 2)  HudMessage("Vitality: %d\n", Player.Vitality,                       HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    75.0,   0.05);
+        if (Player.MenuIndex == 3)  HudMessage("Energy: %d\n", Player.Energy,                           HUDMSG_PLAIN, 0, MenuCursorColor,   200.1,  75.0,   0.05);
+        if (Player.MenuIndex == 4)  HudMessage("Regen: %d\n", Player.Regeneration,                      HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    125.0,  0.05);
+        if (Player.MenuIndex == 5)  HudMessage("Agility: %d\n", Player.Agility,                         HUDMSG_PLAIN, 0, MenuCursorColor,   200.1,  125.0,  0.05);
+        if (Player.MenuIndex == 6)  HudMessage("Capacity: %d\n", Player.Capacity,                       HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    175.0,  0.05);
+        if (Player.MenuIndex == 7)  HudMessage("Luck: %d\n", Player.Luck,                               HUDMSG_PLAIN, 0, MenuCursorColor,   200.1,  175.0,  0.05);
 
         // Primary Stats
         SetFont("BIGFONT");
@@ -387,7 +386,7 @@ function void DrawStatsMenu()
         PrintSprite("PISTA0", 0, 258.0, 238.0, 0.05);
         PrintSprite("PINVA0", 0, 294.0, 245.0, 0.05);
         PrintSprite("STVLJ0", 0, 326.0, 238.0, 0.05);
-        PrintSprite("TOKEN1", 0, 256.0, 276.0, 0.05);
+        PrintSprite("UMODA0", 0, 257.0, 282.0, 0.05);
         PrintSprite("SHPAA0", 0, 302.0, 293.0, 0.05);
         PrintSprite("AUGCA0", 0, 334.0, 282.0, 0.05);
 		SetFont("SMALLFONT");
@@ -405,7 +404,7 @@ function void DrawStatsMenu()
 		if (Player.StimDrop)
 			HudMessage("\crStim\c- Drop Rate: \cf%k%%\n", Player.StimChance, HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 340.0, 0.05);
 		if (Player.TokenDrop)
-			HudMessage("\ccToken\c- Drop Rate: \cf%k%%\n", Player.TokenChance, HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 348.0, 0.05);
+			HudMessage("\cdModule\c- Drop Rate: \cf%k%%\n", Player.TokenChance, HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 348.0, 0.05);
 		if (Player.ShieldDrop)
 			HudMessage("\cvShield\c- Drop Rate: \cf%k%%\n", Player.ShieldChance, HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 356.0, 0.05);
 		if (Player.AugDrop)
@@ -845,14 +844,14 @@ function void DrawSkillMenu()
                HUDMSG_PLAIN, 0, CR_WHITE,
                0.1, 25.0, 0.05);
     
-    // Skill Tokens
-    PrintSprite("TOKEN2", 0, 232.1, 64.1, 0.05);
+    // Upgrade Modules
+    PrintSprite("UMODA0", 0, 232.1, 64.1, 0.05);
     SetFont("BIGFONT");
     if (SkillLevel->Level < CurrentSkill->MaxLevel)
-        HudMessage("%d \cg(-%d)\n", CheckInventory("DRPGSkillToken"), SkillLevel->Level + 1, HUDMSG_PLAIN, 0, CR_DARKGREEN, 256.1, 54.0, 0.05)
+        HudMessage("%d \cg(-%d)\n", CheckInventory("DRPGModule"), (int)((((fixed)SkillLevel->Level + 1) * 250.0) * GetCVarFixed("drpg_module_skillfactor")), HUDMSG_PLAIN, 0, CR_GREEN, 256.1, 54.0, 0.05)
     else
-        HudMessage("%d\n", CheckInventory("DRPGSkillToken"), HUDMSG_PLAIN, 0, CR_DARKGREEN, 256.1, 54.0, 0.05);
-
+        HudMessage("%d\n", CheckInventory("DRPGModule"), HUDMSG_PLAIN, 0, CR_GREEN, 256.1, 54.0, 0.05);
+    
     // Skill Cost/Next Level Cost
     PrintSprite("EPUPA0", 0, 248.0, 88.1, 0.05);
     SetFont("BIGFONT");
@@ -1390,7 +1389,7 @@ function void MenuInput()
     {
         if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD))
         {
-            if (Player.StatPage == STATPAGE_STATS && CheckInventory("DRPGStatToken") > 0)
+            if (Player.StatPage == STATPAGE_STATS)
             {
                 ActivatorSound("menu/move", 127);
                 Player.MenuIndex -= 2;
@@ -1406,7 +1405,7 @@ function void MenuInput()
         };
         if (Buttons & BT_BACK && !(OldButtons & BT_BACK))
         {
-            if (Player.StatPage == STATPAGE_STATS && CheckInventory("DRPGStatToken") > 0)
+            if (Player.StatPage == STATPAGE_STATS)
             {
                 ActivatorSound("menu/move", 127);
                 Player.MenuIndex += 2;
@@ -1434,7 +1433,7 @@ function void MenuInput()
                         Player.StatPage--;
                 };
             }
-            else if (Player.StatPage == STATPAGE_STATS && CheckInventory("DRPGStatToken") > 0)
+            else if (Player.StatPage == STATPAGE_STATS)
             {
                 ActivatorSound("menu/move", 127);
                 Player.MenuIndex--;
@@ -1455,7 +1454,7 @@ function void MenuInput()
                         Player.StatPage++;
                 };
             }
-            else if (Player.StatPage == STATPAGE_STATS && CheckInventory("DRPGStatToken") > 0)
+            else if (Player.StatPage == STATPAGE_STATS)
             {
                 ActivatorSound("menu/move", 127);
                 Player.MenuIndex++;
@@ -1463,7 +1462,7 @@ function void MenuInput()
             };
         };
         if (Buttons == BT_USE && (OldButtons != BT_USE || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
-            if (Player.StatPage == STATPAGE_STATS && CheckInventory("DRPGStatToken") > 0)
+            if (Player.StatPage == STATPAGE_STATS)
                 IncreaseStat(Player.MenuIndex)
             else if (Player.StatPage == STATPAGE_TEAM && Player.MenuIndex != PlayerNumber())
             {
@@ -1833,23 +1832,14 @@ function void IncreaseStat(int Stat)
     };
     
     // Determine the cost of the stat upgrade
-    int StatAmount = 0;
-    if (GetCVar("drpg_statcost") == 0) // Normal Costs
-        StatAmount = 1;
-    if (GetCVar("drpg_statcost") == 1) // Progressive Costs
-        StatAmount = Abs(StatAmount + 1);
-    if (GetCVar("drpg_statcost") == 2) // Tiered Costs
-        StatAmount = Abs((StatAmount / 10) + 1);
+    int Cost = (int)((((fixed)*Stats[Stat] + 1) * 100.0) * GetCVarFixed("drpg_module_statfactor"));
 
     // Make sure you have enough Stat Tokens
-    if (CheckInventory("DRPGStatToken") < StatAmount && Stat == 0)
+    if (CheckInventory("DRPGModule") < Cost && Player.InMenu)
     {
-        if (Stat == 0) // From the menu
-        {
-            if (Player.DelayTimer > 0) return;
-            PrintError("You don't have enough Stat Tokens");
-            ActivatorSound("menu/error", 127);
-        };
+        if (Player.DelayTimer > 0) return;
+        PrintError("You don't have enough Modules to upgrade this stat");
+        ActivatorSound("menu/error", 127);
         
         return;
     };
@@ -1876,27 +1866,28 @@ function void IncreaseStat(int Stat)
     if (Player.InMenu) // Spent the point in the menu, make a sound
         ActivatorSound("menu/move", 127);
     
-    TakeInventory("DRPGStatToken", StatAmount);
+    TakeInventory("DRPGModule", Cost);
 };
 
 function void IncreaseSkill(int Category, int Index)
 {
     SkillPtr CurrentSkill = &Skills[Category][Index];
     SkillLevelInfo *SkillLevel = &Player.SkillLevel[Category][Index];
+    int Cost = (int)((((fixed)SkillLevel->Level + 1) * 250.0) * GetCVarFixed("drpg_module_skillfactor"));
     
-    if (CheckInventory("DRPGSkillToken") > 0)
+    if (CheckInventory("DRPGModule") > 0)
     {
-        if (SkillLevel->Level < CurrentSkill->MaxLevel && CheckInventory("DRPGSkillToken") > SkillLevel->Level)
+        if (SkillLevel->Level < CurrentSkill->MaxLevel && CheckInventory("DRPGModule") >= Cost)
         {
             SkillLevel->Level++;
             SkillLevel->CurrentLevel++;
-            TakeInventory("DRPGSkillToken", SkillLevel->Level);
+            TakeInventory("DRPGModule", SkillLevel->Level);
             ActivatorSound("menu/move", 127);
         };
     }
     else
     {
-        PrintError("You don't have enough Skill Tokens");
+        PrintError("You don't have enough Modules");
         ActivatorSound("menu/error", 127);
     };
 };

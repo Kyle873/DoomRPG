@@ -221,51 +221,26 @@ function void CheckLevel()
     // Now check for a level up
     if (Player.XP >= XPTable[Player.Level] && Player.Level < MAX_LEVEL)
     {
-        int StatTokens;
-        int SkillTokens;
-        int WildcardTokens;
-        
-        if (GetCVar("drpg_levelup_type") == 0) // Skill Level
-        {
-            StatTokens = (6 - GameSkill()) + (Player.Level / 10);
-            SkillTokens = (Player.Level % GameSkill()) == 1;
-            
-            // If you're on Armegeddon (DRLA), Only get one Stat Token per level
-            if (GameSkill() == 6) StatTokens = 1;
-            
-            // If you're on easy, just give one Skill Token per level
-            if (GameSkill() == 1) SkillTokens = 1;
-        };
-        if (GetCVar("drpg_levelup_type") == 1) // Static
-        {
-            StatTokens = 3 + (Player.Level / 10);
-            SkillTokens = 1;
-        };
-        if (GetCVar("drpg_levelup_type") == 2) // Wildcard
-        {
-            WildcardTokens = 3 + (Player.Level / 10);
-        };
-        if (GetCVar("drpg_levelup_natural"))
-            StatTokens /= 3;
+        int Modules = (int)((((fixed)Player.Level + 1) * 100.0) * GetCVarFixed("drpg_module_levelfactor"));
         
         // Level Up
-        ActivatorSound("misc/levelup", 96);
-        
         Player.Level++;
-        
-        GiveInventory("DRPGStatToken", StatTokens);
-        GiveInventory("DRPGSkillToken", SkillTokens);
-        GiveInventory("DRPGWildcardToken", WildcardTokens);
+        GiveInventory("DRPGModule", Modules);
         
         if (GetCVar("drpg_levelup_heal"))
         {
-            if (Player.EP < 0) Player.EP = 0 else Player.EP = Player.EPMax;
             HealThing(SHIELD_HEALTH);
+            
+            if (Player.EP < 0)
+                Player.EP = 0
+            else
+                Player.EP = Player.EPMax;
         };
         
         FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0, 2.0);
         PrintMessage(StrParam("You have reached level %d\n", Player.Level), LEVELUP_ID, -32);
         
+        ActivatorSound("misc/levelup", 96);
         SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(Player.TID, APROP_Height), 0, 0);
     };
 };

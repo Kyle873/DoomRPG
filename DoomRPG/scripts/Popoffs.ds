@@ -56,9 +56,9 @@ script void DamageNumbers()
             
             // Damage Popoff
             if (CheckInventory("DRPGShield"))
-                Popoff(0, Shield, Color)
+                Popoff(0, Shield, Color, "DRPGDigit", true)
             else
-                Popoff(0, Health, Color);
+                Popoff(0, Health, Color, "DRPGDigit", true);
         };
             
         // Terminate if the Actor is dead
@@ -93,33 +93,49 @@ script void InfoPopoffs()
         
         // Credits Popoffs
         if (AfterCredits > BeforeCredits)
-            Popoff(Player.TID, AfterCredits - BeforeCredits, DNUM_CREDGAIN);
+            Popoff(Player.TID, AfterCredits - BeforeCredits, DNUM_CREDGAIN, "DRPGDigit", true);
         if (AfterCredits < BeforeCredits)
-            Popoff(Player.TID, AfterCredits - BeforeCredits, DNUM_CREDLOSS);
+            Popoff(Player.TID, AfterCredits - BeforeCredits, DNUM_CREDLOSS, "DRPGDigit", true);
         
         // EP Popoffs
         if (AfterEP > BeforeEP)
-            Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPGAIN);
+            Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPGAIN, "DRPGDigit", true);
         if (AfterEP < BeforeEP)
-            Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPLOSS);
+            Popoff(Player.TID, AfterEP - BeforeEP, DNUM_EPLOSS, "DRPGDigit", true);
             
         // Terminate if the Player is dead
-        if (ClassifyActor(0) & ACTOR_DEAD) return;
+        if (GetActorProperty(0, APROP_Health) <= 0) return;
     };
     
     Delay(1);
     goto Start;
 };
 
+// Spawns digits for Module pickups
+acscript void ModulePopoffs()
+{
+    while (!(ClassifyActor(0) == ACTOR_WORLD))
+    {
+        Popoff(0, GetUserVariable(0, "user_amount"), 0, "DRPGDigitalDigit", false);
+        Delay(1);
+    };
+};
+
 // Spawn a popoff number
-function Popoff(int TID, int Value, int Color)
+function void Popoff(int TID, int Value, int Color, str DigitType, bool FloatAway)
 {
     int[DNUM_DIGITS] Digits;
     int DigitTID = UniqueTID();
     int DigitBase = 1;
     fixed X = GetActorX(TID);
     fixed Y = GetActorY(TID);
-    fixed Z = GetActorZ(TID) + (GetMonsterID(TID) > 0 ? Monsters[GetMonsterID(TID)].Height : GetActorPropertyFixed(TID, APROP_Height));
+    fixed Z = GetActorZ(TID);
+    
+    // Handling for monsters' height
+    if (!(ClassifyActor(0) & ACTOR_MONSTER))
+        Z += (GetMonsterID(TID) > 0 ? Monsters[GetMonsterID(TID)].Height : GetActorPropertyFixed(TID, APROP_Height))
+    else
+        Z += GetActorPropertyFixed(TID, APROP_Height);
     
     // Ceiling monsters need special Z calculations
     if (CheckFlag(TID, "CEILINGHUGGER"))
@@ -136,7 +152,7 @@ function Popoff(int TID, int Value, int Color)
     // Digit Spawning
     for (int i = 0; i < DNUM_DIGITS; i++)
     {
-        str DigitActor = StrParam("DRPGDigit%dNum%d\n", i + 1, Digits[i]);
+        str DigitActor = StrParam("%s%dNum%d\n", DigitType, i + 1, Digits[i]);
         
         if (Value >= DigitBase || Value <= -DigitBase)
             switch (Digits[1])
@@ -164,10 +180,13 @@ function Popoff(int TID, int Value, int Color)
     SetUserVariable(DigitTID, "user_fade", GetCVar("drpg_damagenumbers_fade"));
     
     // Float away
-    if (CheckFlag(TID, "CEILINGHUGGER"))
-        SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), -0.5, 0, 0)
-    else
-        SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), 0.5, 0, 0);
+    if (FloatAway)
+    {
+        if (CheckFlag(TID, "CEILINGHUGGER"))
+            SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), -0.5, 0, 0)
+        else
+            SetActorVelocity(DigitTID, RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0), 0.5, 0, 0);
+    };
 };
 
 function int GetDigit(int Num, int Digit)
