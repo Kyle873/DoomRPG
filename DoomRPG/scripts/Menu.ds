@@ -1220,7 +1220,10 @@ function void DrawTurretMenu()
     
     // Title
     SetFont("BIGFONT");
-    HudMessage("Turret (%d/%d)\n", Page + 1, PageMax + 1, HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
+    if (Player.TurretUpgradeMode)
+        HudMessage("Turret (%d/%d) (\cvUpgrade\c-)\n", Page + 1, PageMax + 1, HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05)
+    else
+        HudMessage("Turret (%d/%d) (\ckCommand\c-)\n", Page + 1, PageMax + 1, HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
     
     // Icon
     if (Player.Turret.Init)
@@ -1234,17 +1237,7 @@ function void DrawTurretMenu()
         HudMessage("%d\n", Parts, HUDMSG_PLAIN, 0, CR_WHITE, 96.0, 38.0, 0.05);
     PrintSprite("TPRTA0", 0, 96.1, 56.0, 0.05);
     
-    // Ammo
-    SetFont("BIGFONT");
-    HudMessage("Ammo\n", HUDMSG_PLAIN, 0, CR_WHITE, 344.1, 64.0, 0.05);
-    HudMessage("%d/%d\n", Player.Turret.BulletAmmo, Player.Turret.BulletAmmoMax, HUDMSG_PLAIN, 0, CR_BRICK, 344.1, 76.0, 0.05);
-    HudMessage("%d/%d\n", Player.Turret.ShellAmmo, Player.Turret.ShellAmmoMax, HUDMSG_PLAIN, 0, CR_ORANGE, 344.1, 88.0, 0.05);
-    HudMessage("%d/%d\n", Player.Turret.RocketAmmo, Player.Turret.RocketAmmoMax, HUDMSG_PLAIN, 0, CR_GREY, 344.1, 100.0, 0.05);
-    HudMessage("%d/%d\n", Player.Turret.PlasmaAmmo, Player.Turret.PlasmaAmmoMax, HUDMSG_PLAIN, 0, CR_CYAN, 344.1, 112.0, 0.05);
-    HudMessage("%d/%d\n", Player.Turret.RailAmmo, Player.Turret.RailAmmoMax, HUDMSG_PLAIN, 0, CR_GREEN, 344.1, 124.0, 0.05);
-    PrintSprite("T_UPG27", 0, 320.0, 80.0, 0.05);
-    
-    // Upgrades
+    // Modules
     int Count = 0;
     while (Count < TURRET_PAGE_MAX)
     {
@@ -1261,14 +1254,19 @@ function void DrawTurretMenu()
             PrintSpritePulse("TurrBoxH", 0, X, Y, 0.75, 32.0, 0.25);
         
         // Upgrade Level
-        if (Player.Turret.Upgrade[Index] >= UpgradeIter->MaxLevel)
-            Color = CR_GREEN
+        if (Player.TurretUpgradeMode)
+        {
+            if (Player.Turret.Upgrade[Index] >= UpgradeIter->MaxLevel)
+                Color = CR_GREEN
+            else if (Player.Turret.Upgrade[Index] > 0)
+                Color = CR_WHITE
+            else
+                Color = CR_RED;
+            SetFont("SMALLFONT");
+            HudMessage("%d/%d\n", Player.Turret.Upgrade[Index], UpgradeIter->MaxLevel, HUDMSG_PLAIN, 0, Color, X, Y + 16.0, 0.05);
+        }
         else if (Player.Turret.Upgrade[Index] > 0)
-            Color = CR_WHITE
-        else
-            Color = CR_RED;
-        SetFont("SMALLFONT");
-        HudMessage("%d/%d\n", Player.Turret.Upgrade[Index], UpgradeIter->MaxLevel, HUDMSG_PLAIN, 0, Color, X, Y + 16.0, 0.05);
+            DrawTurretInfo(X, Y, Index);
         
         // Icon
         if (Index == Player.MenuIndex)
@@ -1288,7 +1286,60 @@ function void DrawTurretMenu()
     
     // Upgrade Description
     SetFont("SMALLFONT");
-    HudMessage("\ck%s\n\cd%s\n\ca%s\n", Upgrade->Description, Upgrade->UpgradeInfo, Upgrade->CommandInfo, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 284.1, 0.05);
+    HudMessage("\cd%s\n\cv%s\n\ck%s\n", Upgrade->Description, Upgrade->UpgradeInfo, Upgrade->CommandInfo, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 284.1, 0.05);
+};
+
+function void DrawTurretInfo(fixed X, fixed Y, int Index)
+{
+    str Info = "";
+    
+    switch (Index)
+    {
+    case TU_BUILD:
+        if (Player.Turret.Active)
+            Info = "\cdON"
+        else
+            Info = "\caOFF";
+        break;
+    case TU_WEAPON_BULLET:
+        Y -= 4.0;
+        Info = StrParam("\ca%d\n\ca%d\n", Player.Turret.BulletAmmo, Player.Turret.BulletAmmoMax);
+        break;
+    case TU_WEAPON_PELLET:
+        Y -= 4.0;
+        Info = StrParam("\ci%d\n\ci%d\n", Player.Turret.ShellAmmo, Player.Turret.ShellAmmoMax);
+        break;
+    case TU_WEAPON_ROCKET:
+        Y -= 4.0;
+        Info = StrParam("\cc%d\n\cc%d\n", Player.Turret.RocketAmmo, Player.Turret.RocketAmmoMax);
+        break;
+    case TU_WEAPON_PLASMA:
+        Y -= 4.0;
+        Info = StrParam("\cn%d\n\cn%d\n", Player.Turret.PlasmaAmmo, Player.Turret.PlasmaAmmoMax);
+        break;
+    case TU_WEAPON_RAILGUN:
+        Y -= 4.0;
+        Info = StrParam("\cd%d\n\cd%d\n", Player.Turret.RailAmmo, Player.Turret.RailAmmoMax);
+        break;
+    case TU_ARMOR_PLATING:
+        Info = StrParam("\ca%d\n", Player.Turret.HealthMax);
+        break;
+    case TU_ARMOR_PLATING_MELEE:
+        Info = StrParam("\cc%d%%\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_MELEE] * 5);
+        break;
+    case TU_ARMOR_PLATING_BULLET:
+        Info = StrParam("\cj%d%%\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_BULLET] * 5);
+        break;
+    case TU_ARMOR_PLATING_FIRE:
+        Info = StrParam("\cg%d%%\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_FIRE] * 5);
+        break;
+    case TU_ARMOR_PLATING_PLASMA:
+        Info = StrParam("\cn%d%%\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_PLASMA] * 5);
+        break;
+    };
+    
+    SetFont("SMALLFONT");
+    HudMessage("%s\n", Info, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.4, Y + 16.0, 0.05);
 };
 
 function void MenuInput()
@@ -1726,9 +1777,17 @@ function void MenuInput()
             ActivatorSound("menu/move", 127);
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
-            UpgradeTurret(Player.MenuIndex);
-        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
-            TurretCommand(Player.MenuIndex);
+        {
+            if (Player.TurretUpgradeMode)
+                UpgradeTurret(Player.MenuIndex)
+            else
+                TurretCommand(Player.MenuIndex);
+        };
+        if (Buttons == BT_JUMP && OldButtons != BT_JUMP)
+        {
+            Player.TurretUpgradeMode = !Player.TurretUpgradeMode;
+            ActivatorSound("menu/move", 127);
+        };
     };
     
     // Reset the Delay Timer if no buttons are pressed
