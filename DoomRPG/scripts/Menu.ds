@@ -304,7 +304,7 @@ function void DrawStatsMenu()
         PrintSprite("UMODA0", 0, 16.1, 280.1, 0.05);
         SetFont("BIGFONT");
         HudMessage("%d\n", CheckInventory("DRPGModule"), HUDMSG_PLAIN, 0, CR_GREEN, 40.1, 264.1, 0.05);
-        HudMessage("-%d\n", (int)((((fixed)*Stats[Player.MenuIndex] + 1) * 100.0) * GetCVarFixed("drpg_module_statfactor")), HUDMSG_PLAIN, 0, CR_RED, 40.1, 278.1, 0.05);
+        HudMessage("-%d\n", (int)((((fixed)*Stats[Player.MenuIndex] + 1) * (fixed)MODULE_STAT_MULT) * GetCVarFixed("drpg_module_statfactor")), HUDMSG_PLAIN, 0, CR_RED, 40.1, 278.1, 0.05);
         
         SetFont("BIGFONT");
         if (Player.MenuIndex == 0)  HudMessage("Strength: %d\n", Player.Strength,                       HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    25.0,   0.05);
@@ -377,7 +377,7 @@ function void DrawStatsMenu()
         HudMessage("%d\n", LUCK_WEAPONDROP, HUDMSG_PLAIN, 0, (Player.WeaponDrop ? CR_GOLD : CR_GREY), 246.0, 240.0, 0.05);
         HudMessage("%d\n", LUCK_POWERUPDROP, HUDMSG_PLAIN, 0, (Player.PowerupDrop ? CR_GOLD : CR_GREY), 284.0, 240.0, 0.05);
         HudMessage("%d\n", LUCK_STIMDROP, HUDMSG_PLAIN, 0, (Player.StimDrop ? CR_GOLD : CR_GREY), 322.0, 240.0, 0.05);
-        HudMessage("%d\n", LUCK_TOKENDROP, HUDMSG_PLAIN, 0, (Player.TokenDrop ? CR_GOLD : CR_GREY), 246.0, 275.0, 0.05);
+        HudMessage("%d\n", LUCK_MODULEDROP, HUDMSG_PLAIN, 0, (Player.ModuleDrop ? CR_GOLD : CR_GREY), 246.0, 275.0, 0.05);
         HudMessage("%d\n", LUCK_SHIELDDROP, HUDMSG_PLAIN, 0, (Player.ShieldDrop ? CR_GOLD : CR_GREY), 284.0, 276.0, 0.05);
         HudMessage("%d\n", LUCK_AUGDROP, HUDMSG_PLAIN, 0, (Player.AugDrop ? CR_GOLD : CR_GREY), 322.0, 276.0, 0.05);
         PrintSprite("MEDIA0", 0, 260.0, 212.0, 0.05);
@@ -403,8 +403,8 @@ function void DrawStatsMenu()
 			HudMessage("\cqPowerup\c- Drop Rate: \cf%k%%\n", Player.PowerupChance, HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 332.0, 0.05);
 		if (Player.StimDrop)
 			HudMessage("\crStim\c- Drop Rate: \cf%k%%\n", Player.StimChance, HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 340.0, 0.05);
-		if (Player.TokenDrop)
-			HudMessage("\cdModule\c- Drop Rate: \cf%k%%\n", Player.TokenChance, HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 348.0, 0.05);
+		if (Player.ModuleDrop)
+			HudMessage("\cdModule\c- Drop Rate: \cf%k%%\n", Player.ModuleChance, HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 348.0, 0.05);
 		if (Player.ShieldDrop)
 			HudMessage("\cvShield\c- Drop Rate: \cf%k%%\n", Player.ShieldChance, HUDMSG_PLAIN, 0, CR_WHITE, 230.1, 356.0, 0.05);
 		if (Player.AugDrop)
@@ -848,7 +848,7 @@ function void DrawSkillMenu()
     PrintSprite("UMODA0", 0, 232.1, 64.1, 0.05);
     SetFont("BIGFONT");
     if (SkillLevel->Level < CurrentSkill->MaxLevel)
-        HudMessage("%d \cg(-%d)\n", CheckInventory("DRPGModule"), (int)((((fixed)SkillLevel->Level + 1) * 250.0) * GetCVarFixed("drpg_module_skillfactor")), HUDMSG_PLAIN, 0, CR_GREEN, 256.1, 54.0, 0.05)
+        HudMessage("%d \cg(-%d)\n", CheckInventory("DRPGModule"), (int)((((fixed)SkillLevel->Level + 1) * (fixed)MODULE_SKILL_MULT) * GetCVarFixed("drpg_module_skillfactor")), HUDMSG_PLAIN, 0, CR_GREEN, 256.1, 54.0, 0.05)
     else
         HudMessage("%d\n", CheckInventory("DRPGModule"), HUDMSG_PLAIN, 0, CR_GREEN, 256.1, 54.0, 0.05);
     
@@ -1832,9 +1832,9 @@ function void IncreaseStat(int Stat)
     };
     
     // Determine the cost of the stat upgrade
-    int Cost = (int)((((fixed)*Stats[Stat] + 1) * 100.0) * GetCVarFixed("drpg_module_statfactor"));
+    int Cost = (int)((((fixed)*Stats[Stat] + 1) * (fixed)MODULE_STAT_MULT) * GetCVarFixed("drpg_module_statfactor"));
 
-    // Make sure you have enough Stat Tokens
+    // Make sure you have enough Modules
     if (CheckInventory("DRPGModule") < Cost && Player.InMenu)
     {
         if (Player.DelayTimer > 0) return;
@@ -1873,7 +1873,7 @@ function void IncreaseSkill(int Category, int Index)
 {
     SkillPtr CurrentSkill = &Skills[Category][Index];
     SkillLevelInfo *SkillLevel = &Player.SkillLevel[Category][Index];
-    int Cost = (int)((((fixed)SkillLevel->Level + 1) * 250.0) * GetCVarFixed("drpg_module_skillfactor"));
+    int Cost = (int)((((fixed)SkillLevel->Level + 1) * (fixed)MODULE_SKILL_MULT) * GetCVarFixed("drpg_module_skillfactor"));
     
     if (CheckInventory("DRPGModule") > 0)
     {

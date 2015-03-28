@@ -216,6 +216,7 @@ function MissionInfo *CreateMission(int Difficulty)
     long int RewardXP = 0;
     long int RewardRank = 0;
     int RewardCredits = 0;
+    int RewardModules = 0;
     ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
     static MissionInfo Mission;
     
@@ -241,6 +242,7 @@ function MissionInfo *CreateMission(int Difficulty)
         RewardXP += XPNext * 1000 / (100000 - (Difficulty * 10000));
         RewardRank += RankNext * 1000 / (100000 - (Difficulty * 10000));
         RewardCredits += Random(100 * (Difficulty + 1) * (Players(i).Level + 1), 100 * (Difficulty + 1) * (Players(i).Level + 1) * 2);
+        RewardModules += Random(10 * (Difficulty + 1) * (Players(i).Level + 1), 10 * (Difficulty + 1) * (Players(i).Level + 1) * 2);
         
         NumPlayers++;
     };
@@ -249,6 +251,7 @@ function MissionInfo *CreateMission(int Difficulty)
     RewardXP /= NumPlayers;
     RewardRank /= NumPlayers;
     RewardCredits /= NumPlayers;
+    RewardModules /= NumPlayers;
     
     // Assign info to the struct
     Mission.Active = false;
@@ -257,6 +260,7 @@ function MissionInfo *CreateMission(int Difficulty)
     Mission.RewardXP = RewardXP;
     Mission.RewardRank = RewardRank;
     Mission.RewardCredits = RewardCredits;
+    Mission.RewardModules = RewardModules;
     Mission.RewardItem = RewardItem;
     
     // Collection Mission
@@ -369,6 +373,9 @@ function void CheckMission()
         
         // Credits
         GiveInventory("DRPGCredits", Player.Mission.RewardCredits);
+        
+        // Modules
+        GiveInventory("DRPGModule", Player.Mission.RewardModules);
         
         // Item
         str RewardActor = Player.Mission.RewardItem->Actor;
