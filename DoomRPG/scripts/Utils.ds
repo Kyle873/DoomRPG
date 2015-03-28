@@ -439,22 +439,21 @@ acscript void SetSkill(int NewSkill) net
 // Respec - Respecialize your Player
 acscript void Respec(bool DoStats, bool DoSkills) net
 {
-    int StatPoints;
-    int SkillPoints;
+    int Modules;
     int OldCredits;
     
     // Respec Stats
     if (DoStats)
     {
         // Add stats into a pool of tokens to give back to the player
-        StatPoints += Player.Strength;
-        StatPoints += Player.Defense;
-        StatPoints += Player.Vitality - 10;
-        StatPoints += Player.Energy - 10;
-        StatPoints += Player.Regeneration;
-        StatPoints += Player.Agility;
-        StatPoints += Player.Capacity - 10;
-        StatPoints += Player.Luck;
+        Modules += (int)((fixed)Player.Strength * (fixed)MODULE_STAT_MULT * GetCVarFixed("drpg_module_statfactor"));
+        Modules += (int)((fixed)Player.Defense * (fixed)MODULE_STAT_MULT * GetCVarFixed("drpg_module_statfactor"));
+        Modules += (int)(((fixed)Player.Vitality - 10) * (fixed)MODULE_STAT_MULT * GetCVarFixed("drpg_module_statfactor"));
+        Modules += (int)(((fixed)Player.Energy - 10) * (fixed)MODULE_STAT_MULT * GetCVarFixed("drpg_module_statfactor"));
+        Modules += (int)((fixed)Player.Regeneration * (fixed)MODULE_STAT_MULT * GetCVarFixed("drpg_module_statfactor"));
+        Modules += (int)((fixed)Player.Agility * (fixed)MODULE_STAT_MULT * GetCVarFixed("drpg_module_statfactor"));
+        Modules += (int)(((fixed)Player.Capacity - 10) * (fixed)MODULE_STAT_MULT * GetCVarFixed("drpg_module_statfactor"));
+        Modules += (int)((fixed)Player.Luck * (fixed)MODULE_STAT_MULT * GetCVarFixed("drpg_module_statfactor"));
         
         // Reset Stats
         Player.Strength = 0;
@@ -475,10 +474,7 @@ acscript void Respec(bool DoStats, bool DoSkills) net
         Player.AgilityXP = 0;
         Player.CapacityXP = XPTable[9];
         Player.LuckXP = 0;
-
-        // Give Respecced Stat Tokens back
-        GiveInventory("DRPGStatToken", StatPoints);
-
+        
         // Reset Shield
         Player.Shield.Charge = 0;
         Player.Shield.Timer = 375;
@@ -493,17 +489,17 @@ acscript void Respec(bool DoStats, bool DoSkills) net
                 if (!(i == 5 && j == 7)) // Skip Transport
                     while (Player.SkillLevel[i][j].Level > 0)
                     {
-                        SkillPoints += Player.SkillLevel[i][j].Level;
+                        Modules += (int)(((fixed)Player.SkillLevel[i][j].Level * (fixed)MODULE_SKILL_MULT) * GetCVarFixed("drpg_module_skillfactor"));
                         Player.SkillLevel[i][j].CurrentLevel--;
                         Player.SkillLevel[i][j].Level--;
                     };
         
-        // Give Respecced Skill Tokens back
-        GiveInventory("DRPGSkillToken", SkillPoints);
-
         // Remove Auras
         RemoveAura();
     };
+    
+    // Give Respecced Modules
+    GiveInventory("DRPGModule", Modules);
     
     // Take 1/2 Credits
     GiveInventory("DRPGCredits", OldCredits);
@@ -1534,7 +1530,8 @@ function void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Activ
     HudMessage("XP: %lu\n", Mission->RewardXP, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 32.0, 0.05);
     HudMessage("Rank: %lu\n", Mission->RewardRank, HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y + 48.0, 0.05);
     HudMessage("Credits: %d\n", Mission->RewardCredits, HUDMSG_PLAIN, 0, CR_GOLD, X + 0.1, Y + 64.0, 0.05);
-    HudMessage("\ciItem: \c-%s\n", Mission->RewardItem->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 74.1, 0.05);
+    HudMessage("Modules: %d\n", Mission->RewardModules, HUDMSG_PLAIN, 0, CR_GREEN, X + 0.1, Y + 80.0, 0.05);
+    HudMessage("\ciItem: \c-%s\n", Mission->RewardItem->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 96.1, 0.05);
     
     // Mission Objective
     switch (Mission->Type)
@@ -1921,10 +1918,8 @@ acscript void Cheat(int StatBoost)
     // Max out all Skills
     AllSkills();
     
-    // Items - Tokens
-    SetInventory("DRPGStatToken", 10000);
-    SetInventory("DRPGWildcardToken", 10000);
-    SetInventory("DRPGSkillToken", 10000);
+    // Items - Modules
+    SetInventory("DRPGModule", 1000000000);
     
     // Items - Powerups
     SetInventory("PowerInvulnerable", 1);
