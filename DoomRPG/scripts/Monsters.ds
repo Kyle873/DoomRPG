@@ -227,7 +227,9 @@ acscript void MonsterInit(int Flags)
     // Store Actor Name
     Stats->Actor = GetActorClass(0);
     
-    Delay(4); // Allow map events to modify our stats/replacements (see Map.ds:18)
+    Delay(1); // Allow map events to modify our stats/replacements (see Map.ds:18)
+    while (WaitingForReplacements)
+        Delay(1);
     
     if (StrLen(Stats->ReplaceActor) > 0)
     {
@@ -427,6 +429,9 @@ script void MonsterInitStats(int StatFlags)
     // Move Activator to whoever the player is targeting
     if (StatFlags & SF_PLAYERTARGET)
         SetActivatorToTarget(Player.TID);
+    
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        return; // The Monster Reducer can remove a monster before it attains stats, so if that happens, don't bother.
     
     // Pointer
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];

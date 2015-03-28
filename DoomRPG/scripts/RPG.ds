@@ -707,6 +707,11 @@ acscript void ItemInit()
     // Delay while the Items array is being initialized
     while (!ItemsInitialized) Delay(4);
     
+    // [KS] Some items cease existing once they're added to inventory
+    // If that's the case, return early so we don't add empty item info
+    if (ClassifyActor(0) == ACTOR_WORLD)
+        return;
+    
     // Add to Items array
     for (int i = 0; i < MAX_ITEMS; i++)
         if (ItemTIDs[i] == -1)
@@ -779,7 +784,12 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         int TID = UniqueTID();
         fixed X = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
         fixed Y = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
-        fixed Z = BaseZ + Random(-BoundaryZ, BoundaryZ);
+        fixed Z = 0;
+        
+        // Try to keep Z near the floor
+        SpawnForced("MapSpot", X, Y, 0, TID, 0);
+        Z = GetActorFloorZ(TID);
+        Thing_Remove(TID);
         
         bool Spawned = Spawn(Actor, X, Y, Z, TID, 0);
         if (Spawned)

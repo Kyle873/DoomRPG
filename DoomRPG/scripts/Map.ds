@@ -9,6 +9,7 @@
 // Level Info
 static LevelInfo *CurrentLevel;
 static DynamicArray KnownLevels;
+static bool WaitingForReplacements;
 static int LastVisitedLevel;
 static int AllBonusMaps; // For the OCD Shield
 static int CurrentSkill; // Keeps track of skill changes based on events
@@ -135,14 +136,17 @@ script void MapInit() open
         CurrentLevel->NeedsRealInfo = false;
     };
     
-    // Delay to allow monsters to register themselves (See Monsters.ds:199)
-    Delay(1);
+    WaitingForReplacements = true;
+    Delay(2);
     
-    // Set up the currently in-effect map event
-    SetupMapEvent();
+    // Reduce monster population based on difficulty settings
+    static bool WaitLock = true;
+    ReduceMonsterCount(&WaitLock);
+    while (WaitLock)
+        Delay(1);
     
     // Populate the positions array
-    for (int i = 1; i < MAX_MONSTERS; i++)
+    for (int i = 0; i < MonsterID; i++)
     {
         if (!Monsters[i].Init)
             continue;
@@ -153,10 +157,68 @@ script void MapInit() open
         
         // Store position
         ((Position *)CurrentLevel->MonsterPositions.Data)[CurrentLevel->MonsterPositions.Position++] = Monsters[i].Position;
+        
+        // Prevent running away on gigantic maps (see holyhell.wad MAP05)
+        if ((i % 4096) == 0)
+            Delay(1);
     };
+    
+    // Set up the currently in-effect map event
+    SetupMapEvent();
+    
+    WaitingForReplacements = false;
     
     if (CurrentLevel)
         MapLoop();
+};
+
+script void ReduceMonsterCount(bool *WaitLock)
+{
+    int TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+    
+    if (TotalMonsters == 0)
+    {
+        *WaitLock = false;
+        return;
+    };
+    
+    if (TotalMonsters * GetCVar("drpg_monster_population") / 100 == TotalMonsters)
+    {
+        *WaitLock = false;
+        return;
+    };
+    
+    int MonstersToRemove = TotalMonsters - (TotalMonsters * GetCVar("drpg_monster_population") / 100);
+    if (TotalMonsters <= MonstersToRemove)
+        MonstersToRemove = TotalMonsters - 1;
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \ccReducing monster count to \cd%d\cc from \cd%d\n", TotalMonsters - MonstersToRemove, TotalMonsters);
+    
+    int Iterations = 0;
+    while (MonstersToRemove)
+    {
+        for (int i = Random(1, MonsterID - 1); i < MonsterID; i++)
+        {
+            if (!Monsters[i].Init || ClassifyActor(Monsters[i].TID) == ACTOR_NONE || !(CheckFlag(Monsters[i].TID, "COUNTKILL")))
+                continue;
+            
+            Thing_Remove(Monsters[i].TID);
+            Monsters[i].Init = false;
+            Monsters[i].TID = 0;
+            
+            MonstersToRemove--;
+            
+            break;
+        };
+        
+        Iterations++;
+        
+        if ((Iterations % 4096) == 0)
+            Delay(1);
+    };
+    
+    *WaitLock = false;
 };
 
 function bool CheckMapEvent(int Event)
@@ -463,7 +525,7 @@ script void MegaBossEvent()
     CurrentLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
     
     // Replace them with nothing
-    for (int i = 1; i < MAX_MONSTERS; i++)
+    for (int i = 0; i < MonsterID; i++)
     {
         if (!Monsters[i].Init)
             continue;
@@ -471,17 +533,18 @@ script void MegaBossEvent()
         Monsters[i].ReplaceActor = "None";
     };
     
-    Delay(2); // Monsters disappear!
+    WaitingForReplacements = false;
+    Delay(1); // Monsters disappear!
     
     // Shuffle positions
     for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
     {
-        int x = Random(0, CurrentLevel->MonsterPositions.Position - 1);
+        int X = Random(0, CurrentLevel->MonsterPositions.Position - 1);
         Position TempPosition;
         
         TempPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
-        ((Position *)CurrentLevel->MonsterPositions.Data)[i] = ((Position *)CurrentLevel->MonsterPositions.Data)[x];
-        ((Position *)CurrentLevel->MonsterPositions.Data)[x] = TempPosition;
+        ((Position *)CurrentLevel->MonsterPositions.Data)[i] = ((Position *)CurrentLevel->MonsterPositions.Data)[X];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[X] = TempPosition;
     };
     
     // Spawning
@@ -574,6 +637,9 @@ script void EnvironmentalHazard()
             GiveActorInventory(Players(i).TID, "DRPGRadSuitPower", 1);
         
         UseActorInventory(Players(i).TID, "DRPGRadSuit");
+        
+        // [KS] Haaaaaaaax
+        GiveActorInventory(Players(i).TID, "AntiRadiationForMyVoodooDolls", 1);
     };
     
     // Setup
