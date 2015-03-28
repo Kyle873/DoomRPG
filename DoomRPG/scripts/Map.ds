@@ -138,6 +138,12 @@ script void MapInit() open
     // Delay to allow monsters to register themselves (See Monsters.ds:199)
     Delay(1);
     
+    // Reduce monster population based on difficulty settings
+    static bool WaitLock = true;
+    ReduceMonsterCount(&WaitLock);
+    while(WaitLock)
+        Delay(1);
+    
     // Populate the positions array
     for (int i = 1; i < MonsterID; i++)
     {
@@ -154,12 +160,6 @@ script void MapInit() open
         if (!(i % 4096))
             Delay(1); //Prevent running away on gigantic maps (see holyhell.wad MAP05)
     };
-    
-    // Reduce monster population based on difficulty settings
-    static bool WaitLock = true;
-    ReduceMonsterCount(&WaitLock);
-    while(WaitLock)
-        Delay(1);
     
     // Set up the currently in-effect map event
     SetupMapEvent();
@@ -203,6 +203,50 @@ script void ReduceMonsterCount(bool *WaitLock)
             if (!(Iterations % 4096))
         Delay(1);
     };
+    
+    int OldMonsterID = MonsterID;
+    
+    // Now we should update the monster list to reflect the new count and leave no spaces
+    int Cycles = 0;
+    int CurrentMonster = 1;
+    int MovingMonster = CurrentMonster + 1;
+    for (; CurrentMonster < MonsterID - 1; CurrentMonster++)
+    {
+        if (!(Cycles++ % 4096))
+            Delay (1);
+        
+        if (Monsters[CurrentMonster].Init && Monsters[CurrentMonster].TID && ClassifyActor(Monsters[CurrentMonster].TID) != ACTOR_NONE)
+            continue;
+        
+        for (; MovingMonster < MonsterID; MovingMonster++)
+        {
+            if (!(Cycles++ % 4096))
+                Delay (1);
+            
+            if (!Monsters[MovingMonster].Init || !Monsters[MovingMonster].TID || ClassifyActor(Monsters[MovingMonster].TID) == ACTOR_NONE)
+                continue;
+            
+            // If we reached here, we found a monster to shift up
+            if(GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \ccMoving \cd%d\cc to \cd%d\n", MovingMonster, CurrentMonster);
+            Monsters[CurrentMonster] = Monsters[MovingMonster];
+            Monsters[MovingMonster].Init = false;
+            Monsters[MovingMonster].TID = 0;
+            break;
+        };
+    };
+    
+    for (int i = 1; i < MonsterID; i++)
+    {
+        if (Monsters[i].Init)
+            continue;
+        
+        MonsterID = i;
+        break;
+    };
+    
+    if(GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \ccNew MonsterID count is \cd%d \cc(used to be \cd%d\cc)\n", MonsterID, OldMonsterID);
     
     *WaitLock = false;
 };
