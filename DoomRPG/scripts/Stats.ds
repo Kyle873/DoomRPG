@@ -221,51 +221,26 @@ function void CheckLevel()
     // Now check for a level up
     if (Player.XP >= XPTable[Player.Level] && Player.Level < MAX_LEVEL)
     {
-        int StatTokens;
-        int SkillTokens;
-        int WildcardTokens;
-        
-        if (GetCVar("drpg_levelup_type") == 0) // Skill Level
-        {
-            StatTokens = (6 - GameSkill()) + (Player.Level / 10);
-            SkillTokens = (Player.Level % GameSkill()) == 1;
-            
-            // If you're on Armegeddon (DRLA), Only get one Stat Token per level
-            if (GameSkill() == 6) StatTokens = 1;
-            
-            // If you're on easy, just give one Skill Token per level
-            if (GameSkill() == 1) SkillTokens = 1;
-        };
-        if (GetCVar("drpg_levelup_type") == 1) // Static
-        {
-            StatTokens = 3 + (Player.Level / 10);
-            SkillTokens = 1;
-        };
-        if (GetCVar("drpg_levelup_type") == 2) // Wildcard
-        {
-            WildcardTokens = 3 + (Player.Level / 10);
-        };
-        if (GetCVar("drpg_levelup_natural"))
-            StatTokens /= 3;
+        int Modules = (int)((((fixed)Player.Level + 1) * 100.0) * GetCVarFixed("drpg_module_levelfactor"));
         
         // Level Up
-        ActivatorSound("misc/levelup", 96);
-        
         Player.Level++;
-        
-        GiveInventory("DRPGStatToken", StatTokens);
-        GiveInventory("DRPGSkillToken", SkillTokens);
-        GiveInventory("DRPGWildcardToken", WildcardTokens);
+        GiveInventory("DRPGModule", Modules);
         
         if (GetCVar("drpg_levelup_heal"))
         {
-            if (Player.EP < 0) Player.EP = 0 else Player.EP = Player.EPMax;
             HealThing(SHIELD_HEALTH);
+            
+            if (Player.EP < 0)
+                Player.EP = 0
+            else
+                Player.EP = Player.EPMax;
         };
         
         FadeRange(255, 255, 255, 0.5, 255, 255, 255, 0, 2.0);
         PrintMessage(StrParam("You have reached level %d\n", Player.Level), LEVELUP_ID, -32);
         
+        ActivatorSound("misc/levelup", 96);
         SpawnForced("DRPGLevelUpArrow", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(Player.TID, APROP_Height), 0, 0);
     };
 };
@@ -801,7 +776,7 @@ function void CheckStatBounds()
     if (Player.PowerupChance > 100) Player.PowerupChance = 100;
     if (Player.ArmorChance > 100)   Player.ArmorChance = 100;
     if (Player.WeaponChance > 100)  Player.WeaponChance = 100;
-    if (Player.TokenChance > 100)   Player.TokenChance = 100;
+    if (Player.ModuleChance > 100)  Player.ModuleChance = 100;
     if (Player.AugChance > 100)     Player.AugChance = 100;
     if (Player.ShieldChance > 100)  Player.ShieldChance = 100;
     if (Player.StimChance > 100)    Player.StimChance = 100;
@@ -824,7 +799,7 @@ function void CheckLuck()
     Player.WeaponDrop =     (Player.Luck >= LUCK_WEAPONDROP ? true : false);
     Player.PowerupDrop =    (Player.Luck >= LUCK_POWERUPDROP ? true : false);
     Player.StimDrop =       (Player.Luck >= LUCK_STIMDROP ? true : false);
-    Player.TokenDrop =      (Player.Luck >= LUCK_TOKENDROP ? true : false);
+    Player.ModuleDrop =     (Player.Luck >= LUCK_MODULEDROP ? true : false);
     Player.AugDrop =        (Player.Luck >= LUCK_AUGDROP ? true : false);
     Player.ShieldDrop =     (Player.Luck >= LUCK_SHIELDDROP ? true : false);
     
@@ -834,7 +809,7 @@ function void CheckLuck()
     Player.WeaponChance =   Curve(Player.Luck, LUCK_WEAPONDROP, 1000, LUCK_WEAPONCHANCE, LUCK_MAXWEAPONCHANCE);
     Player.PowerupChance =  Curve(Player.Luck, LUCK_POWERUPDROP, 1000, LUCK_POWERUPCHANCE, LUCK_MAXPOWERUPCHANCE);
     Player.StimChance =     Curve(Player.Luck, LUCK_STIMDROP, 1000, LUCK_STIMCHANCE, LUCK_MAXSTIMCHANCE);
-    Player.TokenChance =    Curve(Player.Luck, LUCK_TOKENDROP, 1000, LUCK_TOKENCHANCE, LUCK_MAXTOKENCHANCE);
+    Player.ModuleChance =   Curve(Player.Luck, LUCK_MODULEDROP, 1000, LUCK_MODULECHANCE, LUCK_MAXMODULECHANCE);
     Player.ShieldChance =   Curve(Player.Luck, LUCK_SHIELDDROP, 1000, LUCK_SHIELDCHANCE, LUCK_MAXSHIELDCHANCE);
     Player.AugChance =      Curve(Player.Luck, LUCK_AUGDROP, 1000, LUCK_AUGCHANCE, LUCK_MAXAUGCHANCE);
     
@@ -847,7 +822,7 @@ function void CheckLuck()
         Player.WeaponChance += CurrentLevel->RareAdd;
         Player.PowerupChance += CurrentLevel->RareAdd;
         Player.StimChance += CurrentLevel->RareAdd;
-        Player.TokenChance += CurrentLevel->RareAdd;
+        Player.ModuleChance += CurrentLevel->RareAdd;
         Player.AugChance += CurrentLevel->RareAdd;
         Player.ShieldChance += CurrentLevel->RareAdd;
     };

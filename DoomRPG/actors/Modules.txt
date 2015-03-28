@@ -1,0 +1,30 @@
+actor DRPGModule : Inventory
+{
+    Inventory.MaxAmount 1000000000
+}
+
+actor DRPGModulePickup : CustomInventory
+{
+    var int user_amount;
+    
+    Scale 0.33
+    
+    Inventory.MaxAmount 0
+    Inventory.PickupMessage "You got some Upgrade Modules!"
+    Inventory.PickupSound "items/module"
+    
+    +INVENTORY.ALWAYSPICKUP
+    +INVENTORY.TRANSFER
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
+        TNT1 A 0 A_SetUserVar("user_amount", Random(CallACS("GetModuleAmount") / 2, CallACS("GetModuleAmount")))
+        TNT1 A 0 A_GiveInventory("DRPGModule", user_amount)
+        TNT1 A 0 // ACS_NamedExecuteAlways("ModulePopoffs", 0) // TODO: the TEXTURES portion of the digits needs alignment
+    SpawnLoop:
+        UMOD ABCDEFGHIJKLMNO 4 Bright
+        Loop
+    }
+}
