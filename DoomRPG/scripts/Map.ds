@@ -9,6 +9,7 @@
 // Level Info
 static LevelInfo *CurrentLevel;
 static DynamicArray KnownLevels;
+static bool WaitingForReplacements;
 static int LastVisitedLevel;
 static int AllBonusMaps; // For the OCD Shield
 static int CurrentSkill; // Keeps track of skill changes based on events
@@ -135,8 +136,8 @@ script void MapInit() open
         CurrentLevel->NeedsRealInfo = false;
     };
     
-    // Delay to allow monsters to register themselves (See Monsters.ds:199)
-    Delay(1);
+    WaitingForReplacements = true;
+    Delay(2);
     
     // Reduce monster population based on difficulty settings
     static bool WaitLock = true;
@@ -163,6 +164,8 @@ script void MapInit() open
     
     // Set up the currently in-effect map event
     SetupMapEvent();
+    
+    WaitingForReplacements = false;
     
     if (CurrentLevel)
         MapLoop();
@@ -209,50 +212,6 @@ script void ReduceMonsterCount(bool *WaitLock)
             if (!(Iterations % 4096))
         Delay(1);
     };
-    
-    int OldMonsterID = MonsterID;
-    
-    // Now we should update the monster list to reflect the new count and leave no spaces
-    int Cycles = 0;
-    int CurrentMonster = 1;
-    int MovingMonster = CurrentMonster + 1;
-    for (; CurrentMonster < MonsterID - 1; CurrentMonster++)
-    {
-        if (!(Cycles++ % 4096))
-            Delay (1);
-        
-        if (Monsters[CurrentMonster].Init && Monsters[CurrentMonster].TID && ClassifyActor(Monsters[CurrentMonster].TID) != ACTOR_NONE)
-            continue;
-        
-        for (; MovingMonster < MonsterID; MovingMonster++)
-        {
-            if (!(Cycles++ % 4096))
-                Delay (1);
-            
-            if (!Monsters[MovingMonster].Init || !Monsters[MovingMonster].TID || ClassifyActor(Monsters[MovingMonster].TID) == ACTOR_NONE)
-                continue;
-            
-            // If we reached here, we found a monster to shift up
-            if(GetCVar("drpg_debug"))
-                Log("\cdDEBUG: \ccMoving \cd%d\cc to \cd%d\n", MovingMonster, CurrentMonster);
-            Monsters[CurrentMonster] = Monsters[MovingMonster];
-            Monsters[MovingMonster].Init = false;
-            Monsters[MovingMonster].TID = 0;
-            break;
-        };
-    };
-    
-    for (int i = 1; i < MonsterID; i++)
-    {
-        if (Monsters[i].Init)
-            continue;
-        
-        MonsterID = i;
-        break;
-    };
-    
-    if(GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \ccNew MonsterID count is \cd%d \cc(used to be \cd%d\cc)\n", MonsterID, OldMonsterID);
     
     *WaitLock = false;
 };
@@ -561,7 +520,7 @@ script void MegaBossEvent()
     CurrentLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
     
     // Replace them with nothing
-    for (int i = 1; i < MAX_MONSTERS; i++)
+    for (int i = 1; i < MonsterID; i++)
     {
         if (!Monsters[i].Init)
             continue;
@@ -569,7 +528,8 @@ script void MegaBossEvent()
         Monsters[i].ReplaceActor = "None";
     };
     
-    Delay(2); // Monsters disappear!
+    WaitingForReplacements = false;
+    Delay(1); // Monsters disappear!
     
     // Shuffle positions
     for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
