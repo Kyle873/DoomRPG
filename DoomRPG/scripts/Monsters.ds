@@ -136,19 +136,10 @@ MonsterSpace MegabossInfo[MAX_MEGABOSSES] MegaBosses =
 
 function int NewMonsterID()
 {
-    int CurrentID = MonsterID;
-    int CheckCount = 0;
-    while (Monsters[CurrentID].Init && CheckCount < MAX_MONSTERS)
+    int CurrentID = MonsterID++;
+    if (CurrentID >= MAX_MONSTERS)
     {
-        CurrentID = ++MonsterID;
-        if (MonsterID >= MAX_MONSTERS)
-            MonsterID = 1;
-        CheckCount++;
-    };
-    
-    if (CheckCount >= MAX_MONSTERS)
-    {
-        Log("\ciWARNING: \caToo many monsters! Some of them couldn't be given stats.\n");
+        MonsterID = MAX_MONSTERS;
         return 0;
     };
     
@@ -196,8 +187,8 @@ acscript void MonsterInit(int Flags)
     
     if (GetMonsterID(0) == 0)
     {
-        // The monster couldn't be given stats, so there's nothing more we can do here.
-        DamageNumbers();
+        // The monster couldn't be given an ID, so there's nothing we can possibly do here.
+        Thing_Remove(0);
         return;
     };
     
@@ -230,6 +221,9 @@ acscript void MonsterInit(int Flags)
     Delay(1); // Allow map events to modify our stats/replacements (see Map.ds:18)
     while (WaitingForReplacements)
         Delay(1);
+    
+    if (!Stats->Init)
+        return; // Monster Reducer removed us
     
     if (StrLen(Stats->ReplaceActor) > 0)
     {
