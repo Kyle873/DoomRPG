@@ -40,13 +40,15 @@
     Misc
         - Credits
           - Stored in 4 bytes
+        - Modules
+          - Stored in 4 bytes
         - Chips
           - Gold Chip stored in 2 bytes
           - Platinum Chip stored in 2 bytes
         - UAC Card
           - Stored in 1 byte
         - Augmentation Battery
-          - Stored in 1 byte
+          - Stored in 2 byte
         - Toxicity
           - Stored in 1 byte
         - Pay Bonus
@@ -487,6 +489,7 @@ acscript void LoadCharacter() net
     
     // Misc
     SetInventory("DRPGCredits", Info.Credits);
+    SetInventory("DRPGModule", Info.Modules);
     SetInventory("DRPGChipGold", Info.GoldChips);
     SetInventory("DRPGChipPlatinum", Info.PlatinumChips);
     SetInventory("DRPGUACCard", Info.ShopCard);
@@ -677,6 +680,7 @@ script void PopulateCharData(CharSaveInfo *Info)
     
     // Misc
     Info->Credits = CheckInventory("DRPGCredits");
+    Info->Modules = CheckInventory("DRPGModule");
     Info->GoldChips = CheckInventory("DRPGChipGold");
     Info->PlatinumChips = CheckInventory("DrpgChipPlatinum");
     Info->ShopCard = Player.ShopCard;
@@ -791,6 +795,8 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     
     // Misc
     Info->Credits = HexToInteger(String + StringPos, 8);
+    StringPos += 8;
+    Info->Modules = HexToInteger(String + StringPos, 8);
     StringPos += 8;
     Info->GoldChips = HexToInteger(String + StringPos, 4);
     StringPos += 4;
@@ -941,6 +947,17 @@ script char const *MakeSaveString(CharSaveInfo *Info)
     SaveString[pos + 2] = ToHexChar(Info->Credits >> 20);
     SaveString[pos + 1] = ToHexChar(Info->Credits >> 24);
     SaveString[pos + 0] = ToHexChar(Info->Credits >> 28);
+    pos += 8;
+    
+    // Credits
+    SaveString[pos + 7] = ToHexChar(Info->Modules);
+    SaveString[pos + 6] = ToHexChar(Info->Modules >> 4);
+    SaveString[pos + 5] = ToHexChar(Info->Modules >> 8);
+    SaveString[pos + 4] = ToHexChar(Info->Modules >> 12);
+    SaveString[pos + 3] = ToHexChar(Info->Modules >> 16);
+    SaveString[pos + 2] = ToHexChar(Info->Modules >> 20);
+    SaveString[pos + 1] = ToHexChar(Info->Modules >> 24);
+    SaveString[pos + 0] = ToHexChar(Info->Modules >> 28);
     pos += 8;
     
     // Gold Chips
@@ -1195,6 +1212,7 @@ function int CreateChecksum(CharSaveInfo *Info)
         Checksum ^= Info->Stims[i];
     
     Checksum ^= Info->Credits;
+    Checksum ^= Info->Modules;
     Checksum ^= Info->Battery;
     Checksum ^= Info->Toxicity;
     Checksum ^= Info->PayBonus;
