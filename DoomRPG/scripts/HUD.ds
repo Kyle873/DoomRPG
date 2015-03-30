@@ -117,95 +117,68 @@ script void CreditHUD() enter
         "CREDF0";
     };
     
-    int Credits;
-    int Modules;
+    // Interpolators
+    InterpData Credits;
+    Credits.Value = CheckInventory("DRPGCredits");
+    Credits.OldValue = Credits.OldValue;
+    Credits.StartValue = Credits.OldValue;
+    Credits.DisplayValue = Credits.OldValue;
+    Credits.TimerMaxCap = 2;
+    InterpData Modules;
+    Modules.Value = CheckInventory("DRPGModule");
+    Modules.OldValue = Modules.Value;
+    Modules.StartValue = Modules.Value;
+    Modules.DisplayValue = Modules.Value;
+    Modules.TimerMaxCap = 2;
     
-    int CreditColor;
-    
-    int OldCredits = CheckInventory("DRPGCredits");
-    int OldModules = CheckInventory("DRPGModule");
-    
-    // Roller
-    int StartCredits = CheckInventory("DRPGCredits");
-    int DisplayCredits = CheckInventory("DRPGCredits");
-    int CreditsTimer = 0;
-    int CreditsTimerMax = 0;
-    int StartModules = CheckInventory("DRPGModule");
-    int DisplayModules = CheckInventory("DRPGModule");
-    int ModulesTimer = 0;
-    int ModulesTimerMax = 0;
-
     // Collection
     int CreditsCollected = 0;
     int CreditsCollectionTimer = 0;
     int ModulesCollected = 0;
     int ModulesCollectionTimer = 0;
     
+    // Misc
+    int CreditColor;
+    
     Start:
     
     // If we're on the title map, terminate
     if (InTitle) return;
     
-    Credits = CheckInventory("DRPGCredits");
-    Modules = CheckInventory("DRPGModule");
+    Credits.Value = CheckInventory("DRPGCredits");
+    Modules.Value = CheckInventory("DRPGModule");
     CreditColor = (Timer() / (35 * 60)) % 6;
     fixed X = GetCVarFixed("drpg_credits_x");
     fixed Y = GetCVarFixed("drpg_credits_y");
     
     SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
     
-    // Update the roller and display timer
-    if (Credits != OldCredits)
-    {
-        CreditsCollected += (Credits - OldCredits);
-        CreditsCollectionTimer = 35 * 6;
-        
-        StartCredits = DisplayCredits;
-        CreditsTimerMax = Abs(Credits - DisplayCredits) * 2;
-        if (CreditsTimerMax > 35 * 2)
-            CreditsTimerMax = 35 * 2;
-        CreditsTimer = CreditsTimerMax;
-    };
-    if (Modules != OldModules)
-    {
-        ModulesCollected += (Modules - OldModules);
-        ModulesCollectionTimer = 35 * 6;
-        
-        StartModules = DisplayModules;
-        ModulesTimerMax = Abs(Modules - DisplayModules) * 2;
-        if (ModulesTimerMax > 35 * 2)
-            ModulesTimerMax = 35 * 2;
-        ModulesTimer = ModulesTimerMax;
-    };
+    // Interpolation
+    Credits = Interpolate(Credits);
+    Modules = Interpolate(Modules);
     
-    // Count up until the display Credits reaches the actual Credits
-    if (CreditsTimer > 0)
+    // Update the collection values
+    if (Credits.Value != Credits.OldValue)
     {
-        long int Percent = (CreditsTimerMax * CreditsTimerMax) - (CreditsTimer * CreditsTimer);
-        DisplayCredits = StartCredits + (int)((long int)(Credits - StartCredits) * Percent / (CreditsTimerMax * CreditsTimerMax));
-        CreditsTimer--;
-    }
-    else
-        DisplayCredits = Credits;
-    if (ModulesTimer > 0)
+        CreditsCollected += (Credits.Value - Credits.OldValue);
+        CreditsCollectionTimer = 35 * 6;
+    };
+    if (Modules.Value != Modules.OldValue)
     {
-        long int Percent = (ModulesTimerMax * ModulesTimerMax) - (ModulesTimer * ModulesTimer);
-        DisplayModules = StartModules + (int)((long int)(Modules - StartModules) * Percent / (ModulesTimerMax * ModulesTimerMax));
-        ModulesTimer--;
-    }
-    else
-        DisplayModules = Modules;
+        ModulesCollected += (Modules.Value - Modules.OldValue);
+        ModulesCollectionTimer = 35 * 6;
+    };
     
     PrintSprite(CreditSprites[CreditColor], 0, X, Y + 12.0, 0.05);
     SetFont("BIGFONT");
-    HudMessage("%d\n", DisplayCredits, HUDMSG_PLAIN, 0, CR_GOLD, X + 16.1, Y, 0.05);
+    HudMessage("%d\n", Credits.DisplayValue, HUDMSG_PLAIN, 0, CR_GOLD, X + 16.1, Y, 0.05);
     if (CreditsCollected != 0)
         HudMessage("%c%d\n", (CreditsCollected > 0 ? '+' : '@'), CreditsCollected, HUDMSG_FADEOUT, PAY_ID, (CreditsCollected > 0 ? CR_WHITE : CR_RED), X + 16.1, Y + 12.0, 0.05, 2.0, 1.0);
     if (GetCVar("drpg_module_show") || GetCVar("drpg_hud_preview"))
     {
         PrintSprite("UMODA0", 0, X - 4.0, Y + 56.0, 0.05);
         SetFont("BIGFONT");
-        HudMessage("%d\n", DisplayModules, HUDMSG_PLAIN, 0, CR_GREEN, X + 16.1, Y + 24.0, 0.05);
+        HudMessage("%d\n", Modules.DisplayValue, HUDMSG_PLAIN, 0, CR_GREEN, X + 16.1, Y + 24.0, 0.05);
         if (ModulesCollected != 0)
             HudMessage("%c%d\n", (ModulesCollected > 0 ? '+' : '@'), ModulesCollected, HUDMSG_FADEOUT, PAY_ID + 1, (ModulesCollected > 0 ? CR_DARKGREEN : CR_DARKRED), X + 16.1, Y + 36.0, 0.05, 2.0, 1.0);
     };
@@ -220,8 +193,8 @@ script void CreditHUD() enter
     else
         ModulesCollected = 0;
     
-    OldCredits = CheckInventory("DRPGCredits");
-    OldModules = CheckInventory("DRPGModule");
+    Credits.OldValue = CheckInventory("DRPGCredits");
+    Modules.OldValue = CheckInventory("DRPGModule");
     Delay(1);
     
     goto Start;
@@ -230,32 +203,16 @@ script void CreditHUD() enter
 script void ComboHUD() enter
 {
     int TimerPercent;
-    int Combo;
-    int XP;
-    int Rank;
-    int Bonus;
-    int OldCombo;
-    int OldXP;
-    int OldRank;
-    int OldBonus;
     
     // Rollers
-    int StartCombo = 0;
-    int DisplayCombo = 0;
-    int ComboTimer = 0;
-    int ComboTimerMax = 0;
-    int StartXP = 0;
-    int DisplayXP = 0;
-    int XPTimer = 0;
-    int XPTimerMax = 0;
-    int StartRank = 0;
-    int DisplayRank = 0;
-    int RankTimer = 0;
-    int RankTimerMax = 0;
-    int StartBonus = 0;
-    int DisplayBonus = 0;
-    int BonusTimer = 0;
-    int BonusTimerMax = 0;
+    InterpData Combo;
+    Combo.TimerMaxCap = 1;
+    InterpData XP;
+    XP.TimerMaxCap = 1;
+    InterpData Rank;
+    Rank.TimerMaxCap = 1;
+    InterpData Bonus;
+    Bonus.TimerMaxCap = 1;
     
     Start:
     
@@ -267,78 +224,16 @@ script void ComboHUD() enter
     
     SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
     
-    Combo = Player.Combo;
-    XP = Player.XPGained;
-    Rank = Player.RankGained;
-    Bonus = Player.BonusGained;
+    Combo.Value = Player.Combo;
+    XP.Value = Player.XPGained;
+    Rank.Value = Player.RankGained;
+    Bonus.Value = Player.BonusGained;
     
-    // Roller timer updating
-    if (Combo != OldCombo)
-    {
-        StartCombo = DisplayCombo;
-        ComboTimerMax = Abs(Combo - DisplayCombo);
-        if (ComboTimerMax > 35)
-            ComboTimerMax = 35;
-        ComboTimer = ComboTimerMax;
-    };
-    if (XP != OldXP)
-    {
-        StartXP = DisplayXP;
-        XPTimerMax = Abs(XP - DisplayXP);
-        if (XPTimerMax > 35)
-            XPTimerMax = 35;
-        XPTimer = XPTimerMax;
-    };
-    if (Rank != OldRank)
-    {
-        StartRank = DisplayRank;
-        RankTimerMax = Abs(Rank - DisplayRank);
-        if (RankTimerMax > 35)
-            RankTimerMax = 35;
-        RankTimer = RankTimerMax;
-    };
-    if (Bonus != OldBonus)
-    {
-        StartBonus = DisplayBonus;
-        BonusTimerMax = Abs(Bonus - DisplayBonus);
-        if (BonusTimerMax > 35)
-            BonusTimerMax = 35;
-        BonusTimer = BonusTimerMax;
-    };
-    
-    // Roller counting
-    if (ComboTimer > 0)
-    {
-        long int Percent = (ComboTimerMax * ComboTimerMax) - (ComboTimer * ComboTimer);
-        DisplayCombo = StartCombo + (int)((long int)(Combo - StartCombo) * Percent / (ComboTimerMax * ComboTimerMax));
-        ComboTimer--;
-    }
-    else
-        DisplayCombo = Combo;
-    if (XPTimer > 0)
-    {
-        long int Percent = (XPTimerMax * XPTimerMax) - (XPTimer * XPTimer);
-        DisplayXP = StartXP + (int)((long int)(XP - StartXP) * Percent / (XPTimerMax * XPTimerMax));
-        XPTimer--;
-    }
-    else
-        DisplayXP = XP;
-    if (RankTimer > 0)
-    {
-        long int Percent = (RankTimerMax * RankTimerMax) - (RankTimer * RankTimer);
-        DisplayRank = StartRank + (int)((long int)(Rank - StartRank) * Percent / (RankTimerMax * RankTimerMax));
-        RankTimer--;
-    }
-    else
-        DisplayRank = Rank;
-    if (BonusTimer > 0)
-    {
-        long int Percent = (BonusTimerMax * BonusTimerMax) - (BonusTimer * BonusTimer);
-        DisplayBonus = StartBonus + (int)((long int)(Bonus - StartBonus) * Percent / (BonusTimerMax * BonusTimerMax));
-        BonusTimer--;
-    }
-    else
-        DisplayBonus = Bonus;
+    // Interpolation
+    Combo = Interpolate(Combo);
+    XP = Interpolate(XP);
+    Rank = Interpolate(Rank);
+    Bonus = Interpolate(Bonus);
     
     if (Player.Combo > 0 && Player.ComboTimer <= COMBO_MAX)
         TimerPercent = (int)(((fixed)Player.ComboTimer / (fixed)COMBO_MAX) * 100.0)
@@ -356,19 +251,19 @@ script void ComboHUD() enter
     
     // Combo Info
     SetFont("BIGFONT");
-    if (DisplayCombo > 0 || GetCVar("drpg_hud_preview"))
-        HudMessage("%d\n", DisplayCombo, HUDMSG_PLAIN, 0, CR_PURPLE, X + 0.1, Y + 10.0, 0.05);
-    if (DisplayXP > 0 || GetCVar("drpg_hud_preview"))
-        HudMessage("%d\n", DisplayXP, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 22.0, 0.05);
-    if (DisplayRank > 0 || GetCVar("drpg_hud_preview"))
-        HudMessage("%d\n", DisplayRank, HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y + 34.0, 0.05);
-    if (DisplayBonus > 0 || GetCVar("drpg_hud_preview"))
-        HudMessage("%d\n", DisplayBonus, HUDMSG_PLAIN, 0, CR_GREEN, X + 0.1, Y + 46.0, 0.05);
+    if (Combo.DisplayValue > 0 || GetCVar("drpg_hud_preview"))
+        HudMessage("%d\n", Combo.DisplayValue, HUDMSG_PLAIN, 0, CR_PURPLE, X + 0.1, Y + 10.0, 0.05);
+    if (XP.DisplayValue > 0 || GetCVar("drpg_hud_preview"))
+        HudMessage("%d\n", XP.DisplayValue, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 22.0, 0.05);
+    if (Rank.DisplayValue > 0 || GetCVar("drpg_hud_preview"))
+        HudMessage("%d\n", Rank.DisplayValue, HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y + 34.0, 0.05);
+    if (Bonus.DisplayValue > 0 || GetCVar("drpg_hud_preview"))
+        HudMessage("%d\n", Bonus.DisplayValue, HUDMSG_PLAIN, 0, CR_GREEN, X + 0.1, Y + 46.0, 0.05);
     
-    OldCombo = Player.Combo;
-    OldXP = Player.XPGained;
-    OldRank = Player.RankGained;
-    OldBonus = Player.BonusGained;
+    Combo.OldValue = Player.Combo;
+    XP.OldValue = Player.XPGained;
+    Rank.OldValue = Player.RankGained;
+    Bonus.OldValue = Player.BonusGained;
     Delay(1);
     
     goto Start;

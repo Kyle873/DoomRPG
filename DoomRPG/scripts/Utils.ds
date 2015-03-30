@@ -1782,6 +1782,29 @@ function fixed Lerp(fixed a, fixed b, fixed t)
     return ((1.0 - t) * a) + (t * b);
 };
 
+function InterpData Interpolate(InterpData Data)
+{
+    if (Data.Value != Data.OldValue)
+    {
+        Data.StartValue = Data.DisplayValue;
+        Data.TimerMax = Abs(Data.Value - Data.DisplayValue) * Data.TimerMaxCap;
+        if (Data.TimerMax > 35 * Data.TimerMaxCap)
+            Data.TimerMax = 35 * Data.TimerMaxCap;
+        Data.Timer = Data.TimerMax;
+    };
+    
+    if (Data.Timer > 0)
+    {
+        long int Percent = (Data.TimerMax * Data.TimerMax) - (Data.Timer * Data.Timer);
+        Data.DisplayValue = Data.StartValue + (int)((long int)(Data.Value - Data.StartValue) * Percent / (Data.TimerMax * Data.TimerMax));
+        Data.Timer--;
+    }
+    else
+        Data.DisplayValue = Data.Value;
+    
+    return Data;
+};
+
 /* Super SidDoyle Math Functions(TM)
    
    I'm not quite sure how I came up with this. I have to use this myself, now.
