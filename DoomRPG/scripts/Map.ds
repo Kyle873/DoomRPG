@@ -223,10 +223,6 @@ script void ReduceMonsterCount(bool *WaitLock)
 
 function bool CheckMapEvent(int Event)
 {
-    // Don't bother creating an event if the level has no monsters
-    if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
-        return false;
-    
     switch (Event)
     {
         case MAPEVENT_MEGABOSS:
@@ -319,6 +315,13 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     TargetLevel->PandoraBoxTID = 0;
     TargetLevel->LevelAdd = 0;
     TargetLevel->RareAdd = 0;
+    
+    // Don't bother creating an event if the level has no monsters
+    if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
+    {
+        TargetLevel->Event = MAPEVENT_NONE;
+        return;
+    };
     
     if (RandomFixed(0.0, 99.9) > GetCVarFixed("drpg_mapevent_chance"))
     {

@@ -1,5 +1,6 @@
 #include "RPG.dh"
 
+#include "Stims.dh"
 #include "Turret.dh"
 #include "Utils.dh"
 
@@ -231,7 +232,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Assist Module - Health Injector"; 10; 0;
         "Injects you with some health if you are near death";
-        "Upgrades increase injection chance";
+        "Upgrades increase injection cutoff percentage";
     };
     {
         "Assist Module - Armor Repair Nanites"; 10; 0;
@@ -249,27 +250,29 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
         "Upgrades increase charge speed";
     };
     {
-        "Assist Module - Auto-Injector"; 1; 0;
+        "Assist Module - Stim Injector"; 1; 0;
         "Turret can inject you with a random cocktail of combat-enhancing drugs";
         nullptr;
-        "Issuing this command will trigger an injection";
+        nullptr; // Generated in BuildTurretData()
     };
     {
-        "Assist Module - Auto-Injector - Type"; 2; 0;
+        "Assist Module - Stim Injector - Type"; 2; 0;
         "Determines the type of drugs you will be injected with";
         "Upgrade allows powerups to be injected";
     };
     {
-        "Assist Module - Auto-Injector - Amount"; 10; 0;
+        "Assist Module - Stim Injector - Amount"; 10; 0;
         "Determines the amount of drugs you will be injected with";
     };
     {
-        "Assist Module - Auto-Injector - Potency"; 10; 0;
+        "Assist Module - Stim Injector - Potency"; 10; 0;
         "Determines the potency of the drugs you will be injected with";
     };
     {
         "Assist Module - Emergency Teleportation System"; 1; 0;
-        "The turret will automatically teleport you out of danger under certain conditions";
+        "The turret will automatically teleport you out of danger when under 10% health";
+        nullptr;
+        "Issuing this command will toggle Emergency Teleportation on/off";
     };
     {
         "Assist Module - Team Unit"; 1; 0;
@@ -286,6 +289,14 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
         "Upgrades increase the speed of all sensor-based activities";
     };
     
+    // Money Finder
+    {
+        "Sensors Module - Money Finder"; 1; 0;
+        "Calibrates the sensors to allow the turret to find money";
+        nullptr;
+        "Issuing this command will start the item finder, searching for money";
+    };
+    
     // Item Finder
     {
         "Sensors Module - Item Finder"; 5; 0;
@@ -294,57 +305,12 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
         "Issuing this command will allow you to pick a category of items to search for and bring back to you";
     };
     
-    /* Crate Finder
+    // Crate Finder
     {
         "Sensors Module - Supply Drop Crate Finder"; 2; 0;
         "Calibrates the sensors to allow the turret to find UAC Supply Crates";
         "Upgrade will allow the turret to locate security locked crates";
         "Issuing this command will send the turret to go find a Supply Crate and bring it to you";
-    }; */
-    
-    // TODO: Remove these
-    // Moved them all into just Item Finder, it'll have it's own searching interface
-    {
-        "Sensors Module - Item Finder - Money"; 1; 0;
-        "Allows the sensors to detect and locate money";
-        nullptr;
-        "Issuing this command will start the item finder, searching for money";
-    };
-    {
-        "Sensors Module - Item Finder - Weapons"; 1; 0;
-        "Allows the sensors to detect and locate weapons";
-        nullptr;
-        "Issuing this command will start the item finder, searching for weapons";
-    };
-    {
-        "Sensors Module - Item Finder - Ammo"; 1; 0;
-        "Allows the sensors to detect and locate ammo";
-        nullptr;
-        "Issuing this command will start the item finder, searching for ammo";
-    };
-    {
-        "Sensors Module - Item Finder - Armor"; 1; 0;
-        "Allows the sensors to detect and locate Armor";
-        nullptr;
-        "Issuing this command will start the item finder, searching for armor";
-    };
-    {
-        "Sensors Module - Item Finder - Powerups"; 1; 0;
-        "Allows the sensors to detect and locate powerups";
-        nullptr;
-        "Issuing this command will start the item finder, searching for powerups";
-    };
-    {
-        "Sensors Module - Item Finder - Stims"; 1; 0;
-        "Allows the sensors to detect and locate stims";
-        nullptr;
-        "Issuing this command will start the item finder, searching for stims";
-    };
-    {
-        "Sensors Module - Item Finder - Rare Items"; 1; 0;
-        "Allows the sensors to detect and locate rare items";
-        nullptr;
-        "Issuing this command will start the item finder, searching for rare items";
     };
     
     // --------------------------------------------------
@@ -451,6 +417,7 @@ script void TurretLoop() enter
     
     Start:
     
+    int PlayerNum = PlayerNumber();
     int Health;
     int PrevHealth;
     
@@ -521,35 +488,6 @@ script void TurretLoop() enter
         Player.Turret.RailAmmoMax = 10 * Player.Turret.Upgrade[TU_WEAPON_RAILGUN_CAPACITY];
         Player.Turret.BatteryMax = TURRET_BATTERY_CHARGE * Player.Turret.Upgrade[TU_BATTERY_CAPACITY];
         
-        // Armor/Protection
-        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_MELEE] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionMelee%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_MELEE]), 1);
-        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_BULLET] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionBullet%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_BULLET]), 1);
-        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_FIRE] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionFire%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_FIRE]), 1);
-        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_PLASMA] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionPlasma%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_PLASMA]), 1);
-        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_BLAST] > 0)
-            GiveActorInventory(Player.Turret.TID, "DRPGTurretProtectionBlast\n", 1);
-        if (Player.Turret.Upgrade[TU_ARMOR_MODULE_REFLECT] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretReflection%d\n", Player.Turret.Upgrade[TU_ARMOR_MODULE_REFLECT]), 1);
-        if (Player.Turret.Upgrade[TU_ARMOR_MODULE_REPAIR] > 0)
-            if (GetActorProperty(Player.Turret.TID, APROP_Health) < Player.Turret.HealthMax && (Timer() % (35 * (30 - (Player.Turret.Upgrade[TU_ARMOR_MODULE_REPAIR] * 2.5)))) == 0)
-                SetActorProperty(Player.Turret.TID, APROP_Health, GetActorProperty(Player.Turret.TID, APROP_Health) + 1);
-        if (Player.Turret.Upgrade[TU_ARMOR_MODULE_PHASE] > 0 && Health < PrevHealth)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretPhase%d\n", Player.Turret.Upgrade[TU_ARMOR_MODULE_PHASE]), 1);
-        if (GetActorPowerupTics(Player.Turret.TID, "PowerGhost") > 0)
-        {
-            SetActorProperty(Player.Turret.TID, APROP_RenderStyle, STYLE_Translucent);
-            SetActorPropertyFixed(Player.Turret.TID, APROP_Alpha, 0.5 + (Sin(Timer() / 32.0) * 0.5));
-        }
-        else
-        {
-            SetActorProperty(Player.Turret.TID, APROP_RenderStyle, STYLE_Normal);
-            SetActorPropertyFixed(Player.Turret.TID, APROP_Alpha, 1.0);
-        };
-        
         // Nano Ammo Generators
         if (Player.Turret.Upgrade[TU_AMMO_NANOGEN] > 0 && (Timer() % (35 * (15 - Player.Turret.Upgrade[TU_AMMO_NANOGEN]))) == 0)
         {
@@ -564,6 +502,84 @@ script void TurretLoop() enter
             if (Player.Turret.Upgrade[TU_AMMO_NANOGEN_CELL] && Player.Turret.RailAmmo < Player.Turret.RailAmmoMax)
                 Player.Turret.RailAmmo++;
         };
+        
+        // Armor/Protection
+        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_MELEE] > 0)
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionMelee%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_MELEE]), 1);
+        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_BULLET] > 0)
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionBullet%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_BULLET]), 1);
+        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_FIRE] > 0)
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionFire%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_FIRE]), 1);
+        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_PLASMA] > 0)
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionPlasma%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_PLASMA]), 1);
+        if (Player.Turret.Upgrade[TU_ARMOR_PLATING_BLAST] > 0)
+            GiveActorInventory(Player.Turret.TID, "DRPGTurretProtectionBlast", 1);
+        if (Player.Turret.Upgrade[TU_ARMOR_MODULE_REFLECT] > 0)
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretReflection%d\n", Player.Turret.Upgrade[TU_ARMOR_MODULE_REFLECT]), 1);
+        if (Player.Turret.Upgrade[TU_ARMOR_MODULE_REPAIR] > 0)
+            if (Health < Player.Turret.HealthMax && (Timer() % (35 * (30 - (Player.Turret.Upgrade[TU_ARMOR_MODULE_REPAIR] * 2.5)))) == 0)
+                SetActorProperty(Player.Turret.TID, APROP_Health, Health + 1);
+        if (Player.Turret.Upgrade[TU_ARMOR_MODULE_PHASE] > 0 && Health < PrevHealth)
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretPhase%d\n", Player.Turret.Upgrade[TU_ARMOR_MODULE_PHASE]), 1);
+        if (GetActorPowerupTics(Player.Turret.TID, "PowerGhost") > 0)
+        {
+            SetActorProperty(Player.Turret.TID, APROP_RenderStyle, STYLE_Translucent);
+            SetActorPropertyFixed(Player.Turret.TID, APROP_Alpha, 0.5 + (Sin(Timer() / 32.0) * 0.5));
+        }
+        else
+        {
+            SetActorProperty(Player.Turret.TID, APROP_RenderStyle, STYLE_Normal);
+            SetActorPropertyFixed(Player.Turret.TID, APROP_Alpha, 1.0);
+        };
+        
+        // Assist Modules
+        if (Player.Turret.HitTimer <= 0)
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                // If this player isn't in game, continue
+                if (!PlayerInGame(i)) continue;
+                
+                // If you don't have the Team Unit upgrade yet, skip all other players
+                if (!Player.Turret.Upgrade[TU_ASSIST_TEAM] && i != PlayerNumber()) continue;
+                
+                // Apply to teammates around you if you have the Team Unit upgrade
+                if (i != PlayerNumber() && Player.Turret.Upgrade[TU_ASSIST_TEAM] && Distance(Player.Turret.TID, Players(i).TID) >= 512) continue;
+                
+                // Health
+                if (Player.Turret.Upgrade[TU_ASSIST_HEALTH] > 0 && CalcPercent(Players(i).ActualHealth, Player.HealthMax) < Player.Turret.Upgrade[TU_ASSIST_HEALTH] * 2 && (Timer() % 35) == 0)
+                    Players(i).ActualHealth++;
+                
+                // Armor
+                SetActivator(Players(i).TID); // Yay maxhax because GetArmorInfo() has no playernum param D:
+                if (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] > 0 && CheckInventory("Armor") > 0 && CheckInventory("Armor") < GetArmorInfo(ARMORINFO_ACTUALSAVEAMOUNT) && (Timer() % (35 * (30 - (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] * 2.5)))) == 0)
+                    GiveInventory("ArmorBonus", 1);
+                SetActivator(Players(PlayerNum).TID);
+                
+                // Aug Battery
+                if (Player.Turret.Upgrade[TU_ASSIST_AUG] > 0 && Players(i).Augs.Battery < Players(i).Augs.BatteryMax && (Timer() % (35 * (30 - (Player.Turret.Upgrade[TU_ASSIST_AUG] * 2.5)))) == 0)
+                    Players(i).Augs.Battery++;
+                
+                // Shield
+                if (Player.Turret.Upgrade[TU_ASSIST_SHIELD] > 0 && Players(i).Shield.Active && Players(i).Shield.Charge < Players(i).Shield.Capacity && (Timer() % (35 * (30 - (Player.Turret.Upgrade[TU_ASSIST_SHIELD] * 2.5)))) == 0)
+                    Players(i).Shield.Charge += Players(i).Shield.ChargeRate;
+            };
+        
+        // Emergency Teleport
+        if (Player.Turret.TeleportEnabled && CalcPercent(Player.ActualHealth, Player.HealthMax) <= 10 && Player.Turret.TeleportTimer <= 0)
+        {
+            SetInventory("ArtiTeleport", 1);
+            UseInventory("ArtiTeleport");
+            
+            Player.Turret.TeleportTimer = 35 * 30;
+        };
+        
+        // Timers
+        if (Health < PrevHealth)
+            Player.Turret.HitTimer = 35 * 5;
+        if (Player.Turret.HitTimer > 0)
+            Player.Turret.HitTimer--;
+        if (Player.Turret.TeleportTimer > 0)
+            Player.Turret.TeleportTimer--;
         
         // Pass info to uservars
         TurretPassVars();
@@ -657,6 +673,8 @@ acscript int TurretGetProjectileProperty(int Type)
 
 function void BuildTurretData()
 {
+    // Command description for Stim Injector
+    TurretUpgradeData[TU_ASSIST_INJECTOR].CommandInfo = StrParam("Use \cd%K\c- + \cd%K\ck to issue this command\n", "+speed", "drpg_usestim");
 };
 
 function void TurretCommand(int Index)
@@ -670,10 +688,14 @@ function void TurretCommand(int Index)
     };
     
     if (Index == TU_BUILD)
+    {
+        ActivatorSound("menu/move", 127);
+        
         if (Player.Turret.Active)
             TurretDespawn()
         else
             TurretSpawn();
+    };
     
     if (Index == TU_WEAPON_BULLET)
     {
@@ -820,6 +842,55 @@ function void TurretCommand(int Index)
             };
         };
     };
+    
+    if (Index == TU_ASSIST_INJECTOR)
+        TurretStim();
+    
+    if (Index == TU_ASSIST_TELEPORT)
+    {
+        ActivatorSound("menu/move", 127);
+        Player.Turret.TeleportEnabled = !Player.Turret.TeleportEnabled;
+    };
+};
+
+function void TurretStim()
+{
+    if (!Player.Turret.Upgrade[TU_BUILD])
+    {
+        PrintError("You haven't built a turret");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    if (!Player.Turret.Active)
+    {
+        PrintError("Your turret is not active");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    if (!Player.Turret.Upgrade[TU_ASSIST_INJECTOR] || !Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] || !Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT] || !Player.Turret.Upgrade[TU_ASSIST_INJECTOR_POTENCY])
+    {
+        PrintError("Your turret does not have the appropriate upgrades");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    bool Powerups = (Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] > 1);
+    int MaxAmount = Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT];
+    int Potency = Player.Turret.Upgrade[TU_ASSIST_INJECTOR_POTENCY];
+    int Amount = 0;
+    
+    // Generate the stim
+    while (Amount++ < MaxAmount)
+    {
+        int TypeMax = (Powerups ? StimPowerupEnd : StimStatsEnd);
+        int Type = Random(0, TypeMax);
+        
+        Log("\cd%d. Type: %d (%d)\n", Amount, Type, Potency);
+        
+        Player.Stim.Current[Type] += Potency;
+    };
 };
 
 function int TurretUpgradeCost(int Index)
@@ -889,4 +960,14 @@ function void TurretDespawn()
 acscript void GiveTurret()
 {
     Player.Turret.Upgrade[TU_BUILD] = 1;
+};
+
+acscript void FullTurret()
+{
+    Player.Turret.Upgrade[TU_BUILD] = true;
+    
+    Delay(1);
+    
+    for (int i = 1; i < TU_MAX; i++)
+        Player.Turret.Upgrade[i] = TurretUpgradeData[i].MaxLevel;
 };
