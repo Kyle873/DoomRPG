@@ -3,6 +3,7 @@
 #include "Menu.dh"
 #include "Stats.dh"
 #include "Stims.dh"
+#include "Turret.dh"
 #include "Utils.dh"
 
 // TODO: These two can be merged together by just includin the color code in the string itself
@@ -69,6 +70,9 @@ int StimPowerupEnd = STIM_MAX;
 
 acscript void UseStim() net
 {
+    bool Turret = false;
+    int[STIM_MAX] Injector;
+    
     // If you're dead, terminate
     if (GetActorProperty(0, APROP_Health) <= 0) return;
     
@@ -79,14 +83,27 @@ acscript void UseStim() net
         return;
     };
     
-    if (Player.Stim.Size == 0)
+    // Generate and Activate Turret Stim
+    if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS))
+    {
+        Turret = true;
+        
+        // Store Injector for restore later
+        for (int i = 0; i < STIM_MAX; i++)
+            Injector[i] = Player.Stim.Current[i];
+        
+        TurretStim();
+        Delay(1);
+    };
+    
+    if (Player.Stim.Size == 0 && !Turret)
     {
         PrintError("You don't have an injector ready");
         ActivatorSound("menu/error", 127);
         return;
     };
     
-    if (Player.Stim.Amount == 0)
+    if (Player.Stim.Amount == 0 && !Turret)
     {
         PrintError("Your current injector is empty");
         ActivatorSound("menu/error", 127);
@@ -131,7 +148,8 @@ acscript void UseStim() net
     
     // Apply Active Flags
     for (int i = 0; i < STIM_MAX; i++)
-        if (Player.Stim.Current[i] > 0) Player.Stim.ActiveBonus[i] = true;
+        if (Player.Stim.Current[i] > 0)
+            Player.Stim.ActiveBonus[i] = true;
     
     // Toxicity From amount of different compounds
     for (int i = 0; i < STIM_MAX; i++)
@@ -148,6 +166,11 @@ acscript void UseStim() net
     for (int i = 0; i < STIM_MAX; i++)
         Player.Stim.Last[i] = Player.Stim.Current[i];
     
+    // Restore Injector if it was saved from a turret
+    if (Turret)
+        for (int i = 0; i < STIM_MAX; i++)
+            Player.Stim.Current[i] = Injector[i];
+    
     // Clear the Stim
     Player.Stim.Size = 0;
     Player.Stim.Amount = 0;
@@ -158,7 +181,8 @@ acscript void UseStim() net
     ClearToxicityMeter();
     ActivatorSound("items/stim", 127);
     FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
-    TossStim();
+    if (!Turret)
+        TossStim();
 };
 
 acscript void TossStim()
