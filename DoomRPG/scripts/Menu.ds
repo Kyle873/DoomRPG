@@ -977,6 +977,14 @@ function void DrawSkillMenu()
 
 function void DrawShieldMenu()
 {
+    static str[4] PageTitles =
+    {
+        "\cjBodies";
+        "\cfBatteries";
+        "\cnCapacitors";
+        "\cdAccessories";
+    };
+    
     str Description = "";
     int Amount;
     
@@ -984,17 +992,21 @@ function void DrawShieldMenu()
     SetFont("BIGFONT");
     HudMessage("Shield\n", HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
     
-    static str[4] PageTitles =
-    {
-        "Bodies";
-        "Batteries";
-        "Capacitors";
-        "Accessories";
-    };
-    
     // Page
     HudMessage("%s\n", PageTitles[Player.ShieldPage], HUDMSG_PLAIN, 0, CR_GREEN, 208.1, 10.0, 0.05);
-
+    
+    // Reset New! status on highlighted parts
+    if (Player.ShieldPage == SHIELDPAGE_ACCESSORY)
+    {
+        if (Player.NewShieldAccessoryParts[Player.MenuIndex])
+            Player.NewShieldAccessoryParts[Player.MenuIndex] = false;
+    }
+    else
+    {
+        if (Player.NewShieldParts[Player.ShieldPage][Player.MenuIndex])
+            Player.NewShieldParts[Player.ShieldPage][Player.MenuIndex] = false;
+    };
+    
     // Draw Components
     for (int i = 0; i < 7; i++)
     {
@@ -1005,7 +1017,7 @@ function void DrawShieldMenu()
             int MaxItems;
             int Index = j + (i * 10);
             
-            if (Player.ShieldPage == 3)
+            if (Player.ShieldPage == SHIELDPAGE_ACCESSORY)
             {
                 CurrentAccessory = &ShieldAccessories[Index];
                 MaxItems = MAX_ACCESSORIES;
@@ -1020,93 +1032,107 @@ function void DrawShieldMenu()
             if (Index >= MaxItems) break;
             
             // Draw Available Components
-            for (int k = 0; k < 4; k++)
+            if (Index < MaxItems)
             {
-                if (Index < MaxItems)
-                {
-                    // Draw Equipped Status
-                    SetFont("SMALLFONT");
-                    if (Player.ShieldPage == 0 && Player.Shield.Body && !StrCmp(Player.Shield.Body->Actor, CurrentPart->Actor))
-                        HudMessage("E\n", HUDMSG_PLAIN, 0, CR_WHITE,        0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-                    if (Player.ShieldPage == 1 && Player.Shield.Battery && !StrCmp(Player.Shield.Battery->Actor, CurrentPart->Actor))
-                        HudMessage("E\n", HUDMSG_PLAIN, 0, CR_GOLD,         0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-                    if (Player.ShieldPage == 2 && Player.Shield.Capacitor && !StrCmp(Player.Shield.Capacitor->Actor, CurrentPart->Actor))
-                        HudMessage("E\n", HUDMSG_PLAIN, 0, CR_LIGHTBLUE,    0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-                    if (Player.ShieldPage == 3 && Player.Shield.Accessory && !StrCmp(Player.Shield.Accessory->Actor, CurrentAccessory->Actor))
-                        HudMessage("E\n", HUDMSG_PLAIN, 0, CR_GREEN,        0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-                    
-                    // Draw Quantity if you have more than one
-                    if (Player.ShieldPage < 3 && CheckInventory(CurrentPart->Actor) > 1)   HudMessage("%d\n", CheckInventory(CurrentPart->Actor),  HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-                    if (Player.ShieldPage == 3 && CheckInventory(CurrentAccessory->Actor) > 1)   HudMessage("%d\n", CheckInventory(CurrentAccessory->Actor),  HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
-                };
+                SetFont("SMALLFONT");
                 
-                // Draw Components and set Description
-                if (Player.ShieldPage == k && k < 3)
+                // NEW!
+                if (Player.ShieldPage == SHIELDPAGE_BODY && Player.NewShieldParts[SHIELDPAGE_BODY][Index] && CheckInventory(CurrentPart->Actor) > 0)
+                    HudMessage("NEW!\n", HUDMSG_PLAIN, 0, CR_WHITE,     0.1 + (j * 34.0), 20.1 + (i * 34.0), 0.05);
+                if (Player.ShieldPage == SHIELDPAGE_BATTERY && Player.NewShieldParts[SHIELDPAGE_BATTERY][Index] && CheckInventory(CurrentPart->Actor) > 0)
+                    HudMessage("NEW!\n", HUDMSG_PLAIN, 0, CR_GOLD,      0.1 + (j * 34.0), 20.1 + (i * 34.0), 0.05);
+                if (Player.ShieldPage == SHIELDPAGE_CAPACITOR && Player.NewShieldParts[SHIELDPAGE_CAPACITOR][Index] && CheckInventory(CurrentPart->Actor) > 0)
+                    HudMessage("NEW!\n", HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 0.1 + (j * 34.0), 20.1 + (i * 34.0), 0.05);
+                if (Player.ShieldPage == SHIELDPAGE_ACCESSORY && Player.NewShieldAccessoryParts[Index] && CheckInventory(CurrentAccessory->Actor) > 0)
+                    HudMessage("NEW!\n", HUDMSG_PLAIN, 0, CR_GREEN,     0.1 + (j * 34.0), 20.1 + (i * 34.0), 0.05);
+                
+                // Draw Equipped Status
+                if (Player.ShieldPage == SHIELDPAGE_BODY && Player.Shield.Body && !StrCmp(Player.Shield.Body->Actor, CurrentPart->Actor))
+                    HudMessage("E\n", HUDMSG_PLAIN, 0, CR_WHITE,        0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+                if (Player.ShieldPage == SHIELDPAGE_BATTERY && Player.Shield.Battery && !StrCmp(Player.Shield.Battery->Actor, CurrentPart->Actor))
+                    HudMessage("E\n", HUDMSG_PLAIN, 0, CR_GOLD,         0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+                if (Player.ShieldPage == SHIELDPAGE_CAPACITOR && Player.Shield.Capacitor && !StrCmp(Player.Shield.Capacitor->Actor, CurrentPart->Actor))
+                    HudMessage("E\n", HUDMSG_PLAIN, 0, CR_LIGHTBLUE,    0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+                if (Player.ShieldPage == SHIELDPAGE_ACCESSORY && Player.Shield.Accessory && !StrCmp(Player.Shield.Accessory->Actor, CurrentAccessory->Actor))
+                    HudMessage("E\n", HUDMSG_PLAIN, 0, CR_GREEN,        0.1 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+                
+                // Draw Quantity if you have more than one
+                if (Player.ShieldPage < SHIELDPAGE_ACCESSORY && CheckInventory(CurrentPart->Actor) > 1)
+                    HudMessage("%d\n", CheckInventory(CurrentPart->Actor),      HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+                if (Player.ShieldPage == SHIELDPAGE_ACCESSORY && CheckInventory(CurrentAccessory->Actor) > 1)
+                    HudMessage("%d\n", CheckInventory(CurrentAccessory->Actor), HUDMSG_PLAIN, 0, CR_WHITE, 32.2 + (j * 34.0), 48.0 + (i * 34.0), 0.05);
+            };
+            
+            // Draw Components and set Description
+            if (Player.ShieldPage < SHIELDPAGE_ACCESSORY)
+            {
+                if (Index < MaxItems && CheckInventory(CurrentPart->Actor))
                 {
-                    if (Index < MaxItems && CheckInventory(CurrentPart->Actor))
+                    // Draw Component
+                    if (Player.MenuIndex == Index)
+                        PrintSpritePulse(CurrentPart->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.75, 32.0, 0.25)
+                    else if (Player.NewShieldParts[Player.ShieldPage][Index])
+                        PrintSpritePulse(CurrentPart->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.75, 64.0, 0.25)
+                    else
+                        PrintSprite(CurrentPart->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.05);
+                    
+                    // Set Description
+                    if (Index == Player.MenuIndex)
                     {
-                        // Draw Component
-                        if (Player.MenuIndex == Index)
-                            PrintSpritePulse(CurrentPart->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.75, 32.0, 0.25)
-                        else
-                            PrintSprite(CurrentPart->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.05);
+                        // Name
+                        Description = StrParam("%s\n", CurrentPart->Name);
                         
-                        // Set Description
-                        if (Index == Player.MenuIndex)
-                        {
-                            // Name
-                            Description = StrParam("%s\n", CurrentPart->Name);
-                            
-                            str Prepend;
-                            
-                            // Capacity
-                            if (CurrentPart->Capacity < 0)
-                                Prepend = "\cc"
-                            else
-                                Prepend = "\cj+";
-                            if (CurrentPart->Capacity != 0)
-                                Description = StrParam("%s\n%s%d Capacity\n", Description, Prepend, CurrentPart->Capacity);
-                            
-                            // Charge Rate
-                            if (CurrentPart->ChargeRate < 0)
-                                Prepend = "\cc"
-                            else
-                                Prepend = "\cj+";
-                            if (CurrentPart->ChargeRate != 0)
-                                Description = StrParam("%s\n%s%d Charge Rate/Sec\n", Description, Prepend, CurrentPart->ChargeRate);
-                            
-                            // Delay Rate
-                            if (CurrentPart->DelayRate > 0)
-                                Prepend = "\cc+"
-                            else
-                                Prepend = "\cj";
-                            if (CurrentPart->DelayRate != 0)
-                                Description = StrParam("%s\n%s%k Delay\n", Description, Prepend, CurrentPart->DelayRate);
-                        };
+                        str Prepend;
+                        
+                        // Capacity
+                        if (CurrentPart->Capacity < 0)
+                            Prepend = "\cc"
+                        else
+                            Prepend = "\cj+";
+                        if (CurrentPart->Capacity != 0)
+                            Description = StrParam("%s\n%s%d Capacity\n", Description, Prepend, CurrentPart->Capacity);
+                        
+                        // Charge Rate
+                        if (CurrentPart->ChargeRate < 0)
+                            Prepend = "\cc"
+                        else
+                            Prepend = "\cj+";
+                        if (CurrentPart->ChargeRate != 0)
+                            Description = StrParam("%s\n%s%d Charge Rate/Sec\n", Description, Prepend, CurrentPart->ChargeRate);
+                        
+                        // Delay Rate
+                        if (CurrentPart->DelayRate > 0)
+                            Prepend = "\cc+"
+                        else
+                            Prepend = "\cj";
+                        if (CurrentPart->DelayRate != 0)
+                            Description = StrParam("%s\n%s%k Delay\n", Description, Prepend, CurrentPart->DelayRate);
                     };
-                }
-                else if (Player.ShieldPage == 3 && k == 3)
+                };
+            }
+            else if (Player.ShieldPage == SHIELDPAGE_ACCESSORY)
+            {
+                if (Index < MaxItems && CheckInventory(CurrentAccessory->Actor))
                 {
-                    if (Index < MaxItems && CheckInventory(CurrentAccessory->Actor))
+                    // Draw Component
+                    if (Player.MenuIndex == Index)
+                        PrintSpritePulse(CurrentAccessory->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.75, 32.0, 0.25)
+                    else if (Player.NewShieldAccessoryParts[Index])
+                        PrintSpritePulse(CurrentAccessory->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.75, 64.0, 0.25)
+                    else
+                        PrintSprite(CurrentAccessory->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.05);
+                    
+                    // Set Description
+                    if (Index == Player.MenuIndex)
                     {
-                        // Draw Component
-                        if (Player.MenuIndex == Index)
-                            PrintSpritePulse(CurrentAccessory->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.75, 32.0, 0.25)
-                        else
-                            PrintSprite(CurrentAccessory->Icon, 0, 17.1 + (j * 34.0), 52.1 + (i * 34.0), 0.05);
+                        // Name
+                        Description = StrParam("%s\n", CurrentAccessory->Name);
                         
-                        // Set Description
-                        if (Index == Player.MenuIndex)
-                        {
-                            // Name
-                            Description = StrParam("%s\n", CurrentAccessory->Name);
-                            
-                            str Prepend;
-                            
-                            // Extra Description
-                            if (CurrentAccessory->Description != "")
-                                Description = StrParam("%s\n%s\n", Description, CurrentAccessory->Description);
-                        };
+                        str Prepend;
+                        
+                        // Extra Description
+                        if (CurrentAccessory->Description != "")
+                            Description = StrParam("%s\n%s\n", Description, CurrentAccessory->Description);
                     };
                 };
             };
