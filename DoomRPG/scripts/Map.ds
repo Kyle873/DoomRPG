@@ -295,12 +295,6 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     
     // We need to clear all of the event data before choosing one
     
-    // One-Monster
-    TargetLevel->SelectedMonster = nullptr;
-    
-    // Harmonized Destruction
-    TargetLevel->AuraType = 0;
-    
     // Megaboss
     TargetLevel->MegabossActor = nullptr;
     
@@ -323,11 +317,17 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     // Low Power
     TargetLevel->PowerGeneratorActive = false;
     
+    // One-Monster
+    TargetLevel->SelectedMonster = nullptr;
+    
     // Hell Unleashed
     TargetLevel->HellUnleashedActive = false;
     TargetLevel->PandoraBoxTID = 0;
     TargetLevel->LevelAdd = 0;
     TargetLevel->RareAdd = 0;
+    
+    // Harmonized Destruction
+    TargetLevel->AuraType = 0;
     
     // Don't bother creating an event if the level has no monsters
     if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
@@ -368,7 +368,14 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     
     // Initialize some basic info for the chosen event
     
-    if (TargetLevel->Event == MAPEVENT_TOXICHAZARD)
+    if (TargetLevel->Event == MAPEVENT_MEGABOSS)
+    {
+        TargetLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Chosen Boss: \cg%s\n", TargetLevel->MegabossActor->Actor);
+    }
+    else if (TargetLevel->Event == MAPEVENT_TOXICHAZARD)
     {
         TargetLevel->HazardLevel = Random(1, 5);
         TargetLevel->RadLeft = 100;
@@ -389,13 +396,6 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     else if (TargetLevel->Event == MAPEVENT_HARMONIZEDAURAS)
     {
         TargetLevel->AuraType = Random(0, AURA_MAX);
-    }
-    else if (TargetLevel->Event == MAPEVENT_MEGABOSS)
-    {
-        TargetLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
-        
-        if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: Chosen Boss: \cg%s\n", TargetLevel->MegabossActor->Actor);
     };
 };
 
@@ -479,11 +479,6 @@ script void SetupMapEvent()
             SetHudSize(0, 0, false);
             break;
         
-        case MAPEVENT_HARMONIZEDAURAS:
-            // Harmonized Destruction: Everything spawns with the same aura.
-            HarmonizedDestructionEvent();
-            break;
-        
         case MAPEVENT_ONEMONSTER:
             // One-Monster: All monsters are of a single type.
             OneMonsterEvent();
@@ -493,6 +488,11 @@ script void SetupMapEvent()
             // Hell Unleashed: Monsters will continue to spawn in over time
             // Monster levels and rare drop rates will steadily increase while you stay in the level
             HellUnleashedEvent();
+            break;
+        
+        case MAPEVENT_HARMONIZEDAURAS:
+            // Harmonized Destruction: Everything spawns with the same aura.
+            HarmonizedDestructionEvent();
             break;
         
         // Bonus Events
@@ -866,6 +866,7 @@ script void ThermonuclearBombEvent()
     HudMessageBold("\cgWARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\ciTIME UNTIL DETONATION: %s\n",
                    FormatTime(CurrentLevel->BombTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
     AmbientSound("nuke/alert", 127);
+    SetHudSize(0, 0, false);
     
     Delay(35 * 4);
     
@@ -1129,42 +1130,6 @@ script void OneMonsterEvent()
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.4, 150.0, 1.0, 19.0);
-};
-
-script void HarmonizedDestructionEvent()
-{
-    if (AveragePlayerLevel() < 20 && CurrentLevel->AuraType == AURA_MAX)
-        CurrentLevel->AuraType = Random(0, AURA_MAX - 1);
-    
-    if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: Aura type %d\n", CurrentLevel->AuraType);
-    
-    for (int i = 0; i < MonsterID; i++)
-    {
-        if (!Monsters[i].Init)
-            continue;
-        
-        if (CurrentLevel->AuraType == AURA_MAX)
-        {
-            for (int j = 0; j < AURA_MAX; j++)
-                Monsters[i].Aura.Type[j].Active = true;
-        }
-        else
-        {
-            Monsters[i].Aura.Type[CurrentLevel->AuraType].Active = true;
-        };
-        
-        Monsters[i].Flags &= MF_NOAURAGEN; // Don't let our aura get overwritten
-    };
-    
-    // Level feeling
-    SetMusic("OneAura");
-    SetHudSize(640, 480, false);
-    SetFont("BIGFONT");
-    if (CurrentLevel->AuraType != AURA_MAX)
-        HudMessage("A strange, malicious harmony fills the air.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0)
-    else
-        HudMessage("A strange, malicious harmony fills the air.\nAnd frankly, it's terrifying.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0);
     SetHudSize(0, 0, false);
 };
 
@@ -1279,6 +1244,41 @@ script void HellUnleashedSpawnMonsters()
         Stats->Level += (int)CurrentLevel->LevelAdd;
         Stats->NeedReinit = true;
     };
+};
+
+script void HarmonizedDestructionEvent()
+{
+    if (AveragePlayerLevel() < 20 && CurrentLevel->AuraType == AURA_MAX)
+        CurrentLevel->AuraType = Random(0, AURA_MAX - 1);
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: Aura type %d\n", CurrentLevel->AuraType);
+    
+    for (int i = 0; i < MonsterID; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        if (CurrentLevel->AuraType == AURA_MAX)
+        {
+            for (int j = 0; j < AURA_MAX; j++)
+                Monsters[i].Aura.Type[j].Active = true;
+        }
+        else
+            Monsters[i].Aura.Type[CurrentLevel->AuraType].Active = true;
+        
+        Monsters[i].Flags &= MF_NOAURAGEN; // Don't let our aura get overwritten
+    };
+    
+    // Level feeling
+    SetMusic("OneAura");
+    SetHudSize(640, 480, false);
+    SetFont("BIGFONT");
+    if (CurrentLevel->AuraType != AURA_MAX)
+        HudMessage("A strange, malicious harmony fills the air.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0)
+    else
+        HudMessage("A strange, malicious harmony fills the air.\nAnd frankly, it's terrifying.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0);
+    SetHudSize(0, 0, false);
 };
 
 script void RainbowEvent()
@@ -1493,8 +1493,7 @@ script void MapLoop()
         if (Timer() > 4)
         {
             AmbientSound("misc/secret", 127);
-            HudMessageBold("Everything falls silent.\n",
-                HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+            HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
         };
         
         CurrentLevel->Event = MAPEVENT_NONE;
