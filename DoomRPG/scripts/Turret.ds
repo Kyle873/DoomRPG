@@ -398,22 +398,27 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Hardware - Battery Charge Bus"; 10; 0;
         "Decreases the time it takes for the turret's battery to be recharged when sent back to the Outpost";
+        "Upgrades decrease charging time when in maintenance";
     };
     {
         "Hardware - Build Quality"; 10; 0;
         "Decreases the parts it takes to repair the turret";
+        "Upgrades decrease the turret parts necessary for repair when in maintenance";
     };
     {
         "Hardware - Parts Optimization"; 10; 0;
         "Decreases the time it takes to repair the turret";
+        "Upgrades decrease repair time when in maintenance";
     };
     {
         "Hardware - Specification Optimization"; 10; 0;
-        "Decreases the time it takes to upgrade the turret";
+        "Decreases the time it takes to upgrade and refit the turret";
+        "Upgrades decrease refit time when in maintenance";
     };
     {
         "Hardware - Expert Fabrication"; 10; 0;
         "Decreases the cost of maintenance";
+        "Upgrades decrease cash flow required when in maintenance";
     };
 };
 
@@ -834,6 +839,14 @@ function void TurretMaintenance()
     
     // Don't send for maintenance if there is no maintenance to be done
     if (!Player.Turret.Maintenance && Player.Turret.ChargeTimer <= 0 && Player.Turret.RepairTimer <= 0 && Player.Turret.RefitTimer <= 0) return;
+    
+    // You don't have any money to begin maintenance
+    if (!CheckInventory("DRPGCredits"))
+    {
+        ActivatorSound("menu/error", 127);
+        PrintError("Cannot perform maintenance because you have no money");
+        return;
+    };
     
     if (!Player.Turret.Maintenance)
     {
