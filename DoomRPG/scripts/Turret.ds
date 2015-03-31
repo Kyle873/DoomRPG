@@ -275,8 +275,9 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
         "Issuing this command will toggle Emergency Teleportation on/off";
     };
     {
-        "Assist Module - Team Unit"; 1; 0;
+        "Assist Module - Team Unit"; 10; 0;
         "Allows other assist modules to be used on teammates around you";
+        "Upgrades increase assistance range";
     };
     
     // --------------------------------------------------
@@ -355,32 +356,39 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Battery - Capacity"; 10; 0;
         "Increases the capacity of the turret's battery";
+        "Upgrades increase maximum battery capacity";
     };
     
     // Generators
     {
         "Generator - Kinetic"; 10; 0;
         "Charges the turret's battery based on movement";
+        "Upgrades decrease interval between charges";
     };
     {
         "Generator - Illumination"; 10; 0;
         "Charges the turret's battery based on light level";
+        "Upgrades decrease interval between charges";
     };
     {
         "Generator - Force"; 10; 0;
         "Charges the turret's battery from bullet and melee based damage";
+        "Upgrades increase charge amount when recieving this kind of damage";
     };
     {
         "Generator - Thermal"; 10; 0;
         "Charges the turret's battery from fire based damage";
+        "Upgrades increase charge amount when recieving this kind of damage";
     };
     {
         "Generator - Plasma"; 10; 0;
         "Charges the turret's battery from plasma based damage";
+        "Upgrades increase charge amount when recieving this kind of damage";
     };
     {
         "Generator - Nuclear"; 10; 0;
         "Charges the turret's battery from toxicity and radiation based damage";
+        "Upgrades increase charge amount when recieving this kind of damage";
     };
     
     // --------------------------------------------------
@@ -403,6 +411,10 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
         "Hardware - Specification Optimization"; 10; 0;
         "Decreases the time it takes to upgrade the turret";
     };
+    {
+        "Hardware - Expert Fabrication"; 10; 0;
+        "Decreases the cost of maintenance";
+    };
 };
 
 script void TurretLoop() enter
@@ -423,9 +435,6 @@ script void TurretLoop() enter
     
     if (Player.Turret.Upgrade[TU_BUILD] && !Player.Turret.Init)
     {
-        // Spawn the Turret
-        TurretSpawn();
-        
         // Initial charge
         Player.Turret.Battery = TURRET_BATTERY_CHARGE;
         
@@ -451,6 +460,9 @@ script void TurretLoop() enter
         // Set Active and TID
         Player.Turret.Init = true;
         Player.Turret.Active = true;
+        
+        // Spawn the Turret
+        TurretSpawn();
     };
     
     while (Player.Turret.Active)
@@ -470,10 +482,6 @@ script void TurretLoop() enter
         
         // Set Position
         SetActorPosition(Player.Turret.TID, X, Y, Z, false);
-        
-        // Drain Battery
-        if (Player.Turret.Battery > 0 && (Timer() % 35) == 0)
-            Player.Turret.Battery--;
         
         // Battery is drained
         if (Player.Turret.Battery <= 0)
@@ -543,25 +551,65 @@ script void TurretLoop() enter
                 if (!Player.Turret.Upgrade[TU_ASSIST_TEAM] && i != PlayerNumber()) continue;
                 
                 // Apply to teammates around you if you have the Team Unit upgrade
-                if (i != PlayerNumber() && Player.Turret.Upgrade[TU_ASSIST_TEAM] && Distance(Player.Turret.TID, Players(i).TID) >= 512) continue;
+                if (i != PlayerNumber() && Player.Turret.Upgrade[TU_ASSIST_TEAM] > 0 && Distance(Player.Turret.TID, Players(i).TID) >= Player.Turret.Upgrade[TU_ASSIST_TEAM] * 256) continue;
                 
                 // Health
-                if (Player.Turret.Upgrade[TU_ASSIST_HEALTH] > 0 && CalcPercent(Players(i).ActualHealth, Player.HealthMax) < Player.Turret.Upgrade[TU_ASSIST_HEALTH] * 2 && (Timer() % 35) == 0)
+                if (Player.Turret.Upgrade[TU_ASSIST_HEALTH] > 0 && CalcPercent(Players(i).ActualHealth, Players(i).HealthMax) < Player.Turret.Upgrade[TU_ASSIST_HEALTH] * 2 && ((Timer() + 8) % 35) == 0)
+                {
+                    for (fixed j = 0.0; j <= 1.0; j += 0.02)
+                    {
+                        fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
+                        fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
+                        fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
+                        SpawnForced("DRPGTurretAssistParticleHealth", X, Y, Z, 0, 0);
+                    };
+                    
                     Players(i).ActualHealth++;
+                };
                 
                 // Armor
                 SetActivator(Players(i).TID); // Yay maxhax because GetArmorInfo() has no playernum param D:
-                if (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] > 0 && CheckInventory("Armor") > 0 && CheckInventory("Armor") < GetArmorInfo(ARMORINFO_ACTUALSAVEAMOUNT) && (Timer() % (35 * (30 - (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] * 2.5)))) == 0)
+                if (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] > 0 && CheckInventory("Armor") > 0 && CheckInventory("Armor") < GetArmorInfo(ARMORINFO_ACTUALSAVEAMOUNT) && ((Timer() + 35) % (35 * (30 - (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] * 2.5)))) == 0)
+                {
+                    for (fixed j = 0.0; j <= 1.0; j += 0.02)
+                    {
+                        fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
+                        fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
+                        fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
+                        SpawnForced("DRPGTurretAssistParticleArmor", X, Y, Z, 0, 0);
+                    };
+                    
                     GiveInventory("ArmorBonus", 1);
+                };
                 SetActivator(Players(PlayerNum).TID);
                 
                 // Aug Battery
-                if (Player.Turret.Upgrade[TU_ASSIST_AUG] > 0 && Players(i).Augs.Battery < Players(i).Augs.BatteryMax && (Timer() % (35 * (30 - (Player.Turret.Upgrade[TU_ASSIST_AUG] * 2.5)))) == 0)
+                if (Player.Turret.Upgrade[TU_ASSIST_AUG] > 0 && Players(i).Augs.Battery < Players(i).Augs.BatteryMax && ((Timer() + 26) % (35 * (30 - (Player.Turret.Upgrade[TU_ASSIST_AUG] * 2.5)))) == 0)
+                {
+                    for (fixed j = 0.0; j <= 1.0; j += 0.02)
+                    {
+                        fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
+                        fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
+                        fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
+                        SpawnForced("DRPGTurretAssistParticleAug", X, Y, Z, 0, 0);
+                    };
+                    
                     Players(i).Augs.Battery++;
+                };
                 
                 // Shield
-                if (Player.Turret.Upgrade[TU_ASSIST_SHIELD] > 0 && Players(i).Shield.Active && Players(i).Shield.Charge < Players(i).Shield.Capacity && (Timer() % (35 * (30 - (Player.Turret.Upgrade[TU_ASSIST_SHIELD] * 2.5)))) == 0)
+                if (Player.Turret.Upgrade[TU_ASSIST_SHIELD] > 0 && Players(i).Shield.Active && Players(i).Shield.Charge < Players(i).Shield.Capacity && ((Timer() + 17) % (35 * (30 - (Player.Turret.Upgrade[TU_ASSIST_SHIELD] * 2.5)))) == 0)
+                {
+                    for (fixed j = 0.0; j <= 1.0; j += 0.02)
+                    {
+                        fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
+                        fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
+                        fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
+                        SpawnForced("DRPGTurretAssistParticleShield", X, Y, Z, 0, 0);
+                    };
+                    
                     Players(i).Shield.Charge += Players(i).Shield.ChargeRate;
+                };
             };
         
         // Emergency Teleport
@@ -573,22 +621,122 @@ script void TurretLoop() enter
             Player.Turret.TeleportTimer = 35 * 30;
         };
         
+        // Generators
+        if (Player.Turret.HitTimer <= 0)
+        {
+            if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_KINETIC] > 0 && IsPlayerMoving() && (Timer() % (35 * (11 - Player.Turret.Upgrade[TU_BATTERY_GENERATOR_KINETIC]))) == 0)
+                Player.Turret.Battery++;
+            if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_ILLUMINATION] > 0 && GetActorLightLevel(Player.Turret.TID) >= 192 && (Timer() % (35 * (11 - Player.Turret.Upgrade[TU_BATTERY_GENERATOR_ILLUMINATION]))) == 0)
+                Player.Turret.Battery++;
+            
+            // Damage-based Generators
+            if (Health < PrevHealth)
+            {
+                if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_FORCE] > 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") == DT_NORMAL)
+                    Player.Turret.Battery += Player.Turret.Upgrade[TU_BATTERY_GENERATOR_FORCE];
+                if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_FORCE] > 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") == DT_MELEE)
+                    Player.Turret.Battery += Player.Turret.Upgrade[TU_BATTERY_GENERATOR_FORCE];
+                if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_THERMAL] > 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") == DT_FIRE)
+                    Player.Turret.Battery += Player.Turret.Upgrade[TU_BATTERY_GENERATOR_THERMAL];
+                if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_PLASMA] > 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") == DT_PLASMA)
+                    Player.Turret.Battery += Player.Turret.Upgrade[TU_BATTERY_GENERATOR_PLASMA];
+                if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_PLASMA] > 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") == DT_LIGHTNING)
+                    Player.Turret.Battery += Player.Turret.Upgrade[TU_BATTERY_GENERATOR_PLASMA];
+                if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_NUCLEAR] > 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") == DT_TOXIC)
+                    Player.Turret.Battery += Player.Turret.Upgrade[TU_BATTERY_GENERATOR_NUCLEAR];
+                if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_NUCLEAR] > 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") == DT_RADIATION)  
+                    Player.Turret.Battery += Player.Turret.Upgrade[TU_BATTERY_GENERATOR_NUCLEAR];
+            };
+        };
+        
         // Timers
-        if (Health < PrevHealth)
+        if (Health < PrevHealth && GetUserVariable(Player.Turret.TID, "user_damage_type") != DT_TOXIC && GetUserVariable(Player.Turret.TID, "user_damage_type") != DT_RADIATION)
             Player.Turret.HitTimer = 35 * 5;
         if (Player.Turret.HitTimer > 0)
             Player.Turret.HitTimer--;
         if (Player.Turret.TeleportTimer > 0)
             Player.Turret.TeleportTimer--;
         
+        // Drain Battery
+        if (Player.Turret.Battery > 0 && (Timer() % 35) == 0)
+            Player.Turret.Battery--;
+        
+        // Prevent battery overflow
+        if (Player.Turret.Battery > Player.Turret.BatteryMax)
+            Player.Turret.Battery = Player.Turret.BatteryMax;
+        
         // Pass info to uservars
         TurretPassVars();
+        
+        // Reset damage type
+        SetUserVariable(Player.Turret.TID, "user_damage_type", DT_NONE);
+        
+        // Turret was destroyed
+        if (Health - PrevHealth < 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") != DT_NONE)
+            Player.Turret.Destroyed = true;
         
         Delay(1);
         
         // Post-health check
         PrevHealth = Health;
+        Player.Turret.Health = Health;
     };
+    
+    Delay(1);
+    goto Start;
+};
+
+script void TurretLoopMaintenance() enter
+{
+    bool CanRepair = true;
+    int RepairMod = 0;
+    
+    Start:
+    
+    // Calculate Timers
+    Player.Turret.ChargeTimer = Player.Turret.BatteryMax - Player.Turret.Battery;
+    Player.Turret.RepairTimer = Player.Turret.HealthMax - Player.Turret.Health;
+    
+    // No Credits for payment
+    if (CheckInventory("DRPGCredits") <= 0)
+        Player.Turret.Maintenance = false;
+    
+    // Maintenance
+    if (Player.Turret.Maintenance)
+    {
+        // Charging
+        if ((Timer() % (35 - (Player.Turret.Upgrade[TU_HARDWARE_BATTERY] * 3))) == 0)
+            if (Player.Turret.ChargeTimer > 0)
+                Player.Turret.Battery++;
+        
+        // Repairing
+        if ((Timer() % (35 - (Player.Turret.Upgrade[TU_HARDWARE_PART] * 3))) == 0)
+        {
+            RepairMod = 10 - Player.Turret.Upgrade[TU_HARDWARE_BUILD];
+            if (RepairMod > 0 && CheckInventory("DRPGTurretPart") <= 0)
+                CanRepair = false;
+            if (CanRepair)
+            {
+                if (RepairMod > 0 && (Player.Turret.RepairTimer % 10) == 0)
+                    TakeInventory("DRPGTurretPart", 1);
+                if (Player.Turret.RepairTimer > 0)
+                    Player.Turret.Health++;
+            };
+        };
+        
+        // Refitting
+        if ((Timer() % (35 - (Player.Turret.Upgrade[TU_HARDWARE_SPECS] * 3))) == 0)
+            if (Player.Turret.RefitTimer > 0)
+                Player.Turret.RefitTimer--;
+        
+        // Steady credit loss while maintenance is happening
+        if ((Timer() % (1 + Player.Turret.Upgrade[TU_HARDWARE_FABRICATION])) == 0)
+            TakeInventory("DRPGCredits", 1);
+    };
+    
+    // Maintenance is done
+    if (Player.Turret.ChargeTimer <= 0 && Player.Turret.RepairTimer <= 0 && Player.Turret.RefitTimer <= 0)
+        Player.Turret.Maintenance = false;
     
     Delay(1);
     goto Start;
@@ -603,6 +751,8 @@ acscript void TurretInit()
     SetActivator(MasterTID);
     Thing_ChangeTID(TempTID, Player.Turret.TID);
     
+    if (Player.Turret.Health > 0)
+        SetActorProperty(Player.Turret.TID, APROP_Health, Player.Turret.Health);
     Player.Turret.Active = true;
 };
 
@@ -675,6 +825,29 @@ function void BuildTurretData()
 {
     // Command description for Stim Injector
     TurretUpgradeData[TU_ASSIST_INJECTOR].CommandInfo = StrParam("Use \cd%K\c- + \cd%K\ck to issue this command\n", "+speed", "drpg_usestim");
+};
+
+function void TurretMaintenance()
+{
+    // Don't do anything if the turret isn't built yet
+    if (!Player.Turret.Upgrade[TU_BUILD]) return;
+    
+    // Don't send for maintenance if there is no maintenance to be done
+    if (!Player.Turret.Maintenance && Player.Turret.ChargeTimer <= 0 && Player.Turret.RepairTimer <= 0 && Player.Turret.RefitTimer <= 0) return;
+    
+    if (!Player.Turret.Maintenance)
+    {
+        ActivatorSound("menu/move", 127);
+        Player.Turret.Maintenance = true;
+        TurretDespawn();
+    }
+    else
+    {
+        ActivatorSound("menu/move", 127);
+        Player.Turret.Maintenance = false;
+        if (Player.Turret.RefitTimer <= 0)
+            TurretSpawn();
+    };
 };
 
 function void TurretCommand(int Index)
@@ -943,6 +1116,34 @@ function void TurretSpawn()
 {
     int TID = UniqueTID();
     
+    if (Player.Turret.Battery <= 0)
+    {
+        ActivatorSound("menu/error", 127);
+        PrintError("Your turret's battery is depleted");
+        return;
+    };
+    
+    if (Player.Turret.Destroyed)
+    {
+        ActivatorSound("menu/error", 127);
+        PrintError("Your turret is destroyed and must be repaired");
+        return;
+    };
+    
+    if (Player.Turret.Maintenance)
+    {
+        ActivatorSound("menu/error", 127);
+        PrintError("Your turret is currently in the Outpost for maintenance");
+        return;
+    };
+    
+    if (Player.Turret.RefitTimer > 0)
+    {
+        ActivatorSound("menu/error", 127);
+        PrintError("Your turret is currently being refitted with upgrades");
+        return;
+    };
+    
     GiveInventory("DRPGPortableTurretSpawner", 1);
     SpawnForced("TeleportFog", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
     
@@ -951,15 +1152,18 @@ function void TurretSpawn()
 
 function void TurretDespawn()
 {
+    if (!Player.Turret.Active) return;
+    
+    Player.Turret.Health = GetActorProperty(Player.Turret.TID, APROP_Health);
+    Player.Turret.Active = false;
+    
     SpawnForced("TeleportFog", GetActorX(Player.Turret.TID), GetActorY(Player.Turret.TID), GetActorZ(Player.Turret.TID), 0, 0);
     Thing_Remove(Player.Turret.TID);
-    
-    Player.Turret.Active = false;
 };
 
 acscript void GiveTurret()
 {
-    Player.Turret.Upgrade[TU_BUILD] = 1;
+    Player.Turret.Upgrade[TU_BUILD] = true;
 };
 
 acscript void FullTurret()

@@ -1267,6 +1267,30 @@ function void DrawTurretMenu()
         HudMessage("%d\n", Parts, HUDMSG_PLAIN, 0, CR_WHITE, 96.0, 38.0, 0.05);
     PrintSprite("TPRTA0", 0, 96.1, 56.0, 0.05);
     
+    // Charge Timer
+    SetFont("BIGFONT");
+    HudMessage("%s\n", FormatTime(Player.Turret.ChargeTimer * 35), HUDMSG_PLAIN, 0, CR_YELLOW, 160.1, 38.0, 0.05);
+    if (Player.Turret.Maintenance)
+        PrintSpritePulse("TCharge", 0, 160.1, 35.0, 0.5, 32.0, 0.5)
+    else
+        PrintSprite("TCharge", 0, 160.1, 35.0, 0.05);
+    
+    // Repair Timer
+    SetFont("BIGFONT");
+    HudMessage("%s\n", FormatTime(Player.Turret.RepairTimer * 35), HUDMSG_PLAIN, 0, CR_BRICK, 224.1, 38.0, 0.05);
+    if (Player.Turret.Maintenance)
+        PrintSpritePulse("TRepair", 0, 224.1, 35.0, 0.5, 32.0, 0.5)
+    else
+        PrintSprite("TRepair", 0, 224.1, 35.0, 0.05);
+    
+    // Refit Timer
+    SetFont("BIGFONT");
+    HudMessage("%s\n", FormatTime(Player.Turret.RefitTimer * 35), HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 288.1, 38.0, 0.05);
+    if (Player.Turret.Maintenance)
+        PrintSpritePulse("TRefit", 0, 288.1, 35.0, 0.5, 32.0, 0.5)
+    else
+        PrintSprite("TRefit", 0, 288.1, 35.0, 0.05);
+    
     // Modules
     int Count = 0;
     while (Count < TURRET_PAGE_MAX)
@@ -1385,11 +1409,42 @@ function void DrawTurretInfo(fixed X, fixed Y, int Index)
         Y -= 4.0;
         Info = StrParam("\cv%k\n\cvSec\n", 30 - (Player.Turret.Upgrade[TU_ASSIST_SHIELD] * 2.5));
         break;
+    case TU_ASSIST_TEAM:
+        Y -= 4.0;
+        Info = StrParam("\cj%d\n\cjRange\n", Player.Turret.Upgrade[TU_ASSIST_TEAM] * 256);
+        break;
     case TU_ASSIST_TELEPORT:
         if (Player.Turret.TeleportEnabled)
             Info = "\cdON"
         else
             Info = "\caOFF";
+        break;
+    case TU_BATTERY_CAPACITY:
+        Info = StrParam("\ck%s\n", FormatTime(Player.Turret.BatteryMax * 35));
+        break;
+    case TU_BATTERY_GENERATOR_KINETIC:
+        Y -= 4.0;
+        Info = StrParam("\ck%d Sec\n\ckDelay\n", 11 - Player.Turret.Upgrade[TU_BATTERY_GENERATOR_KINETIC]);
+        break;
+    case TU_BATTERY_GENERATOR_ILLUMINATION:
+        Y -= 4.0;
+        Info = StrParam("\ck%d Sec\n\ckDelay\n", 11 - Player.Turret.Upgrade[TU_BATTERY_GENERATOR_ILLUMINATION]);
+        break;
+    case TU_BATTERY_GENERATOR_FORCE:
+        Y -= 4.0;
+        Info = StrParam("\cj+%d\n\cjDMG\n", Player.Turret.Upgrade[TU_BATTERY_GENERATOR_FORCE]);
+        break;
+    case TU_BATTERY_GENERATOR_THERMAL:
+        Y -= 4.0;
+        Info = StrParam("\cg+%d\n\cgDMG\n", Player.Turret.Upgrade[TU_BATTERY_GENERATOR_THERMAL]);
+        break;
+    case TU_BATTERY_GENERATOR_PLASMA:
+        Y -= 4.0;
+        Info = StrParam("\cn+%d\n\cnDMG\n", Player.Turret.Upgrade[TU_BATTERY_GENERATOR_PLASMA]);
+        break;
+    case TU_BATTERY_GENERATOR_NUCLEAR:
+        Y -= 4.0;
+        Info = StrParam("\cd+%d\n\cdDMG\n", Player.Turret.Upgrade[TU_BATTERY_GENERATOR_NUCLEAR]);
         break;
     };
     
@@ -1838,6 +1893,8 @@ function void MenuInput()
             else
                 TurretCommand(Player.MenuIndex);
         };
+        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
+            TurretMaintenance();
         if (Buttons == BT_JUMP && OldButtons != BT_JUMP)
         {
             Player.TurretUpgradeMode = !Player.TurretUpgradeMode;
@@ -1950,13 +2007,12 @@ function void IncreaseSkill(int Category, int Index)
 
 function void UpgradeTurret(int Index)
 {
-    /* Uncomment when ready
     if (Index > 0 && !Player.Turret.Upgrade[TU_BUILD])
     {
         PrintError("You haven't built the turret yet");
         ActivatorSound("menu/error", 127);
         return;
-    }; */
+    };
     
     if (Player.Turret.Upgrade[Index] < TurretUpgradeData[Index].MaxLevel)
     {
@@ -1965,6 +2021,13 @@ function void UpgradeTurret(int Index)
             Player.Turret.Upgrade[Index]++;
             TakeInventory("DRPGTurretPart", TurretUpgradeData[Index].Cost);
             ActivatorSound("menu/move", 127);
+            
+            // Refit
+            if (Index > 0)
+            {
+                TurretDespawn();
+                Player.Turret.RefitTimer += Player.Turret.Upgrade[Index] * 5;
+            };
         }
         else
         {

@@ -834,11 +834,10 @@ script void TurretHUD() enter
 {
     Start:
     
-    while (Player.Turret.Active || (GetCVar("drpg_hud_preview") && GetCVar("drpg_debug")))
+    while (Player.Turret.Active || Player.Turret.Maintenance || (GetCVar("drpg_hud_preview") && GetCVar("drpg_debug")))
     {
         fixed X = GetCVarFixed("drpg_turret_x");
         fixed Y = GetCVarFixed("drpg_turret_y");
-        int Health = GetActorProperty(Player.Turret.TID, APROP_Health);
         int[TW_MAX] Ammo =
         {
             Player.Turret.BulletAmmo;
@@ -860,17 +859,31 @@ script void TurretHUD() enter
             case TW_PLASMA: case TW_RAILGUN:    AmmoIcon = "CELLA0";    break;
         };
         
-        // Icons
-        PrintSprite("PTURA3A7", 0, X + 0.1, Y + (int)(Sin((fixed)Timer() / 64.0) * 8.0), 0.05);
-        if (Player.Turret.Weapon > 0)
-            PrintSprite(AmmoIcon, 0, X + 0.1, Y + 24.0, 0.05);
-        
-        // Health, Battery, Ammo
-        SetFont("BIGFONT");
-        HudMessage("%d\n", Health, HUDMSG_PLAIN, 0, CR_RED, X + 24.1, Y - 16.0, 0.05);
-        HudMessage("%s\n", FormatTime(Player.Turret.Battery * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 24.1, Y, 0.05);
-        if (Player.Turret.Weapon > 0)
-            HudMessage("%d\n", Ammo[Player.Turret.Weapon - 1], HUDMSG_PLAIN, 0, CR_WHITE, X + 24.1, Y + 16.0, 0.05);
+        if (Player.Turret.Maintenance)
+        {
+            // Icon
+            PrintSprite("TMaint", 0, X + -16.1, Y - 4.0, 0.05);
+            
+            // Timers
+            SetFont("BIGFONT");
+            HudMessage("%s\n", FormatTime(Player.Turret.ChargeTimer * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 24.1, Y - 16.0, 0.05);
+            HudMessage("%s\n", FormatTime(Player.Turret.RepairTimer * 35), HUDMSG_PLAIN, 0, CR_BRICK, X + 24.1, Y, 0.05);
+            HudMessage("%s\n", FormatTime(Player.Turret.RefitTimer * 35), HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 24.1, Y + 16.0, 0.05);
+        }
+        else
+        {
+            // Icons
+            PrintSprite("PTURA3A7", 0, X + 0.1, Y + (int)(Sin((fixed)Timer() / 64.0) * 8.0), 0.05);
+            if (Player.Turret.Weapon > 0)
+                PrintSprite(AmmoIcon, 0, X + 0.1, Y + 24.0, 0.05);
+            
+            // Health, Battery, Ammo
+            SetFont("BIGFONT");
+            HudMessage("%d\n", Player.Turret.Health, HUDMSG_PLAIN, 0, CR_RED, X + 24.1, Y - 16.0, 0.05);
+            HudMessage("%s\n", FormatTime(Player.Turret.Battery * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 24.1, Y, 0.05);
+            if (Player.Turret.Weapon > 0)
+                HudMessage("%d\n", Ammo[Player.Turret.Weapon - 1], HUDMSG_PLAIN, 0, CR_WHITE, X + 24.1, Y + 16.0, 0.05);
+        };
         
         Delay(1);
     };

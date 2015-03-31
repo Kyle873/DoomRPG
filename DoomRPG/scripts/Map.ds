@@ -775,6 +775,19 @@ script void EnvironmentalHazardDamage()
         for (int i = 0; i <= SHORT_MAX; i++)
             SectorDamage(i, Damage, "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
         
+        // Damage Turrets
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Player is not in-game
+            if (!PlayerInGame(i)) continue;
+            
+            // Don't have a turret or it isn't out
+            if (!Players(i).Turret.Upgrade[TU_BUILD] || !Players(i).Turret.Active) continue;
+            
+            Thing_Damage2(Players(i).Turret.TID, Damage, "Radiation");
+            SetUserVariable(Players(i).Turret.TID, "user_damage_type", DT_RADIATION);
+        };
+        
         Delay(32);
     };
 };
@@ -795,7 +808,7 @@ acscript void EnvironmentalHazardRefillGenerator()
     if (CurrentLevel->GeneratorFuel < 35 * 30)
         CurrentLevel->GeneratorFuel = 35 * 30;
     
-    AmbientSound ("radiation/refuel", 127);
+    AmbientSound("radiation/refuel", 127);
     SetFont("BIGFONT");
     HudMessageBold("Generator refueled\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.25, 2.0, 1.0);
 };
