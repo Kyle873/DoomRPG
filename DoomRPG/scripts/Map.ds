@@ -676,7 +676,7 @@ script void EnvironmentalHazard()
     while (!NeutralizerSpawned)
     {
         NeutralizerTID = UniqueTID();
-        NeutralizerSpawned = SpawnEventActor("DRPGRadiationNeutralizer", GeneratorTID);
+        NeutralizerSpawned = SpawnEventActor("DRPGRadiationNeutralizer", NeutralizerTID);
         Delay(1);
     };
     
@@ -691,6 +691,12 @@ script void EnvironmentalHazard()
     {
         if (CurrentLevel->GeneratorFuel)
         {
+            if (!GetUserVariable(NeutralizerTID, "user_running"))
+            {
+                SetUserVariable(NeutralizerTID, "user_running", 1);
+                Thing_Activate(NeutralizerTID);
+            };
+            
             CurrentLevel->GeneratorFuel--;
             
             if (Timer() % RadTimeRequired == 0)
@@ -703,6 +709,8 @@ script void EnvironmentalHazard()
                     
                     if (CurrentLevel->HazardLevel == 0)
                     {
+                        if (GetUserVariable(NeutralizerTID, "user_running"))
+                            Thing_Deactivate(NeutralizerTID);
                         EnvironmentalHazardDisarm();
                         return;
                     };
@@ -714,6 +722,11 @@ script void EnvironmentalHazard()
                     HudMessageBold("Radiation level reduced to %d\n", CurrentLevel->HazardLevel, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_YELLOW, 0.5, 0.25, 2.0, 1.0);
                 };
             };
+        }
+        else
+        {
+            if (GetUserVariable(NeutralizerTID, "user_running"))
+                Thing_Deactivate(NeutralizerTID);
         };
         
         Delay(1);
@@ -782,8 +795,9 @@ acscript void EnvironmentalHazardRefillGenerator()
     if (CurrentLevel->GeneratorFuel < 35 * 30)
         CurrentLevel->GeneratorFuel = 35 * 30;
     
+    AmbientSound ("radiation/refuel", 127);
     SetFont("BIGFONT");
-    HudMessageBold("Generator refuelled\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.25, 2.0, 1.0);
+    HudMessageBold("Generator refueled\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.25, 2.0, 1.0);
 };
 
 script void EnvironmentalHazardDisarm()
