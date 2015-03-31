@@ -138,7 +138,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     
     // Ammo
     {
-        "Ammo Module - Autoloader"; 0; 0;
+        "Ammo Module - Autoloader"; 1; 0;
         "Autoloads ammo if it runs out from your own ammo pool";
         nullptr;
         "issuing this command will toggle autoloading on and off";
@@ -486,7 +486,8 @@ script void TurretLoop() enter
         fixed Z = GetActorZ(0) + 32.0;
         
         // Set Position
-        SetActorPosition(Player.Turret.TID, X, Y, Z, false);
+        if (!Player.Turret.SelfDestruct)
+            SetActorPosition(Player.Turret.TID, X, Y, Z, false);
         
         // Battery is drained
         if (Player.Turret.Battery <= 0)
@@ -500,6 +501,21 @@ script void TurretLoop() enter
         Player.Turret.PlasmaAmmoMax = 300 * Player.Turret.Upgrade[TU_WEAPON_PLASMA_CAPACITY];
         Player.Turret.RailAmmoMax = 10 * Player.Turret.Upgrade[TU_WEAPON_RAILGUN_CAPACITY];
         Player.Turret.BatteryMax = TURRET_BATTERY_CHARGE * Player.Turret.Upgrade[TU_BATTERY_CAPACITY];
+        
+        // Autoloader
+        if (Player.Turret.Upgrade[TU_AMMO_AUTOLOADER] && Player.Turret.Autoload)
+        {
+            if (Player.Turret.BulletAmmo <= 0)
+                TurretLoadAmmo(TU_WEAPON_BULLET);
+            if (Player.Turret.ShellAmmo <= 0)
+                TurretLoadAmmo(TU_WEAPON_PELLET);
+            if (Player.Turret.RocketAmmo <= 0)
+                TurretLoadAmmo(TU_WEAPON_ROCKET);
+            if (Player.Turret.PlasmaAmmo <= 0)
+                TurretLoadAmmo(TU_WEAPON_PLASMA);
+            if (Player.Turret.RailAmmo <= 0)
+                TurretLoadAmmo(TU_WEAPON_RAILGUN);
+        };
         
         // Nano Ammo Generators
         if (Player.Turret.Upgrade[TU_AMMO_NANOGEN] > 0 && (Timer() % (35 * (15 - Player.Turret.Upgrade[TU_AMMO_NANOGEN]))) == 0)
@@ -777,10 +793,22 @@ acscript void TurretMenu()
     }
     else
     {
-        Player.InMenu = true;
-        Player.Menu = MENUPAGE_TURRET;
-        Player.TurretUpgradeMode = false;
-        ActivatorSound("menu/enter", 127);
+        if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
+        {
+            if (!Player.Turret.Init) return;
+            
+            if (Player.Turret.Active)
+                TurretDespawn()
+            else
+                TurretSpawn();
+        }
+        else
+        {
+            Player.InMenu = true;
+            Player.Menu = MENUPAGE_TURRET;
+            Player.TurretUpgradeMode = false;
+            ActivatorSound("menu/enter", 127);
+        };
     };
 };
 
@@ -830,6 +858,25 @@ acscript int TurretGetProjectileProperty(int Type)
     return 0;
 };
 
+acscript void TurretPostSelfDestruct()
+{
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        // Player is not in-game
+        if (!PlayerInGame(i)) continue;
+        
+        SetActivator(Players(i).TID);
+        FadeRange(255, 255, 255, 0.75, 255, 255, 255, 0.0, 5.0);
+    };
+    
+    SetActivator(GetActorProperty(0, APROP_MasterTID)); // Transfer from Turret to Player
+    
+    Player.Turret.Active = false;
+    Player.Turret.Destroyed = true;
+    Player.Turret.SelfDestruct = false;
+    Player.Turret.Health = 0;
+};
+
 function void BuildTurretData()
 {
     // Command description for Stim Injector
@@ -867,6 +914,79 @@ function void TurretMaintenance()
     };
 };
 
+function bool TurretLoadAmmo(int Type)
+{
+    str[5] AmmoActor =
+    {
+        "Clip";
+        "Shell";
+        "RocketAmmo";
+        "Cell";
+        "Cell";
+    };
+    str[5] ReloadSound =
+    {
+        "turret/reloadbullet";
+        "turret/reloadpellet";
+        "turret/reloadrocket";
+        "turret/reloadplasma";
+        "turret/reloadrail";
+    };
+    int[5] MinAmount = { 50; 20; 5; 100; 50; };
+    int *[5] Ammo =
+    {
+        &Player.Turret.BulletAmmo;
+        &Player.Turret.ShellAmmo;
+        &Player.Turret.RocketAmmo;
+        &Player.Turret.PlasmaAmmo;
+        &Player.Turret.RailAmmo;
+    };
+    int *[5] AmmoMax =
+    {
+        &Player.Turret.BulletAmmoMax;
+        &Player.Turret.ShellAmmoMax;
+        &Player.Turret.RocketAmmoMax;
+        &Player.Turret.PlasmaAmmoMax;
+        &Player.Turret.RailAmmoMax;
+    };
+    int AmmoType;
+    
+    // Determine proper ammo type from param
+    switch (Type)
+    {
+    case TU_WEAPON_BULLET:  AmmoType = 0; break;
+    case TU_WEAPON_PELLET:  AmmoType = 1; break;
+    case TU_WEAPON_ROCKET:  AmmoType = 2; break;
+    case TU_WEAPON_PLASMA:  AmmoType = 3; break;
+    case TU_WEAPON_RAILGUN: AmmoType = 4; break;
+    };
+    
+    if (CheckInventory(AmmoActor[AmmoType]) >= MinAmount[AmmoType] && AmmoType == 4) // Railgun special case
+    {
+        (*Ammo[AmmoType])++;
+        TakeInventory(AmmoActor[AmmoType], MinAmount[AmmoType]);
+        ThingSound(Player.Turret.TID, ReloadSound[AmmoType], 127);
+        return true;
+    }
+    else if (CheckInventory(AmmoActor[AmmoType]) >= MinAmount[AmmoType] && *Ammo[AmmoType] + MinAmount[AmmoType] > *AmmoMax[AmmoType])
+    {
+        int Amount = *AmmoMax[AmmoType] - *Ammo[AmmoType];
+        *Ammo[AmmoType] += Amount;
+        TakeInventory(AmmoActor[AmmoType], Amount);
+        ThingSound(Player.Turret.TID, ReloadSound[AmmoType], 127);
+        return true;
+    }
+    else if (CheckInventory(AmmoActor[AmmoType]) >= MinAmount[AmmoType])
+    {
+        *Ammo[AmmoType] += MinAmount[AmmoType];
+        TakeInventory(AmmoActor[AmmoType], MinAmount[AmmoType]);
+        ThingSound(Player.Turret.TID, ReloadSound[AmmoType], 127);
+        return true;
+    }
+    else
+        return false;
+};
+
 function void TurretCommand(int Index)
 {
     // Don't issue the command if you don't have the upgrade yet
@@ -892,28 +1012,14 @@ function void TurretCommand(int Index)
         if (Player.Turret.Weapon != TW_BULLET)
         {
             Player.Turret.Weapon = TW_BULLET;
-            ActivatorSound("menu/click", 127);
+            ThingSound(Player.Turret.TID, "turret/loadbullet", 127);
         }
         else if (Player.Turret.BulletAmmo < Player.Turret.BulletAmmoMax)
         {
-            if (CheckInventory("Clip") < 50)
+            if (!TurretLoadAmmo(TU_WEAPON_BULLET))
             {
                 ActivatorSound("menu/error", 127);
                 PrintError("You need at least \ca50 Bullets\c- to load into the turret");
-            }
-            else
-            {
-                if (Player.Turret.BulletAmmo + 50 > Player.Turret.BulletAmmoMax)
-                {
-                    int Amount = Player.Turret.BulletAmmoMax - Player.Turret.BulletAmmo;
-                    Player.Turret.BulletAmmo += Amount;
-                    TakeInventory("Clip", Amount);
-                }
-                else
-                {
-                    Player.Turret.BulletAmmo += 50;
-                    TakeInventory("Clip", 50);
-                };
             };
         };
     };
@@ -923,28 +1029,14 @@ function void TurretCommand(int Index)
         if (Player.Turret.Weapon != TW_PELLET)
         {
             Player.Turret.Weapon = TW_PELLET;
-            ActivatorSound("menu/click", 127);
+            ThingSound(Player.Turret.TID, "turret/loadpellet", 127);
         }
         else if (Player.Turret.ShellAmmo < Player.Turret.ShellAmmoMax)
         {
-            if (CheckInventory("Shell") < 20)
+            if (!TurretLoadAmmo(TU_WEAPON_PELLET))
             {
                 ActivatorSound("menu/error", 127);
                 PrintError("You need at least \ci20 Shells\c- to load into the turret");
-            }
-            else
-            {
-                if (Player.Turret.ShellAmmo + 20 > Player.Turret.ShellAmmoMax)
-                {
-                    int Amount = Player.Turret.ShellAmmoMax - Player.Turret.ShellAmmo;
-                    Player.Turret.ShellAmmo += Amount;
-                    TakeInventory("Shell", Amount);
-                }
-                else
-                {
-                    Player.Turret.ShellAmmo += 20;
-                    TakeInventory("Shell", 20);
-                };
             };
         };
     };
@@ -954,28 +1046,14 @@ function void TurretCommand(int Index)
         if (Player.Turret.Weapon != TW_ROCKET)
         {
             Player.Turret.Weapon = TW_ROCKET;
-            ActivatorSound("menu/click", 127);
+            ThingSound(Player.Turret.TID, "turret/loadrocket", 127);
         }
         else if (Player.Turret.RocketAmmo < Player.Turret.RocketAmmoMax)
         {
-            if (CheckInventory("RocketAmmo") < 5)
+            if (!TurretLoadAmmo(TU_WEAPON_ROCKET))
             {
                 ActivatorSound("menu/error", 127);
                 PrintError("You need at least \cc5 Rockets\c- to load into the turret");
-            }
-            else
-            {
-                if (Player.Turret.RocketAmmo + 5 > Player.Turret.RocketAmmoMax)
-                {
-                    int Amount = Player.Turret.RocketAmmoMax - Player.Turret.RocketAmmo;
-                    Player.Turret.RocketAmmo += Amount;
-                    TakeInventory("RocketAmmo", Amount);
-                }
-                else
-                {
-                    Player.Turret.RocketAmmo += 5;
-                    TakeInventory("RocketAmmo", 5);
-                };
             };
         };
     };
@@ -985,28 +1063,14 @@ function void TurretCommand(int Index)
         if (Player.Turret.Weapon != TW_PLASMA)
         {
             Player.Turret.Weapon = TW_PLASMA;
-            ActivatorSound("menu/click", 127);
+            ThingSound(Player.Turret.TID, "turret/loadplasma", 127);
         }
         else if (Player.Turret.PlasmaAmmo < Player.Turret.PlasmaAmmoMax)
         {
-            if (CheckInventory("Cell") < 100)
+            if (!TurretLoadAmmo(TU_WEAPON_PLASMA))
             {
                 ActivatorSound("menu/error", 127);
                 PrintError("You need at least \cd100 Cells\c- to load into the turret");
-            }
-            else
-            {
-                if (Player.Turret.PlasmaAmmo + 100 > Player.Turret.PlasmaAmmoMax)
-                {
-                    int Amount = Player.Turret.PlasmaAmmoMax - Player.Turret.PlasmaAmmo;
-                    Player.Turret.PlasmaAmmo += Amount;
-                    TakeInventory("Cell", Amount);
-                }
-                else
-                {
-                    Player.Turret.PlasmaAmmo += 100;
-                    TakeInventory("Cell", 100);
-                };
             };
         };
     };
@@ -1016,21 +1080,28 @@ function void TurretCommand(int Index)
         if (Player.Turret.Weapon != TW_RAILGUN)
         {
             Player.Turret.Weapon = TW_RAILGUN;
-            ActivatorSound("menu/click", 127);
+            ThingSound(Player.Turret.TID, "turret/loadrail", 127);
         }
         else if (Player.Turret.RailAmmo < Player.Turret.RailAmmoMax)
         {
-            if (CheckInventory("Cell") < 50)
+            if (!TurretLoadAmmo(TU_WEAPON_RAILGUN))
             {
                 ActivatorSound("menu/error", 127);
                 PrintError("You need at least \cd50 Cells\c- to load into the turret");
-            }
-            else
-            {
-                Player.Turret.RailAmmo++;
-                TakeInventory("Cell", 50);
             };
         };
+    };
+    
+    if (Index == TU_AMMO_AUTOLOADER)
+    {
+        ActivatorSound("menu/move", 127);
+        Player.Turret.Autoload = !Player.Turret.Autoload;
+    };
+    
+    if (Index == TU_WEAPON_SELFDESTRUCT && !Player.Turret.SelfDestruct)
+    {
+        SetActorState(Player.Turret.TID, "SelfDestruct");
+        Player.Turret.SelfDestruct = true;
     };
     
     if (Index == TU_ASSIST_INJECTOR)
@@ -1127,6 +1198,10 @@ function void TurretPassVars()
     SetUserVariable(Player.Turret.TID, "user_ammo_rocket", Player.Turret.RocketAmmo);
     SetUserVariable(Player.Turret.TID, "user_ammo_plasma", Player.Turret.PlasmaAmmo);
     SetUserVariable(Player.Turret.TID, "user_ammo_rail", Player.Turret.RailAmmo);
+    
+    // Self Destruct
+    SetUserVariable(Player.Turret.TID, "user_destruct_range", Player.Turret.Upgrade[TU_WEAPON_SELFDESTRUCT] * 1024);
+    SetUserVariable(Player.Turret.TID, "user_destruct_damage", Player.Turret.Upgrade[TU_WEAPON_SELFDESTRUCT] * 1000);
 };
 
 function void TurretSpawn()
