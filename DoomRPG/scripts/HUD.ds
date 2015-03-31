@@ -832,9 +832,12 @@ script void MultiplayerHUD() enter
 
 script void TurretHUD() enter
 {
+    InterpData Health;
+    Health.TimerMaxCap = 2;
+    
     Start:
     
-    while (Player.Turret.Active || Player.Turret.Maintenance || (GetCVar("drpg_hud_preview") && GetCVar("drpg_debug")))
+    while (Player.Turret.Active || Player.Turret.Maintenance || GetCVar("drpg_hud_preview"))
     {
         fixed X = GetCVarFixed("drpg_turret_x");
         fixed Y = GetCVarFixed("drpg_turret_y");
@@ -849,6 +852,11 @@ script void TurretHUD() enter
         str AmmoIcon = "";
         
         SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+        
+        Health.Value = Player.Turret.Health;
+        
+        // Interpolation
+        Health = Interpolate(Health);
         
         // Determine Ammo Icon
         switch (Player.Turret.Weapon)
@@ -870,7 +878,7 @@ script void TurretHUD() enter
             HudMessage("%s\n", FormatTime(Player.Turret.RepairTimer * 35), HUDMSG_PLAIN, 0, CR_BRICK, X + 24.1, Y, 0.05);
             HudMessage("%s\n", FormatTime(Player.Turret.RefitTimer * 35), HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 24.1, Y + 16.0, 0.05);
         }
-        else
+        else if (!Player.Turret.Maintenance || GetCVar("drpg_hud_preview"))
         {
             // Icons
             PrintSprite("PTURA3A7", 0, X + 0.1, Y + (int)(Sin((fixed)Timer() / 64.0) * 8.0), 0.05);
@@ -879,12 +887,13 @@ script void TurretHUD() enter
             
             // Health, Battery, Ammo
             SetFont("BIGFONT");
-            HudMessage("%d\n", Player.Turret.Health, HUDMSG_PLAIN, 0, CR_RED, X + 24.1, Y - 16.0, 0.05);
+            HudMessage("%d\n", Health.DisplayValue, HUDMSG_PLAIN, 0, CR_RED, X + 24.1, Y - 16.0, 0.05);
             HudMessage("%s\n", FormatTime(Player.Turret.Battery * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 24.1, Y, 0.05);
             if (Player.Turret.Weapon > 0)
                 HudMessage("%d\n", Ammo[Player.Turret.Weapon - 1], HUDMSG_PLAIN, 0, CR_WHITE, X + 24.1, Y + 16.0, 0.05);
         };
         
+        Health.OldValue = Player.Turret.Health;
         Delay(1);
     };
     
