@@ -235,6 +235,11 @@ function bool CheckMapEvent(int Event)
                 return false;
             return true;
         
+        case MAPEVENT_HARMONIZEDAURAS:
+            if (AveragePlayerLevel() < 10)
+                return false;
+            return true;
+        
         case MAPEVENT_BONUS_RAINBOWS:
             if (Random(0, 3))
                 return false;
@@ -246,8 +251,12 @@ function bool CheckMapEvent(int Event)
             return true;
         
         case MAPEVENT_SKILL_HELL:
+            if (CurrentSkill >= 4)
+                return false;
             return true;
         case MAPEVENT_SKILL_ARMAGEDDON:
+            if (CurrentSkill >= 5)
+                return false;
             if (CompatMode != COMPAT_DRLA || AveragePlayerLevel() < 10)
                 return false;
             return true;
@@ -276,6 +285,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
         "All Auras";
         "One-Monster";
         "Hell Unleashed";
+        "Harmonized Destruction";
         
         "RAINBOWS!";
         
@@ -287,6 +297,9 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     
     // One-Monster
     TargetLevel->SelectedMonster = nullptr;
+    
+    // Harmonized Destruction
+    TargetLevel->AuraType = 0;
     
     // Megaboss
     TargetLevel->MegabossActor = nullptr;
@@ -372,6 +385,10 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
         
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: Chosen Monster: \cg%s\n", TargetLevel->SelectedMonster->Name);
+    }
+    else if (TargetLevel->Event == MAPEVENT_HARMONIZEDAURAS)
+    {
+        TargetLevel->AuraType = Random(0, AURA_MAX);
     }
     else if (TargetLevel->Event == MAPEVENT_MEGABOSS)
     {
@@ -462,6 +479,11 @@ script void SetupMapEvent()
             SetHudSize(0, 0, false);
             break;
         
+        case MAPEVENT_HARMONIZEDAURAS:
+            // Harmonized Destruction: Everything spawns with the same aura.
+            HarmonizedDestructionEvent();
+            break;
+        
         case MAPEVENT_ONEMONSTER:
             // One-Monster: All monsters are of a single type.
             OneMonsterEvent();
@@ -496,6 +518,7 @@ script void SetupMapEvent()
         case MAPEVENT_SKILL_ARMAGEDDON:
             if (GameSkill() != 6)
                 ChangeLevel(CurrentLevel->LumpName, 0, CHANGELEVEL_NOINTERMISSION, 5);
+            SetMusic("Skill6");
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
             HudMessage("A foul misfortune sweeps the land, turning up the darkest creatures. There is no God now.\n", HUDMSG_FADEOUT, 0, CR_GREY, 320.4, 150.0, 1.0, 19.0);
@@ -1094,6 +1117,43 @@ script void OneMonsterEvent()
     HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.4, 150.0, 1.0, 19.0);
 };
 
+script void HarmonizedDestructionEvent()
+{
+    if (AveragePlayerLevel() < 20 && CurrentLevel->AuraType == AURA_MAX)
+        CurrentLevel->AuraType = Random(0, AURA_MAX - 1);
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: Aura type %d\n", CurrentLevel->AuraType);
+    
+    for (int i = 0; i < MonsterID; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        if (CurrentLevel->AuraType == AURA_MAX)
+        {
+            for (int j = 0; j < AURA_MAX; j++)
+                Monsters[i].Aura.Type[j].Active = true;
+        }
+        else
+        {
+            Monsters[i].Aura.Type[CurrentLevel->AuraType].Active = true;
+        };
+        
+        Monsters[i].Flags &= MF_NOAURAGEN; // Don't let our aura get overwritten
+    };
+    
+    // Level feeling
+    SetMusic("OneAura");
+    SetHudSize(640, 480, false);
+    SetFont("BIGFONT");
+    if (CurrentLevel->AuraType != AURA_MAX)
+        HudMessage("A strange, malicious harmony fills the air.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0)
+    else
+        HudMessage("A strange, malicious harmony fills the air.\nAnd frankly, it's terrifying.", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0);
+    SetHudSize(0, 0, false);
+};
+
 script void HellUnleashedEvent()
 {
     bool BoxSpawned = false;
@@ -1413,7 +1473,7 @@ script void MapLoop()
         CalculateBonusMaps();
     };
     
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_HARMONIZEDAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
     {
         // All Auras and One-Monster events are ended by killing everything on the map
         if (Timer() > 4)
@@ -1589,6 +1649,10 @@ acscript void SetMapEvent(int Level, int ID)
     
     LevelInfo *MapToChange = &((LevelInfo *)KnownLevels.Data)[LevelIndex];
     MapToChange->Event = ID;
+    
+    if (MapToChange->Event == MAPEVENT_HARMONIZEDAURAS)
+        MapToChange->AuraType = Random(0, AURA_MAX);
+    
     if (CurrentLevel == MapToChange)
         Log("\cjYou will need to warp back to this level to see changes take effect.\n");
 };
