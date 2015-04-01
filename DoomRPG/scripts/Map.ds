@@ -24,7 +24,7 @@ script void MapInit() open
         CurrentSkill = GameSkill() - 1;
         ArrayCreate(&KnownLevels, "LVLS\x00", 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
-        PassingEventTimer = GetCVar ("drpg_mapevent_eventtime") * 35 * 60;
+        PassingEventTimer = GetCVar("drpg_mapevent_eventtime") * 35 * 60;
         
         if (KnownLevels.Data == nullptr)
         {
@@ -235,6 +235,11 @@ function bool CheckMapEvent(int Event)
                 return false;
             return true;
         
+        case MAPEVENT_HARMONIZEDAURAS:
+            if (AveragePlayerLevel() < 10)
+                return false;
+            return true;
+        
         case MAPEVENT_BONUS_RAINBOWS:
             if (Random(0, 3))
                 return false;
@@ -246,8 +251,12 @@ function bool CheckMapEvent(int Event)
             return true;
         
         case MAPEVENT_SKILL_HELL:
+            if (CurrentSkill >= 4)
+                return false;
             return true;
         case MAPEVENT_SKILL_ARMAGEDDON:
+            if (CurrentSkill >= 5)
+                return false;
             if (CompatMode != COMPAT_DRLA || AveragePlayerLevel() < 10)
                 return false;
             return true;
@@ -276,6 +285,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
         "All Auras";
         "One-Monster";
         "Hell Unleashed";
+        "Harmonized Destruction";
         
         "RAINBOWS!";
         
@@ -284,9 +294,6 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     };
     
     // We need to clear all of the event data before choosing one
-    
-    // One-Monster
-    TargetLevel->SelectedMonster = nullptr;
     
     // Megaboss
     TargetLevel->MegabossActor = nullptr;
@@ -310,11 +317,17 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     // Low Power
     TargetLevel->PowerGeneratorActive = false;
     
+    // One-Monster
+    TargetLevel->SelectedMonster = nullptr;
+    
     // Hell Unleashed
     TargetLevel->HellUnleashedActive = false;
     TargetLevel->PandoraBoxTID = 0;
     TargetLevel->LevelAdd = 0;
     TargetLevel->RareAdd = 0;
+    
+    // Harmonized Destruction
+    TargetLevel->AuraType = 0;
     
     // Don't bother creating an event if the level has no monsters
     if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
@@ -355,7 +368,14 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     
     // Initialize some basic info for the chosen event
     
-    if (TargetLevel->Event == MAPEVENT_TOXICHAZARD)
+    if (TargetLevel->Event == MAPEVENT_MEGABOSS)
+    {
+        TargetLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Chosen Boss: \cg%s\n", TargetLevel->MegabossActor->Actor);
+    }
+    else if (TargetLevel->Event == MAPEVENT_TOXICHAZARD)
     {
         TargetLevel->HazardLevel = Random(1, 5);
         TargetLevel->RadLeft = 100;
@@ -373,12 +393,9 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: Chosen Monster: \cg%s\n", TargetLevel->SelectedMonster->Name);
     }
-    else if (TargetLevel->Event == MAPEVENT_MEGABOSS)
+    else if (TargetLevel->Event == MAPEVENT_HARMONIZEDAURAS)
     {
-        TargetLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
-        
-        if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: Chosen Boss: \cg%s\n", TargetLevel->MegabossActor->Actor);
+        TargetLevel->AuraType = Random(0, AURA_MAX);
     };
 };
 
@@ -473,6 +490,11 @@ script void SetupMapEvent()
             HellUnleashedEvent();
             break;
         
+        case MAPEVENT_HARMONIZEDAURAS:
+            // Harmonized Destruction: Everything spawns with the same aura.
+            HarmonizedDestructionEvent();
+            break;
+        
         // Bonus Events
         // --------------------------------------------------
         
@@ -496,6 +518,7 @@ script void SetupMapEvent()
         case MAPEVENT_SKILL_ARMAGEDDON:
             if (GameSkill() != 6)
                 ChangeLevel(CurrentLevel->LumpName, 0, CHANGELEVEL_NOINTERMISSION, 5);
+            SetMusic("Skill6");
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
             HudMessage("A foul misfortune sweeps the land, turning up the darkest creatures. There is no God now.\n", HUDMSG_FADEOUT, 0, CR_GREY, 320.4, 150.0, 1.0, 19.0);
@@ -653,7 +676,7 @@ script void EnvironmentalHazard()
     while (!NeutralizerSpawned)
     {
         NeutralizerTID = UniqueTID();
-        NeutralizerSpawned = SpawnEventActor("DRPGRadiationNeutralizer", GeneratorTID);
+        NeutralizerSpawned = SpawnEventActor("DRPGRadiationNeutralizer", NeutralizerTID);
         Delay(1);
     };
     
@@ -668,6 +691,12 @@ script void EnvironmentalHazard()
     {
         if (CurrentLevel->GeneratorFuel)
         {
+            if (!GetUserVariable(NeutralizerTID, "user_running"))
+            {
+                SetUserVariable(NeutralizerTID, "user_running", 1);
+                Thing_Activate(NeutralizerTID);
+            };
+            
             CurrentLevel->GeneratorFuel--;
             
             if (Timer() % RadTimeRequired == 0)
@@ -680,6 +709,8 @@ script void EnvironmentalHazard()
                     
                     if (CurrentLevel->HazardLevel == 0)
                     {
+                        if (GetUserVariable(NeutralizerTID, "user_running"))
+                            Thing_Deactivate(NeutralizerTID);
                         EnvironmentalHazardDisarm();
                         return;
                     };
@@ -691,6 +722,11 @@ script void EnvironmentalHazard()
                     HudMessageBold("Radiation level reduced to %d\n", CurrentLevel->HazardLevel, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_YELLOW, 0.5, 0.25, 2.0, 1.0);
                 };
             };
+        }
+        else
+        {
+            if (GetUserVariable(NeutralizerTID, "user_running"))
+                Thing_Deactivate(NeutralizerTID);
         };
         
         Delay(1);
@@ -739,6 +775,19 @@ script void EnvironmentalHazardDamage()
         for (int i = 0; i <= SHORT_MAX; i++)
             SectorDamage(i, Damage, "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
         
+        // Damage Turrets
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Player is not in-game
+            if (!PlayerInGame(i)) continue;
+            
+            // Don't have a turret or it isn't out
+            if (!Players(i).Turret.Upgrade[TU_BUILD] || !Players(i).Turret.Active) continue;
+            
+            Thing_Damage2(Players(i).Turret.TID, Damage, "Radiation");
+            SetUserVariable(Players(i).Turret.TID, "user_damage_type", DT_RADIATION);
+        };
+        
         Delay(32);
     };
 };
@@ -759,8 +808,9 @@ acscript void EnvironmentalHazardRefillGenerator()
     if (CurrentLevel->GeneratorFuel < 35 * 30)
         CurrentLevel->GeneratorFuel = 35 * 30;
     
+    AmbientSound("radiation/refuel", 127);
     SetFont("BIGFONT");
-    HudMessageBold("Generator refuelled\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.25, 2.0, 1.0);
+    HudMessageBold("Generator refueled\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.25, 2.0, 1.0);
 };
 
 script void EnvironmentalHazardDisarm()
@@ -829,6 +879,7 @@ script void ThermonuclearBombEvent()
     HudMessageBold("\cgWARNING! WARNING!\n\c[White]THERMONUCLEAR BOMB ACTIVATED!\n\ciTIME UNTIL DETONATION: %s\n",
                    FormatTime(CurrentLevel->BombTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
     AmbientSound("nuke/alert", 127);
+    SetHudSize(0, 0, false);
     
     Delay(35 * 4);
     
@@ -1092,6 +1143,7 @@ script void OneMonsterEvent()
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.4, 150.0, 1.0, 19.0);
+    SetHudSize(0, 0, false);
 };
 
 script void HellUnleashedEvent()
@@ -1205,6 +1257,41 @@ script void HellUnleashedSpawnMonsters()
         Stats->Level += (int)CurrentLevel->LevelAdd;
         Stats->NeedReinit = true;
     };
+};
+
+script void HarmonizedDestructionEvent()
+{
+    if (AveragePlayerLevel() < 20 && CurrentLevel->AuraType == AURA_MAX)
+        CurrentLevel->AuraType = Random(0, AURA_MAX - 1);
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: Aura type %d\n", CurrentLevel->AuraType);
+    
+    for (int i = 0; i < MonsterID; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        if (CurrentLevel->AuraType == AURA_MAX)
+        {
+            for (int j = 0; j < AURA_MAX; j++)
+                Monsters[i].Aura.Type[j].Active = true;
+        }
+        else
+            Monsters[i].Aura.Type[CurrentLevel->AuraType].Active = true;
+        
+        Monsters[i].Flags &= MF_NOAURAGEN; // Don't let our aura get overwritten
+    };
+    
+    // Level feeling
+    SetMusic("OneAura");
+    SetHudSize(640, 480, false);
+    SetFont("BIGFONT");
+    if (CurrentLevel->AuraType != AURA_MAX)
+        HudMessage("A strange, malicious harmony fills the air.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0)
+    else
+        HudMessage("A strange, malicious harmony fills the air.\nAnd frankly, it's terrifying.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0);
+    SetHudSize(0, 0, false);
 };
 
 script void RainbowEvent()
@@ -1413,14 +1500,13 @@ script void MapLoop()
         CalculateBonusMaps();
     };
     
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_HARMONIZEDAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
     {
         // All Auras and One-Monster events are ended by killing everything on the map
         if (Timer() > 4)
         {
             AmbientSound("misc/secret", 127);
-            HudMessageBold("Everything falls silent.\n",
-                HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+            HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
         };
         
         CurrentLevel->Event = MAPEVENT_NONE;
@@ -1589,6 +1675,10 @@ acscript void SetMapEvent(int Level, int ID)
     
     LevelInfo *MapToChange = &((LevelInfo *)KnownLevels.Data)[LevelIndex];
     MapToChange->Event = ID;
+    
+    if (MapToChange->Event == MAPEVENT_HARMONIZEDAURAS)
+        MapToChange->AuraType = Random(0, AURA_MAX);
+    
     if (CurrentLevel == MapToChange)
         Log("\cjYou will need to warp back to this level to see changes take effect.\n");
 };

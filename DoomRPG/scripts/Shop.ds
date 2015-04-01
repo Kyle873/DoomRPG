@@ -168,14 +168,19 @@ function void ShopLoop()
                    24.1, 24.0, 0.05);
         
         // Price
-        if (CategoryFlags[Player.ShopPage] & CF_NOSELL) // No Selling
-            HudMessage("\cj%d C \ck(Discount: %d%%)\n",
-                       Cost, Player.ShopDiscount,
+        if (ItemCategoryFlags[Player.ShopPage] & CF_NOBUY && ItemCategoryFlags[Player.ShopPage] & CF_NOSELL) // No Buying or Selling
+            HudMessage("(Discount: %d%%)\n",
+                       Player.ShopDiscount,
                        HUDMSG_PLAIN, 0, CR_GOLD,
                        24.1, 38.0, 0.05)
-        else if (CategoryFlags[Player.ShopPage] & CF_NOBUY || Rank == -1) // No Buying
+        else if (ItemCategoryFlags[Player.ShopPage] & CF_NOBUY || Rank == -1) // No Buying
             HudMessage("\ci%d C \ck(Discount: %d%%)\n",
                        SellPrice, Player.ShopDiscount,
+                       HUDMSG_PLAIN, 0, CR_GOLD,
+                       24.1, 38.0, 0.05)
+        else if (ItemCategoryFlags[Player.ShopPage] & CF_NOSELL) // No Selling
+            HudMessage("\cj%d C \ck(Discount: %d%%)\n",
+                       Cost, Player.ShopDiscount,
                        HUDMSG_PLAIN, 0, CR_GOLD,
                        24.1, 38.0, 0.05)
         else // Normal
@@ -244,7 +249,7 @@ function void ShopLoop()
             ActivatorSound("menu/move", 127);
             Player.ShopPage--;
             Player.ShopIndex = 0;
-            if (Player.ShopPage < 0) Player.ShopPage = ItemCategories - 1;
+            if (Player.ShopPage < 0) Player.ShopPage = (GetCVar("drpg_debug") ? ItemCategories : ItemCategories - 1);
         }
         else
         {
@@ -259,7 +264,7 @@ function void ShopLoop()
             ActivatorSound("menu/move", 127);
             Player.ShopPage++;
             Player.ShopIndex = 0;
-            if (Player.ShopPage > ItemCategories - 1) Player.ShopPage = 0;
+            if (Player.ShopPage > (GetCVar("drpg_debug") ? ItemCategories : ItemCategories - 1)) Player.ShopPage = 0;
         }
         else
         {
@@ -316,7 +321,7 @@ function void ShopLoop()
                 Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_NONE;
             ActivatorSound("menu/move", 127);
         }
-        else if (!(CategoryFlags[Player.ShopPage] & CF_NOSELL))
+        else if (!(ItemCategoryFlags[Player.ShopPage] & CF_NOSELL))
         {
             if (Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] != AT_SELL)
                 Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_SELL
@@ -353,7 +358,7 @@ function void BuyItem(str Item)
     };
     
     // If the item (or category) is flagged to never be buyable, return
-    if (ItemPtr->Rank == -1 || CategoryFlags[Player.ShopPage] & CF_NOBUY)
+    if (ItemPtr->Rank == -1 || ItemCategoryFlags[Player.ShopPage] & CF_NOBUY)
     {
         if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         {
@@ -462,7 +467,7 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     };
     
     // If you're on a page that doesn't allow selling or you don't have any of the required item, fail
-    if (!AutoSold && (CheckInventory(Item) == 0 || CategoryFlags[Player.ShopPage] & CF_NOSELL))
+    if (!AutoSold && (CheckInventory(Item) == 0 || ItemCategoryFlags[Player.ShopPage] & CF_NOSELL))
     {
         if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         {
@@ -507,6 +512,9 @@ function void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
 {
     ItemInfoPtr ItemPtr = &ItemData[Page][Index];
     int *LockerAmount = &Player.Locker[Page][Index];
+    
+    // Stop if this item cannot be deposited
+    if (ItemCategoryFlags[Page] & CF_NOSTORE) return;
     
     if ((Player.EP >= LOCKER_EPRATE || CharSave) && CheckInventory(ItemPtr->Actor) > 0)
     {
@@ -578,6 +586,9 @@ function void WithdrawItem(int Page, int Index)
 {
     ItemInfoPtr ItemPtr = &ItemData[Page][Index];
     int *LockerAmount = &Player.Locker[Page][Index];
+    
+    // Stop if this item cannot be withdrawn
+    if (ItemCategoryFlags[Page] & CF_NOSTORE) return;
     
     // Spawning
     if (Player.EP >= LOCKER_EPRATE && *LockerAmount > 0)

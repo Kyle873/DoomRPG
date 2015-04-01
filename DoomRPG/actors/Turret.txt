@@ -197,31 +197,52 @@ ACTOR DRPGPortableTurret
     var int user_ammo_plasma;
     var int user_ammo_rail;
     
+    // Self Destruct
+    var int user_destruct_range;
+    var int user_destruct_damage;
+    
+    // Misc
+    var int user_damage_type;
+    
     Health 100
     Radius 16
     Height 16
-    Speed 10
+    Speed 0
     Painchance 256
     Mass 0x7FFFFFFF
     Species "Player"
     
     +SOLID
+    +NOGRAVITY
+    +FLOAT
     +SHOOTABLE
     +NOBLOOD
     +NOCLIP
-    +FLOATBOB
     +FRIENDLY
     
     States
     {
     Spawn:
         TNT1 A 0 NoDelay ACS_NamedExecuteAlways("TurretInit", 0)
+        Goto Idle
     See:
-        TNT1 A 0 A_PlaySound("drpgturret/hum", CHAN_6, 1.0, 1, 1.25)
+        TNT1 A 0 A_PlaySound("drpgturret/hum", CHAN_6, 1.0, true, 1.25)
         PTUR A 1 A_Chase("", "Missile")
+        TNT1 A 0 A_JumpIfTargetInLOS(1)
+        Goto Forget
         TNT1 A 0 A_Jump(255, "See")
         TNT1 A 0 A_PlaySound("drpgturret/beep", CHAN_7)
         Loop
+    Forget:
+        TNT1 A 0 A_ClearTarget
+    Idle:
+        TNT1 A 0 A_PlaySound("drpgturret/hum", CHAN_6, 1.0, true, 1.25)
+        TNT1 A 0 A_Wander
+        PTUR A 1 A_Look
+        Loop
+    Searching:
+        PTUR A -1
+        Stop
     Missile:
         TNT1 A 0 A_JumpIf(user_weapon == TW_NONE, "See")
         TNT1 A 0 A_JumpIf(user_weapon == TW_BULLET, "Missile.Bullet")
@@ -306,6 +327,35 @@ ACTOR DRPGPortableTurret
         TNT1 A 0 A_PlaySound("drpgturret/cooldown", CHAN_5)
         PTUR A 2 A_FaceTarget
         Goto See
+    SelfDestruct:
+        TNT1 A 0 A_StopSound(CHAN_6)
+        TNT1 A 0 A_PlaySound("turret/countdown", CHAN_5, 1.0, false, 0.0)
+        PTUR A 350
+        TNT1 A 0 A_PlaySound("turret/explode", CHAN_5, 1.0, false, 0.0)
+        TNT1 A 0 A_Explode(user_destruct_damage, user_destruct_range)
+        TNT1 A 0 ACS_NamedExecuteAlways("TurretPostSelfDestruct", 0)
+        Stop
+    Pain:
+        TNT1 A 0 A_SetUserVar("user_damage_type", DT_NORMAL)
+        Goto See
+    Pain.Slime:
+        TNT1 A 0 A_SetUserVar("user_damage_type", DT_TOXIC)
+        Goto See
+    Pain.Radiation:
+        TNT1 A 0 A_SetUserVar("user_damage_type", DT_RADIATION)
+        Goto See
+    Pain.Melee:
+        TNT1 A 0 A_SetUserVar("user_damage_type", DT_MELEE)
+        Goto See
+    Pain.Fire:
+        TNT1 A 0 A_SetUserVar("user_damage_type", DT_FIRE)
+        Goto See
+    Pain.Plasma:
+        TNT1 A 0 A_SetUserVar("user_damage_type", DT_PLASMA)
+        Goto See
+    Pain.Lightning:
+        TNT1 A 0 A_SetUserVar("user_damage_type", DT_LIGHTNING)
+        Goto See
     Death:
         TNT1 A 0 A_SpawnItemEx("TeleportFog")
         Stop
@@ -329,7 +379,7 @@ actor DRPGPortableTurretSpawner : CustomInventory
 
 actor DRPGTurretPart : Inventory
 {
-    Inventory.MaxAmount 1000
+    Inventory.MaxAmount 10000
     Inventory.PickupMessage "You got a Turret Part."
     Inventory.PickupSound "items/turret"
     
