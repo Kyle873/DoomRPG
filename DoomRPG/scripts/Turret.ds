@@ -811,7 +811,11 @@ script void TurretLoopMaintenance() enter
     
     // Maintenance is done
     if (Player.Turret.ChargeTimer <= 0 && Player.Turret.RepairTimer <= 0 && Player.Turret.RefitTimer <= 0)
+    {
         Player.Turret.Maintenance = false;
+        if (Player.Turret.Destroyed)
+            Player.Turret.Destroyed = false;
+    };
     
     Delay(1);
     goto Start;
@@ -957,8 +961,10 @@ acscript void TurretInit()
     SetActivator(MasterTID);
     Thing_ChangeTID(TempTID, Player.Turret.TID);
     
+    Log("\caHealth: %d\n", Player.Turret.Health);
     if (Player.Turret.Health > 0)
         SetActorProperty(Player.Turret.TID, APROP_Health, Player.Turret.Health);
+    
     Player.Turret.Active = true;
 };
 
@@ -1090,8 +1096,6 @@ function void TurretMaintenance()
     {
         ActivatorSound("menu/move", 127);
         Player.Turret.Maintenance = false;
-        if (Player.Turret.RefitTimer <= 0)
-            TurretSpawn();
     };
 };
 
@@ -1171,12 +1175,7 @@ function bool TurretLoadAmmo(int Type)
 function void TurretCommand(int Index)
 {
     // Don't issue the command if you don't have the upgrade yet
-    if (!Player.Turret.Upgrade[Index])
-    {
-        ActivatorSound("menu/error", 127);
-        PrintError("You don't have this upgrade yet");
-        return;
-    };
+    if (!Player.Turret.Upgrade[Index]) return;
     
     if (Index == TU_BUILD)
     {
@@ -1538,7 +1537,6 @@ function void TurretDespawn()
 {
     if (!Player.Turret.Active) return;
     
-    Player.Turret.Health = GetActorProperty(Player.Turret.TID, APROP_Health);
     Player.Turret.Active = false;
     
     SpawnForced("TeleportFog", GetActorX(Player.Turret.TID), GetActorY(Player.Turret.TID), GetActorZ(Player.Turret.TID), 0, 0);
