@@ -243,6 +243,9 @@ acscript void RegenArea(int ID)
         AddBattery(BatteryCharges);
         TakeInventory("DRPGCredits", BatteryCharges * 10);
         
+        if (Player.Augs.BatteryMax - Player.Augs.Battery < 1 && Player.Augs.BatteryMax - Player.Augs.Battery > 0)
+            AddBattery(1); // One more to get rid of the fraction-of-a-percent
+        
         SetFont("BIGFONT");
         HudMessage("Augmentation Battery Recharged\n", HUDMSG_FADEOUT, 0, CR_YELLOW, 0.5, 0.33, 2.0, 0.5);
         FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0.0, 1.0);
@@ -280,7 +283,7 @@ acscript void LevelTransport()
         HudMessage("Level Transporter\n", HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 32.1, 32.1, 0.05, 0.5);
         
         int TitleColor = CR_GOLD;
-        if (TeleDest->NeedsRealInfo)
+        if (TeleDest->NeedsRealInfo || !(TeleDest->Completed))
             TitleColor = CR_RED
         else if (TeleDest->AllBonus)
             TitleColor = CR_GREEN;
@@ -328,7 +331,7 @@ acscript void LevelTransport()
                 AreaText = "\c[Grey]Detected: Unknown Hostile Lifeform (Megaboss)\n\cgUse extreme caution when engaging target.\c-\nA quarantine has been issued for this area.";
                 break;
             case MAPEVENT_TOXICHAZARD:
-                AreaText = "\c[DarkGreen]Detected: High Radiation Levels (Environmental Hazard)\c-\nPlease wear protective clothing when traversing this location.";
+                AreaText = StrParam("\c[DarkGreen]Detected: High Radiation Levels (Environmental Hazard)\c-\n\cdHazard level: %d\c-\nPlease wear protective clothing when traversing this location.\n", TeleDest->HazardLevel);
                 break;
             case MAPEVENT_NUCLEARBOMB:
                 AreaText = "\c[Orange]Detected: Area-Destruction Device (Thermonuclear Bomb)\c-\nDo not stay within the detonation area.";
