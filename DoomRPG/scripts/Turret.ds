@@ -902,6 +902,15 @@ script void TurretSensors()
             // This item is credits, skip it
             if (Contains(Actor, "Credits")) continue;
             
+            // If this is an unknown item, log it in debug mode and skip it
+            if (!StrCmp(FindItem(Actor)->Actor, "None"))
+            {
+                if (GetCVar("drpg_debug"))
+                    Log("\cdDEBUG: \c-Unknown item \cd%s\c- found at index \cd%d\c- (TID \cd%d\c-)\n", Actor, i, ItemTIDs[i]);
+                
+                continue;
+            };
+            
             // Array has grown too big, resize it
             if (Player.Turret.SensorItems.Position == Player.Turret.SensorItems.Size)
                 ArrayResize(&Player.Turret.SensorItems);
@@ -916,7 +925,7 @@ script void TurretSensors()
                 // GROSS HACK
                 // If this comes back as None (an unknown item), it's likely that it was NOT a weapon and we should go about normally
                 // Otherwise, we'll do another search, stripping away the Pickup under the assumption it is a weapon and it will be found in the database
-                if (StrCmp(FindItem(StrLeft(Actor, StrLen(Actor) - 6))->Actor, "None"))
+                if (!StrCmp(FindItem(StrLeft(Actor, StrLen(Actor) - 6))->Actor, "None"))
                     Player.Turret.SensorItemPtrs[i] = FindItem(Actor)
                 else
                     Player.Turret.SensorItemPtrs[i] = FindItem(StrLeft(Actor, StrLen(Actor) - 6));
