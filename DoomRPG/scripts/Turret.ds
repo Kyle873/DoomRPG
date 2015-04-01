@@ -444,10 +444,6 @@ script void TurretLoop() enter
         // Initial Battery Charge
         Player.Turret.Battery = TURRET_BATTERY_CHARGE;
         
-        // Offsets
-        Player.Turret.AngleOffset = -0.25;
-        Player.Turret.DistanceOffset = 48;
-        
         // Nametag
         SetActorPropertyString(Player.Turret.TID, APROP_Nametag, StrParam("%N\c-'s Turret\n", PlayerNumber() + 1));
         
@@ -483,11 +479,25 @@ script void TurretLoop() enter
         if (GetActorProperty(Player.TID, APROP_Health) <= 0 || GetActorProperty(Player.Turret.TID, APROP_Health) <= 0)
             TurretDespawn();
         
+        // Temporary Ceiling checking rotationy thing
+        if (GetActorCeilingZ(Player.TID) - GetActorZ(Player.TID) <= 80)
+        {
+            Player.Turret.AngleOffset += 0.01;
+            Player.Turret.DistanceOffset = 24;
+            Player.Turret.HeightOffset = -48;
+        }
+        else
+        {
+            Player.Turret.AngleOffset = 0;
+            Player.Turret.DistanceOffset = 0;
+            Player.Turret.HeightOffset = 0;
+        };
+        
         // Offset
         fixed Angle = GetActorAngle(0) + Player.Turret.AngleOffset;
         fixed X = GetActorX(0) + Cos(Angle) * Player.Turret.DistanceOffset;
         fixed Y = GetActorY(0) + Sin(Angle) * Player.Turret.DistanceOffset;
-        fixed Z = GetActorZ(0) + 32.0;
+        fixed Z = GetActorZ(0) + GetActorPropertyFixed(Player.TID, APROP_Height) + Player.Turret.HeightOffset;
         
         // Set Position
         if (!Player.Turret.SelfDestruct && !Player.Turret.SensorsActive)
@@ -998,10 +1008,11 @@ acscript void TurretMenu()
     };
 };
 
-acscript void TurretSetOffset(int Angle, int DistanceOffset)
+acscript void TurretSetOffset(int AngleOffset, int DistanceOffset, int HeightOffset)
 {
-    Player.Turret.AngleOffset += (fixed)Angle / 100.0;
+    Player.Turret.AngleOffset += (fixed)AngleOffset / 100.0;
     Player.Turret.DistanceOffset += (fixed)DistanceOffset;
+    Player.Turret.HeightOffset += (fixed)HeightOffset;
 };
 
 acscript void TurretUseAmmo(int Type)
@@ -1173,8 +1184,8 @@ function bool TurretLoadAmmo(int Type)
 
 function void TurretCommand(int Index)
 {
-    // Don't issue the command if you don't have the upgrade yet
-    if (!Player.Turret.Upgrade[Index]) return;
+    // Don't issue the command if you don't have the upgrade yet or your turret is destroyed or in maintenance
+    if (!Player.Turret.Upgrade[Index] || Player.Turret.Destroyed || Player.Turret.Maintenance) return;
     
     if (Index == TU_BUILD)
     {
