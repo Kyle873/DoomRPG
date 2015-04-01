@@ -1,5 +1,6 @@
 #include "RPG.dh"
 
+#include "Crate.dh"
 #include "Stims.dh"
 #include "Turret.dh"
 #include "Utils.dh"
@@ -290,28 +291,28 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
         "Upgrades increase the speed of all sensor-based activities";
     };
     
-    // Money Finder
+    // Module Finder
     {
-        "Sensors Module - Money Finder"; 1; 0;
-        "Calibrates the sensors to allow the turret to find money";
+        "Sensors Module - Module Finder"; 1; 0;
+        "Calibrates the sensors to allow the turret to find upgrade modules";
         nullptr;
-        "Issuing this command will start the item finder, searching for money";
+        "Issuing this command will start the item finder, searching for upgrade modules";
     };
     
     // Item Finder
     {
-        "Sensors Module - Item Finder"; 5; 0;
+        "Sensors Module - Item Finder"; 1; 0;
         "Calibrates the sensors to allow the turret to find different types of items";
-        "Upgrades will allow you to find higher value items";
-        "Issuing this command will allow you to pick a category of items to search for and bring back to you";
+        nullptr;
+        "Issuing this command will have the turret scout the map and allow you to locate items";
     };
     
     // Crate Finder
     {
-        "Sensors Module - Supply Drop Crate Finder"; 2; 0;
+        "Sensors Module - Supply Drop Crate Finder"; 1; 0;
         "Calibrates the sensors to allow the turret to find UAC Supply Crates";
-        "Upgrade will allow the turret to locate security locked crates";
-        "Issuing this command will send the turret to go find a Supply Crate and bring it to you";
+        nullptr;
+        "Issuing this command will have the turret scout the map and allow you to locate supply crates";
     };
     
     // --------------------------------------------------
@@ -440,7 +441,7 @@ script void TurretLoop() enter
     
     if (Player.Turret.Upgrade[TU_BUILD] && !Player.Turret.Init)
     {
-        // Initial charge
+        // Initial Battery Charge
         Player.Turret.Battery = TURRET_BATTERY_CHARGE;
         
         // Offsets
@@ -461,6 +462,9 @@ script void TurretLoop() enter
         
         // Reset the current weapon
         Player.Turret.Weapon = TW_NONE;
+        
+        // Reset the current sensor item
+        Player.Turret.CurrentSensorItem = -1;
         
         // Set Active and TID
         Player.Turret.Init = true;
@@ -486,7 +490,7 @@ script void TurretLoop() enter
         fixed Z = GetActorZ(0) + 32.0;
         
         // Set Position
-        if (!Player.Turret.SelfDestruct)
+        if (!Player.Turret.SelfDestruct && !Player.Turret.SensorsActive)
             SetActorPosition(Player.Turret.TID, X, Y, Z, false);
         
         // Battery is drained
@@ -577,12 +581,12 @@ script void TurretLoop() enter
                 // Health
                 if (Player.Turret.Upgrade[TU_ASSIST_HEALTH] > 0 && CalcPercent(Players(i).ActualHealth, Players(i).HealthMax) < Player.Turret.Upgrade[TU_ASSIST_HEALTH] * 2 && ((Timer() + 8) % 35) == 0)
                 {
-                    for (fixed j = 0.0; j <= 1.0; j += 0.02)
+                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
                     {
                         fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
                         fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
                         fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
-                        SpawnForced("DRPGTurretAssistParticleHealth", X, Y, Z, 0, 0);
+                        SpawnForced("DRPGTurretParticleAssistHealth", X, Y, Z, 0, 0);
                     };
                     
                     Players(i).ActualHealth++;
@@ -592,12 +596,12 @@ script void TurretLoop() enter
                 SetActivator(Players(i).TID); // Yay maxhax because GetArmorInfo() has no playernum param D:
                 if (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] > 0 && CheckInventory("Armor") > 0 && CheckInventory("Armor") < GetArmorInfo(ARMORINFO_ACTUALSAVEAMOUNT) && ((Timer() + 35) % (35 * (30 - (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] * 2.5)))) == 0)
                 {
-                    for (fixed j = 0.0; j <= 1.0; j += 0.02)
+                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
                     {
                         fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
                         fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
                         fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
-                        SpawnForced("DRPGTurretAssistParticleArmor", X, Y, Z, 0, 0);
+                        SpawnForced("DRPGTurretParticleAssistArmor", X, Y, Z, 0, 0);
                     };
                     
                     GiveInventory("ArmorBonus", 1);
@@ -607,12 +611,12 @@ script void TurretLoop() enter
                 // Aug Battery
                 if (Player.Turret.Upgrade[TU_ASSIST_AUG] > 0 && Players(i).Augs.Battery < Players(i).Augs.BatteryMax && ((Timer() + 26) % (35 * (30 - (Player.Turret.Upgrade[TU_ASSIST_AUG] * 2.5)))) == 0)
                 {
-                    for (fixed j = 0.0; j <= 1.0; j += 0.02)
+                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
                     {
                         fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
                         fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
                         fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
-                        SpawnForced("DRPGTurretAssistParticleAug", X, Y, Z, 0, 0);
+                        SpawnForced("DRPGTurretParticleAssistAug", X, Y, Z, 0, 0);
                     };
                     
                     Players(i).Augs.Battery++;
@@ -621,12 +625,12 @@ script void TurretLoop() enter
                 // Shield
                 if (Player.Turret.Upgrade[TU_ASSIST_SHIELD] > 0 && Players(i).Shield.Active && Players(i).Shield.Charge < Players(i).Shield.Capacity && ((Timer() + 17) % (35 * (30 - (Player.Turret.Upgrade[TU_ASSIST_SHIELD] * 2.5)))) == 0)
                 {
-                    for (fixed j = 0.0; j <= 1.0; j += 0.02)
+                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
                     {
                         fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
                         fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
                         fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
-                        SpawnForced("DRPGTurretAssistParticleShield", X, Y, Z, 0, 0);
+                        SpawnForced("DRPGTurretParticleAssistShield", X, Y, Z, 0, 0);
                     };
                     
                     Players(i).Shield.Charge += Players(i).Shield.ChargeRate;
@@ -688,6 +692,52 @@ script void TurretLoop() enter
         
         // Pass info to uservars
         TurretPassVars();
+        
+        // Draw Sensors progress bar
+        if (Player.Turret.SensorsActive)
+        {
+            if (Player.Turret.SensorMode == TSM_MODULES)
+                DrawProgressBar("\cdFinding Modules", Player.Turret.SensorPercent);
+            if (Player.Turret.SensorMode == TSM_ITEMS)
+                DrawProgressBar("\cjFinding Items", Player.Turret.SensorPercent);
+            if (Player.Turret.SensorMode == TSM_CRATE)
+                DrawProgressBar("\ccFinding Supply Drops", Player.Turret.SensorPercent);
+        };
+        
+        // Sensor item tracing beam
+        if (Player.Turret.CurrentSensorItem >= 0)
+        {
+            int TID = *(&((int *)Player.Turret.SensorItems.Data)[Player.Turret.CurrentSensorItem]);
+            
+            if (ClassifyActor(TID) != ACTOR_NONE && (Timer() % 5) == 0)
+                for (fixed i = 0.0; i <= 1.0; i += 0.01)
+                {
+                    fixed X = Lerp(GetActorX(Player.Turret.TID), GetActorX(TID), i);
+                    fixed Y = Lerp(GetActorY(Player.Turret.TID), GetActorY(TID), i);
+                    fixed Z = Lerp(GetActorZ(Player.Turret.TID), GetActorZ(TID), i);
+                    SpawnForced("DRPGTurretParticleItemTrail", X, Y, Z, 0, 0);
+                };
+        };
+        
+        // Sensor crate tracing beam
+        if (Player.Turret.SensorCrates.Position > 0 && (Timer() % 5) == 0)
+        {
+            for (int i = 0; i < Player.Turret.SensorCrates.Position; i++)
+            {
+                int ID = *(&((int *)Player.Turret.SensorCrates.Data)[i]);
+                
+                // Skip this crate if it's empty
+                if (Crates[ID].Empty) continue;
+                
+                for (fixed j = 0.0; j <= 1.0; j += 0.01)
+                {
+                    fixed X = Lerp(GetActorX(Player.Turret.TID), GetActorX(Crates[ID].TID), j);
+                    fixed Y = Lerp(GetActorY(Player.Turret.TID), GetActorY(Crates[ID].TID), j);
+                    fixed Z = Lerp(GetActorZ(Player.Turret.TID), GetActorZ(Crates[ID].TID), j);
+                    SpawnForced("DRPGTurretParticleCrateTrail", X, Y, Z, 0, 0);
+                };
+            };
+        };
         
         // Reset damage type
         SetUserVariable(Player.Turret.TID, "user_damage_type", DT_NONE);
@@ -767,6 +817,137 @@ script void TurretLoopMaintenance() enter
     goto Start;
 };
 
+script void TurretSensors()
+{
+    bool Complete = false;
+    int Current = 0;
+    int Total = 0;
+    
+    Player.Turret.SensorsActive = true;
+    
+    Start:
+    
+    SetActorState(Player.Turret.TID, "Searching");
+    
+    if (Player.Turret.SensorMode == TSM_MODULES)
+    {
+        // Determine the total amount of existing module pickup
+        for (int i = 0; ItemTIDs[i] != -1; i++)
+            if (!StrCmp(GetActorClass(ItemTIDs[i]), "DRPGModulePickup"))
+                Total++;
+        
+        while (Current < Total)
+        {
+            for (int i = 0; ItemTIDs[i] != -1; i++)
+            {
+                if (!StrCmp(GetActorClass(ItemTIDs[i]), "DRPGModulePickup"))
+                {
+                    SetActorPosition(Player.Turret.TID, GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorZ(ItemTIDs[i]), true);
+                    Player.Turret.ModulesCollected += GetUserVariable(ItemTIDs[i], "user_amount");
+                    Thing_Remove(ItemTIDs[i]);
+                    Current++;
+                    break;
+                };
+            };
+            
+            Player.Turret.SensorPercent = (int)(((fixed)Current / (fixed)Total) * 100.0);
+            Delay(33 - (Player.Turret.Upgrade[TU_SENSORS] * 3));
+        };
+        
+        if (Total > 0)
+        {
+            ActivatorSound("items/module", 127);
+            GiveInventory("DRPGModule", Player.Turret.ModulesCollected);
+            Player.Turret.ModulesCollected = 0;
+        };
+        
+        Complete = true;
+    };
+    
+    if (Player.Turret.SensorMode == TSM_ITEMS)
+    {
+        // Create the sensor items array
+        Player.SensorIndex = 0;
+        Player.Turret.CurrentSensorItem = -1;
+        if (Player.Turret.SensorItems.Position > 0)
+            ArrayDestroy(&Player.Turret.SensorItems);
+        ArrayCreate(&Player.Turret.SensorItems, "SITM\x00", 9 * 6, sizeof(int));
+        
+        // Determine the total amount of items
+        for (int i = 0; ItemTIDs[i] != -1; i++)
+            if (ClassifyActor(ItemTIDs[i]) != ACTOR_NONE)
+                Total++;
+        
+        for (int i = 0; ItemTIDs[i] != -1; i++)
+        {
+            // This item doesn't exist, skip it
+            if (ClassifyActor(ItemTIDs[i]) == ACTOR_NONE) continue;
+            
+            // Array has grown too big, resize it
+            if (Player.Turret.SensorItems.Position == Player.Turret.SensorItems.Size)
+                ArrayResize(&Player.Turret.SensorItems);
+            
+            // Add the item to the sensor items array
+            ((int *)Player.Turret.SensorItems.Data)[Player.Turret.SensorItems.Position++] = ItemTIDs[i];
+            
+            // Cache ItemInfoPtr for reference later in TurretDrawSensorGrid()
+            // This is an insanely horrible hack and should DEFINITELY be done better
+            Player.Turret.SensorItemPtrs[i] = FindItem(GetActorClass(ItemTIDs[i]));
+            
+            SetActorPosition(Player.Turret.TID, GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorZ(ItemTIDs[i]), true);
+            Current++;
+            
+            Player.Turret.SensorPercent = (int)(((fixed)Current / (fixed)Total) * 100.0);
+            Delay(33 - (Player.Turret.Upgrade[TU_SENSORS] * 3));
+        };
+        
+        Complete = true;
+    };
+    
+    if (Player.Turret.SensorMode == TSM_CRATE)
+    {
+        // Create the sensor crates array
+        if (Player.Turret.SensorCrates.Position > 0)
+            ArrayDestroy(&Player.Turret.SensorCrates);
+        ArrayCreate(&Player.Turret.SensorCrates, "SCRT\x00", 9 * 6, sizeof(int));
+        
+        Total = CrateID;
+        
+        for (int i = 0; i < CrateID; i++)
+        {
+            // Crate is empty, skip it
+            if (Crates[i].Empty) continue;
+            
+            // Array has grown too big, resize it
+            if (Player.Turret.SensorCrates.Position == Player.Turret.SensorCrates.Size)
+                ArrayResize(&Player.Turret.SensorCrates);
+            
+            ((int *)Player.Turret.SensorCrates.Data)[Player.Turret.SensorCrates.Position++] = i;
+            
+            SetActorPosition(Player.Turret.TID, GetActorX(Crates[i].TID), GetActorY(Crates[i].TID), GetActorZ(Crates[i].TID), true);
+            Current++;
+            
+            Player.Turret.SensorPercent = (int)(((fixed)Current / (fixed)Total) * 100.0);
+            Delay(33 - (Player.Turret.Upgrade[TU_SENSORS] * 3));
+        };
+        
+        Complete = true;
+    };
+    
+    // Sensor operation complete
+    if (Complete)
+    {
+        SetActorState(Player.Turret.TID, "See");
+        Player.Turret.SensorMode = TSM_NONE;
+        Player.Turret.SensorPercent = 0;
+        Player.Turret.SensorsActive = false;
+        return;
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
 acscript void TurretInit()
 {
     int TempTID = UniqueTID();
@@ -806,7 +987,7 @@ acscript void TurretMenu()
         {
             Player.InMenu = true;
             Player.Menu = MENUPAGE_TURRET;
-            Player.TurretUpgradeMode = false;
+            Player.TurretPage = TURRETPAGE_COMMAND;
             ActivatorSound("menu/enter", 127);
         };
     };
@@ -1112,6 +1293,27 @@ function void TurretCommand(int Index)
         ActivatorSound("menu/move", 127);
         Player.Turret.TeleportEnabled = !Player.Turret.TeleportEnabled;
     };
+    
+    if (Index == TU_SENSORS_MODULEFINDER && !Player.Turret.SensorsActive)
+    {
+        ActivatorSound("menu/move", 127);
+        Player.Turret.SensorMode = TSM_MODULES;
+        TurretSensors();
+    };
+    
+    if (Index == TU_SENSORS_ITEMFINDER && !Player.Turret.SensorsActive)
+    {
+        ActivatorSound("menu/move", 127);
+        Player.Turret.SensorMode = TSM_ITEMS;
+        TurretSensors();
+    };
+    
+    if (Index == TU_SENSORS_SUPPLYFINDER && !Player.Turret.SensorsActive)
+    {
+        ActivatorSound("menu/move", 127);
+        Player.Turret.SensorMode = TSM_CRATE;
+        TurretSensors();
+    };
 };
 
 function void TurretStim()
@@ -1202,6 +1404,96 @@ function void TurretPassVars()
     // Self Destruct
     SetUserVariable(Player.Turret.TID, "user_destruct_range", Player.Turret.Upgrade[TU_WEAPON_SELFDESTRUCT] * 1024);
     SetUserVariable(Player.Turret.TID, "user_destruct_damage", Player.Turret.Upgrade[TU_WEAPON_SELFDESTRUCT] * 1000);
+};
+
+function void TurretDrawSensorGrid()
+{
+    // Width/Height
+    int Width = 9;
+    int Height = 6;
+    
+    // Coordinates
+    fixed BaseX;
+    fixed BaseY;
+    fixed BoxX;
+    fixed BoxY;
+    fixed X;
+    fixed Y;
+    fixed IconX;
+    fixed IconY;
+    
+    for (int i = 0; i < Height; i++)
+    {
+        // Reset base X
+        BaseX = 0.0;
+        
+        for (int j = 0; j < Width; j++)
+        {
+            int Index = j + (i * Width);
+            
+            // Calculate offset
+            if (Player.SensorIndex >= Height * Width)
+                Index += (Player.SensorIndex / (Height * Width)) * (Height * Width);
+            
+            int TID = *(&((int *)Player.Turret.SensorItems.Data)[Index]);
+            ItemInfoPtr Item = Player.Turret.SensorItemPtrs[Index];
+            bool Active = (ClassifyActor(TID) != ACTOR_WORLD);
+            str Icon = Item->Sprite.Name;
+            str Name = Item->Name;
+            int IconXOff = Item->Sprite.XOff;
+            int IconYOff = Item->Sprite.YOff;
+            
+            // Stop if we're at the end of the list
+            if (Index > Player.Turret.SensorItems.Position - 1) break;
+            
+            // Placeholder Icon
+            if (StrLen(Icon) == 0)
+                Icon = "SprNone";
+            
+            // Setup X and Y
+            X = 26.0 + BaseX;
+            Y = 50.0 + BaseY;
+            BoxX = 48.0 + BaseX;
+            BoxY = 72.0 + BaseY;
+            IconX = 48.0 + BaseX;
+            IconY = 72.0 + BaseY;
+            IconX += IconXOff;
+            IconY += IconYOff;
+            
+            if (Active)
+            {
+                // Selected Item
+                if (Index == Player.Turret.CurrentSensorItem)
+                    PrintSpritePulse("TSensor", 0, X - 11.0 + 0.1, Y - 10.1, 0.75, 128.0, 0.25, false);
+                
+                // Icon
+                SetHudClipRect(X, Y, 44, 44);
+                if (Player.SensorIndex == Index)
+                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.75, 32.0, 0.25)
+                else
+                    PrintSprite(Icon, 0, IconX, IconY, 0.05);
+                SetHudClipRect(0, 0, 0, 0);
+                
+                // Box
+                if (Player.SensorIndex == Index)
+                    PrintSprite("ItemBoxH", 0, BoxX, BoxY, 0.05);
+                PrintSprite("ItemBoxB", 0, BoxX, BoxY, 0.05);
+                
+                // Item Name
+                if (Player.SensorIndex == Index)
+                {
+                    SetFont("BIGFONT");
+                    HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 344.1, 0.05);
+                };
+            };
+            
+            // Increment X
+            BaseX += 48.0;
+        };
+        
+        // Increment Y
+        BaseY += 48.0;
+    };
 };
 
 function void TurretSpawn()
