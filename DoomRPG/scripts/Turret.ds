@@ -459,9 +459,6 @@ script void TurretLoop() enter
         // Reset the current weapon
         Player.Turret.Weapon = TW_NONE;
         
-        // Reset the current sensor item
-        Player.Turret.CurrentSensorItem = -1;
-        
         // Set Active and TID
         Player.Turret.Init = true;
         Player.Turret.Active = true;
@@ -715,22 +712,25 @@ script void TurretLoop() enter
         };
         
         // Sensor item tracing beam
-        if (Player.Turret.CurrentSensorItem >= 0)
+        if (Player.Turret.SensorItems.Position > 0 && (Timer() % 35) == 0)
         {
-            int TID = *(&((int *)Player.Turret.SensorItems.Data)[Player.Turret.CurrentSensorItem]);
-            
-            if (ClassifyActor(TID) != ACTOR_NONE && (Timer() % 5) == 0)
-                for (fixed i = 0.0; i <= 1.0; i += 0.01)
-                {
-                    fixed X = Lerp(GetActorX(Player.Turret.TID), GetActorX(TID), i);
-                    fixed Y = Lerp(GetActorY(Player.Turret.TID), GetActorY(TID), i);
-                    fixed Z = Lerp(GetActorZ(Player.Turret.TID), GetActorZ(TID), i);
-                    SpawnForced("DRPGTurretParticleItemTrail", X, Y, Z, 0, 0);
-                };
+            for (int i = 0; i < Player.Turret.SensorItems.Position; i++)
+            {
+                int TID = *(&((int *)Player.Turret.SensorItems.Data)[i]);
+                
+                if (ClassifyActor(TID) != ACTOR_NONE)
+                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
+                    {
+                        fixed X = Lerp(GetActorX(Player.Turret.TID), GetActorX(TID), j);
+                        fixed Y = Lerp(GetActorY(Player.Turret.TID), GetActorY(TID), j);
+                        fixed Z = Lerp(GetActorZ(Player.Turret.TID), GetActorZ(TID), j);
+                        SpawnForced("DRPGTurretParticleItemTrail", X, Y, Z, 0, 0);
+                    };
+            };
         };
         
         // Sensor crate tracing beam
-        if (Player.Turret.SensorCrates.Position > 0 && (Timer() % 5) == 0)
+        if (Player.Turret.SensorCrates.Position > 0 && (Timer() % 35) == 0)
         {
             for (int i = 0; i < Player.Turret.SensorCrates.Position; i++)
             {
@@ -881,8 +881,6 @@ script void TurretSensors()
     if (Player.Turret.SensorMode == TSM_ITEMS)
     {
         // Create the sensor items array
-        Player.SensorIndex = 0;
-        Player.Turret.CurrentSensorItem = -1;
         if (Player.Turret.SensorItems.Position > 0)
             ArrayDestroy(&Player.Turret.SensorItems);
         ArrayCreate(&Player.Turret.SensorItems, "SITM\x00", 9 * 6, sizeof(int));
@@ -894,22 +892,11 @@ script void TurretSensors()
         
         for (int i = 0; ItemTIDs[i] != -1; i++)
         {
-            str Actor = GetActorClass(ItemTIDs[i]);
-            
             // This item doesn't exist, skip it
             if (ClassifyActor(ItemTIDs[i]) == ACTOR_NONE) continue;
             
             // This item is credits, skip it
-            if (Contains(Actor, "Credits")) continue;
-            
-            // If this is an unknown item, log it in debug mode and skip it
-            if (!StrCmp(FindItem(Actor)->Actor, "None"))
-            {
-                if (GetCVar("drpg_debug"))
-                    Log("\cdDEBUG: \c-Unknown item \cd%s\c- found at index \cd%d\c- (TID \cd%d\c-)\n", Actor, i, ItemTIDs[i]);
-                
-                continue;
-            };
+            if (Contains(GetActorClass(ItemTIDs[i]), "Credits")) continue;
             
             // Array has grown too big, resize it
             if (Player.Turret.SensorItems.Position == Player.Turret.SensorItems.Size)
@@ -917,21 +904,6 @@ script void TurretSensors()
             
             // Add the item to the sensor items array
             ((int *)Player.Turret.SensorItems.Data)[Player.Turret.SensorItems.Position++] = ItemTIDs[i];
-            
-            // Cache ItemInfoPtr for reference later in TurretDrawSensorGrid()
-            // This is an insanely horrible hack and should DEFINITELY be done better
-            if (CompatMode == COMPAT_DRLA && EndsWith(Actor, "Pickup"))
-            {
-                // GROSS HACK
-                // If this comes back as None (an unknown item), it's likely that it was NOT a weapon and we should go about normally
-                // Otherwise, we'll do another search, stripping away the Pickup under the assumption it is a weapon and it will be found in the database
-                if (!StrCmp(FindItem(StrLeft(Actor, StrLen(Actor) - 6))->Actor, "None"))
-                    Player.Turret.SensorItemPtrs[i] = FindItem(Actor)
-                else
-                    Player.Turret.SensorItemPtrs[i] = FindItem(StrLeft(Actor, StrLen(Actor) - 6));
-            }
-            else
-                Player.Turret.SensorItemPtrs[i] = FindItem(Actor);
             
             SetActorPosition(Player.Turret.TID, GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorZ(ItemTIDs[i]), true);
             Current++;
@@ -1440,103 +1412,6 @@ function void TurretPassVars()
     // Self Destruct
     SetUserVariable(Player.Turret.TID, "user_destruct_range", Player.Turret.Upgrade[TU_WEAPON_SELFDESTRUCT] * 1024);
     SetUserVariable(Player.Turret.TID, "user_destruct_damage", Player.Turret.Upgrade[TU_WEAPON_SELFDESTRUCT] * 1000);
-};
-
-function void TurretDrawSensorGrid()
-{
-    // Width/Height
-    int Width = 9;
-    int Height = 6;
-    
-    // Coordinates
-    fixed BaseX;
-    fixed BaseY;
-    fixed BoxX;
-    fixed BoxY;
-    fixed X;
-    fixed Y;
-    fixed IconX;
-    fixed IconY;
-    
-    for (int i = 0; i < Height; i++)
-    {
-        // Reset base X
-        BaseX = 0.0;
-        
-        for (int j = 0; j < Width; j++)
-        {
-            int Index = j + (i * Width);
-            
-            // Calculate offset
-            if (Player.SensorIndex >= Height * Width)
-                Index += (Player.SensorIndex / (Height * Width)) * (Height * Width);
-            
-            int TID = *(&((int *)Player.Turret.SensorItems.Data)[Index]);
-            ItemInfoPtr Item = Player.Turret.SensorItemPtrs[Index];
-            bool Active = (ClassifyActor(TID) != ACTOR_WORLD);
-            str Icon = Item->Sprite.Name;
-            str Name = Item->Name;
-            int IconXOff = Item->Sprite.XOff;
-            int IconYOff = Item->Sprite.YOff;
-            
-            // Stop if we're at the end of the list
-            if (Index > Player.Turret.SensorItems.Position - 1) break;
-            
-            // Placeholder Icon
-            if (StrLen(Icon) == 0)
-                Icon = "SprNone";
-            
-            // Setup X and Y
-            X = 26.0 + BaseX;
-            Y = 50.0 + BaseY;
-            BoxX = 48.0 + BaseX;
-            BoxY = 72.0 + BaseY;
-            IconX = 48.0 + BaseX;
-            IconY = 72.0 + BaseY;
-            IconX += IconXOff;
-            IconY += IconYOff;
-            
-            if (Active)
-            {
-                // Selected Item
-                if (Index == Player.Turret.CurrentSensorItem)
-                    PrintSpritePulse("TSensor", 0, X - 11.0 + 0.1, Y - 10.1, 0.75, 128.0, 0.25, false);
-                
-                // Icon
-                SetHudClipRect(X, Y, 44, 44);
-                if (Player.SensorIndex == Index)
-                    PrintSpritePulse(Icon, 0, IconX, IconY, 0.75, 32.0, 0.25)
-                else
-                    PrintSprite(Icon, 0, IconX, IconY, 0.05);
-                SetHudClipRect(0, 0, 0, 0);
-                
-                // Box
-                if (Player.SensorIndex == Index)
-                    PrintSprite("ItemBoxH", 0, BoxX, BoxY, 0.05);
-                PrintSprite("ItemBoxB", 0, BoxX, BoxY, 0.05);
-                
-                // Item Name
-                if (Player.SensorIndex == Index)
-                {
-                    SetFont("BIGFONT");
-                    HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 344.1, 0.05);
-                };
-                
-                // Item Actor - For Testing
-                if (Player.SensorIndex == Index && GetCVar("drpg_debug"))
-                {
-                    SetFont("BIGFONT");
-                    HudMessage("\ccActor: \c-%s\n", GetActorClass(TID), HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 344.1 + 32.0, 0.05);
-                };
-            };
-            
-            // Increment X
-            BaseX += 48.0;
-        };
-        
-        // Increment Y
-        BaseY += 48.0;
-    };
 };
 
 function void TurretSpawn()
