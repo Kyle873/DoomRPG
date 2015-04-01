@@ -13,7 +13,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Build Turret"; 1; 0;
         "Build the portable turret";
-        nullptr;
+        "";
         "Issuing this command will enable or disable the turret";
     };
     
@@ -25,7 +25,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Weapon Module - Bullet"; 1; 0;
         "The turret is able to fire rapid-fire low-damage bullets";
-        nullptr;
+        "";
         "Issuing this command will load the bullet weapon module, issuing this command while the weapon is already loaded will insert bullets";
     };
     {
@@ -45,7 +45,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Weapon Module - Pellet"; 1; 0;
         "The turret is able to fire shotgun-like pellet spread shots";
-        nullptr;
+        "";
         "Issuing this command will load the pellet weapon module, issuing this command while the weapon is already loaded will insert pellets";
     };
     {
@@ -73,7 +73,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Weapon Module - Rocket"; 1; 0;
         "The turret is able to fire explosive rockets";
-        nullptr;
+        "";
         "Issuing this command will load the rocket weapon module, issuing this command while the weapon is already loaded will insert rockets";
     };
     {
@@ -97,7 +97,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Weapon Module - Plasma"; 1; 0;
         "The turret is able to fire superheated balls of plasma";
-        nullptr;
+        "";
         "Issuing this command will load the plasma weapon module, issuing this command while the weapon is already loaded will insert cells";
     };
     {
@@ -117,7 +117,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Weapon Module - Railgun"; 1; 0;
         "The turret is able to fire piercing railgun shots";
-        nullptr;
+        "";
         "Issuing this command will load the railgun weapon module, issuing this command while the weapon is already loaded will insert cells";
     };
     {
@@ -141,7 +141,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Ammo Module - Autoloader"; 1; 0;
         "Autoloads ammo if it runs out from your own ammo pool";
-        nullptr;
+        "";
         "issuing this command will toggle autoloading on and off";
     };
     {
@@ -253,8 +253,8 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Assist Module - Stim Injector"; 1; 0;
         "Turret can inject you with a random cocktail of combat-enhancing drugs";
-        nullptr;
-        nullptr; // Generated in BuildTurretData()
+        "";
+        ""; // Generated in BuildTurretData()
     };
     {
         "Assist Module - Stim Injector - Type"; 2; 0;
@@ -272,7 +272,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Assist Module - Emergency Teleportation System"; 1; 0;
         "The turret will automatically teleport you out of danger when under 10% health";
-        nullptr;
+        "";
         "Issuing this command will toggle Emergency Teleportation on/off";
     };
     {
@@ -295,7 +295,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Sensors Module - Module Finder"; 1; 0;
         "Calibrates the sensors to allow the turret to find upgrade modules";
-        nullptr;
+        "";
         "Issuing this command will start the item finder, searching for upgrade modules";
     };
     
@@ -303,7 +303,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Sensors Module - Item Finder"; 1; 0;
         "Calibrates the sensors to allow the turret to find different types of items";
-        nullptr;
+        "";
         "Issuing this command will have the turret scout the map and allow you to locate items";
     };
     
@@ -311,7 +311,7 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Sensors Module - Supply Drop Crate Finder"; 1; 0;
         "Calibrates the sensors to allow the turret to find UAC Supply Crates";
-        nullptr;
+        "";
         "Issuing this command will have the turret scout the map and allow you to locate supply crates";
     };
     
@@ -322,31 +322,31 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     {
         "Command Module - Idle"; 1; 0;
         "Allows you to command the turret to wait at it's current location";
-        nullptr;
+        "";
         "Issuing this command will tell the turret to wait";
     };
     {
         "Command Module - Wander"; 1; 0;
         "Allows you to command the turret to wander around it's current location";
-        nullptr;
+        "";
         "Issuing this command will tell the turret to wander";
     };
     {
         "Command Module - Orbit"; 1; 0;
         "Allows you to command the turret to orbit around your location";
-        nullptr;
+        "";
         "Issuing this command will tell the turret to orbit";
     };
     {
         "Command Module - Target"; 1; 0;
         "Allows you to command the turret to attack your current target";
-        nullptr;
+        "";
         "Issuing this command will tell the turret to attack your current target";
     };
     {
         "Command Module - Control"; 1; 0;
         "Allows you to remotely control the turret";
-        nullptr;
+        "";
         "Issuing this command will switch your control over to the turret";
     };
 
@@ -894,8 +894,13 @@ script void TurretSensors()
         
         for (int i = 0; ItemTIDs[i] != -1; i++)
         {
+            str Actor = GetActorClass(ItemTIDs[i]);
+            
             // This item doesn't exist, skip it
             if (ClassifyActor(ItemTIDs[i]) == ACTOR_NONE) continue;
+            
+            // This item is credits, skip it
+            if (Contains(Actor, "Credits")) continue;
             
             // Array has grown too big, resize it
             if (Player.Turret.SensorItems.Position == Player.Turret.SensorItems.Size)
@@ -906,7 +911,18 @@ script void TurretSensors()
             
             // Cache ItemInfoPtr for reference later in TurretDrawSensorGrid()
             // This is an insanely horrible hack and should DEFINITELY be done better
-            Player.Turret.SensorItemPtrs[i] = FindItem(GetActorClass(ItemTIDs[i]));
+            if (CompatMode == COMPAT_DRLA && EndsWith(Actor, "Pickup"))
+            {
+                // GROSS HACK
+                // If this comes back as None (an unknown item), it's likely that it was NOT a weapon and we should go about normally
+                // Otherwise, we'll do another search, stripping away the Pickup under the assumption it is a weapon and it will be found in the database
+                if (StrCmp(FindItem(StrLeft(Actor, StrLen(Actor) - 6))->Actor, "None"))
+                    Player.Turret.SensorItemPtrs[i] = FindItem(Actor)
+                else
+                    Player.Turret.SensorItemPtrs[i] = FindItem(StrLeft(Actor, StrLen(Actor) - 6));
+            }
+            else
+                Player.Turret.SensorItemPtrs[i] = FindItem(Actor);
             
             SetActorPosition(Player.Turret.TID, GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorZ(ItemTIDs[i]), true);
             Current++;
@@ -1001,6 +1017,8 @@ acscript void TurretMenu()
         else
         {
             Player.InMenu = true;
+            Player.InShop = false;
+            Player.OutpostMenu = 0;
             Player.Menu = MENUPAGE_TURRET;
             Player.TurretPage = TURRETPAGE_COMMAND;
             ActivatorSound("menu/enter", 127);
@@ -1493,6 +1511,13 @@ function void TurretDrawSensorGrid()
                 {
                     SetFont("BIGFONT");
                     HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 344.1, 0.05);
+                };
+                
+                // Item Actor - For Testing
+                if (Player.SensorIndex == Index && GetCVar("drpg_debug"))
+                {
+                    SetFont("BIGFONT");
+                    HudMessage("\ccActor: \c-%s\n", GetActorClass(TID), HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 344.1 + 32.0, 0.05);
                 };
             };
             

@@ -6,7 +6,7 @@
 
 AddressSpace MapArray ItemSpace;
 
-int ItemCategories = 9; // 9 vanilla, 7 reserved for compatibility
+int ItemCategories = 8; // 8 vanilla, 7 reserved for compatibility, 1 at the end for all the misc hidden stuff
 
 str[ITEM_CATEGORIES] ItemCategoryNames =
 {
@@ -15,28 +15,26 @@ str[ITEM_CATEGORIES] ItemCategoryNames =
     "Health";
     "Armor";
     "Powerups";
-    "Misc";
     "Shield Parts";
     "Stims/Augs/Turret";
     "Loot";
 };
 
-int[ITEM_CATEGORIES] CategoryFlags =
+int[ITEM_CATEGORIES] ItemCategoryFlags =
 {
     CF_NONE;                // Weapons
     CF_NOSELL;              // Ammo
     CF_NONE;                // Health
     CF_NONE;                // Armor
     CF_NONE;                // Powerups
-    CF_NOBUY | CF_NOSELL;   // Misc
     CF_NONE;                // Shield Parts
-    CF_NONE;                // Stims/Augs
+    CF_NONE;                // Stims/Augs/Turret Parts
     CF_NOBUY;               // Loot
 };
 
 int[ITEM_CATEGORIES] ItemMax =
 {
-    8; 11; 8; 11; 11; 6; 1; 32; MAX_LOOT;
+    8; 11; 8; 11; 11; 1; 32; MAX_LOOT;
 };
 
 ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
@@ -112,22 +110,12 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
         { "DRPGImmunityCrystal";        "Immunity Crystal";                 100000;     8;  { "CRYS";   -7; -4; }; };
     };
     
-    // Misc
-    {
-        { "DRPGEPCapsule";              "EP Capsule";                       0;          -1; { "EPUPA0"; 16; 24; }; };
-        { "DRPGBigEPCapsule";           "Big EP Capsule";                   0;          -1; { "EPUPA0"; 16; 24; }; };
-        { "DRPGChipGold";               "\cfGold Chip";                     0;          -1; { "CHPGA0"; 16; 32; }; };
-        { "DRPGChipPlatinum";           "Platinum Chip";                    0;          -1; { "CHPPA0"; 16; 32; }; };
-        { "DRPGUACCard";                "UAC Card";                         0;          -1; { "UCRDA0"; 26; 26; }; };
-        { "DRPGDiamondUACCard";         "Diamond UAC Card";                 0;          -1; { "UCRDE0"; 26; 26; }; };
-    };
-    
     // Shield Parts - Built Dynamically
     {
         { "DRPGBasicShieldPackage";     "Basic Shield Package";             5000;       0;  { "SHPAA0"; 16; 32; }; };
     };
 
-    // Stims/Augmentations
+    // Stims/Augmentations/Turret Parts
     {
         { "DRPGStimSmall";              "Small Stim";                       1000;       0;  { "STIMB0"; 16; 29; }; };
         { "DRPGStimMedium";             "Medium Stim";                      2500;       2;  { "STIMB0"; 16; 29; }; };
@@ -191,13 +179,13 @@ script void BuildItemData()
     int Index = 1;
     
     // Shield Page
-    ItemMax[6] = 1;
+    ItemMax[5] = 1;
     for (int i = 0; i < 3; i++)
     {
         str ShieldName;
         int ShieldPartCost;
         
-        ItemMax[6] += ShieldPartsMax[i];
+        ItemMax[5] += ShieldPartsMax[i];
         
         switch (i)
         {
@@ -211,8 +199,8 @@ script void BuildItemData()
             ShieldPartCost = 0;
 
             // Name
-            ItemData[6][Index].Actor = StrParam("%s\n", ShieldParts[i][j].Actor);
-            ItemData[6][Index].Name = StrParam("%s%s\c-\n", ShieldName, ShieldParts[i][j].Name);
+            ItemData[5][Index].Actor = StrParam("%s\n", ShieldParts[i][j].Actor);
+            ItemData[5][Index].Name = StrParam("%s%s\c-\n", ShieldName, ShieldParts[i][j].Name);
             
             // Price
             ShieldPartPtr PartPtr = &ShieldParts[i][j];
@@ -246,15 +234,15 @@ script void BuildItemData()
                 ShieldPartCost = 1000;
 
             // Apply Price
-            ItemData[6][Index].Price = ShieldPartCost;
+            ItemData[5][Index].Price = ShieldPartCost;
             
             // Rank
-            ItemData[6][Index].Rank = j / 1.5;
+            ItemData[5][Index].Rank = j / 1.5;
             
             // Sprite Info
-            ItemData[6][Index].Sprite.Name = ShieldParts[i][j].Icon;
-            ItemData[6][Index].Sprite.XOff = 16;
-            ItemData[6][Index].Sprite.YOff = 32;
+            ItemData[5][Index].Sprite.Name = ShieldParts[i][j].Icon;
+            ItemData[5][Index].Sprite.XOff = 16;
+            ItemData[5][Index].Sprite.YOff = 32;
             
             Index++;
         };
@@ -267,20 +255,20 @@ script void BuildItemData()
     
     qsort(ShieldAccessoriesSorted, MAX_ACCESSORIES, sizeof(ShieldAccsPtr), ShieldInversePriceSort);
     
-    ItemMax[6] += MAX_ACCESSORIES;
+    ItemMax[5] += MAX_ACCESSORIES;
     for (int i = 0; i < MAX_ACCESSORIES; i++)
     {
         ShieldAccsPtr Accessory = ShieldAccessoriesSorted[i];
         
-        ItemData[6][Index].Actor = Accessory->Actor;
-        ItemData[6][Index].Name = StrParam("Shield Accessory - %s\n", Accessory->Name);
-        ItemData[6][Index].Price = Accessory->Price;
-        ItemData[6][Index].Rank = i * (MAX_RANK / 2) / MAX_ACCESSORIES; // This makes all accessories available by SSgt +
+        ItemData[5][Index].Actor = Accessory->Actor;
+        ItemData[5][Index].Name = StrParam("Shield Accessory - %s\n", Accessory->Name);
+        ItemData[5][Index].Price = Accessory->Price;
+        ItemData[5][Index].Rank = i * (MAX_RANK / 2) / MAX_ACCESSORIES; // This makes all accessories available by SSgt +
         
         // Sprite Info
-        ItemData[6][Index].Sprite.Name = Accessory->Icon;
-        ItemData[6][Index].Sprite.XOff = 16;
-        ItemData[6][Index].Sprite.YOff = 32;
+        ItemData[5][Index].Sprite.Name = Accessory->Icon;
+        ItemData[5][Index].Sprite.XOff = 16;
+        ItemData[5][Index].Sprite.YOff = 32;
         
         Index++;
     };
@@ -309,16 +297,16 @@ script void BuildItemData()
     if (CompatMode == COMPAT_DRLA)
     {
         // Categories
-        ItemCategories = 11;
-        ItemCategoryNames[9] = "Mod Packs";
-        ItemCategoryNames[10] = "Boots";
+        ItemCategories = 10;
+        ItemCategoryNames[8] = "Mod Packs";
+        ItemCategoryNames[9] = "Boots";
         
         // Maximums
         ItemMax[0] = 150;   // Weapons
         ItemMax[3] = 91;    // Armor
         ItemMax[4] = 13;    // Powerups
-        ItemMax[9] = 9;     // Mod Packs
-        ItemMax[10] = 33;   // Boots
+        ItemMax[8] = 9;     // Mod Packs
+        ItemMax[9] = 33;   // Boots
         
         // Weapons
         ItemData[0] =
@@ -628,7 +616,7 @@ script void BuildItemData()
         ItemData[4][ItemMax[4] - 1] = { "RLBlueprintComputer"; "Blueprint Computer"; 3000; 4; { "BLUPA0"; 14; 23; }; };
         
         // Mod Packs
-        ItemData[9] =
+        ItemData[8] =
         {
             // Normal Modpacks
             { "RLPowerModItem";                         "Power Modpack";                                        5000;   0;  { "PMODA0"; 8;  17; }; };
@@ -645,7 +633,7 @@ script void BuildItemData()
         };
         
         // Boots
-        ItemData[10] =
+        ItemData[9] =
         {
             // Common Boots
             { "RLSteelBootsPickup";                     "Steel Boots";                                          250;    0;  { "BOOTS0"; 13; 26; }; };
@@ -692,12 +680,52 @@ script void BuildItemData()
         };
     };
     
+    // Misc Hidden Stuff
+    ItemCategoryNames[ItemCategories] = "Misc";
+    ItemCategoryFlags[ItemCategories] = CF_NOBUY | CF_NOSELL | CF_NOSTORE;
+    ItemMax[ItemCategories] = 19;
+    ItemData[ItemCategories] =
+    {
+        { "None";                       "\caUnknown Item\c-";               0;          -1; { "SprNone"; 0;  0; }; };
+        { "DRPGEPCapsule";              "\cnEP Capsule\c-";                 0;          -1; { "EPUPA0"; 16; 24; }; };
+        { "DRPGBigEPCapsule";           "\cnBig EP Capsule\c-";             0;          -1; { "EPUPA0"; 16; 24; }; };
+        { "DRPGChipGold";               "\cfGold Chip\c-";                  0;          -1; { "CHPGA0"; 16; 32; }; };
+        { "DRPGChipPlatinum";           "Platinum Chip";                    0;          -1; { "CHPPA0"; 16; 32; }; };
+        { "DRPGUACCard";                "UAC Card";                         0;          -1; { "UCRDA0"; 26; 26; }; };
+        { "DRPGDiamondUACCard";         "Diamond UAC Card";                 0;          -1; { "UCRDE0"; 26; 26; }; };
+        { "DRPGNukeKey1";               "\chBlue\c- Nuke Key";              0;          -1; { "NKEYA0"; 6;  20; }; };
+        { "DRPGNukeKey2";               "\cmBlack\c- Nuke Key";             0;          -1; { "NKEYB0"; 6;  20; }; };
+        { "DRPGNukeKey3";               "\csBrown\c- Nuke Key";             0;          -1; { "NKEYC0"; 6;  20; }; };
+        { "DRPGNukeKey4";               "\cdGreen\c- Nuke Key";             0;          -1; { "NKEYD0"; 6;  20; }; };
+        { "DRPGNukeKey5";               "\ciOrange\c- Nuke Key";            0;          -1; { "NKEYE0"; 6;  20; }; };
+        { "DRPGNukeKey6";               "\cgRed\c- Nuke Key";               0;          -1; { "NKEYF0"; 6;  20; }; };
+        { "DRPGNukeKey7";               "\ctPurple\c- Nuke Key";            0;          -1; { "NKEYG0"; 6;  20; }; };
+        { "DRPGNukeKey8";               "\cjWhite\c- Nuke Key";             0;          -1; { "NKEYH0"; 6;  20; }; };
+        { "DRPGNukeKey9";               "\ckYellow\c- Nuke Key";            0;          -1; { "NKEYI0"; 6;  20; }; };
+        { "DRPGGeneratorCell";          "Generator Cell";                   0;          -1; { "GCELA0"; 8;  33; }; };
+        { "DRPGGeneratorCellDead";      "Dead Generator Cell";              0;          -1; { "GCELH0"; 8;  33; }; };
+        { "DRPGNeutralizerFuel";        "Radiation Neutralizer Fuel";       0;          -1; { "RADMB0"; 9;  20; }; };
+    };
+    
+    // Misc item insertions based on compatibility mode
+    if (CompatMode == COMPAT_DRLA)
+    {
+        ItemMax[ItemCategories] += 6;
+        
+        ItemData[ItemCategories][ItemMax[ItemCategories] - 6] = { "RLClip2"; "Clip"; 0; -1; { "CLIPA0"; 2; 11; }; };
+        ItemData[ItemCategories][ItemMax[ItemCategories] - 5] = { "RLClipBox2"; "Box of Bullets"; 0; -1; { "AMMOA0"; 12; 16; }; };
+        ItemData[ItemCategories][ItemMax[ItemCategories] - 4] = { "RLShellBox2"; "Box of Shells"; 0; -1; { "SBOXA0"; 16; 12; }; };
+        ItemData[ItemCategories][ItemMax[ItemCategories] - 3] = { "RLRocketBox2"; "Box of Rockets"; 0; -1; { "BROKA0"; 27; 20; }; };
+        ItemData[ItemCategories][ItemMax[ItemCategories] - 2] = { "RLCell2"; "Cells"; 0; -1; { "CELLA0"; 8; 12; }; };
+        ItemData[ItemCategories][ItemMax[ItemCategories] - 1] = { "RLCellPack2"; "Cell Pack"; 0; -1; { "CELPA0"; 15; 20; }; };
+    };
+    
     // Remove rank limitations in Debug Mode
     if (GetCVar("drpg_debug"))
         RemoveItemRanks();
     
     Delay(1);
-
+    
     // We need this here now because DRLA is special
     for (int i = 0; i < ItemCategories; i++)
         for (int j = 0; j < ItemMax[i]; j++)
@@ -808,12 +836,12 @@ function ItemInfoPtr GetRewardItem(int Difficulty)
 
 function ItemInfoPtr FindItem(str Item)
 {
-    for (int i = 0; i < ItemCategories; i++)
+    for (int i = 0; i <= ItemCategories; i++)
         for (int j = 0; j < ItemMax[i]; j++)
             if (Contains(ItemData[i][j].Actor, Item))
                 return &ItemData[i][j];
     
-    return nullptr;
+    return &ItemData[ItemCategories][0];
 };
 
 acscript void DumpItemData()
