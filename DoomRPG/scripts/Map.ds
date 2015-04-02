@@ -794,6 +794,10 @@ script void EnvironmentalHazardDamage()
 
 acscript void EnvironmentalHazardRefillGenerator()
 {
+    int FuelAmount = 35 * 30 * (6 - GameSkill());
+    if (FuelAmount < 35 * 30)
+        FuelAmount = 35 * 30;
+    
     SetActivator(0, AAPTR_TARGET);
     
     if (CurrentLevel->Event != MAPEVENT_TOXICHAZARD)
@@ -802,11 +806,11 @@ acscript void EnvironmentalHazardRefillGenerator()
     if (!CheckInventory("DRPGNeutralizerFuel"))
         return;
     
-    TakeInventory("DRPGNeutralizerFuel", 1);
-    CurrentLevel->GeneratorFuel = 35 * 30 * (6 - GameSkill());
+    if (CurrentLevel->GeneratorFuel >= FuelAmount)
+        return;
     
-    if (CurrentLevel->GeneratorFuel < 35 * 30)
-        CurrentLevel->GeneratorFuel = 35 * 30;
+    TakeInventory("DRPGNeutralizerFuel", 1);
+    CurrentLevel->GeneratorFuel = FuelAmount;
     
     AmbientSound("radiation/refuel", 127);
     SetFont("BIGFONT");
