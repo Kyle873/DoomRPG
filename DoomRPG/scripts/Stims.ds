@@ -76,13 +76,6 @@ acscript void UseStim() net
     // If you're dead, terminate
     if (GetActorProperty(0, APROP_Health) <= 0) return;
     
-    if (Player.Stim.Active)
-    {
-        PrintError("You already have a stim active");
-        ActivatorSound("menu/error", 127);
-        return;
-    };
-    
     // Generate and Activate Turret Stim
     if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) && Player.Turret.Active)
     {
@@ -112,36 +105,51 @@ acscript void UseStim() net
         return;
     };
     
+    // Store previous states
+    if (!Player.Stim.Active)
+        Player.Stim.PrevStats =
+        {
+            Player.Strength;
+            Player.Defense;
+            Player.Vitality;
+            Player.Energy;
+            Player.Regeneration;
+            Player.Agility;
+            Player.Capacity;
+            Player.Luck;
+        };
+    
     // Set Timer for Stat bonuses
-    for (int i = StimStatsStart; i < StimStatsEnd; i++)
+    for (int i = StimStatsStart; i < StimStatsEnd + 2; i++)
         if (Player.Stim.Current[i] > 0)
         {
             Player.Stim.Active = true;
-            Player.Stim.Timer = 35 * (60 + (Player.Stim.Current[STIM_PURIFIER] * 30));
-            Player.Stim.TimerMax = Player.Stim.Timer;
+            Player.Stim.Timer += 35 * (60 + (Player.Stim.Current[STIM_PURIFIER] * 30));
+            if (Player.Stim.Timer >= Player.Stim.TimerMax)
+                Player.Stim.TimerMax = Player.Stim.Timer;
         };
     
-    // Apply Potency
+    // Apply Multiplier and Potency
     for (int i = StimStatsStart; i < StimStatsEnd; i++)
-        if (Player.Stim.Current[i] > 0)
-            Player.Stim.Current[i] = (Player.Stim.Current[i] * 5) + (Player.Stim.Current[STIM_POTENCY] * 5);
+        Player.Stim.Current[i] += (Player.Stim.Current[i] * 5) + (Player.Stim.Current[STIM_POTENCY] * 5);
     
     // Apply Stat Bonuses
-    Player.StrengthBonus = Player.Stim.Current[STIM_STRENGTH];
-    Player.DefenseBonus = Player.Stim.Current[STIM_DEFENSE];
-    Player.VitalityBonus = Player.Stim.Current[STIM_VITALITY];
-    Player.EnergyBonus = Player.Stim.Current[STIM_ENERGY];
-    Player.RegenerationBonus = Player.Stim.Current[STIM_REGENERATION];
-    Player.AgilityBonus = Player.Stim.Current[STIM_AGILITY];
-    Player.CapacityBonus = Player.Stim.Current[STIM_CAPACITY];
-    Player.LuckBonus = Player.Stim.Current[STIM_LUCK];
+    Player.StrengthBonus += Player.Stim.Current[STIM_STRENGTH];
+    Player.DefenseBonus += Player.Stim.Current[STIM_DEFENSE];
+    Player.VitalityBonus += Player.Stim.Current[STIM_VITALITY];
+    Player.EnergyBonus += Player.Stim.Current[STIM_ENERGY];
+    Player.RegenerationBonus += Player.Stim.Current[STIM_REGENERATION];
+    Player.AgilityBonus += Player.Stim.Current[STIM_AGILITY];
+    Player.CapacityBonus += Player.Stim.Current[STIM_CAPACITY];
+    Player.LuckBonus += Player.Stim.Current[STIM_LUCK];
     
     // Setup Powerup Timers
     for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
         if (Player.Stim.Current[i] > 0)
         {
-            Player.Stim.PowerupTimer[i] = (35 * Player.Stim.Current[i]) * 30;
-            Player.Stim.PowerupTimerMax[i] = Player.Stim.PowerupTimer[i];
+            Player.Stim.PowerupTimer[i] += (35 * Player.Stim.Current[i]) * 30;
+            if (Player.Stim.PowerupTimer[i] > Player.Stim.PowerupTimerMax[i])
+                Player.Stim.PowerupTimerMax[i] = Player.Stim.PowerupTimer[i];
             
             // Regeneration Vial handling
             if (i == STIM_ADRENALINE)
@@ -166,7 +174,7 @@ acscript void UseStim() net
     
     // Apply current Stim to last used Stim
     for (int i = 0; i < STIM_MAX; i++)
-        Player.Stim.Last[i] = Player.Stim.Current[i];
+        Player.Stim.Last[i] += Player.Stim.Current[i];
     
     // Restore Injector if it was saved from a turret
     if (Turret)
@@ -297,15 +305,20 @@ function void CheckStim()
     // Remove bonuses and active flags when Stim has expired
     if (Player.Stim.Timer <= 0 && Player.Stim.Active)
     {
-        Player.StrengthBonus = -Player.Stim.Last[STIM_STRENGTH];
-        Player.DefenseBonus = -Player.Stim.Last[STIM_DEFENSE];
-        Player.VitalityBonus = -Player.Stim.Last[STIM_VITALITY];
-        Player.EnergyBonus = -Player.Stim.Last[STIM_ENERGY];
-        Player.RegenerationBonus = -Player.Stim.Last[STIM_REGENERATION];
-        Player.AgilityBonus = -Player.Stim.Last[STIM_AGILITY];
-        Player.CapacityBonus = -Player.Stim.Last[STIM_CAPACITY];
-        Player.LuckBonus = -Player.Stim.Last[STIM_LUCK];
         Player.Stim.Active = false;
+        
+        // Restore previous stats
+        Player.Strength = Player.Stim.PrevStats[STAT_STRENGTH];
+        Player.Defense = Player.Stim.PrevStats[STAT_DEFENSE];
+        Player.Vitality = Player.Stim.PrevStats[STAT_VITALITY];
+        Player.Energy = Player.Stim.PrevStats[STAT_ENERGY];
+        Player.Regeneration = Player.Stim.PrevStats[STAT_REGENERATION];
+        Player.Agility = Player.Stim.PrevStats[STAT_AGILITY];
+        Player.Capacity = Player.Stim.PrevStats[STAT_CAPACITY];
+        Player.Luck = Player.Stim.PrevStats[STAT_LUCK];
+        
+        for (int i = 0; i < STIM_MAX; i++)
+            Player.Stim.Last[i] = 0;
         
         for (int i = 0; i < STIM_MAX; i++)
             Player.Stim.ActiveBonus[i] = false;
