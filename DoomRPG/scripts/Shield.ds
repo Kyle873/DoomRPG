@@ -1316,11 +1316,26 @@ script bool ActivateShield()
         return true;
     
     if (!Player.Shield.Body || !Player.Shield.Battery || !Player.Shield.Capacitor)
+    {
+        PrintError("Your shield is incomplete and is missing one or more parts");
+        ActivatorSound("menu/error", 127);
         return false;
+    };
     
     if (Player.StatusType[SE_EMP])
+    {
+        PrintError("Your shield cannot be activated while EMP is active");
+        ActivatorSound("menu/error", 127);
         return false;
-        
+    };
+    
+    if (Player.Shield.Capacity <= 0)
+    {
+        PrintError("Your shield has no charge capacity and cannot be activated");
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+
     FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
     
     if (Player.Shield.Accessory && Player.Shield.Accessory->Equip)
@@ -1355,10 +1370,10 @@ script bool ActivateShield()
     return true;
 };
 
-script void DeactivateShield()
+script bool DeactivateShield()
 {
     if (!Player.Shield.Active)
-        return;
+        return true;
     
     FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0.0, 0.25);
     
@@ -1395,6 +1410,8 @@ script void DeactivateShield()
     };
     if (GetCVar("drpg_shield_reset") || Player.StatusType[SE_EMP])
         Player.Shield.Charge = 0;
+    
+    return true;
 };
 
 acscript void ToggleShield() net
@@ -1402,17 +1419,10 @@ acscript void ToggleShield() net
     // If you're dead, terminate
     if (GetActorProperty(0, APROP_Health) <= 0) return;
     
-    bool Success = true;
     if (!Player.Shield.Active)
-        Success = ActivateShield()
+        ActivateShield()
     else
         DeactivateShield();
-    
-    if (!Success)
-    {
-        PrintError("There was a problem activating your Shield");
-        ActivatorSound("menu/error", 127);
-    };
 };
 
 function void RemoveShieldAccessory()

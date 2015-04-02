@@ -1242,6 +1242,7 @@ function void DrawStimsMenu()
 // Good luck figuring it out
 function void DrawTurretMenu()
 {
+    int Count = 0;
     int Parts = CheckInventory("DRPGTurretPart");
     int Color = CR_RED;
     int PageMax = MAX_UPGRADES / TURRET_PAGE_MAX;
@@ -1254,8 +1255,6 @@ function void DrawTurretMenu()
         HudMessage("Turret (\ckCommand\c-)\n", HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
     if (Player.TurretPage == TURRETPAGE_UPGRADE)
         HudMessage("Turret (\cvUpgrade\c-)\n", HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
-    if (Player.TurretPage == TURRETPAGE_SENSOR)
-        HudMessage("Turret (\cdSensor Data\c-)\n", HUDMSG_PLAIN, 0, CR_GREEN, 0.1, 10.0, 0.05);
     
     // Icon
     if (Player.Turret.Init)
@@ -1294,60 +1293,54 @@ function void DrawTurretMenu()
         PrintSprite("TRefit", 0, 288.1, 35.0, 0.05);
     
     // Modules
-    int Count = 0;
-    if (Player.TurretPage == TURRETPAGE_COMMAND || Player.TurretPage == TURRETPAGE_UPGRADE)
+    while (Count < TURRET_PAGE_MAX)
     {
-        while (Count < TURRET_PAGE_MAX)
+        int Index = (Page * TURRET_PAGE_MAX) + Count;
+        fixed X = 24.0 + ((Count % (TURRET_PAGE_MAX / 4)) * 48.0);
+        fixed Y = 80.0 + ((Count / (TURRET_PAGE_MAX / 4)) * 48.0);
+        TurretUpgradePtr UpgradeIter = &TurretUpgradeData[Index];
+        
+        // Stop if we've hit the page or upgrade max limit
+        if (Index >= MAX_UPGRADES) break;
+        
+        // Highlight
+        if (Index == Player.MenuIndex)
+            PrintSpritePulse("TurrBoxH", 0, X, Y, 0.75, 32.0, 0.25);
+        
+        // Upgrade Level
+        if (Player.TurretPage == TURRETPAGE_UPGRADE)
         {
-            int Index = (Page * TURRET_PAGE_MAX) + Count;
-            fixed X = 24.0 + ((Count % (TURRET_PAGE_MAX / 4)) * 48.0);
-            fixed Y = 80.0 + ((Count / (TURRET_PAGE_MAX / 4)) * 48.0);
-            TurretUpgradePtr UpgradeIter = &TurretUpgradeData[Index];
-            
-            // Stop if we've hit the page or upgrade max limit
-            if (Index >= MAX_UPGRADES) break;
-            
-            // Highlight
-            if (Index == Player.MenuIndex)
-                PrintSpritePulse("TurrBoxH", 0, X, Y, 0.75, 32.0, 0.25);
-            
-            // Upgrade Level
-            if (Player.TurretPage == TURRETPAGE_UPGRADE)
-            {
-                if (Player.Turret.Upgrade[Index] >= UpgradeIter->MaxLevel)
-                    Color = CR_GREEN
-                else if (Player.Turret.Upgrade[Index] > 0)
-                    Color = CR_WHITE
-                else
-                    Color = CR_RED;
-                SetFont("SMALLFONT");
-                HudMessage("%d/%d\n", Player.Turret.Upgrade[Index], UpgradeIter->MaxLevel, HUDMSG_PLAIN, 0, Color, X, Y + 16.0, 0.05);
-            }
+            if (Player.Turret.Upgrade[Index] >= UpgradeIter->MaxLevel)
+                Color = CR_GREEN
             else if (Player.Turret.Upgrade[Index] > 0)
-                DrawTurretInfo(X, Y, Index);
-            
-            // Icon
-            if (Index == Player.MenuIndex)
-                PrintSpritePulse(StrParam("T_UPG%d\n", Index + 1), 0, X, Y, 0.75, 32.0, 0.25)
+                Color = CR_WHITE
             else
-                PrintSprite(StrParam("T_UPG%d\n", Index + 1), 0, X, Y, 0.05);
-            
-            // Box
-            PrintSprite("TurrBoxB", 0, X, Y, 0.05);
-            
-            Count++;
-        };
+                Color = CR_RED;
+            SetFont("SMALLFONT");
+            HudMessage("%d/%d\n", Player.Turret.Upgrade[Index], UpgradeIter->MaxLevel, HUDMSG_PLAIN, 0, Color, X, Y + 16.0, 0.05);
+        }
+        else if (Player.Turret.Upgrade[Index] > 0)
+            DrawTurretInfo(X, Y, Index);
         
-        // Upgrade Name
-        SetFont("BIGFONT");
-        HudMessage("%s\n", Upgrade->Name, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 256.1, 0.05);
+        // Icon
+        if (Index == Player.MenuIndex)
+            PrintSpritePulse(StrParam("T_UPG%d\n", Index + 1), 0, X, Y, 0.75, 32.0, 0.25)
+        else
+            PrintSprite(StrParam("T_UPG%d\n", Index + 1), 0, X, Y, 0.05);
         
-        // Upgrade Description
-        SetFont("SMALLFONT");
-        HudMessage("\cd%s\n\cv%s\n\ck%s\n", Upgrade->Description, Upgrade->UpgradeInfo, Upgrade->CommandInfo, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 284.1, 0.05);
-    }
-    else
-        TurretDrawSensorGrid();
+        // Box
+        PrintSprite("TurrBoxB", 0, X, Y, 0.05);
+        
+        Count++;
+    };
+    
+    // Upgrade Name
+    SetFont("BIGFONT");
+    HudMessage("%s\n", Upgrade->Name, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 256.1, 0.05);
+    
+    // Upgrade Description
+    SetFont("SMALLFONT");
+    HudMessage("\cd%s\n\cv%s\n\ck%s\n", Upgrade->Description, Upgrade->UpgradeInfo, Upgrade->CommandInfo, HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 284.1, 0.05);
 };
 
 function void DrawTurretInfo(fixed X, fixed Y, int Index)
@@ -1434,6 +1427,11 @@ function void DrawTurretInfo(fixed X, fixed Y, int Index)
     case TU_ASSIST_TEAM:
         Y -= 4.0;
         Info = StrParam("\cj%d\n\cjRange\n", Player.Turret.Upgrade[TU_ASSIST_TEAM] * 256);
+        break;
+    case TU_SENSORS_MODULEFINDER:
+    case TU_SENSORS_ITEMFINDER:
+    case TU_SENSORS_SUPPLYFINDER:
+        Info = "\cdGo";
         break;
     case TU_BATTERY_CAPACITY:
         Info = StrParam("\ck%s\n", FormatTime(Player.Turret.BatteryMax * 35));
@@ -1877,49 +1875,30 @@ function void MenuInput()
     // Turret Menu
     if (Player.Menu == MENUPAGE_TURRET && !Player.MenuBlock)
     {
-        int *Index = (Player.TurretPage == TURRETPAGE_SENSOR ? &Player.SensorIndex : &Player.MenuIndex);
-        int MaxIndex = (Player.TurretPage == TURRETPAGE_SENSOR ? Player.Turret.SensorItems.Position - 1 : MAX_UPGRADES - 1);
-        
-        if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD) && *Index > 0)
+        if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD) && Player.MenuIndex > 0)
         {
-            if (Player.TurretPage == TURRETPAGE_SENSOR)
-            {
-                if (Buttons & BT_SPEED)
-                    *Index -= 54
-                else
-                    *Index -= 9;
-            }
-            else
-                *Index -= TURRET_PAGE_MAX / 4;
-            if (*Index < 0) *Index = 0;
+            Player.MenuIndex -= TURRET_PAGE_MAX / 4;
+            if (Player.MenuIndex < 0) Player.MenuIndex = 0;
             ActivatorSound("menu/move", 127);
         };
-        if (Buttons & BT_BACK && !(OldButtons & BT_BACK) && *Index < MaxIndex)
+        if (Buttons & BT_BACK && !(OldButtons & BT_BACK) && Player.MenuIndex < MAX_UPGRADES - 1)
         {
-            if (Player.TurretPage == TURRETPAGE_SENSOR)
-            {
-                if (Buttons & BT_SPEED)
-                    *Index += 54
-                else
-                    *Index += 9;
-            }
-            else
-                *Index += TURRET_PAGE_MAX / 4;
-            if (*Index >= MaxIndex) *Index = MaxIndex;
+            Player.MenuIndex += TURRET_PAGE_MAX / 4;
+            if (Player.MenuIndex >= MAX_UPGRADES - 1) Player.MenuIndex = MAX_UPGRADES - 1;
             ActivatorSound("menu/move", 127);
         };
         if (((Buttons & BT_LEFT && !(OldButtons & BT_LEFT)) ||
             (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT)))
-            && *Index > 0)
+            && Player.MenuIndex > 0)
         {
-            (*Index)--;
+            (Player.MenuIndex)--;
             ActivatorSound("menu/move", 127);
         };
         if (((Buttons & BT_RIGHT && !(OldButtons & BT_RIGHT)) ||
             (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT)))
-            && *Index < MaxIndex)
+            && Player.MenuIndex < MAX_UPGRADES - 1)
         {
-            (*Index)++;
+            (Player.MenuIndex)++;
             ActivatorSound("menu/move", 127);
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
@@ -1927,24 +1906,14 @@ function void MenuInput()
             if (Player.TurretPage == TURRETPAGE_COMMAND)
                 TurretCommand(Player.MenuIndex)
             else if (Player.TurretPage == TURRETPAGE_UPGRADE)
-                UpgradeTurret(Player.MenuIndex)
-            else if (Player.TurretPage == TURRETPAGE_SENSOR)
-            {
-                if (Player.Turret.CurrentSensorItem == *Index)
-                    Player.Turret.CurrentSensorItem = -1
-                else
-                    Player.Turret.CurrentSensorItem = *Index;
-                ActivatorSound("menu/move", 127);
-            };
+                UpgradeTurret(Player.MenuIndex);
         };
-        if (Buttons == BT_SPEED && OldButtons != BT_SPEED && Player.TurretPage != TURRETPAGE_SENSOR)
+        if (Buttons == BT_SPEED && OldButtons != BT_SPEED)
             TurretMaintenance();
         if (Buttons == BT_JUMP && OldButtons != BT_JUMP)
         {
             Player.TurretPage++;
-            if (Player.Turret.SensorItems.Position == 0 && Player.TurretPage > TURRETPAGE_UPGRADE)
-                Player.TurretPage = TURRETPAGE_COMMAND;
-            if (Player.TurretPage > TURRETPAGE_SENSOR)
+            if (Player.TurretPage >= TURRETPAGE_MAX)
                 Player.TurretPage = TURRETPAGE_COMMAND;
             ActivatorSound("menu/move", 127);
         };

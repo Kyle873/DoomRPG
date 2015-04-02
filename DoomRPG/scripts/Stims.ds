@@ -84,7 +84,7 @@ acscript void UseStim() net
     };
     
     // Generate and Activate Turret Stim
-    if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS))
+    if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) && Player.Turret.Active)
     {
         Turret = true;
         
@@ -92,7 +92,9 @@ acscript void UseStim() net
         for (int i = 0; i < STIM_MAX; i++)
             Injector[i] = Player.Stim.Current[i];
         
-        TurretStim();
+        if (!TurretStim())
+            return;
+        
         Delay(1);
     };
     
@@ -180,6 +182,8 @@ acscript void UseStim() net
     // FX
     ClearToxicityMeter();
     ActivatorSound("items/stim", 127);
+    if (Random(0, 100) == 0) // DRUGS
+        ActivatorSound("misc/drugs", 127);
     FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
     if (!Turret)
         TossStim();

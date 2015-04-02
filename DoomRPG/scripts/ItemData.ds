@@ -29,7 +29,7 @@ int[ITEM_CATEGORIES] ItemCategoryFlags =
     CF_NONE;                // Powerups
     CF_NONE;                // Shield Parts
     CF_NONE;                // Stims/Augs/Turret Parts
-    CF_NOBUY;               // Loot
+    CF_NOBUY | CF_NODROP;   // Loot
 };
 
 int[ITEM_CATEGORIES] ItemMax =
@@ -306,7 +306,7 @@ script void BuildItemData()
         ItemMax[3] = 91;    // Armor
         ItemMax[4] = 13;    // Powerups
         ItemMax[8] = 9;     // Mod Packs
-        ItemMax[9] = 33;   // Boots
+        ItemMax[9] = 33;    // Boots
         
         // Weapons
         ItemData[0] =
@@ -785,19 +785,6 @@ script void BuildItemData()
         { "DRPGNeutralizerFuel";        "Radiation Neutralizer Fuel";       0;          -1; { "RADMB0"; 9;  20; }; };
     };
     
-    // Misc item insertions based on compatibility mode
-    if (CompatMode == COMPAT_DRLA)
-    {
-        ItemMax[ItemCategories] += 6;
-        
-        ItemData[ItemCategories][ItemMax[ItemCategories] - 6] = { "RLClip2"; "Clip"; 0; -1; { "CLIPA0"; 2; 11; }; };
-        ItemData[ItemCategories][ItemMax[ItemCategories] - 5] = { "RLClipBox2"; "Box of Bullets"; 0; -1; { "AMMOA0"; 12; 16; }; };
-        ItemData[ItemCategories][ItemMax[ItemCategories] - 4] = { "RLShellBox2"; "Box of Shells"; 0; -1; { "SBOXA0"; 16; 12; }; };
-        ItemData[ItemCategories][ItemMax[ItemCategories] - 3] = { "RLRocketBox2"; "Box of Rockets"; 0; -1; { "BROKA0"; 27; 20; }; };
-        ItemData[ItemCategories][ItemMax[ItemCategories] - 2] = { "RLCell2"; "Cells"; 0; -1; { "CELLA0"; 8; 12; }; };
-        ItemData[ItemCategories][ItemMax[ItemCategories] - 1] = { "RLCellPack2"; "Cell Pack"; 0; -1; { "CELPA0"; 15; 20; }; };
-    };
-    
     // Remove rank limitations in Debug Mode
     if (GetCVar("drpg_debug"))
         RemoveItemRanks();
@@ -867,11 +854,12 @@ script void BuildItemData()
 
 function int ShieldInversePriceSort(void const *Left, void const *Right)
 {
-    ShieldAccsPtr LeftPart = *((ShieldAccsPtr*)Left);
-    ShieldAccsPtr RightPart = *((ShieldAccsPtr*)Right);
+    ShieldAccsPtr LeftPart = *((ShieldAccsPtr *)Left);
+    ShieldAccsPtr RightPart = *((ShieldAccsPtr *)Right);
     
     if (LeftPart->Price > RightPart->Price) return 1;
     if (LeftPart->Price < RightPart->Price) return -1;
+    
     return 0;
 };
 
