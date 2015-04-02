@@ -479,37 +479,120 @@ __extfunc "C" void *bsearch(void const *key, void const *base, size_t nmemb, siz
 };
 
 //
-// qsort
+// SortGnome
 //
-__extfunc "C" void qsort(void *base, size_t nmemb, size_t size,
-                         __func_t int(void const *, void const *) compar)
+__intfunc void SortGnome(char *base, char *end, size_t size,
+   __func_t(void const *, void const *) -> int compar)
 {
-   // Array must have at least two members to sort.
-   if(nmemb < 2) return;
+   char *itr = base;
 
-   char *itr = (char *)base;
-   // Consider end to be one less than the actual end, for the purpose of the
-   // iterator condition.
-   char *end = (char *)base + (nmemb - 1) * size;
+   // Treat end as the actual last element for looptermination purposes.
+   end -= size;
 
    // Gnome sort!
    while(itr != end)
    {
       // If itr > itr+1...
-      if(compar(itr, itr+size) > 0)
+      if(compar(itr, itr + size) > 0)
       {
          // Swap the two elements.
-         memswp(itr, itr+size, size);
+         char *swpL = itr, swpR = itr + size;
+         for(size_t n = size; n--; ++swpL, ++swpR)
+         {
+            char swpT = *swpL;
+            *swpL = *swpR;
+            *swpR =  swpT;
+         };
 
          // Reset the iterator.
          if(itr != base) itr -= size;
       }
       else
-      {
-         // Advance the iterator.
          itr += size;
-      };
    };
+};
+
+//
+// SortQuick
+//
+__intfunc void SortQuick(char *begin, char *end, char *pivot, size_t size,
+   __func_t(void const *, void const *) -> int compar)
+{
+   // Copy pivot value.
+   memcpy(pivot, begin + (((end - begin) / (int)size) >> 1) * size, size);
+
+   // Do partitioning.
+   char *itrL = begin, itrR = end - size;
+   for(;;)
+   {
+      while(compar(itrL, pivot) < 0) itrL += size;
+      while(compar(pivot, itrR) < 0) itrR -= size;
+
+      if(itrL > itrR) break;
+
+      {
+         // Swap the two elements.
+         char *swpL = itrL, swpR = itrR;
+         for(size_t n = size; n--; ++swpL, ++swpR)
+         {
+            char swpT = *swpL;
+            *swpL = *swpR;
+            *swpR =  swpT;
+         };
+      };
+
+      itrL += size;
+      itrR -= size;
+   };
+
+   // Recurse.
+   int len;
+
+   // begin..itrL
+   len = (itrL - begin) / size;
+
+   if(len > 5)
+      SortQuick(begin, itrL, pivot, size, compar)
+   else if(len > 1)
+      SortGnome(begin, itrL, size, compar);
+
+   // itrL..end
+   len = (end - itrL) / size;
+
+   if(len > 5)
+      SortQuick(itrL, end, pivot, size, compar)
+   else if(len > 1)
+      SortGnome(itrL, end, size, compar);
+};
+
+//
+// qsort
+//
+__extfunc "C" void qsort(void *base, size_t nmemb, size_t size,
+   __func_t(void const *, void const *) -> int compar)
+{
+   if(!nmemb || nmemb == 1) return;
+
+   // Use gnome sort for small arrays.
+   if(nmemb < 5)
+   {
+      SortGnome(base, (char *)base + nmemb * size, size, compar);
+      return;
+   };
+
+   char[64] pivotBuf;
+   char*    pivot;
+
+   // Set up pivot storage for quicksort.
+   if(size <= sizeof(pivotBuf))
+      pivot = pivotBuf
+   else
+      pivot = malloc(size);
+
+   SortQuick(base, (char*)base + nmemb * size, pivot, size, compar);
+
+   if(size > sizeof(pivotBuf))
+      free(pivot);
 };
 
 //===================================================================
