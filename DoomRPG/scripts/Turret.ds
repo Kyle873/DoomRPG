@@ -778,7 +778,6 @@ script void TurretLoopMaintenance() enter
             if (Player.Turret.ChargeTimer > 0)
             {
                 Player.Turret.Battery++;
-                MaintCost++;
                 
                 // Done
                 if (Player.Turret.Battery >= Player.Turret.BatteryMax)
@@ -786,6 +785,7 @@ script void TurretLoopMaintenance() enter
             };
         
         // Repairing
+            MaintCost++;
         if ((Timer() % (35 - (Player.Turret.Upgrade[TU_HARDWARE_PART] * 3))) == 0)
         {
             RepairMod = 60 + (Player.Turret.Upgrade[TU_HARDWARE_BUILD] * 60);
@@ -806,7 +806,6 @@ script void TurretLoopMaintenance() enter
                         TakeInventory("DRPGTurretPart", 1);
                     
                     Player.Turret.Health++;
-                    MaintCost++;
                     
                     // Done
                     if (Player.Turret.Health >= Player.Turret.HealthMax)
@@ -820,12 +819,19 @@ script void TurretLoopMaintenance() enter
             if (Player.Turret.RefitTimer > 0)
             {
                 Player.Turret.RefitTimer--;
-                MaintCost++;
                 
                 // Done
                 if (Player.Turret.RefitTimer <= 0)
                     ActivatorSound("turret/refitdone", 127);
             };
+        
+        // Calculate maintenance cost for this tic
+        if (Player.Turret.ChargeTimer > 0)
+            MaintCost++;
+        if (CanRepair && Player.Turret.RepairTimer > 0)
+            MaintCost++;
+        if (Player.Turret.RefitTimer > 0)
+            MaintCost++;
         
         // Steady credit loss while maintenance is happening
         if ((Player.Turret.ChargeTimer > 0 || (CanRepair && Player.Turret.RepairTimer > 0) || Player.Turret.RefitTimer > 0) && (Timer() % (5 + (Player.Turret.Upgrade[TU_HARDWARE_FABRICATION] * 3))) == 0)
