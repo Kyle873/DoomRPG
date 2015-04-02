@@ -549,8 +549,11 @@ script void TurretLoop() enter
         // Reset the current weapon
         Player.Turret.Weapon = TW_NONE;
         
+        // Small delay to let the initial upgrades kick in and for total to be calculated
+        Delay(1);
+        
         // Initial Battery Charge
-        Player.Turret.Battery = TURRET_BATTERY_CHARGE * Player.Turret.Upgrade[TU_BATTERY_CAPACITY];
+        Player.Turret.Battery = Player.Turret.BatteryMax;
         
         // Set Active and TID
         Player.Turret.Init = true;
@@ -596,15 +599,6 @@ script void TurretLoop() enter
         // Battery is drained
         if (Player.Turret.Battery <= 0)
             TurretDespawn();
-        
-        // Totals which need to be kept updated
-        Player.Turret.HealthMax = 100 * Player.Turret.Upgrade[TU_ARMOR_PLATING];
-        Player.Turret.BulletAmmoMax = 200 * Player.Turret.Upgrade[TU_WEAPON_BULLET_CAPACITY];
-        Player.Turret.ShellAmmoMax = 50 * Player.Turret.Upgrade[TU_WEAPON_PELLET_CAPACITY];
-        Player.Turret.RocketAmmoMax = 50 * Player.Turret.Upgrade[TU_WEAPON_ROCKET_CAPACITY];
-        Player.Turret.PlasmaAmmoMax = 300 * Player.Turret.Upgrade[TU_WEAPON_PLASMA_CAPACITY];
-        Player.Turret.RailAmmoMax = 10 * Player.Turret.Upgrade[TU_WEAPON_RAILGUN_CAPACITY];
-        Player.Turret.BatteryMax = TURRET_BATTERY_CHARGE * Player.Turret.Upgrade[TU_BATTERY_CAPACITY];
         
         // Autoloader
         if (Player.Turret.Upgrade[TU_AMMO_AUTOLOADER] && Player.Turret.Autoload)
@@ -835,6 +829,15 @@ script void TurretLoopMaintenance() enter
     int MaintCost = 0;
     
     Start:
+    
+    // Stats which need to be kept updated
+    Player.Turret.HealthMax = 100 * Player.Turret.Upgrade[TU_ARMOR_PLATING];
+    Player.Turret.BatteryMax = TURRET_BATTERY_CHARGE * Player.Turret.Upgrade[TU_BATTERY_CAPACITY];
+    Player.Turret.BulletAmmoMax = 200 * Player.Turret.Upgrade[TU_WEAPON_BULLET_CAPACITY];
+    Player.Turret.ShellAmmoMax = 50 * Player.Turret.Upgrade[TU_WEAPON_PELLET_CAPACITY];
+    Player.Turret.RocketAmmoMax = 50 * Player.Turret.Upgrade[TU_WEAPON_ROCKET_CAPACITY];
+    Player.Turret.PlasmaAmmoMax = 300 * Player.Turret.Upgrade[TU_WEAPON_PLASMA_CAPACITY];
+    Player.Turret.RailAmmoMax = 10 * Player.Turret.Upgrade[TU_WEAPON_RAILGUN_CAPACITY];
     
     // Calculate Timers
     Player.Turret.ChargeTimer = Player.Turret.BatteryMax - Player.Turret.Battery;
