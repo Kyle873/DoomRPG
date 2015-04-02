@@ -15,7 +15,7 @@
     --- Character Save Format ---
     
     GENERAL NOTES
-    - Items such as Shield Parts, Augs and Stims will be stored in the Locker for retrieval instead of in the save data itself
+    - Items such as Shield Parts, Aug canisters/upgrades and Stim injectors will be stored in the Locker for retrieval instead of in the save data itself
     - Each byte will be stored with a leading 0 if necessary, so a level of 10 and a rank level of 5 will come out as 0A05
     
     Version / Compatibility Flag
@@ -37,6 +37,8 @@
         - Each augmentation's level is stored in 1 byte
     Stims
         - Each stim vial type is stored in 4 bytes
+    Turret
+        - Each turret upgrade is stored in 1 byte
     Misc
         - Credits
           - Stored in 4 bytes
@@ -487,6 +489,10 @@ acscript void LoadCharacter() net
     for (int i = 0; i < STIM_MAX; i++)
         Player.Stim.Vials[i] = Info.Stims[i];
     
+    // Turret
+    for (int i = 0; i < TU_MAX; i++)
+        Player.Turret.Upgrade[i] = Info.TurretUpgrades[i];
+    
     // Misc
     SetInventory("DRPGCredits", Info.Credits);
     SetInventory("DRPGModule", Info.Modules);
@@ -678,6 +684,9 @@ script void PopulateCharData(CharSaveInfo *Info)
     for (int i = 0; i < STIM_MAX; i++)
         Info->Stims[i] = Player.Stim.Vials[i];
     
+    for (int i = 0; i < TU_MAX; i++)
+        Info->TurretUpgrades[i] = Player.Turret.Upgrade[i];
+    
     // Misc
     Info->Credits = CheckInventory("DRPGCredits");
     Info->Modules = CheckInventory("DRPGModule");
@@ -791,6 +800,13 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     {
         Info->Stims[i] = HexToInteger(String + StringPos, 8);
         StringPos += 8;
+    };
+    
+    // Turret
+    for (int i = 0; i < TU_MAX; i++)
+    {
+        Info->TurretUpgrades[i] = HexToInteger(String + StringPos, 1);
+        StringPos += 1;
     };
     
     // Misc
@@ -934,6 +950,13 @@ script char const *MakeSaveString(CharSaveInfo *Info)
         SaveString[pos + 1] = ToHexChar(Info->Stims[i] >> 24);
         SaveString[pos + 0] = ToHexChar(Info->Stims[i] >> 28);
         pos += 8;
+    };
+    
+    // Turret
+    for (int i = 0; i < TU_MAX; i++)
+    {
+        SaveString[pos + 0] = ToHexChar(Info->TurretUpgrades[i]);
+        pos += 1;
     };
     
     // Misc
@@ -1210,6 +1233,9 @@ function int CreateChecksum(CharSaveInfo *Info)
     
     for (int i = 0; i < STIM_MAX; i++)
         Checksum ^= Info->Stims[i];
+    
+    for (int i = 0; i < TU_MAX; i++)
+        Checksum ^= Info->TurretUpgrades[i];
     
     Checksum ^= Info->Credits;
     Checksum ^= Info->Modules;
