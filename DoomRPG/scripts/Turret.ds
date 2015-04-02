@@ -777,7 +777,12 @@ script void TurretLoopMaintenance() enter
         // Repairing
         if ((Timer() % (35 - (Player.Turret.Upgrade[TU_HARDWARE_PART] * 3))) == 0)
         {
-            RepairMod = 10 - Player.Turret.Upgrade[TU_HARDWARE_BUILD];
+            RepairMod = 60 + (Player.Turret.Upgrade[TU_HARDWARE_BUILD] * 60);
+            
+            // Full upgrade means no more turret part repair cost
+            if (Player.Turret.Upgrade[TU_HARDWARE_BUILD] >= TurretUpgradeData[TU_HARDWARE_BUILD].MaxLevel)
+                RepairMod = 0;
+            
             if (RepairMod > 0 && !CheckInventory("DRPGTurretPart"))
                 CanRepair = false
             else
@@ -786,7 +791,7 @@ script void TurretLoopMaintenance() enter
             {
                 if (Player.Turret.RepairTimer > 0)
                 {
-                    if (RepairMod > 0 && (Player.Turret.RepairTimer % 10) == 0)
+                    if (RepairMod > 0 && (Player.Turret.RepairTimer % RepairMod) == 0)
                         TakeInventory("DRPGTurretPart", 1);
                     
                     Player.Turret.Health++;
@@ -814,14 +819,15 @@ script void TurretLoopMaintenance() enter
             TakeInventory("DRPGCredits", 1);
     };
     
+    // Turret is fixed up
+    if (Player.Turret.Destroyed && Player.Turret.RepairTimer <= 0)
+        Player.Turret.Destroyed = false;
+    
     // Maintenance is done
     if (Player.Turret.Maintenance && Player.Turret.ChargeTimer <= 0 && Player.Turret.RepairTimer <= 0 && Player.Turret.RefitTimer <= 0)
     {
         Player.Turret.Maintenance = false;
         ActivatorSound("turret/maintenancedone", 127);
-        
-        if (Player.Turret.Destroyed)
-            Player.Turret.Destroyed = false;
     };
     
     Delay(1);
