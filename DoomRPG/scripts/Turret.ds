@@ -425,6 +425,10 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
 
 script void TurretLoop() enter
 {
+    int PlayerNum = PlayerNumber();
+    int Health;
+    int PrevHealth;
+    
     // Level Entry - Spawn Turret if it's active
     if (Player.Turret.Init && Player.Turret.Active)
     {
@@ -434,10 +438,6 @@ script void TurretLoop() enter
     };
     
     Start:
-    
-    int PlayerNum = PlayerNumber();
-    int Health;
-    int PrevHealth;
     
     if (Player.Turret.Upgrade[TU_BUILD] && !Player.Turret.Init)
     {
@@ -459,6 +459,12 @@ script void TurretLoop() enter
             Player.Turret.Upgrade[TU_ARMOR_PLATING] = 1;
         if (!Player.Turret.Upgrade[TU_BATTERY_CAPACITY])
             Player.Turret.Upgrade[TU_BATTERY_CAPACITY] = 1;
+        if (!Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE])
+            Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] = 1;
+        if (!Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT])
+            Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT] = 1;
+        if (!Player.Turret.Upgrade[TU_ASSIST_INJECTOR_POTENCY])
+            Player.Turret.Upgrade[TU_ASSIST_INJECTOR_POTENCY] = 1;
         
         // Reset the current weapon
         Player.Turret.Weapon = TW_NONE;
@@ -746,12 +752,15 @@ script void TurretLoopMaintenance() enter
 {
     bool CanRepair = true;
     int RepairMod = 0;
+    int MaintCost = 0;
     
     Start:
     
     // Calculate Timers
     Player.Turret.ChargeTimer = Player.Turret.BatteryMax - Player.Turret.Battery;
     Player.Turret.RepairTimer = Player.Turret.HealthMax - Player.Turret.Health;
+    
+    // Reset maintenance cost this tic
     
     // No Credits for payment
     if (Player.Turret.Maintenance && !CheckInventory("DRPGCredits"))
@@ -768,6 +777,7 @@ script void TurretLoopMaintenance() enter
             if (Player.Turret.ChargeTimer > 0)
             {
                 Player.Turret.Battery++;
+                MaintCost++;
                 
                 // Done
                 if (Player.Turret.Battery >= Player.Turret.BatteryMax)
@@ -795,6 +805,7 @@ script void TurretLoopMaintenance() enter
                         TakeInventory("DRPGTurretPart", 1);
                     
                     Player.Turret.Health++;
+                    MaintCost++;
                     
                     // Done
                     if (Player.Turret.Health >= Player.Turret.HealthMax)
@@ -808,6 +819,7 @@ script void TurretLoopMaintenance() enter
             if (Player.Turret.RefitTimer > 0)
             {
                 Player.Turret.RefitTimer--;
+                MaintCost++;
                 
                 // Done
                 if (Player.Turret.RefitTimer <= 0)
@@ -815,8 +827,8 @@ script void TurretLoopMaintenance() enter
             };
         
         // Steady credit loss while maintenance is happening
-        if ((Player.Turret.ChargeTimer > 0 || (CanRepair && Player.Turret.RepairTimer > 0) || Player.Turret.RefitTimer > 0) && (Timer() % (1 + Player.Turret.Upgrade[TU_HARDWARE_FABRICATION])) == 0)
-            TakeInventory("DRPGCredits", 1);
+        if ((Player.Turret.ChargeTimer > 0 || (CanRepair && Player.Turret.RepairTimer > 0) || Player.Turret.RefitTimer > 0) && (Timer() % (5 + (Player.Turret.Upgrade[TU_HARDWARE_FABRICATION] * 3))) == 0)
+            TakeInventory("DRPGCredits", MaintCost);
     };
     
     // Turret is fixed up
@@ -1374,7 +1386,7 @@ function bool TurretStim()
 
 function int TurretUpgradeCost(int Index)
 {
-    return (TurretUpgradeData[Index].Cost * (Player.Turret.Upgrade[Index] + 1));
+    return TurretUpgradeData[Index].Cost * (Player.Turret.Upgrade[Index] + 1);
 };
 
 function void TurretPassVars()
