@@ -730,7 +730,7 @@ script void TurretLoop() enter
         // Generators
         if (Player.Turret.HitTimer <= 0)
         {
-            if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_KINETIC] > 0 && IsPlayerMoving() && (Timer() % (35 * (11 - Player.Turret.Upgrade[TU_BATTERY_GENERATOR_KINETIC]))) == 0)
+            if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_KINETIC] > 0 && (AbsFixed(GetActorVelX(0)) + AbsFixed(GetActorVelY(0))) > 0 && (Timer() % (35 * (11 - Player.Turret.Upgrade[TU_BATTERY_GENERATOR_KINETIC]))) == 0)
                 Player.Turret.Battery++;
             if (Player.Turret.Upgrade[TU_BATTERY_GENERATOR_ILLUMINATION] > 0 && GetActorLightLevel(Player.Turret.TID) >= 192 && (Timer() % (35 * (11 - Player.Turret.Upgrade[TU_BATTERY_GENERATOR_ILLUMINATION]))) == 0)
                 Player.Turret.Battery++;
@@ -1884,6 +1884,13 @@ function bool TurretStim()
     if (!Player.Turret.Upgrade[TU_ASSIST_INJECTOR] || !Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] || !Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT] || !Player.Turret.Upgrade[TU_ASSIST_INJECTOR_POTENCY])
     {
         PrintError("Your turret does not have the appropriate upgrades");
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    if (Distance(Player.Turret.TID, Player.TID) >= 192)
+    {
+        PrintError("You are too far away from the turret for a stim injection");
         ActivatorSound("menu/error", 127);
         return false;
     };
