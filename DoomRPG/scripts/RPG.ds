@@ -116,19 +116,58 @@ script void Init() enter
     
     if (!Player.FirstRun)
     {
-        // Setup initial stats
-		Player.Vitality = 10;
-		Player.PrevVitality = 10;
-		Player.Energy = 10;
-		Player.PrevEnergy = 10;
-		Player.Capacity = 10;
+        // Funds
+        GiveInventory("DRPGCredits", GetCVar("drpg_start_credits"));
+        GiveInventory("DRPGModule", GetCVar("drpg_start_modules"));
+        GiveInventory("DRPGTurretPart", GetCVar("drpg_start_turretparts"));
         
-        Player.VitalityXP = XPTable[9];
-        Player.EnergyXP = XPTable[9];
-        Player.CapacityXP = XPTable[9];
+        // Level/Rank
+        if (GetCVar("drpg_start_level") > 0)
+        {
+            Player.Level = GetCVar("drpg_start_level");
+            Player.XP = XPTable[Player.Level - 1];
+        };
+        if (GetCVar("drpg_start_rank") > 0)
+        {
+            Player.RankLevel = GetCVar("drpg_start_rank");
+            Player.Rank = RankTable[Player.RankLevel - 1];
+        };
         
-        GiveInventory("DRPGCredits", 100);
-        GiveInventory("DRPGModule", 250);
+        // Stats
+        Player.Strength = GetCVar("drpg_start_strength");
+        Player.Defense = GetCVar("drpg_start_defense");
+        Player.Vitality = GetCVar("drpg_start_vitality");
+        Player.PrevVitality = Player.Vitality;
+        Player.Energy = GetCVar("drpg_start_energy");
+        Player.PrevEnergy = Player.Energy;
+        Player.Regeneration = GetCVar("drpg_start_regeneration");
+        Player.Agility = GetCVar("drpg_start_agility");
+        Player.Capacity = GetCVar("drpg_start_capacity");
+        Player.Luck = GetCVar("drpg_start_luck");
+        
+        // Stat XP
+        if (Player.Strength > 0)
+            Player.StrengthXP = StatTable[Player.Strength - 1];
+        if (Player.Defense > 0)
+            Player.DefenseXP = StatTable[Player.Defense - 1];
+        if (Player.Vitality > 0)
+            Player.VitalityXP = StatTable[Player.Vitality - 1];
+        if (Player.Energy > 0)
+            Player.EnergyXP = StatTable[Player.Energy - 1];
+        if (Player.Regeneration > 0)
+            Player.RegenerationXP = StatTable[Player.Regeneration - 1];
+        if (Player.Agility > 0)
+            Player.AgilityXP = StatTable[Player.Agility - 1];
+        if (Player.Capacity > 0)
+            Player.CapacityXP = StatTable[Player.Capacity - 1];
+        if (Player.Luck > 0)
+            Player.LuckXP = StatTable[Player.Luck - 1];
+        
+        // Default Health/EP
+        Player.EP = Player.Energy * 10;
+        Player.ActualHealth = Player.Vitality * 10;
+        Player.PrevHealth = Player.ActualHealth;
+        SetActorProperty(0, APROP_Health, Player.ActualHealth);
         
         // Set the default skill indices
         for (int i = 0; i < MAX_SKILLKEYS; i++)
@@ -141,17 +180,11 @@ script void Init() enter
         Player.SkillLevel[MAX_CATEGORIES - 1][SkillCategoryMax[MAX_CATEGORIES - 1] - 1].Level = 1;
         Player.SkillLevel[MAX_CATEGORIES - 1][SkillCategoryMax[MAX_CATEGORIES - 1] - 1].CurrentLevel = 1;
         
-        // Default Health/EP
-        Player.EP = Player.Energy * 10;
-        Player.ActualHealth = Player.Vitality * 10;
-        Player.PrevHealth = Player.ActualHealth;
-        SetActorProperty(0, APROP_Health, Player.ActualHealth);
-        
         // Set default selected skill to nothing
         Player.SkillSelected = -1;
         
         // Fill Augmentation Battery
-        Player.Augs.Battery = 100;
+        Player.Augs.Battery = Player.Capacity * 10;
         
         // Setup the New! shield parts arrays
         for (int i = 0; i < SHIELDPAGE_MAX; i++)
@@ -177,13 +210,20 @@ script void Init() enter
     if (!GetCVar("drpg_skill_keepauras"))
         RemoveAura();
     
-    // Transport from/to Outpost Screen Fading
+    // Transport FX
     if (Transported)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Player is not in-game
+            if (!PlayerInGame(i)) continue;
+            
             SetActorProperty(Players(i).TID, APROP_Invulnerable, false);
-        SetPlayerProperty (0, 0, PROP_TOTALLYFROZEN); // In case we were in the menu
-        FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
+            SpawnForced("DRPGTransportEffect", GetActorX(Players(i).TID), GetActorY(Players(i).TID), GetActorZ(Players(i).TID), 0, 0);
+            ThingSound(Players(i).TID, "misc/transport", 96);
+        };
+        
+        SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN); // In case we were in the menu
         Transported = false;
     };
     
@@ -315,8 +355,8 @@ script void Loop()
     // Regeneration
     DoRegen();
     
-    // Set mass stupid high when Invulnerable to prevent knockback
-    if (CheckInventory("PowerInvulnerable"))
+    // Set mass stupid high when Invulnerable or transporting to prevent knockback
+    if (CheckInventory("PowerInvulnerable") || Transported)
         Player.Mass *= 128;
     
     // Apply Stats
@@ -652,10 +692,7 @@ script void ItemHandler()
     // Items array initialization complete
     ItemsInitialized = true;
     
-    // No magnetizing in the Outpost
-    if (InBase) return;
-    
-    while (ItemsInitialized)
+    while (ItemsInitialized && !InBase)
     {
         for (int i = 0; i < MAX_ITEMS; i++)
         {
@@ -674,6 +711,9 @@ script void ItemHandler()
                 
                 // Skip this player if they aren't Magnetic
                 if (Players(j).Stim.PowerupTimer[STIM_MAGNETIC] <= 0) continue;
+                
+                // Skip this player if they are dead
+                if (GetActorProperty(Players(j).TID, APROP_Health) <= 0) continue;
                 
                 fixed Dist = Distance(ItemTIDs[i], Players(j).TID);
                 fixed Height = GetActorPropertyFixed(Players(j).TID, APROP_Height);
@@ -767,18 +807,18 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     int Instructions = 0;
     int Iterations = 0;
     
+    // Initial delay to make sure all items have been added/initialized in the level
+    Delay(4);
+    
     // Determine the max amount of items to create if it's not specifically specified
     if (MaxItems == 0)
         MaxItems = Random(LevelNum / GameSkill(), LevelNum) + ((AveragePlayerLuck() + AveragePlayerLevel()) / (GameSkill() * 2));
     
-    // Stop if there are no monsters in the level
-    if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) <= 0) return;
-    
     // Find the furthest monster from the player to determine some approximate boundaries to work with
-    for (int i = 0; i < MonsterID; i++)
+    for (int i = 0; ItemTIDs[i] != -1; i++)
     {
-        fixed Dist = Distance3D(GetActorX(0), GetActorY(0), GetActorZ(0), Monsters[i].Position.X, Monsters[i].Position.Y, Monsters[i].Position.Z);
-        fixed ZDiff = AbsFixed(GetActorZ(0) - Monsters[i].Position.Z);
+        fixed Dist = Distance3D(GetActorX(0), GetActorY(0), GetActorZ(0), GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorZ(ItemTIDs[i]));
+        fixed ZDiff = AbsFixed(GetActorZ(0) - GetActorZ(ItemTIDs[i]));
         
         if (Dist > Boundary)
         {
@@ -804,16 +844,21 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         {
             bool Remove = true;
             
-            for (int i = 1; i < MonsterID; i++)
+            for (int i = 0; ItemTIDs[i] != -1; i++)
             {
                 // If this spot is blank, skip it
-                if (Monsters[i].TID == 0) continue;
+                if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
                 
                 // Randomly continue for variance
                 if (Random(1, 4) == 1) continue;
                 
-                bool CanSee = CheckSight(Monsters[i].TID, TID, 0);
-                if (CanSee)
+                bool CanSee = CheckSight(ItemTIDs[i], TID, 0);
+                
+                // [KS] Don't spawn stuff on special-effects flats like skyfloor or blackness, or at extreme height differences, because more often than not those are used as void space filler or instakill floors.
+                // Examples: Epic2 MAP14, SF2012 MAP02, some CC4 maps.
+                bool BadFloor = (CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF"));
+                
+                if (CanSee && !BadFloor && Abs(Z - GetActorZ(ItemTIDs[i])) <= 128)
                 {
                     Remove = false;
                     Items++;
@@ -1033,6 +1078,533 @@ script void Respawn() respawn
     };
 };
 
+// Gives the player their default loadout based on their starting options
+script void DefaultLoadout()
+{
+    static str[LOADOUT_WEAPONS][3] WeaponInfo =
+    {
+        // CVAR, Vanilla Actor, Extras Actor
+        
+        { "drpg_start_weapon_chainsaw";         "DRPGChainsaw";         "Chainsaw1";        };
+        { "drpg_start_weapon_pistol";           "DRPGPistol";           "Pistol1";          };
+        { "drpg_start_weapon_shotgun";          "DRPGShotgun";          "Shotgun1";         };
+        { "drpg_start_weapon_ssg";              "DRPGSuperShotgun";     "SSG";              };
+        { "drpg_start_weapon_chaingun";         "DRPGChaingun";         "Chaingun1";        };
+        { "drpg_start_weapon_rocketlauncher";   "DRPGRocketLauncher";   "RocketLauncher1";  };
+        { "drpg_start_weapon_plasmarifle";      "DRPGPlasmaRIfle";      "Plasmagun";        };
+        { "drpg_start_weapon_bfg";              "DRPGBFG9001";          "BFG9001";          };
+    };
+    static str[LOADOUT_ARMORS] ArmorInfo =
+    {
+        "DRPGGreenArmorEffect";
+        "DRPGBlueArmorEffect";
+        "DRPGYellowArmorEffect";
+        "DRPGRedArmorEffect";
+        "DRPGWhiteArmorEffect";
+        "DRPGReinforcedGreenArmorEffect";
+        "DRPGReinforcedBlueArmorEffect";
+        "DRPGReinforcedYellowArmorEffect";
+        "DRPGReinforcedRedArmorEffect";
+        "DRPGReinforcedWhiteArmorEffect";
+    };
+    static str[LOADOUT_SHIELDPARTS] ShieldPartColorCodes =
+    {
+        "\cv";  // Capacity +
+        "\ch";  // Capacity -
+        "\cd";  // Charge Rate +
+        "\cq";  // Charge Rate -
+        "\cr";  // Delay Rate +
+        "\cg";  // Delay Rate -
+    };
+    static str[LOADOUT_SHIELDACCS] ShieldAccessoryColorCodes =
+    {
+        "\cg";  // Strength / Damage
+        "\ca";  // Vitality / Health
+        "\ci";  // Agility / Speed
+        "\cd";  // Defense / Armor
+        "\cf";  // Luck / Money
+        "\cn";  // Energy
+        "\ch";  // Capacity / Ammo
+        "\ck";  // Rank
+        "\cc";  // Augmentation
+        "\cq";  // Powerup
+        "\cj";  // Misc / Multi-Category
+    };
+    static str[LOADOUT_DRLAWEAPONS] DRLAWeaponColorCodes =
+    {
+        "";     // Common
+        "\cv";  // Assembled
+        "\ct";  // Exotic
+        "\ci";  // Superior
+        "\cd";  // Unique
+        "\cg";  // Demonic
+        "\cf";  // Legendary
+    };
+    static str[LOADOUT_DRLAARMORS] DRLAArmorColorCodes =
+    {
+        "";     // Common
+        "\cv";  // Assembled
+        "\ct";  // Exotic
+        "\cc";  // Onyx
+        "\cd";  // Unique
+        "\cf";  // Legendary
+    };
+    static str[LOADOUT_DRLAMODPACKS] DRLAModPacks =
+    {
+        "RLPowerModItem";
+        "RLBulkModItem";
+        "RLAgilityModItem";
+        "RLTechnicalModItem";
+        "RLSniperModItem";
+        "RLFirestormModItem";
+        "RLNanoModItem";
+        "RLOnyxModItem";
+    };
+    
+    // Shield Databases
+    ItemInfoPtr [LOADOUT_SHIELDPARTS][MAX_PARTS * 3] ShieldPartTypes;
+    ItemInfoPtr [LOADOUT_SHIELDACCS][MAX_ACCESSORIES] ShieldAccessoryTypes;
+    int[LOADOUT_SHIELDPARTS] PartCount;
+    int[LOADOUT_SHIELDACCS] AccessoryCount;
+    
+    // DRLA Databases
+    ItemInfoPtr [LOADOUT_DRLAWEAPONS][ITEM_MAX] DRLAWeaponTypes;
+    ItemInfoPtr [LOADOUT_DRLAARMORS][ITEM_MAX] DRLAArmorTypes;
+    ItemInfoPtr [LOADOUT_DRLAARMORS][ITEM_MAX] DRLABootsTypes;
+    int[LOADOUT_DRLAWEAPONS] DRLAWeaponCount;
+    int[LOADOUT_DRLAARMORS] DRLAArmorCount;
+    int[LOADOUT_DRLAARMORS] DRLABootsCount;
+    
+    // Delay to allow for item data to initialize
+    Delay(4);
+    
+    // Build Shield and DRLA item databases based on their respective items' color codes
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < ShieldPartsMax[i]; j++)
+            for (int k = 0; k < LOADOUT_SHIELDPARTS; k++)
+                if (Contains(ShieldParts[i][j].Name, ShieldPartColorCodes[k]))
+                {
+                    ShieldPartTypes[k][PartCount[k]++] = FindItemInCategory(ShieldParts[i][j].Actor, 5);
+                    break;
+                };
+    for (int i = 0; i < MAX_ACCESSORIES; i++)
+        for (int j = 0; j < LOADOUT_SHIELDACCS; j++)
+            if (Contains(ShieldAccessories[i].Name, ShieldAccessoryColorCodes[j]))
+            {
+                ShieldAccessoryTypes[j][AccessoryCount[j]++] = FindItemInCategory(ShieldAccessories[i].Actor, 5);
+                break;
+            };
+    for (int i = 0; i < ItemMax[0]; i++)
+        for (int j = 1; j < LOADOUT_DRLAWEAPONS; j++)
+        {
+            if (i < 10) // Special catch for Common
+            {
+                DRLAWeaponTypes[0][DRLAWeaponCount[0]++] = &ItemData[0][i];
+                break;
+            }
+            else if (Contains(ItemData[0][i].Name, DRLAWeaponColorCodes[j]))
+            {
+                DRLAWeaponTypes[j][DRLAWeaponCount[j]++] = &ItemData[0][i];
+                break;
+            };
+        };
+    for (int i = 1; i < ItemMax[3]; i++)
+        for (int j = 1; j < LOADOUT_DRLAARMORS; j++)
+        {
+            // Onyx is handled below
+            if (j == 3) continue;
+            
+            if (i < 4) // Special catch for Common
+            {
+                DRLAArmorTypes[0][DRLAArmorCount[0]++] = &ItemData[3][i];
+                break;
+            }
+            else if (Contains(ItemData[3][i].Name, "Onyx")) // Special catch for Onyx
+            {
+                DRLAArmorTypes[3][DRLAArmorCount[3]++] = &ItemData[3][i];
+                break;
+            }
+            else if (Contains(ItemData[3][i].Name, DRLAArmorColorCodes[j]))
+            {
+                DRLAArmorTypes[j][DRLAArmorCount[j]++] = &ItemData[3][i];
+                break;
+            };
+        };
+    for (int i = 0; i < ItemMax[9]; i++)
+        for (int j = 1; j < LOADOUT_DRLAARMORS; j++)
+        {
+            if (i < 3) // Special catch for Common
+            {
+                DRLABootsTypes[0][DRLABootsCount[0]++] = &ItemData[9][i];
+                break;
+            }
+            else if (Contains(ItemData[9][i].Name, DRLAArmorColorCodes[j]))
+            {
+                DRLABootsTypes[j][DRLABootsCount[j]++] = &ItemData[9][i];
+                break;
+            };
+        };
+    
+    // Weapons
+    if (CompatMode != COMPAT_DRLA)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            if (GetCVar(WeaponInfo[i][0]))
+            {
+                if (CompatMode == COMPAT_EXTRAS)
+                {
+                    GiveInventory(WeaponInfo[i][2], 1);
+                    SetWeapon(WeaponInfo[i][2]);
+                }
+                else
+                {
+                    GiveInventory(WeaponInfo[i][1], 1);
+                    SetWeapon(WeaponInfo[i][1]);
+                };
+            }
+            else
+            {
+                if (CompatMode == COMPAT_EXTRAS)
+                    TakeInventory(WeaponInfo[i][2], 1)
+                else
+                    TakeInventory(WeaponInfo[i][1], 1);
+            };
+        };
+    };
+    
+    // Ammo
+    SetInventory("Clip", GetCVar("drpg_start_ammo_bullet"));
+    SetInventory("Shell", GetCVar("drpg_start_ammo_shell"));
+    SetInventory("RocketAmmo", GetCVar("drpg_start_ammo_rocket"));
+    SetInventory("Cell", GetCVar("drpg_start_ammo_cell"));
+    
+    // Armor
+    if (CompatMode != COMPAT_DRLA && GetCVar("drpg_start_armor") > 0)
+        GiveInventory(ArmorInfo[GetCVar("drpg_start_armor") - 1], 1);
+    
+    // Active Augs
+    int ActiveAugs = 0;
+    while (ActiveAugs < GetCVar("drpg_start_aug_amount"))
+    {
+        int Type = Random(0, AUG_MAX - 1);
+        
+        // Skip this aug if it's already active
+        if (Player.Augs.Level[Type] > 0) continue;
+        
+        Player.Augs.Level[Type]++;
+        ActiveAugs++;
+        
+        if ((Timer() % 5) == 0)
+            Delay(1);
+    };
+    
+    // Aug Canisters/Upgrades
+    int AugItems = 0;
+    while (AugItems < GetCVar("drpg_start_aug_upgrades"))
+    {
+        int Type = Random(0, 1);
+        
+        // Check if one or the other is max
+        if (CheckInventory("DRPGAugCanister") >= 100)
+            Type = 1;
+        if (CheckInventory("DRPGAugUpgradeCanister") >= 100)
+            Type = 0;
+        
+        if (Type == 1)
+            GiveInventory("DRPGAugCanister", 1)
+        else
+            GiveInventory("DRPGAugUpgradeCanister", 1);
+        
+        AugItems++;
+        
+        if ((Timer() % 5) == 0)
+            Delay(1);
+    };
+    
+    // Aug Slots
+    SetInventory("DRPGAugSlotUpgrade", GetCVar("drpg_start_aug_slots"));
+    
+    // Shield Parts
+    bool FoundPart = false;
+    int Parts = 0;
+    int Accessories = 0;
+    
+    // Bodies, Batteries, Capacitors
+    while (Parts < GetCVar("drpg_start_shield_amount"))
+    {
+        for (int i = 0; i < LOADOUT_SHIELDPARTS; i++)
+        {
+            FoundPart = false;
+        
+            // If this shield type doesn't match what you selected, continue to the next category
+            if (GetCVar("drpg_start_shield_type") > 0 && i != GetCVar("drpg_start_shield_type") - 1) continue;
+            
+            for (int j = 0; j < PartCount[i]; j++)
+                if (Random(1, 4) == 1 && !CheckInventory(ShieldPartTypes[i][j]->Actor))
+                {
+                    GiveInventory(ShieldPartTypes[i][j]->Actor, 1);
+                    Parts++;
+                    FoundPart = true;
+                    break;
+                };
+            
+            if (FoundPart)
+                break;
+        };
+        
+        if ((Timer() % 5) == 0)
+            Delay(1);
+    };
+    
+    // Shield Accessories
+    while (Accessories < GetCVar("drpg_start_shield_amount_acc"))
+    {
+        for (int i = 0; i < LOADOUT_SHIELDACCS; i++)
+        {
+            FoundPart = false;
+        
+            // If this shield type doesn't match what you selected, continue to the next category
+            if (GetCVar("drpg_start_shield_type_acc") > 0 && i != GetCVar("drpg_start_shield_type_acc") - 1) continue;
+            
+            for (int j = 0; j < AccessoryCount[i]; j++)
+                if (Random(1, 4) == 1 && !CheckInventory(ShieldAccessoryTypes[i][j]->Actor))
+                {
+                    GiveInventory(ShieldAccessoryTypes[i][j]->Actor, 1);
+                    Accessories++;
+                    FoundPart = true;
+                    break;
+                };
+            
+            if (FoundPart)
+                break;
+        };
+        
+        if ((Timer() % 5) == 0)
+            Delay(1);
+    };
+    
+    // Stims
+    int Injectors = 0;
+    int Vials = 0;
+    while (Injectors < GetCVar("drpg_start_stim_injectors"))
+    {
+        switch (Random(1, 4))
+        {
+        case 1: // Small
+            if (CheckInventory("DRPGStimSmall") >= 1000) continue;
+            GiveInventory("DRPGStimSmall", 1);
+            break;
+        case 2: // Medium
+            if (CheckInventory("DRPGStimMedium") >= 1000) continue;
+            GiveInventory("DRPGStimMedium", 1);
+            break;
+        case 3: // Large
+            if (CheckInventory("DRPGStimLarge") >= 1000) continue;
+            GiveInventory("DRPGStimLarge", 1);
+            break;
+        case 4: // XL
+            if (CheckInventory("DRPGStimXL") >= 1000) continue;
+            GiveInventory("DRPGStimXL", 1);
+            break;
+        };
+        
+        Injectors++;
+        
+        if ((Timer() % 5) == 0)
+            Delay(1);
+    };
+    while (Vials < GetCVar("drpg_start_stim_vials"))
+    {
+        int Type = Random(0, STIM_MAX - 1);
+        bool Maxed = true;
+        
+        // Check to make sure all the vials aren't maxed
+        for (int i = 0; i < STIM_MAX; i++)
+            if (Player.Stim.Vials[i] < Player.Capacity * 10)
+                Maxed = false;
+        if (Maxed) break;
+        
+        // Don't include Boosters
+        if (!GetCVar("drpg_start_stim_boosters") && Type >= StimStatsEnd && Type <= StimPowerupStart) continue;
+        
+        // Don't include Powerups
+        if (!GetCVar("drpg_start_stim_powerups") && Type >= StimPowerupStart && Type <= StimPowerupEnd) continue;
+        
+        // Skip this one if this vial type is full
+        if (Player.Stim.Vials[Type] >= Player.Capacity * 10) continue;
+        
+        Player.Stim.Vials[Type]++;
+        Vials++;
+        
+        if ((Timer() % 5) == 0)
+            Delay(1);
+    };
+    
+    // Minigame Chips
+    int Chips = 0;
+    while (Chips < GetCVar("drpg_start_bonus_chips"))
+    {
+        int Type = Random(0, 1);
+        
+        // Check if one or the other is max
+        if (CheckInventory("DRPGChipGold") >= 1000)
+            Type = 1;
+        if (CheckInventory("DRPGChipPlatinum") >= 1000)
+            Type = 0;
+        
+        if (Type == 1)
+            GiveInventory("DRPGChipGold", 1)
+        else
+            GiveInventory("DRPGChipPlatinum", 1);
+        
+        Chips++;
+        
+        if ((Timer() % 5) == 0)
+            Delay(1);
+    };
+    
+    // UAC Shop Card
+    if (GetCVar("drpg_start_bonus_shopcard") > 0)
+    {
+        // Diamond Card
+        if (GetCVar("drpg_start_bonus_shopcard") == 5)
+            GiveInventory("DRPGDiamondUACCard", 1)
+        else
+            GiveInventory("DRPGUACCard", GetCVar("drpg_start_bonus_shopcard"));
+    };
+    
+    // Payout Bonus
+    Player.PayBonus = GetCVar("drpg_start_bonus_payout");
+    
+    // DRLA
+    if (CompatMode == COMPAT_DRLA)
+    {
+        bool FoundWeapon = false;
+        bool FoundArmor = false;
+        bool FoundBoots = false;
+        int WeaponCount = 0;
+        int MaxWeaponCount = GetCVar("drpg_start_drla_weapon_amount");
+        int ModPackCount = 0;
+        int ModPackMax = GetCVar("drpg_start_drla_modpacks");
+        
+        // Weapons
+        if (GetCVar("drpg_start_drla_weapon_type") > 0)
+            if (MaxWeaponCount > DRLAWeaponCount[GetCVar("drpg_start_drla_weapon_type") - 1])
+                MaxWeaponCount = DRLAWeaponCount[GetCVar("drpg_start_drla_weapon_type") - 1];
+        while (WeaponCount < MaxWeaponCount)
+        {
+            for (int i = 0; i < LOADOUT_DRLAWEAPONS; i++)
+            {
+                FoundWeapon = false;
+                
+                // If this weapon type doesn't match what you selected, continue to the next category
+                if (GetCVar("drpg_start_drla_weapon_type") > 0 && i != GetCVar("drpg_start_drla_weapon_type") - 1) continue;
+                
+                for (int j = 0; j < DRLAWeaponCount[i]; j++)
+                    if (Random(1, 10) == 1 && !CheckInventory(DRLAWeaponTypes[i][j]->Actor))
+                    {
+                        GiveInventory(DRLAWeaponTypes[i][j]->Actor, 1);
+                        WeaponCount++;
+                        FoundWeapon = true;
+                        break;
+                    };
+                
+                if (FoundWeapon)
+                    break;
+            };
+            
+            if ((Timer() % 5) == 0)
+                Delay(1);
+        };
+        GiveInventory("RLWeaponLimit", WeaponCount);
+        
+        // Armor
+        if (GetCVar("drpg_start_drla_armor") >= 0)
+            while (!FoundArmor)
+            {
+                for (int i = 0; i < LOADOUT_DRLAARMORS; i++)
+                {
+                    // If this armor type doesn't match what you selected, continue to the next category
+                    if (GetCVar("drpg_start_drla_armor") >= 0 && i != GetCVar("drpg_start_drla_armor") - 1) continue;
+                    
+                    // If there is nothing in this category, skip it
+                    if (GetCVar("drpg_start_drla_armor") >= 0 && DRLAArmorCount[GetCVar("drpg_start_drla_armor") - 1] == 0)
+                    {
+                        FoundArmor = true;
+                        break;
+                    };
+                    
+                    for (int j = 0; j < DRLAArmorCount[i]; j++)
+                        if (Random(1, 10) == 1)
+                        {
+                            GiveInventory(DRLAArmorTypes[i][j]->Actor, 1);
+                            FoundArmor = true;
+                            break;
+                        };
+                    
+                    if (FoundArmor)
+                        break;
+                };
+                
+                if ((Timer() % 5) == 0)
+                    Delay(1);
+            };
+            
+        // Boots
+        if (GetCVar("drpg_start_drla_boots") >= 0)
+            while (!FoundBoots)
+            {
+                for (int i = 0; i < LOADOUT_DRLAARMORS; i++)
+                {
+                    // If this armor type doesn't match what you selected, continue to the next category
+                    if (GetCVar("drpg_start_drla_boots") >= 0 && i != GetCVar("drpg_start_drla_boots") - 1) continue;
+                    
+                    // If there is nothing in this category, skip it
+                    if (GetCVar("drpg_start_drla_boots") >= 0 && DRLABootsCount[GetCVar("drpg_start_drla_boots") - 1] == 0)
+                    {
+                        FoundBoots = true;
+                        break;
+                    };
+                    
+                    for (int j = 0; j < DRLABootsCount[i]; j++)
+                        if (Random(1, 10) == 1)
+                        {
+                            GiveInventory(DRLABootsTypes[i][j]->Actor, 1);
+                            FoundBoots = true;
+                            break;
+                        };
+                    
+                    if (FoundBoots)
+                        break;
+                };
+                
+                if ((Timer() % 5) == 0)
+                    Delay(1);
+            };
+        
+        // Mod Packs
+        if (PlayerClass(0) == 2)
+            ModPackMax--;
+        while (ModPackCount < ModPackMax)
+        {
+            int Type = Random(0, LOADOUT_DRLAMODPACKS - 1);
+            
+            // Stop if we're not the technician and we try and give over 4 mods
+            if (PlayerClass(0) != 2 && ModPackCount >= 4) break;
+            
+            // Skip exotic modpacks if the selection is disabled
+            if (Type > 3 && GetCVar("drpg_start_drla_modpacks_amount")) continue;
+            
+            GiveInventory(DRLAModPacks[Type], 1);
+            ModPackCount++;
+            
+            if ((Timer() % 5) == 0)
+                Delay(1);
+        };
+    };
+};
+
 // Apply values to global vars visible on the HUD
 function void CheckHUD()
 {
@@ -1088,17 +1660,6 @@ function void CheckKeys()
             };
         };
     };
-};
-
-function void DefaultLoadout()
-{
-    // Extras Compatibility
-    if (CompatMode == COMPAT_EXTRAS)
-        SetWeapon("Pistol1");
-    
-    // DoomRL Compatibility
-    if (CompatMode == COMPAT_DRLA)
-        SetWeapon("RLPistol");
 };
 
 function void CheckCompatibility()

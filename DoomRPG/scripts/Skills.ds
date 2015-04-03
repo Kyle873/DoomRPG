@@ -550,7 +550,7 @@ script void SkillWheel() enter
             };
             
             // Clear Skill
-            if (Buttons & BT_USE)
+            if (Buttons & BT_USE && Player.SkillCategory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
             {
                 Player.SkillCategory[Selected] = -1;
                 Player.SkillIndex[Selected] = -1;
@@ -668,11 +668,11 @@ acscript void UseSkill(int Key) net
         Overdrive = true;
     
     // Overdriving an unlearnt skill will learn it
-    if (Overdrive && CheckInventory("DRPGSkillToken") > 0 && SkillLevel->Level == 0)
+    if (Overdrive && CheckInventory("DRPGModule") >= MODULE_SKILL_MULT && SkillLevel->Level == 0)
     {
         SkillLevel->Level++;
         SkillLevel->CurrentLevel++;
-        TakeInventory("DRPGSkillToken", 1);
+        TakeInventory("DRPGModule", MODULE_SKILL_MULT);
         FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
         ActivatorSound("health/epcapsule", 127);
         return;
@@ -894,6 +894,8 @@ acscript bool Decontaminate(SkillLevelInfo *SkillLevel, void *Data)
     
     ActivatorSound("skills/decontaminate", 127);
     FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0);
+    
+    Player.SkillCostMult += 25;
     
     return true;
 };
@@ -1127,7 +1129,7 @@ acscript bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
     Player.Aura.Type[Index].Level = SkillLevel->CurrentLevel;
     
     // Aura Cost Multiplier
-    Player.Aura.CostMult += 10;
+    Player.SkillCostMult += 10;
     
     ActivatorSound("skills/buff", 127);
     return true;
@@ -1994,18 +1996,27 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         // Ready - tally votes and confirm/deny Transport
         if (Ready || Force)
         {
+            Transported = true;
+            
             SetPlayerProperty(1, 0, PROP_TOTALLYFROZEN);
             
             // Approved
             if (PlayersApprove > PlayersDeny || Force)
             {
                 for (int i = 0; i < MAX_PLAYERS; i++)
+                {
+                    // Player is not in-game
+                    if (!PlayerInGame(i)) continue;
+                    
                     SetActorProperty(Players(i).TID, APROP_Invulnerable, true);
+                    SetActorVelocity(Players(i).TID, 0, 0, 0, false, false);
+                    SpawnForced("DRPGTransportEffect", GetActorX(Players(i).TID), GetActorY(Players(i).TID), GetActorZ(Players(i).TID), 0, 0);
+                    ThingSound(Players(i).TID, "misc/transport", 96);
+                };
+                
                 SetFont("BIGFONT");
-                HudMessageBold("\cdTransport Approved!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 4.0);
+                HudMessageBold("\cdTransport Approved!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 1.0);
                 Delay(35 * 2);
-                FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 3.0);
-                Delay(35 * 3);
             }
             
             // Denied
@@ -2044,15 +2055,19 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
     }
     else // Single Player
     {
-        // Fade Screen
-        FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 1.0);
+        Transported = true;
+        
+        // Transport FX
+        SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+        ActivatorSound("misc/transport", 96);
         
         // Freeze Player
         SetActorProperty(0, APROP_Invulnerable, true);
         SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+        SetActorVelocity(0, 0, 0, 0, false, false);
         
         // Delay and unfreeze Player
-        Delay(35);
+        Delay(35 * 2);
         SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
         SetActorProperty(0, APROP_Invulnerable, false);
     };
@@ -2070,7 +2085,6 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         else
             ChangeLevel("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, CurrentSkill);
         InBase = true;
-        Transported = true;
         return true;
     }
     else
@@ -2213,8 +2227,8 @@ function int ScaleEPCost(int Cost)
     ScaleCost /= 100;
     
     // Aura Multiplier
-    if (Player.Aura.CostMult > 0)
-        ScaleCost += (Player.Aura.CostMult * ScaleCost) / 100;
+    if (Player.SkillCostMult > 0)
+        ScaleCost += (Player.SkillCostMult * ScaleCost) / 100;
     
     return ScaleCost;
 };
@@ -2481,9 +2495,9 @@ function void CheckAuras()
             };
     
     // Decrease Aura Cost Multiplier
-    if (Player.Aura.CostMult > 0 && !PlayerHasAura(PlayerNumber()))
+    if (Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
         if ((Timer() % (35 * (5 + GameSkill()))) == 0)
-            Player.Aura.CostMult--;
+            Player.SkillCostMult--;
     
     // Reset Aura and Soul States
     if (Player.Aura.Time <= 0 || !Player.Aura.Team)
