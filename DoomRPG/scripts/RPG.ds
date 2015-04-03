@@ -659,10 +659,7 @@ script void ItemHandler()
     // Items array initialization complete
     ItemsInitialized = true;
     
-    // No magnetizing in the Outpost
-    if (InBase) return;
-    
-    while (ItemsInitialized)
+    while (ItemsInitialized && !InBase)
     {
         for (int i = 0; i < MAX_ITEMS; i++)
         {
@@ -681,6 +678,9 @@ script void ItemHandler()
                 
                 // Skip this player if they aren't Magnetic
                 if (Players(j).Stim.PowerupTimer[STIM_MAGNETIC] <= 0) continue;
+                
+                // Skip this player if they are dead
+                if (GetActorProperty(Players(j).TID, APROP_Health) <= 0) continue;
                 
                 fixed Dist = Distance(ItemTIDs[i], Players(j).TID);
                 fixed Height = GetActorPropertyFixed(Players(j).TID, APROP_Height);

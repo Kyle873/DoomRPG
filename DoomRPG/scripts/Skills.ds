@@ -550,7 +550,7 @@ script void SkillWheel() enter
             };
             
             // Clear Skill
-            if (Buttons & BT_USE)
+            if (Buttons & BT_USE && Player.SkillCategory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
             {
                 Player.SkillCategory[Selected] = -1;
                 Player.SkillIndex[Selected] = -1;
@@ -895,6 +895,8 @@ acscript bool Decontaminate(SkillLevelInfo *SkillLevel, void *Data)
     ActivatorSound("skills/decontaminate", 127);
     FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0);
     
+    Player.SkillCostMult += 25;
+    
     return true;
 };
 
@@ -1127,7 +1129,7 @@ acscript bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
     Player.Aura.Type[Index].Level = SkillLevel->CurrentLevel;
     
     // Aura Cost Multiplier
-    Player.Aura.CostMult += 10;
+    Player.SkillCostMult += 10;
     
     ActivatorSound("skills/buff", 127);
     return true;
@@ -2225,8 +2227,8 @@ function int ScaleEPCost(int Cost)
     ScaleCost /= 100;
     
     // Aura Multiplier
-    if (Player.Aura.CostMult > 0)
-        ScaleCost += (Player.Aura.CostMult * ScaleCost) / 100;
+    if (Player.SkillCostMult > 0)
+        ScaleCost += (Player.SkillCostMult * ScaleCost) / 100;
     
     return ScaleCost;
 };
@@ -2493,9 +2495,9 @@ function void CheckAuras()
             };
     
     // Decrease Aura Cost Multiplier
-    if (Player.Aura.CostMult > 0 && !PlayerHasAura(PlayerNumber()))
+    if (Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
         if ((Timer() % (35 * (5 + GameSkill()))) == 0)
-            Player.Aura.CostMult--;
+            Player.SkillCostMult--;
     
     // Reset Aura and Soul States
     if (Player.Aura.Time <= 0 || !Player.Aura.Team)
