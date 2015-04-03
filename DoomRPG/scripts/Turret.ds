@@ -1065,6 +1065,119 @@ script void TurretSensors()
     goto Start;
 };
 
+script void TurretItemSensorThink()
+{
+    if (!Player.Turret.SensorItemData.Enabled)
+        return;
+    
+    if (Player.Turret.SensorItemData.Array.Position < 1)
+        return;
+    
+    int TID;
+    
+    if (Player.Turret.SensorItemData.PulseDelay == 0)
+    {
+        if (Player.Turret.SensorItemData.CurrentPosition >= Player.Turret.SensorItemData.Array.Position)
+        {
+            Player.Turret.SensorItemData.CurrentPosition = 0;
+            Player.Turret.SensorItemData.PulseDelay = 35;
+        }
+        else
+        {
+            if (Player.Turret.SensorItemData.CheckDelay)
+                Player.Turret.SensorItemData.CheckDelay--
+            else
+            {
+                if (Player.Turret.SensorItemData.CurrentPosition == 0)
+                    qsort(Player.Turret.SensorItemData.Array.Data, Player.Turret.SensorItemData.Array.Position, sizeof(int), TurretSensorDistanceComparison);
+                
+                TID = *(&((int *)Player.Turret.SensorItemData.Array.Data)[Player.Turret.SensorItemData.CurrentPosition]);
+                
+                while (ClassifyActor(TID) == ACTOR_NONE && Player.Turret.SensorItemData.CurrentPosition < Player.Turret.SensorItemData.Array.Position)
+                {
+                    Player.Turret.SensorItemData.CurrentPosition++;
+                    if (Player.Turret.SensorItemData.CurrentPosition < Player.Turret.SensorItemData.Array.Position)
+                        TID = *(&((int *)Player.Turret.SensorItemData.Array.Data)[Player.Turret.SensorItemData.CurrentPosition]);
+                };
+                
+                if (Player.Turret.SensorItemData.CurrentPosition < Player.Turret.SensorItemData.Array.Position)
+                {
+                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
+                    {
+                        fixed X = Lerp(GetActorX(Player.Turret.TID), GetActorX(TID), j);
+                        fixed Y = Lerp(GetActorY(Player.Turret.TID), GetActorY(TID), j);
+                        fixed Z = Lerp(GetActorZ(Player.Turret.TID), GetActorZ(TID), j);
+                        if (CheckFlag(TID, "COUNTITEM"))
+                            SpawnForced("DRPGTurretParticleItemLootTrail", X, Y, Z, 0, 0)
+                        else
+                            SpawnForced("DRPGTurretParticleItemTrail", X, Y, Z, 0, 0);  
+                    };
+                    
+                    Player.Turret.SensorItemData.CurrentPosition++;
+                    Player.Turret.SensorItemData.CheckDelay = 3;
+                };
+            };
+        };
+    }
+    else
+        Player.Turret.SensorItemData.PulseDelay--;
+};
+
+script void TurretCrateSensorThink()
+{
+    if (!Player.Turret.SensorCrateData.Enabled)
+        return;
+    
+    if (Player.Turret.SensorCrateData.Array.Position < 1)
+        return;
+    
+    int TID;
+    
+    if (Player.Turret.SensorCrateData.PulseDelay == 0)
+    {
+        if (Player.Turret.SensorCrateData.CurrentPosition >= Player.Turret.SensorCrateData.Array.Position)
+        {
+            Player.Turret.SensorCrateData.CurrentPosition = 0;
+            Player.Turret.SensorCrateData.PulseDelay = 35;
+        }
+        else
+        {
+            if (Player.Turret.SensorCrateData.CheckDelay)
+                Player.Turret.SensorCrateData.CheckDelay--
+            else
+            {
+                if (Player.Turret.SensorCrateData.CurrentPosition == 0)
+                    qsort(Player.Turret.SensorCrateData.Array.Data, Player.Turret.SensorCrateData.Array.Position, sizeof(int), TurretSensorDistanceComparison);
+                
+                TID = *(&((int *)Player.Turret.SensorCrateData.Array.Data)[Player.Turret.SensorCrateData.CurrentPosition]);
+                
+                while (ClassifyActor(TID) == ACTOR_NONE && Player.Turret.SensorCrateData.CurrentPosition < Player.Turret.SensorCrateData.Array.Position)
+                {
+                    Player.Turret.SensorCrateData.CurrentPosition++;
+                    if (Player.Turret.SensorCrateData.CurrentPosition < Player.Turret.SensorCrateData.Array.Position)
+                        TID = *(&((int *)Player.Turret.SensorCrateData.Array.Data)[Player.Turret.SensorCrateData.CurrentPosition]);
+                };
+                
+                if (Player.Turret.SensorCrateData.CurrentPosition < Player.Turret.SensorCrateData.Array.Position)
+                {
+                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
+                    {
+                        fixed X = Lerp(GetActorX(Player.Turret.TID), GetActorX(TID), j);
+                        fixed Y = Lerp(GetActorY(Player.Turret.TID), GetActorY(TID), j);
+                        fixed Z = Lerp(GetActorZ(Player.Turret.TID), GetActorZ(TID), j);
+                        SpawnForced("DRPGTurretParticleCrateTrail", X, Y, Z, 0, 0);
+                    };
+                    
+                    Player.Turret.SensorCrateData.CurrentPosition++;
+                    Player.Turret.SensorCrateData.CheckDelay = 3;
+                };
+            };
+        };
+    }
+    else
+        Player.Turret.SensorCrateData.PulseDelay--;
+};
+
 acscript void TurretMenu()
 {
     if (!GetCVar("drpg_debug")) return;
@@ -1164,10 +1277,347 @@ acscript void TurretPostSelfDestruct()
     Player.Turret.Health = 0;
 };
 
+// Turret AI
+
+script void TurretAI(int TID)
+{
+    SetActivator(TID);
+    
+    int Weapon = GetUserVariable(0, "user_weapon");
+    int Ammo = 0;
+    int PlayerID = GetActorProperty(0, APROP_MasterTID);
+    bool NeedsTeleport = false;
+    bool HasTarget = false;
+    bool AnnouncedTarget = false;
+    bool Dodging = false;
+    int LosingInterestTime = 0;
+    int TargetTID = 0;
+    int TravelTime = 0;
+    int AggressionType = GetUserCVar(TurretGetOwningPlayer(), "drpg_turret_aggression");
+    int AggressionMode = 0;
+    int HeatLevel = 0;
+    bool Cooldown = false;
+    
+    Start:
+    
+    if (ClassifyActor(0) == ACTOR_WORLD)
+        return;
+    
+    // Just in case it was changed
+    AggressionType = GetUserCVar(TurretGetOwningPlayer(), "drpg_turret_aggression");
+    
+    Weapon = GetUserVariable(0, "user_weapon");
+    switch (Weapon)
+    {
+    case TW_BULLET:
+        Ammo = GetUserVariable(0, "user_ammo_bullet");
+        break;
+    case TW_PELLET:
+        Ammo = GetUserVariable(0, "user_ammo_shell");
+        break;
+    case TW_ROCKET:
+        Ammo = GetUserVariable(0, "user_ammo_rocket");
+        break;
+    case TW_PLASMA:
+        Ammo = GetUserVariable(0, "user_ammo_plasma");
+        break;
+    case TW_RAILGUN:
+        Ammo = GetUserVariable(0, "user_ammo_rail");
+        break;
+    };
+    
+    HasTarget = TurretCheckTarget();
+    
+    // Target handling
+    if (HasTarget)
+    {
+        if (!TurretCheckTargetSuitable() || Weapon == TW_NONE || Ammo < 1)
+        {
+            SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
+            HasTarget = false;
+            TargetTID = 0;
+        }
+        else
+            TargetTID = GetActorProperty(0, APROP_TargetTID);
+        
+        if (!CheckSight(0, TargetTID, CSF_NOFAKEFLOORS))
+        {
+            LosingInterestTime++;
+            if (LosingInterestTime >= 35 * 6)
+            {
+                SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
+                HasTarget = false;
+                TargetTID = 0;
+            };
+        }
+        else
+            LosingInterestTime = 0;
+    };
+    
+    // Air friction, don't slide away helplessly like cacodemons do.
+    SetActorVelocity(0, GetActorVelX(0) * 0.8, GetActorVelY(0) * 0.8, GetActorVelZ(0) * 0.8, false, false);
+    
+    if (AbsFixed(GetActorVelX(0)) < 0.01 && AbsFixed(GetActorVelY(0)) < 0.01 && AbsFixed(GetActorVelZ(0)) < 0.01)
+        SetActorVelocity(0, 0, 0, 0, false, false); // Dead stop if we're going too slow
+    
+    // Movement
+    
+    // Stay off the floor
+    if (GetActorZ(0) - GetActorFloorZ(0) < 32)
+        SetActorVelocity(0, 0, 0, TURRET_ACCELERATION, true, false);
+    
+    // Teleport detection - If the player suddenly poofs into another part of the map, we need to go with them.
+    if (GetActorProperty(PlayerID, APROP_Reactiontime) > 0 && Distance(0, PlayerID) > 96)
+        NeedsTeleport = true;
+    
+    if (NeedsTeleport)
+        NeedsTeleport = !TurretTeleport(PlayerID);
+    
+    // Missile Avoidance
+    int ProjectileTID = UniqueTID();
+    if (PickActor(0, GetActorAngle(0), GetActorPitch(0), 384, ProjectileTID, MF_MISSILE, ML_BLOCKEVERYTHING | ML_BLOCKPROJECTILE))
+    {
+        fixed InterceptAngle = VectorAngle(GetActorX(ProjectileTID) - GetActorX(0), GetActorY(ProjectileTID) - GetActorY(0));
+        fixed DodgeDirection;
+        
+        if (!Dodging)
+        {
+            DodgeDirection = 0.25;
+            if (!Random(0, 3))
+                DodgeDirection = -0.25;
+            
+            Dodging = true;
+        };
+        
+        SetActorVelocity(0, TURRET_ACCELERATION * Cos(InterceptAngle - DodgeDirection), TURRET_ACCELERATION * Sin(InterceptAngle - DodgeDirection), 0, true, false);
+        
+        Thing_ChangeTID(ProjectileTID, 0);
+    }
+    else
+        Dodging = false;
+    
+    if (!HasTarget)
+    {
+        // Idle routine - Stay close to the player
+        
+        if (AnnouncedTarget)
+            AnnouncedTarget = false;
+        
+        if (Distance(0, PlayerID) > 144)
+        {
+            if (TravelTime > 35 * 8 && (AbsFixed(GetActorVelX(0)) < 0.1 || AbsFixed(GetActorVelY(0)) < 0.1))
+                // Been trying to reach the player for 8+ seconds and going nowhere, so give up and teleport to them if possible
+                NeedsTeleport = true;
+            
+            fixed TravelAngle = VectorAngle(GetActorX(PlayerID) - GetActorX(0), GetActorY(PlayerID) - GetActorY(0));
+            fixed TravelPitch = VectorAngle(Distance(0, PlayerID), GetActorZ(PlayerID) - GetActorZ(0));
+            
+            SetActorAngle(0, TravelAngle);
+            SetActorPitch(0, TravelPitch);
+            SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelPitch), true, false);
+            
+            TravelTime++;
+        }
+        else
+        {
+            if (TravelTime)
+                TravelTime = 0;
+            
+            SetActorAngle(0, GetActorAngle(PlayerID));
+        };
+        
+        if (Weapon != TW_NONE && !(Timer() % 35))
+        {
+            if (TurretGetPlayerTarget() != 0)
+            {
+                SetPointer(AAPTR_TARGET, TurretGetPlayerTarget());
+            }
+            else
+                SetActorState(0, "ScanForEnemies");
+        };
+    }
+    else
+    {
+        // Battle routine - Circle around the target and fire at it, keeping a distance away.
+        
+        if (!AnnouncedTarget)
+        {
+            SetActorState(0, "Targeting");
+            AnnouncedTarget = true;
+        };
+        
+        if (AggressionType == 2) // Determine per weapon
+        {
+            if (Weapon == TW_PELLET || Weapon == TW_PLASMA)
+                AggressionMode = 1
+            else
+                AggressionMode = 0;
+        }
+        else
+            AggressionMode = AggressionType;
+        
+        fixed AimAngle = VectorAngle(GetActorX(TargetTID) - GetActorX(0), GetActorY(TargetTID) - GetActorY(0));
+        fixed AimPitch = VectorAngle(Distance(0, TargetTID), GetActorZ(TargetTID) - GetActorZ(0));
+        
+        SetActorAngle(0, AimAngle);
+        SetActorPitch(0, AimPitch);
+        
+        if (Weapon == TW_ROCKET && Distance(0, TargetTID) <= 176 && !GetUserArray(0, "user_upgrades", TU_ARMOR_PLATING_BLAST))
+        {
+            // Back up out of the blast zone if we can be damaged by it
+            SetActorVelocity(0, TURRET_ACCELERATION * Cos(AimAngle - 0.5) * Cos(AimPitch - 0.5), TURRET_ACCELERATION * Sin(AimAngle - 0.5) * Cos(AimPitch - 0.5), TURRET_ACCELERATION * Sin(AimPitch - 0.5), true, false);
+        };
+        
+        if (AggressionMode == 0)
+        {
+            // Passive Fire - Stay in slow orbit by the player and only fire at the enemy
+            
+            fixed TravelAngle = VectorAngle(GetActorX(PlayerID) - GetActorX(0), GetActorY(PlayerID) - GetActorY(0));
+            fixed TravelPitch = VectorAngle(Distance(0, PlayerID), GetActorZ(PlayerID) - GetActorZ(0));
+            if (Distance(0, PlayerID) > 256 || LosingInterestTime)
+                SetActorVelocity(0, (TURRET_ACCELERATION / 3) * Cos(TravelAngle) * Cos(TravelPitch), (TURRET_ACCELERATION / 3) * Sin(TravelAngle) * Cos(TravelPitch), (TURRET_ACCELERATION / 3) * Sin(TravelPitch), true, false)
+            else
+                SetActorVelocity(0, -(TURRET_ACCELERATION / 4) * Cos(TravelAngle), -(TURRET_ACCELERATION / 4) * Sin(TravelAngle), 0, true, false);
+            
+            SetActorVelocity(0, (TURRET_ACCELERATION / 3) * Cos(TravelAngle - 0.22), (TURRET_ACCELERATION / 3) * Sin(TravelAngle - 0.22), 0, true, false);
+        }
+        else
+        {
+            // Aggressive Fire - Orbit the enemy and draw them away from the player aggressively
+            
+            fixed TravelAngle = VectorAngle(GetActorX(TargetTID) - GetActorX(0), GetActorY(TargetTID) - GetActorY(0));
+            fixed TravelPitch = VectorAngle(Distance(0, TargetTID), GetActorZ(TargetTID) - GetActorZ(0));
+            
+            // Stay level with the target so we have a better time shooting it
+            if (GetActorZ(TargetTID) - GetActorZ(0) < -32)
+                SetActorVelocity(0, 0, 0, -TURRET_ACCELERATION, true, false)
+            else if (GetActorZ(TargetTID) - GetActorZ(0) > 32)
+                SetActorVelocity(0, 0, 0, TURRET_ACCELERATION, true, false);
+            
+            if (Distance(0, TargetTID) > GetActorPropertyFixed(TargetTID, APROP_Radius) + 192.0 || LosingInterestTime)
+            {
+                SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelPitch), true, false);
+                //Log("Turret is engaging. Distance: %k\n", Distance(0, TargetTID));
+            }
+            else if (Distance(0, TargetTID) < GetActorPropertyFixed(TargetTID, APROP_Radius) + 128.0)
+            {
+                SetActorVelocity(0, -TURRET_ACCELERATION * Cos(TravelAngle), -TURRET_ACCELERATION * Sin(TravelAngle), 0, true, false);
+                //Log("Turret is backing up. Distance: %k\n", Distance(0, TargetTID));
+            };
+            
+            SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle - 0.25), TURRET_ACCELERATION * Sin(TravelAngle - 0.25), 0, true, false);
+        };
+        
+        // Unload all you've got!
+        if (Ammo > 0 && !Cooldown && HeatLevel < 100 && !GetUserVariable(0, "user_firing") && CheckSight(0, TargetTID, CSF_NOFAKEFLOORS) && (Weapon != TW_ROCKET || ((Distance(0, TargetTID) > 176 || GetUserArray(0, "user_upgrades", TU_ARMOR_PLATING_BLAST)) && Distance(PlayerID, TargetTID) > 176)))
+        {
+            SetActorState(0, "Missile");
+            switch (Weapon)
+            {
+            case TW_BULLET:
+                HeatLevel += 5;
+                break;
+            case TW_PELLET:
+                HeatLevel += 15;
+                break;
+            case TW_ROCKET:
+                HeatLevel += 30;
+                break;
+            case TW_PLASMA:
+                HeatLevel += 8;
+                break;
+            case TW_RAILGUN:
+                HeatLevel += 50;
+                break;
+            };
+        };
+    };
+    
+    if (HeatLevel > 0)
+    {
+        //Log("Heat: %d%%\n", HeatLevel);
+        if (HeatLevel >= 100 && !GetUserVariable(0, "user_firing") && !Cooldown)
+        {
+            //Log("Start cooldown\n");
+            SetActorState(0, "Cooldown");
+            Cooldown = true;
+        };
+        if (!(Timer() % 16))
+            HeatLevel -= 8;
+    }
+    else if (Cooldown)
+    {
+        //Log("Leave cooldown\n");
+        Cooldown = false;
+    };
+    
+    Delay(1);
+    
+    goto Start;
+};
+
+script bool TurretCheckTarget()
+{
+    return SetActivator(0, AAPTR_TARGET);
+};
+
+script bool TurretCheckTargetSuitable()
+{
+    SetActivator(0, AAPTR_TARGET);
+    int ActorInfo = ClassifyActor(0);
+    if (ActorInfo == ACTOR_WORLD || ActorInfo & ACTOR_DEAD || CheckFlag(0, "NONSHOOTABLE") || !CheckFlag(0, "SHOOTABLE"))
+        return false;
+    
+    return true;
+};
+
+script int TurretGetOwningPlayer()
+{
+    SetActivator(0, AAPTR_FRIENDPLAYER);
+    
+    return PlayerNumber();
+};
+
+script int TurretGetPlayerTarget()
+{
+    SetActivator(0, AAPTR_FRIENDPLAYER);
+    if (SetActivator(0, AAPTR_PLAYER_GETTARGET))
+        return ActivatorTID();
+    
+    return 0;
+};
+
 function void BuildTurretData()
 {
     // Command description for Stim Injector
     TurretUpgradeData[TU_ASSIST_INJECTOR].CommandInfo = StrParam("Use \cd%K\c- + \cd%K\ck to issue this command\n", "+speed", "drpg_usestim");
+};
+
+function bool TurretTeleport(int DestTID)
+{
+    fixed OldX = GetActorX(0);
+    fixed OldY = GetActorY(0);
+    fixed OldZ = GetActorZ(0);
+    fixed TeleX = GetActorX(DestTID) + (80.0 * Cos(GetActorAngle(DestTID) + 0.25));
+    fixed TeleY = GetActorY(DestTID) + (80.0 * Sin(GetActorAngle(DestTID) + 0.25));
+    fixed TeleZ = GetActorZ(DestTID) + 32.0;
+    
+    bool Teleported = SetActorPosition(0, TeleX, TeleY, TeleZ, false);
+    
+    if (Teleported && CheckSight(DestTID, 0, CSF_NOFAKEFLOORS))
+    {
+        PlaySound(0, "turret/spawn", CHAN_BODY, 1.0, false, ATTN_NORM);
+        SpawnForced("DRPGTurretTeleport", TeleX, TeleY, TeleZ - 32.0, 0, 0);
+        
+        SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
+    }
+    else
+    {
+        SetActorPosition(0, OldX, OldY, OldZ, false);
+        Teleported = false;
+    };
+    
+    return Teleported;
 };
 
 function void TurretMaintenance()
@@ -1505,6 +1955,30 @@ function void TurretPassVars()
     SetUserVariable(Player.Turret.TID, "user_destruct_damage", Player.Turret.Upgrade[TU_WEAPON_SELFDESTRUCT] * 1000);
 };
 
+function int TurretSensorDistanceComparison(void const *TIDPtr1, void const *TIDPtr2)
+{
+    int TID1 = *(int *)TIDPtr1;
+    int TID2 = *(int *)TIDPtr2;
+    
+    if (ClassifyActor(TID1) == ACTOR_NONE && ClassifyActor(TID2) == ACTOR_NONE)
+        return 0;
+    if (ClassifyActor(TID1) == ACTOR_NONE)
+        return -1;
+    if (ClassifyActor(TID2) == ACTOR_NONE)
+        return 1;
+    
+    fixed Distance1 = Distance(Player.Turret.TID, TID1);
+    fixed Distance2 = Distance(Player.Turret.TID, TID2);
+    
+    if (Distance2 == Distance1)
+        return 0
+    else if (Distance2 > Distance1)
+        return -1;
+    return 1;
+};
+
+// Spawning/Despawning
+
 function void TurretSpawn()
 {
     int TID = UniqueTID();
@@ -1568,343 +2042,6 @@ function void TurretSpawn()
     };
 };
 
-#define TURRET_ACCELERATION 1.5
-
-script void TurretAI(int TID)
-{
-    SetActivator(TID);
-    
-    int Weapon = GetUserVariable(0, "user_weapon");
-    int Ammo = 0;
-    int PlayerID = GetActorProperty(0, APROP_MasterTID);
-    bool NeedsTeleport = false;
-    bool HasTarget = false;
-    bool AnnouncedTarget = false;
-    bool Dodging = false;
-    int LosingInterestTime = 0;
-    int TargetTID = 0;
-    int TravelTime = 0;
-    int AggressionType = GetUserCVar(TurretGetOwningPlayer(), "drpg_turret_aggression");
-    int AggressionMode = 0;
-    int HeatLevel = 0;
-    bool Cooldown = false;
-    
-    Start:
-    
-    if (ClassifyActor(0) == ACTOR_WORLD)
-        return;
-    
-    // Just in case it was changed
-    AggressionType = GetUserCVar(TurretGetOwningPlayer(), "drpg_turret_aggression");
-    
-    Weapon = GetUserVariable(0, "user_weapon");
-    switch (Weapon)
-    {
-    case TW_BULLET:
-        Ammo = GetUserVariable(0, "user_ammo_bullet");
-        break;
-    case TW_PELLET:
-        Ammo = GetUserVariable(0, "user_ammo_shell");
-        break;
-    case TW_ROCKET:
-        Ammo = GetUserVariable(0, "user_ammo_rocket");
-        break;
-    case TW_PLASMA:
-        Ammo = GetUserVariable(0, "user_ammo_plasma");
-        break;
-    case TW_RAILGUN:
-        Ammo = GetUserVariable(0, "user_ammo_rail");
-        break;
-    };
-    
-    HasTarget = TurretCheckTarget();
-    
-    // Target handling
-    if (HasTarget)
-    {
-        if (!TurretCheckTargetSuitable() || Weapon == TW_NONE || Ammo < 1)
-        {
-            SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
-            HasTarget = false;
-            TargetTID = 0;
-        }
-        else
-            TargetTID = GetActorProperty(0, APROP_TargetTID);
-        
-        if (!CheckSight(0, TargetTID, CSF_NOFAKEFLOORS))
-        {
-            LosingInterestTime++;
-            if (LosingInterestTime >= 35 * 6)
-            {
-                SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
-                HasTarget = false;
-                TargetTID = 0;
-            };
-        }
-        else
-            LosingInterestTime = 0;
-    };
-    
-    // Air friction, don't slide away helplessly like cacodemons do.
-    SetActorVelocity(0, GetActorVelX(0) * 0.8, GetActorVelY(0) * 0.8, GetActorVelZ(0) * 0.8, false, false);
-    
-    if (AbsFixed(GetActorVelX(0)) < 0.01 && AbsFixed(GetActorVelY(0)) < 0.01 && AbsFixed(GetActorVelZ(0)) < 0.01)
-        SetActorVelocity(0, 0, 0, 0, false, false); // Dead stop if we're going too slow
-    
-    // Movement
-    
-    // Stay off the floor
-    if (GetActorZ(0) - GetActorFloorZ(0) < 32)
-        SetActorVelocity(0, 0, 0, TURRET_ACCELERATION, true, false);
-    
-    // Teleport detection - If the player suddenly poofs into another part of the map, we need to go with them.
-    if (GetActorProperty(PlayerID, APROP_Reactiontime) > 0 && Distance(0, PlayerID) > 96)
-        NeedsTeleport = true;
-    
-    if (NeedsTeleport)
-        NeedsTeleport = !TurretTeleport(PlayerID);
-    
-    // Missile Avoidance
-    int ProjectileTID = UniqueTID();
-    if (PickActor(0, GetActorAngle(0), GetActorPitch(0), 384, ProjectileTID, MF_MISSILE, ML_BLOCKEVERYTHING | ML_BLOCKPROJECTILE))
-    {
-        fixed InterceptAngle = VectorAngle(GetActorX(ProjectileTID) - GetActorX(0), GetActorY(ProjectileTID) - GetActorY(0));
-        fixed DodgeDirection;
-        
-        if (!Dodging)
-        {
-            DodgeDirection = 0.25;
-            if (!Random(0, 3))
-                DodgeDirection = -0.25;
-            
-            Dodging = true;
-        };
-        
-        SetActorVelocity(0, TURRET_ACCELERATION * Cos(InterceptAngle - DodgeDirection), TURRET_ACCELERATION * Sin(InterceptAngle - DodgeDirection), 0, true, false);
-        
-        Thing_ChangeTID(ProjectileTID, 0);
-    }
-    else
-        Dodging = false;
-    
-    if (!HasTarget)
-    {
-        // Idle routine - Stay close to the player
-        
-        if (AnnouncedTarget)
-            AnnouncedTarget = false;
-        
-        if (Distance(0, PlayerID) > 144)
-        {
-            if (TravelTime > 35 * 8 && (AbsFixed(GetActorVelX(0)) < 0.1 || AbsFixed(GetActorVelY(0)) < 0.1))
-                // Been trying to reach the player for 8+ seconds and going nowhere, so give up and teleport to them if possible
-                NeedsTeleport = true;
-            
-            fixed TravelAngle = VectorAngle(GetActorX(PlayerID) - GetActorX(0), GetActorY(PlayerID) - GetActorY(0));
-            fixed TravelPitch = VectorAngle(Distance(0, PlayerID), GetActorZ(PlayerID) - GetActorZ(0));
-            
-            SetActorAngle(0, TravelAngle);
-            SetActorPitch(0, TravelPitch);
-            SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelPitch), true, false);
-            
-            TravelTime++;
-        }
-        else
-        {
-            if (TravelTime)
-                TravelTime = 0;
-            
-            SetActorAngle(0, GetActorAngle(PlayerID));
-        };
-        
-        if (Weapon != TW_NONE && !(Timer() % 35))
-        {
-            if (TurretGetPlayerTarget() != 0)
-            {
-                SetPointer(AAPTR_TARGET, TurretGetPlayerTarget());
-            }
-            else
-                SetActorState(0, "ScanForEnemies");
-        };
-    }
-    else
-    {
-        // Battle routine - Circle around the target and fire at it, keeping a distance away.
-        
-        if (!AnnouncedTarget)
-        {
-            SetActorState(0, "Targeting");
-            AnnouncedTarget = true;
-        };
-        
-        if (AggressionType == 2) // Determine per weapon
-        {
-            if (Weapon == TW_PELLET || Weapon == TW_PLASMA)
-                AggressionMode = 1
-            else
-                AggressionMode = 0;
-        }
-        else
-            AggressionMode = AggressionType;
-        
-        fixed AimAngle = VectorAngle(GetActorX(TargetTID) - GetActorX(0), GetActorY(TargetTID) - GetActorY(0));
-        fixed AimPitch = VectorAngle(Distance(0, TargetTID), GetActorZ(TargetTID) - GetActorZ(0));
-        
-        SetActorAngle(0, AimAngle);
-        SetActorPitch(0, AimPitch);
-        
-        if (Weapon == TW_ROCKET && Distance(0, TargetTID) <= 176 && !GetUserArray(0, "user_upgrades", TU_ARMOR_PLATING_BLAST))
-        {
-            // Back up out of the blast zone if we can be damaged by it
-            SetActorVelocity(0, TURRET_ACCELERATION * Cos(AimAngle - 0.5) * Cos(AimPitch - 0.5), TURRET_ACCELERATION * Sin(AimAngle - 0.5) * Cos(AimPitch - 0.5), TURRET_ACCELERATION * Sin(AimPitch - 0.5), true, false);
-        };
-        
-        if (AggressionMode == 0)
-        {
-            // Passive Fire - Stay in slow orbit by the player and only fire at the enemy
-            
-            fixed TravelAngle = VectorAngle(GetActorX(PlayerID) - GetActorX(0), GetActorY(PlayerID) - GetActorY(0));
-            fixed TravelPitch = VectorAngle(Distance(0, PlayerID), GetActorZ(PlayerID) - GetActorZ(0));
-            if (Distance(0, PlayerID) > 256 || LosingInterestTime)
-                SetActorVelocity(0, (TURRET_ACCELERATION / 3) * Cos(TravelAngle) * Cos(TravelPitch), (TURRET_ACCELERATION / 3) * Sin(TravelAngle) * Cos(TravelPitch), (TURRET_ACCELERATION / 3) * Sin(TravelPitch), true, false)
-            else
-                SetActorVelocity(0, -(TURRET_ACCELERATION / 4) * Cos(TravelAngle), -(TURRET_ACCELERATION / 4) * Sin(TravelAngle), 0, true, false);
-            
-            SetActorVelocity(0, (TURRET_ACCELERATION / 3) * Cos(TravelAngle - 0.22), (TURRET_ACCELERATION / 3) * Sin(TravelAngle - 0.22), 0, true, false);
-        }
-        else
-        {
-            // Aggressive Fire - Orbit the enemy and draw them away from the player aggressively
-            
-            fixed TravelAngle = VectorAngle(GetActorX(TargetTID) - GetActorX(0), GetActorY(TargetTID) - GetActorY(0));
-            fixed TravelPitch = VectorAngle(Distance(0, TargetTID), GetActorZ(TargetTID) - GetActorZ(0));
-            
-            // Stay level with the target so we have a better time shooting it
-            if (GetActorZ(TargetTID) - GetActorZ(0) < -32)
-                SetActorVelocity(0, 0, 0, -TURRET_ACCELERATION, true, false)
-            else if (GetActorZ(TargetTID) - GetActorZ(0) > 32)
-                SetActorVelocity(0, 0, 0, TURRET_ACCELERATION, true, false);
-            
-            if (Distance(0, TargetTID) > GetActorPropertyFixed(TargetTID, APROP_Radius) + 192.0 || LosingInterestTime)
-            {
-                SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelPitch), true, false);
-                //Log("Turret is engaging. Distance: %k\n", Distance(0, TargetTID));
-            }
-            else if (Distance(0, TargetTID) < GetActorPropertyFixed(TargetTID, APROP_Radius) + 128.0)
-            {
-                SetActorVelocity(0, -TURRET_ACCELERATION * Cos(TravelAngle), -TURRET_ACCELERATION * Sin(TravelAngle), 0, true, false);
-                //Log("Turret is backing up. Distance: %k\n", Distance(0, TargetTID));
-            };
-            
-            SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle - 0.25), TURRET_ACCELERATION * Sin(TravelAngle - 0.25), 0, true, false);
-        };
-        
-        // Unload all you've got!
-        if (Ammo > 0 && !Cooldown && HeatLevel < 100 && !GetUserVariable(0, "user_firing") && CheckSight(0, TargetTID, CSF_NOFAKEFLOORS) && (Weapon != TW_ROCKET || ((Distance(0, TargetTID) > 176 || GetUserArray(0, "user_upgrades", TU_ARMOR_PLATING_BLAST)) && Distance(PlayerID, TargetTID) > 176)))
-        {
-            SetActorState(0, "Missile");
-            switch (Weapon)
-            {
-            case TW_BULLET:
-                HeatLevel += 5;
-                break;
-            case TW_PELLET:
-                HeatLevel += 15;
-                break;
-            case TW_ROCKET:
-                HeatLevel += 30;
-                break;
-            case TW_PLASMA:
-                HeatLevel += 8;
-                break;
-            case TW_RAILGUN:
-                HeatLevel += 50;
-                break;
-            };
-        };
-    };
-    
-    if (HeatLevel > 0)
-    {
-        //Log("Heat: %d%%\n", HeatLevel);
-        if (HeatLevel >= 100 && !GetUserVariable(0, "user_firing") && !Cooldown)
-        {
-            //Log("Start cooldown\n");
-            SetActorState(0, "Cooldown");
-            Cooldown = true;
-        };
-        if (!(Timer() % 16))
-            HeatLevel -= 8;
-    }
-    else if (Cooldown)
-    {
-        //Log("Leave cooldown\n");
-        Cooldown = false;
-    };
-    
-    Delay(1);
-    
-    goto Start;
-};
-
-function bool TurretTeleport(int DestTID)
-{
-    fixed OldX = GetActorX(0);
-    fixed OldY = GetActorY(0);
-    fixed OldZ = GetActorZ(0);
-    fixed TeleX = GetActorX(DestTID) + (80.0 * Cos(GetActorAngle(DestTID) + 0.25));
-    fixed TeleY = GetActorY(DestTID) + (80.0 * Sin(GetActorAngle(DestTID) + 0.25));
-    fixed TeleZ = GetActorZ(DestTID) + 32.0;
-    
-    bool Teleported = SetActorPosition(0, TeleX, TeleY, TeleZ, false);
-    
-    if (Teleported && CheckSight(DestTID, 0, CSF_NOFAKEFLOORS))
-    {
-        PlaySound(0, "turret/spawn", CHAN_BODY, 1.0, false, ATTN_NORM);
-        SpawnForced("DRPGTurretTeleport", TeleX, TeleY, TeleZ - 32.0, 0, 0);
-        
-        SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
-    }
-    else
-    {
-        SetActorPosition(0, OldX, OldY, OldZ, false);
-        Teleported = false;
-    };
-    
-    return Teleported;
-};
-
-script bool TurretCheckTarget()
-{
-    return SetActivator(0, AAPTR_TARGET);
-};
-
-script bool TurretCheckTargetSuitable()
-{
-    SetActivator(0, AAPTR_TARGET);
-    int ActorInfo = ClassifyActor(0);
-    if (ActorInfo == ACTOR_WORLD || ActorInfo & ACTOR_DEAD || CheckFlag(0, "NONSHOOTABLE") || !CheckFlag(0, "SHOOTABLE"))
-        return false;
-    
-    return true;
-};
-
-script int TurretGetOwningPlayer()
-{
-    SetActivator(0, AAPTR_FRIENDPLAYER);
-    
-    return PlayerNumber();
-};
-
-script int TurretGetPlayerTarget()
-{
-    SetActivator(0, AAPTR_FRIENDPLAYER);
-    if (SetActivator(0, AAPTR_PLAYER_GETTARGET))
-        return ActivatorTID();
-    
-    return 0;
-};
-
 function void TurretDespawn()
 {
     if (!Player.Turret.Active) return;
@@ -1917,140 +2054,7 @@ function void TurretDespawn()
     Thing_Remove(Player.Turret.TID);
 };
 
-script void TurretItemSensorThink()
-{
-    if (!Player.Turret.SensorItemData.Enabled)
-        return;
-    
-    if (Player.Turret.SensorItemData.Array.Position < 1)
-        return;
-    
-    int TID;
-    
-    if (Player.Turret.SensorItemData.PulseDelay == 0)
-    {
-        if (Player.Turret.SensorItemData.CurrentPosition >= Player.Turret.SensorItemData.Array.Position)
-        {
-            Player.Turret.SensorItemData.CurrentPosition = 0;
-            Player.Turret.SensorItemData.PulseDelay = 35;
-        }
-        else
-        {
-            if (Player.Turret.SensorItemData.CheckDelay)
-                Player.Turret.SensorItemData.CheckDelay--
-            else
-            {
-                if (Player.Turret.SensorItemData.CurrentPosition == 0)
-                    qsort(Player.Turret.SensorItemData.Array.Data, Player.Turret.SensorItemData.Array.Position, sizeof(int), TurretSensorDistanceComparison);
-                
-                TID = *(&((int *)Player.Turret.SensorItemData.Array.Data)[Player.Turret.SensorItemData.CurrentPosition]);
-                
-                while (ClassifyActor(TID) == ACTOR_NONE && Player.Turret.SensorItemData.CurrentPosition < Player.Turret.SensorItemData.Array.Position)
-                {
-                    Player.Turret.SensorItemData.CurrentPosition++;
-                    if (Player.Turret.SensorItemData.CurrentPosition < Player.Turret.SensorItemData.Array.Position)
-                        TID = *(&((int *)Player.Turret.SensorItemData.Array.Data)[Player.Turret.SensorItemData.CurrentPosition]);
-                };
-                
-                if (Player.Turret.SensorItemData.CurrentPosition < Player.Turret.SensorItemData.Array.Position)
-                {
-                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
-                    {
-                        fixed X = Lerp(GetActorX(Player.Turret.TID), GetActorX(TID), j);
-                        fixed Y = Lerp(GetActorY(Player.Turret.TID), GetActorY(TID), j);
-                        fixed Z = Lerp(GetActorZ(Player.Turret.TID), GetActorZ(TID), j);
-                        if (CheckFlag(TID, "COUNTITEM"))
-                            SpawnForced("DRPGTurretParticleItemLootTrail", X, Y, Z, 0, 0)
-                        else
-                            SpawnForced("DRPGTurretParticleItemTrail", X, Y, Z, 0, 0);  
-                    };
-                    
-                    Player.Turret.SensorItemData.CurrentPosition++;
-                    Player.Turret.SensorItemData.CheckDelay = 3;
-                };
-            };
-        };
-    }
-    else
-        Player.Turret.SensorItemData.PulseDelay--;
-};
-
-script void TurretCrateSensorThink()
-{
-    if (!Player.Turret.SensorCrateData.Enabled)
-        return;
-    
-    if (Player.Turret.SensorCrateData.Array.Position < 1)
-        return;
-    
-    int TID;
-    
-    if (Player.Turret.SensorCrateData.PulseDelay == 0)
-    {
-        if (Player.Turret.SensorCrateData.CurrentPosition >= Player.Turret.SensorCrateData.Array.Position)
-        {
-            Player.Turret.SensorCrateData.CurrentPosition = 0;
-            Player.Turret.SensorCrateData.PulseDelay = 35;
-        }
-        else
-        {
-            if (Player.Turret.SensorCrateData.CheckDelay)
-                Player.Turret.SensorCrateData.CheckDelay--
-            else
-            {
-                if (Player.Turret.SensorCrateData.CurrentPosition == 0)
-                    qsort(Player.Turret.SensorCrateData.Array.Data, Player.Turret.SensorCrateData.Array.Position, sizeof(int), TurretSensorDistanceComparison);
-                
-                TID = *(&((int *)Player.Turret.SensorCrateData.Array.Data)[Player.Turret.SensorCrateData.CurrentPosition]);
-                
-                while (ClassifyActor(TID) == ACTOR_NONE && Player.Turret.SensorCrateData.CurrentPosition < Player.Turret.SensorCrateData.Array.Position)
-                {
-                    Player.Turret.SensorCrateData.CurrentPosition++;
-                    if (Player.Turret.SensorCrateData.CurrentPosition < Player.Turret.SensorCrateData.Array.Position)
-                        TID = *(&((int *)Player.Turret.SensorCrateData.Array.Data)[Player.Turret.SensorCrateData.CurrentPosition]);
-                };
-                
-                if (Player.Turret.SensorCrateData.CurrentPosition < Player.Turret.SensorCrateData.Array.Position)
-                {
-                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
-                    {
-                        fixed X = Lerp(GetActorX(Player.Turret.TID), GetActorX(TID), j);
-                        fixed Y = Lerp(GetActorY(Player.Turret.TID), GetActorY(TID), j);
-                        fixed Z = Lerp(GetActorZ(Player.Turret.TID), GetActorZ(TID), j);
-                        SpawnForced("DRPGTurretParticleCrateTrail", X, Y, Z, 0, 0);
-                    };
-                    
-                    Player.Turret.SensorCrateData.CurrentPosition++;
-                    Player.Turret.SensorCrateData.CheckDelay = 3;
-                };
-            };
-        };
-    }
-    else
-        Player.Turret.SensorCrateData.PulseDelay--;
-};
-
-function int TurretSensorDistanceComparison(void const *TIDPtr1, void const *TIDPtr2)
-{
-    int TID1 = *(int *)TIDPtr1;
-    int TID2 = *(int *)TIDPtr2;
-    
-    if (ClassifyActor(TID1) == ACTOR_NONE && ClassifyActor(TID2) == ACTOR_NONE)
-        return 0;
-    if (ClassifyActor(TID1) == ACTOR_NONE)
-        return -1;
-    if (ClassifyActor(TID2) == ACTOR_NONE)
-        return 1;
-    
-    fixed Distance1 = Distance(Player.Turret.TID, TID1);
-    fixed Distance2 = Distance(Player.Turret.TID, TID2);
-    
-    if (Distance2 == Distance1)
-        return 0
-    else if (Distance2 > Distance1)
-        return -1;
-    return 1;
-};
+// Debugging
 
 acscript void GiveTurret()
 {
