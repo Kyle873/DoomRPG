@@ -177,13 +177,20 @@ script void Init() enter
     if (!GetCVar("drpg_skill_keepauras"))
         RemoveAura();
     
-    // Transport from/to Outpost Screen Fading
+    // Transport FX
     if (Transported)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Player is not in-game
+            if (!PlayerInGame(i)) continue;
+            
             SetActorProperty(Players(i).TID, APROP_Invulnerable, false);
-        SetPlayerProperty (0, 0, PROP_TOTALLYFROZEN); // In case we were in the menu
-        FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 1.0);
+            SpawnForced("DRPGTransportEffect", GetActorX(Players(i).TID), GetActorY(Players(i).TID), GetActorZ(Players(i).TID), 0, 0);
+            ThingSound(Players(i).TID, "misc/transport", 96);
+        };
+        
+        SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN); // In case we were in the menu
         Transported = false;
     };
     

@@ -2000,12 +2000,18 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
             if (PlayersApprove > PlayersDeny || Force)
             {
                 for (int i = 0; i < MAX_PLAYERS; i++)
+                {
+                    // Player is not in-game
+                    if (!PlayerInGame(i)) continue;
+                    
                     SetActorProperty(Players(i).TID, APROP_Invulnerable, true);
+                    SpawnForced("DRPGTransportEffect", GetActorX(Players(i).TID), GetActorY(Players(i).TID), GetActorZ(Players(i).TID), 0, 0);
+                    ThingSound(Players(i).TID, "misc/transport", 96);
+                };
+                
                 SetFont("BIGFONT");
-                HudMessageBold("\cdTransport Approved!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 4.0);
+                HudMessageBold("\cdTransport Approved!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 1.0, 1.0);
                 Delay(35 * 2);
-                FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 3.0);
-                Delay(35 * 3);
             }
             
             // Denied
@@ -2044,15 +2050,16 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
     }
     else // Single Player
     {
-        // Fade Screen
-        FadeRange(255, 255, 255, 0.0, 255, 255, 255, 1.0, 1.0);
+        // Transport FX
+        SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+        ActivatorSound("misc/transport", 96);
         
         // Freeze Player
         SetActorProperty(0, APROP_Invulnerable, true);
         SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
         
         // Delay and unfreeze Player
-        Delay(35);
+        Delay(35 * 2);
         SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
         SetActorProperty(0, APROP_Invulnerable, false);
     };
