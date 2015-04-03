@@ -767,18 +767,18 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     int Instructions = 0;
     int Iterations = 0;
     
+    // Initial delay to make sure all items have been added/initialized in the level
+    Delay(4);
+    
     // Determine the max amount of items to create if it's not specifically specified
     if (MaxItems == 0)
         MaxItems = Random(LevelNum / GameSkill(), LevelNum) + ((AveragePlayerLuck() + AveragePlayerLevel()) / (GameSkill() * 2));
     
-    // Stop if there are no monsters in the level
-    if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) <= 0) return;
-    
     // Find the furthest monster from the player to determine some approximate boundaries to work with
-    for (int i = 0; i < MonsterID; i++)
+    for (int i = 0; ItemTIDs[i] != -1; i++)
     {
-        fixed Dist = Distance3D(GetActorX(0), GetActorY(0), GetActorZ(0), Monsters[i].Position.X, Monsters[i].Position.Y, Monsters[i].Position.Z);
-        fixed ZDiff = AbsFixed(GetActorZ(0) - Monsters[i].Position.Z);
+        fixed Dist = Distance3D(GetActorX(0), GetActorY(0), GetActorZ(0), GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorZ(ItemTIDs[i]));
+        fixed ZDiff = AbsFixed(GetActorZ(0) - GetActorZ(ItemTIDs[i]));
         
         if (Dist > Boundary)
         {
@@ -804,22 +804,21 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         {
             bool Remove = true;
             
-            for (int i = 1; i < MonsterID; i++)
+            for (int i = 0; ItemTIDs[i] != -1; i++)
             {
                 // If this spot is blank, skip it
-                if (Monsters[i].TID == 0) continue;
+                if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
                 
                 // Randomly continue for variance
                 if (Random(1, 4) == 1) continue;
                 
-                bool CanSee = CheckSight(Monsters[i].TID, TID, 0);
+                bool CanSee = CheckSight(ItemTIDs[i], TID, 0);
                 
                 // [KS] Don't spawn stuff on special-effects flats like skyfloor or blackness, or at extreme height differences, because more often than not those are used as void space filler or instakill floors.
                 // Examples: Epic2 MAP14, SF2012 MAP02, some CC4 maps.
-                bool BadFloor = CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF");
+                bool BadFloor = (CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF"));
                 
-                // BUG: There's also the issue of items spawning into monster closets. Maybe we should use existing item placements as a check point instead?
-                if (CanSee && !BadFloor && Abs(Z - Monsters[i].Position.Z) <= 128)
+                if (CanSee && !BadFloor && Abs(Z - GetActorZ(ItemTIDs[i])) <= 128)
                 {
                     Remove = false;
                     Items++;
