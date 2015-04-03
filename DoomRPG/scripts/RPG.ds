@@ -813,7 +813,13 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
                 if (Random(1, 4) == 1) continue;
                 
                 bool CanSee = CheckSight(Monsters[i].TID, TID, 0);
-                if (CanSee)
+                
+                // [KS] Don't spawn stuff on special-effects flats like skyfloor or blackness, or at extreme height differences, because more often than not those are used as void space filler or instakill floors.
+                // Examples: Epic2 MAP14, SF2012 MAP02, some CC4 maps.
+                bool BadFloor = CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF");
+                
+                // BUG: There's also the issue of items spawning into monster closets. Maybe we should use existing item placements as a check point instead?
+                if (CanSee && !BadFloor && Abs(Z - Monsters[i].Position.Z) <= 128)
                 {
                     Remove = false;
                     Items++;
