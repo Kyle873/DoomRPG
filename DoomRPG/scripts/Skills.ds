@@ -668,11 +668,11 @@ acscript void UseSkill(int Key) net
         Overdrive = true;
     
     // Overdriving an unlearnt skill will learn it
-    if (Overdrive && CheckInventory("DRPGSkillToken") > 0 && SkillLevel->Level == 0)
+    if (Overdrive && CheckInventory("DRPGModule") >= MODULE_SKILL_MULT && SkillLevel->Level == 0)
     {
         SkillLevel->Level++;
         SkillLevel->CurrentLevel++;
-        TakeInventory("DRPGSkillToken", 1);
+        TakeInventory("DRPGModule", MODULE_SKILL_MULT);
         FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 0.5);
         ActivatorSound("health/epcapsule", 127);
         return;
@@ -1994,6 +1994,8 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         // Ready - tally votes and confirm/deny Transport
         if (Ready || Force)
         {
+            Transported = true;
+            
             SetPlayerProperty(1, 0, PROP_TOTALLYFROZEN);
             
             // Approved
@@ -2051,6 +2053,8 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
     }
     else // Single Player
     {
+        Transported = true;
+        
         // Transport FX
         SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
         ActivatorSound("misc/transport", 96);
@@ -2079,7 +2083,6 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         else
             ChangeLevel("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, CurrentSkill);
         InBase = true;
-        Transported = true;
         return true;
     }
     else
