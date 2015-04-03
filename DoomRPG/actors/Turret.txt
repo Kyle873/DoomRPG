@@ -190,6 +190,7 @@ ACTOR DRPGPortableTurret
     
     // Weapons
     var int user_weapon;
+    var int user_firing;
     var int user_bullet_damage;
     var int user_bullet_rof;
     var int user_pellet_damage;
@@ -219,174 +220,127 @@ ACTOR DRPGPortableTurret
     Health 1000
     Radius 16
     Height 16
-    Speed 0
+    Speed 1.0
     Painchance 256
     Mass 0x7FFFFFFF
     Species "Player"
     
+    +ISMONSTER
+    +NOBLOCKMONST
+    +SLIDESONWALLS
+    +FLOATBOB
     +SOLID
     +NOGRAVITY
     +FLOAT
     +SHOOTABLE
     +NOBLOOD
-    +NOCLIP
     +FRIENDLY
     +NOTIMEFREEZE
+    +THRUSPECIES
     
     States
     {
     Spawn:
-        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("TurretInit", 0)
-        Goto Idle
-    See:
-        TNT1 A 0 A_PlaySound("turret/hum", CHAN_6, 1.0, true, 1.25)
-        PTUR A 1 A_Chase("", "Missile")
-        TNT1 A 0 A_JumpIfTargetInLOS(1)
-        Goto Forget
-        TNT1 A 0 A_Jump(255, "See")
-        TNT1 A 0 A_PlaySound("turret/beep", CHAN_7)
+        PTUR A 0 A_SetUserVar ("user_firing", 0)
+        PTUR A 1 A_PlaySound("turret/hum", CHAN_6, 1.0, true, 1.25)
         Loop
-    Forget:
-        TNT1 A 0 A_ClearTarget
-    Idle:
-        TNT1 A 0 A_PlaySound("turret/hum", CHAN_6, 1.0, true, 1.25)
-        TNT1 A 0 A_Wander
-        PTUR A 1 A_Look
-        Loop
+    ScanForEnemies:
+        PTUR A 0 A_Jump(192, 2)
+        PTUR A 0 A_PlaySound("turret/beep", CHAN_7, 1.0, false, 1.25)
+        PTUR A 1 A_LookEx (LOF_NOJUMP)
+        Goto Spawn
     Searching:
-        TNT1 A 0 A_PlaySound("turret/searching", CHAN_6, 1.0, true, 1.25)
+        PTUR A 0 A_PlaySound("turret/searching", CHAN_6, 1.0, true, 1.25)
         PTUR A -1
         Stop
+    Targeting:
+        PTUR A 0 A_PlaySound("turret/targeting", CHAN_7)
+        Goto Spawn
     Missile:
-        TNT1 A 0 A_JumpIf(user_weapon == TW_NONE, "See")
-        TNT1 A 0 A_JumpIf(user_weapon == TW_BULLET, "Missile.Bullet")
-        TNT1 A 0 A_JumpIf(user_weapon == TW_PELLET, "Missile.Pellet")
-        TNT1 A 0 A_JumpIf(user_weapon == TW_ROCKET, "Missile.Rocket")
-        TNT1 A 0 A_JumpIf(user_weapon == TW_PLASMA, "Missile.Plasma")
-        TNT1 A 0 A_JumpIf(user_weapon == TW_RAILGUN, "Missile.Railgun")
-        Goto See
+        PTUR A 0 A_JumpIf(user_weapon == TW_NONE, "Spawn")
+        PTUR A 0 A_JumpIf(user_weapon == TW_BULLET, "Missile.Bullet")
+        PTUR A 0 A_JumpIf(user_weapon == TW_PELLET, "Missile.Pellet")
+        PTUR A 0 A_JumpIf(user_weapon == TW_ROCKET, "Missile.Rocket")
+        PTUR A 0 A_JumpIf(user_weapon == TW_PLASMA, "Missile.Plasma")
+        PTUR A 0 A_JumpIf(user_weapon == TW_RAILGUN, "Missile.Railgun")
+        Goto Spawn
     Missile.Bullet:
-        TNT1 A 0 A_JumpIf(user_ammo_bullet <= 0, "See")
-        TNT1 A 0 A_PlaySound("turret/targeting", CHAN_7)
-        PTUR A 2 A_FaceTarget
-    Missile.BulletLoop:
-        TNT1 A 0 A_FaceTarget
-        TNT1 A 0 A_PlaySound("turret/fire", CHAN_WEAPON, 1.0, 0, 0.6)
+        PTUR A 0 A_SetUserVar ("user_firing", 1)
+        PTUR A 0 A_PlaySound("turret/fire", CHAN_WEAPON, 1.0, 0, 0.6)
         PTUR B 0 Bright A_CustomBulletAttack(8, 0, 1, Random(5, 10) * (user_bullet_damage + 1), "BulletPuff", 0, CBAF_NORANDOM)
-        TNT1 A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_BULLET)
+        PTUR A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_BULLET)
         PTUR B 2 Bright
         PTUR A 0 A_SetTics(6 - user_bullet_rof)
-        PTUR A 0 A_FaceTarget
-        TNT1 A 0 A_JumpIf(user_ammo_bullet <= 0, "See")
-        TNT1 A 0 A_MonsterRefire(0, "MissileEnd")
-        Loop
+        PTUR A 0 A_SetUserVar ("user_firing", 0)
+        Goto Spawn
     Missile.Pellet:
-        TNT1 A 0 A_JumpIf(user_ammo_shell <= 0, "See")
-        TNT1 A 0 A_PlaySound("turret/targeting", CHAN_7)
-        PTUR A 2 A_FaceTarget
-    Missile.PelletLoop:
-        TNT1 A 0 A_FaceTarget
-        TNT1 A 0 A_PlaySound("weapons/sshotf", CHAN_WEAPON, 1.0, 0, 0.6)
+        PTUR A 0 A_SetUserVar ("user_firing", 1)
+        PTUR A 0 A_PlaySound("weapons/sshotf", CHAN_WEAPON, 1.0, 0, 0.6)
         PTUR B 0 Bright A_CustomBulletAttack(16 - (user_pellet_spread * 3), 16 - (user_pellet_spread * 3), 3 * (user_pellet_amount + 1), Random(10, 20) * (user_pellet_damage + 1), "BulletPuff", 0, CBAF_NORANDOM)
-        TNT1 A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_PELLET)
+        PTUR A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_PELLET)
         PTUR B 10 Bright
         PTUR A 0 A_SetTics(35 - (user_pellet_rof * 5))
-        PTUR A 0 A_FaceTarget
-        TNT1 A 0 A_JumpIf(user_ammo_shell <= 0, "See")
-        TNT1 A 0 A_MonsterRefire(0, "MissileEnd")
-        Loop
+        PTUR A 0 A_SetUserVar ("user_firing", 0)
+        Goto Spawn
     Missile.Rocket:
-        TNT1 A 0 A_JumpIf(user_ammo_rocket <= 0, "See")
-        TNT1 A 0 A_PlaySound("turret/targeting", CHAN_7)
-        PTUR A 2 A_FaceTarget
-    Missile.RocketLoop:
-        TNT1 A 0 A_FaceTarget
-        PTUR C 0 Bright A_CustomMissile("DRPGTurretRocket", height, 0, 0, CMF_AIMOFFSET | CMF_CHECKTARGETDEAD)
-        TNT1 A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_ROCKET)
+        PTUR A 0 A_SetUserVar ("user_firing", 1)
+        PTUR C 0 Bright A_CustomMissile("DRPGTurretRocket", height, 0, 0, CMF_AIMOFFSET)
+        PTUR A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_ROCKET)
         PTUR C 10 Bright
         PTUR A 0 A_SetTics(70 - (user_rocket_rof * 12))
-        PTUR A 0 A_FaceTarget
-        TNT1 A 0 A_JumpIf(user_ammo_rocket <= 0, "See")
-        TNT1 A 0 A_MonsterRefire(0, "MissileEnd")
-        Loop
+        PTUR A 0 A_SetUserVar ("user_firing", 0)
+        Goto Spawn
     Missile.Plasma:
-        TNT1 A 0 A_JumpIf(user_ammo_plasma <= 0, "See")
-        TNT1 A 0 A_PlaySound("turret/targeting", CHAN_7)
-        PTUR A 2 A_FaceTarget
-    Missile.PlasmaLoop:
-        TNT1 A 0 A_FaceTarget
-        PTUR D 0 Bright A_CustomMissile("DRPGTurretPlasma", height, 0, 0, CMF_AIMOFFSET | CMF_CHECKTARGETDEAD)
-        TNT1 A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_PLASMA)
+        PTUR A 0 A_SetUserVar ("user_firing", 1)
+        PTUR D 0 Bright A_CustomMissile("DRPGTurretPlasma", height, 0, 0, CMF_AIMOFFSET)
+        PTUR A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_PLASMA)
         PTUR D 3 Bright
         PTUR A 0 A_SetTics(5 - user_plasma_rof)
-        PTUR A 0 A_FaceTarget
-        TNT1 A 0 A_JumpIf(user_ammo_plasma <= 0, "See")
-        TNT1 A 0 A_MonsterRefire(0, "MissileEnd")
-        Loop
+        PTUR A 0 A_SetUserVar ("user_firing", 0)
+        Goto Spawn
     Missile.Railgun:
-        TNT1 A 0 A_JumpIf(user_ammo_rail <= 0, "See")
-        TNT1 A 0 A_PlaySound("turret/targeting", CHAN_7)
-        PTUR A 2 A_FaceTarget
-    Missile.RailgunLoop:
-        TNT1 A 0 A_FaceTarget
+        PTUR A 0 A_SetUserVar ("user_firing", 1)
         PTUR E 0 Bright A_CustomRailgun(Random(50, 100) * (user_railgun_damage + 1), 0, "LightGreen", "Green", RGF_FULLBRIGHT | user_railgun_ripping, true)
-        TNT1 A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_RAILGUN)
+        PTUR A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_RAILGUN)
         PTUR E 10 Bright
         PTUR A 0 A_SetTics(35 - (user_plasma_rof * 5))
-        PTUR A 0 A_FaceTarget
-        TNT1 A 0 A_JumpIf(user_ammo_rail <= 0, "See")
-        TNT1 A 0 A_MonsterRefire(0, "MissileEnd")
-        Loop
-    MissileEnd:
-        TNT1 A 0 A_PlaySound("turret/cooldown", CHAN_5)
-        PTUR A 2 A_FaceTarget
-        Goto See
+        PTUR A 0 A_SetUserVar ("user_firing", 0)
+        Goto Spawn
+    Cooldown:
+        PTUR A 0 A_PlaySound("turret/cooldown", CHAN_5)
+        PTUR A 35
+        Goto Spawn
     SelfDestruct:
-        TNT1 A 0 A_StopSound(CHAN_6)
-        TNT1 A 0 A_PlaySound("turret/countdown", CHAN_5, 1.0, false, 0.0)
+        PTUR A 0 A_StopSound(CHAN_6)
+        PTUR A 0 A_PlaySound("turret/countdown", CHAN_5, 1.0, false, 0.0)
         PTUR A 350
-        TNT1 A 0 A_PlaySound("turret/explode", CHAN_5, 1.0, false, 0.0)
-        TNT1 A 0 A_Explode(user_destruct_damage, user_destruct_range)
-        TNT1 A 0 ACS_NamedExecuteAlways("TurretPostSelfDestruct", 0)
+        PTUR A 0 A_PlaySound("turret/explode", CHAN_5, 1.0, false, 0.0)
+        PTUR A 0 A_Explode(user_destruct_damage, user_destruct_range)
+        PTUR A 0 ACS_NamedExecuteAlways("TurretPostSelfDestruct", 0)
         Stop
     Pain:
-        TNT1 A 0 A_SetUserVar("user_damage_type", DT_NORMAL)
-        Goto See
+        PTUR A 0 A_SetUserVar("user_damage_type", DT_NORMAL)
+        Goto Spawn
     Pain.Slime:
-        TNT1 A 0 A_SetUserVar("user_damage_type", DT_TOXIC)
-        Goto See
+        PTUR A 0 A_SetUserVar("user_damage_type", DT_TOXIC)
+        Goto Spawn
     Pain.Radiation:
-        TNT1 A 0 A_SetUserVar("user_damage_type", DT_RADIATION)
-        Goto See
+        PTUR A 0 A_SetUserVar("user_damage_type", DT_RADIATION)
+        Goto Spawn
     Pain.Melee:
-        TNT1 A 0 A_SetUserVar("user_damage_type", DT_MELEE)
-        Goto See
+        PTUR A 0 A_SetUserVar("user_damage_type", DT_MELEE)
+        Goto Spawn
     Pain.Fire:
-        TNT1 A 0 A_SetUserVar("user_damage_type", DT_FIRE)
-        Goto See
+        PTUR A 0 A_SetUserVar("user_damage_type", DT_FIRE)
+        Goto Spawn
     Pain.Plasma:
-        TNT1 A 0 A_SetUserVar("user_damage_type", DT_PLASMA)
-        Goto See
+        PTUR A 0 A_SetUserVar("user_damage_type", DT_PLASMA)
+        Goto Spawn
     Pain.Lightning:
-        TNT1 A 0 A_SetUserVar("user_damage_type", DT_LIGHTNING)
-        Goto See
+        PTUR A 0 A_SetUserVar("user_damage_type", DT_LIGHTNING)
+        Goto Spawn
     Death:
-        TNT1 A 0 A_SpawnItemEx("DRPGTurretTeleport")
-        Stop
-    }
-}
-
-actor DRPGPortableTurretSpawner : CustomInventory
-{
-    +INVENTORY.AUTOACTIVATE
-    
-    States
-    {
-    Spawn:
-        TNT1 A -1
-        Stop
-    Use:
-        TNT1 A 0 A_SpawnItemEx("DRPGPortableTurret", 0, 0, 0, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION | SXF_SETMASTER)
+        PTUR A 0 A_SpawnItemEx("DRPGTurretTeleport")
         Stop
     }
 }
