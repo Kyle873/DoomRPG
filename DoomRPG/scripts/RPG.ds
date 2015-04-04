@@ -245,7 +245,6 @@ script void Init() enter
     ShieldTimer();
     WeaponSpeed();
     StatRandomizer();
-    AutosaveHandler();
     DamageNumbers();
     InfoPopoffs();
     HealthBars();
@@ -342,9 +341,6 @@ script void Loop()
     // Display Stat HUD if enabled
     if (GetUserCVar(PlayerNumber(), "drpg_stats_alwaysshow") || GetCVar("drpg_hud_preview"))
         StatHUD();
-    
-    // Shop Special Handling
-    if (Arbitrator) CheckShopSpecial(false);
     
     // Regeneration
     DoRegen();
@@ -669,6 +665,130 @@ script void AutosaveHandler()
         
         Delay(1);
     };
+};
+
+script void ShopSpecialHandler() enter
+{
+    Start:
+    
+    // Reset the item
+    if (ShopSpecialTimer <= 0)
+    {
+        bool ValidItem = false;
+        int Tries = 0;
+        int MinValue = 0;
+        int MaxValue = 0;
+        int Category = 0;
+        int Index = 0;
+        
+        // Calculate min and max based on settings
+        switch (GetCVar("drpg_shopspecial_type"))
+        {
+        case SHOPSPECIAL_MINMAX:
+            MinValue = GetCVar("drpg_shopspecial_min");
+            MaxValue = GetCVar("drpg_shopspecial_max");
+            break;
+        case SHOPSPECIAL_LEVEL:
+            MinValue = AveragePlayerLevel() * MAX_LEVEL;
+            MaxValue = AveragePlayerLevel() * (100 * MAX_LEVEL);
+            break;
+        case SHOPSPECIAL_RANK:
+            MinValue = AveragePlayerRank() * (25 * MAX_RANK);
+            MaxValue = AveragePlayerRank() * (2500 * MAX_RANK);
+            break;
+        case SHOPSPECIAL_CREDITS:
+            MinValue = AveragePlayerCredits() / 10;
+            MaxValue = AveragePlayerCredits() * 10;
+            break;
+        case SHOPSPECIAL_LUCK:
+            MinValue = AveragePlayerLuck() * 500;
+            MaxValue = AveragePlayerLuck() * 5000;
+            break;
+        };
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Shop Special \c-Min/Max Calculated: \ca%d \c-/ \cd%d\n", MinValue, MaxValue);
+        
+        // Blank out the item until a new one is found
+        ShopSpecialItem = GetBlankItem();
+        
+        while (!ValidItem)
+        {
+            ValidItem = true;
+            
+            Delay(1);
+            
+            // Pick an item
+            Category = (GetCVar("drpg_shopspecial_category") >= 0 ? GetCVar("drpg_shopspecial_category") : Random(0, ItemCategories - 1));
+            Index = Random(0, ItemMax[Category] - 1);
+            
+            // We're not having any luck meeting the criteria, or the min/max value are impossible values to meet (0 / 0)
+            // Break and give up on generating a shop special this time
+            if (Tries > 100 || (MinValue == 0 && MaxValue == 0))
+            {
+                ValidItem = false;
+                break;
+            };
+            
+            // Retry if you land on an item with no cost
+            if (ItemData[Category][Index].Price == 0)
+            {
+                ValidItem = false;
+                Tries++;
+                continue;
+            };
+            
+            // Skip Loot category entirely
+            if (Category == 7)
+            {
+                ValidItem = false;
+                Tries++;
+                continue;
+            };
+            
+            // Make sure the item is within the valid price range
+            if (ItemData[Category][Index].Price < MinValue || ItemData[Category][Index].Price > MaxValue)
+            {
+                ValidItem = false;
+                Tries++;
+                continue;
+            };
+            
+            // Item is valid, continue
+            if (ValidItem)
+                break;
+        };
+        
+        if (ValidItem)
+        {
+            // Assign the item to the Shop Special item
+            ShopSpecialItem = &ItemData[Category][Index];
+            
+            // Spawn the item if you're in the Outpost
+            SpawnShopSpecialItem();
+        };
+        
+        // Reset the timer and bought status
+        ShopSpecialTimer = 35 * 60 * GetCVar("drpg_shopspecial_time");
+        ShopSpecialBought = false;
+        
+        if (GetCVar("drpg_debug"))
+        {
+            if (ShopSpecialItem == GetBlankItem())
+                Log("\cdDEBUG: Shop Special expired! \caNo new item generated\n")
+            else
+                Log("\cdDEBUG: Shop Special expired! Now \cj%s\n", ShopSpecialItem->Name);
+        };
+    };
+    
+    // Remove the item if it was bought
+    if (InBase && ShopSpecialBought)
+        Thing_Remove(ShopSpecialTID + 1);
+    
+    // Decrease the timer
+    ShopSpecialTimer--;
+    
+    Delay(1);
+    goto Start;
 };
 
 // Handles the Items dynamic array and associated behavior
