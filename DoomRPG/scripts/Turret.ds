@@ -1426,6 +1426,7 @@ script void TurretAI(int TID)
     int Weapon = GetUserVariable(0, "user_weapon");
     int Ammo = 0;
     int PlayerID = GetActorProperty(0, APROP_MasterTID);
+    fixed TurretSpeed = GetUserCVar(TurretGetOwningPlayer(), "drpg_turret_movespeed");
     bool NeedsTeleport = false;
     bool HasTarget = false;
     bool AnnouncedTarget = false;
@@ -1450,6 +1451,7 @@ script void TurretAI(int TID)
     };
     
     // Just in case it was changed
+    TurretSpeed = GetUserCVar(TurretGetOwningPlayer(), "drpg_turret_movespeed");
     AggressionType = GetUserCVar(TurretGetOwningPlayer(), "drpg_turret_aggression");
     
     Weapon = GetUserVariable(0, "user_weapon");
@@ -1510,7 +1512,7 @@ script void TurretAI(int TID)
     
     // Stay off the floor
     if (GetActorZ(0) - GetActorFloorZ(0) < 32)
-        SetActorVelocity(0, 0, 0, TURRET_ACCELERATION, true, false);
+        SetActorVelocity(0, 0, 0, TurretSpeed, true, false);
     
     // Teleport detection - If the player suddenly poofs into another part of the map, we need to go with them.
     if (GetActorProperty(PlayerID, APROP_Reactiontime) > 0 && Distance(0, PlayerID) > 96)
@@ -1535,7 +1537,7 @@ script void TurretAI(int TID)
             Dodging = true;
         };
         
-        SetActorVelocity(0, TURRET_ACCELERATION * Cos(InterceptAngle - DodgeDirection), TURRET_ACCELERATION * Sin(InterceptAngle - DodgeDirection), 0, true, false);
+        SetActorVelocity(0, TurretSpeed * Cos(InterceptAngle - DodgeDirection), TurretSpeed * Sin(InterceptAngle - DodgeDirection), 0, true, false);
         
         Thing_ChangeTID(ProjectileTID, 0);
     }
@@ -1560,7 +1562,7 @@ script void TurretAI(int TID)
             
             SetActorAngle(0, TravelAngle);
             SetActorPitch(0, TravelPitch);
-            SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelPitch), true, false);
+            SetActorVelocity(0, TurretSpeed * Cos(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelPitch), true, false);
             
             TravelTime++;
         }
@@ -1611,7 +1613,7 @@ script void TurretAI(int TID)
         if (Weapon == TW_ROCKET && Distance(0, TargetTID) <= 176 && !GetUserArray(0, "user_upgrades", TU_ARMOR_PLATING_BLAST))
         {
             // Back up out of the blast zone if we can be damaged by it
-            SetActorVelocity(0, TURRET_ACCELERATION * Cos(AimAngle - 0.5) * Cos(AimPitch - 0.5), TURRET_ACCELERATION * Sin(AimAngle - 0.5) * Cos(AimPitch - 0.5), TURRET_ACCELERATION * Sin(AimPitch - 0.5), true, false);
+            SetActorVelocity(0, TurretSpeed * Cos(AimAngle - 0.5) * Cos(AimPitch - 0.5), TurretSpeed * Sin(AimAngle - 0.5) * Cos(AimPitch - 0.5), TurretSpeed * Sin(AimPitch - 0.5), true, false);
         };
         
         if (AggressionMode == 0)
@@ -1621,11 +1623,11 @@ script void TurretAI(int TID)
             fixed TravelAngle = VectorAngle(GetActorX(PlayerID) - GetActorX(0), GetActorY(PlayerID) - GetActorY(0));
             fixed TravelPitch = VectorAngle(Distance(0, PlayerID), GetActorZ(PlayerID) - GetActorZ(0));
             if (Distance(0, PlayerID) > 256 || LosingInterestTime)
-                SetActorVelocity(0, (TURRET_ACCELERATION / 3) * Cos(TravelAngle) * Cos(TravelPitch), (TURRET_ACCELERATION / 3) * Sin(TravelAngle) * Cos(TravelPitch), (TURRET_ACCELERATION / 3) * Sin(TravelPitch), true, false)
+                SetActorVelocity(0, TurretSpeed * Cos(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelPitch), true, false)
             else
-                SetActorVelocity(0, -(TURRET_ACCELERATION / 4) * Cos(TravelAngle), -(TURRET_ACCELERATION / 4) * Sin(TravelAngle), 0, true, false);
+                SetActorVelocity(0, TurretSpeed * Cos(TravelAngle), TurretSpeed * Sin(TravelAngle), 0, true, false);
             
-            SetActorVelocity(0, (TURRET_ACCELERATION / 3) * Cos(TravelAngle - 0.22), (TURRET_ACCELERATION / 3) * Sin(TravelAngle - 0.22), 0, true, false);
+            SetActorVelocity(0, (TurretSpeed / 3) * Cos(TravelAngle - 0.22), (TurretSpeed / 3) * Sin(TravelAngle - 0.22), 0, true, false);
         }
         else
         {
@@ -1636,22 +1638,22 @@ script void TurretAI(int TID)
             
             // Stay level with the target so we have a better time shooting it
             if (GetActorZ(TargetTID) - GetActorZ(0) < -32)
-                SetActorVelocity(0, 0, 0, -TURRET_ACCELERATION, true, false)
+                SetActorVelocity(0, 0, 0, -TurretSpeed, true, false)
             else if (GetActorZ(TargetTID) - GetActorZ(0) > 32)
-                SetActorVelocity(0, 0, 0, TURRET_ACCELERATION, true, false);
+                SetActorVelocity(0, 0, 0, TurretSpeed, true, false);
             
             if (Distance(0, TargetTID) > GetActorPropertyFixed(TargetTID, APROP_Radius) + 192.0 || LosingInterestTime)
             {
-                SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelPitch), true, false);
+                SetActorVelocity(0, TurretSpeed * Cos(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelPitch), true, false);
                 //Log("Turret is engaging. Distance: %k\n", Distance(0, TargetTID));
             }
             else if (Distance(0, TargetTID) < GetActorPropertyFixed(TargetTID, APROP_Radius) + 128.0)
             {
-                SetActorVelocity(0, -TURRET_ACCELERATION * Cos(TravelAngle), -TURRET_ACCELERATION * Sin(TravelAngle), 0, true, false);
+                SetActorVelocity(0, -TurretSpeed * Cos(TravelAngle), -TurretSpeed * Sin(TravelAngle), 0, true, false);
                 //Log("Turret is backing up. Distance: %k\n", Distance(0, TargetTID));
             };
             
-            SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle - 0.25), TURRET_ACCELERATION * Sin(TravelAngle - 0.25), 0, true, false);
+            SetActorVelocity(0, TurretSpeed * Cos(TravelAngle - 0.25), TurretSpeed * Sin(TravelAngle - 0.25), 0, true, false);
         };
         
         // Unload all you've got!
