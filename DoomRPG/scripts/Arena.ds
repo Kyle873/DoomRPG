@@ -20,6 +20,7 @@ int ArenaSectorTag = 100;
 int ArenaWave;
 int ArenaTimer;
 int ArenaKeyTimer;
+int ArenaKeyTimerType;
 int ArenaCount;
 int ArenaMod;
 int ArenaEnvironment;
@@ -52,6 +53,7 @@ str[ABONUS_MAX] ArenaBonus =
     "\cuWeapon Drop";
     "\caPowerup Drop";
     "\cuStim Drop";
+    "\ciCrate Drop";
     "\ciMod Drop";
     "\cqKey Drop";
 };
@@ -107,7 +109,7 @@ acscript void ArenaLoop()
                     HudMessage("Press \cd%K\c- to start the next wave\nPress \cd%K\c- to exit the Arena\n", "+use" , "+speed",
                                HUDMSG_PLAIN, 0, CR_WHITE, 1.5, 0.75, 0.05);
                 
-                if (Buttons & BT_USE && !(OldButtons & BT_USE) && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu) && !Player.MenuBlock)
+                if (Buttons & BT_USE && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && Player.CrateOpen) && !Player.MenuBlock)
                 {
                     // Check to see if others are still in the menu
                     for (int i = 0; i < MAX_PLAYERS; i++)
@@ -116,29 +118,35 @@ acscript void ArenaLoop()
                     
                     if (Ready)
                     {
-                        // Multiplayer Countdown
-                        if (InMultiplayer)
+                        ArenaKeyTimer++;
+                        ArenaKeyTimerType = AKTIMER_CONTINUE;
+                        if (ArenaKeyTimer > ARENA_HOLDTIME)
                         {
-                            SetFont("BIGFONT");
-                            for (int i = 3; i > 0; i--)
+                            // Multiplayer Countdown
+                            if (InMultiplayer)
                             {
-                                HudMessageBold("%d\n", i, HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 0.25, 0.75);
-                                Delay(35);
+                                SetFont("BIGFONT");
+                                for (int i = 3; i > 0; i--)
+                                {
+                                    HudMessageBold("%d\n", i, HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 0.25, 0.75);
+                                    Delay(35);
+                                };
                             };
+                            
+                            ArenaWave++;
+                            ArenaState = ARENA_READY;
                         };
-                        
-                        ArenaWave++;
-                        ArenaState = ARENA_READY;
                     }
                     else
                     {
                         PrintError("Someone is currently in a menu\n");
                         ActivatorSound("menu/error", 127);
                     };
-                };
-                if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
+                }
+                else if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && Player.CrateOpen))
                 {
                     ArenaKeyTimer++;
+                    ArenaKeyTimerType = AKTIMER_STOP;
                     if (ArenaKeyTimer > ARENA_HOLDTIME)
                     {
                         ArenaStop();
@@ -259,13 +267,13 @@ acscript void ArenaChooseBonus()
             ActivatorSound("menu/move", 127);
             BonusChoice--;
             if (BonusChoice < 1) BonusChoice = ABONUS_MAX - (CanChooseKey ? 1 : 2);
-            if (BonusChoice == 10 && CompatMode != COMPAT_DRLA) BonusChoice--;
+            if (BonusChoice == ABONUS_MODDROP && CompatMode != COMPAT_DRLA) BonusChoice--;
         };
         if (Buttons == BT_BACK && OldButtons != BT_BACK)
         {
             ActivatorSound("menu/move", 127);
             BonusChoice++;
-            if (BonusChoice == 10 && CompatMode != COMPAT_DRLA) BonusChoice++;
+            if (BonusChoice == ABONUS_MODDROP && CompatMode != COMPAT_DRLA) BonusChoice++;
             if (BonusChoice > ABONUS_MAX - (CanChooseKey ? 1 : 2)) BonusChoice = 1;
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
@@ -370,6 +378,9 @@ function void ArenaGetBonus(int Bonus)
             DropArenaItem("DRPGStimPackagePowerup");
         DropArenaItem("DRPGStimDropper");
         break;
+    case ABONUS_CRATEDROP: // Crate Drop
+        DropArenaItem("DRPGCrate");
+        break;
     case ABONUS_MODDROP: // Mod Drop (DRLA Only)
         if (CompatMode == COMPAT_DRLA)
             DropArenaItem("RLModPackSpawner")
@@ -423,7 +434,7 @@ function void DropArenaItem(str Item)
         fixed YSpeed = GetCVarFixed("drpg_monster_dropdist");
         fixed ZSpeed = 8.0;
         
-        SpawnForced("TeleportFog", X, Y, Z, 0, 0);
+        SpawnForced("DRPGTurretTeleport", X, Y, Z, 0, 0);
         Success = SpawnForced(Item, X, Y, Z, TID, 0);
         
         if (Success)
@@ -493,7 +504,15 @@ function void ArenaDrawHUD()
     if (ArenaKeyTimer > 0 && ArenaKeyTimer <= ARENA_HOLDTIME)
     {
         int Percent = CalcPercent(ArenaKeyTimer, ARENA_HOLDTIME);
-        DrawProgressBar("Stopping Arena", Percent);
+        str Text;
+        
+        switch (ArenaKeyTimerType)
+        {
+        case AKTIMER_STOP:      Text = "Stopping Arena";    break;
+        case AKTIMER_CONTINUE:  Text = "\caNext Wave";      break;
+        };
+        
+        DrawProgressBar(Text, Percent);
     };
 };
 
