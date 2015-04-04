@@ -180,7 +180,6 @@ function void CheckCombo()
     if (Player.ComboTimer == COMBO_STOP || (Player.Aura.Type[AURA_WHITE].Active && Player.Aura.Type[AURA_WHITE].Level >= 2 && Timer() == 4))
     {
         int ComboBonus = (int)((((fixed)Player.Combo / (fixed)GameSkill()) * (Player.XPGained + Player.RankGained)) / 10.0);
-        if (ComboBonus < 0) ComboBonus = 0;
         
         // You cannot gain Negative XP, but you can lose Rank
         if (Player.XPGained < 0) Player.XPGained = 0;
@@ -214,10 +213,6 @@ function void CheckCombo()
 // Keeps current level and XP updated
 function void CheckLevel()
 {
-    // Prevent underflow
-    if (Player.XP < 0)
-        Player.XP = 0;
-    
     if (Player.Level < MAX_LEVEL)
         Player.XPNext = XPTable[Player.Level];
     
@@ -257,10 +252,6 @@ function void CheckLevel()
 // Keeps current Rank updated
 function void CheckRank()
 {
-    // Prevent underflow
-    if (Player.Rank < 0)
-        Player.Rank = 0;
-    
     Player.RankString = Ranks[Player.RankLevel];
     
     if (Player.RankLevel < MAX_RANK)
@@ -373,7 +364,10 @@ function void CheckStats()
     Player.BonusDamage = Player.Strength;
     Player.DamageMult = 0;
     Player.TotalDamage = Player.LevelDamage + Player.BonusDamage;
-    Player.DamageFactor = (Player.Defense > 200 ? 0.25 : 1.0 - Curve((fixed)Player.Defense, 0, 200, 0, 0.75));
+    if (Player.Defense >= 0)
+        Player.DamageFactor = (Player.Defense > 200 ? 0.25 : 1.0 - Curve((fixed)Player.Defense, 1, 200, 0.01, 0.75))
+    else
+        Player.DamageFactor = -(Player.Defense / 100);
     Player.Mass = 100 + (Player.Defense * 10);
 	Player.HealthMax = Player.Vitality * 10;
     Player.StatusEffectResist = (fixed)Player.Vitality / 4.0;
@@ -731,11 +725,6 @@ function void CheckHardStatCaps()
 
 function void CheckStatBounds()
 {
-    /* Prevent Overflow of EP - I'd rather we not do this, just for things like Stims
-    if (Player.EP > Player.EPMax)
-        Player.EP = Player.EPMax;
-	*/
-    
     // Cap Defense/DamageFactor
     if (Player.DamageFactor < 0.1)
         Player.DamageFactor = 0.1;
@@ -772,10 +761,14 @@ function void CheckStatBounds()
     };
     
     // Cap Weapon Speed
+    if (Player.WeaponSpeed < 0)
+        Player.WeaponSpeed = 0;
     if (Player.WeaponSpeed > 100)
         Player.WeaponSpeed = 100;
     
     // Cap Survival Bonus
+    if (Player.SurvivalBonus < 0)
+        Player.SurvivalBonus = 0;
     if (Player.SurvivalBonus > 75 && (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_ROULETTE))
         Player.SurvivalBonus = 75;
     

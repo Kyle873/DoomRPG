@@ -15,10 +15,7 @@
 #include "Utils.dh"
 
 // Globals
-static bool                ShopSpecialBought;
-static int                 ShopSpecialTimer;
-static ItemInfo ItemSpace *ShopSpecialItem;
-static int                 OutpostNotoriety;
+static int OutpostNotoriety;
 
 // Spawn Spots and TIDs
 int ShopSpecialTID = 1001;
@@ -977,10 +974,19 @@ acscript void ShopSpecial()
     // if you're already in a menu, terminate
     if (Player.InMenu || Player.InShop || Player.OutpostMenu == OMENU_SHOPSPECIAL) return;
     
+    // If there is no shop special
+    if (ShopSpecialItem == GetBlankItem())
+    {
+        ActivatorSound("menu/error", 127);
+        PrintError(StrParam("There is currently no Shop Special item.\n\nNext restock will be in \cj%s\c-.\n", FormatTime(ShopSpecialTimer)));
+        return;
+    };
+    
+    // If the shop special was already bought
     if (ShopSpecialBought)
     {
         ActivatorSound("menu/error", 127);
-        PrintError(StrParam("Shop Special is currently out of stock.\nNext restock will be in \cj%s.\n", FormatTime(ShopSpecialTimer)));
+        PrintError(StrParam("Shop Special is currently out of stock.\n\nNext restock will be in \cj%s\c-.\n", FormatTime(ShopSpecialTimer)));
         return;
     };
     
@@ -993,16 +999,17 @@ acscript void ShopSpecial()
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
         str Name = ShopSpecialItem->Name;
-        int Discount = (30 - (GameSkill() * 5)) + Player.ShopDiscount;
-        int Cost = ShopSpecialItem->Price - ShopSpecialItem->Price * Player.ShopDiscount / 100;
-        
+        int Discount = GetCVar("drpg_shopspecial_discount") + Player.ShopDiscount;
         // Cap the Shop Special Discount at 75%
-        if (Discount > 75) Discount = 75;
+        if (Discount > 75)
+            Discount = 75;
+        int Cost = ShopSpecialItem->Price - ((ShopSpecialItem->Price * Discount) / 100);
         
-        // If the item's already been bought, terminate
-        if (ShopSpecialBought)
+        // If the item's already been bought or the timer expires, terminate
+        if (ShopSpecialBought || ShopSpecialTimer <= 0)
         {
-            SetPlayerProperty(true, 0, PROP_TOTALLYFROZEN);
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            Player.OutpostMenu = 0;
             return;
         };
         
@@ -1370,109 +1377,24 @@ acscript void SpawnBoss()
     };
 };
 
-function void CheckShopSpecial(bool Force)
-{
-    // Reset the item
-    if (ShopSpecialTimer <= 0 || Force)
-    {
-        int Category;
-        int Index;
-        bool ValidItem;
-
-        // Item Blacklist
-        auto int[][2] ItemBlacklist =
-        {
-            // Category, Index
-            
-            // Ammo
-            { 1;    0;  };  // Clip
-            { 1;    1;  };  // Box of Bullets
-            { 1;    2;  };  // Shells
-            { 1;    3;  };  // Box of Shells
-            { 1;    4;  };  // Rockets
-            { 1;    5;  };  // Box of Rockets
-            { 1;    6;  };  // Cell
-            { 1;    7;  };  // Cell Pack
-            { 1;    8;  };  // Small Backpack
-            { 1;    9;  };  // Backpack
-            
-            // Armor
-            { 3;    0;  };  // Armor Bonus
-            
-            // End of list
-            { -1;       };
-        };
-        
-        while (!ValidItem)
-        {
-            // Pick an item
-            Category = Random(0, ItemCategories - 1);
-            Index = Random(0, ItemMax[Category] - 1);
-            
-            // Check the item against the blacklist
-            for (int i = 0; ItemBlacklist[i][0] != -1; i++)
-            {
-                ValidItem = true;
-                
-                // Check Blacklist Category and Index
-                if (Category == ItemBlacklist[i][0] && Index == ItemBlacklist[i][1])
-                {
-                    ValidItem = false;
-                    break;
-                };
-            };
-            
-            // Skip Loot category entirely
-            if (Category == 8)
-                ValidItem = false;
-            
-            // Retry if you land on an item with no cost
-            if (ItemData[Category][Index].Price == 0)
-                ValidItem = false;
-        };
-        
-        // Assign the item to the Shop Special item
-        ShopSpecialItem = &ItemData[Category][Index];
-        
-        // Spawn the item if you're in the Outpost
-        SpawnShopSpecialItem();
-        
-        // Reset the timer and bought status
-        ShopSpecialTimer = SHOP_SPECIAL_TIMER;
-        ShopSpecialBought = false;
-        
-        if (GetCVar("drpg_debug"))
-            if (Arbitrator)
-                Log("\cdDEBUG: Shop Special expired! Now \cj%s\n", ShopSpecialItem->Name);
-    };
-    
-    // Remove the item if it was bought
-    if (InBase && ShopSpecialBought)
-        Thing_Remove(ShopSpecialTID + 1);
-    
-    // Decrease the timer
-    ShopSpecialTimer--;
-};
-
 function void SpawnShopSpecialItem()
 {
     if (InBase)
     {
+        // Remove old item
+        Thing_Remove(ShopSpecialTID + 1);
+        
         // DoomRL Compatibility
         str ItemSpawnActor = ShopSpecialItem->Actor;
         if (CompatMode == COMPAT_DRLA)
             if (ShopSpecialItem->Category == 0) // Weapons
                 ItemSpawnActor = StrParam("%sPickup\n", ItemSpawnActor);
         
-        Thing_Remove(ShopSpecialTID + 1);
-        if (!SpawnSpotForced(ItemSpawnActor, ShopSpecialTID, ShopSpecialTID + 1, 0))
-            CheckShopSpecial(true)
-        else
-        {
-            SpawnSpotForced("TeleportFog", ShopSpecialTID, 0, 0);
-            SetActorProperty(ShopSpecialTID, APROP_Invulnerable, true);
-            Thing_SetSpecial(ShopSpecialTID, 80, 8);
-        };
+        // Spawn new item
+        SpawnSpotForced("DRPGTurretTeleport", ShopSpecialTID, 0, 0);
+        SpawnSpotForced(ItemSpawnActor, ShopSpecialTID, ShopSpecialTID + 1, 0);
+        SetActorProperty(ShopSpecialTID + 1, APROP_Invulnerable, true);
+        Thing_SetSpecial(ShopSpecialTID + 1, 80, 8);
     };
 };
 
