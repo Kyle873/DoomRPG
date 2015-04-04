@@ -318,10 +318,10 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
         ""; // Generated in BuildTurretData()
     };
     {
-        "Assist Module - Stim Injector - Type"; 2; 10;
+        "Assist Module - Stim Injector - Type"; 3; 10;
         "Determines the type of drugs you will be injected with";
-        "Upgrade allows powerups to be injected";
-        "";
+        "Upgrade allows boosters and powerups to be injected";
+        "Issuing this command will swap between broad injection and Focused injection";
     };
     {
         "Assist Module - Stim Injector - Amount"; 10; 5;
@@ -927,6 +927,10 @@ script void TurretLoopMaintenance() enter
         ActivatorSound("turret/maintenancedone", 127);
     };
     
+    // Stim cooldown timer handling
+    if (Player.Turret.StimTimer > 0 && (Timer() % 35) == 0)
+        Player.Turret.StimTimer--;
+    
     Delay(1);
     goto Start;
 };
@@ -1190,6 +1194,127 @@ script void TurretCrateSensorThink()
     }
     else
         Player.Turret.SensorCrateData.PulseDelay--;
+};
+
+script void TurretPickStimMenu()
+{
+    static str[STIM_MAX] VialSprites =
+    {
+        "STVLA0";
+        "STVLB0";
+        "STVLC0";
+        "STVLD0";
+        "STVLE0";
+        "STVLF0";
+        "STVLG0";
+        "STVLH0";
+        "STVLI0";
+        "STVLJ0";
+        "STVLK0";
+        "STVLL0";
+        "STVLM0";
+        "STVLN0";
+        "STVLO0";
+        "STVLP0";
+        "STVLQ0";
+        "STVLR0";
+        "STVLS0";
+    };
+    
+    int Radius = 128;
+    int Selection = 0;
+    int TypeMax = 0;
+    fixed LerpPos = 0;
+    
+    // Determine which types can be picked
+    if (Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] == 1) // Stats
+        TypeMax = StimStatsEnd
+    else if (Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] == 2) // Bosters
+        TypeMax = StimPowerupStart
+    else // Everything
+        TypeMax = STIM_MAX;
+    
+    // Set Resolution
+    SetHudSize(640, 480, false);
+    
+    // Silly hack to make sure you let go of the key before the actual wheel comes up
+    while (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
+        Delay(1);
+    
+    while (true)
+    {
+        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        fixed Increment = 1.0 / TypeMax;
+        fixed Location = (Increment * (fixed)Selection);
+        fixed OldLocation;
+        fixed Angle;
+        fixed X;
+        fixed Y;
+        
+        // Keep menus closed - This is technically a hack and shouldn't be here
+        Player.InMenu = false;
+        Player.InShop = false;
+        
+        // Freeze
+        SetPlayerProperty(0, 1, PROP_FROZEN);
+        
+        // Lerp position
+        if (LerpPos <= 1.0)
+            LerpPos += 0.1;
+        if (LerpPos > 1.0)
+            LerpPos = 1.0;
+        
+        // Vials
+        for (int i = 0; i < TypeMax; i++)
+        {
+            Angle = 0.25 + Lerp(OldLocation, Location, LerpPos) - (Increment * i);
+            X = 320.0 + (Radius * Cos(Angle)) + 4.0;
+            Y = 240.0 + (Radius * Sin(Angle)) + 16.0;
+            
+            PrintSprite("ItemBoxH", 0, 320, 240 + Radius, 0.05);
+            PrintSprite(VialSprites[i], 0, (int)X, (int)Y, 0.05);
+        };
+        
+        // Draw Name
+        SetFont("BIGFONT");
+        HudMessage("%s\n", CompoundNames[Selection], HUDMSG_PLAIN, 0, CompoundColors[Selection], 320, 240 + Radius + 32, 0.05);
+        
+        // Input
+        if (Buttons & BT_USE)
+        {
+            Player.Turret.StimVialType = Selection;
+            Player.Turret.StimPicked = true;
+            break;
+        };
+        if (Buttons & BT_SPEED)
+        {
+            ActivatorSound("menu/click", 127);
+            Player.Turret.StimVialType = -1;
+            Player.Turret.StimPicked = true;
+            break;
+        };
+        if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT))
+        {
+            ActivatorSound("menu/click", 127);
+            Selection--;
+            OldLocation = Location;
+            LerpPos = 0;
+            if (Selection < 0) Selection = TypeMax - 1;
+        };
+        if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT))
+        {
+            ActivatorSound("menu/click", 127);
+            Selection++;
+            OldLocation = Location;
+            LerpPos = 0;
+            if (Selection > TypeMax - 1) Selection = 0;
+        };
+        
+        Delay(1);
+    };
+    
+    SetPlayerProperty(0, 0, PROP_FROZEN);
 };
 
 acscript void TurretMenu()
@@ -1858,6 +1983,12 @@ function void TurretCommand(int Index)
     if (Index == TU_ASSIST_INJECTOR && Player.Turret.Active)
         TurretStim();
     
+    if (Index == TU_ASSIST_INJECTOR_TYPE)
+    {
+        ActivatorSound("menu/move", 127);
+        Player.Turret.StimFocused = !Player.Turret.StimFocused;
+    };
+    
     if (Index == TU_ASSIST_TELEPORT)
     {
         ActivatorSound("menu/move", 127);
@@ -1916,6 +2047,13 @@ function bool TurretStim()
         return false;
     };
     
+    if (Player.Turret.StimTimer > 0)
+    {
+        PrintError(StrParam("Your turret is currently generating more compounds and will be ready in \cc%s", FormatTime(Player.Turret.StimTimer * 35)));
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
     bool Powerups = (Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] > 1);
     int MaxAmount = Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT];
     int Potency = Player.Turret.Upgrade[TU_ASSIST_INJECTOR_POTENCY];
@@ -1924,11 +2062,19 @@ function bool TurretStim()
     // Generate the stim
     while (Amount++ < MaxAmount)
     {
-        int TypeMax = (Powerups ? StimPowerupEnd : StimStatsEnd);
-        int Type = Random(0, TypeMax);
-        
-        Player.Stim.Current[Type] += Potency;
+        if (Player.Turret.StimFocused) // Focused Injection
+            Player.Stim.Current[Player.Turret.StimVialType] += (Player.Turret.StimVialType >= StimStatsEnd ? Potency / 5 : Potency)
+        else // Broad injection
+        {
+            int TypeMax = (Powerups ? StimPowerupEnd : StimStatsEnd);
+            int Type = Random(0, TypeMax);
+            
+            Player.Stim.Current[Type] += Potency;
+        };
     };
+    
+    // Reset stim cooldown timer
+    Player.Turret.StimTimer = 60;
     
     return true;
 };
