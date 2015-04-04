@@ -364,10 +364,10 @@ function void CheckStats()
     Player.BonusDamage = Player.Strength;
     Player.DamageMult = 0;
     Player.TotalDamage = Player.LevelDamage + Player.BonusDamage;
-    if (Player.Defense >= 0)
-        Player.DamageFactor = (Player.Defense > 200 ? 0.25 : 1.0 - Curve((fixed)Player.Defense, 1, 200, 0.01, 0.75))
+    if (Player.Defense > 0)
+        Player.DamageFactor = (Player.Defense > 200 ? 0.25 : 1.0 - Curve((fixed)Player.Defense, 0, 200, 0.01, 0.75))
     else
-        Player.DamageFactor = -(Player.Defense / 100);
+        Player.DamageFactor = 1.0 + AbsFixed(((fixed)Player.Defense / 100.0));
     Player.Mass = 100 + (Player.Defense * 10);
 	Player.HealthMax = Player.Vitality * 10;
     Player.StatusEffectResist = (fixed)Player.Vitality / 4.0;
@@ -700,6 +700,7 @@ function void ResetRegen()
 // Keep stats capped at certain values
 function void CheckStatCaps()
 {
+    // Current Cap (Soft + level)
     if (Player.Strength > Player.StatCap)       Player.Strength = Player.StatCap;
     if (Player.Defense > Player.StatCap)        Player.Defense = Player.StatCap;
     if (Player.Vitality > Player.StatCap)       Player.Vitality = Player.StatCap;
@@ -708,6 +709,16 @@ function void CheckStatCaps()
     if (Player.Agility > Player.StatCap)        Player.Agility = Player.StatCap;
     if (Player.Capacity > Player.StatCap)       Player.Capacity = Player.StatCap;
     if (Player.Luck > Player.StatCap)           Player.Luck = Player.StatCap;
+    
+    // Negative Cap
+    if (Player.Strength < 100)                  Player.Strength = -100;
+    if (Player.Defense < 100)                   Player.Defense = -100;
+    if (Player.Vitality < 100)                  Player.Vitality = -100;
+    if (Player.Energy > < 100)                  Player.Energy = -100;
+    if (Player.Regeneration < 100)              Player.Regeneration = -100;
+    if (Player.Agility < 100)                   Player.Agility = -100;
+    if (Player.Capacity < 100)                  Player.Capacity = -100;
+    if (Player.Luck < 100)                      Player.Luck = -100;
 };
 
 // Keep stats capped at the hard value
@@ -728,6 +739,10 @@ function void CheckStatBounds()
     // Cap Defense/DamageFactor
     if (Player.DamageFactor < 0.1)
         Player.DamageFactor = 0.1;
+    
+    // Prevent Mass from underflowing
+    if (Player.Mass < 0)
+        Player.Mass = 0;
     
     // Cap the max regen timer amounts to 1 second
     if (Player.HPTime < 35)
