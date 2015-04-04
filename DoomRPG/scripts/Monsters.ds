@@ -1498,8 +1498,8 @@ script void MonsterDeath()
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     int Killer = WhoKilledMe();
-    fixed XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2.0, GetActorProperty(0, APROP_SpawnHealth)) * (1.0 + (fixed)Stats->Threat * 0.3);
-    int RankAmount = GetActorProperty(0, APROP_SpawnHealth) * (1 + (Stats->Threat - (Stats->Threat > 0 ? 1 : 0)));
+    long int XPAmount = Random(GetActorProperty(0, APROP_SpawnHealth) / 2.0, GetActorProperty(0, APROP_SpawnHealth)) * (1 + (Stats->Threat - (Stats->Threat > 0 ? 1 : 0)));;
+    long int RankAmount = GetActorProperty(0, APROP_SpawnHealth) * (1 + (Stats->Threat - (Stats->Threat > 0 ? 1 : 0)));
     int DropMod = Stats->Luck * 0.256;
     int DropAmount = (int)(1.0 + ((fixed)Stats->Luck / 500.0));
     
@@ -1565,9 +1565,9 @@ script void MonsterDeath()
     // Add XP/Rank
     if (!(Stats->Flags & MF_NOXP) && !GetActorProperty(0, APROP_Friendly))
     {
-        // XP modifications based on level and skill
-        if (GetCVar("drpg_xp_monsterlevel")) XPAmount *= 1.0 + ((fixed)Stats->Level / 100.0);
-        if (GetCVar("drpg_xp_skilllevel")) XPAmount *= 1.0 - (0.15 * (fixed)GameSkill());
+        // Take Rank if the enemy has MF_RANKLOSS
+        if (Stats->Flags & MF_RANKLOSS)
+            RankAmount = -RankAmount;
         
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -1575,10 +1575,7 @@ script void MonsterDeath()
             
             if (Killer == i)
             {
-                if (Stats->Flags & MF_RANKLOSS)
-                    AddXP(i, (int)XPAmount, RankAmount, false)
-                else
-                    AddXP(i, (int)XPAmount, -RankAmount, false);
+                AddXP(i, XPAmount, RankAmount, false);
                 if (GetCVar("drpg_levelup_natural"))
                 {
                     fixed Scale = GetCVarFixed("drpg_strength_scalexp");
@@ -1591,7 +1588,7 @@ script void MonsterDeath()
                 };
             }
             else
-                AddXP(i, (int)XPAmount, RankAmount, true);
+                AddXP(i, XPAmount / 3, 0, true);
         };
     };
     
