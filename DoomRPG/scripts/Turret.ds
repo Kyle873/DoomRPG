@@ -581,7 +581,11 @@ script void TurretLoop() enter
         
         // Despawn the turret if itself or the owning player dies
         if (GetActorProperty(Player.TID, APROP_Health) <= 0 || GetActorProperty(Player.Turret.TID, APROP_Health) <= 0)
+        {
+            Player.Turret.Destroyed = true;
+            Player.Turret.PaidForRepair = false;
             TurretDespawn();
+        };
         
         // Battery is drained
         if (Player.Turret.Battery <= 0)
@@ -794,13 +798,6 @@ script void TurretLoop() enter
         // Reset damage type
         SetUserVariable(Player.Turret.TID, "user_damage_type", DT_NONE);
         
-        // Turret was destroyed
-        if (Health - PrevHealth < 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") != DT_NONE)
-        {
-            Player.Turret.Destroyed = true;
-            Player.Turret.PaidForRepair = false;
-        };
-        
         Delay(1);
         
         // Post-health check
@@ -814,7 +811,6 @@ script void TurretLoop() enter
 
 script void TurretLoopMaintenance() enter
 {
-    bool CanRepair = true;
     int MaintCost = 0;
     
     Start:
@@ -893,7 +889,10 @@ script void TurretLoopMaintenance() enter
                 
                 // Done
                 if (Player.Turret.Health >= Player.Turret.HealthMax)
+                {
                     ActivatorSound("turret/repairdone", 127);
+                    Player.Turret.Destroyed = false;
+                };
             };
         };
         
@@ -911,19 +910,15 @@ script void TurretLoopMaintenance() enter
         // Calculate maintenance cost for this tic
         if (Player.Turret.ChargeTimer > 0)
             MaintCost++;
-        if (CanRepair && Player.Turret.RepairTimer > 0)
+        if (Player.Turret.PaidForRepair && Player.Turret.RepairTimer > 0)
             MaintCost++;
         if (Player.Turret.RefitTimer > 0)
             MaintCost++;
         
         // Steady credit loss while maintenance is happening
-        if ((Player.Turret.ChargeTimer > 0 || (CanRepair && Player.Turret.RepairTimer > 0) || Player.Turret.RefitTimer > 0) && (Timer() % (5 + (Player.Turret.Upgrade[TU_HARDWARE_FABRICATION] * 3))) == 0)
+        if ((Player.Turret.ChargeTimer > 0 || (Player.Turret.PaidForRepair && Player.Turret.RepairTimer > 0) || Player.Turret.RefitTimer > 0) && (Timer() % (5 + (Player.Turret.Upgrade[TU_HARDWARE_FABRICATION] * 3))) == 0)
             TakeInventory("DRPGCredits", MaintCost);
     };
-    
-    // Turret is fixed up
-    if (Player.Turret.Destroyed && Player.Turret.RepairTimer <= 0)
-        Player.Turret.Destroyed = false;
     
     // Maintenance is done
     if (Player.Turret.Maintenance && Player.Turret.ChargeTimer <= 0 && Player.Turret.RepairTimer <= 0 && Player.Turret.RefitTimer <= 0)
