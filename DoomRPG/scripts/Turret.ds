@@ -559,9 +559,10 @@ script void TurretLoop() enter
         // Initial Battery Charge
         Player.Turret.Battery = Player.Turret.BatteryMax;
         
-        // Set Active and TID
+        // Set Flags
         Player.Turret.Init = true;
         Player.Turret.Active = true;
+        Player.Turret.PaidForRepair = true;
         
         // Spawn the Turret
         TurretSpawn();
@@ -796,7 +797,10 @@ script void TurretLoop() enter
         
         // Turret was destroyed
         if (Health - PrevHealth < 0 && GetUserVariable(Player.Turret.TID, "user_damage_type") != DT_NONE)
+        {
             Player.Turret.Destroyed = true;
+            Player.Turret.PaidForRepair = false;
+        };
         
         Delay(1);
         
@@ -812,7 +816,6 @@ script void TurretLoop() enter
 script void TurretLoopMaintenance() enter
 {
     bool CanRepair = true;
-    int RepairMod = 0;
     int MaintCost = 0;
     
     Start:
@@ -869,29 +872,29 @@ script void TurretLoopMaintenance() enter
         // Repairing
         if ((Timer() % (35 - (Player.Turret.Upgrade[TU_HARDWARE_PART] * 3))) == 0)
         {
-            RepairMod = 60 + (Player.Turret.Upgrade[TU_HARDWARE_BUILD] * 60);
-            
-            // Full upgrade means no more turret part repair cost
-            if (Player.Turret.Upgrade[TU_HARDWARE_BUILD] >= TurretUpgradeData[TU_HARDWARE_BUILD].MaxLevel)
-                RepairMod = 0;
-            
-            if (RepairMod > 0 && !CheckInventory("DRPGTurretPart"))
-                CanRepair = false
-            else
-                CanRepair = true;
-            if (CanRepair)
+            if (Player.Turret.RepairTimer > 0)
             {
-                if (Player.Turret.RepairTimer > 0)
+                // Turret was destroyed, we need to pay parts up-front to fix it
+                if (Player.Turret.Destroyed && !Player.Turret.PaidForRepair)
                 {
-                    if (RepairMod > 0 && (Player.Turret.RepairTimer % RepairMod) == 0)
-                        TakeInventory("DRPGTurretPart", 1);
+                    int Parts = Player.Turret.Upgrade[TU_ARMOR_PLATING] - Player.Turret.Upgrade[TU_HARDWARE_BUILD];
                     
-                    Player.Turret.Health++;
-                    
-                    // Done
-                    if (Player.Turret.Health >= Player.Turret.HealthMax)
-                        ActivatorSound("turret/repairdone", 127);
+                    // If the parts upgrade outweighs the plating upgrade, there is no cost
+                    if (Parts <= 0)
+                        Player.Turret.PaidForRepair = true
+                    else if (CheckInventory("DRPGTurretPart") >= Parts)
+                    {
+                        Player.Turret.PaidForRepair = true;
+                        TakeInventory("DRPGTurretPart", Parts);
+                    };
                 };
+                
+                if (Player.Turret.PaidForRepair)
+                    Player.Turret.Health++;
+                
+                // Done
+                if (Player.Turret.Health >= Player.Turret.HealthMax)
+                    ActivatorSound("turret/repairdone", 127);
             };
         };
         
@@ -1273,6 +1276,7 @@ acscript void TurretPostSelfDestruct()
     
     Player.Turret.Active = false;
     Player.Turret.Destroyed = true;
+    Player.Turret.PaidForRepair = false;
     Player.Turret.SelfDestruct = false;
     Player.Turret.Health = 0;
 };
@@ -2026,8 +2030,9 @@ function void TurretSpawn()
     fixed Z = GetActorZ(0) + 32.0;
     
     bool Spawned = Spawn("DRPGPortableTurret", X, Y, Z, TID, GetActorAngle(0) * 256);
+    bool CanSee = CheckSight(Player.TID, TID, 0);
     
-    if (Spawned)
+    if (Spawned && CanSee)
     {
         PlaySound(TID, "turret/spawn", CHAN_BODY, 1.0, false, ATTN_NORM);
         Player.Turret.TID = TID;
@@ -2044,6 +2049,7 @@ function void TurretSpawn()
     }
     else
     {
+        Thing_Remove(TID);
         ActivatorSound("menu/error", 127);
         PrintError("The turret has no room to spawn here");
     };
