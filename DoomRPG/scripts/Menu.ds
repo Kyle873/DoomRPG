@@ -306,11 +306,17 @@ function void DrawStatsMenu()
     // Stats Page
     if (Player.StatPage == STATPAGE_STATS)
     {
+        int Cost = (int)((((fixed)*Stats[Player.MenuIndex] + 1) * (fixed)MODULE_STAT_MULT) * GetCVarFixed("drpg_module_statfactor"));
+        if (Cost < 0)
+            Cost = -Cost
+        else if (Cost == 0)
+            Cost = (int)((1 * (fixed)MODULE_STAT_MULT) * GetCVarFixed("drpg_module_statfactor"));
+
         // Upgrade Modules
         PrintSprite("UMODA0", 0, 16.1, 280.1, 0.05);
         SetFont("BIGFONT");
         HudMessage("%d\n", CheckInventory("DRPGModule"), HUDMSG_PLAIN, 0, CR_GREEN, 40.1, 264.1, 0.05);
-        HudMessage("-%d\n", (int)((((fixed)*Stats[Player.MenuIndex] + 1) * (fixed)MODULE_STAT_MULT) * GetCVarFixed("drpg_module_statfactor")), HUDMSG_PLAIN, 0, CR_RED, 40.1, 278.1, 0.05);
+        HudMessage("-%d\n", Cost, HUDMSG_PLAIN, 0, CR_RED, 40.1, 278.1, 0.05);
         
         SetFont("BIGFONT");
         if (Player.MenuIndex == 0)  HudMessage("Strength: %d\n", Player.Strength,                       HUDMSG_PLAIN, 0, MenuCursorColor,   0.1,    25.0,   0.05);
@@ -1972,6 +1978,11 @@ function void IncreaseStat(int Stat)
     
     // Determine the cost of the stat upgrade
     int Cost = (int)((((fixed)*Stats[Stat] + 1) * (fixed)MODULE_STAT_MULT) * GetCVarFixed("drpg_module_statfactor"));
+    
+    if (Cost < 0)
+        Cost = -Cost
+    else if (Cost == 0)
+        Cost = (int)((1 * (fixed)MODULE_STAT_MULT) * GetCVarFixed("drpg_module_statfactor"));
 
     // Make sure you have enough Modules
     if (CheckInventory("DRPGModule") < Cost && Player.InMenu)
