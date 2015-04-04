@@ -959,9 +959,17 @@ script void TurretSensors()
         {
             for (int i = 0; ItemTIDs[i] != -1; i++)
             {
+                // If the turret is destroyed while scanning, abort
+                if (!Player.Turret.Active || Player.Turret.Destroyed)
+                {
+                    Current = Total;
+                    break;
+                };
+            
                 if (!StrCmp(GetActorClass(ItemTIDs[i]), "DRPGModulePickup"))
                 {
-                    SetActorPosition(Player.Turret.TID, GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorZ(ItemTIDs[i]), true);
+                    SpawnForced("DRPGTurretTeleport", GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorFloorZ(ItemTIDs[i]), 0, 0);
+                    SetActorPosition(Player.Turret.TID, GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorZ(ItemTIDs[i]), false);
                     Player.Turret.ModulesCollected += GetUserVariable(ItemTIDs[i], "user_amount");
                     Thing_Remove(ItemTIDs[i]);
                     Current++;
@@ -997,6 +1005,10 @@ script void TurretSensors()
         
         for (int i = 0; ItemTIDs[i] != -1; i++)
         {
+            // If the turret is destroyed while scanning, abort
+            if (!Player.Turret.Active || Player.Turret.Destroyed)
+                break;
+            
             // This item doesn't exist, skip it
             if (ClassifyActor(ItemTIDs[i]) == ACTOR_NONE) continue;
             
@@ -1033,6 +1045,10 @@ script void TurretSensors()
         
         for (int i = 0; i < CrateID; i++)
         {
+            // If the turret is deactivated or destroyed while scanning, abort
+            if (!Player.Turret.Active || Player.Turret.Destroyed)
+                break;
+            
             // Crate is empty, skip it
             if (Crates[i].Empty) continue;
             
@@ -1042,7 +1058,8 @@ script void TurretSensors()
             
             ((int *)Player.Turret.SensorCrateData.Array.Data)[Player.Turret.SensorCrateData.Array.Position++] = Crates[i].TID;
             
-            SetActorPosition(Player.Turret.TID, GetActorX(Crates[i].TID), GetActorY(Crates[i].TID), GetActorZ(Crates[i].TID), true);
+            SpawnForced("DRPGTurretTeleport", GetActorX(Crates[i].TID), GetActorY(Crates[i].TID), GetActorZ(Crates[i].TID), 0, 0);
+            SetActorPosition(Player.Turret.TID, GetActorX(Crates[i].TID), GetActorY(Crates[i].TID), GetActorZ(Crates[i].TID), false);
             Current++;
             
             Player.Turret.SensorPercent = (int)(((fixed)Current / (fixed)Total) * 100.0);
@@ -1056,7 +1073,7 @@ script void TurretSensors()
     // Sensor operation complete
     if (Complete)
     {
-        SetActorState(Player.Turret.TID, "See");
+        SetActorState(Player.Turret.TID, "Spawn");
         Player.Turret.SensorMode = TSM_NONE;
         Player.Turret.SensorPercent = 0;
         Player.Turret.SensorsActive = false;
@@ -1886,7 +1903,7 @@ function bool TurretStim()
     
     if (!Player.Turret.Upgrade[TU_ASSIST_INJECTOR] || !Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] || !Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT] || !Player.Turret.Upgrade[TU_ASSIST_INJECTOR_POTENCY])
     {
-        PrintError("Your turret does not have the appropriate upgrades");
+        PrintError("Your turret does not have the appropriate upgrade");
         ActivatorSound("menu/error", 127);
         return false;
     };
