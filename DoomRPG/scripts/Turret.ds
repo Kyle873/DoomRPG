@@ -927,6 +927,10 @@ script void TurretLoopMaintenance() enter
         ActivatorSound("turret/maintenancedone", 127);
     };
     
+    // Stim cooldown timer handling
+    if (Player.Turret.StimTimer > 0 && (Timer() % 35) == 0)
+        Player.Turret.StimTimer--;
+    
     Delay(1);
     goto Start;
 };
@@ -1916,6 +1920,13 @@ function bool TurretStim()
         return false;
     };
     
+    if (Player.Turret.StimTimer > 0)
+    {
+        PrintError(StrParam("Your turret is currently generating more compounds and will be ready in \cj%s", FormatTime(Player.Turret.StimTimer * 35)));
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
     bool Powerups = (Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] > 1);
     int MaxAmount = Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT];
     int Potency = Player.Turret.Upgrade[TU_ASSIST_INJECTOR_POTENCY];
@@ -1929,6 +1940,9 @@ function bool TurretStim()
         
         Player.Stim.Current[Type] += Potency;
     };
+    
+    // Reset stim cooldown timer
+    Player.Turret.StimTimer = 60;
     
     return true;
 };
