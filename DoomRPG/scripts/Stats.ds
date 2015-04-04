@@ -18,7 +18,8 @@ int HardStatCap = 1000;
 
 // XP & Rank Tables
 static long int[MAX_LEVEL] XPTable;
-static long int[MAX_LEVEL * 2] StatTable;
+static long int[MAX_LEVEL * 3 + 1] RealStatTable;
+static long int *StatTable;
 static long int[MAX_RANK] RankTable;
 
 // Rank strings
@@ -137,9 +138,17 @@ function void InitXPTable()
 
 function void InitStatXPTable()
 {
+    StatTable = &RealStatTable[101];
+
     StatTable[0] = 200 + XPCurve;
     for (int i = 1; i < MAX_LEVEL * 2; i++)
         StatTable[i] = ((StatTable[i - 1] / 2000) + 1) * (200 + XPCurve) + StatTable[i - 1];
+};
+
+function void InitNegativeStatXPTable()
+{
+    for (int i = 1; i <= MAX_LEVEL + 1; i++)
+        StatTable[-i] = ((StatTable[i - 1] / 2000) + 1) * (200 + XPCurve) + StatTable[i - 1] * -1;
 };
 
 function void InitRankTable()

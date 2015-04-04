@@ -71,6 +71,8 @@ script void GlobalInit() open
         Delay(1);
         InitStatXPTable();
         Delay(1);
+        InitNegativeStatXPTable();
+        Delay(1);
         InitRankTable();
         
         // Arena Wave
@@ -146,22 +148,14 @@ script void Init() enter
         Player.Luck = GetCVar("drpg_start_luck");
         
         // Stat XP
-        if (Player.Strength > 0)
-            Player.StrengthXP = StatTable[Player.Strength - 1];
-        if (Player.Defense > 0)
-            Player.DefenseXP = StatTable[Player.Defense - 1];
-        if (Player.Vitality > 0)
-            Player.VitalityXP = StatTable[Player.Vitality - 1];
-        if (Player.Energy > 0)
-            Player.EnergyXP = StatTable[Player.Energy - 1];
-        if (Player.Regeneration > 0)
-            Player.RegenerationXP = StatTable[Player.Regeneration - 1];
-        if (Player.Agility > 0)
-            Player.AgilityXP = StatTable[Player.Agility - 1];
-        if (Player.Capacity > 0)
-            Player.CapacityXP = StatTable[Player.Capacity - 1];
-        if (Player.Luck > 0)
-            Player.LuckXP = StatTable[Player.Luck - 1];
+        Player.StrengthXP = StatTable[Player.Strength - 1];
+        Player.DefenseXP = StatTable[Player.Defense - 1];
+        Player.VitalityXP = StatTable[Player.Vitality - 1];
+        Player.EnergyXP = StatTable[Player.Energy - 1];
+        Player.RegenerationXP = StatTable[Player.Regeneration - 1];
+        Player.AgilityXP = StatTable[Player.Agility - 1];
+        Player.CapacityXP = StatTable[Player.Capacity - 1];
+        Player.LuckXP = StatTable[Player.Luck - 1];
         
         // Default Health/EP
         Player.EP = Player.Energy * 10;
@@ -797,11 +791,10 @@ acscript void ItemDump()
 // Dynamic Loot Generation System
 script void DynamicLootGenerator(str Actor, int MaxItems)
 {
-    fixed BaseX = GetActorX(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
-    fixed BaseY = GetActorY(0) + 64.0 * Random(1, 4) * (Random(1, 2) == 1 ? -1 : 1);
-    fixed BaseZ = GetActorZ(0);
-    fixed Boundary = 0;
-    fixed BoundaryZ = 0;
+    fixed LowerX = GetActorX(0);
+    fixed UpperX = GetActorX(0);
+    fixed LowerY = GetActorY(0);
+    fixed UpperY = GetActorY(0);
     int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
     int Items = 0;
     int Instructions = 0;
@@ -814,24 +807,40 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     if (MaxItems == 0)
         MaxItems = Random(LevelNum / GameSkill(), LevelNum) + ((AveragePlayerLuck() + AveragePlayerLevel()) / (GameSkill() * 2));
     
-    // Find the furthest monster from the player to determine some approximate boundaries to work with
+    if (MaxItems == 0)
+    {
+        if (GetCVar("drpg_debug"))
+            Log("\cdDebug: \c-Skipped item generation.\n");
+        return;
+    }
+    else if (MaxItems < 0)
+    {
+        // [KS] Negative luck? Na na nana na! *raspberry*
+        MaxItems = -MaxItems;
+        Actor = "DRPGGenericMonsterDropper";
+    };
+    
+    // Find the furthest item from the player to determine some approximate boundaries to work with
     for (int i = 0; ItemTIDs[i] != -1; i++)
     {
-        fixed Dist = Distance3D(GetActorX(0), GetActorY(0), GetActorZ(0), GetActorX(ItemTIDs[i]), GetActorY(ItemTIDs[i]), GetActorZ(ItemTIDs[i]));
-        fixed ZDiff = AbsFixed(GetActorZ(0) - GetActorZ(ItemTIDs[i]));
+        if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
         
-        if (Dist > Boundary)
-        {
-            Boundary = Dist;
-            BoundaryZ = ZDiff;
-        };
+        fixed ItemX = GetActorX(ItemTIDs[i]);
+        fixed ItemY = GetActorY(ItemTIDs[i]);
+        
+        if (LowerX > ItemX) LowerX = ItemX;
+        if (UpperX < ItemX) UpperX = ItemX;
+        if (LowerY > ItemY) LowerY = ItemY;
+        if (UpperY < ItemY) UpperY = ItemY;
     };
+    
+    Delay(1);
     
     while (Items < MaxItems)
     {
         int TID = UniqueTID();
-        fixed X = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
-        fixed Y = BaseX + Random(0, Boundary) * (Random(1, 2) == 1 ? -1 : 1);
+        fixed X = RandomFixed(LowerX, UpperX);
+        fixed Y = RandomFixed(LowerY, UpperY);
         fixed Z = 0;
         
         // Try to keep Z near the floor
@@ -839,7 +848,7 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         Z = GetActorFloorZ(TID);
         Thing_Remove(TID);
         
-        bool Spawned = Spawn(Actor, X, Y, Z, TID, 0);
+        bool Spawned = Spawn(Actor, X, Y, Z, TID, 32 * Random(0, 7));
         if (Spawned)
         {
             bool Remove = true;
@@ -875,7 +884,7 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         };
         
         if (GetCVar("drpg_debug"))
-            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\cdActor: \c-%s\n\ccInstructions: %d\n\cdIteration: %d\n\ciBoundary: %k\n\nX: %k\nY: %k\nZ: %k\n", Items, MaxItems, Actor, Instructions, Iterations, Boundary, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
+            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\cdActor: \c-%s\n\ccInstructions: %d\n\cdIteration: %d\n\ciBoundaries: %k-%k, %k-%k\n\nX: %k\nY: %k\nZ: %k\n", Items, MaxItems, Actor, Instructions, Iterations, LowerX, UpperX, LowerY, UpperY, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
         
         Iterations++;
     };
