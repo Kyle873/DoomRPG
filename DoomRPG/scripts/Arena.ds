@@ -19,6 +19,7 @@ int ArenaSpotSpawns = 1100;
 int ArenaSectorTag = 100;
 int ArenaWave;
 int ArenaTimer;
+int ArenaKeyTimer;
 int ArenaCount;
 int ArenaMod;
 int ArenaEnvironment;
@@ -135,11 +136,17 @@ acscript void ArenaLoop()
                         ActivatorSound("menu/error", 127);
                     };
                 };
-                if (Buttons & BT_SPEED && !(OldButtons & BT_SPEED) && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
+                if (Buttons & BT_SPEED && (!Player.InMenu && !Player.InShop && !Player.OutpostMenu))
                 {
-                    ArenaStop();
-                    return;
-                };
+                    ArenaKeyTimer++;
+                    if (ArenaKeyTimer > ARENA_HOLDTIME)
+                    {
+                        ArenaStop();
+                        return;
+                    };
+                }
+                else
+                    ArenaKeyTimer = 0;
                 
                 // Reset menu block
                 if (Buttons == 0 && OldButtons == 0)
@@ -480,6 +487,13 @@ function void ArenaDrawHUD()
         HudMessageBold("%s\n", ArenaEvents[ArenaEnvironment],
                        HUDMSG_PLAIN, 0, CR_WHITE, X, Y, 0.05);
         Y += 8.0;
+    };
+    
+    // Cancel Timer
+    if (ArenaKeyTimer > 0 && ArenaKeyTimer <= ARENA_HOLDTIME)
+    {
+        int Percent = CalcPercent(ArenaKeyTimer, ARENA_HOLDTIME);
+        DrawProgressBar("Stopping Arena", Percent);
     };
 };
 
