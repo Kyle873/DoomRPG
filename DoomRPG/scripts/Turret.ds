@@ -1226,6 +1226,16 @@ script void TurretPickStimMenu()
     int TypeMax = 0;
     fixed LerpPos = 0;
     
+    // Fail if the upgrade isn't present
+    if (!Player.Turret.Upgrade[TU_ASSIST_INJECTOR])
+    {
+        Player.Turret.StimVialType = -1;
+        Player.Turret.StimPicked = true;
+        PrintError("Your turret does not have the appropriate upgrade");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
     // Determine which types can be picked
     if (Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] == 1) // Stats
         TypeMax = StimStatsEnd
@@ -2062,18 +2072,19 @@ function bool TurretStim()
     int Amount = 0;
     
     // Generate the stim
-    while (Amount++ < MaxAmount)
+    if (Player.Turret.StimFocused) // Focused Injection
     {
-        if (Player.Turret.StimFocused) // Focused Injection
-            Player.Stim.Current[Player.Turret.StimVialType] += (Player.Turret.StimVialType >= StimStatsEnd ? Potency / 5 : Potency)
-        else // Broad injection
-        {
-            int TypeMax = (Powerups ? StimPowerupEnd : StimStatsEnd);
-            int Type = Random(0, TypeMax);
-            
-            Player.Stim.Current[Type] += Potency;
-        };
-    };
+        // Multipliers
+        if (Player.Turret.StimVialType < StimStatsEnd)
+            Potency *= 10;
+        if (Player.Turret.StimVialType == STIM_PURIFIER || Player.Turret.StimVialType == STIM_POTENCY)
+            Potency *= 2;
+        
+        Player.Stim.Current[Player.Turret.StimVialType] += Potency;
+    }
+    else // Broad injection
+        while (Amount++ < MaxAmount)
+            Player.Stim.Current[Random(0, (Powerups ? StimPowerupEnd : StimStatsEnd))] += Potency;
     
     // Reset stim cooldown timer
     Player.Turret.StimTimer = 60;
