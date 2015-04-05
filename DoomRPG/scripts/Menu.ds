@@ -263,7 +263,7 @@ function void DrawMainMenu()
         
         // Toxicity
         if (Player.Toxicity > 0 || Player.Stim.Size > 0)
-            DrawToxicityBar(176, 320, false);
+            DrawToxicityBar(176.0, 320.0, false);
     };
 };
 
@@ -694,7 +694,7 @@ function void DrawStatsMenu()
         
         // Toxicity
         if (PlayerPtr->Toxicity > 0 || PlayerPtr->Stim.Size > 0)
-            DrawToxicityBar(276, 250, true);
+            DrawToxicityBar(276.0, 250.0, true);
         
         // Shield
         DrawShieldInfo(Player.MenuIndex, 232, 281);
@@ -1255,42 +1255,18 @@ function void DrawStimsMenu()
     };
     
     // Toxicity
-    DrawToxicityBar(32, 240, false);
+    DrawToxicityBar(32.0, 240.0, false);
 };
 
 // This was written while I am sick and messed up on medication
 // Good luck figuring it out
 function void DrawTurretMenu()
 {
-    static str[STIM_MAX] VialSprites =
-    {
-        "STVLA0";
-        "STVLB0";
-        "STVLC0";
-        "STVLD0";
-        "STVLE0";
-        "STVLF0";
-        "STVLG0";
-        "STVLH0";
-        "STVLI0";
-        "STVLJ0";
-        "STVLK0";
-        "STVLL0";
-        "STVLM0";
-        "STVLN0";
-        "STVLO0";
-        "STVLP0";
-        "STVLQ0";
-        "STVLR0";
-        "STVLS0";
-    };
-    
     int Count = 0;
     int Parts = CheckInventory("DRPGTurretPart");
     int Color = CR_RED;
     int PageMax = MAX_UPGRADES / TURRET_PAGE_MAX;
     int Page = Player.MenuIndex / TURRET_PAGE_MAX;
-    int VialType = (Timer() / 35) % STIM_MAX;
     TurretUpgradePtr Upgrade = &TurretUpgradeData[Player.MenuIndex];
     
     // Title
@@ -1312,45 +1288,8 @@ function void DrawTurretMenu()
         HudMessage("%d\n", Parts, HUDMSG_PLAIN, 0, CR_WHITE, 96.0, 38.0, 0.05);
     PrintSprite("TPRTA0", 0, 96.1, 56.0, 0.05);
     
-    // Charge Timer
-    SetFont("BIGFONT");
-    HudMessage("%s\n", FormatTime(Player.Turret.ChargeTimer * 35), HUDMSG_PLAIN, 0, CR_YELLOW, 160.1, 38.0, 0.05);
-    if (Player.Turret.Maintenance && Player.Turret.ChargeTimer > 0)
-        PrintSpritePulse("TCharge", 0, 160.1, 35.0, 0.5, 32.0, 0.5)
-    else
-        PrintSprite("TCharge", 0, 160.1, 35.0, 0.05);
-    
-    // Repair Timer
-    SetFont("BIGFONT");
-    HudMessage("%s\n", FormatTime(Player.Turret.RepairTimer * 35), HUDMSG_PLAIN, 0, (Player.Turret.PaidForRepair ? CR_BRICK : CR_RED), 224.1, 38.0, 0.05);
-    if (Player.Turret.Maintenance && Player.Turret.RepairTimer > 0)
-        PrintSpritePulse("TRepair", 0, 224.1, 35.0, 0.5, 32.0, 0.5)
-    else
-        PrintSprite("TRepair", 0, 224.1, 35.0, 0.05);
-    
-    // Refit Timer
-    SetFont("BIGFONT");
-    HudMessage("%s\n", FormatTime(Player.Turret.RefitTimer * 35), HUDMSG_PLAIN, 0, CR_LIGHTBLUE, 288.1, 38.0, 0.05);
-    if (Player.Turret.Maintenance && Player.Turret.RefitTimer > 0)
-        PrintSpritePulse("TRefit", 0, 288.1, 35.0, 0.5, 32.0, 0.5)
-    else
-        PrintSprite("TRefit", 0, 288.1, 35.0, 0.05);
-    
-    // Stim Timer
-    if (Player.Turret.Upgrade[TU_ASSIST_INJECTOR])
-    {
-        SetFont("BIGFONT");
-        if (Player.Turret.StimTimer > 0)
-        {
-            HudMessage("%s\n", FormatTime(Player.Turret.StimTimer * 35), HUDMSG_PLAIN, 0, CR_GREY, 364.1, 38.0, 0.05);
-            PrintSpritePulse("STCAA0", 0, 348.1, 35.0 + 2.0, 0.5, 32.0, 0.5);
-        }
-        else
-        {
-            HudMessage("Ready\n", HUDMSG_PLAIN, 0, CR_GREEN, 364.1, 38.0, 0.05);
-            PrintSprite(VialSprites[VialType], 0, 348.1 + 4.0, 35.0 + 18.0, 0.05);
-        };
-    };
+    // Timers
+    DrawTurretTimers(160.0, 38.0);
     
     // Modules
     while (Count < TURRET_PAGE_MAX)
@@ -1416,22 +1355,42 @@ function void DrawTurretInfo(fixed X, fixed Y, int Index)
             Info = "\caOFF";
         break;
     case TU_WEAPON_BULLET:
+        if (Player.Turret.Weapon == TW_BULLET)
+            Info = "\caON";
+        break;
+    case TU_WEAPON_BULLET_CAPACITY:
         Y -= 4.0;
         Info = StrParam("\ca%d\n\ca%d\n", Player.Turret.BulletAmmo, Player.Turret.BulletAmmoMax);
         break;
     case TU_WEAPON_PELLET:
+        if (Player.Turret.Weapon == TW_PELLET)
+            Info = "\ciON";
+        break;
+    case TU_WEAPON_PELLET_CAPACITY:
         Y -= 4.0;
         Info = StrParam("\ci%d\n\ci%d\n", Player.Turret.ShellAmmo, Player.Turret.ShellAmmoMax);
         break;
     case TU_WEAPON_ROCKET:
+        if (Player.Turret.Weapon == TW_ROCKET)
+            Info = "\ccON";
+        break;
+    case TU_WEAPON_ROCKET_CAPACITY:
         Y -= 4.0;
         Info = StrParam("\cc%d\n\cc%d\n", Player.Turret.RocketAmmo, Player.Turret.RocketAmmoMax);
         break;
     case TU_WEAPON_PLASMA:
+        if (Player.Turret.Weapon == TW_PLASMA)
+            Info = "\cnON";
+        break;
+    case TU_WEAPON_PLASMA_CAPACITY:
         Y -= 4.0;
         Info = StrParam("\cn%d\n\cn%d\n", Player.Turret.PlasmaAmmo, Player.Turret.PlasmaAmmoMax);
         break;
     case TU_WEAPON_RAILGUN:
+        if (Player.Turret.Weapon == TW_RAILGUN)
+            Info = "\cdON";
+        break;
+    case TU_WEAPON_RAILGUN_CAPACITY:
         Y -= 4.0;
         Info = StrParam("\cd%d\n\cd%d\n", Player.Turret.RailAmmo, Player.Turret.RailAmmoMax);
         break;
@@ -1507,6 +1466,26 @@ function void DrawTurretInfo(fixed X, fixed Y, int Index)
     case TU_SENSORS_SUPPLYFINDER:
         Info = "\cdGo";
         break;
+    case TU_COMMAND_IDLE:
+        if (Player.Turret.Command == TC_IDLE)
+            Info = "\cdON";
+        break;
+    case TU_COMMAND_WANDER:
+        if (Player.Turret.Command == TC_WANDER)
+            Info = "\cdON";
+        break;
+    case TU_COMMAND_ORBIT:
+        if (Player.Turret.Command == TC_ORBIT)
+            Info = "\cdON";
+        break;
+    case TU_COMMAND_TARGET:
+        if (Player.Turret.Command == TC_TARGET)
+            Info = "\cdON";
+        break;
+    case TU_COMMAND_CONTROL:
+        if (Player.Turret.Command == TC_CONTROL)
+            Info = "\cdON";
+        break;
     case TU_BATTERY_CAPACITY:
         Info = StrParam("\ck%s\n", FormatTime(Player.Turret.BatteryMax * 35));
         break;
@@ -1538,6 +1517,74 @@ function void DrawTurretInfo(fixed X, fixed Y, int Index)
     
     SetFont("SMALLFONT");
     HudMessage("%s\n", Info, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.4, Y + 16.0, 0.05);
+};
+
+function void DrawTurretTimers(fixed X, fixed Y)
+{
+    static str[STIM_MAX] VialSprites =
+    {
+        "STVLA0";
+        "STVLB0";
+        "STVLC0";
+        "STVLD0";
+        "STVLE0";
+        "STVLF0";
+        "STVLG0";
+        "STVLH0";
+        "STVLI0";
+        "STVLJ0";
+        "STVLK0";
+        "STVLL0";
+        "STVLM0";
+        "STVLN0";
+        "STVLO0";
+        "STVLP0";
+        "STVLQ0";
+        "STVLR0";
+        "STVLS0";
+    };
+    
+    int VialType = (Timer() / 35) % STIM_MAX;
+    
+    // Charge Timer
+    SetFont("BIGFONT");
+    HudMessage("%s\n", FormatTime(Player.Turret.ChargeTimer * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y, 0.05);
+    if (Player.Turret.Maintenance && Player.Turret.ChargeTimer > 0)
+        PrintSpritePulse("TCharge", 0, X + 0.1, Y - 3.0, 0.5, 32.0, 0.5)
+    else
+        PrintSprite("TCharge", 0, X + 0.1, Y - 3.0, 0.05);
+    
+    // Repair Timer
+    SetFont("BIGFONT");
+    HudMessage("%s\n", FormatTime(Player.Turret.RepairTimer * 35), HUDMSG_PLAIN, 0, (Player.Turret.PaidForRepair ? CR_BRICK : CR_RED), X + 64.1, Y, 0.05);
+    if (Player.Turret.Maintenance && Player.Turret.RepairTimer > 0)
+        PrintSpritePulse("TRepair", 0, X + 64.1, Y - 3.0, 0.5, 32.0, 0.5)
+    else
+        PrintSprite("TRepair", 0, X + 64.1, Y - 3.0, 0.05);
+    
+    // Refit Timer
+    SetFont("BIGFONT");
+    HudMessage("%s\n", FormatTime(Player.Turret.RefitTimer * 35), HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 128.1, Y, 0.05);
+    if (Player.Turret.Maintenance && Player.Turret.RefitTimer > 0)
+        PrintSpritePulse("TRefit", 0, X + 128.1, Y - 3.0, 0.5, 32.0, 0.5)
+    else
+        PrintSprite("TRefit", 0, X + 128.1, Y - 3.0, 0.05);
+    
+    // Stim Timer
+    if (Player.Turret.Upgrade[TU_ASSIST_INJECTOR])
+    {
+        SetFont("BIGFONT");
+        if (Player.Turret.StimTimer > 0)
+        {
+            HudMessage("%s\n", FormatTime(Player.Turret.StimTimer * 35), HUDMSG_PLAIN, 0, CR_GREY, X + 204.1, Y, 0.05);
+            PrintSpritePulse("STCAA0", 0, X + 204.1 - 16.0, Y - 3.0 + 2.0, 0.5, 32.0, 0.5);
+        }
+        else
+        {
+            HudMessage("Ready\n", HUDMSG_PLAIN, 0, CR_GREEN, X + 204.1, Y, 0.05);
+            PrintSprite(VialSprites[VialType], 0, X + 204.1 - 16.0 + 4.0, Y - 3.0 + 18.0, 0.05);
+        };
+    };
 };
 
 function void MenuInput()
@@ -2280,7 +2327,7 @@ function void DrawPlayerSprite(int PlayerNum, fixed X, fixed Y)
         PrintSprite("PLAYA1", 0, X, Y + 2.0, 0.05);
 };
 
-function void DrawToxicityBar(int X, int Y, bool HideInfo)
+function void DrawToxicityBar(fixed X, fixed Y, bool HideInfo)
 {
     // Title
     SetFont("BIGFONT");
