@@ -1571,6 +1571,7 @@ script void TurretAI(int TID)
     int TargetTID = 0;
     int TargetOriginalTID = 0;
     int TravelTime = 0;
+    int TeleportWaitTime = GetUserCVar(PlayerID, "drpg_turret_telewaittime");
     int AggressionType = GetUserCVar(PlayerID, "drpg_turret_aggression");
     int AggressionMode = 0;
     int HeatLevel = 0;
@@ -1600,6 +1601,7 @@ script void TurretAI(int TID)
     TurretEnemyDistance = GetUserCVarFixed(PlayerID, "drpg_turret_enemydist");
     AggressionType = GetUserCVar(PlayerID, "drpg_turret_aggression");
     MaxInterestTime = GetUserCVar(PlayerID, "drpg_turret_pursuittime");
+    TeleportWaitTime = GetUserCVar(PlayerID, "drpg_turret_telewaittime");
     
     Weapon = GetUserVariable(0, "user_weapon");
     switch (Weapon)
@@ -1705,8 +1707,8 @@ script void TurretAI(int TID)
         
         if (Distance(0, PlayerTID) > TurretPlayerDistance)
         {
-            if (TravelTime > 35 * 8 && (AbsFixed(GetActorVelX(0)) < 0.1 || AbsFixed(GetActorVelY(0)) < 0.1))
-                // Been trying to reach the player for 8+ seconds and going nowhere, so give up and teleport to them if possible
+            if (TravelTime > 35 * TeleportWaitTime && (AbsFixed(GetActorVelX(0)) < 0.1 || AbsFixed(GetActorVelY(0)) < 0.1))
+                // Been trying to reach the player for the specified seconds and going nowhere, so give up and teleport to them if possible
                 NeedsTeleport = true;
             
             TurretAngle = VectorAngle(GetActorX(PlayerTID) - GetActorX(0), GetActorY(PlayerTID) - GetActorY(0));
