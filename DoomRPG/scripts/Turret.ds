@@ -1437,18 +1437,22 @@ script void TurretAI(int TID)
     int Ammo = 0;
     int PlayerTID = GetActorProperty(0, APROP_MasterTID);
     int PlayerID = TurretGetOwningPlayer();
-    fixed TurretSpeed = GetUserCVarFixed(TurretGetOwningPlayer(), "drpg_turret_movespeed");
+    fixed TurretSpeed = GetUserCVarFixed(PlayerID, "drpg_turret_movespeed");
     bool NeedsTeleport = false;
     bool HasTarget = false;
     bool AnnouncedTarget = false;
     bool Dodging = false;
     int LosingInterestTime = 0;
+    int MaxInterestTime = GetUserCVar(PlayerID, "drpg_turret_pursuittime");
     int TargetTID = 0;
+    int TargetOriginalTID = 0;
     int TravelTime = 0;
-    int AggressionType = GetUserCVar(TurretGetOwningPlayer(), "drpg_turret_aggression");
+    int AggressionType = GetUserCVar(PlayerID, "drpg_turret_aggression");
     int AggressionMode = 0;
     int HeatLevel = 0;
     bool Cooldown = false;
+    fixed TurretPlayerDistance = GetUserCVarFixed(PlayerID, "drpg_turret_playerdist");
+    fixed TurretEnemyDistance = GetUserCVarFixed(PlayerID, "drpg_turret_enemydist");
     fixed TurretAngle;
     fixed TurretPitch;
     fixed EnemyAngle;
@@ -1468,7 +1472,10 @@ script void TurretAI(int TID)
     
     // Just in case it was changed
     TurretSpeed = GetUserCVarFixed(PlayerID, "drpg_turret_movespeed");
+    TurretPlayerDistance = GetUserCVarFixed(PlayerID, "drpg_turret_playerdist");
+    TurretEnemyDistance = GetUserCVarFixed(PlayerID, "drpg_turret_enemydist");
     AggressionType = GetUserCVar(PlayerID, "drpg_turret_aggression");
+    MaxInterestTime = GetUserCVar(PlayerID, "drpg_turret_pursuittime");
     
     Weapon = GetUserVariable(0, "user_weapon");
     switch (Weapon)
@@ -1502,20 +1509,26 @@ script void TurretAI(int TID)
             TargetTID = 0;
         }
         else
-            TargetTID = GetActorProperty(0, APROP_TargetTID);
-        
-        if (!CheckSight(0, TargetTID, CSF_NOFAKEFLOORS))
         {
-            LosingInterestTime++;
-            if (LosingInterestTime >= 35 * 6)
+            TargetOriginalTID = GetActorProperty(0, APROP_TargetTID);
+            TargetTID = UniqueTID();
+            
+            TurretForceTargetTID(TargetTID);
+            
+            if (!CheckSight(0, TargetTID, CSF_NOFAKEFLOORS))
             {
-                SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
-                HasTarget = false;
-                TargetTID = 0;
-            };
-        }
-        else
-            LosingInterestTime = 0;
+                LosingInterestTime++;
+                if (LosingInterestTime >= 35 * MaxInterestTime)
+                {
+                    TurretForceTargetTID(TargetOriginalTID);
+                    SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
+                    HasTarget = false;
+                    TargetTID = 0;
+                };
+            }
+            else
+                LosingInterestTime = 0;
+        };
     };
     
     // Air friction, don't slide away helplessly like cacodemons do.
@@ -1531,7 +1544,7 @@ script void TurretAI(int TID)
         SetActorVelocity(0, 0, 0, TurretSpeed, true, false);
     
     // Teleport detection - If the player suddenly poofs into another part of the map, we need to go with them.
-    if (GetActorProperty(PlayerTID, APROP_Reactiontime) > 0 && Distance(0, PlayerTID) > 96)
+    if (GetActorProperty(PlayerTID, APROP_Reactiontime) > 0 && Distance(0, PlayerTID) > 96.0)
         NeedsTeleport = true;
     
     if (NeedsTeleport)
@@ -1566,7 +1579,7 @@ script void TurretAI(int TID)
         if (AnnouncedTarget)
             AnnouncedTarget = false;
         
-        if (Distance(0, PlayerTID) > 144)
+        if (Distance(0, PlayerTID) > TurretPlayerDistance)
         {
             if (TravelTime > 35 * 8 && (AbsFixed(GetActorVelX(0)) < 0.1 || AbsFixed(GetActorVelY(0)) < 0.1))
                 // Been trying to reach the player for 8+ seconds and going nowhere, so give up and teleport to them if possible
@@ -1585,7 +1598,7 @@ script void TurretAI(int TID)
             if (TravelTime)
                 TravelTime = 0;
             
-            TurretTurn(GetActorAngle(PlayerTID), 0);
+            TurretTurn(GetActorAngle(PlayerTID), -GetActorPitch(PlayerTID));
         };
         
         if (Weapon != TW_NONE && !(Timer() % 35))
@@ -1627,7 +1640,7 @@ script void TurretAI(int TID)
         
         TurretTurn(EnemyAngle, EnemyPitch);
         
-        if (Distance(0, TargetTID) <= 176.0)
+        if (Distance(0, TargetTID) <= GetActorPropertyFixed(TargetTID, APROP_Radius) + TurretEnemyDistance)
         {
             // Invading our personal space, back away
             TurretFly(EnemyAngle, 0, -TurretSpeed);
@@ -1639,7 +1652,7 @@ script void TurretAI(int TID)
             
             TurretAngle = VectorAngle(GetActorX(PlayerTID) - GetActorX(0), GetActorY(PlayerTID) - GetActorY(0));
             TurretPitch = VectorAngle(Distance(0, PlayerTID), GetActorZ(PlayerTID) - GetActorZ(0));
-            if (Distance(0, PlayerTID) > 256.0 || LosingInterestTime)
+            if (Distance(0, PlayerTID) > TurretPlayerDistance)
                 TurretFly(TurretAngle, TurretPitch, TurretSpeed)
             else
                 TurretFly(TurretAngle, 0, -TurretSpeed);
@@ -1656,16 +1669,14 @@ script void TurretAI(int TID)
             else if (GetActorZ(TargetTID) - GetActorZ(0) > 32)
                 SetActorVelocity(0, 0, 0, TurretSpeed, true, false);
             
-            if (Distance(0, TargetTID) > GetActorPropertyFixed(TargetTID, APROP_Radius) + 176 || LosingInterestTime)
-                TurretFly(EnemyAngle, EnemyPitch, TurretSpeed)
-            else
-                TurretFly(EnemyAngle, 0, -TurretSpeed);
+            if (Distance(0, TargetTID) > GetActorPropertyFixed(TargetTID, APROP_Radius) + TurretEnemyDistance || LosingInterestTime)
+                TurretFly(EnemyAngle, -EnemyPitch, TurretSpeed);
             
             TurretFly(EnemyAngle - 0.25, 0, TurretSpeed);
         };
         
         // Unload all you've got!
-        if (Ammo > 0 && !Cooldown && HeatLevel < 100 && !GetUserVariable(0, "user_firing") && CheckSight(0, TargetTID, CSF_NOFAKEFLOORS) && (Weapon != TW_ROCKET || ((Distance(0, TargetTID) > 176 || GetUserArray(0, "user_upgrades", TU_ARMOR_PLATING_BLAST)) && Distance(PlayerID, TargetTID) > 176)))
+        if (Ammo > 0 && !Cooldown && HeatLevel < 100 && !GetUserVariable(0, "user_firing") && CheckSight(0, TargetTID, CSF_NOFAKEFLOORS) && (Weapon != TW_ROCKET || ((Distance(0, TargetTID) > 176.0 || GetUserArray(0, "user_upgrades", TU_ARMOR_PLATING_BLAST)) && Distance(PlayerID, TargetTID) > 176.0)))
         {
             SetActorState(0, "Missile");
             switch (Weapon)
@@ -1702,6 +1713,15 @@ script void TurretAI(int TID)
     else if (Cooldown)
         Cooldown = false;
     
+    if (HasTarget)
+        TurretForceTargetTID(TargetOriginalTID);
+    
+    if (GetCVar("drpg_debug"))
+    SpawnForced("DRPGTurretParticleAssistHealth",
+        GetActorX(0) + (64.0 * Cos(GetActorAngle(0)) * Cos(-GetActorPitch(0))),
+        GetActorY(0) + (64.0 * Sin(GetActorAngle(0)) * Cos(-GetActorPitch(0))),
+        GetActorZ(0) + (64.0 * Sin(-GetActorPitch(0))), 0, 0);
+    
     Delay(1);
     
     goto Start;
@@ -1716,6 +1736,8 @@ function void TurretTurn(fixed NewAngle, fixed NewPitch)
 {
     fixed OldAngle = GetActorAngle(0);
     fixed OldPitch = GetActorPitch(0);
+    
+    NewPitch = -(((0.5 + NewPitch) % 1.0) - 0.5);
     
     if (OldAngle == NewAngle && OldPitch == NewPitch)
         return;
@@ -1743,12 +1765,26 @@ script bool TurretCheckTarget()
 
 script bool TurretCheckTargetSuitable()
 {
+    bool Suitable = true;
+    int OriginalTargetTID;
+    int NewTargetTID = UniqueTID();
     SetActivator(0, AAPTR_TARGET);
-    int ActorInfo = ClassifyActor(0);
-    if (ActorInfo == ACTOR_WORLD || ActorInfo & ACTOR_DEAD || CheckFlag(0, "NONSHOOTABLE") || !CheckFlag(0, "SHOOTABLE") || CheckFlag(0, "FRIENDLY") || CheckFlag(0, "NEVERTARGET"))
+    OriginalTargetTID = ActivatorTID();
+    Thing_ChangeTID(0, NewTargetTID);
+    int ActorInfo = ClassifyActor(NewTargetTID);
+    if (ActorInfo == ACTOR_WORLD || ActorInfo & ACTOR_DEAD || CheckFlag(NewTargetTID, "NONSHOOTABLE") || !CheckFlag(NewTargetTID, "SHOOTABLE") || CheckFlag(NewTargetTID, "FRIENDLY") || CheckFlag(NewTargetTID, "NEVERTARGET"))
         return false;
     
-    return true;
+    Thing_ChangeTID(0, OriginalTargetTID);
+    return Suitable;
+};
+
+script void TurretForceTargetTID(int NewTID)
+{
+    if (!SetActivator(0, AAPTR_TARGET))
+        return;
+    
+    Thing_ChangeTID(0, NewTID);
 };
 
 script int TurretGetOwningPlayer()
@@ -1778,24 +1814,41 @@ function bool TurretTeleport(int DestTID)
     fixed OldX = GetActorX(0);
     fixed OldY = GetActorY(0);
     fixed OldZ = GetActorZ(0);
-    fixed TeleX = GetActorX(DestTID) + (80.0 * Cos(GetActorAngle(DestTID) + 0.25));
-    fixed TeleY = GetActorY(DestTID) + (80.0 * Sin(GetActorAngle(DestTID) + 0.25));
+    fixed[3] TeleX = {
+        GetActorX(DestTID) + (64.0 * Cos(GetActorAngle(DestTID) + 0.25));
+        GetActorX(DestTID) + (64.0 * Cos(GetActorAngle(DestTID) - 0.25));
+        GetActorX(DestTID) + (64.0 * Cos(GetActorAngle(DestTID)));
+    };
+    fixed[3] TeleY = {
+        GetActorY(DestTID) + (64.0 * Sin(GetActorAngle(DestTID) + 0.25));
+        GetActorY(DestTID) + (64.0 * Sin(GetActorAngle(DestTID) - 0.25));
+        GetActorY(DestTID) + (64.0 * Sin(GetActorAngle(DestTID)));
+    };
     fixed TeleZ = GetActorZ(DestTID) + 32.0;
     
-    bool Teleported = SetActorPosition(0, TeleX, TeleY, TeleZ, false);
-    
-    if (Teleported && CheckSight(DestTID, 0, CSF_NOFAKEFLOORS))
+    bool Teleported = false;
+    for (int i = 0; i < 3; i++)
     {
-        PlaySound(0, "turret/spawn", CHAN_BODY, 1.0, false, ATTN_NORM);
-        SpawnForced("DRPGTurretTeleport", TeleX, TeleY, TeleZ - 32.0, 0, 0);
+        // Try left, right, then in front
+        Teleported = SetActorPosition(0, TeleX[i], TeleY[i], TeleZ, false);
         
-        SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
-    }
-    else
-    {
-        SetActorPosition(0, OldX, OldY, OldZ, false);
-        Teleported = false;
+        if (Teleported && CheckSight(DestTID, 0, CSF_NOFAKEFLOORS))
+        {
+            PlaySound(0, "turret/spawn", CHAN_BODY, 1.0, false, ATTN_NORM);
+            SpawnForced("DRPGTurretTeleport", TeleX[i], TeleY[i], TeleZ - 32.0, 0, 0);
+            
+            SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
+            break;
+        }
+        else
+        {
+            Teleported = false;
+            continue;
+        };
     };
+    
+    if (!Teleported)
+        SetActorPosition(0, OldX, OldY, OldZ, false);
     
     return Teleported;
 };
