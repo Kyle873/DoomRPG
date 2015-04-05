@@ -312,9 +312,9 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
         "";
     };
     {
-        "Assist Module - Stim Injector"; 1; 5;
+        "Assist Module - Stim Injector"; 10; 5;
         "Turret can inject you with a random cocktail of combat-enhancing drugs";
-        "";
+        "Upgrades increase compound generation speed and decrease wait time between injections";
         ""; // Generated in BuildTurretData()
     };
     {
@@ -1992,9 +1992,6 @@ function void TurretCommand(int Index)
         Player.Turret.SelfDestruct = true;
     };
     
-    if (Index == TU_ASSIST_INJECTOR && Player.Turret.Active)
-        TurretStim();
-    
     if (Index == TU_ASSIST_INJECTOR_TYPE)
     {
         ActivatorSound("menu/move", 127);
@@ -2087,7 +2084,10 @@ function bool TurretStim()
             Player.Stim.Current[Random(0, (Powerups ? StimPowerupEnd : StimStatsEnd))] += Potency;
     
     // Reset stim cooldown timer
-    Player.Turret.StimTimer = 60;
+    if (Player.Turret.StimFocused)
+        Player.Turret.StimTimer = 60 * 5 - (Player.Turret.Upgrade[TU_ASSIST_INJECTOR] * 30)
+    else
+        Player.Turret.StimTimer = 60 - (Player.Turret.Upgrade[TU_ASSIST_INJECTOR] * 6);
     
     return true;
 };
