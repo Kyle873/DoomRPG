@@ -594,15 +594,15 @@ script void TurretLoop() enter
         // Autoloader
         if (Player.Turret.Upgrade[TU_AMMO_AUTOLOADER] && Player.Turret.Autoload)
         {
-            if (Player.Turret.BulletAmmo <= 0)
+            if (Player.Turret.Upgrade[TU_WEAPON_BULLET] && Player.Turret.BulletAmmo <= 0)
                 TurretLoadAmmo(TU_WEAPON_BULLET);
-            if (Player.Turret.ShellAmmo <= 0)
+            if (Player.Turret.Upgrade[TU_WEAPON_PELLET] && Player.Turret.ShellAmmo <= 0)
                 TurretLoadAmmo(TU_WEAPON_PELLET);
-            if (Player.Turret.RocketAmmo <= 0)
+            if (Player.Turret.Upgrade[TU_WEAPON_ROCKET] && Player.Turret.RocketAmmo <= 0)
                 TurretLoadAmmo(TU_WEAPON_ROCKET);
-            if (Player.Turret.PlasmaAmmo <= 0)
+            if (Player.Turret.Upgrade[TU_WEAPON_PLASMA] && Player.Turret.PlasmaAmmo <= 0)
                 TurretLoadAmmo(TU_WEAPON_PLASMA);
-            if (Player.Turret.RailAmmo <= 0)
+            if (Player.Turret.Upgrade[TU_WEAPON_RAILGUN] && Player.Turret.RailAmmo <= 0)
                 TurretLoadAmmo(TU_WEAPON_RAILGUN);
         };
         
@@ -1226,6 +1226,16 @@ script void TurretPickStimMenu()
     int TypeMax = 0;
     fixed LerpPos = 0;
     
+    // Fail if the upgrade isn't present
+    if (!Player.Turret.Upgrade[TU_ASSIST_INJECTOR])
+    {
+        Player.Turret.StimVialType = -1;
+        Player.Turret.StimPicked = true;
+        PrintError("Your turret does not have the appropriate upgrade");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
     // Determine which types can be picked
     if (Player.Turret.Upgrade[TU_ASSIST_INJECTOR_TYPE] == 1) // Stats
         TypeMax = StimStatsEnd
@@ -1426,6 +1436,7 @@ script void TurretAI(int TID)
     int Weapon = GetUserVariable(0, "user_weapon");
     int Ammo = 0;
     int PlayerID = GetActorProperty(0, APROP_MasterTID);
+    fixed TurretSpeed = GetUserCVarFixed(TurretGetOwningPlayer(), "drpg_turret_movespeed");
     bool NeedsTeleport = false;
     bool HasTarget = false;
     bool AnnouncedTarget = false;
@@ -1450,6 +1461,7 @@ script void TurretAI(int TID)
     };
     
     // Just in case it was changed
+    TurretSpeed = GetUserCVarFixed(TurretGetOwningPlayer(), "drpg_turret_movespeed");
     AggressionType = GetUserCVar(TurretGetOwningPlayer(), "drpg_turret_aggression");
     
     Weapon = GetUserVariable(0, "user_weapon");
@@ -1510,7 +1522,7 @@ script void TurretAI(int TID)
     
     // Stay off the floor
     if (GetActorZ(0) - GetActorFloorZ(0) < 32)
-        SetActorVelocity(0, 0, 0, TURRET_ACCELERATION, true, false);
+        SetActorVelocity(0, 0, 0, TurretSpeed, true, false);
     
     // Teleport detection - If the player suddenly poofs into another part of the map, we need to go with them.
     if (GetActorProperty(PlayerID, APROP_Reactiontime) > 0 && Distance(0, PlayerID) > 96)
@@ -1535,7 +1547,7 @@ script void TurretAI(int TID)
             Dodging = true;
         };
         
-        SetActorVelocity(0, TURRET_ACCELERATION * Cos(InterceptAngle - DodgeDirection), TURRET_ACCELERATION * Sin(InterceptAngle - DodgeDirection), 0, true, false);
+        SetActorVelocity(0, TurretSpeed * Cos(InterceptAngle - DodgeDirection), TurretSpeed * Sin(InterceptAngle - DodgeDirection), 0, true, false);
         
         Thing_ChangeTID(ProjectileTID, 0);
     }
@@ -1560,7 +1572,7 @@ script void TurretAI(int TID)
             
             SetActorAngle(0, TravelAngle);
             SetActorPitch(0, TravelPitch);
-            SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelPitch), true, false);
+            SetActorVelocity(0, TurretSpeed * Cos(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelPitch), true, false);
             
             TravelTime++;
         }
@@ -1611,7 +1623,7 @@ script void TurretAI(int TID)
         if (Weapon == TW_ROCKET && Distance(0, TargetTID) <= 176 && !GetUserArray(0, "user_upgrades", TU_ARMOR_PLATING_BLAST))
         {
             // Back up out of the blast zone if we can be damaged by it
-            SetActorVelocity(0, TURRET_ACCELERATION * Cos(AimAngle - 0.5) * Cos(AimPitch - 0.5), TURRET_ACCELERATION * Sin(AimAngle - 0.5) * Cos(AimPitch - 0.5), TURRET_ACCELERATION * Sin(AimPitch - 0.5), true, false);
+            SetActorVelocity(0, TurretSpeed * Cos(AimAngle - 0.5) * Cos(AimPitch - 0.5), TurretSpeed * Sin(AimAngle - 0.5) * Cos(AimPitch - 0.5), TurretSpeed * Sin(AimPitch - 0.5), true, false);
         };
         
         if (AggressionMode == 0)
@@ -1621,11 +1633,11 @@ script void TurretAI(int TID)
             fixed TravelAngle = VectorAngle(GetActorX(PlayerID) - GetActorX(0), GetActorY(PlayerID) - GetActorY(0));
             fixed TravelPitch = VectorAngle(Distance(0, PlayerID), GetActorZ(PlayerID) - GetActorZ(0));
             if (Distance(0, PlayerID) > 256 || LosingInterestTime)
-                SetActorVelocity(0, (TURRET_ACCELERATION / 3) * Cos(TravelAngle) * Cos(TravelPitch), (TURRET_ACCELERATION / 3) * Sin(TravelAngle) * Cos(TravelPitch), (TURRET_ACCELERATION / 3) * Sin(TravelPitch), true, false)
+                SetActorVelocity(0, TurretSpeed * Cos(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelPitch), true, false)
             else
-                SetActorVelocity(0, -(TURRET_ACCELERATION / 4) * Cos(TravelAngle), -(TURRET_ACCELERATION / 4) * Sin(TravelAngle), 0, true, false);
+                SetActorVelocity(0, TurretSpeed * Cos(TravelAngle), TurretSpeed * Sin(TravelAngle), 0, true, false);
             
-            SetActorVelocity(0, (TURRET_ACCELERATION / 3) * Cos(TravelAngle - 0.22), (TURRET_ACCELERATION / 3) * Sin(TravelAngle - 0.22), 0, true, false);
+            SetActorVelocity(0, (TurretSpeed / 3) * Cos(TravelAngle - 0.22), (TurretSpeed / 3) * Sin(TravelAngle - 0.22), 0, true, false);
         }
         else
         {
@@ -1636,22 +1648,22 @@ script void TurretAI(int TID)
             
             // Stay level with the target so we have a better time shooting it
             if (GetActorZ(TargetTID) - GetActorZ(0) < -32)
-                SetActorVelocity(0, 0, 0, -TURRET_ACCELERATION, true, false)
+                SetActorVelocity(0, 0, 0, -TurretSpeed, true, false)
             else if (GetActorZ(TargetTID) - GetActorZ(0) > 32)
-                SetActorVelocity(0, 0, 0, TURRET_ACCELERATION, true, false);
+                SetActorVelocity(0, 0, 0, TurretSpeed, true, false);
             
             if (Distance(0, TargetTID) > GetActorPropertyFixed(TargetTID, APROP_Radius) + 192.0 || LosingInterestTime)
             {
-                SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelAngle) * Cos(TravelPitch), TURRET_ACCELERATION * Sin(TravelPitch), true, false);
+                SetActorVelocity(0, TurretSpeed * Cos(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelAngle) * Cos(TravelPitch), TurretSpeed * Sin(TravelPitch), true, false);
                 //Log("Turret is engaging. Distance: %k\n", Distance(0, TargetTID));
             }
             else if (Distance(0, TargetTID) < GetActorPropertyFixed(TargetTID, APROP_Radius) + 128.0)
             {
-                SetActorVelocity(0, -TURRET_ACCELERATION * Cos(TravelAngle), -TURRET_ACCELERATION * Sin(TravelAngle), 0, true, false);
+                SetActorVelocity(0, -TurretSpeed * Cos(TravelAngle), -TurretSpeed * Sin(TravelAngle), 0, true, false);
                 //Log("Turret is backing up. Distance: %k\n", Distance(0, TargetTID));
             };
             
-            SetActorVelocity(0, TURRET_ACCELERATION * Cos(TravelAngle - 0.25), TURRET_ACCELERATION * Sin(TravelAngle - 0.25), 0, true, false);
+            SetActorVelocity(0, TurretSpeed * Cos(TravelAngle - 0.25), TurretSpeed * Sin(TravelAngle - 0.25), 0, true, false);
         };
         
         // Unload all you've got!
@@ -2060,18 +2072,19 @@ function bool TurretStim()
     int Amount = 0;
     
     // Generate the stim
-    while (Amount++ < MaxAmount)
+    if (Player.Turret.StimFocused) // Focused Injection
     {
-        if (Player.Turret.StimFocused) // Focused Injection
-            Player.Stim.Current[Player.Turret.StimVialType] += (Player.Turret.StimVialType >= StimStatsEnd ? Potency / 5 : Potency)
-        else // Broad injection
-        {
-            int TypeMax = (Powerups ? StimPowerupEnd : StimStatsEnd);
-            int Type = Random(0, TypeMax);
-            
-            Player.Stim.Current[Type] += Potency;
-        };
-    };
+        // Multipliers
+        if (Player.Turret.StimVialType < StimStatsEnd)
+            Potency *= 10;
+        if (Player.Turret.StimVialType == STIM_PURIFIER || Player.Turret.StimVialType == STIM_POTENCY)
+            Potency *= 2;
+        
+        Player.Stim.Current[Player.Turret.StimVialType] += Potency;
+    }
+    else // Broad injection
+        while (Amount++ < MaxAmount)
+            Player.Stim.Current[Random(0, (Powerups ? StimPowerupEnd : StimStatsEnd))] += Potency;
     
     // Reset stim cooldown timer
     Player.Turret.StimTimer = 60;
