@@ -963,13 +963,14 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         fixed X = RandomFixed(LowerX, UpperX);
         fixed Y = RandomFixed(LowerY, UpperY);
         fixed Z = 0;
+        int A = 32 * Random(0, 7);
         
         // Try to keep Z near the floor
         SpawnForced("MapSpot", X, Y, 0, TID, 0);
         Z = GetActorFloorZ(TID);
         Thing_Remove(TID);
         
-        bool Spawned = Spawn(Actor, X, Y, Z, TID, 32 * Random(0, 7));
+        bool Spawned = Spawn("MapSpotGravity", X, Y, Z, TID, A);
         if (Spawned)
         {
             bool Remove = true;
@@ -991,7 +992,6 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
                 if (CanSee && !BadFloor && Abs(Z - GetActorZ(ItemTIDs[i])) <= 128)
                 {
                     Remove = false;
-                    Items++;
                     break;
                 };
                 
@@ -1000,8 +1000,12 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
                     Delay(1);
             };
             
-            if (Remove)
-                Thing_Remove(TID);
+            Thing_Remove(TID);
+            if (!Remove)
+            {
+                if (Spawn(Actor, X, Y, Z, TID, A))
+                    Items++;
+            };
         };
         
         if (GetCVar("drpg_debug"))
