@@ -1,6 +1,7 @@
 #include "RPG.dh"
 
 #include "Crate.dh"
+#include "Menu.dh"
 #include "Stims.dh"
 #include "Turret.dh"
 #include "Utils.dh"
@@ -1282,9 +1283,11 @@ script void TurretPickStimMenu()
             X = 320.0 + (Radius * Cos(Angle)) + 4.0;
             Y = 240.0 + (Radius * Sin(Angle)) + 16.0;
             
-            PrintSprite("ItemBoxH", 0, 320, 240 + Radius, 0.05);
             PrintSprite(VialSprites[i], 0, (int)X, (int)Y, 0.05);
         };
+        
+        // Box
+        PrintSprite("ItemBoxH", 0, 320, 240 + Radius, 0.05);
         
         // Draw Name
         SetFont("BIGFONT");
@@ -1327,37 +1330,158 @@ script void TurretPickStimMenu()
     SetPlayerProperty(0, 0, PROP_FROZEN);
 };
 
-acscript void TurretMenu()
+acscript void TurretCommandWheel() enter
 {
-    if (!GetCVar("drpg_debug")) return;
-    
-    if (Player.InMenu)
+    static int[MAX_COMMANDS] Commands =
     {
-        Player.InMenu = false;
-        ActivatorSound("menu/leave", 127);
-        SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-    }
-    else
-    {
-        if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
-        {
-            if (!Player.Turret.Init) return;
-            
-            if (Player.Turret.Active)
-                TurretDespawn()
-            else
-                TurretSpawn();
-        }
-        else
-        {
-            Player.InMenu = true;
-            Player.InShop = false;
-            Player.OutpostMenu = 0;
-            Player.Menu = MENUPAGE_TURRET;
-            Player.TurretPage = TURRETPAGE_COMMAND;
-            ActivatorSound("menu/enter", 127);
-        };
+        TU_WEAPON_BULLET;
+        TU_WEAPON_BULLET_CAPACITY;
+        TU_WEAPON_PELLET;
+        TU_WEAPON_PELLET_CAPACITY;
+        TU_WEAPON_ROCKET;
+        TU_WEAPON_ROCKET_CAPACITY;
+        TU_WEAPON_PLASMA;
+        TU_WEAPON_PLASMA_CAPACITY;
+        TU_WEAPON_RAILGUN;
+        TU_WEAPON_RAILGUN_CAPACITY;
+        TU_AMMO_AUTOLOADER;
+        TU_WEAPON_SELFDESTRUCT;
+        TU_ASSIST_INJECTOR_TYPE;
+        TU_ASSIST_TELEPORT;
+        TU_SENSORS_MODULEFINDER;
+        TU_SENSORS_ITEMFINDER;
+        TU_SENSORS_SUPPLYFINDER;
+        TU_COMMAND_IDLE;
+        TU_COMMAND_WANDER;
+        TU_COMMAND_ORBIT;
+        TU_COMMAND_TARGET;
+        TU_COMMAND_CONTROL;
     };
+    
+    Start:
+    
+    bool Close = false;
+    int[MAX_COMMANDS] CurrentCommands;
+    int CurrentCommandsCount = 0;
+    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+    int Radius = 160;
+    int CurrentRadius = 0;
+    fixed LerpPos = 0;
+    
+    // Rebuild currently known commands
+    for (int i = 0; i < MAX_COMMANDS; i++)
+        if (Player.Turret.Upgrade[Commands[i]] > 0)
+            CurrentCommands[CurrentCommandsCount++] = Commands[i];
+    
+    // Open the wheel or quickly activate/deactivate the turret
+    if (Buttons & BT_SPEED && Buttons & BT_USER2 && !(OldButtons & BT_USER2))
+        TurretCommand(TU_BUILD)
+    else if (!(Buttons & BT_SPEED) && Buttons & BT_USER2 && !((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0 || Player.SkillWheelOpen) && Player.Turret.Init)
+    {
+        ActivatorSound("menu/click", 127);
+        Player.Turret.WheelOpen = true;
+        LerpPos = 1.0;
+    };
+    
+    while (Player.Turret.WheelOpen || CurrentRadius > 0)
+    {
+        fixed Increment = 1.0 / CurrentCommandsCount;
+        fixed Location = (Increment * (fixed)Player.Turret.WheelCommand);
+        fixed OldLocation;
+        fixed Angle;
+        fixed X;
+        fixed Y;
+        
+        // Freeze player
+        SetPlayerProperty(0, 1, PROP_FROZEN);
+        
+        // Check Input
+        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        
+        // Check for release
+        if (!(Buttons & BT_USER2) && !Close)
+            Close = true;
+        
+        // Lerp position
+        if (LerpPos <= 1.0)
+            LerpPos += 0.1;
+        if (LerpPos > 1.0)
+            LerpPos = 1.0;
+        
+        // Animate wheel closed/open
+        if (Close)
+        {
+            CurrentRadius -= 32;
+            
+            // Closed
+            if (CurrentRadius <= 0)
+            {
+                SetPlayerProperty(0, 0, PROP_FROZEN);
+                Player.Turret.WheelOpen = false;
+            };
+        }
+        else if (CurrentRadius < Radius)
+            CurrentRadius += 32;
+        
+        // Set Resolution
+        SetHudSize(640, 480, false);
+        
+        // Turret Timers
+        DrawTurretTimers(206.0, 32.0);
+        
+        // Command Icons/Info
+        for (int i = 0; i < CurrentCommandsCount; i++)
+        {
+            Angle = 0.25 + Lerp(OldLocation, Location, LerpPos) - (Increment * i);
+            X = 320.0 + (CurrentRadius * Cos(Angle));
+            Y = 240.0 + (CurrentRadius * Sin(Angle));
+            
+            if (Player.Turret.Upgrade[CurrentCommands[i]] > 0)
+                DrawTurretInfo((int)X, (int)Y, CurrentCommands[i]);
+            
+            PrintSprite(StrParam("T_UPG%d\n", CurrentCommands[i] + 1), 0, (int)X, (int)Y, 0.05);
+        };
+        
+        // Name
+        SetFont("BIGFONT");
+        HudMessage("%s\n", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].Name, HUDMSG_PLAIN, 0, CR_WHITE, 320, 240 + CurrentRadius + 32, 0.05);
+        
+        // Description
+        SetFont("SMALLFONT");
+        HudMessage("%s\n", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].CommandInfo, HUDMSG_PLAIN, 0, CR_YELLOW, 320.4, 240.1 + CurrentRadius + 48, 0.05);
+        
+        // Input
+        if (!Close)
+        {
+            if (Buttons & BT_USE && !(OldButtons & BT_USE))
+                TurretCommand(CurrentCommands[Player.Turret.WheelCommand]);
+            if (Buttons & BT_SPEED && !(OldButtons & BT_SPEED))
+                TurretMaintenance();
+            if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT))
+            {
+                ActivatorSound("menu/click", 127);
+                Player.Turret.WheelCommand--;
+                OldLocation = Location;
+                LerpPos = 0;
+                if (Player.Turret.WheelCommand < 0) Player.Turret.WheelCommand = CurrentCommandsCount - 1;
+            };
+            if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT))
+            {
+                ActivatorSound("menu/click", 127);
+                Player.Turret.WheelCommand++;
+                OldLocation = Location;
+                LerpPos = 0;
+                if (Player.Turret.WheelCommand > CurrentCommandsCount - 1) Player.Turret.WheelCommand = 0;
+            };
+        };
+        
+        Delay(1);
+    };
+    
+    Delay(1);
+    goto Start;
 };
 
 acscript void TurretSetOffset(int AngleOffset, int DistanceOffset, int HeightOffset)
@@ -1909,8 +2033,6 @@ function void TurretCommand(int Index)
     
     if (Index == TU_BUILD)
     {
-        ActivatorSound("menu/move", 127);
-        
         if (Player.Turret.Active)
             TurretDespawn()
         else
