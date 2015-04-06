@@ -8,6 +8,8 @@
 #include "Stats.dh"
 #include "Utils.dh"
 
+static MissionInfo[MAX_DIFFICULTIES][MAX_MISSIONS] Missions;
+
 str[MAX_DIFFICULTIES] MissionDifficulties =
 {
     "\cdVery Easy";
@@ -42,9 +44,19 @@ script void PopulateMissions()
     
     for (int i = 0; i < MAX_DIFFICULTIES; i++)
     {
+        auto MissionInfo[MAX_MISSIONS] MissionsSorted;
+        
+        // Create new missions
         for (int j = 0; j < MAX_MISSIONS; j++)
-            Missions[i][j] = *CreateMission(i);
-            
+            MissionsSorted[j] = CreateMission(i);
+        
+        // Sort the missions by type
+        qsort(MissionsSorted, MAX_MISSIONS, sizeof(MissionInfo), MissionTypeSort);
+        
+        // Add the sorted missions into the missions array
+        for (int j = 0; j < MAX_MISSIONS; j++)
+            Missions[i][j] = MissionsSorted[j];
+        
         Delay(1);
     };
     
@@ -189,7 +201,7 @@ script void MissionDeathCheck(int Killer, MonsterStatsPtr Stats)
     };
 };
 
-function MissionInfo *CreateMission(int Difficulty)
+function MissionInfo CreateMission(int Difficulty)
 {
     int Type = Random(0, MT_MAX - 1);
     int NumPlayers = 0;
@@ -284,12 +296,21 @@ function MissionInfo *CreateMission(int Difficulty)
     if (Type == MT_COMBO)
         Mission.Amount = (Difficulty + 2) * 10;
     
-    return &Mission;
+    return Mission;
 };
 
 function void CreateMissionAt(int Difficulty, int Index)
 {
-    Missions[Difficulty][Index] = *CreateMission(Difficulty);
+    // Create new mission
+    Missions[Difficulty][Index] = CreateMission(Difficulty);
+    
+    // Resort the missions in this category
+    auto MissionInfo[MAX_MISSIONS] MissionsSorted;
+    for (int i = 0; i < MAX_MISSIONS; i++)
+        MissionsSorted[i] = Missions[Difficulty][i];
+    qsort(MissionsSorted, MAX_MISSIONS, sizeof(MissionInfo), MissionTypeSort);
+    for (int i = 0; i < MAX_MISSIONS; i++)
+        Missions[Difficulty][i] = MissionsSorted[i];
 };
 
 function void CheckMission()
@@ -458,4 +479,15 @@ function str GetMissionMonsterActor(str Actor)
         return StrParam("DRPG%sExtras\n", Actor)
     else
         return StrParam("DRPG%s\n", Actor);
+};
+
+function int MissionTypeSort(void const *Left, void const *Right)
+{
+    MissionInfo LeftMission = *((MissionInfo *)Left);
+    MissionInfo RightMission = *((MissionInfo *)Right);
+    
+    if (LeftMission.Type < RightMission.Type) return -1;
+    if (LeftMission.Type > RightMission.Type) return 1;
+    
+    return 0;
 };
