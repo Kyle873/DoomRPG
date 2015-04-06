@@ -15,6 +15,7 @@ static int LastVisitedLevel;
 static int AllBonusMaps; // For the OCD Shield
 static int CurrentSkill; // Keeps track of skill changes based on events
 static int PassingEventTimer;
+static bool DisableEvent;
 
 // Map Init Script
 script void MapInit() open
@@ -26,6 +27,7 @@ script void MapInit() open
         ArrayCreate(&KnownLevels, "LVLS\x00", 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
         PassingEventTimer = GetCVar("drpg_mapevent_eventtime") * 35 * 60;
+        DisableEvent = true;
         
         if (KnownLevels.Data == nullptr)
         {
@@ -173,6 +175,7 @@ script void MapInit() open
     // Setup missions which require generation
     SetupMapMissions();
     
+    DisableEvent = false;
     WaitingForReplacements = false;
     
     if (CurrentLevel)
@@ -279,14 +282,10 @@ function bool CheckMapEvent(int Event)
             return true;
         
         case MAPEVENT_SKILL_HELL:
-            if (AveragePlayerLevel() <= 0)
-                return false;
             if (CurrentSkill >= 4)
                 return false;
             return true;
         case MAPEVENT_SKILL_ARMAGEDDON:
-            if (AveragePlayerLevel() <= 0)
-                return false;
             if (CurrentSkill >= 5)
                 return false;
             if (CompatMode != COMPAT_DRLA || AveragePlayerLevel() < 10)
@@ -368,7 +367,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
         return;
     };
     
-    if (RandomFixed(0.0, 99.9) > GetCVarFixed("drpg_mapevent_chance"))
+    if (RandomFixed(0.0, 99.9) > GetCVarFixed("drpg_mapevent_chance") || DisableEvent)
     {
         TargetLevel->Event = MAPEVENT_NONE;
         return; // No special event
@@ -739,16 +738,7 @@ script void EnvironmentalHazard()
             continue;
         
         TakeActorInventory(Players(i).TID, "DRPGNeutralizerFuel", 5);
-        
-        // [KS] If the players are level 0 (ie just started the game) and the first map is an Environmental Hazard,
-        // give a free suit so they have some minutes to find more.
-        
-        // BUG: Giving DRPGRadSuit directly doesn't do anything. Shouldn't it place suits in the inventory bar? Silly ZDoom.
-        
-        if (Players(i).Level < 1)
-            GiveActorInventory(Players(i).TID, "DRPGRadSuitPower", 1);
-        
-        UseActorInventory(Players(i).TID, "DRPGRadSuit");
+        UseActorInventory(Players(i).TID, "DRPGRadSuit"); // [KS] This doesn't work?? Silly ZDoom.
         
         // [KS] Haaaaaaaax
         GiveActorInventory(Players(i).TID, "AntiRadiationForMyVoodooDolls", 1);
