@@ -1168,18 +1168,18 @@ function void CheckStatusEffects()
     };
 };
 
-function void StatusDamage(int Amount)
+function void StatusDamage(int Amount, fixed Chance, bool Critical)
 {
     int Type = -1;
-    int Chance;
+    int StatChance;
     int Intensity;
     int Time;
     
     // Can't get Status Effects if Pink Aura is active
     if (Player.Aura.Type[AURA_PINK].Active || Player.SoulActive[SOUL_PINK]) return;
     
-    // Calculate the chance
-    Chance = RandomFixed(0.0, 100.0);
+    // We lucked out this time and won't get hit with a status effect
+    if (RandomFixed(0.0, 100.0) >= Chance) return;
     
     // Calculate the intensity
     Intensity = (Amount * Player.HealthMax) / 1000;
@@ -1189,127 +1189,109 @@ function void StatusDamage(int Amount)
         Intensity = 5;
     
     // Criticals boost chance 2.5x
-    if (Amount >= Player.HealthMax / 2)
+    if (Critical)
         Chance *= 2.5;
     
     // Damage Types
     switch (Player.DamageType)
     {
     case DT_TOXIC:
-        if (Chance <= 20.0) // 1 in 5
+        switch (Random(1, 3))
         {
-            switch (Random(1, 3))
-            {
-            case 1:
-                Type = SE_POISON;
-                Time = Random(1, 10);
-                break;
-            case 2:
-                Type = SE_CORROSION;
-                Time = Random(1, 10);
-                break;
-            case 3:
-                Type = SE_RADIATION;
-                Time = Random(1, 10);
-                break;
-            };
+        case 1:
+            Type = SE_POISON;
+            Time = Random(1, 10);
+            break;
+        case 2:
+            Type = SE_CORROSION;
+            Time = Random(1, 10);
+            break;
+        case 3:
+            Type = SE_RADIATION;
+            Time = Random(1, 10);
+            break;
         };
         break;
     case DT_RADIATION:
-        if (Chance <= 10.0) // 1 in 10
-        {
-            Type = SE_RADIATION;
-            Time = Random(1, 10);
-        };
+        Type = SE_RADIATION;
+        Time = Random(1, 10);
         break;
     case DT_MELEE:
-        if (Chance <= 12.5) // 1 in 8
+        switch (Random(1, 3))
         {
-            switch (Random(1, 3))
-            {
-            case 1:
-                Type = SE_BLIND;
-                Time = Random(5, 10);
-                break;
-            case 2:
-                Type = SE_CONFUSION;
-                Time = Random(5, 10);
-                break;
-            case 3:
-                Type = SE_FATIGUE;
-                Time = Random(5, 30);
-                break;
-            };
+        case 1:
+            Type = SE_BLIND;
+            Time = Random(5, 10);
+            break;
+        case 2:
+            Type = SE_CONFUSION;
+            Time = Random(5, 10);
+            break;
+        case 3:
+            Type = SE_FATIGUE;
+            Time = Random(5, 30);
+            break;
         };
         break;
     case DT_PLASMA:
-        if (Chance <= 12.5) // 1 in 8
+        switch (Random(1, 5))
         {
-            switch (Random(1, 5))
-            {
-            case 1:
-                Type = SE_POISON;
-                Time = Random(5, 20);
-                break;
-            case 2:
-                Type = SE_CORROSION;
-                Time = Random(5, 20);
-                break;
-            case 3:
-                Type = SE_VIRUS;
-                Time = Random(60, 180);
-                break;
-            case 4:
-                Type = SE_SILENCE;
-                Intensity = 1; // Only has one level of intensity
-                Time = Random(60, 180);
-                break;
-            case 5:
-                Type = SE_CURSE;
-                Time = Random(10, 60);
-                break;
-            };
+        case 1:
+            Type = SE_POISON;
+            Time = Random(5, 20);
+            break;
+        case 2:
+            Type = SE_CORROSION;
+            Time = Random(5, 20);
+            break;
+        case 3:
+            Type = SE_VIRUS;
+            Time = Random(60, 180);
+            break;
+        case 4:
+            Type = SE_SILENCE;
+            Intensity = 1; // Only has one level of intensity
+            Time = Random(60, 180);
+            break;
+        case 5:
+            Type = SE_CURSE;
+            Time = Random(10, 60);
+            break;
         };
         break;
     case DT_LIGHTNING:
-        if (Chance <= 20.0) // 1 in 5
+        switch (Random(1, 4))
         {
-            switch (Random(1, 4))
-            {
-            case 1:
-                Type = SE_BLIND;
-                Time = Random(5, 10);
-                break;
-            case 2:
-                Type = SE_SILENCE;
-                Intensity = 1; // Only has one level of intensity
-                Time = Random(60, 180);
-                break;
-            case 3:
-                Type = SE_EMP;
-                Time = Random(5, 30);
-                break;
-            case 4:
-                Type = SE_RADIATION;
-                Time = Random(5, 20);
-                break;
-            };
+        case 1:
+            Type = SE_BLIND;
+            Time = Random(5, 10);
+            break;
+        case 2:
+            Type = SE_SILENCE;
+            Intensity = 1; // Only has one level of intensity
+            Time = Random(60, 180);
+            break;
+        case 3:
+            Type = SE_EMP;
+            Time = Random(5, 30);
+            break;
+        case 4:
+            Type = SE_RADIATION;
+            Time = Random(5, 20);
+            break;
         };
         break;
     case DT_FIRE:
-        if (Chance <= 12.5) // 1 in 8
+        switch (Random(1, 2))
         {
-            switch (Random(1, 2))
-            {
-            case 1:
-                Type = SE_BLIND;
-                Time = Random(5, 10);
-                break;
-            case 2:
-                Type = SE_FATIGUE;
-                Time = Random(5, 30);
-                break;
-            };
+        case 1:
+            Type = SE_BLIND;
+            Time = Random(5, 10);
+            break;
+        case 2:
+            Type = SE_FATIGUE;
+            Time = Random(5, 30);
+            break;
         };
         break;
     };

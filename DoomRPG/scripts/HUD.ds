@@ -764,9 +764,6 @@ script void CoopViewHUD() enter
         
         Delay(1);
     };
-    
-    Delay(1);
-    goto Start;
 };
 
 script void MultiplayerHUD() enter
@@ -898,6 +895,124 @@ script void TurretHUD() enter
     goto Start;
 };
 
+script void StatHUD() enter
+{
+    static int[STAT_MAX] StatColors =
+    {
+        CR_RED;         // Strength
+        CR_GREEN;       // Defense
+        CR_BRICK;       // Vitality
+        CR_LIGHTBLUE;   // Energy
+        CR_PURPLE;      // Regeneration
+        CR_ORANGE;      // Agility
+        CR_BLUE;        // Capacity
+        CR_GOLD;        // Luck
+    };
+    
+    Start:
+    
+    int *[STAT_MAX] Stats =
+    {
+        &Player.Strength;
+        &Player.Defense;
+        &Player.Vitality;
+        &Player.Energy;
+        &Player.Regeneration;
+        &Player.Agility;
+        &Player.Capacity;
+        &Player.Luck;
+    };
+    int[STAT_MAX] PrevStats;
+    bool Change = false;
+    fixed X = GetCVarFixed("drpg_stats_x");
+    fixed Y = GetCVarFixed("drpg_stats_y");
+    
+    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
+    
+    // Determine if there was a change in your stats
+    for (int i = 0; i < STAT_MAX; i++)
+        if (*Stats[i] != PrevStats[i])
+        {
+            Change = true;
+            break;
+        };
+    
+    // TODO: This causes SEVERE FPS drops for some reason
+    // I have no idea why, considering it's about 10 times less intensive than something like the Stim HUD, which is fine
+    if (Change || GetCVar("drpg_stats_alwaysshow") || GetCVar("drpg_hud_preview"))
+        for (int i = 0; i < STAT_MAX; i++)
+        {
+            SetFont("BIGFONT");
+            HudMessage("%d\n", *Stats[i], HUDMSG_FADEOUT, STAT_ID + i, StatColors[i], X + 9.0 + ((i % 4) * 36.0), Y + ((i / 4) * 24.0), 2.0, 3.0);
+            PrintSpriteFade(StrParam("STAT%dS\n", i + 1), STAT_ID + STAT_MAX + i, X + 20.0 + ((i % 4) * 36.0), Y + 20.0 + ((i / 4) * 24.0), 2.0, 3.0);
+        };
+    
+    // Store stats for comparison next tic
+    for (int i = 0; i < STAT_MAX; i++)
+        PrevStats[i] = *Stats[i];
+    
+    Delay(1);
+    goto Start;
+};
+
+script void DamageHUD() enter
+{
+    Start:
+    
+    if (GetCVar("drpg_damagenumbers_hud"))
+    {
+        int Color = CR_WHITE;
+        str Text = "";
+        fixed Time;
+        
+        // Size
+        if (Player.HUDDamage == 1)
+            SetFont("SMALLFONT")
+        else
+            SetFont("BIGFONT");
+        
+        // Color
+        switch (Player.DamageType)
+        {
+        case DT_NORMAL:                     Color = CR_WHITE;       break;
+        case DT_TOXIC: case DT_RADIATION:   Color = CR_GREEN;       break;
+        case DT_MELEE:                      Color = CR_GREY;        break;
+        case DT_FIRE:                       Color = CR_RED;         break;
+        case DT_PLASMA: case DT_LIGHTNING:  Color = CR_LIGHTBLUE;   break;
+        };
+        
+        if (Player.HUDDamage > 0 && Player.HUDDamage < SHIELD_HEALTH - Player.HealthMax - Player.HUDDamage)
+        {
+            if (Player.HUDDamageCritical) // Critical Hit
+            {
+                Text = StrParam("%s\cgCRITICAL\n\n", Text);
+                Time += 1.0;
+                Player.HUDDamageCritical = false;
+            };
+            
+            // Status Effect
+            if (Player.StatusTypeHUD >= 0)
+            {
+                Text = StrParam("%s%s %s\n\n", Text, StatusEffects[Player.StatusTypeHUD], StatusNumerals[Player.StatusIntensity[Player.StatusTypeHUD]]);
+                Player.StatusTypeHUD = -1;
+                Time += 1.0;
+            };
+            
+            // Loss
+            Text = StrParam("%s%d\n", Text, Player.HUDDamage);
+            
+            // Display
+            HudMessage("%s\n", Text, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0 + Time);
+            
+            // Reset
+            Player.HUDDamage = 0;
+        };
+    };
+    
+    Delay(1);
+    goto Start;
+};
+
 script void DRLAHUD() enter
 {
     static str[6] RaritySuffix =
@@ -928,7 +1043,7 @@ script void DRLAHUD() enter
         int ModPacks = (IsTechnician ? CheckInventory("RLScavengerModLimit") : CheckInventory("RLModLimit"));
         
         SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
-        
+         
         // Weapon/Modpacks counters
         SetFont("BIGFONT");
         if (Weapons >= 6)
@@ -1006,7 +1121,7 @@ script void DRLAHUD() enter
                 else break; // Kinda lolhax
                 
                 // Synthfire/Duel-wielded weapons
-                if (CheckWeapon("RLAntiFreakJackal") && CheckInventory("RLAlucardFu")) // Jackal/Casull
+                if (CheckWeapon("RLAntiFreakJackal") && CheckInventory("RLAntiFreakJackalDemonArtifacts")) // Jackal/Casull
                 {
                     Duel = true;
                     Name = "\cdAnti-Freak Jackal & Hellsing ARMS Casull";
@@ -1019,7 +1134,7 @@ script void DRLAHUD() enter
                     Firestorm[1] = CheckInventory("RLHellsingARMSCasullFirestormMod");
                     Nano[1] = CheckInventory("RLHellsingARMSCasullNanoMod");
                 }
-                else if (CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonTwinShotguns")) // Twin WSTE-M5's
+                else if (CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonShotgunsDemonArtifacts")) // Twin WSTE-M5's
                 {
                     Duel = true;
                     Name = "\cdTwin WSTE-M5 Shotguns";
@@ -1120,7 +1235,7 @@ script void DRLAHUD() enter
                 // Icon
                 if (Duel) // Duel-wielding
                 {
-                    if (CheckWeapon("RLAntiFreakJackal") && CheckInventory("RLAlucardFu")) // Jackal/Casull
+                    if (CheckWeapon("RLAntiFreakJackal") && CheckInventory("RLAntiFreakJackalDemonArtifacts")) // Jackal/Casull
                     {
                         ItemInfoPtr JackelItem = &ItemData[0][42]; // Should probably come up with a better way to reference these?
                         ItemInfoPtr CasullItem = &ItemData[0][43];
@@ -1128,7 +1243,7 @@ script void DRLAHUD() enter
                         PrintSprite(JackelItem->Sprite.Name, 0, X + JackelItem->Sprite.XOff, Y + JackelItem->Sprite.YOff + (int)(Sin((fixed)Timer() / 128.0) * 4.0), 0.05);
                         PrintSprite(CasullItem->Sprite.Name, 0, X + CasullItem->Sprite.XOff + 32.0, Y + CasullItem->Sprite.YOff + (int)(Cos((fixed)Timer() / 128.0) * 4.0), 0.05);
                     }
-                    else if (CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonTwinShotguns")) // Twin WSTE-M5's
+                    else if (CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonShotgunsDemonArtifacts")) // Twin WSTE-M5's
                     {
                         PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff + (int)(Sin((fixed)Timer() / 128.0) * 4.0), 0.05);
                         PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff + 32.0, Y + ItemPtr->Sprite.YOff + (int)(Cos((fixed)Timer() / 128.0) * 4.0), 0.05);
@@ -1155,84 +1270,5 @@ script void DRLAHUD() enter
         };
         
         Delay(1);
-    };
-};
-
-script void StatHUD()
-{
-    fixed X = GetCVarFixed("drpg_stats_x");
-    fixed Y = GetCVarFixed("drpg_stats_y");
-    fixed Offset = 11.0;
-    
-    SetHudSize(GetCVar("drpg_hud_width"), GetCVar("drpg_hud_height"), false);
-    
-    // Stat Amounts
-    SetFont("BIGFONT");
-    HudMessage("%d\n", Player.Strength, HUDMSG_FADEOUT, STAT_ID, CR_RED, X - 96.0 - Offset, Y + 35.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Defense, HUDMSG_FADEOUT, STAT_ID + 1, CR_GREEN, X - 64.0 - Offset, Y + 35.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Vitality, HUDMSG_FADEOUT, STAT_ID + 2, CR_BRICK, X - 32.0 - Offset, Y + 35.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Energy, HUDMSG_FADEOUT, STAT_ID + 3, CR_LIGHTBLUE, X - 0.0 - Offset, Y + 35.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Regeneration, HUDMSG_FADEOUT, STAT_ID + 4, CR_PURPLE, X - 96.0 - Offset, Y + 54.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Agility, HUDMSG_FADEOUT, STAT_ID + 5, CR_ORANGE, X - 64.0 - Offset, Y + 54.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Capacity, HUDMSG_FADEOUT, STAT_ID + 6, CR_BLUE, X - 32.0 - Offset, Y + 54.0, 5.0, 5.0);
-    HudMessage("%d\n", Player.Luck, HUDMSG_FADEOUT, STAT_ID + 7, CR_YELLOW, X - 0.0 - Offset, Y + 54.0, 5.0, 5.0);
-    
-    // Stat Icons
-    PrintSpriteFade("STAT1S", STAT_ID + 8, X - 96.0, Y + 54.0, 5.0, 5.0);
-    PrintSpriteFade("STAT2S", STAT_ID + 9, X - 64.0, Y + 54.0, 5.0, 5.0);
-    PrintSpriteFade("STAT3S", STAT_ID + 10, X - 32.0, Y + 54.0, 5.0, 5.0);
-    PrintSpriteFade("STAT4S", STAT_ID + 11, X - 0.0, Y + 54.0, 5.0, 5.0);
-    PrintSpriteFade("STAT5S", STAT_ID + 12, X - 96.0, Y + 74.0, 5.0, 5.0);
-    PrintSpriteFade("STAT6S", STAT_ID + 13, X - 64.0, Y + 74.0, 5.0, 5.0);
-    PrintSpriteFade("STAT7S", STAT_ID + 14, X - 32.0, Y + 74.0, 5.0, 5.0);
-    PrintSpriteFade("STAT8S", STAT_ID + 15, X - 0.0, Y + 74.0, 5.0, 5.0);
-};
-
-script void DamageHUD(int Loss)
-{
-    if (GetCVar("drpg_damagenumbers_hud"))
-    {
-        int Color = CR_WHITE;
-        str Text = "";
-        fixed Time;
-        
-        // Size
-        if (Loss == 1)
-            SetFont("SMALLFONT")
-        else
-            SetFont("BIGFONT");
-        
-        // Color
-        switch (Player.DamageType)
-        {
-        case DT_NORMAL:                     Color = CR_WHITE;       break;
-        case DT_TOXIC: case DT_RADIATION:   Color = CR_GREEN;       break;
-        case DT_MELEE:                      Color = CR_GREY;        break;
-        case DT_FIRE:                       Color = CR_RED;         break;
-        case DT_PLASMA: case DT_LIGHTNING:  Color = CR_LIGHTBLUE;   break;
-        };
-        
-        if (Loss > 0 && Loss < SHIELD_HEALTH - Player.HealthMax - Loss)
-        {
-            if (Loss >= Player.HealthMax / 2) // Critical Hit
-            {
-                Text = StrParam("%s\cgCRITICAL\n\n", Text);
-                Time += 1.0;
-            };
-            
-            // Status Effect
-            if (Player.StatusTypeHUD > 0)
-            {
-                Text = StrParam("%s%s %s\n\n", Text, StatusEffects[Player.StatusTypeHUD], StatusNumerals[Player.StatusIntensity[Player.StatusTypeHUD]]);
-                Player.StatusTypeHUD = 0;
-                Time += 1.0;
-            };
-            
-            // Loss
-            Text = StrParam("%s%d\n", Text, Loss);
-            
-            // Display
-            HudMessage("%s\n", Text, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, 1.0 + Time);
-        };
     };
 };

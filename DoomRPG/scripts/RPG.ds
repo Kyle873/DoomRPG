@@ -165,6 +165,9 @@ script void Init() enter
         Player.PrevHealth = Player.ActualHealth;
         SetActorProperty(0, APROP_Health, Player.ActualHealth);
         
+        // Setup HUD stuff
+        Player.StatusTypeHUD = -1;
+        
         // Set the default skill indices
         for (int i = 0; i < MAX_SKILLKEYS; i++)
         {
@@ -375,10 +378,13 @@ script void Loop()
 // Damage Handler Entry Point
 script void PlayerDamage()
 {
+    bool CanSurvive;
+    bool Critical;
     int BeforeDamage;
     int DamageTaken;
     int ShieldDamageAmount;
-    bool CanSurvive;
+    int MonsterID;
+    fixed LuckChance;
     
     Start:
     
@@ -417,23 +423,47 @@ script void PlayerDamage()
     };
     
     BeforeDamage = GetActorProperty(Player.TID, APROP_Health);
-    Player.DamageType = DT_NONE;
+    // Player.DamageType = DT_NONE; // I don't think we need this here anymore?
     
     Delay(1);
+    
+    // Get attacker's ID
+    Player.DamageTID = WhoShotMe();
     
     DamageTaken = BeforeDamage - GetActorProperty(Player.TID, APROP_Health);
     ShieldDamageAmount = 0;
     
     if (DamageTaken > 0)
     {
+        Player.HUDDamage = DamageTaken;
         Player.AutosaveTimerReset = true;
+        
+        // Find Monster ID
+        MonsterID = FindMonster(Player.DamageTID);
+        
+        // Calculate monster crit/status chance
+        LuckChance = (fixed)Monsters[MonsterID].Luck / 20.0;
+        
+        // Calculate a critical hit
+        if (Player.DamageTID > 0 && MonsterID > 0)
+            if (RandomFixed(0.0, 100.0) <= LuckChance)
+            {
+                DamageTaken *= 2;
+                Critical = true;
+                Player.HUDDamageCritical = true;
+            };
         
         AugDamage(DamageTaken);
         ToxicityDamage();
-        StatusDamage(DamageTaken);
+        if (MonsterID > 0)
+            StatusDamage(DamageTaken, LuckChance, Critical)
+        else
+            StatusDamage(DamageTaken, RandomFixed(0.0, 100.0), Critical);
         ResetRegen();
-        DamageHUD(DamageTaken);
     };
+    
+    // Reset attacker's ID
+    Player.DamageTID = -1;
     
     if (DamageTaken > 0 && Player.Shield.Active)
         ShieldTimerReset();
@@ -613,9 +643,6 @@ script void StatRandomizer()
                 IncreaseStat(GetCVar("drpg_auto_spend_pref"))
             else // Select Random Stat
                 IncreaseStat(Random(0, STAT_MAX - 1));
-            
-            // Display Stat HUD
-            StatHUD();
             
             Delay(1);
         };
