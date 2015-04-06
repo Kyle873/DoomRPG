@@ -297,6 +297,9 @@ acscript void MonsterInit(int Flags)
     if (!(Flags & MF_NOSTATS))
         MonsterRegenerationHandler();
     
+    // Energy Stat Handling
+    MonsterAggressionHandler();
+    
     // Death Handler
     MonsterDeathCheck();
     
@@ -723,6 +726,46 @@ script void MonsterInitStats(int StatFlags)
         Stats->NeedReinit = false;
         MonsterStatsHandler();
     };
+};
+
+script void MonsterAggressionHandler()
+{
+    // Delay Stagger
+    Delay(GetMonsterID(0) % 4);
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    int Energy = Stats->Energy;
+    
+    Start:
+    
+    if (GetActorProperty(0, APROP_Health) <= 0)
+    {
+        Delay(35);
+        goto Start;
+    };
+
+    if (ClassifyActor(0) & ACTOR_WORLD)
+        return;
+    
+    Energy = Stats->Energy;
+    
+    fixed Aggression = 0.25 + (Energy * 0.00475);
+    
+    if (Aggression < 1.0)
+    {
+        if (RandomFixed(0.0, 1.0) < Aggression)
+            GiveInventory("DRPGMonsterDontAttack", 1);
+    }
+    else
+    {
+        if (RandomFixed(0.0, 1.0) < ((Aggression - 1.0) / 4.0))
+            GiveInventory("DRPGMonsterAttackMore", 1);
+    };
+    
+    Delay(8);
+    goto Start;
 };
 
 script void MonsterStatsHandler()
