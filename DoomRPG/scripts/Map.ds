@@ -125,6 +125,7 @@ script void MapInit() open
             CurrentLevel->ParBonus = true;
         CalculateBonusMaps();
         
+        CurrentLevel->AdditionalMonsters = 0;
         CurrentLevel->Event = MAPEVENT_NONE;
         CurrentLevel->MonsterPositions = BLANKDYNAMICARRAY;
         
@@ -167,6 +168,8 @@ script void MapInit() open
     // Set up the currently in-effect map event
     SetupMapEvent();
     
+    AddAdditionalMonsters();
+    
     // Setup missions which require generation
     SetupMapMissions();
     
@@ -198,7 +201,7 @@ script void ReduceMonsterCount(bool *WaitLock)
     {
         MonstersToRemove = -MonstersToRemove;
         Log("\cdDEBUG: \ccAdding \cd%d\cc more monsters!\n", MonstersToRemove);
-        DynamicLootGenerator("DRPGGenericMonsterDropper", MonstersToRemove);
+        CurrentLevel->AdditionalMonsters = MonstersToRemove;
         *WaitLock = false;
         return;
     };
@@ -233,6 +236,17 @@ script void ReduceMonsterCount(bool *WaitLock)
     };
     
     *WaitLock = false;
+};
+
+function void AddAdditionalMonsters()
+{
+    if (CurrentLevel->AdditionalMonsters < 1 || CurrentLevel->Event == MAPEVENT_MEGABOSS)
+        return;
+    
+    if (CurrentLevel->Event == MAPEVENT_ONEMONSTER)
+        DynamicLootGenerator(GetMissionMonsterActor(CurrentLevel->SelectedMonster->Actor), CurrentLevel->AdditionalMonsters)
+    else
+        DynamicLootGenerator("DRPGGenericMonsterDropper", CurrentLevel->AdditionalMonsters);
 };
 
 function bool CheckMapEvent(int Event)
@@ -400,13 +414,49 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     }
     else if (TargetLevel->Event == MAPEVENT_ONEMONSTER)
     {
-        bool Extras = (CompatMode == COMPAT_EXTRAS);
         bool DRLA = (CompatMode == COMPAT_DRLA);
         
+        int Amount;
+        MonsterInfoPtr[64] PotentialMonsters;
+        int NumPotentialMonsters;
+        int MonsterDataAmount;
+        fixed MonsterLevelDivisor;
+        
         if (DRLA)
-            TargetLevel->SelectedMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA - 1)]
+        {
+            MonsterDataAmount = MAX_DEF_MONSTERS_DRLA;
+            MonsterLevelDivisor = 2.5;
+        }
         else
-            TargetLevel->SelectedMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS - 1)];
+        {
+            MonsterDataAmount = MAX_DEF_MONSTERS;
+            MonsterLevelDivisor = 1.25;
+        };
+        
+        // Generate a list based on monsters' threat levels.
+        for (int i = 0; i < MonsterDataAmount; i++)
+        {
+            MonsterInfoPtr TempMonster;
+            int RequiredLevel;
+            int AverageLevel = AveragePlayerLevel();
+            
+            if (DRLA)
+                TempMonster = &MonsterDataDRLA[i]
+            else
+                TempMonster = &MonsterData[i];
+            
+            RequiredLevel = (fixed)(TempMonster->Difficulty + ((TempMonster->ThreatLevel) * 20)) / MonsterLevelDivisor;
+            RequiredLevel = Clamp(0, RequiredLevel, 80);
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \ccPotential monster: \cg%s \cc/ Needed level: \cg%d%s\n", TempMonster->Name, RequiredLevel, TempMonster->Difficulty <= 4? " (Ignored)" : "");
+            
+            if (TempMonster->Difficulty <= 4 || AverageLevel >= RequiredLevel && TempMonster->ThreatLevel <= 5)
+                PotentialMonsters[NumPotentialMonsters++] = TempMonster;
+        };
+        
+        for (int i = 0; i < NumPotentialMonsters; i++)
+        
+        TargetLevel->SelectedMonster = PotentialMonsters[Random(0, NumPotentialMonsters - 1)];
         
         if (GetCVar("drpg_debug"))
             Log("\cdDEBUG: Chosen Monster: \cg%s\n", TargetLevel->SelectedMonster->Name);
@@ -1167,18 +1217,13 @@ script void OneMonsterEvent()
 {
     bool Extras = (CompatMode == COMPAT_EXTRAS);
     bool DRLA = (CompatMode == COMPAT_DRLA);
-    
+
     for (int i = 0; i < MonsterID; i++)
     {
         if (!Monsters[i].Init)
             continue;
         
-        if (Extras)
-            Monsters[i].ReplaceActor = StrParam("DRPG%sExtras\n", CurrentLevel->SelectedMonster->Actor)
-        else if (DRLA)
-            Monsters[i].ReplaceActor = StrParam("%sRPG\n", CurrentLevel->SelectedMonster->Actor)
-        else
-            Monsters[i].ReplaceActor = StrParam("DRPG%s\n", CurrentLevel->SelectedMonster->Actor);
+        Monsters[i].ReplaceActor = GetMissionMonsterActor(CurrentLevel->SelectedMonster->Actor);
     };
     
     // Level feeling
@@ -1186,6 +1231,16 @@ script void OneMonsterEvent()
     SetFont("BIGFONT");
     HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.4, 150.0, 1.0, 19.0);
     SetHudSize(0, 0, false);
+    
+    Delay(35); // Allow the replacements to actually spawn.
+    
+    while (ThingCountName(GetMissionMonsterActor(CurrentLevel->SelectedMonster->Actor), 0) > 0)
+        Delay(1);
+    
+    AmbientSound("misc/secret", 127);
+    HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+    
+    CurrentLevel->Event = MAPEVENT_NONE;
 };
 
 script void HellUnleashedEvent()
@@ -1420,7 +1475,7 @@ script void MapLoop()
     };
     
     // Kills/Item/Secrets special bonuses
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS)
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
     {
         CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
         CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
@@ -1439,7 +1494,7 @@ script void MapLoop()
         CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
     };
     
-    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus)
+    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -1542,12 +1597,13 @@ script void MapLoop()
         CalculateBonusMaps();
     };
     
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_HARMONIZEDAURAS || CurrentLevel->Event == MAPEVENT_ONEMONSTER))
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_HARMONIZEDAURAS))
     {
         // All Auras and One-Monster events are ended by killing everything on the map
         if (Timer() > 4)
         {
             AmbientSound("misc/secret", 127);
+            SetFont("BIGFONT");
             HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
         };
         

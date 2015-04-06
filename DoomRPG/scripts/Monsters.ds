@@ -246,10 +246,19 @@ acscript void MonsterInit(int Flags)
     
     if (StrLen(Stats->ReplaceActor) > 0)
     {
+        int OldTID = ActivatorTID();
+        bool Ambush = GetActorProperty(0, APROP_Ambush);
         Thing_Remove(0);
         Stats->Init = false;
         if (StrICmp(Stats->ReplaceActor, "None") != 0)
-            Spawn(Stats->ReplaceActor, Stats->Position.X, Stats->Position.Y, Stats->Position.Z, ActivatorTID(), Stats->Position.Angle * 256);
+        {
+            int NewTID = UniqueTID();
+            if (Spawn(Stats->ReplaceActor, Stats->Position.X, Stats->Position.Y, Stats->Position.Z, NewTID, Stats->Position.Angle * 256))
+            {
+                SetActorProperty(NewTID, APROP_Ambush, Ambush);
+                Thing_ChangeTID(NewTID, OldTID);
+            };
+        };
         return;        
     };
     
