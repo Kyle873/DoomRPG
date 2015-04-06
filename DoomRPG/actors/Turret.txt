@@ -368,7 +368,13 @@ actor DRPGTurretPart : Inventory
     }
 }
 
-actor DRPGTurretRocket : Rocket
+actor DRPGTurretRocketProtection : PowerProtection
+{
+    DamageFactor "Fire", 0
+    Powerup.Duration 1
+}
+
+actor DRPGTurretRocket : DRPGRocket
 {
     Damage (CallACS("TurretGetProjectileDamage", TP_ROCKET))
     Species "Player"
@@ -386,10 +392,13 @@ actor DRPGTurretRocket : Rocket
         TNT1 A 0 A_ChangeFlag("SEEKERMISSILE", true)
         MISL A 1 Bright A_SeekerMissile(1, 1 * CallACS("TurretGetProjectileProperty", TP_ROCKET), SMF_LOOK)
         Loop
+    Death:
+        TNT1 A 0 A_RadiusGive("DRPGTurretRocketProtection", 128, RGF_PLAYERS)
+        Goto Super::Death
     }
 }
 
-actor DRPGTurretPlasma : PlasmaBall
+actor DRPGTurretPlasma : DRPGPlasmaBall
 {
     Damage (CallACS("TurretGetProjectileDamage", TP_PLASMA))
     Species "Player"
