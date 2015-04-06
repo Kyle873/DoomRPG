@@ -529,18 +529,12 @@ str[NAME_MAX_COLORS] NameColors =
     "\cq"; "\cr"; "\cs"; "\ct"; "\cu"; "\cv";
 };
 
-// TODO: Stupid bullshit hacks everywhere here because Contains is broken due to StrLen() being broken, GEGHEWFGIUHEUFIHEWIUGHWIUGNJHEIFNWJH
 function str GenerateName(str Actor, str Tag)
 {
-    // Human (DRPG)
-    if (Contains(Actor, "ZombieMan", true) || 
-        Contains(Actor, "ShotgunGuy", true) ||
-        Contains(Actor, "ChaingunGuy", true))
-        return GenerateZombieName(false);
-    
-    // Human (DRLA)
-    for (int i = 0; i < MAX_HUMANS; i++)
-        if (StrCmp(StrLeft(Actor, StrLen(Actor) - 3), MonsterHumanData[i][0]) == 0)
+    // Humans
+    if (CompatMode == COMPAT_DRLA)
+    {
+        if (Contains(Tag, "Human"))
         {
             bool Female = false;
             
@@ -550,6 +544,14 @@ function str GenerateName(str Actor, str Tag)
             
             return GenerateZombieName(Female);
         };
+    }
+    else // Vanilla/Extras
+    {
+        if (Contains(Actor, "ZombieMan", true) || 
+            Contains(Actor, "ShotgunGuy", true) ||
+            Contains(Actor, "ChaingunGuy", true))
+            return GenerateZombieName(false);
+    };
     
     // Marines
     if (Contains(Tag, "Marine"))

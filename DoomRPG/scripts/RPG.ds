@@ -6,6 +6,7 @@
 #include "HealthBars.dh"
 #include "HUD.dh"
 #include "ItemData.dh"
+#include "Map.dh"
 #include "Menu.dh"
 #include "Mission.dh"
 #include "Monsters.dh"
@@ -937,8 +938,15 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     else if (MaxItems < 0)
     {
         // [KS] Negative luck? Na na nana na! *raspberry*
+        if (CurrentLevel->Event == MAPEVENT_MEGABOSS)
+            return;
+        
         MaxItems = -MaxItems;
-        Actor = "DRPGGenericMonsterDropper";
+        if (CurrentLevel != NULL && CurrentLevel->Event == MAPEVENT_ONEMONSTER)
+            Actor = GetMissionMonsterActor(CurrentLevel->SelectedMonster->Actor)
+        else
+            Actor = "DRPGGenericMonsterDropper";
+        return;
     };
     
     // Find the furthest item from the player to determine some approximate boundaries to work with
