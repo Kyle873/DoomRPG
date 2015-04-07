@@ -106,6 +106,9 @@ acscript void UseCrate(int ID)
     
     SetActivator(GetActorProperty(0, APROP_TargetTID));
     
+    // Hack for if you somehow activate a crate while you're hacking another one
+    if (Player.CrateHacking) return;
+    
     // Someone else is hacking the crate
     if (Crates[ID].Hacking >= 0)
     {
@@ -244,12 +247,14 @@ acscript void CrateHack()
             Delay(1);
     };
     
+    // Prevent the use input from leaking into the input handling below (aka exploding a crate immediately in your face)
     Delay(4);
     
     ActivatorSound("hacking/begin", 127);
     
     SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
     Crates[Player.CrateID].Hacking = PlayerNumber();
+    Player.CrateHacking = true;
     
     while (Hacking)
     {
@@ -398,6 +403,7 @@ acscript void CrateHack()
     
     SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
     Crates[Player.CrateID].Hacking = -1;
+    Player.CrateHacking = false;
 };
 
 function void GenerateCrate(int ID, int Amount)
