@@ -417,6 +417,7 @@ script void SkillWheel() enter
 {
     Start:
     
+    bool Close = false;
     int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
     int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
     int Selected = -1;
@@ -434,7 +435,7 @@ script void SkillWheel() enter
     };
     
     // Wheel Loop
-    while (Player.SkillWheelOpen)
+    while (Player.SkillWheelOpen || CurrentRadius > 0)
     {
         SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
         
@@ -457,9 +458,23 @@ script void SkillWheel() enter
             };
             
             SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-            CurrentRadius = Radius;
-            Player.SkillWheelOpen = false;
+            Close = true;
         };
+        
+        // Animate Wheel
+        if (Close)
+        {
+            CurrentRadius -= GetCVar("drpg_skill_wheelspeed");
+            
+            // Closed
+            if (CurrentRadius <= 0)
+            {
+                Player.SkillWheelOpen = false;
+                Close = false;
+            };
+        }
+        else if (CurrentRadius < Radius)
+            CurrentRadius += GetCVar("drpg_skill_wheelspeed");
         
         // Selection
         fixed MouseX = -GetPlayerInputFixed(PlayerNumber(), INPUT_YAW) * 1.2;
@@ -578,22 +593,18 @@ script void SkillWheel() enter
             
             // Slot Number
             SetFont("SMALLFONT");
-            HudMessage("%d\n", i + 1, HUDMSG_FADEOUT, WHEEL_ID - MAX_SKILLKEYS + i, CR_GREEN, (int)(X + 16), (int)(Y - 16), 0.05, 1.0);
+            HudMessage("%d\n", i + 1, HUDMSG_PLAIN, WHEEL_ID - MAX_SKILLKEYS + i, CR_GREEN, (int)(X + 16), (int)(Y - 16), 0.05);
             
             // Icon
             if (Player.SkillCategory[i] != -1 && Player.SkillIndex[i] != -1)
-                PrintSpriteFade(Skills[Player.SkillCategory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05, 1.0);
+                PrintSprite(Skills[Player.SkillCategory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05);
             
             // Box
-            PrintSpriteFade("ItemBox", WHEEL_ID + MAX_SKILLKEYS + i, (int)X, (int)Y, 0.05, 1.0);
+            PrintSprite("ItemBox", WHEEL_ID + MAX_SKILLKEYS + i, (int)X, (int)Y, 0.05);
         };
         
-        // Animate Wheel
-        if (CurrentRadius < Radius)
-            CurrentRadius += GetCVar("drpg_skill_wheelspeed");
-        
         // Skill Info
-        if (CurrentSkill != nullptr)
+        if (CurrentSkill != nullptr && CurrentRadius >= Radius)
         {
             int Cost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel);
             str CostColor = (Player.EP < Cost ? "\cg" : "\cv");
@@ -607,12 +618,20 @@ script void SkillWheel() enter
             // Display
             SetFont("SMALLFONT");
             SetHudClipRect(0, 0, 0, 0, 128);
-            HudMessage("%s\n", Info, HUDMSG_FADEOUT, WHEEL_ID + (MAX_SKILLKEYS * 2), CR_WHITE, 320.4, 240.0, 0.05, 1.0);
+            HudMessage("%s\n", Info, HUDMSG_PLAIN, WHEEL_ID + (MAX_SKILLKEYS * 2), CR_WHITE, 320.4, 240.0, 0.05);
             SetHudClipRect(0, 0, 0, 0, 0);
         };
         
         Delay(1);
     };
+    
+    // Update the Skill Wheel CVARS
+    if (Player.FirstRun)
+        for (int i = 0; i < MAX_SKILLKEYS; i++)
+        {
+            SetCVar(StrParam("drpg_skillwheel_category_%d\n", i + 1), Player.SkillCategory[i]);
+            SetCVar(StrParam("drpg_skillwheel_index_%d\n", i + 1), Player.SkillIndex[i]);
+        };
     
     Delay(1);
     goto Start;
