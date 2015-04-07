@@ -415,17 +415,29 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
 // Skill Wheel
 script void SkillWheel() enter
 {
-    Start:
-    
     bool Close = false;
-    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-    int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-    int Selected = -1;
-    int LastSelected = -1;
-    int Radius = 96;
+    int Buttons;
+    int OldButtons;
+    int Radius = 128;
     int CurrentRadius = 0;
+    int Cost = 0;
+    int CurrentLevel = 0;
+    int Level = 0;
+    fixed LerpPos = 0;
+    fixed Increment;
+    fixed Location;
+    fixed OldLocation;
+    fixed Angle;
+    fixed X;
+    fixed Y;
     SkillPtr CurrentSkill;
     SkillLevelInfo *SkillLevel;
+    
+    Start:
+    
+    // Check Input
+    Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+    OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
     
     // Open the wheel
     if (Buttons & BT_USER1 && !((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0 || Player.Turret.WheelOpen))
@@ -443,18 +455,22 @@ script void SkillWheel() enter
         Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
         
+        // Setup lerp location
+        Increment = 1.0 / MAX_SKILLKEYS;
+        Location = (Increment * (fixed)Player.WheelSelection);
+        
         // Check for release
         if (!(Buttons & BT_USER1) && !(Buttons & BT_SPEED))
         {
-            if (Selected != -1)
+            if (Player.WheelSelection != -1)
             {
                 if (Player.InMenu && Player.Menu == 3)
                 {
-                    Player.SkillCategory[Selected] = Player.SkillPage;
-                    Player.SkillIndex[Selected] = Player.MenuIndex;
+                    Player.SkillCategory[Player.WheelSelection] = Player.SkillPage;
+                    Player.SkillIndex[Player.WheelSelection] = Player.MenuIndex;
                 }
                 else
-                    Player.SkillSelected = Selected;
+                    Player.SkillSelected = Player.WheelSelection;
             };
             
             SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
@@ -476,150 +492,94 @@ script void SkillWheel() enter
         else if (CurrentRadius < Radius)
             CurrentRadius += GetCVar("drpg_skill_wheelspeed");
         
-        // Selection
-        fixed MouseX = -GetPlayerInputFixed(PlayerNumber(), INPUT_YAW) * 1.2;
-        fixed MouseY = GetPlayerInputFixed(PlayerNumber(), INPUT_PITCH);
-        if (CurrentRadius >= Radius)
-        {
-            if (Buttons == (BT_USER1 | BT_FORWARD) && Selected != 0)
-                Selected = 0
-            else if (Buttons == (BT_USER1 | BT_FORWARD | BT_MOVERIGHT) && Selected != 1)
-            {
-                Selected = 1;
-                Delay(5);
-            }
-            else if (Buttons == (BT_USER1 | BT_MOVERIGHT) && Selected != 2)
-                Selected = 2
-            else if (Buttons == (BT_USER1 | BT_MOVERIGHT | BT_BACK) && Selected != 3)
-            {
-                Selected = 3;
-                Delay(5);
-            }
-            else if (Buttons == (BT_USER1 | BT_BACK) && Selected != 4)
-                Selected = 4
-            else if (Buttons == (BT_USER1 | BT_BACK | BT_MOVELEFT) && Selected != 5)
-            {
-                Selected = 5;
-                Delay(5);
-            }
-            else if (Buttons == (BT_USER1 | BT_MOVELEFT) && Selected != 6)
-                Selected = 6
-            else if (Buttons == (BT_USER1 | BT_MOVELEFT | BT_FORWARD) && Selected != 7)
-            {
-                Selected = 7;
-                Delay(5);
-            }
-            // There used to be non-working stuff here, but I fixed it to be working. -Kate
-            else if ((FixedSqrt(MouseX * MouseX + MouseY * MouseY)) > 0.02)
-            {
-                if (VectorAngle(MouseX, MouseY) > 0.1875 && VectorAngle(MouseX, MouseY) < 0.3125)
-                    Selected = 0
-                else if (VectorAngle(MouseX, MouseY) > 0.0625 && VectorAngle(MouseX, MouseY) < 0.1875)
-                    Selected = 1
-                else if (VectorAngle(MouseX, MouseY) >= 0 && VectorAngle(MouseX, MouseY) < 0.0625)
-                    Selected = 2
-                else if (VectorAngle(MouseX, MouseY) <= 1 && VectorAngle(MouseX, MouseY) > 0.9375)
-                    Selected = 2
-                else if (VectorAngle(MouseX, MouseY) > 0.8125 && VectorAngle(MouseX, MouseY) < 0.9375)
-                    Selected = 3
-                else if (VectorAngle(MouseX, MouseY) > 0.6875 && VectorAngle(MouseX, MouseY) < 0.8125)
-                    Selected = 4
-                else if (VectorAngle(MouseX, MouseY) > 0.5625 && VectorAngle(MouseX, MouseY) < 0.6875)
-                    Selected = 5
-                else if (VectorAngle(MouseX, MouseY) > 0.4375 && VectorAngle(MouseX, MouseY) < 0.5625)
-                    Selected = 6
-                else if (VectorAngle(MouseX, MouseY) > 0.3125 && VectorAngle(MouseX, MouseY) < 0.4375)
-                    Selected = 7;
-            };
-            // else
-               // Selected = -1;
-        };
+        // Lerp position
+        if (LerpPos <= 1.0)
+            LerpPos += 0.1;
+        if (LerpPos > 1.0)
+            LerpPos = 1.0;
         
-        // Set Skill
-        if (Selected >= 0 && Player.SkillCategory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
+        // Input
+        if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT))
         {
-            CurrentSkill = &Skills[Player.SkillCategory[Selected]][Player.SkillIndex[Selected]];
-            SkillLevel = &Player.SkillLevel[Player.SkillCategory[Selected]][Player.SkillIndex[Selected]];
-        }
-        else
-        {
-            CurrentSkill = nullptr;
-            SkillLevel = nullptr;
+            ActivatorSound("menu/click", 127);
+            Player.WheelSelection--;
+            OldLocation = Location;
+            LerpPos = 0;
+            if (Player.WheelSelection < 0) Player.WheelSelection = MAX_SKILLKEYS - 1;
         };
-        
-        // Extra Input Handling
-        if (Buttons & BT_SPEED && Selected != -1)
+        if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT))
         {
+            ActivatorSound("menu/click", 127);
+            Player.WheelSelection++;
+            OldLocation = Location;
+            LerpPos = 0;
+            if (Player.WheelSelection > MAX_SKILLKEYS - 1) Player.WheelSelection = 0;
+        };
+        if (Buttons & BT_SPEED && Player.SkillCategory[Player.WheelSelection] != -1 && Player.SkillIndex[Player.WheelSelection] != -1)
+        {
+            SkillLevel = &Player.SkillLevel[Player.SkillCategory[Player.WheelSelection]][Player.SkillIndex[Player.WheelSelection]];
+            
             // Decrease selected skill level
-            if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT) && SkillLevel->CurrentLevel > 1)
+            if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD) && SkillLevel->CurrentLevel > 1)
             {
                 SkillLevel->CurrentLevel--;
                 AmbientSound("menu/move", 127);
             };
             
             // Increase selected skill level
-            if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT) && SkillLevel->CurrentLevel < SkillLevel->Level)
+            if (Buttons & BT_BACK && !(OldButtons & BT_BACK) && SkillLevel->CurrentLevel < SkillLevel->Level)
             {
                 SkillLevel->CurrentLevel++;
                 AmbientSound("menu/move", 127);
             };
             
             // Clear Skill
-            if (Buttons & BT_USE && Player.SkillCategory[Selected] != -1 && Player.SkillIndex[Selected] != -1)
+            if (Buttons & BT_USE)
             {
-                Player.SkillCategory[Selected] = -1;
-                Player.SkillIndex[Selected] = -1;
+                Player.SkillCategory[Player.WheelSelection] = -1;
+                Player.SkillIndex[Player.WheelSelection] = -1;
                 AmbientSound("menu/move", 127);
             };
         };
-        
-        // Play sound
-        if (Selected != LastSelected && Selected >= 0)
-            ActivatorSound("menu/click", 127);
-        
-        LastSelected = Selected;
         
         // Draw Wheel
         SetHudSize(640, 480, false);
         for (int i = 0; i < MAX_SKILLKEYS; i++)
         {
-            fixed Angle = -0.25 + ((1.0 / MAX_SKILLKEYS) * i);
-            fixed X = 320.0 + (CurrentRadius * Cos(Angle));
-            fixed Y = 240.0 + (CurrentRadius * Sin(Angle));
+            Angle = 0.25 + Lerp(OldLocation, Location, LerpPos) - (Increment * i);
+            X = 320.0 + CurrentRadius * Cos(Angle);
+            Y = 240.0 + CurrentRadius * Sin(Angle);
+            Level = Player.SkillLevel[Player.SkillCategory[i]][Player.SkillIndex[i]].Level;
+            CurrentLevel = Player.SkillLevel[Player.SkillCategory[i]][Player.SkillIndex[i]].CurrentLevel;
+            Cost = ScaleEPCost(Skills[Player.SkillCategory[i]][Player.SkillIndex[i]].Cost * CurrentLevel);
             
-            // Cursor
-            if (i == Selected)
-                PrintSprite("SelectBo", 0, (int)X, (int)Y, 0.05);
-            
-            // Slot Number
+            // Slot Number, Cost, Levels
             SetFont("SMALLFONT");
-            HudMessage("%d\n", i + 1, HUDMSG_PLAIN, WHEEL_ID - MAX_SKILLKEYS + i, CR_GREEN, (int)(X + 16), (int)(Y - 16), 0.05);
+            HudMessage("%d\n", i + 1, HUDMSG_PLAIN, 0, CR_WHITE, (int)(X + 18), (int)(Y - 18), 0.05);
+            if (Player.SkillCategory[i] != -1 && Player.SkillIndex[i] != -1)
+            {
+                HudMessage("%d\n", Cost, HUDMSG_PLAIN, 0, (Level ? CR_LIGHTBLUE : CR_RED), (int)(X - 21) + 0.1, (int)(Y - 18), 0.05);
+                HudMessage("%d/%d\n", CurrentLevel, Level, HUDMSG_PLAIN, 0, (Level > 0 ? CR_GREEN : CR_RED), (int)X, (int)(Y + 18), 0.05);
+            };
             
             // Icon
             if (Player.SkillCategory[i] != -1 && Player.SkillIndex[i] != -1)
-                PrintSprite(Skills[Player.SkillCategory[i]][Player.SkillIndex[i]].Icon, WHEEL_ID + i, (int)X, (int)Y, 0.05);
-            
-            // Box
-            PrintSprite("ItemBox", WHEEL_ID + MAX_SKILLKEYS + i, (int)X, (int)Y, 0.05);
+                PrintSprite(Skills[Player.SkillCategory[i]][Player.SkillIndex[i]].Icon, 0, (int)X, (int)Y, 0.05)
+            else
+                PrintSprite("SprNone", 0, (int)X, (int)Y, 0.05);
         };
         
-        // Skill Info
-        if (CurrentSkill != nullptr && CurrentRadius >= Radius)
+        // Cursor
+        PrintSprite("ItemBoxH", 0, 320, 240 + CurrentRadius, 0.05);
+        
+        // Name
+        if (Player.SkillCategory[Player.WheelSelection] != -1 && Player.SkillIndex[Player.WheelSelection] != -1)
         {
-            int Cost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel);
-            str CostColor = (Player.EP < Cost ? "\cg" : "\cv");
-            str Info;
+            CurrentSkill = &SkillData[Player.SkillCategory[Player.WheelSelection]][Player.SkillIndex[Player.WheelSelection]];
+            Level = Player.SkillLevel[Player.SkillCategory[Player.WheelSelection]][Player.SkillIndex[Player.WheelSelection]].Level;
             
-            // Build info string
-            Info = StrParam("\cd%s\n\n\n", CurrentSkill->Name);
-            Info = StrParam("%s\cjLevel: %d/%d\n\n", Info, SkillLevel->CurrentLevel, SkillLevel->Level);
-            Info = StrParam("%s%s%d EP\n", Info, CostColor, Cost);
-            
-            // Display
-            SetFont("SMALLFONT");
-            SetHudClipRect(0, 0, 0, 0, 128);
-            HudMessage("%s\n", Info, HUDMSG_PLAIN, WHEEL_ID + (MAX_SKILLKEYS * 2), CR_WHITE, 320.4, 240.0, 0.05);
-            SetHudClipRect(0, 0, 0, 0, 0);
+            SetFont("BIGFONT");
+            HudMessage("%s\n", CurrentSkill->Name, HUDMSG_PLAIN, 0, (Level > 0 ? CR_WHITE : CR_RED), 320, 240 + CurrentRadius + 32, 0.05);
         };
         
         Delay(1);
