@@ -589,6 +589,12 @@ script void MonsterInitStats(int StatFlags)
     // Apply Aura
     if (!GetActorProperty(0, APROP_Friendly) && !(Stats->Flags & MF_NOAURA) && !(Stats->Flags & MF_NOAURAGEN) && !StatFlags)
     {
+        // Check to see if any players have a Kill Auras event
+        int AuraMissionAdd = 0;
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            if (Players(i).Mission.Type == MT_KILLAURAS)
+                AuraMissionAdd += Players(i).Mission.Amount;
+        
         // 1st roll: Chance of having an aura at all
         bool HasAura = true;
         if (CurrentLevel->Event != MAPEVENT_ALLAURAS)
@@ -598,6 +604,8 @@ script void MonsterInitStats(int StatFlags)
             if (AuraChance > 1000) AuraChance = 1000;
             AuraChance *= AuraChance;
             AuraChance /= 1000;
+            if (AuraMissionAdd > 0)
+                AuraChance += (AuraMissionAdd * 10);
             HasAura = (Random(0, 1000) < AuraChance);
         };
         
@@ -612,7 +620,7 @@ script void MonsterInitStats(int StatFlags)
         while (AuraNumber > 0)
         {
             int AuraType = Random(0, AURA_MAX - 1);
-            if (Stats->Aura.Type[AuraType].Active == true)
+            if (Stats->Aura.Type[AuraType].Active)
                 continue;
             
             Stats->Aura.Type[AuraType].Active = true;
@@ -627,14 +635,10 @@ script void MonsterInitStats(int StatFlags)
         if (CurrentLevel->Event == MAPEVENT_HARMONIZEDAURAS)
         {
             if (CurrentLevel->AuraType == AURA_MAX)
-            {
                 for (int j = 0; j < AURA_MAX; j++)
-                    Stats->Aura.Type[j].Active = true;
-            }
+                    Stats->Aura.Type[j].Active = true
             else
-            {
                 Stats->Aura.Type[CurrentLevel->AuraType].Active = true;
-            };
         };
     };
     
