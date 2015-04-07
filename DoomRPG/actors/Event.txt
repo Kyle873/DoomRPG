@@ -10,8 +10,6 @@ actor DRPGThermonuclearBomb : SwitchableDecoration
     Height 32
     Mass 50
     
-    Scale 0.75
-    
     +SOLID
     -SHOOTABLE
     +NOBLOOD
@@ -41,14 +39,55 @@ actor DRPGThermonuclearBomb : SwitchableDecoration
         TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombActivate", 0)
         Goto SpawnActive
     Disarmed:
-        TNT1 A 0 A_StopSound(CHAN_6)
-        TNT1 A 0 A_ChangeFlag("SHOOTABLE", false)
-        TBOM C -1
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombPickup")
         Stop
     Death:
     Explode:
         TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombExplode", 0)
         TNT1 A 0 A_StopSound(CHAN_6)
+        TNT1 A 0 A_SetScale(4.0, 4.0)
+        MISL BCD 6 Bright
+        Stop
+    }
+}
+
+actor DRPGThermonuclearBombPickup : CustomInventory
+{
+    Tag "Thermonuclear Bomb"
+    
+    Inventory.MaxAmount 10
+    Inventory.PickupMessage "Picked up the ThermoNuclear Bomb!"
+    Inventory.PickupSound "nuke/pickup"
+    Inventory.Icon "NUKE"
+    
+    +INVBAR
+    
+    States
+    {
+    Spawn:
+        TBOM C -1
+        Stop
+    Use:
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombDropped")
+        Stop
+    }
+}
+
+actor DRPGThermonuclearBombDropped
+{
+    -SOLID
+    +OLDRADIUSDMG
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_ChangeVelocity(8, 0, 0, CVF_RELATIVE)
+        TNT1 A 0 A_ChangeFlag("SPECIAL", false)
+        TNT1 A 0 A_PlaySound("nuke/countdown", CHAN_5, 1.0, false, 0.0)
+        TBOM A 350 Bright
+        TNT1 A 0 A_PlaySound("nuke/detonate", CHAN_5, 1.0, false, 0.0)
+        TNT1 A 0 A_Explode(25000, 32767, 0, true, 32767, 360, 25000)
+        TNT1 A 0 A_SetScale(4.0, 4.0)
         MISL BCD 6 Bright
         Stop
     }
