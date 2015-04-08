@@ -253,6 +253,7 @@ script void Init() enter
     DamageNumbers();
     InfoPopoffs();
     HealthBars();
+    AutosaveHandler();
     ShopItemAutoHandler();
     
     // GUI
@@ -1326,15 +1327,19 @@ script void DefaultLoadout()
     };
     
     // Shield Databases
-    ItemInfoPtr [LOADOUT_SHIELDPARTS][MAX_PARTS * 3] ShieldPartTypes;
-    ItemInfoPtr [LOADOUT_SHIELDACCS][MAX_ACCESSORIES] ShieldAccessoryTypes;
-    int[LOADOUT_SHIELDPARTS] PartCount;
+    ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_BODIES] ShieldBodyTypes;
+    ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_BATTERIES] ShieldBatteryTypes;
+    ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_CAPACITORS] ShieldCapacitorTypes;
+    ItemInfoPtr[LOADOUT_SHIELDACCS][MAX_ACCESSORIES] ShieldAccessoryTypes;
+    static int[LOADOUT_SHIELDPARTS] BodyCount;
+    static int[LOADOUT_SHIELDPARTS] BatteryCount;
+    static int[LOADOUT_SHIELDPARTS] CapacitorCount;
     int[LOADOUT_SHIELDACCS] AccessoryCount;
     
     // DRLA Databases
-    ItemInfoPtr [LOADOUT_DRLAWEAPONS][ITEM_MAX] DRLAWeaponTypes;
-    ItemInfoPtr [LOADOUT_DRLAARMORS][ITEM_MAX] DRLAArmorTypes;
-    ItemInfoPtr [LOADOUT_DRLAARMORS][ITEM_MAX] DRLABootsTypes;
+    ItemInfoPtr[LOADOUT_DRLAWEAPONS][ITEM_MAX] DRLAWeaponTypes;
+    ItemInfoPtr[LOADOUT_DRLAARMORS][ITEM_MAX] DRLAArmorTypes;
+    ItemInfoPtr[LOADOUT_DRLAARMORS][ITEM_MAX] DRLABootsTypes;
     int[LOADOUT_DRLAWEAPONS] DRLAWeaponCount;
     int[LOADOUT_DRLAARMORS] DRLAArmorCount;
     int[LOADOUT_DRLAARMORS] DRLABootsCount;
@@ -1343,14 +1348,27 @@ script void DefaultLoadout()
     Delay(4);
     
     // Build Shield and DRLA item databases based on their respective items' color codes
-    for (int i = 0; i < 3; i++)
-        for (int j = 0; j < ShieldPartsMax[i]; j++)
-            for (int k = 0; k < LOADOUT_SHIELDPARTS; k++)
-                if (Contains(ShieldParts[i][j].Name, ShieldPartColorCodes[k]))
-                {
-                    ShieldPartTypes[k][PartCount[k]++] = FindItemInCategory(ShieldParts[i][j].Actor, 5);
-                    break;
-                };
+    for (int i = 0; i < MAX_BODIES; i++)
+        for (int j = 0; j < LOADOUT_SHIELDPARTS; j++)
+            if (Contains(ShieldParts[0][i].Name, ShieldPartColorCodes[j]))
+            {
+                ShieldBodyTypes[j][BodyCount[j]++] = FindItemInCategory(ShieldParts[0][i].Actor, 5);
+                break;
+            };
+    for (int i = 0; i < MAX_BATTERIES; i++)
+        for (int j = 0; j < LOADOUT_SHIELDPARTS; j++)
+            if (Contains(ShieldParts[1][i].Name, ShieldPartColorCodes[j]))
+            {
+                ShieldBatteryTypes[j][BatteryCount[j]++] = FindItemInCategory(ShieldParts[1][i].Actor, 5);
+                break;
+            };
+    for (int i = 0; i < MAX_CAPACITORS; i++)
+        for (int j = 0; j < LOADOUT_SHIELDPARTS; j++)
+            if (Contains(ShieldParts[2][i].Name, ShieldPartColorCodes[j]))
+            {
+                ShieldCapacitorTypes[j][CapacitorCount[j]++] = FindItemInCategory(ShieldParts[2][i].Actor, 5);
+                break;
+            };
     for (int i = 0; i < MAX_ACCESSORIES; i++)
         for (int j = 0; j < LOADOUT_SHIELDACCS; j++)
             if (Contains(ShieldAccessories[i].Name, ShieldAccessoryColorCodes[j]))
@@ -1490,45 +1508,67 @@ script void DefaultLoadout()
     Player.Augs.BaseSlots = GetCVar("drpg_start_aug_slots");
     
     // Shield Parts
-    bool FoundPart = false;
-    int TotalParts = GetCVar("drpg_start_shield_amount");
-    int TotalAccessories = GetCVar("drpg_start_shield_amount_acc");
-    int Parts = 0;
-    int Accessories = 0;
-    
-    // Bodies, Batteries, Capacitors
-    if (GetCVar("drpg_start_shield_type") >= 0)
-        TotalParts = PartCount[GetCVar("drpg_start_shield_type")];
-    if (GetCVar("drpg_start_shield_type_acc") >= 0)
-        TotalAccessories = AccessoryCount[GetCVar("drpg_start_shield_type_acc")];
-    while (Parts < TotalParts)
+    for (int i = 0; i < 3; i++)
     {
-        for (int i = 0; i < LOADOUT_SHIELDPARTS; i++)
+        int *[3] Count =
         {
-            FoundPart = false;
+            &BodyCount[0];
+            &BatteryCount[0];
+            &CapacitorCount[0];
+        };
+        int[3] Total =
+        {
+            GetCVar("drpg_start_shield_amount_body");
+            GetCVar("drpg_start_shield_amount_battery");
+            GetCVar("drpg_start_shield_amount_capacitor");
+        };
+        int[3] Current;
         
-            // Force the part type if the CVAR is set
-            if (GetCVar("drpg_start_shield_type") >= 0)
-                i = GetCVar("drpg_start_shield_type");
+        // Calculate total if we specify a type so that overflows or explosions don't happen
+        // Always returns 0, fuck if I can figure out why
+        if (GetCVar("drpg_start_shield_type") >= 0)
+            if (Total[i] > Count[i][GetCVar("drpg_start_shield_type")])
+                Total[i] = Count[i][GetCVar("drpg_start_shield_type")];
+        
+        // Log("%d : %d\n", Total[i], *Count[i][GetCVar("drpg_start_shield_type")]);
+        
+        while (Current[i] < Total[i])
+        {
+            int Category = Random(0, LOADOUT_SHIELDPARTS - 1);
             
-            for (int j = 0; j < PartCount[i]; j++)
-                if (Random(1, 4) == 1 && !CheckInventory(ShieldPartTypes[i][j]->Actor))
+            // Force the category type if the CVAR is set
+            if (GetCVar("drpg_start_shield_type") >= 0)
+                Category = GetCVar("drpg_start_shield_type");
+            
+            for (int j = 0; j < Count[i][Category]; j++)
+            {
+                ItemInfoPtr *[3] Type =
                 {
-                    GiveInventory(ShieldPartTypes[i][j]->Actor, 1);
-                    Parts++;
-                    FoundPart = true;
+                    &ShieldBodyTypes[Category][j];
+                    &ShieldBatteryTypes[Category][j];
+                    &ShieldCapacitorTypes[Category][j];
+                };
+                
+                if (!CheckInventory((*(Type[i]))->Actor))
+                {
+                    GiveInventory((*(Type[i]))->Actor, 1);
+                    Current[i]++;
                     break;
                 };
-            
-            if (FoundPart)
-                break;
+            };
             
             if ((Timer() % 5) == 0)
                 Delay(1);
         };
     };
-    
+
     // Shield Accessories
+    bool FoundPart = false;
+    int TotalAccessories = GetCVar("drpg_start_shield_amount_acc");
+    int Accessories = 0;
+    if (GetCVar("drpg_start_shield_type_acc") >= 0)
+        if (Accessories > AccessoryCount[GetCVar("drpg_start_shield_type_acc")])
+        TotalAccessories = AccessoryCount[GetCVar("drpg_start_shield_type_acc")];
     while (Accessories < TotalAccessories)
     {
         for (int i = 0; i < LOADOUT_SHIELDACCS; i++)

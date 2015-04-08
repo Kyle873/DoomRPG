@@ -175,16 +175,8 @@ acscript void UseStim() net
         if (Player.Stim.Current[i] > 0)
             Player.Stim.ActiveBonus[i] = true;
     
-    // Toxicity From amount of different compounds
-    for (int i = 0; i < STIM_MAX; i++)
-        if (Player.Stim.ActiveBonus[i])
-            Player.Toxicity++;
-    
-    // Toxicity from total amount of compounds
-    Player.Toxicity += Player.Stim.Amount / 5;
-    
-    // Toxicity added Based on Skill
-    Player.Toxicity += GameSkill();
+    // Add Toxicity
+    Player.Toxicity += Player.Stim.Toxicity;
     
     // Apply current Stim to last used Stim
     for (int i = 0; i < STIM_MAX; i++)
@@ -294,6 +286,20 @@ function void CheckStim()
         Player.Stim.Capacity = 50;
     if (Player.Stim.Size == 4) // Extra-Large
         Player.Stim.Capacity = 100;
+    
+    // Reset toxicity var
+    Player.Stim.Toxicity = 0;
+    
+    // Toxicity From amount of different compounds
+    for (int i = 0; i < STIM_MAX; i++)
+        if (Player.Stim.Current[i] > 0)
+            Player.Stim.Toxicity++;
+    
+    // Toxicity from total amount of compounds
+    Player.Stim.Toxicity += Player.Stim.Amount / 5;
+    
+    // Toxicity added Based on Skill
+    Player.Stim.Toxicity += GameSkill();
     
     // Calculate the current Stim amount
     Player.Stim.Amount = 0;
