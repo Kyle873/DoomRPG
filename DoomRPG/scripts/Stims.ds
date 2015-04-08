@@ -311,21 +311,36 @@ function void CheckStim()
     for (int i = 0; i < STIM_MAX; i++)
         Player.Stim.Amount += Player.Stim.Current[i];
     
-    // Decrease Stim Timer
-    if (Player.Stim.Timer > 0)
-        Player.Stim.Timer--;
-    
     // Mugshot
     if (Player.Stim.Timer > 0)
         SetMugShotState("Ouch");
     
+    // Stim Timer handling
+    if (Player.Stim.Timer > 0)
+        Player.Stim.Timer--;
+    if (Player.Stim.Timer <= 0) // Reset timer maximums
+    {
+        Player.Stim.Timer = 0;
+        Player.Stim.TimerMax = 0;
+    };
+    
     // Powerup Timer Handling
     for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
+    {
+        // Tick timers
         if (Player.Stim.PowerupTimer[i] > 0)
         {
             GiveInventory(StrParam("%s\n", StimPowerupActors[i - StimPowerupStart]), 1);
             Player.Stim.PowerupTimer[i]--;
         };
+        
+        // Reset timer maximums
+        if (Player.Stim.PowerupTimer[i] <= 0)
+        {
+            Player.Stim.PowerupTimer[i] = 0;
+            Player.Stim.PowerupTimerMax[i] = 0;
+        };
+    };
     
     // Remove bonuses and active flags when Stim has expired
     if (Player.Stim.Timer <= 0 && Player.Stim.Active)
