@@ -1525,12 +1525,9 @@ script void DefaultLoadout()
         int[3] Current;
         
         // Calculate total if we specify a type so that overflows or explosions don't happen
-        // Always returns 0, fuck if I can figure out why
         if (GetCVar("drpg_start_shield_type") >= 0)
             if (Total[i] > Count[i][GetCVar("drpg_start_shield_type")])
                 Total[i] = Count[i][GetCVar("drpg_start_shield_type")];
-        
-        // Log("%d : %d\n", Total[i], *Count[i][GetCVar("drpg_start_shield_type")]);
         
         while (Current[i] < Total[i])
         {
@@ -1563,37 +1560,33 @@ script void DefaultLoadout()
     };
 
     // Shield Accessories
-    bool FoundPart = false;
     int TotalAccessories = GetCVar("drpg_start_shield_amount_acc");
     int Accessories = 0;
     if (GetCVar("drpg_start_shield_type_acc") >= 0)
-        if (Accessories > AccessoryCount[GetCVar("drpg_start_shield_type_acc")])
-        TotalAccessories = AccessoryCount[GetCVar("drpg_start_shield_type_acc")];
+        if (TotalAccessories > AccessoryCount[GetCVar("drpg_start_shield_type_acc")])
+            TotalAccessories = AccessoryCount[GetCVar("drpg_start_shield_type_acc")];
     while (Accessories < TotalAccessories)
     {
-        for (int i = 0; i < LOADOUT_SHIELDACCS; i++)
+        int Category = Random(0, LOADOUT_SHIELDACCS - 1);
+        
+        // Force the category type if the CVAR is set
+        if (GetCVar("drpg_start_shield_type_acc") >= 0)
+            Category = GetCVar("drpg_start_shield_type_acc");
+        
+        for (int i = 0; i < AccessoryCount[Category]; i++)
         {
-            FoundPart = false;
+            ItemInfoPtr *Type = &ShieldAccessoryTypes[Category][i];
             
-            // Force the accessory type if the CVAR is set
-            if (GetCVar("drpg_start_shield_type_acc") >= 0)
-                i = GetCVar("drpg_start_shield_type_acc");
-            
-            for (int j = 0; j < AccessoryCount[i]; j++)
-                if (Random(1, 4) == 1 && !CheckInventory(ShieldAccessoryTypes[i][j]->Actor))
-                {
-                    GiveInventory(ShieldAccessoryTypes[i][j]->Actor, 1);
-                    Accessories++;
-                    FoundPart = true;
-                    break;
-                };
-            
-            if (FoundPart)
+            if (!CheckInventory((*Type)->Actor))
+            {
+                GiveInventory((*Type)->Actor, 1);
+                Accessories++;
                 break;
-            
-            if ((Timer() % 5) == 0)
-                Delay(1);
+            };
         };
+        
+        if ((Timer() % 5) == 0)
+            Delay(1);
     };
     
     // Stims

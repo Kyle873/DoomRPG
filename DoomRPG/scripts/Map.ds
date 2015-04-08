@@ -1261,7 +1261,7 @@ script void HellUnleashedEvent()
             AddMult = 0.001;
         
         // Spawn in next wave of enemies
-        if ((Timer() % (35 * (int)ParTime)) == 0)
+        if ((Timer() % (35 * (int)(ParTime / GameSkill()))) == 0)
             HellUnleashedSpawnMonsters();
         
         // Slowly increment the values
@@ -1310,13 +1310,16 @@ acscript void HellUnleashedStart()
     
     CurrentLevel->HellUnleashedActive = 2;
     
+    // Spawn an initial wave of enemies
+    HellUnleashedSpawnMonsters();
+    
     SetMusic("HellUnle");
 };
 
 script void HellUnleashedSpawnMonsters()
 {
     if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \c-Spawning next wave of monsters...\n");
+        Log("\cdDEBUG: \caHell Unleashed \c-- Spawning next wave of monsters...\n");
     
     Delay(1); // Maximize our instructions
     
@@ -1626,6 +1629,14 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         HudMessageBold("\cgA mysterious force prevents you from leaving!\n",
                        HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
         SetHudSize(0, 0, false);
+        
+        // In Hell Unleashed, spawn waves of enemies to spite the player for trying to leave without opening the box
+        if (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive)
+            while (!CurrentLevel->HellUnleashedActive)
+            {
+                HellUnleashedSpawnMonsters();
+                Delay(35 * 30);
+            };
         
         // Wait until the event is over
         while (CurrentLevel->Event == MAPEVENT_MEGABOSS || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
