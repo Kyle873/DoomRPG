@@ -263,10 +263,15 @@ acscript void AddCompound(int Type, int Amount)
         Player.Stim.Vials[Type] = Player.Stim.VialMax;
 };
 
+acscript void AddCompoundDirect(int Type, int Amount)
+{
+    Player.Stim.Current[Type] = Amount;
+    UseStim(true);
+};
+
 function void CheckStim()
 {
-    // Saves typing and lets me iterate the powerup timers way easier
-    auto str[] StimPowerupActors =
+    static str[9] StimPowerupActors =
     {
         "DRPGPowerStimIndestructible";
         "DRPGPowerStimShadow";
@@ -334,7 +339,7 @@ function void CheckStim()
             };
             
             // Regeneration Handling
-            if (i == STIM_ADRENALINE)
+            if (i == STIM_ADRENALINE && Player.Stim.PowerupTimer[i] > 0)
                 Player.RegenBoostTimer = Player.Stim.PowerupTimer[i];
             
             // Reset timer maximums
@@ -367,7 +372,7 @@ function void CheckStim()
                 Player.Stim.ActiveBonus[i] = false;
         };
     }
-    else // Hack to reset the regen boost timer per-tic if the stims are deactivated after they are active
+    else if (Player.Stim.ActiveBonus[STIM_ADRENALINE]) // Hack to reset the regen boost timer per-tic if the stims are deactivated after they are active
         Player.RegenBoostTimer = 0;
 };
 
