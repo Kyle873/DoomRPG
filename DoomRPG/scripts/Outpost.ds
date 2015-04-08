@@ -12,6 +12,7 @@
 #include "Shop.dh"
 #include "Skills.dh"
 #include "Stats.dh"
+#include "Stims.dh"
 #include "Utils.dh"
 
 // Globals
@@ -247,6 +248,212 @@ acscript void RegenArea(int ID)
         HudMessage("Augmentation Battery Recharged\n", HUDMSG_FADEOUT, 0, CR_YELLOW, 0.5, 0.33, 2.0, 0.5);
         FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0.0, 1.0);
         ActivatorSound("regen/battery", 127);
+    };
+};
+
+acscript void StimInjector()
+{
+    int Index = 0;
+    int[STIM_MAX] Injector;
+    int[STIM_MAX] PrevVials;
+    
+    // if you're already in a menu, terminate
+    if (Player.InMenu || Player.InShop || Player.OutpostMenu == OMENU_LEVELTRANSPORT) return;
+    
+    // If the Marines are hostile and the bosses aren't dead, terminate
+    if (MarinesHostile && ThingCount(0, MarineBossTID) > 0) return;
+    
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+    Player.OutpostMenu = OMENU_STIMINJECTOR;
+    
+    // Empty the injector and populate the previous vials
+    for (int i = 0; i <= STIM_MAX - 1; i++)
+    {
+        Injector[i] = 0;
+        PrevVials[i] = Player.Stim.Vials[i];
+    };
+    
+    while (true)
+    {
+        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        int Color = 0;
+        int Amount = 0;
+        int Cost = 0;
+        fixed BaseX = 120.1;
+        fixed BaseY = 160.0;
+        fixed X = BaseX;
+        fixed Y = BaseY;
+        fixed YOff = 0;
+        
+        // Count compounds in the injector
+        for (int i = 0; i <= STIM_MAX - 1; i++)
+            Amount += Injector[i];
+        
+        // Calculate Cost
+        for (int i = 0; i <= STIM_MAX - 1; i++)
+        {
+            if (i >= StimStatsEnd)
+                Cost += Injector[i] * 100
+            else
+                Cost += Injector[i] * 10;
+        };
+        
+        SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+        
+        // Draw injector bar
+        for (int i = 0; i <= STIM_MAX - 1; i++)
+        {
+            if (Injector[i] > 0)
+            {
+                if (X >= 300.0)
+                {
+                    X = BaseX;
+                    YOff += 6.0;
+                };
+                
+                DrawBar(StrParam("Stim%d\n", i + 1), X, Y - YOff + 10.0, Injector[i], true);
+                X += Injector[i];
+            };
+        };
+        
+        // Draw Amount/Cost
+        X = BaseX;
+        SetFont("BIGFONT");
+        HudMessage("Injector: %d (\cf%d Credits\c-)\n", Amount, Cost, HUDMSG_PLAIN, 0, CR_GREEN, X, Y - YOff, 0.05);
+        
+        Y += 32.0;
+        
+        // Vial drawing
+        for (int i = 0; i <= STIM_MAX - 1; i++)
+        {
+            // Reset X/Y
+            X = BaseX;
+            
+            // Set the Color
+            if (i == Index)
+                Color = MenuCursorColor
+            else
+                Color = CompoundColors[i];
+            
+            // Vial Bar
+            int Amount = (int)(((fixed)Player.Stim.Vials[i] / (fixed)(Player.Stim.VialMax + 1)) * 100.0);
+            if (Amount > 100)
+                Amount = 100;
+            DrawBar(StrParam("Stim%d\n", i + 1), X, Y, Amount);
+            
+            // Vial
+            X += 112.0;
+            SetFont("SMALLFONT");
+            HudMessage("%s: %d/%d\n", CompoundNames[i], Player.Stim.Vials[i], Player.Stim.VialMax, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
+            
+            if (i == StimStatsEnd - 1 || i == StimPowerupStart - 1)
+                Y += 16.0
+            else
+                Y += 8.0;
+        };
+        
+        // Input -- pukename stiminjector; pukename givecompounds 10; pukename givecredits
+        if (Buttons == BT_USE && OldButtons != BT_USE)
+        {
+            if (Amount == 0)
+            {
+                PrintError("The injector is empty");
+                ActivatorSound("menu/error", 127);
+            }
+            else if (CheckInventory("DRPGCredits") >= Cost)
+            {
+                // Save the currently held injector
+                int Size = Player.Stim.Size;
+                int[STIM_MAX] HeldInjector;
+                for (int i = 0; i <= STIM_MAX - 1; i++)
+                    HeldInjector[i] = Player.Stim.Current[i];
+                
+                // Push injector
+                for (int i = 0; i <= STIM_MAX - 1; i++)
+                    Player.Stim.Current[i] = Injector[i];
+                
+                UseStim(true);
+                
+                // Hack to counteract the toxicity that would be given normally by a stim
+                Player.Toxicity -= Player.Stim.Toxicity;
+                
+                // Take Credits
+                TakeInventory("DRPGCredits", Cost);
+                
+                // Restore the previous injector
+                Player.Stim.Size = Size;
+                for (int i = 0; i <= STIM_MAX - 1; i++)
+                    Player.Stim.Current[i] = HeldInjector[i];
+                
+                SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+                Player.OutpostMenu = 0;
+                return;
+            }
+            else
+            {
+                PrintError("You don't have enough Credits");
+                ActivatorSound("menu/error", 127);
+            };
+        };
+        if (Buttons == BT_SPEED)
+        {
+            // Reset vials
+            for (int i = 0; i <= STIM_MAX - 1; i++)
+                Player.Stim.Vials[i] = PrevVials[i];
+            
+            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+            Player.OutpostMenu = 0;
+            return;
+        };
+        if (Buttons == BT_FORWARD && (OldButtons != BT_FORWARD || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
+        {
+            Index--;
+            ActivatorSound("menu/move", 127);
+            if (Index < 0) Index = STIM_MAX - 1;
+        };
+        if (Buttons == BT_FORWARD)
+            Player.DelayTimer++;
+        if (Buttons == BT_BACK && (OldButtons != BT_BACK || Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
+        {
+            Index++;
+            ActivatorSound("menu/move", 127);
+            if (Index > STIM_MAX) Index = 0;
+        };
+        if (Buttons == BT_BACK)
+            Player.DelayTimer++;
+        if (((Buttons == BT_LEFT && OldButtons != BT_LEFT) ||
+            (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT)) ||
+            (Buttons == BT_LEFT || Buttons == BT_MOVELEFT &&
+            Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
+        {
+            if (Injector[Index] > 0)
+            {
+                Injector[Index]--;
+                Player.Stim.Vials[Index]++;
+                ActivatorSound("menu/move", 127);
+            };
+        };
+        if (Buttons == BT_LEFT || Buttons == BT_MOVELEFT)
+            Player.DelayTimer++;
+        if (((Buttons == BT_RIGHT && OldButtons != BT_RIGHT) ||
+            (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT)) ||
+            (Buttons == BT_RIGHT || Buttons == BT_MOVERIGHT &&
+            Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat")))
+        {
+            if (Player.Stim.Vials[Index] > 0 && Injector[Index] < 100)
+            {
+                Injector[Index]++;
+                Player.Stim.Vials[Index]--;
+                ActivatorSound("menu/move", 127);
+            };
+        };
+        if (Buttons == BT_RIGHT || Buttons == BT_MOVERIGHT)
+            Player.DelayTimer++;
+        if (Buttons == 0 && OldButtons == 0)
+            Player.DelayTimer = 0;
+        
+        Delay(1);
     };
 };
 

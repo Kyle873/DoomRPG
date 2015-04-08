@@ -67,9 +67,10 @@ int StimStatsEnd = 8;
 int StimPowerupStart = 10;
 int StimPowerupEnd = STIM_MAX;
 
-acscript void UseStim() net
+acscript void UseStim(bool Force) net
 {
     bool Turret = false;
+    int Size;
     int[STIM_MAX] Injector;
     
     // If you're dead, terminate
@@ -96,6 +97,7 @@ acscript void UseStim() net
         };
         
         // Store Injector for restore later
+        Size = Player.Stim.Size;
         for (int i = 0; i < STIM_MAX; i++)
             Injector[i] = Player.Stim.Current[i];
         
@@ -105,14 +107,14 @@ acscript void UseStim() net
         Delay(1);
     };
     
-    if (Player.Stim.Size == 0 && !Turret)
+    if (!Force && Player.Stim.Size == 0 && !Turret)
     {
         PrintError("You don't have an injector ready");
         ActivatorSound("menu/error", 127);
         return;
     };
     
-    if (Player.Stim.Amount == 0 && !Turret)
+    if (!Force && Player.Stim.Amount == 0 && !Turret)
     {
         PrintError("Your current injector is empty");
         ActivatorSound("menu/error", 127);
@@ -184,8 +186,11 @@ acscript void UseStim() net
     
     // Restore Injector if it was saved from a turret
     if (Turret)
+    {
+        Size = Player.Stim.Size;
         for (int i = 0; i < STIM_MAX; i++)
             Player.Stim.Current[i] = Injector[i];
+    };
     
     // Clear the Stim
     Player.Stim.Size = 0;
