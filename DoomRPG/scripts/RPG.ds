@@ -1331,9 +1331,9 @@ script void DefaultLoadout()
     ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_BATTERIES] ShieldBatteryTypes;
     ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_CAPACITORS] ShieldCapacitorTypes;
     ItemInfoPtr[LOADOUT_SHIELDACCS][MAX_ACCESSORIES] ShieldAccessoryTypes;
-    int[LOADOUT_SHIELDPARTS] BodyCount;
-    int[LOADOUT_SHIELDPARTS] BatteryCount;
-    int[LOADOUT_SHIELDPARTS] CapacitorCount;
+    static int[LOADOUT_SHIELDPARTS] BodyCount;
+    static int[LOADOUT_SHIELDPARTS] BatteryCount;
+    static int[LOADOUT_SHIELDPARTS] CapacitorCount;
     int[LOADOUT_SHIELDACCS] AccessoryCount;
     
     // DRLA Databases
@@ -1510,36 +1510,11 @@ script void DefaultLoadout()
     // Shield Parts
     for (int i = 0; i < 3; i++)
     {
-        // WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
-        // This is such a terrible fucking hack it's not even goddamn funny
-        // Bug DavidPH about how to assign object arrays into pointers SO I DON'T NEED TO FUCKING DO THIS
-        // WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
-        int *[3][LOADOUT_SHIELDPARTS] Count =
+        int *[3] Count =
         {
-            {
-                &BodyCount[0];
-                &BodyCount[1];
-                &BodyCount[2];
-                &BodyCount[3];
-                &BodyCount[4];
-                &BodyCount[5];
-            };
-            {
-                &BatteryCount[0];
-                &BatteryCount[1];
-                &BatteryCount[2];
-                &BatteryCount[3];
-                &BatteryCount[4];
-                &BatteryCount[5];
-            };
-            {
-                &CapacitorCount[0];
-                &CapacitorCount[1];
-                &CapacitorCount[2];
-                &CapacitorCount[3];
-                &CapacitorCount[4];
-                &CapacitorCount[5];
-            };
+            &BodyCount[0];
+            &BatteryCount[0];
+            &CapacitorCount[0];
         };
         int[3] Total =
         {
@@ -1552,8 +1527,8 @@ script void DefaultLoadout()
         // Calculate total if we specify a type so that overflows or explosions don't happen
         // Always returns 0, fuck if I can figure out why
         if (GetCVar("drpg_start_shield_type") >= 0)
-            if (Total[i] > *Count[i][GetCVar("drpg_start_shield_type")])
-                Total[i] = *Count[i][GetCVar("drpg_start_shield_type")];
+            if (Total[i] > Count[i][GetCVar("drpg_start_shield_type")])
+                Total[i] = Count[i][GetCVar("drpg_start_shield_type")];
         
         // Log("%d : %d\n", Total[i], *Count[i][GetCVar("drpg_start_shield_type")]);
         
@@ -1565,7 +1540,7 @@ script void DefaultLoadout()
             if (GetCVar("drpg_start_shield_type") >= 0)
                 Category = GetCVar("drpg_start_shield_type");
             
-            for (int j = 0; j < *Count[i][Category]; j++)
+            for (int j = 0; j < Count[i][Category]; j++)
             {
                 ItemInfoPtr *[3] Type =
                 {
