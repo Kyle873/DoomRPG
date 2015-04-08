@@ -1,5 +1,6 @@
 #include "RPG.dh"
 
+#include "Arena.dh"
 #include "Menu.dh"
 #include "Stats.dh"
 #include "Stims.dh"
@@ -166,10 +167,6 @@ acscript void UseStim(bool Force) net
             Player.Stim.PowerupTimer[i] += (35 * Player.Stim.Current[i]) * 30;
             if (Player.Stim.PowerupTimer[i] > Player.Stim.PowerupTimerMax[i])
                 Player.Stim.PowerupTimerMax[i] = Player.Stim.PowerupTimer[i];
-            
-            // Regeneration Vial handling
-            if (i == STIM_ADRENALINE)
-                Player.RegenBoostTimer += (35 * Player.Stim.Current[i]) * 30;
         };
     
     // Apply Active Flags
@@ -315,54 +312,63 @@ function void CheckStim()
     if (Player.Stim.Timer > 0)
         SetMugShotState("Ouch");
     
-    // Stim Timer handling
-    if (Player.Stim.Timer > 0)
-        Player.Stim.Timer--;
-    if (Player.Stim.Timer <= 0) // Reset timer maximums
+    if (!InBase || ArenaActive)
     {
-        Player.Stim.Timer = 0;
-        Player.Stim.TimerMax = 0;
-    };
-    
-    // Powerup Timer Handling
-    for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
-    {
-        // Tick timers
-        if (Player.Stim.PowerupTimer[i] > 0)
+        // Stim Timer handling
+        if (Player.Stim.Timer > 0)
+            Player.Stim.Timer--;
+        if (Player.Stim.Timer <= 0) // Reset timer maximums
         {
-            GiveInventory(StrParam("%s\n", StimPowerupActors[i - StimPowerupStart]), 1);
-            Player.Stim.PowerupTimer[i]--;
+            Player.Stim.Timer = 0;
+            Player.Stim.TimerMax = 0;
         };
         
-        // Reset timer maximums
-        if (Player.Stim.PowerupTimer[i] <= 0)
+        // Powerup Timer Handling
+        for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
         {
-            Player.Stim.PowerupTimer[i] = 0;
-            Player.Stim.PowerupTimerMax[i] = 0;
+            // Tick timers
+            if (Player.Stim.PowerupTimer[i] > 0)
+            {
+                GiveInventory(StrParam("%s\n", StimPowerupActors[i - StimPowerupStart]), 1);
+                Player.Stim.PowerupTimer[i]--;
+            };
+            
+            // Regeneration Handling
+            if (i == STIM_ADRENALINE)
+                Player.RegenBoostTimer = Player.Stim.PowerupTimer[i];
+            
+            // Reset timer maximums
+            if (Player.Stim.PowerupTimer[i] <= 0)
+            {
+                Player.Stim.PowerupTimer[i] = 0;
+                Player.Stim.PowerupTimerMax[i] = 0;
+            };
         };
-    };
-    
-    // Remove bonuses and active flags when Stim has expired
-    if (Player.Stim.Timer <= 0 && Player.Stim.Active)
-    {
-        Player.Stim.Active = false;
         
-        // Restore previous stats
-        Player.Strength = Player.Stim.PrevStats[STAT_STRENGTH];
-        Player.Defense = Player.Stim.PrevStats[STAT_DEFENSE];
-        Player.Vitality = Player.Stim.PrevStats[STAT_VITALITY];
-        Player.Energy = Player.Stim.PrevStats[STAT_ENERGY];
-        Player.Regeneration = Player.Stim.PrevStats[STAT_REGENERATION];
-        Player.Agility = Player.Stim.PrevStats[STAT_AGILITY];
-        Player.Capacity = Player.Stim.PrevStats[STAT_CAPACITY];
-        Player.Luck = Player.Stim.PrevStats[STAT_LUCK];
-        
-        for (int i = 0; i < STIM_MAX; i++)
-            Player.Stim.Last[i] = 0;
-        
-        for (int i = 0; i < STIM_MAX; i++)
-            Player.Stim.ActiveBonus[i] = false;
-    };
+        // Remove bonuses and active flags when Stim has expired
+        if (Player.Stim.Timer <= 0 && Player.Stim.Active)
+        {
+            Player.Stim.Active = false;
+            
+            // Restore previous stats
+            Player.Strength = Player.Stim.PrevStats[STAT_STRENGTH];
+            Player.Defense = Player.Stim.PrevStats[STAT_DEFENSE];
+            Player.Vitality = Player.Stim.PrevStats[STAT_VITALITY];
+            Player.Energy = Player.Stim.PrevStats[STAT_ENERGY];
+            Player.Regeneration = Player.Stim.PrevStats[STAT_REGENERATION];
+            Player.Agility = Player.Stim.PrevStats[STAT_AGILITY];
+            Player.Capacity = Player.Stim.PrevStats[STAT_CAPACITY];
+            Player.Luck = Player.Stim.PrevStats[STAT_LUCK];
+            
+            for (int i = 0; i < STIM_MAX; i++)
+                Player.Stim.Last[i] = 0;
+            
+            for (int i = 0; i < STIM_MAX; i++)
+                Player.Stim.ActiveBonus[i] = false;
+        };
+    }
+    else // Hack to reset the regen boost timer per-tic if the stims are deactivated after they are active
+        Player.RegenBoostTimer = 0;
 };
 
 function void MixStim(int Type)
