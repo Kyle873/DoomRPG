@@ -113,7 +113,10 @@ script void ShopItemAutoHandler()
                     };
                 };
         
-        Delay(1);
+        if (GetCVar("drpg_toaster"))
+            Delay(35)
+        else
+            Delay(1);
         
         // Transfer current items to previous items
         if (GetCVar("drpg_pickup_behavior") > 0)
@@ -328,6 +331,20 @@ function void ShopLoop()
             else
                 Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_NONE;
             ActivatorSound("menu/move", 127);
+        };
+    };
+    if (Buttons == BT_ALTATTACK && OldButtons != BT_ALTATTACK && Player.LockerMode)
+    {
+        if (InBase)
+        {
+            for (int i = 0; i < ItemMax[Player.ShopPage]; i++)
+                while (Player.Locker[Player.ShopPage][i] > 0)
+                    WithdrawItem(Player.ShopPage, i);
+        }
+        else
+        {
+            PrintError("You can only bulk withdraw while in the Outpost");
+            ActivatorSound("menu/error", 127);
         };
     };
     
