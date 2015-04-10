@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2012 David Hill
+// Copyright(C) 2012-2015 David Hill
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
@@ -1055,7 +1055,7 @@ __extfunc "C" void perror(char const *s)
    \
    if(prec < 0) prec = 0; \
    \
-   char padc = (flags & FF_PAD0 && !prec) ? '0' : ' '; \
+   char padc = (flags & FF_PAD0 && !prec) ? '0' : ' ', sign = 0; \
    \
    if(prec < 1) prec = 1;
 
@@ -1069,6 +1069,13 @@ __extfunc "C" void perror(char const *s)
       if(i > 0) for(; i--; ++ret) PrintChar(padc); \
    }; \
    \
+   /* Print sign, if any. */ \
+   if(sign) \
+   { \
+      PrintChar(sign); \
+      ++ret; \
+   }; \
+   \
    /* Pad to precision and print number. */ \
    for(; len < prec; ++len) PrintChar('0'); \
    PrintStatic(base, @*base); \
@@ -1078,6 +1085,59 @@ __extfunc "C" void perror(char const *s)
    \
    /* Return number of characters written. */ \
    return len + ret;
+
+//
+// PrintNumI
+//
+#define PrintNumI(N,T,D) \
+   if(i < 0) \
+   { \
+      sign = '-'; \
+      i = -i; \
+   } \
+   else \
+   { \
+           if(flags & FF_SIGN) sign = '+'  \
+      else if(flags & FF_PADS) sign = ' '; \
+   }; \
+   \
+   static char[(N)+1] s; \
+   \
+   char __near *base = s+(N); \
+   T id; \
+   \
+   while(i) \
+   { \
+      id = D(i, 10); \
+      *--base = (int)id.rem + '0'; \
+      i = id.quot; \
+   }; \
+   \
+   int len = s+(N) - base, ret = 0;
+
+//
+// _Print_i
+//
+__extfunc "C" int _Print_i(int flags, int width, int prec, char fmt, int i)
+{
+   PrintNum_Pre();
+
+   PrintNumI(10, div_t, div);
+
+   PrintNum_End();
+};
+
+//
+// _Print_li
+//
+__extfunc "C" int _Print_li(int flags, int width, int prec, char fmt, long i)
+{
+   PrintNum_Pre();
+
+   PrintNumI(20, ldiv_t, ldiv);
+
+   PrintNum_End();
+};
 
 #define PrintNumO(N) \
    static char[(N)+1] s; \
