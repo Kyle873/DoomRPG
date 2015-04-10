@@ -2249,7 +2249,7 @@ function void CheckSkills()
         Player.SkillSupplyCooldown--;
     
     // Cost multiplier timer handling
-    if (Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
+    if ((!InBase || ArenaActive) && Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
         if ((Timer() % (35 * GetCVar("drpg_skill_costcooldown"))) == 0)
             Player.SkillCostMult--;
     
@@ -2468,13 +2468,14 @@ function void CheckAuras()
     };
     
     // Decrease Aura Timer
-    for (int i = 0; i < AURA_MAX; i++)
-        if (Player.Aura.Time > 0 && Player.Aura.Type[i].Active)
-            if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGPowerStimChrono") && !CheckInventory("DRPGMenuFreezer"))
-            {
-                Player.Aura.Time--;
-                break; // Remove this for Yholl-style behavior, still contemplating
-            };
+    if (!InBase || ArenaActive)
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Player.Aura.Time > 0 && Player.Aura.Type[i].Active)
+                if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGPowerStimChrono") && !CheckInventory("DRPGMenuFreezer"))
+                {
+                    Player.Aura.Time--;
+                    break; // Remove this for Yholl-style behavior, still contemplating
+                };
     
     // Reset Aura and Soul States
     if (Player.Aura.Time <= 0 || !Player.Aura.Team)
