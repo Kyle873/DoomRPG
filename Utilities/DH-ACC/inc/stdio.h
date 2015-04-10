@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2012 David Hill
+// Copyright(C) 2012-2015 David Hill
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
@@ -341,6 +341,12 @@ __function void perror(char const *s);
 //
 // Implementation extensions.
 //
+
+// %i
+__function int _Print_i(int flags, int width, int prec, char fmt, int i);
+
+// %li
+__function int _Print_li(int flags, int width, int prec, char fmt, long i);
 
 // %o
 __function int _Print_o(int flags, int width, int prec, char fmt, unsigned o);
