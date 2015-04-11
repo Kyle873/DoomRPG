@@ -420,6 +420,7 @@ script void PlayerDamage()
         SetActorProperty(0, APROP_SpawnHealth, Player.ActualHealth < Player.HealthMax ? SHIELD_HEALTH * 2 : SHIELD_HEALTH);
     };
     
+    Player.DamageType = DT_NONE;
     BeforeDamage = GetActorProperty(Player.TID, APROP_Health);
     
     Delay(1);
@@ -432,7 +433,6 @@ script void PlayerDamage()
     
     if (DamageTaken > 0)
     {
-        Player.HUDDamage = DamageTaken;
         Player.AutosaveTimerReset = true;
         
         // Find Monster ID
@@ -447,7 +447,6 @@ script void PlayerDamage()
             {
                 DamageTaken *= 2;
                 Critical = true;
-                Player.HUDDamageCritical = true;
             };
         
         AugDamage(DamageTaken);
@@ -457,9 +456,8 @@ script void PlayerDamage()
         else
             StatusDamage(DamageTaken, RandomFixed(0.0, 100.0), Critical);
         ResetRegen();
-    }
-    else // Reset the damage type as we didn't take any damage this tic
-        Player.DamageType = DT_NONE;
+        DamageHUD(DamageTaken, Critical);
+    };
     
     // Reset attacker's ID
     Player.DamageTID = -1;
@@ -1089,30 +1087,44 @@ acscript void QuickHeal(int Quick) net
 // Quickly buy EP
 acscript void QuickEP() net
 {
-    /* Disable this for now to try and make everyone happy
-    if (!GetCVar("drpg_shoptype") && !InBase)
-    {
-        ActivatorSound("menu/error", 127);
-        return;
-    }; */
+    int PrevEP = Player.EP;
+    int Time = 35;
     
-    int Amount = Player.EPMax - Player.EP;
+    // Return if you're already at max EP
+    if (Player.EP >= Player.EPMax) return;
     
-    if (CheckInventory("DRPGCredits") > 0 && Player.EP < Player.EPMax)
+    SetPlayerProperty(0, 1, PROP_FROZEN);
+    
+    while (true)
     {
-        ActivatorSound("health/epcapsule", 127);
+        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        int Percent = (int)(((fixed)(Player.EP - PrevEP) / (fixed)(Player.EPMax - PrevEP)) * 100.0);
+        fixed X = GetActorX(0) + Cos((fixed)Timer() / 64.0) * 32.0;
+        fixed Y = GetActorY(0) + Sin((fixed)Timer() / 64.0) * 32.0;
+        fixed Z = GetActorZ(0);
         
-        if (CheckInventory("DRPGCredits") < Amount)
-            Amount = CheckInventory("DRPGCredits");
+        PlaySound(0, "misc/epfocus", CHAN_BODY, 0.5, true, ATTN_NORM);
+        SpawnForced("DRPGEPFocusAura", X, Y, Z, 0, 0);
+        DrawProgressBar("\cnFocusing", Percent);
         
-        TakeInventory("DRPGCredits", Amount);
-        AddEP(Amount, false);
-    }
-    else
-    {
-        ActivatorSound("menu/error", 127);
-        return;
+        if ((Timer() % 35) == 0)
+            Time--;
+        if (Time < 1)
+            Time = 1;
+        
+        if ((Timer() % Time) == 0)
+            Player.EP++;
+        
+        if (Buttons > 0 || Player.EP >= Player.EPMax)
+        {
+            PlaySound(0, "misc/epfocusdone", CHAN_BODY, 0.5, false, ATTN_NORM);
+            break;
+        };
+        
+        Delay(1);
     };
+    
+    SetPlayerProperty(0, 0, PROP_FROZEN);
 };
 
 // Death Script
