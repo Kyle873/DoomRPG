@@ -191,6 +191,7 @@ actor DRPGPortableTurret
     // Weapons
     var int user_weapon;
     var int user_firing;
+    var int user_doing_sensor_stuff;
     var int user_selfdestruction;
     var int user_bullet_damage;
     var int user_bullet_rof;
@@ -222,7 +223,7 @@ actor DRPGPortableTurret
     
     Health 1000
     Radius 16
-    Height 16
+    Height 10
     Speed 1.0
     Painchance 256
     Mass 0x7FFFFFFF
@@ -246,7 +247,6 @@ actor DRPGPortableTurret
     +CANPASS
     +DROPOFF
     +WINDTHRUST
-    +FLOATBOB
     +SOLID
     +NOGRAVITY
     +FLOAT
@@ -319,7 +319,7 @@ actor DRPGPortableTurret
         Goto Spawn
     Missile.Railgun:
         PTUR A 0 A_SetUserVar("user_firing", 1)
-        PTUR E 0 Bright A_CustomRailgun(Random(50, 100) * (user_railgun_damage + 1), 0, "LightGreen", "Green", RGF_FULLBRIGHT | user_railgun_ripping, true, 0, "None", 0, 0, 16384, 35 + (user_railgun_damage * 3), 1.0 - (user_railgun_damage / 20), 1.0 + (user_railgun_damage / 5), "None", -4)
+        PTUR E 0 Bright A_CustomRailgun(Random(50, 100) * (user_railgun_damage + 1), 0, "LightGreen", "Green", RGF_FULLBRIGHT | user_railgun_ripping, true, 0, "None", 0, 0, 16384, 35 + (user_railgun_damage * 3), 1.0 - (user_railgun_damage / 20), 1.0 + (user_railgun_damage / 5), "None", -5)
         PTUR A 0 ACS_NamedExecuteAlways("TurretUseAmmo", 0, TW_RAILGUN)
         PTUR E 10 Bright
         PTUR A 0 A_SetTics(35 - (user_plasma_rof * 5))
@@ -399,6 +399,45 @@ actor DRPGTurretPartCrate : CustomInventory
         TNT1 A 0 A_GiveInventory("DRPGTurretPart", 50)
         Stop
     }
+}
+
+actor DRPGTurretTargetingLaser : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_CustomRailgun (0, 0, "None", "Red", RGF_SILENT | RGF_NOPIERCING | RGF_FULLBRIGHT, 0, 0, "DRPGTurretLaserPuff", 0, 0, 0, 1, 1.0, 0, "DRPGTurretLaserTrail", -5)
+        Stop
+    }
+}
+
+actor DRPGTurretLaserPuff : BulletPuff
+{
+    +PAINLESS
+    +BLOODLESSIMPACT
+    +ALWAYSPUFF
+    
+    RenderStyle Add
+    Alpha 1.0
+    Scale 0.025
+    Radius 4
+    Height 4
+    
+    States
+    {
+    Spawn:
+        PTCL D 2 Bright
+        Stop
+    }
+}
+
+actor DRPGTurretLaserTrail : DRPGTurretLaserPuff
+{
+    Alpha 0.0625
+    Scale 0.0125
 }
 
 actor DRPGTurretRocketProtection : PowerProtection
