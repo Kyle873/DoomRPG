@@ -964,63 +964,63 @@ script void StatHUD() enter
     goto Start;
 };
 
-script void DamageHUD() enter
+script void DamageHUD(int Amount, bool Critical)
 {
-    Start:
+    // Return if the CVAR is disabled
+    if (!GetCVar("drpg_damagenumbers_hud")) return;
     
-    if (GetCVar("drpg_damagenumbers_hud"))
+    int Color = CR_WHITE;
+    str Text = "";
+    fixed Time = 1.0;
+    
+    // Size
+    if (Amount == 1)
+        SetFont("SMALLFONT")
+    else
+        SetFont("BIGFONT");
+    
+    // Color
+    switch (Player.DamageType)
     {
-        int Color = CR_WHITE;
-        str Text = "";
-        fixed Time = 1.0;
-        
-        // Size
-        if (Player.HUDDamage == 1)
-            SetFont("SMALLFONT")
-        else
-            SetFont("BIGFONT");
-        
-        // Color
-        switch (Player.DamageType)
-        {
-        case DT_NORMAL:                     Color = CR_WHITE;       break;
-        case DT_TOXIC: case DT_RADIATION:   Color = CR_GREEN;       break;
-        case DT_MELEE:                      Color = CR_GREY;        break;
-        case DT_FIRE:                       Color = CR_RED;         break;
-        case DT_PLASMA: case DT_LIGHTNING:  Color = CR_LIGHTBLUE;   break;
-        };
-        
-        if (Player.HUDDamage > 0 && Player.HUDDamage < SHIELD_HEALTH - Player.HealthMax - Player.HUDDamage)
-        {
-            // Critical Hit
-            if (Player.HUDDamageCritical)
-            {
-                Text = StrParam("%s\cgCRITICAL\n\n", Text);
-                Time += 1.0;
-                Player.HUDDamageCritical = false;
-            };
-            
-            // Status Effect
-            if (Player.StatusTypeHUD >= 0)
-            {
-                Text = StrParam("%s%s %s\n\n", Text, StatusEffects[Player.StatusTypeHUD], StatusNumerals[Player.StatusIntensity[Player.StatusTypeHUD]]);
-                Player.StatusTypeHUD = -1;
-                Time += 1.0;
-            };
-            
-            // Loss
-            Text = StrParam("%s%d\n", Text, Player.HUDDamage);
-            
-            // Display
-            HudMessage("%s\n", Text, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, Time);
-            
-            // Reset
-            Player.HUDDamage = 0;
-        };
+    case DT_NORMAL:                     Color = CR_WHITE;       break;
+    case DT_TOXIC: case DT_RADIATION:   Color = CR_GREEN;       break;
+    case DT_MELEE:                      Color = CR_GREY;        break;
+    case DT_FIRE:                       Color = CR_RED;         break;
+    case DT_PLASMA: case DT_LIGHTNING:  Color = CR_LIGHTBLUE;   break;
     };
     
-    Delay(1);
-    goto Start;
+    if (Amount > 0 && Amount < SHIELD_HEALTH - Player.HealthMax - Amount)
+    {
+        // Death
+        if (Player.ActualHealth - Amount <= 0)
+        {
+            SetFont("BIGFONT");
+            Color = CR_DARKRED;
+            Text = StrParam("%s\crDEATH\n\n", Text);
+            Time += 4.0;
+        };
+        
+        // Critical Hit
+        if (Critical)
+        {
+            Text = StrParam("%s\cgCRITICAL\n\n", Text);
+            Time += 1.0;
+        };
+        
+        // Status Effect
+        if (Player.StatusTypeHUD >= 0)
+        {
+            Text = StrParam("%s%s %s\n\n", Text, StatusEffects[Player.StatusTypeHUD], StatusNumerals[Player.StatusIntensity[Player.StatusTypeHUD]]);
+            Time += 1.0;
+            Player.StatusTypeHUD = -1;
+        };
+        
+        // Loss
+        Text = StrParam("%s%d\n", Text, Amount);
+        
+        // Display
+        HudMessage("%s\n", Text, HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, Time);
+    };
 };
 
 script void DRLAHUD() enter
