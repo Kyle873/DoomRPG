@@ -272,7 +272,7 @@ function bool CheckMapEvent(int Event)
             return true;
         
         case MAPEVENT_BONUS_RAINBOWS:
-            if (Random(0, 3))
+            if (Random(0, 15))
                 return false;
             return true;
         
@@ -325,6 +325,8 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     };
     
     // We need to clear all of the event data before choosing one
+    
+    CurrentLevel->EventCompleted = false;
     
     // Megaboss
     TargetLevel->MegabossActor = nullptr;
@@ -447,9 +449,9 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
             RequiredLevel = (fixed)(TempMonster->Difficulty + ((TempMonster->ThreatLevel) * 20)) / MonsterLevelDivisor;
             RequiredLevel = Clamp(0, RequiredLevel, 80);
             if (GetCVar("drpg_debug"))
-                Log("\cdDEBUG: \ccPotential monster: \cg%s \cc/ Needed level: \cg%d%s\n", TempMonster->Name, RequiredLevel, TempMonster->Difficulty <= 4 ? " (Ignored)" : "");
+                Log("\cdDEBUG: \ccPotential monster: \cg%s \cc/ Needed level: \cg%d\n", TempMonster->Name, RequiredLevel);
             
-            if (TempMonster->Difficulty <= 4 || AverageLevel >= RequiredLevel && TempMonster->ThreatLevel <= 5)
+            if (AverageLevel >= RequiredLevel && TempMonster->ThreatLevel <= 5)
                 PotentialMonsters[NumPotentialMonsters++] = TempMonster;
         };
         
@@ -716,7 +718,7 @@ script void MegaBossEvent()
         {
             SetMusic("*"); // TODO: Some sort of victory fanfare thingy here?
             Delay(35 * 60); // Let the players pick up the loot
-            CurrentLevel->Event = MAPEVENT_NONE;
+            CurrentLevel->EventCompleted = true;
             return;
         };
         
@@ -761,12 +763,12 @@ script void EnvironmentalHazard()
     
     int CheckPar = GetLevelInfo(LEVELINFO_PAR_TIME);
     if (CheckPar == 0)
-        CheckPar = 3;
+        CheckPar = GetCVar("drpg_default_par_seconds"); // Default Par
     
     CheckPar *= 35;
     
     int RadTimeRequired = CheckPar / 100;
-    while (CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
+    while (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && !CurrentLevel->EventCompleted)
     {
         if (CurrentLevel->GeneratorFuel)
         {
@@ -814,7 +816,7 @@ script void EnvironmentalHazard()
 
 script void EnvironmentalHazardSetColors()
 {
-    if (CurrentLevel->Event != MAPEVENT_TOXICHAZARD)
+    if (CurrentLevel->EventCompleted)
     {
         for (int i = 0; i <= SHORT_MAX; i++)
         {
@@ -900,11 +902,11 @@ acscript void EnvironmentalHazardRefillGenerator()
 
 script void EnvironmentalHazardDisarm()
 {
-    if (CurrentLevel->Event != MAPEVENT_TOXICHAZARD)
+    if (CurrentLevel->Event != MAPEVENT_TOXICHAZARD || CurrentLevel->EventCompleted)
         return;
     
     EnvironmentalHazardSetColors();
-    CurrentLevel->Event = MAPEVENT_NONE;
+    CurrentLevel->EventCompleted = true;
     
     SetMusic("*");
     
@@ -921,7 +923,7 @@ script void ThermonuclearBombEvent()
     bool BombDisarmed = false;
     
     // Calculate bomb time
-    CurrentLevel->BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 3 : 300) * 35;
+    CurrentLevel->BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 2 : GetCVar("drpg_default_par_seconds") * 2) * 35;
     
     // Reset key states
     for (int i = 0; i < MAX_NUKE_KEYS; i++)
@@ -1058,7 +1060,7 @@ script void ThermonuclearBombEvent()
         for (int i = 0; i < MonsterID; i++)
             Thing_Destroy(Monsters[i].TID, true, 0);
         
-        CurrentLevel->Event = MAPEVENT_NONE;
+        CurrentLevel->EventCompleted = true;
         
         SetMusic("");
         
@@ -1149,6 +1151,7 @@ script void LowPowerEvent()
     
     AmbientSound("misc/poweroff", 127);
     SetMusic("LowPower");
+    CurrentLevel->EventCompleted = true; // This event disappears when you leave
     
     // Darken all the sectors
     for (int i = 0; i <= SHORT_MAX; i++)
@@ -1170,7 +1173,6 @@ script void LowPowerEvent()
         Delay(1);
     
     // Generator is now active - Activate emergency lighting
-    CurrentLevel->Event = MAPEVENT_NONE;
     AmbientSound("misc/poweron", 127);
     SetActorState(GeneratorTID, "PoweredUp");
     SetUserVariable(GeneratorTID, "user_powered", 1);
@@ -1233,7 +1235,7 @@ script void OneMonsterEvent()
     AmbientSound("misc/secret", 127);
     HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
     
-    CurrentLevel->Event = MAPEVENT_NONE;
+    CurrentLevel->EventCompleted = true;
 };
 
 script void HellUnleashedEvent()
@@ -1256,7 +1258,7 @@ script void HellUnleashedEvent()
     {
         fixed ParTime = (fixed)GetLevelInfo(LEVELINFO_PAR_TIME);
         if (ParTime <= 0) // Assign a default value to prevent divide-by-zero
-            ParTime = 35 * 60 * 5; // 5 Minutes
+            ParTime = 35 * GetCVar("drpg_default_par_seconds"); // Default Par
         fixed AddMult = 0.1 / ParTime;
         
         // Cap this to make sure it isn't too low
@@ -1390,6 +1392,7 @@ script void HarmonizedDestructionEvent()
 script void RainbowEvent()
 {
     SetMusic("RAINBOWS");
+    CurrentLevel->EventCompleted = true; // Disappears when we leave
     
     fixed Angle = 0;
     int Red, Green, Blue;
@@ -1595,7 +1598,7 @@ script void MapLoop()
     
     if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_HARMONIZEDAURAS))
     {
-        // All Auras and One-Monster events are ended by killing everything on the map
+        // All Auras and Harmonized Destruction events are ended by killing everything on the map
         if (Timer() > 4)
         {
             AmbientSound("misc/secret", 127);
@@ -1603,8 +1606,7 @@ script void MapLoop()
             HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
         };
         
-        CurrentLevel->Event = MAPEVENT_NONE;
-        CurrentLevel->SelectedMonster = nullptr;
+        CurrentLevel->EventCompleted = true;
     };
     
     Delay(1);
@@ -1689,22 +1691,29 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Delay(35 * 5);
     };
     
-    // Remove the Hell Unleashed event
-    if (CurrentLevel && CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && CurrentLevel->HellUnleashedActive)
-        CurrentLevel->Event = MAPEVENT_NONE;
+    if (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
+        CurrentLevel->EventCompleted = true; // These don't actually end until you leave the map normally
     
-    // Remove the RAINBOWS event
-    if (CurrentLevel && CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
-        CurrentLevel->Event = MAPEVENT_NONE;
-    
-    // Remove the Skill events and restore the skill level
-    if (CurrentLevel && (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON))
+    // Remove the active event if it's been completed
+    if (CurrentLevel && CurrentLevel->EventCompleted)
     {
-        ChangeSkill(CurrentSkill);
         CurrentLevel->Event = MAPEVENT_NONE;
+        CurrentLevel->EventCompleted = false;
+        // And reset the skill for these
+        if (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
+            ChangeSkill(CurrentSkill);
     };
     
     CurrentLevel->Completed = true; // We finished the map
+    
+    // Despawn all player's turrets
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        // Player is not in-game or their turret is not active
+        if (!PlayerInGame(i) || Players(i).Turret.Active) continue;
+        
+        Players(i).Turret.Active = false;
+    };
     
     // Now exit the level
     if (Secret)
