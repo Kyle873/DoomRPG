@@ -1026,7 +1026,7 @@ script void ThermonuclearBombEvent()
         
         SetActorState(BombTID, "Disarmed");
         SetUserVariable(BombTID, "user_disarmed", 1);
-        ActivatorSound("nuke/disarmed", 127);
+        AmbientSound("nuke/disarmed", 127);
         SetMusic("*");
         
         // Level/Rank up
@@ -1040,25 +1040,7 @@ script void ThermonuclearBombEvent()
     }
     else if (!BombDisarmed || CurrentLevel->BombExplode) // Epic failure, explode everyone to die
     {
-        StopSound(BombTID, CHAN_BODY);
-        AmbientSound("nuke/detonate", 127);
-        
         SetActorState(BombTID, "Explode");
-        
-        // Kill Players
-        // So technically, a player may not die if they are using invincibility or have high enough health and resists, but it's close enough :P
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i))
-                continue;
-            
-            Thing_Damage2(Players(i).TID, 12500, "Melee");
-            Thing_Damage2(Players(i).TID, 12500, "Fire");
-        };
-        
-        // Kill Monsters
-        for (int i = 0; i < MonsterID; i++)
-            Thing_Destroy(Monsters[i].TID, true, 0);
         
         CurrentLevel->EventCompleted = true;
         

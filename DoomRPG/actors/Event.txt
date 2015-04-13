@@ -43,10 +43,25 @@ actor DRPGThermonuclearBomb : SwitchableDecoration
         Stop
     Death:
     Explode:
-        TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombExplode", 0)
+        TNT1 A 0 A_StopSound(CHAN_BODY)
         TNT1 A 0 A_StopSound(CHAN_6)
+        TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombExplode", 0)
+        TNT1 A 0 A_PlaySound("nuke/detonate", CHAN_5, 1.0, false, 0.0)
+        // Hit everything in the room regardless of height
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, 1, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, 1, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, CeilingZ - Z - 5, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, CeilingZ - Z - 5, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        // If you're way too close, no number of walls will save you
+        TNT1 A 0 A_RadiusGive ("DRPGThermonuclearBombDirectDamage1", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        TNT1 A 0 A_RadiusGive ("DRPGThermonuclearBombDirectDamage2", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        // Nuclear fallout
+        TNT1 A 0 A_SpawnItemEx("DRPGBombRadiationArea", 0, 0, 16, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
         TNT1 A 0 A_SetScale(4.0, 4.0)
         MISL BCD 6 Bright
+        Stop
         Stop
     }
 }
@@ -93,8 +108,10 @@ actor DRPGThermonuclearBombDropped
         TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
         TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
         // If you're way too close, no number of walls will save you
-        TNT1 A 0 A_RadiusGive ("DRPGThermonuclearBombDirectDamage1", 1024, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
-        TNT1 A 0 A_RadiusGive ("DRPGThermonuclearBombDirectDamage2", 1024, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        TNT1 A 0 A_RadiusGive("DRPGThermonuclearBombDirectDamage1", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        TNT1 A 0 A_RadiusGive("DRPGThermonuclearBombDirectDamage2", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        // Nuclear fallout
+        TNT1 A 0 A_SpawnItemEx("DRPGBombRadiationArea", 0, 0, 16, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
         TNT1 A 0 A_SetScale(4.0, 4.0)
         MISL BCD 6 Bright
         Stop
@@ -145,6 +162,46 @@ actor DRPGThermonuclearBombDirectDamage2 : DRPGThermonuclearBombDirectDamage1
     {
     Pickup:
         TNT1 A 0 A_DamageSelf(12500, "Melee", DMSS_AFFECTARMOR)
+        Stop
+    }
+}
+
+actor DRPGBombRadiationArea
+{
+    +NoBlockmap
+    +NoSector
+    +NoInteraction
+    
+    var int user_timer;
+    
+    States
+    {
+    Spawn:
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx ("DRPGRadiationParticle", Random(-2048, 2048), Random(-2048, 2048), Random(-256, 256), 0, 0, 0, 0)
+        TNT1 A 0 A_SetUserVar("user_timer", user_timer + 1)
+        TNT1 A 1 Light("BOMBRADIATIONGLOW") A_JumpIf(user_timer >= 32, "DoDamage")
+        Loop
+    DoDamage:
+        TNT1 A 0 A_SetUserVar("user_timer", 0)
+        TNT1 A 0 A_RadiusGive("DRPGBombRadiationAreaDamage", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        Goto Spawn
+    }
+}
+
+actor DRPGBombRadiationAreaDamage : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_JumpIfInventory("PowerIronFeet", 1, "DoNothing")
+        TNT1 A 0 A_JumpIfInventory("DRPGSkillIronFeet", 1, "DoNothing")
+        TNT1 A 0 A_DamageSelf(5, "Radiation", 0)
+        Stop
+    DoNothing:
+        TNT1 A 0
         Stop
     }
 }
@@ -531,8 +588,26 @@ actor DRPGLowPowerRadiationBarrel
     RadBarrel3:
         RBAR C 0 A_PlaySound("misc/radiation", CHAN_BODY, 0.5, true, ATTN_NORM)
         RBAR CCCCC 0 A_SpawnItemEx("DRPGRadiationParticle", FRandom(-32,32), FRandom(-32,32), FRandom(0,64), 0, 0, 0, 0, 0, 128)
-        RBAR C 32 A_Explode(20, 128, XF_NOTMISSILE, false, 0)
+        RBAR C 32 A_RadiusGive("DRPGRadiationBarrelDamage", 128, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE)
         Loop
+    }
+}
+
+actor DRPGRadiationBarrelDamage : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_JumpIfInventory("PowerIronFeet", 1, "DoNothing")
+        TNT1 A 0 A_JumpIfInventory("DRPGSkillIronFeet", 1, "DoNothing")
+        TNT1 A 0 A_DamageSelf(20, "Radiation", 0)
+        Stop
+    DoNothing:
+        TNT1 A 0
+        Stop
     }
 }
 
