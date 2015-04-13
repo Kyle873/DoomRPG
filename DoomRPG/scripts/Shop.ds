@@ -90,6 +90,7 @@ script void ShopItemAutoHandler()
                 };
         
         // Auto-Store
+        bool deposited = false;
         if (Player.EP >= LOCKER_EPRATE)
             for (int i = 0; i < ItemCategories; i++)
                 for (int j = 0; j < ItemMax[i]; j++)
@@ -101,15 +102,14 @@ script void ShopItemAutoHandler()
                         // Special handling for DRLA weapons since you can only keep one weapon with mods in the locker
                         if (CompatMode == COMPAT_DRLA && i == 0 && Player.Locker[i][j] > 0) continue;
                         
-                        while (CheckInventory(Item->Actor) > 0)
+                        while (CheckInventory(Item->Actor) > 0 && Player.EP >= LOCKER_EPRATE)
                         {
-                            if (Player.EP < LOCKER_EPRATE)
-                                Delay(1);
-                            
                             DepositItem(i, j, false, true);
+                            deposited = true;
                         };
                         
-                        ActivatorSound("shop/autostore", 127);
+                        if (deposited)
+                            ActivatorSound("shop/autostore", 127);
                     };
                 };
         
