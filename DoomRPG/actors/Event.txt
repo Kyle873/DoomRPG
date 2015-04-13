@@ -76,7 +76,6 @@ actor DRPGThermonuclearBombPickup : CustomInventory
 actor DRPGThermonuclearBombDropped
 {
     -SOLID
-    +OLDRADIUSDMG
     
     States
     {
@@ -86,9 +85,66 @@ actor DRPGThermonuclearBombDropped
         TNT1 A 0 A_PlaySound("nuke/countdown", CHAN_5, 1.0, false, 0.0)
         TBOM A 350 Bright
         TNT1 A 0 A_PlaySound("nuke/detonate", CHAN_5, 1.0, false, 0.0)
-        TNT1 A 0 A_Explode(25000, 32767, 0, true, 32767, 360, 25000)
+        // Hit everything in the room regardless of height
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, 1, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, 1, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, CeilingZ - Z - 5, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, CeilingZ - Z - 5, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        // If you're way too close, no number of walls will save you
+        TNT1 A 0 A_RadiusGive ("DRPGThermonuclearBombDirectDamage1", 1024, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        TNT1 A 0 A_RadiusGive ("DRPGThermonuclearBombDirectDamage2", 1024, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
         TNT1 A 0 A_SetScale(4.0, 4.0)
         MISL BCD 6 Bright
+        Stop
+    }
+}
+
+actor DRPGThermonuclearBombExplosion1
+{
+    Radius 4
+    Height 4
+    +SHOOTABLE
+    +NONSHOOTABLE
+    Projectile
+    Speed 0
+    DamageType "Fire"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 A_Die
+    Death:
+        TNT1 A 2 A_Explode(4170, 16000, 0, true, 16000)
+        Stop
+    }
+}
+
+actor DRPGThermonuclearBombExplosion2 : DRPGThermonuclearBombExplosion1
+{
+    DamageType "Melee"
+}
+
+actor DRPGThermonuclearBombDirectDamage1 : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_DamageSelf(12500, "Fire", DMSS_AFFECTARMOR)
+        Stop
+    }
+}
+
+actor DRPGThermonuclearBombDirectDamage2 : DRPGThermonuclearBombDirectDamage1
+{
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_DamageSelf(12500, "Melee", DMSS_AFFECTARMOR)
         Stop
     }
 }
