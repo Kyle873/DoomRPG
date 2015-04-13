@@ -43,10 +43,25 @@ actor DRPGThermonuclearBomb : SwitchableDecoration
         Stop
     Death:
     Explode:
-        TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombExplode", 0)
+        TNT1 A 0 A_StopSound(CHAN_BODY)
         TNT1 A 0 A_StopSound(CHAN_6)
+        TNT1 A 0 ACS_NamedExecuteAlways("ThermonuclearBombExplode", 0)
+        TNT1 A 0 A_PlaySound("nuke/detonate", CHAN_5, 1.0, false, 0.0)
+        // Hit everything in the room regardless of height
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, 1, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, 1, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, CeilingZ - Z - 5, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, CeilingZ - Z - 5, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        // If you're way too close, no number of walls will save you
+        TNT1 A 0 A_RadiusGive ("DRPGThermonuclearBombDirectDamage1", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        TNT1 A 0 A_RadiusGive ("DRPGThermonuclearBombDirectDamage2", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        // Nuclear fallout
+        TNT1 A 0 A_SpawnItemEx("DRPGBombRadiationArea", 0, 0, 16, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
         TNT1 A 0 A_SetScale(4.0, 4.0)
         MISL BCD 6 Bright
+        Stop
         Stop
     }
 }
@@ -76,7 +91,6 @@ actor DRPGThermonuclearBombPickup : CustomInventory
 actor DRPGThermonuclearBombDropped
 {
     -SOLID
-    +OLDRADIUSDMG
     
     States
     {
@@ -86,9 +100,108 @@ actor DRPGThermonuclearBombDropped
         TNT1 A 0 A_PlaySound("nuke/countdown", CHAN_5, 1.0, false, 0.0)
         TBOM A 350 Bright
         TNT1 A 0 A_PlaySound("nuke/detonate", CHAN_5, 1.0, false, 0.0)
-        TNT1 A 0 A_Explode(25000, 32767, 0, true, 32767, 360, 25000)
+        // Hit everything in the room regardless of height
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, 1, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, 1, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, CeilingZ - Z - 5, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, CeilingZ - Z - 5, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion1", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGThermonuclearBombExplosion2", 0, 0, (CeilingZ - Z) / 2, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        // If you're way too close, no number of walls will save you
+        TNT1 A 0 A_RadiusGive("DRPGThermonuclearBombDirectDamage1", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        TNT1 A 0 A_RadiusGive("DRPGThermonuclearBombDirectDamage2", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        // Nuclear fallout
+        TNT1 A 0 A_SpawnItemEx("DRPGBombRadiationArea", 0, 0, 16, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
         TNT1 A 0 A_SetScale(4.0, 4.0)
         MISL BCD 6 Bright
+        Stop
+    }
+}
+
+actor DRPGThermonuclearBombExplosion1
+{
+    Radius 4
+    Height 4
+    +SHOOTABLE
+    +NONSHOOTABLE
+    Projectile
+    Speed 0
+    DamageType "Fire"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 A_Die
+    Death:
+        TNT1 A 2 A_Explode(4170, 16000, 0, true, 16000)
+        Stop
+    }
+}
+
+actor DRPGThermonuclearBombExplosion2 : DRPGThermonuclearBombExplosion1
+{
+    DamageType "Melee"
+}
+
+actor DRPGThermonuclearBombDirectDamage1 : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_DamageSelf(12500, "Fire", DMSS_AFFECTARMOR)
+        Stop
+    }
+}
+
+actor DRPGThermonuclearBombDirectDamage2 : DRPGThermonuclearBombDirectDamage1
+{
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_DamageSelf(12500, "Melee", DMSS_AFFECTARMOR)
+        Stop
+    }
+}
+
+actor DRPGBombRadiationArea
+{
+    +NoBlockmap
+    +NoSector
+    +NoInteraction
+    
+    var int user_timer;
+    
+    States
+    {
+    Spawn:
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx ("DRPGRadiationParticle", Random(-2048, 2048), Random(-2048, 2048), Random(-256, 256), 0, 0, 0, 0)
+        TNT1 A 0 A_SetUserVar("user_timer", user_timer + 1)
+        TNT1 A 1 Light("BOMBRADIATIONGLOW") A_JumpIf(user_timer >= 32, "DoDamage")
+        Loop
+    DoDamage:
+        TNT1 A 0 A_SetUserVar("user_timer", 0)
+        TNT1 A 0 A_RadiusGive("DRPGBombRadiationAreaDamage", 2048, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE | RGF_NOSIGHT)
+        Goto Spawn
+    }
+}
+
+actor DRPGBombRadiationAreaDamage : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_JumpIfInventory("PowerIronFeet", 1, "DoNothing")
+        TNT1 A 0 A_JumpIfInventory("DRPGSkillIronFeet", 1, "DoNothing")
+        TNT1 A 0 A_DamageSelf(5, "Radiation", 0)
+        Stop
+    DoNothing:
+        TNT1 A 0
         Stop
     }
 }
@@ -288,6 +401,241 @@ actor DRPGGeneratorCellDead : Inventory
     Spawn:
         TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
         GCEL H -1
+        Stop
+    }
+}
+
+actor DRPGLowPowerJunkSpawner : RandomSpawner
+{
+    DropItem "DRPGLowPowerJunkPile"         256 60
+    DropItem "DRPGDeadDemonSpawner"         256 50
+    DropItem "DRPGLowPowerRadiationBarrel"  256 40
+    DropItem "DRPGDeadMarine"               256 30
+    DropItem "DRPGLowPowerBrokenLamp"       256 20
+    DropItem "DRPGDestroyedTurret"          256 10
+    DropItem "DRPGCrate"                    256 5
+	DropItem "DRPGExperimentTank"           256 5
+    DropItem "DRPGModulePickup"             256 2
+}
+
+actor DRPGExperimentTank
+{
+	Height 56
+	Radius 24
+	Health 10
+	Mass 4000
+	
+	+SHOOTABLE
+	+NOBLOOD
+	
+	States
+	{
+	Spawn:
+		ETNK A -1
+		Stop
+	Death:
+		ETNK B 0 A_PlaySound("misc/breakglass", CHAN_BODY)
+		ETNK B 0 A_Jump(256,
+            "DropAug",
+            "DropShield",
+            "DropModule", "DropModule",
+            "DropStim", "DropStim", "DropStim", "DropStim", "DropStim", 
+            "DropMoney", "DropMoney", "DropMoney", "DropMoney", "DropMoney", "DropMoney", "DropMoney", "DropMoney", "DropMoney", "DropMoney")
+	DropAug:
+		ETNK B 0 A_SpawnItemEx("DRPGAugDropper", 0, 0, 32, Random(-5, 5), Random(-5, 5), Random(-5, 5), Random(0, 359))
+		Goto DeathEnd
+	DropShield:
+		ETNK B 0 A_SpawnItemEx("DRPGShieldDropper", 0, 0, 32, Random(-5, 5), Random(-5, 5), Random(-5, 5), Random(0, 359))
+		Goto DeathEnd
+	DropModule:
+		ETNK B 0 A_SpawnItemEx("DRPGModulePickup", 0, 0, 32, Random(-5, 5), Random(-5, 5), Random(-5, 5), Random(0, 359))
+		Goto DeathEnd
+	DropStim:
+		ETNK BBBBBBBBBBBB 0 A_SpawnItemEx("DRPGVialDropper", 0, 0, 32, Random(-5, 5), Random(-5, 5), Random(-5, 5), Random(0, 359))
+        ETNK BBB 0 A_SpawnItemEx("DRPGStimDropper", 0, 0, 32, Random(-5, 5), Random(-5, 5), Random(-5, 5), Random(0, 359))
+		Goto DeathEnd
+	DropMoney:
+		ETNK BBBBBBBBBBBBBBBBBBBB 0 A_SpawnItemEx("DRPGMoneyDropper", 0, 0, 32, Random(-5, 5), Random(-5, 5), Random(-5, 5), Random(0, 359), 0, 128)
+		Goto DeathEnd
+	DeathEnd:
+		ETNK B -1
+		Stop
+	}
+}
+
+actor DRPGDeadDemonSpawner : RandomSpawner
+{
+    DropItem "DeadCacodemon"
+    DropItem "DeadDemon"
+    DropItem "DeadDoomImp"
+    DropItem "DeadShotgunGuy"
+    DropItem "DeadZombieMan"
+}
+
+actor DRPGLowPowerJunkPile
+{
+    Radius 25
+    Height 25
+    Scale 0.5
+    States
+    {
+    Spawn:
+        JPIL AAAAAAAAAAAAAAAAAAAA 0 NoDelay A_SpawnItemEx("DRPGLowPowerJunk", 0, 0, 0, FRandom(-32, 32), FRandom(-32, 32), FRandom(0, 32), FRandom(0, 360))
+        JPIL A 0 NoDelay A_SpawnItemEx("DRPGBatteryDropper", 0, 0, 0, FRandom(-32, 32), FRandom(-32, 32), FRandom(0, 32), FRandom(0, 360), 0, 200)
+        JPIL A 0 A_Jump(256, "Pile1", "Pile2")
+    Pile1:
+        JPIL A -1
+        Stop
+    Pile2:
+        JPIL B -1
+        Stop
+    }
+}
+
+actor DRPGLowPowerJunk
+{
+    Radius 4
+    Height 8
+    Scale 1.25
+    States
+    {
+    Spawn:
+        JUNK A 0 NoDelay A_Jump(256, "Junk1", "Junk2", "Junk3", "Junk4", "Junk5", "Junk6","Junk7", "Junk8", "Junk9", "Junk10", "Junk11", "Junk12", "Junk13", "Junk14","Junk15", "Junk16", "Junk17", "Junk18", "Junk19", "Junk20")
+    Junk1:
+        JUNK A -1
+        Stop
+    Junk2:
+        JUNK B -1
+        Stop
+    Junk3:
+        JUNK C -1
+        Stop
+    Junk4:
+        JUNK D -1
+        Stop
+    Junk5:
+        JUNK E -1
+        Stop
+    Junk6:
+        JUNK F -1
+        Stop
+    Junk7:
+        JUNK G -1
+        Stop
+    Junk8:
+        JUNK H -1
+        Stop
+    Junk9:
+        JUNK I -1
+        Stop
+    Junk10:
+        JUNK J -1
+        Stop
+    Junk11:
+        JUNK K -1
+        Stop
+    Junk12:
+        JUNK L -1
+        Stop
+    Junk13:
+        JUNK M -1
+        Stop
+    Junk14:
+        JUNK N -1
+        Stop
+    Junk15:
+        JUNK O -1
+        Stop
+    Junk16:
+        JUNK P -1
+        Stop
+    Junk17:
+        JUNK Q -1
+        Stop
+    Junk18:
+        JUNK R -1
+        Stop
+    Junk19:
+        JUNK S -1
+        Stop
+    Junk20:
+        JUNK T -1
+        Stop
+    }
+}
+
+actor DRPGLowPowerRadiationBarrel
+{
+    Radius 16
+    Height 32
+    Scale 1.25
+    DamageType "Radiation"
+    
+    +DONTSPLASH
+    +NODAMAGETHRUST
+    +NEVERTARGET
+    
+    States
+    {
+    Spawn:
+        RBAR A 0 NoDelay A_Jump(256, "RadBarrel1", "RadBarrel2", "RadBarrel3")
+    RadBarrel1:
+        RBAR A -1
+        Stop
+    RadBarrel2:
+        RBAR B -1
+        Stop
+    RadBarrel3:
+        RBAR C 0 A_PlaySound("misc/radiation", CHAN_BODY, 0.5, true, ATTN_NORM)
+        RBAR CCCCC 0 A_SpawnItemEx("DRPGRadiationParticle", FRandom(-32,32), FRandom(-32,32), FRandom(0,64), 0, 0, 0, 0, 0, 128)
+        RBAR C 32 A_RadiusGive("DRPGRadiationBarrelDamage", 128, RGF_PLAYERS | RGF_MONSTERS | RGF_OBJECTS | RGF_CUBE)
+        Loop
+    }
+}
+
+actor DRPGRadiationBarrelDamage : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_JumpIfInventory("PowerIronFeet", 1, "DoNothing")
+        TNT1 A 0 A_JumpIfInventory("DRPGSkillIronFeet", 1, "DoNothing")
+        TNT1 A 0 A_DamageSelf(20, "Radiation", 0)
+        Stop
+    DoNothing:
+        TNT1 A 0
+        Stop
+    }
+}
+
+actor DRPGLowPowerBrokenLamp
+{
+    States
+    {
+    Spawn:
+        BLMP A 0 A_PlaySound("shield/lightning", CHAN_BODY, 0.5, false, ATTN_NORM)
+        BLMP AAAA 0 A_CustomRailgun(Random(5,30), 0, "None", "D0 E0 FF", RGF_SILENT | RGF_FULLBRIGHT, 0, 50, "DRPGElectricalPuff", 180, 90, 128, 1, 1.5, 0, "DRPGShieldLightningParticle", 12)
+        BLMP A 2 Bright Light("BROKENLAMPZAP")
+        BLMP A 0 A_SetTics(Random(1,50))
+        Loop
+    }
+}
+
+actor DRPGElectricalPuff : BulletPuff
+{
+    DamageType "Plasma"
+    PainType "Lightning"
+    
+    +ALWAYSPUFF
+    
+    States
+    {
+    Spawn:
+        TNT1 A 4
+        RBAR AAA 0 A_SpawnItemEx("DRPGShieldStaticParticle", 0, 0, 0, FRandom(-1,1), FRandom(-1,1), FRandom(-1,1), 0)
         Stop
     }
 }

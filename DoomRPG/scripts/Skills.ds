@@ -499,46 +499,49 @@ script void SkillWheel() enter
             LerpPos = 1.0;
         
         // Input
-        if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT))
+        if (!Close)
         {
-            ActivatorSound("menu/click", 127);
-            Player.WheelSelection--;
-            OldLocation = Location;
-            LerpPos = 0;
-            if (Player.WheelSelection < 0) Player.WheelSelection = MAX_SKILLKEYS - 1;
-        };
-        if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT))
-        {
-            ActivatorSound("menu/click", 127);
-            Player.WheelSelection++;
-            OldLocation = Location;
-            LerpPos = 0;
-            if (Player.WheelSelection > MAX_SKILLKEYS - 1) Player.WheelSelection = 0;
-        };
-        if (Buttons & BT_SPEED && Player.SkillCategory[Player.WheelSelection] != -1 && Player.SkillIndex[Player.WheelSelection] != -1)
-        {
-            SkillLevel = &Player.SkillLevel[Player.SkillCategory[Player.WheelSelection]][Player.SkillIndex[Player.WheelSelection]];
-            
-            // Decrease selected skill level
-            if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD) && SkillLevel->CurrentLevel > 1)
+            if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT))
             {
-                SkillLevel->CurrentLevel--;
-                AmbientSound("menu/move", 127);
+                ActivatorSound("menu/click", 127);
+                Player.WheelSelection--;
+                OldLocation = Location;
+                LerpPos = 0;
+                if (Player.WheelSelection < 0) Player.WheelSelection = MAX_SKILLKEYS - 1;
             };
-            
-            // Increase selected skill level
-            if (Buttons & BT_BACK && !(OldButtons & BT_BACK) && SkillLevel->CurrentLevel < SkillLevel->Level)
+            if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT))
             {
-                SkillLevel->CurrentLevel++;
-                AmbientSound("menu/move", 127);
+                ActivatorSound("menu/click", 127);
+                Player.WheelSelection++;
+                OldLocation = Location;
+                LerpPos = 0;
+                if (Player.WheelSelection > MAX_SKILLKEYS - 1) Player.WheelSelection = 0;
             };
-            
-            // Clear Skill
-            if (Buttons & BT_USE)
+            if (Buttons & BT_SPEED && Player.SkillCategory[Player.WheelSelection] != -1 && Player.SkillIndex[Player.WheelSelection] != -1)
             {
-                Player.SkillCategory[Player.WheelSelection] = -1;
-                Player.SkillIndex[Player.WheelSelection] = -1;
-                AmbientSound("menu/move", 127);
+                SkillLevel = &Player.SkillLevel[Player.SkillCategory[Player.WheelSelection]][Player.SkillIndex[Player.WheelSelection]];
+                
+                // Decrease selected skill level
+                if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD) && SkillLevel->CurrentLevel > 1)
+                {
+                    SkillLevel->CurrentLevel--;
+                    AmbientSound("menu/move", 127);
+                };
+                
+                // Increase selected skill level
+                if (Buttons & BT_BACK && !(OldButtons & BT_BACK) && SkillLevel->CurrentLevel < SkillLevel->Level)
+                {
+                    SkillLevel->CurrentLevel++;
+                    AmbientSound("menu/move", 127);
+                };
+                
+                // Clear Skill
+                if (Buttons & BT_USE)
+                {
+                    Player.SkillCategory[Player.WheelSelection] = -1;
+                    Player.SkillIndex[Player.WheelSelection] = -1;
+                    AmbientSound("menu/move", 127);
+                };
             };
         };
         
@@ -2253,7 +2256,7 @@ function void CheckSkills()
         Player.SkillSupplyCooldown--;
     
     // Cost multiplier timer handling
-    if ((!InBase || ArenaActive) && Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
+    if ((!InBase || ArenaActive || MarinesHostile) && Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
         if ((Timer() % (35 * GetCVar("drpg_skill_costcooldown"))) == 0)
             Player.SkillCostMult--;
     
@@ -2343,7 +2346,7 @@ function void CheckAuras()
         };
         
         // White Aura
-        if (Player.Aura.Type[AURA_WHITE].Active && !CheckInventory("DRPGMenuFreezer") && (!InBase || ArenaActive))
+        if (Player.Aura.Type[AURA_WHITE].Active && !CheckInventory("DRPGMenuFreezer") && (!InBase || ArenaActive || MarinesHostile))
         {
             if (Player.Aura.Type[AURA_WHITE].Level >= 2 || Player.SoulActive[SOUL_WHITE])
             {
@@ -2440,7 +2443,7 @@ function void CheckAuras()
         };
         
         // Yellow Aura
-        if (Player.Aura.Type[AURA_YELLOW].Active && !CheckInventory("DRPGMenuFreezer") && (!InBase || ArenaActive))
+        if (Player.Aura.Type[AURA_YELLOW].Active && !CheckInventory("DRPGMenuFreezer") && (!InBase || ArenaActive || MarinesHostile))
         {
             if ((Timer() % (35 * (6 - Player.Aura.Type[AURA_YELLOW].Level))) == 1)
                 GiveInventory("DRPGCredits", (Player.RankLevel + 1));
@@ -2472,7 +2475,7 @@ function void CheckAuras()
     };
     
     // Decrease Aura Timer
-    if (!InBase || ArenaActive)
+    if (!InBase || ArenaActive || MarinesHostile)
         for (int i = 0; i < AURA_MAX; i++)
             if (Player.Aura.Time > 0 && Player.Aura.Type[i].Active)
                 if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGPowerStimChrono") && !CheckInventory("DRPGMenuFreezer"))
