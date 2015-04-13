@@ -1988,9 +1988,8 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
                     // Player is not in-game
                     if (!PlayerInGame(i)) continue;
                     
-                    SetActorProperty(Players(i).TID, APROP_Invulnerable, true);
-                    SetActorVelocity(Players(i).TID, 0, 0, 0, false, false);
                     SpawnForced("DRPGTransportEffect", GetActorX(Players(i).TID), GetActorY(Players(i).TID), GetActorZ(Players(i).TID), 0, 0);
+                    TransportOutFX(Players(i).TID);
                     ThingSound(Players(i).TID, "misc/transport", 96);
                 };
                 
@@ -2038,18 +2037,10 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         Transported = true;
         
         // Transport FX
-        SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
-        ActivatorSound("misc/transport", 96);
-        
-        // Freeze Player
-        SetActorProperty(0, APROP_Invulnerable, true);
-        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-        SetActorVelocity(0, 0, 0, 0, false, false);
+        TransportOutFX(0);
         
         // Delay and unfreeze Player
         Delay(35 * 2);
-        SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-        SetActorProperty(0, APROP_Invulnerable, false);
     };
     
     // Transport
@@ -2078,6 +2069,38 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         Transported = true;
         return true;
     };
+};
+
+acscript void TransportOutFX(int tid)
+{
+    if (tid != 0)
+        SetActivator(tid);
+    
+    if (GetActorZ(0) == GetActorFloorZ(0))
+        SetActorPosition(0, GetActorX(0), GetActorY(0), GetActorZ(0)+1, false);
+    GiveInventory("DRPGTransportSetNonShootable", 1);
+    ActivatorSound("misc/transport", 96);
+    SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+    SetActorProperty(0, APROP_RenderStyle, STYLE_AddStencil);
+    SetActorProperty(0, APROP_StencilColor, 0x00FF00);
+    for (int ticker = 0; ticker < 70; ticker++)
+    {
+        SetActorVelocity(0, 0, 0, 0, false, false);
+        SetActorPropertyFixed(0, APROP_Alpha, 1.0 - ((1.0 / 70.0) * ticker));
+        Delay(1);
+    };
+};
+
+acscript void TransportInFX(int tid)
+{
+    if (tid != 0)
+        SetActivator(tid);
+    
+    GiveInventory("DRPGTransportUnsetNonShootable", 1);
+    ActivatorSound("misc/transport", 96);
+    SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+    SetActorProperty(0, APROP_RenderStyle, STYLE_Normal);
+    SetActorPropertyFixed(0, APROP_Alpha, 1.0);
 };
 
 acscript void RemoveAura()
