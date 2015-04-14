@@ -8,12 +8,18 @@
 #include "Utils.dh"
 
 // Level Info
-static LevelInfo *CurrentLevel;
 static DynamicArray KnownLevels;
+static LevelInfo *CurrentLevel;
+static LevelInfo *PreviousLevel;
+static LevelInfo *TransporterLevel;
+static int PreviousLevelNum;
+static int PreviousPrimaryLevelNum;
+static bool UsedSecretExit;
 static bool WaitingForReplacements;
-static int LastVisitedLevel;
 static int AllBonusMaps; // For the OCD Shield
 static int CurrentSkill; // Keeps track of skill changes based on events
+
+// Local
 static int PassingEventTimer;
 static bool DisableEvent;
 
@@ -21,124 +27,184 @@ static bool DisableEvent;
 script void MapInit() open
 {
     // Running the game for the first time
-    if (KnownLevels.Data == nullptr)
+    if (KnownLevels.Data == NULL)
     {
         CurrentSkill = GameSkill() - 1;
+        UsedSecretExit = false;
+        PreviousLevelSecret = false;
+        PreviousLevelNum = 0;
+        PreviousPrimaryLevelNum = 0;
         ArrayCreate(&KnownLevels, "LVLS\x00", 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
+        PreviousLevel = NULL;
         PassingEventTimer = GetCVar("drpg_mapevent_eventtime") * 35 * 60;
         DisableEvent = true;
         
-        if (KnownLevels.Data == nullptr)
+        if (KnownLevels.Data == NULL)
         {
             Log("\cgWARNING: \caCould not allocate level info!\n");
             return;
         };
         
+        LevelInfo *OutpostMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+        OutpostMap->LevelNum = 0;
+        OutpostMap->LumpName = "OUTPOST";
+        OutpostMap->NiceName = "UAC Outpost";
+        OutpostMap->Completed = true;
+        OutpostMap->UACBase = true;
+        OutpostMap->NeedsRealInfo = false;
+        
+        // [KS] Not right now.
+        /*
+        LevelInfo *ArenaMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+        ArenaMap->LevelNum = 0;
+        ArenaMap->LumpName = "ARENA";
+        ArenaMap->NiceName = "UAC Arena";
+        ArenaMap->Completed = true;
+        ArenaMap->UACArena = true;
+        ArenaMap->NeedsRealInfo = false;
+        */
+        
+        CurrentLevel = FindLevelInfo();
+        
         // Special case for starting in the Outpost: Add a starting map if you start here
-        if (GetLevelInfo(LEVELINFO_LEVELNUM) == 999)
+        if (CurrentLevel && CurrentLevel->UACBase)
         {
-            LevelInfo *DummyMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
-            DummyMap->LevelNum = 1;
-            DummyMap->LumpName = GetCVarString("drpg_startmap");
-            DummyMap->NiceName = "Unknown Area";
-            DummyMap->NeedsRealInfo = true;
+            LevelInfo *StartingMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+            StartingMap->LevelNum = 1;
+            StartingMap->LumpName = GetCVarString("drpg_startmap");
+            StartingMap->NiceName = "Unknown Area";
+            StartingMap->NeedsRealInfo = true;
+            
+            PreviousLevel = StartingMap;
+            TransporterLevel = StartingMap;
             return;
-        }
-        else
-        {
-            // We don't need to Resize since the array size will always be 0 here
-            CurrentLevel = &(((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++]);
-            // So that FindLevelInfoIndex can pick it up immediately
-            CurrentLevel->LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
-            CurrentLevel->NeedsRealInfo = true;
         };
     };
     
-    int Index = FindLevelInfoIndex();
+    CurrentLevel = FindLevelInfo();
     
-    // The map has no level number
-    if (Index == -3)
-    {
-        CurrentLevel = NULL;
-        return;
-    }
-    else if (Index == -2) // UAC Outpost
-    {
-        CurrentLevel = NULL;
-        SetupOutpostEvent();
-        return;
-    }
-    else if (Index == -1) // New map - We need to create new info for it
+    if (CurrentLevel == NULL) // New map - We need to create new info for it
     {
         CurrentLevel = &(((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++]);
         CurrentLevel->NeedsRealInfo = true;
         
         if (KnownLevels.Position == KnownLevels.Size)
             ArrayResize(&KnownLevels);
-    }
-    else
-        CurrentLevel = &(((LevelInfo *)KnownLevels.Data)[Index]);
+    };
     
     if (CurrentLevel->NeedsRealInfo)
     {
-        CurrentLevel->LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+        // [KS] Is this an outpost or an arena?
+        if (ThingCountName("OutpostMarker", 0) > 0)
+        {
+            CurrentLevel->LevelNum = 0;
+            CurrentLevel->SecretMap = false;
+            
+            CurrentLevel->Completed = true;
+            CurrentLevel->UACBase = true;
+            
+            CurrentLevel->NeedsRealInfo = false;
+        }
+        else if (ThingCountName("ArenaMarker", 0) > 0)
+        {
+            CurrentLevel->LevelNum = 0;
+            CurrentLevel->SecretMap = false;
+            
+            CurrentLevel->Completed = true;
+            CurrentLevel->UACArena = true;
+            
+            CurrentLevel->NeedsRealInfo = false;
+        }
+        else
+        {
+            // [KS] Generate map numbers on the fly based on visitation order and
+            // exit usage. The map order for a non-hub is typically a tree - one
+            // linear path with optional branching (secret-exit-based) paths that
+            // stop in dead ends. Using that knowledge, we can deduce that the maps
+            // will travel in a straight line to the end for the most part, and
+            // predict the next map number from the last non-secret map that we've
+            // discovered.
+            
+            // This will allow us to not have to rely on LEVELNUM since that can,
+            // and most often will, wind up being absent for user maps that provide
+            // their own MAPINFO definitions.
+            
+            PreviousLevelNum++;
+            if (!UsedSecretExit)
+                PreviousLevelNum = ++PreviousPrimaryLevelNum;
+            
+            CurrentLevel->LevelNum = PreviousLevelNum;
+            CurrentLevel->SecretMap = UsedSecretExit;
+            
+            if (GetCVar("drpg_debug"))
+                Log ("\cdDEBUG: \cjLevel number: \cd%d\n", CurrentLevel->LevelNum);
+            
+            CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
+            CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
+            
+            CurrentLevel->UACBase = false;
+            CurrentLevel->UACArena = false;
+            
+            CurrentLevel->Completed = false;
+            
+            CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+            CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+            CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+            CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+            CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+            CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+            CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+            CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+            CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
+            
+            // For rank giving and mission counting
+            CurrentLevel->UniqueSecrets = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+            
+            CurrentLevel->ShortestTime = 0x7FFFFFFF;
+            
+            // These never change so we don't need to update them
+            CurrentLevel->Par = GetLevelInfo(LEVELINFO_PAR_TIME);
+            CurrentLevel->Sucks = GetLevelInfo(LEVELINFO_SUCK_TIME);
+            
+            CurrentLevel->KillBonus = false;
+            CurrentLevel->ItemsBonus = false;
+            CurrentLevel->SecretsBonus = false;
+            CurrentLevel->AllBonus = false;
+            CurrentLevel->ParBonus = false;
+            
+            // Check to see if these are unobtainable
+            if (CurrentLevel->MaxTotalMonsters == 0)
+                CurrentLevel->KillBonus = true;
+            if (CurrentLevel->MaxTotalItems == 0)
+                CurrentLevel->ItemsBonus = true;
+            if (CurrentLevel->MaxTotalSecrets == 0)
+                CurrentLevel->SecretsBonus = true;
+            if (CurrentLevel->MaxTotalMonsters == 0 && CurrentLevel->MaxTotalItems == 0 && CurrentLevel->MaxTotalSecrets == 0)
+                CurrentLevel->AllBonus = true;
+            if (CurrentLevel->Par == 0)
+                CurrentLevel->ParBonus = true;
+            CalculateBonusMaps();
+            
+            CurrentLevel->AdditionalMonsters = 0;
+            CurrentLevel->Event = MAPEVENT_NONE;
+            CurrentLevel->MonsterPositions = BLANKDYNAMICARRAY;
+            
+            // Allocate the Monster Positions dynamic array
+            ArrayCreate(&CurrentLevel->MonsterPositions, "MPOS\x00", 64, sizeof(Position));
+            
+            // Decide the map's event, if any
+            DecideMapEvent(CurrentLevel);
+            
+            CurrentLevel->NeedsRealInfo = false;
+        };
         
-        CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
-        CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
-        
-        CurrentLevel->Completed = false;
-        
-        CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
-        CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
-        CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
-        CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
-        CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
-        CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
-        CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
-        CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
-        CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
-        
-        // For rank giving and mission counting
-        CurrentLevel->UniqueSecrets = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
-        
-        CurrentLevel->ShortestTime = 0x7FFFFFFF;
-        
-        // These never change so we don't need to update them
-        CurrentLevel->Par = GetLevelInfo(LEVELINFO_PAR_TIME);
-        CurrentLevel->Sucks = GetLevelInfo(LEVELINFO_SUCK_TIME);
-        
-        CurrentLevel->KillBonus = false;
-        CurrentLevel->ItemsBonus = false;
-        CurrentLevel->SecretsBonus = false;
-        CurrentLevel->AllBonus = false;
-        CurrentLevel->ParBonus = false;
-        
-        // Check to see if these are unobtainable
-        if (CurrentLevel->MaxTotalMonsters == 0)
-            CurrentLevel->KillBonus = true;
-        if (CurrentLevel->MaxTotalItems == 0)
-            CurrentLevel->ItemsBonus = true;
-        if (CurrentLevel->MaxTotalSecrets == 0)
-            CurrentLevel->SecretsBonus = true;
-        if (CurrentLevel->MaxTotalMonsters == 0 && CurrentLevel->MaxTotalItems == 0 && CurrentLevel->MaxTotalSecrets == 0)
-            CurrentLevel->AllBonus = true;
-        if (CurrentLevel->Par == 0)
-            CurrentLevel->ParBonus = true;
-        CalculateBonusMaps();
-        
-        CurrentLevel->AdditionalMonsters = 0;
-        CurrentLevel->Event = MAPEVENT_NONE;
-        CurrentLevel->MonsterPositions = BLANKDYNAMICARRAY;
-        
-        // Allocate the Monster Positions dynamic array
-        ArrayCreate(&CurrentLevel->MonsterPositions, "MPOS\x00", 64, sizeof(Position));
-        
-        // Decide the map's event, if any
-        DecideMapEvent(CurrentLevel);
-        
-        CurrentLevel->NeedsRealInfo = false;
+        // We need to make sure the maps stay sorted whenever we add one
+        qsort(KnownLevels.Data, KnownLevels.Position, sizeof(LevelInfo), LevelSort);
     };
+    
+    if (CurrentLevel->UACBase || CurrentLevel->UACArena)
+        return; // [KS] These maps set themselves up, so nothing more to do.
     
     WaitingForReplacements = true;
     Delay(2);
@@ -180,6 +246,22 @@ script void MapInit() open
     
     if (CurrentLevel)
         MapLoop();
+};
+
+function int LevelSort(void const *Left, void const *Right)
+{
+    LevelInfo LeftLevel = *((LevelInfo *)Left);
+    LevelInfo RightLevel = *((LevelInfo *)Right);
+    
+    // Sort order: Outpost, Arena, Normal Map, Secret Map
+    
+    int LeftScore = LeftLevel.LevelNum + (LeftLevel.SecretMap? 1000 : 0) + (LeftLevel.UACBase? -2000 : 0) + (LeftLevel.UACArena? -1000 : 0);
+    int RightScore = RightLevel.LevelNum + (RightLevel.SecretMap? 1000 : 0) + (RightLevel.UACBase? -2000 : 0) + (RightLevel.UACArena? -1000 : 0);
+    
+    if (LeftScore < RightScore) return -1;
+    if (LeftScore > RightScore) return 1;
+    
+    return 0;
 };
 
 script void ReduceMonsterCount(bool *WaitLock)
@@ -325,12 +407,16 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
         "Skills - Armageddon";
     };
     
+    if (TargetLevel->UACBase)
+        // [KS] One day, there will be invasions. Someday.
+        return;
+    
     // We need to clear all of the event data before choosing one
     
     CurrentLevel->EventCompleted = false;
     
     // Megaboss
-    TargetLevel->MegabossActor = nullptr;
+    TargetLevel->MegabossActor = NULL;
     
     // Environmental Hazard
     TargetLevel->HazardLevel = 0;
@@ -352,7 +438,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     TargetLevel->PowerGeneratorActive = false;
     
     // One-Monster
-    TargetLevel->SelectedMonster = nullptr;
+    TargetLevel->SelectedMonster = NULL;
     
     // Hell Unleashed
     TargetLevel->HellUnleashedActive = false;
@@ -1699,6 +1785,9 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Players(i).Turret.Active = false;
     };
     
+    UsedSecretExit = Secret;
+    PreviousLevel = CurrentLevel;
+
     // Now exit the level
     if (Secret)
         Exit_Secret(0)
@@ -1723,21 +1812,28 @@ function bool SpawnEventActor(str Actor, int TID)
         return true;
 };
 
-function int FindLevelInfoIndex(int LevelNum)
+function LevelInfo *FindLevelInfo(str MapName)
 {
-    if (LevelNum == 0)
-        LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
-    
-    if (LevelNum == 999)
-        return -2; // Special value to mean the Outpost.
-    if (LevelNum == 0)
-        return -3; // The map has a bogus level number, so we just don't know.
+    if (MapName == nullptr)
+        MapName = StrParam("%N\n", PRINTNAME_LEVEL);
     
     for (int i = 0; i < KnownLevels.Position; i++)
-        if (((LevelInfo *)KnownLevels.Data)[i].LevelNum == LevelNum)
+        if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
+            return &((LevelInfo *)KnownLevels.Data)[i];
+    
+    return NULL;
+};
+
+function int FindLevelInfoIndex(str MapName)
+{
+    if (MapName == nullptr)
+        MapName = StrParam("%N\n", PRINTNAME_LEVEL);
+    
+    for (int i = 0; i < KnownLevels.Position; i++)
+        if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
             return i;
     
-    return -1;
+    return 0; // Default to the Outpost because we don't actually know where we are
 };
 
 script void CalculateBonusMaps()
@@ -1753,22 +1849,25 @@ script void CalculateBonusMaps()
 
 acscript void SetMapEvent(int Level, int ID)
 {
-    if (Level == 0)
-        Level = GetLevelInfo(LEVELINFO_LEVELNUM);
+    LevelInfo *MapToChange = NULL;
     
-    int LevelIndex = FindLevelInfoIndex(Level);
-    if (LevelIndex == -2)
+    if (Level == 0)
+        MapToChange = CurrentLevel
+    else if (Level < 0 || Level >= KnownLevels.Position)
+        MapToChange = NULL
+    else
+        MapToChange = &((LevelInfo *)KnownLevels.Data)[Level];
+    
+    if (MapToChange == NULL)
     {
-        Log("\cgOutpost Events aren't implemented yet.\n");
-        return;
-    }
-    else if (LevelIndex == -1 || LevelIndex == -3)
-    {
-        Log("\cgCan't set an event for that level - Visit it first.\n");
+        Log("\cgYou attempt black voodoo magic and fail.\n");
+        
+        if (Random(1, 6) == 1) // Roll for critical failure
+            DamageThing(1000000);
+        
         return;
     };
     
-    LevelInfo *MapToChange = &((LevelInfo *)KnownLevels.Data)[LevelIndex];
     MapToChange->Event = ID;
     
     if (MapToChange->Event == MAPEVENT_HARMONIZEDAURAS)

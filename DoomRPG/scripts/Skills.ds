@@ -1210,7 +1210,7 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript bool Translocate(SkillLevelInfo *SkillLevel, void *Data)
 {
-    if (InBase)
+    if (CurrentLevel->UACBase)
     {
         PrintError("Cannot translocate here");
         ActivatorSound("menu/error", 127);
@@ -1552,7 +1552,7 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
     };
     
     // Stop if you're in the Outpost
-    if (InBase)
+    if (CurrentLevel->UACBase)
     {
         PrintError("You cannot summon friendlies here");
         ActivatorSound("menu/error", 127);
@@ -2050,28 +2050,23 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
     };
     
     // Transport
-    if (!InBase)
+    if (!CurrentLevel->UACBase)
     {
-        LastVisitedLevel = FindLevelInfoIndex();
+        TransporterLevel = FindLevelInfo();
        
         // Clear the event if there is one
         if (CurrentLevel->EventCompleted)
             CurrentLevel->Event = MAPEVENT_NONE;
         
-        // Just in case we warp to Outpost from a map with no index, default to MAP01
-        if (LastVisitedLevel < 0) LastVisitedLevel = 0;
-        
         if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
             ChangeLevel("OUTPOST2", 0, CHANGELEVEL_NOINTERMISSION, CurrentSkill)
         else
             ChangeLevel("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, CurrentSkill);
-        InBase = true;
         return true;
     }
     else
     {
-        ChangeLevel(((LevelInfo *)KnownLevels.Data)[LastVisitedLevel].LumpName, 0, CHANGELEVEL_NOINTERMISSION, -1);
-        InBase = false;
+        ChangeLevel(TransporterLevel->LumpName, 0, CHANGELEVEL_NOINTERMISSION, -1);
         Transported = true;
         return true;
     };
@@ -2285,7 +2280,7 @@ function void CheckSkills()
         Player.SkillSupplyCooldown--;
     
     // Cost multiplier timer handling
-    if ((!InBase || ArenaActive || MarinesHostile) && Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
+    if ((!CurrentLevel->UACBase || ArenaActive || MarinesHostile) && Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
         if ((Timer() % (35 * GetCVar("drpg_skill_costcooldown"))) == 0)
             Player.SkillCostMult--;
     
@@ -2375,7 +2370,7 @@ function void CheckAuras()
         };
         
         // White Aura
-        if (Player.Aura.Type[AURA_WHITE].Active && !CheckInventory("DRPGMenuFreezer") && (!InBase || ArenaActive || MarinesHostile))
+        if (Player.Aura.Type[AURA_WHITE].Active && !CheckInventory("DRPGMenuFreezer") && (!CurrentLevel->UACBase || ArenaActive || MarinesHostile))
         {
             if (Player.Aura.Type[AURA_WHITE].Level >= 2 || Player.SoulActive[SOUL_WHITE])
             {
@@ -2472,7 +2467,7 @@ function void CheckAuras()
         };
         
         // Yellow Aura
-        if (Player.Aura.Type[AURA_YELLOW].Active && !CheckInventory("DRPGMenuFreezer") && (!InBase || ArenaActive || MarinesHostile))
+        if (Player.Aura.Type[AURA_YELLOW].Active && !CheckInventory("DRPGMenuFreezer") && (!CurrentLevel->UACBase || ArenaActive || MarinesHostile))
         {
             if ((Timer() % (35 * (6 - Player.Aura.Type[AURA_YELLOW].Level))) == 1)
                 GiveInventory("DRPGCredits", (Player.RankLevel + 1));
@@ -2504,7 +2499,7 @@ function void CheckAuras()
     };
     
     // Decrease Aura Timer
-    if (!InBase || ArenaActive || MarinesHostile)
+    if (!CurrentLevel->UACBase || ArenaActive || MarinesHostile)
         for (int i = 0; i < AURA_MAX; i++)
             if (Player.Aura.Time > 0 && Player.Aura.Type[i].Active)
                 if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGPowerStimChrono") && !CheckInventory("DRPGMenuFreezer"))

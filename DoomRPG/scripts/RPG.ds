@@ -24,7 +24,6 @@
 const str Version = "v0.9.13 Beta - Phat Lewt Edition";
 
 // Flags
-static bool InBase;
 static bool Transported;
 static bool GlobalsInitialized;
 static int CompatMode;
@@ -100,7 +99,7 @@ script void GlobalInit() open
     ItemHandler();
     
     // Initialize the Dynamic Loot Generator
-    if (GetCVar("drpg_loot_system") && !InBase)
+    if (GetCVar("drpg_loot_system") && !CurrentLevel->UACBase)
         DynamicLootGenerator("DRPGGenericDropper");
 };
 
@@ -309,7 +308,7 @@ script void Loop()
     MenuCursorColor = CursorColors[(Timer() / 3) % 6];
     
     // Calculate Shop Discount
-    Player.ShopDiscount = (int)((Player.RankLevel * 2.1) + (InBase ? (Player.ShopCard * 5) : 0));
+    Player.ShopDiscount = (int)((Player.RankLevel * 2.1) + (CurrentLevel->UACBase ? (Player.ShopCard * 5) : 0));
     
     // Main Menu
     if (Player.InMenu)
@@ -806,7 +805,7 @@ script void ShopSpecialHandler() enter
     };
     
     // Remove the item if it was bought
-    if (InBase && ShopSpecialBought)
+    if (CurrentLevel->UACBase && ShopSpecialBought)
         Thing_Remove(ShopSpecialTID + 1);
     
     // Decrease the timer
@@ -831,7 +830,7 @@ script void ItemHandler()
     // Items array initialization complete
     ItemsInitialized = true;
     
-    while (ItemsInitialized && !InBase)
+    while (ItemsInitialized && !CurrentLevel->UACBase)
     {
         for (int i = 0; i < MAX_ITEMS; i++)
         {
@@ -940,7 +939,7 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     fixed UpperX = GetActorX(0);
     fixed LowerY = GetActorY(0);
     fixed UpperY = GetActorY(0);
-    int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+    int LevelNum = CurrentLevel->LevelNum;
     int Items = 0;
     int Instructions = 0;
     int Iterations = 0;

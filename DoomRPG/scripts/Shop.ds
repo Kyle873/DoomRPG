@@ -1,6 +1,7 @@
 #include "RPG.dh"
 
 #include "ItemData.dh"
+#include "Map.dh"
 #include "Menu.dh"
 #include "Minigame.dh"
 #include "Shield.dh"
@@ -69,7 +70,7 @@ script void ShopItemAutoHandler()
                     Items[i][j] = CheckInventory(ItemData[i][j].Actor);
         
         // Auto-Sell
-        if (Player.RankLevel > 0 || InBase)
+        if (Player.RankLevel > 0 || CurrentLevel->UACBase)
             for (int i = 0; i < ItemCategories; i++)
                 for (int j = 0; j < ItemMax[i]; j++)
                 {
@@ -146,7 +147,7 @@ function void ShopLoop()
     SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 
     // Force Locker mode if the Shop Anywhere CVAR is off
-    if (!GetCVar("drpg_shoptype") && !InBase)
+    if (!GetCVar("drpg_shoptype") && !CurrentLevel->UACBase)
         Player.LockerMode = true;
     
     SetFont("BIGFONT");
@@ -160,11 +161,11 @@ function void ShopLoop()
         // EP Cost/Inventory Count
         if (GetCVar("drpg_inv_capacity"))
             HudMessage("%s%d EP \c-(Inventory: %d/%d)\n",
-                       (InBase ? "\cc" : "\cn"), LOCKER_EPRATE, Player.InvItems, CheckInventoryMax(),
+                       (CurrentLevel->UACBase ? "\cc" : "\cn"), LOCKER_EPRATE, Player.InvItems, CheckInventoryMax(),
                        HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 38.0, 0.05)
         else
             HudMessage("%s%d EP\n",
-                       (InBase ? "\cc" : "\cn"), LOCKER_EPRATE,
+                       (CurrentLevel->UACBase ? "\cc" : "\cn"), LOCKER_EPRATE,
                        HUDMSG_PLAIN, 0, CR_GOLD, 24.1, 38.0, 0.05);
     }
     else
@@ -206,7 +207,7 @@ function void ShopLoop()
         str CardSprite;
         
         SetFont("BIGFONT");
-        HudMessage("+%d%%\n", Player.ShopCard * 5, HUDMSG_PLAIN, 0, (InBase ? CR_YELLOW : CR_GREY), 436.4, 364.0, 0.05);
+        HudMessage("+%d%%\n", Player.ShopCard * 5, HUDMSG_PLAIN, 0, (CurrentLevel->UACBase ? CR_YELLOW : CR_GREY), 436.4, 364.0, 0.05);
         if (ItemRanksRemoved)
         {
             SetFont("SMALLFONT");
@@ -224,7 +225,7 @@ function void ShopLoop()
         else if (Player.ShopCard == 5)
             CardSprite = "UCRDE0";
         
-        if (InBase)
+        if (CurrentLevel->UACBase)
             PrintSprite(CardSprite, 0, 458.0, 384.0, 0.05)
         else
             PrintSpritePulse(CardSprite, 0, 458.0, 384.0, 0.5, 64.0, 0.5);
@@ -294,7 +295,7 @@ function void ShopLoop()
             else if (Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] != AT_SELL)
                 BuyItem(ItemPtr->Actor);
         };
-    if (Buttons & BT_JUMP && !(OldButtons & BT_JUMP) && (GetCVar("drpg_shoptype") || InBase))
+    if (Buttons & BT_JUMP && !(OldButtons & BT_JUMP) && (GetCVar("drpg_shoptype") || CurrentLevel->UACBase))
     {
         Player.LockerMode = !Player.LockerMode;
         ActivatorSound("menu/move", 127);
@@ -334,7 +335,7 @@ function void ShopLoop()
     };
     if (Buttons == BT_ALTATTACK && OldButtons != BT_ALTATTACK && Player.LockerMode)
     {
-        if (InBase)
+        if (CurrentLevel->UACBase)
         {
             for (int i = 0; i < ItemMax[Player.ShopPage]; i++)
                 while (Player.Locker[Player.ShopPage][i] > 0)
@@ -411,7 +412,7 @@ function void BuyItem(str Item)
         if (Player.ShopPage == 0) // Weapons
             Item = StrParam("%sPickup\n", Item);
     
-    if (InBase && !GetCVar("drpg_shoptype"))
+    if (CurrentLevel->UACBase && !GetCVar("drpg_shoptype"))
         Spawned = SpawnSpotForced(Item, ShopSpotID, 0, 0)
     else
     {
@@ -471,7 +472,7 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     int SellCost;
 
     // You must be at least Rank 1 or in the Outpost to sell items
-    if (Player.RankLevel == 0 && !InBase)
+    if (Player.RankLevel == 0 && !CurrentLevel->UACBase)
     {
         if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
         {
@@ -580,7 +581,7 @@ function void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
         };
         
         TakeInventory(ItemPtr->Actor, 1);
-        if (!InBase && !CharSave)
+        if (!CurrentLevel->UACBase && !CharSave)
             Player.EP -= LOCKER_EPRATE;
         (*LockerAmount)++;
         if (CharSave && CompatMode == COMPAT_DRLA && Page == 0 && *LockerAmount > 1) // Prevent dumping multiple weapons in the locker in DRLA saves
@@ -639,7 +640,7 @@ function void WithdrawItem(int Page, int Index)
         
         SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
         (*LockerAmount)--;
-        if (!InBase)
+        if (!CurrentLevel->UACBase)
             Player.EP -= LOCKER_EPRATE;
         ActivatorSound("menu/move", 127);
     }
