@@ -1083,8 +1083,17 @@ acscript void QuickHeal(int Quick) net
     };
 };
 
-// Quickly buy EP
-acscript void QuickEP() net
+// Activate Focus Mode
+acscript void ToggleFocusMode() net
+{
+    Player.Focusing = !Player.Focusing;
+    
+    if (Player.Focusing)
+        FocusMode();
+};
+
+// Focus Mode Script
+acscript void FocusMode()
 {
     int PrevEP = Player.EP;
     int Time = 35;
@@ -1094,7 +1103,7 @@ acscript void QuickEP() net
     
     SetPlayerProperty(0, 1, PROP_FROZEN);
     
-    while (true)
+    while (Player.Focusing)
     {
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         int Percent = (int)(((fixed)(Player.EP - PrevEP) / (fixed)(Player.EPMax - PrevEP)) * 100.0);
@@ -1115,14 +1124,12 @@ acscript void QuickEP() net
             Player.EP++;
         
         if (Buttons > 0 || Player.EP >= Player.EPMax)
-        {
-            PlaySound(0, "misc/epfocusdone", CHAN_BODY, 0.5, false, ATTN_NORM);
-            break;
-        };
+            Player.Focusing = false;
         
         Delay(1);
     };
     
+    PlaySound(0, "misc/epfocusdone", CHAN_BODY, 0.5, false, ATTN_NORM);
     SetPlayerProperty(0, 0, PROP_FROZEN);
 };
 
