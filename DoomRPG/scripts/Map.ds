@@ -71,17 +71,6 @@ script void MapInit() open
             ArenaMap->UACArena = true;
             ArenaMap->NeedsRealInfo = false;
             */
-        }
-        else
-        {
-            LevelInfo *StartingMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
-            StartingMap->LevelNum = 1;
-            StartingMap->LumpName = GetCVarString("drpg_startmap");
-            StartingMap->NiceName = "Unknown Area";
-            StartingMap->UACBase = false;
-            StartingMap->UACArena = false;
-            StartingMap->SecretMap = false;
-            StartingMap->NeedsRealInfo = true;
         };
     };
     
@@ -90,6 +79,7 @@ script void MapInit() open
     if (CurrentLevel == NULL) // New map - We need to create new info for it
     {
         CurrentLevel = &(((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++]);
+        CurrentLevel->LevelNum = 0;
         CurrentLevel->NeedsRealInfo = true;
         
         if (KnownLevels.Position == KnownLevels.Size)
@@ -143,12 +133,15 @@ script void MapInit() open
             // and most often will, wind up being absent for user maps that provide
             // their own MAPINFO definitions.
             
-            PreviousLevelNum++;
-            if (!UsedSecretExit)
-                PreviousLevelNum = ++PreviousPrimaryLevelNum;
-            
-            CurrentLevel->LevelNum = PreviousLevelNum;
-            CurrentLevel->SecretMap = UsedSecretExit;
+            if (CurrentLevel->LevelNum == 0)
+            {
+                PreviousLevelNum++;
+                if (!UsedSecretExit)
+                    PreviousLevelNum = ++PreviousPrimaryLevelNum;
+                
+                CurrentLevel->LevelNum = PreviousLevelNum;
+                CurrentLevel->SecretMap = UsedSecretExit;
+            };
             
             if (GetCVar("drpg_debug"))
                 Log ("\cdDEBUG: \cjLevel number: \cd%d\n", CurrentLevel->LevelNum);
@@ -223,12 +216,6 @@ script void MapInit() open
     if (CurrentLevel->UACBase)
         DefaultOutpost = CurrentLevel;
     
-    // If these are unset, set them now
-    if (!PreviousLevel)
-        PreviousLevel = FindLevelInfo(CurrentLevel->UACBase? GetCVarString("drpg_startmap") : StrParam("%N\n", PRINTNAME_LEVEL));
-    if (!TransporterLevel)
-        TransporterLevel = FindLevelInfo(CurrentLevel->UACBase? GetCVarString("drpg_startmap") : StrParam("%N\n", PRINTNAME_LEVEL));
-    
     if (CurrentLevel->UACBase || CurrentLevel->UACArena)
         return; // [KS] These maps set themselves up, so nothing more to do.
     
@@ -272,6 +259,22 @@ script void MapInit() open
     
     if (CurrentLevel)
         MapLoop();
+};
+
+acscript void AddUnknownMap(str Name, str DisplayName, int LevelNumber, int Secret)
+{
+    while (KnownLevels.Data == NULL)
+        Delay(1);
+    
+    LevelInfo *NewMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+    NewMap->LumpName = Name;
+    NewMap->NiceName = DisplayName;
+    NewMap->LevelNum = LevelNumber;
+    NewMap->SecretMap = Secret;
+    NewMap->UACBase = false;
+    NewMap->UACArena = false;
+    NewMap->SecretMap = false;
+    NewMap->NeedsRealInfo = true;
 };
 
 function int LevelSort(void const *Left, void const *Right)
@@ -1813,6 +1816,9 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
     
     UsedSecretExit = Secret;
     PreviousLevel = CurrentLevel;
+    PreviousLevelNum = CurrentLevel->LevelNum;
+    if (!CurrentLevel->SecretMap)
+        PreviousPrimaryLevelNum = CurrentLevel->LevelNum;
 
     // Now exit the level
     if (Secret)
