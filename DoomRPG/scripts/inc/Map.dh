@@ -12,6 +12,10 @@ struct LevelInfo
     // we need to replace the placeholder info with real info.
     bool NeedsRealInfo;
     
+    // Map is an Outpost or an Arena
+    bool UACBase;
+    bool UACArena;
+    
     // Name data
     str LumpName;
     str NiceName;
@@ -44,6 +48,7 @@ struct LevelInfo
     
     // Miscellaneous
     int AdditionalMonsters;
+    bool SecretMap;
     
     // Event stuff
     DynamicArray MonsterPositions;
@@ -84,10 +89,16 @@ struct LevelInfo
 
 extern
 {
-    variable static LevelInfo *CurrentLevel;
     variable static DynamicArray KnownLevels;
+    variable static LevelInfo *CurrentLevel;
+    variable static LevelInfo *PreviousLevel;
+    variable static LevelInfo *TransporterLevel;
+    variable static LevelInfo *DefaultOutpost;
+    variable static int PreviousLevelNum;
+    variable static int PreviousPrimaryLevelNum;
+    variable static bool UsedSecretExit;
+    variable static bool PreviousLevelSecret;
     variable static bool WaitingForReplacements;
-    variable static int LastVisitedLevel;
     variable static int AllBonusMaps;
     variable static int CurrentSkill;
 };
@@ -144,14 +155,17 @@ extern
 extern "ACS"
 {
     script void MapExit(bool) @ MAP_EXIT_SCRIPTNUM;
+    script void AddUnknownMap(str, str, int, int);
 };
 
 extern
 {
+    function int LevelSort(void const *, void const *);
     function void AddAdditionalMonsters();
     function bool SpawnEventActor(str, int);
     function bool CheckMapEvent(int);
-    function int FindLevelInfoIndex(int = 0);
+    function LevelInfo *FindLevelInfo(str = nullptr);
+    function int FindLevelInfoIndex(str = nullptr);
 };
 
 #endif

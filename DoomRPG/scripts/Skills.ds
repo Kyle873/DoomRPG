@@ -433,6 +433,8 @@ script void SkillWheel() enter
     SkillPtr CurrentSkill;
     SkillLevelInfo *SkillLevel;
     
+    Location = OldLocation = (Increment * (fixed)Player.WheelSelection);
+    
     Start:
     
     // Check Input
@@ -458,6 +460,10 @@ script void SkillWheel() enter
         // Setup lerp location
         Increment = 1.0 / MAX_SKILLKEYS;
         Location = (Increment * (fixed)Player.WheelSelection);
+        if (Location < 0.5 && OldLocation > 0.5 && OldLocation - Location > 0.5)
+            OldLocation -= 1.0
+        else if (Location > 0.5 && OldLocation < 0.5 && Location - OldLocation > 0.5)
+            OldLocation += 1.0;
         
         // Check for release
         if (!(Buttons & BT_USER1) && !(Buttons & BT_SPEED))
@@ -628,6 +634,9 @@ acscript void UseSkill(int Key) net
     // If the key is unassigned, terminate
     if (Index != -1)
         if (Player.SkillCategory[Index] == -1 || Player.SkillIndex[Index] == -1) return;
+    
+    // Using a skill will disturb your Focus
+    Player.Focusing = false;
     
     // You can't use skills if you're Silenced
     if (Player.StatusType[SE_SILENCE]) return;
@@ -1204,7 +1213,7 @@ acscript bool Weaken(SkillLevelInfo *SkillLevel, void *Data)
 
 acscript bool Translocate(SkillLevelInfo *SkillLevel, void *Data)
 {
-    if (InBase)
+    if (CurrentLevel->UACBase)
     {
         PrintError("Cannot translocate here");
         ActivatorSound("menu/error", 127);
@@ -1546,7 +1555,7 @@ acscript bool Summon(SkillLevelInfo *SkillLevel, void *Data)
     };
     
     // Stop if you're in the Outpost
-    if (InBase)
+    if (CurrentLevel->UACBase)
     {
         PrintError("You cannot summon friendlies here");
         ActivatorSound("menu/error", 127);
@@ -1988,9 +1997,8 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
                     // Player is not in-game
                     if (!PlayerInGame(i)) continue;
                     
-                    SetActorProperty(Players(i).TID, APROP_Invulnerable, true);
-                    SetActorVelocity(Players(i).TID, 0, 0, 0, false, false);
                     SpawnForced("DRPGTransportEffect", GetActorX(Players(i).TID), GetActorY(Players(i).TID), GetActorZ(Players(i).TID), 0, 0);
+                    TransportOutFX(Players(i).TID);
                     ThingSound(Players(i).TID, "misc/transport", 96);
                 };
                 
@@ -2038,46 +2046,62 @@ acscript bool Transport(SkillLevelInfo *SkillLevel, void *Data)
         Transported = true;
         
         // Transport FX
-        SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
-        ActivatorSound("misc/transport", 96);
-        
-        // Freeze Player
-        SetActorProperty(0, APROP_Invulnerable, true);
-        SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
-        SetActorVelocity(0, 0, 0, 0, false, false);
+        TransportOutFX(0);
         
         // Delay and unfreeze Player
         Delay(35 * 2);
-        SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-        SetActorProperty(0, APROP_Invulnerable, false);
     };
     
     // Transport
-    if (!InBase)
+    if (!CurrentLevel->UACBase)
     {
-        LastVisitedLevel = FindLevelInfoIndex();
+        TransporterLevel = FindLevelInfo();
        
         // Clear the event if there is one
         if (CurrentLevel->EventCompleted)
             CurrentLevel->Event = MAPEVENT_NONE;
         
-        // Just in case we warp to Outpost from a map with no index, default to MAP01
-        if (LastVisitedLevel < 0) LastVisitedLevel = 0;
-        
-        if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED)
-            ChangeLevel("OUTPOST2", 0, CHANGELEVEL_NOINTERMISSION, CurrentSkill)
-        else
-            ChangeLevel("OUTPOST", 0, CHANGELEVEL_NOINTERMISSION, CurrentSkill);
-        InBase = true;
+        ChangeLevel(DefaultOutpost->LumpName, 0, CHANGELEVEL_NOINTERMISSION, CurrentSkill);
         return true;
     }
     else
     {
-        ChangeLevel(((LevelInfo *)KnownLevels.Data)[LastVisitedLevel].LumpName, 0, CHANGELEVEL_NOINTERMISSION, -1);
-        InBase = false;
+        ChangeLevel(TransporterLevel->LumpName, 0, CHANGELEVEL_NOINTERMISSION, -1);
         Transported = true;
         return true;
     };
+};
+
+acscript void TransportOutFX(int tid)
+{
+    if (tid != 0)
+        SetActivator(tid);
+    
+    if (GetActorZ(0) == GetActorFloorZ(0))
+        SetActorPosition(0, GetActorX(0), GetActorY(0), GetActorZ(0)+1, false);
+    GiveInventory("DRPGTransportSetNonShootable", 1);
+    ActivatorSound("misc/transport", 96);
+    SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+    SetActorProperty(0, APROP_RenderStyle, STYLE_AddStencil);
+    SetActorProperty(0, APROP_StencilColor, 0x00FF00);
+    for (int ticker = 0; ticker < 70; ticker++)
+    {
+        SetActorVelocity(0, 0, 0, 0, false, false);
+        SetActorPropertyFixed(0, APROP_Alpha, 1.0 - ((1.0 / 70.0) * ticker));
+        Delay(1);
+    };
+};
+
+acscript void TransportInFX(int tid)
+{
+    if (tid != 0)
+        SetActivator(tid);
+    
+    GiveInventory("DRPGTransportUnsetNonShootable", 1);
+    ActivatorSound("misc/transport", 96);
+    SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+    SetActorProperty(0, APROP_RenderStyle, STYLE_Normal);
+    SetActorPropertyFixed(0, APROP_Alpha, 1.0);
 };
 
 acscript void RemoveAura()
@@ -2256,7 +2280,7 @@ function void CheckSkills()
         Player.SkillSupplyCooldown--;
     
     // Cost multiplier timer handling
-    if ((!InBase || ArenaActive || MarinesHostile) && Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
+    if ((!CurrentLevel->UACBase || ArenaActive || MarinesHostile) && Player.SkillCostMult > 0 && !PlayerHasAura(PlayerNumber()))
         if ((Timer() % (35 * GetCVar("drpg_skill_costcooldown"))) == 0)
             Player.SkillCostMult--;
     
@@ -2346,7 +2370,7 @@ function void CheckAuras()
         };
         
         // White Aura
-        if (Player.Aura.Type[AURA_WHITE].Active && !CheckInventory("DRPGMenuFreezer") && (!InBase || ArenaActive || MarinesHostile))
+        if (Player.Aura.Type[AURA_WHITE].Active && !CheckInventory("DRPGMenuFreezer") && (!CurrentLevel->UACBase || ArenaActive || MarinesHostile))
         {
             if (Player.Aura.Type[AURA_WHITE].Level >= 2 || Player.SoulActive[SOUL_WHITE])
             {
@@ -2443,7 +2467,7 @@ function void CheckAuras()
         };
         
         // Yellow Aura
-        if (Player.Aura.Type[AURA_YELLOW].Active && !CheckInventory("DRPGMenuFreezer") && (!InBase || ArenaActive || MarinesHostile))
+        if (Player.Aura.Type[AURA_YELLOW].Active && !CheckInventory("DRPGMenuFreezer") && (!CurrentLevel->UACBase || ArenaActive || MarinesHostile))
         {
             if ((Timer() % (35 * (6 - Player.Aura.Type[AURA_YELLOW].Level))) == 1)
                 GiveInventory("DRPGCredits", (Player.RankLevel + 1));
@@ -2475,7 +2499,7 @@ function void CheckAuras()
     };
     
     // Decrease Aura Timer
-    if (!InBase || ArenaActive || MarinesHostile)
+    if (!CurrentLevel->UACBase || ArenaActive || MarinesHostile)
         for (int i = 0; i < AURA_MAX; i++)
             if (Player.Aura.Time > 0 && Player.Aura.Type[i].Active)
                 if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGPowerStimChrono") && !CheckInventory("DRPGMenuFreezer"))

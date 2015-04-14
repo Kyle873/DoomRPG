@@ -483,7 +483,7 @@ script void MonsterInitStats(int StatFlags)
     fixed MapWeight = GetCVarFixed("drpg_monster_map_weight");
     fixed RandomMinWeight = GetCVarFixed("drpg_monster_random_min_mult");
     fixed RandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
-    int LevelNum = GetLevelInfo(LEVELINFO_LEVELNUM);
+    int LevelNum = CurrentLevel->LevelNum;
     int NumPlayers;
     int[8] StatEffect;
     
@@ -492,7 +492,7 @@ script void MonsterInitStats(int StatFlags)
         LevelNum = 100;
     
     // If the Arena is active, base the Monster Levels Map Number portion on the current wave
-    if (InBase && ArenaActive)
+    if (CurrentLevel->UACBase && ArenaActive)
         LevelNum = ArenaWave / 3;
     
     // Calculate Monster Level
@@ -978,24 +978,19 @@ script void MonsterAuraDisplayHandler()
         };
     };
     
-    if (!VisibleToPlayers)
+    if (!VisibleToPlayers && !InTitle)
     {
         Delay(4);
         goto Start;
     };
     
     // Spawn Auras
-    if (MonsterHasAura(Stats) || (GetActorProperty(0, APROP_Friendly) && !InBase))
+    if (MonsterHasAura(Stats) || (GetActorProperty(0, APROP_Friendly) && !CurrentLevel->UACBase))
         SpawnAuras(0, false);
     
     // Shadow Aura Effects
     if (MonsterHasShadowAura(Stats))
-    {
-        if (GetActorLightLevel(0) < 192)
-            SetActorProperty(0, APROP_RenderStyle, STYLE_Fuzzy)
-        else
-            SetActorProperty(0, APROP_RenderStyle, Stats->RenderStyle);
-    };
+        SetActorProperty(0, APROP_RenderStyle, STYLE_Subtract);
     
     // Spawn Assassination Target
     if (Stats->Target > 0)

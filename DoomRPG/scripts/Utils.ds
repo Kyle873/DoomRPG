@@ -50,7 +50,7 @@ str[AURA_MAX] AuraIcons =
 
 acscript int InOutpost()
 {
-    return (int)InBase;
+    return (int)CurrentLevel->UACBase;
 };
 
 acscript int GetUniqueTID()
@@ -571,6 +571,9 @@ acscript void AddToxicity(int Amount)
     Player.ToxicTimer = 0;
     Player.ToxicOffset = 0;
     Player.ToxicStage = 0;
+    
+    if (Player.Toxicity < 0)
+        Player.Toxicity = 0;
     
     if ((PrevToxicity < 25 && Player.Toxicity >= 25) ||
         (PrevToxicity < 50 && Player.Toxicity >= 50) ||
@@ -1208,8 +1211,8 @@ function void SpawnAuras(int TID, bool ForceFancy)
             if (MonsterAura->Type[i].Active)
                 AuraCount++;
 
-        // Return if the monster is stealthy
-        if (IsStealth(TID))
+        // Return if the monster is stealthy and NOT shadow
+        if (IsStealth(TID) && AuraCount < AURA_MAX)
             return;
         
         // LOS Checks
@@ -1234,7 +1237,7 @@ function void SpawnAuras(int TID, bool ForceFancy)
         };
         
         // Return if LOS checks failed
-        if (!SpawnOK)
+        if (!SpawnOK && !InTitle)
             return;
         
         // Spawn the Aura

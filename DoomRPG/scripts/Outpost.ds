@@ -53,10 +53,9 @@ bool Invasion = false;
 acscript void EnterOutpost()
 {
     SetHudSize(320, 240, true);
-    InBase = true;
     
     // Assign the current level to the level choice
-    LevelChoice = LastVisitedLevel;
+    LevelChoice = FindLevelInfoIndex(TransporterLevel->LumpName);
     
     // Use alternate music if you have a high Notoriety
     if (OutpostNotoriety >= 3)
@@ -496,11 +495,19 @@ acscript void LevelTransport()
             TitleColor = CR_RED
         else if (TeleDest->AllBonus)
             TitleColor = CR_GREEN;
+        
+        str MapType = "Standard Map";
+        if (TeleDest->SecretMap)
+            MapType = "Secret Map";
+        if (TeleDest->UACBase)
+            MapType = "UAC Base";
+        if (TeleDest->UACArena)
+            MapType = "UAC Arena";
         HudMessage("%s\n", TeleDest->NiceName, HUDMSG_FADEOUT, MENU_ID + 1, TitleColor, 32.1, 64.1, 0.05, 0.5);
         SetFont("SMALLFONT");
-        HudMessage("%s\n", TeleDest->LumpName, HUDMSG_FADEOUT, MENU_ID + 2, CR_ORANGE, 32.1, 80.1, 0.05, 0.5);
+        HudMessage("%s - %s\n", TeleDest->LumpName, MapType, HUDMSG_FADEOUT, MENU_ID + 2, CR_ORANGE, 32.1, 80.1, 0.05, 0.5);
         
-        if (!TeleDest->NeedsRealInfo)
+        if (!TeleDest->NeedsRealInfo && !TeleDest->UACBase && !TeleDest->UACArena)
         {
             int KillColor = CR_BRICK;
             if (TeleDest->KillBonus && Timer() & 16)
@@ -529,7 +536,6 @@ acscript void LevelTransport()
             else
                 HudMessage("Completion Time: \c[Red]N/A\n", HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5);
             
-            SetFont("BIGFONT");
             str AreaText = "No anomalies detected";
             switch (TeleDest->Event)
             {
@@ -571,9 +577,28 @@ acscript void LevelTransport()
                 break;
             };
             
+            SetFont("BIGFONT");
             HudMessage("Area Status\n", HUDMSG_FADEOUT, MENU_ID + 8, CR_GREEN, 32.1, 152.1, 0.05, 0.5);
             SetFont("SMALLFONT");
             HudMessage("%s\n", AreaText, HUDMSG_FADEOUT, MENU_ID + 9, CR_WHITE, 32.1, 168.1, 0.05, 0.5);
+        }
+        else if (!TeleDest->NeedsRealInfo && TeleDest->UACBase)
+        {
+            str AreaText = "No anomalies detected";
+            
+            if (PowerOut)
+                AreaText = "\c[Red]Detected: Electrical Grid Malfunction"
+            else if (Invasion || MarinesHostile)
+                AreaText = "\c[Brick]Detected: Security Breach";
+            HudMessage("This is a secure UAC military base.\n", HUDMSG_FADEOUT, MENU_ID + 3, CR_DARKGREEN, 32.1, 96.1, 0.05, 0.5);
+            SetFont("BIGFONT");
+            HudMessage("Area Status\n", HUDMSG_FADEOUT, MENU_ID + 8, CR_GREEN, 32.1, 152.1, 0.05, 0.5);
+            SetFont("SMALLFONT");
+            HudMessage("%s\n", AreaText, HUDMSG_FADEOUT, MENU_ID + 9, CR_WHITE, 32.1, 168.1, 0.05, 0.5);
+        }
+        else if (!TeleDest->NeedsRealInfo && TeleDest->UACArena)
+        {
+            HudMessage("This is a known UAC battle arena site.\n", HUDMSG_FADEOUT, MENU_ID + 3, CR_LIGHTBLUE, 32.1, 96.1, 0.05, 0.5);
         };
         
         // Input
@@ -602,6 +627,15 @@ acscript void LevelTransport()
         };
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
+            if (CurrentLevel == TeleDest)
+            {
+                PrintError("You are already at this location.");
+                ActivatorSound("menu/error", 127);
+                SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+                Player.OutpostMenu = 0;
+                return;
+            };
+            
             // Special handling for Marine Hostility and Emergency Power
             if (MarinesHostile || PowerOut)
             {
@@ -644,14 +678,12 @@ acscript void LevelTransport()
             
             Player.OutpostMenu = 0;
             
-            SpawnForced("DRPGTransportEffect", GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
-            ActivatorSound("misc/transport", 96);
+            TransportOutFX(0);
             
             Delay(35 * 2);
             
             SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             SetPlayerProperty(0, 0, PROP_FROZEN);
-            InBase = false;
             Transported = true;
             
             if (BossDead)
@@ -1586,7 +1618,7 @@ acscript void SpawnBoss()
 
 function void SpawnShopSpecialItem()
 {
-    if (InBase)
+    if (CurrentLevel->UACBase)
     {
         // Remove old item
         Thing_Remove(ShopSpecialTID + 1);
