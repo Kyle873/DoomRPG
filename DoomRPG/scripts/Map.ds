@@ -12,6 +12,7 @@ static DynamicArray KnownLevels;
 static LevelInfo *CurrentLevel;
 static LevelInfo *PreviousLevel;
 static LevelInfo *TransporterLevel;
+static LevelInfo *DefaultOutpost;
 static int PreviousLevelNum;
 static int PreviousPrimaryLevelNum;
 static bool UsedSecretExit;
@@ -46,39 +47,41 @@ script void MapInit() open
             return;
         };
         
-        LevelInfo *OutpostMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
-        OutpostMap->LevelNum = 0;
-        OutpostMap->LumpName = "OUTPOST";
-        OutpostMap->NiceName = "UAC Outpost";
-        OutpostMap->Completed = true;
-        OutpostMap->UACBase = true;
-        OutpostMap->NeedsRealInfo = false;
-        
-        // [KS] Not right now.
-        /*
-        LevelInfo *ArenaMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
-        ArenaMap->LevelNum = 0;
-        ArenaMap->LumpName = "ARENA";
-        ArenaMap->NiceName = "UAC Arena";
-        ArenaMap->Completed = true;
-        ArenaMap->UACArena = true;
-        ArenaMap->NeedsRealInfo = false;
-        */
-        
-        CurrentLevel = FindLevelInfo();
-        
-        // Special case for starting in the Outpost: Add a starting map if you start here
-        if (CurrentLevel && CurrentLevel->UACBase)
+        // Quick check to add the standard Outpost if we didn't start on it
+        if (ThingCountName("DRPGOutpostMarker", 0) == 0 && ThingCountName("DRPGArenaMarker", 0) == 0)
+        {
+            LevelInfo *OutpostMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+            OutpostMap->LevelNum = 0;
+            OutpostMap->LumpName = "OUTPOST";
+            OutpostMap->NiceName = "UAC Outpost";
+            OutpostMap->Completed = true;
+            OutpostMap->UACBase = true;
+            OutpostMap->UACArena = false;
+            OutpostMap->NeedsRealInfo = false;
+            
+            DefaultOutpost = OutpostMap;
+            
+            // [KS] Not right now.
+            /*
+            LevelInfo *ArenaMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+            ArenaMap->LevelNum = 0;
+            ArenaMap->LumpName = "ARENA";
+            ArenaMap->NiceName = "UAC Arena";
+            ArenaMap->Completed = true;
+            ArenaMap->UACArena = true;
+            ArenaMap->NeedsRealInfo = false;
+            */
+        }
+        else
         {
             LevelInfo *StartingMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
             StartingMap->LevelNum = 1;
             StartingMap->LumpName = GetCVarString("drpg_startmap");
             StartingMap->NiceName = "Unknown Area";
+            StartingMap->UACBase = false;
+            StartingMap->UACArena = false;
+            StartingMap->SecretMap = false;
             StartingMap->NeedsRealInfo = true;
-            
-            PreviousLevel = StartingMap;
-            TransporterLevel = StartingMap;
-            return;
         };
     };
     
@@ -96,24 +99,34 @@ script void MapInit() open
     if (CurrentLevel->NeedsRealInfo)
     {
         // [KS] Is this an outpost or an arena?
-        if (ThingCountName("OutpostMarker", 0) > 0)
+        if (ThingCountName("DRPGOutpostMarker", 0) > 0)
         {
             CurrentLevel->LevelNum = 0;
             CurrentLevel->SecretMap = false;
+            
+            CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
+            CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
             
             CurrentLevel->Completed = true;
             CurrentLevel->UACBase = true;
+            CurrentLevel->UACArena = false;
             
+            CurrentLevel->Event = UACEVENT_NONE;
             CurrentLevel->NeedsRealInfo = false;
         }
-        else if (ThingCountName("ArenaMarker", 0) > 0)
+        else if (ThingCountName("DRPGArenaMarker", 0) > 0)
         {
             CurrentLevel->LevelNum = 0;
             CurrentLevel->SecretMap = false;
             
+            CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
+            CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
+
             CurrentLevel->Completed = true;
+            CurrentLevel->UACBase = false;
             CurrentLevel->UACArena = true;
             
+            CurrentLevel->Event = UACEVENT_NONE;
             CurrentLevel->NeedsRealInfo = false;
         }
         else
@@ -202,6 +215,19 @@ script void MapInit() open
         // We need to make sure the maps stay sorted whenever we add one
         qsort(KnownLevels.Data, KnownLevels.Position, sizeof(LevelInfo), LevelSort);
     };
+    
+    // We need to do this again because qsort invalidated all our pointers
+    CurrentLevel = FindLevelInfo();
+    
+    // Transport will take us to the last base we were in.
+    if (CurrentLevel->UACBase)
+        DefaultOutpost = CurrentLevel;
+    
+    // If these are unset, set them now
+    if (!PreviousLevel)
+        PreviousLevel = FindLevelInfo(CurrentLevel->UACBase? GetCVarString("drpg_startmap") : StrParam("%N\n", PRINTNAME_LEVEL));
+    if (!TransporterLevel)
+        TransporterLevel = FindLevelInfo(CurrentLevel->UACBase? GetCVarString("drpg_startmap") : StrParam("%N\n", PRINTNAME_LEVEL));
     
     if (CurrentLevel->UACBase || CurrentLevel->UACArena)
         return; // [KS] These maps set themselves up, so nothing more to do.
