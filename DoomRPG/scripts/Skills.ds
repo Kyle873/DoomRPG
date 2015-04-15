@@ -232,22 +232,13 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
         {
             "Aura Steal"; 500; 1; AuraSteal;
             {
-                "Steals an enemies Auras, taking it from them and giving it to you\nTime based on their Energy";
+                "Steals an enemies Auras\nTime is based on their Energy\nCan only steal Auras if you currently have none active";
             };
         };
         {
-            "Soul Steal"; 100; 10; SoulSteal;
+            "Soul Steal"; 500; 1; SoulSteal;
             {
-                "Steal 10% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
-                "Steal 20% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
-                "Steal 30% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
-                "Steal 40% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
-                "Steal 50% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
-                "Steal 60% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
-                "Steal 70% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
-                "Steal 80% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
-                "Steal 90% of the target's maximum HP\nIf the enemy dies, they will drop their Soul";
-                "Steal 100% of the target's maximum HP\nWhen the enemy dies, they will drop their Soul";
+                "Kill the target, stealing their health and soul";
             };
         };
     };
@@ -1246,6 +1237,7 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the Player has no target
     if (ActivatorTID() == Players(PlayerNum).TID)
     {
+        SetActivator(Players(PlayerNum).TID);
         PrintError("You have no target");
         ActivatorSound("menu/error", 127);
         return false;
@@ -1254,6 +1246,7 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the target isn't actually a valid monster
     if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
     {
+        SetActivator(Players(PlayerNum).TID);
         PrintError("Target is not a valid enemy");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
@@ -1262,7 +1255,26 @@ acscript bool AuraSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the target doesn't have an Aura
     if (!MonsterHasAura(Stats))
     {
+        SetActivator(Players(PlayerNum).TID);
         PrintError("Target does not have any auras");
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If you already have an Aura
+    if (PlayerHasAura(PlayerNum))
+    {
+        SetActivator(Players(PlayerNum).TID);
+        PrintError("You already have an active aura");
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target has a shadow Aura
+    if (MonsterHasShadowAura(Stats))
+    {
+        SetActivator(Players(PlayerNum).TID);
+        PrintError("Target's auras are too strong");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
@@ -1321,6 +1333,7 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the Player has no target
     if (ActivatorTID() == Players(PlayerNum).TID)
     {
+        SetActivator(Players(PlayerNum).TID);
         PrintError("You have no target");
         ActivatorSound("menu/error", 127);
         return false;
@@ -1329,15 +1342,26 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     // Refund - If the target isn't actually a valid monster
     if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
     {
+        SetActivator(Players(PlayerNum).TID);
         PrintError("Target is not a valid enemy");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
     
     // Refund - If the target is a boss or can never have an aura to begin with
-    if (Stats->Flags & MF_BOSS || Stats->Flags & MF_NOAURA || CheckFlag(0, "BOSS"))
+    if (Stats->Flags & MF_BOSS || Stats->Flags & MF_NOAURA || Stats->Flags & MF_MEGABOSS || CheckFlag(0, "BOSS"))
     {
-        PrintError("Target has no soul");
+        SetActivator(Players(PlayerNum).TID);
+        PrintError("Target's soul is too strong");
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target is not weak enough (Below 10% Health)
+    if (CalcPercent(GetActorProperty(0, APROP_Health), Stats->HealthMax) > 10)
+    {
+        SetActivator(Players(PlayerNum).TID);
+        PrintError("Target is not weak enough");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
@@ -1347,9 +1371,8 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     if (LeechAmount < 1)
         LeechAmount = 1;
     
-    AllowsXP = !(Stats->Flags & MF_NOXP);
-    
     // Don't gain XP from this
+    AllowsXP = !(Stats->Flags & MF_NOXP);
     if (AllowsXP)
         Stats->Flags |= MF_NOXP;
     
