@@ -1822,6 +1822,20 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Exit_Normal(0);
 };
 
+script void ResetMapEvent() unloading
+{
+    // Remove the active event if it's been completed
+    if (CurrentLevel && CurrentLevel->Event && CurrentLevel->EventCompleted)
+    {
+        CurrentLevel->Event = MAPEVENT_NONE;
+        CurrentLevel->EventCompleted = false;
+        
+        // And reset the skill for these
+        if (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
+            ChangeSkill(CurrentSkill);
+    };
+};
+
 function bool SpawnEventActor(str Actor, int TID)
 {
     fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
