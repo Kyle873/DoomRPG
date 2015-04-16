@@ -1002,7 +1002,7 @@ acscript void EnvironmentalHazardRefillGenerator()
     
     SetActivator(0, AAPTR_TARGET);
     
-    if (CurrentLevel->Event != MAPEVENT_TOXICHAZARD)
+    if (CurrentLevel->Event != MAPEVENT_TOXICHAZARD || CurrentLevel->EventCompleted)
         return;
     
     if (!CheckInventory("DRPGNeutralizerFuel"))
@@ -1753,7 +1753,7 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
     };
     
     // Environmental Hazard triggers a security lockdown until the hazard level is cleared
-    if (CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
+    if (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && !CurrentLevel->EventCompleted)
     {
         AmbientSound("transfer/fail", 127);
         
@@ -1931,6 +1931,12 @@ acscript void SetMapEvent(int Level, int ID)
     
     if (MapToChange->Event == MAPEVENT_HARMONIZEDAURAS)
         MapToChange->AuraType = Random(0, AURA_MAX);
+    
+    if (MapToChange->Event == MAPEVENT_TOXICHAZARD)
+    {
+        MapToChange->HazardLevel = 5;
+        MapToChange->RadLeft = 100;
+    };
     
     if (CurrentLevel == MapToChange)
         Log("\cjYou will need to warp back to this level to see changes take effect.\n");
