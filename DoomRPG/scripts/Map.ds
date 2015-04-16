@@ -863,7 +863,7 @@ script void EnvironmentalHazard()
         UseActorInventory(Players(i).TID, "RadSuit2"); // DRLA
         
         // [KS] Haaaaaaaax
-        GiveActorInventory(Players(i).TID, "AntiRadiationForMyVoodooDolls", 1);
+        GiveActorInventory(Players(i).TID, "DRPGAntiRadiationForMyVoodooDolls", 1);
     };
     
     // Setup
@@ -1706,6 +1706,7 @@ script void MapLoop()
             AmbientSound("misc/secret", 127);
             SetFont("BIGFONT");
             HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+            SetFont("SMALLFONT");
         };
         
         CurrentLevel->EventCompleted = true;
@@ -1727,15 +1728,16 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
     
     // Megabosses prevent you from leaving until they are killed
     // Hell Unleashed prevents you from leaving until you have opened the box
-    if (CurrentLevel->Event == MAPEVENT_MEGABOSS || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
+    if ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
     {
         AmbientSound("mission/gottarget2", 127);
         
         SetHudSize(640, 480, false);
         SetFont("BIGFONT");
         HudMessageBold("\cgA mysterious force prevents you from leaving!\n",
-                       HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
+                       HUDMSG_TYPEON | HUDMSG_LOG, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
         SetHudSize(0, 0, false);
+        SetFont("SMALLFONT");
         
         // In Hell Unleashed, spawn waves of enemies to spite the player for trying to leave without opening the box
         if (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive)
@@ -1746,7 +1748,23 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
             };
         
         // Wait until the event is over
-        while (CurrentLevel->Event == MAPEVENT_MEGABOSS || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
+        while ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
+            Delay(35 * 5);
+    };
+    
+    // Environmental Hazard triggers a security lockdown until the hazard level is cleared
+    if (CurrentLevel->Event == MAPEVENT_TOXICHAZARD)
+    {
+        AmbientSound("transfer/fail", 127);
+        
+        SetHudSize(640, 480, false);
+        SetFont("BIGFONT");
+        HudMessageBold("Level \cg%d\c- Security Lockdown is currently in effect.\nCannot transfer until \cjenvironmental hazard\c- is \cjclear\c-.\n", CurrentLevel->HazardLevel,
+                       HUDMSG_TYPEON | HUDMSG_LOG, 0, CR_GREEN, 320.4, 160.0, 3.0, 0.03, 0.5);
+        SetHudSize(0, 0, false);
+        SetFont("SMALLFONT");
+        
+        while (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && !CurrentLevel->EventCompleted)
             Delay(35 * 5);
     };
     
@@ -1820,6 +1838,20 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Exit_Secret(0)
     else
         Exit_Normal(0);
+};
+
+script void ResetMapEvent() unloading
+{
+    // Remove the active event if it's been completed
+    if (CurrentLevel && CurrentLevel->Event && CurrentLevel->EventCompleted)
+    {
+        CurrentLevel->Event = MAPEVENT_NONE;
+        CurrentLevel->EventCompleted = false;
+        
+        // And reset the skill for these
+        if (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
+            ChangeSkill(CurrentSkill);
+    };
 };
 
 function bool SpawnEventActor(str Actor, int TID)

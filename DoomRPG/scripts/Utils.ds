@@ -261,6 +261,21 @@ acscript int PowersuitCheck()
         return -1;
 };
 
+acscript void RadiationDamage(int damageamount)
+{
+    // We need this because if the calling actor damages itself, it winds up multiplying its' own damage.
+    if (CheckInventory("PowerIronFeet") || CheckInventory("DRPGSkillIronFeet"))
+        return;
+    
+    int mytid = UniqueTID();
+    int oldtid = ActivatorTID();
+    
+    Thing_ChangeTID(0, mytid);
+    SetActivator(0, AAPTR_NULL);
+    Thing_Damage2(mytid, damageamount, "Radiation");
+    Thing_ChangeTID(mytid, oldtid);
+};
+
 acscript int ShieldRemoveArmor()
 {
     return (int)(GetCVar("drpg_shield_armorremove") && Player.Shield.Active);
@@ -1525,8 +1540,8 @@ function void DrawBattery()
 {
     fixed Width = GetCVar("drpg_hud_width");
     fixed Height = GetCVar("drpg_hud_height");
-    fixed X = GetCVarFixed("drpg_aug_x");
-    fixed Y = GetCVarFixed("drpg_aug_y");
+    fixed X = GetCVar("drpg_aug_x");
+    fixed Y = GetCVar("drpg_aug_y");
     int HoldTime = (GetCVar("drpg_aug_showbattery") ? 0.05 : 3.0);
     int FadeTime = (GetCVar("drpg_aug_showbattery") ? 0.05 : 2.0);
     
