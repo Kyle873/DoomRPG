@@ -261,41 +261,6 @@ script void MapInit() open
         MapLoop();
 };
 
-acscript void AddUnknownMap(str Name, str DisplayName, int LevelNumber, int Secret)
-{
-    while (KnownLevels.Data == NULL)
-        Delay(1);
-    
-    if (FindLevelInfo(Name) != NULL)
-        return; // This map was already unlocked, so ignore it
-    
-    LevelInfo *NewMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
-    NewMap->LumpName = Name;
-    NewMap->NiceName = DisplayName;
-    NewMap->LevelNum = LevelNumber;
-    NewMap->SecretMap = Secret;
-    NewMap->UACBase = false;
-    NewMap->UACArena = false;
-    NewMap->SecretMap = false;
-    NewMap->NeedsRealInfo = true;
-};
-
-function int LevelSort(void const *Left, void const *Right)
-{
-    LevelInfo LeftLevel = *((LevelInfo *)Left);
-    LevelInfo RightLevel = *((LevelInfo *)Right);
-    
-    // Sort order: Outpost, Arena, Normal Map, Secret Map
-    
-    int LeftScore = LeftLevel.LevelNum + (LeftLevel.SecretMap ? 1000 : 0) + (LeftLevel.UACBase ? -2000 : 0) + (LeftLevel.UACArena ? -1000 : 0);
-    int RightScore = RightLevel.LevelNum + (RightLevel.SecretMap ? 1000 : 0) + (RightLevel.UACBase ? -2000 : 0) + (RightLevel.UACArena ? -1000 : 0);
-    
-    if (LeftScore < RightScore) return -1;
-    if (LeftScore > RightScore) return 1;
-    
-    return 0;
-};
-
 script void ReduceMonsterCount(bool *WaitLock)
 {
     int TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
@@ -356,6 +321,249 @@ script void ReduceMonsterCount(bool *WaitLock)
     *WaitLock = false;
 };
 
+script void SetupMapMissions()
+{
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        // Player is currently not in-game
+        if (!PlayerInGame(i)) continue;
+        
+        // Kill
+        if (Players(i).Mission.Active && Players(i).Mission.Type == MT_KILL)
+        {
+            int Amount = Players(i).Mission.Amount - Players(i).Mission.Current;
+            DynamicLootGenerator(GetMissionMonsterActor(Players(i).Mission.Monster->Actor), Amount);
+        };
+        
+        // Assassination
+        if (Players(i).Mission.Active && Players(i).Mission.Type == MT_ASSASSINATION)
+            DynamicLootGenerator(GetMissionMonsterActor(Players(i).Mission.Monster->Actor), 1);
+    };
+};
+
+script void MapLoop()
+{
+    int XPBonus;
+    int RankBonus;
+    
+    int ItemsFound;
+    int SecretsFound;
+    
+    int ItemsLastFound = 0;
+    
+    Delay(5); // Allow Map Events to change the monster/item counts
+    
+    Start:
+    
+    // Mission Trackers
+    ItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+    SecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+    
+    if (ItemsFound > ItemsLastFound)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i) || Players(i).Mission.Type != MT_ITEMS)
+                continue;
+            
+            Players(i).Mission.Current += ItemsFound - ItemsLastFound;
+        };
+    };
+    
+    // These should be unique-only, because they're not secrets anymore once
+    // you know about them.
+    if (SecretsFound > CurrentLevel->UniqueSecrets)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
+            
+            RankBonus = RankTable[Players(i).RankLevel] / 100;
+            Players(i).Rank += RankBonus;
+            
+            if (Players(i).Mission.Type != MT_SECRETS)
+                continue;
+
+            Players(i).Mission.Current += SecretsFound - CurrentLevel->UniqueSecrets;
+        };
+        
+        CurrentLevel->UniqueSecrets = SecretsFound;
+    };
+    
+    // Kills/Item/Secrets special bonuses
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
+    {
+        CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
+        CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
+        CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+    };
+    if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS)) > CurrentLevel->MaxItemPercentage)
+    {
+        CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
+        CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
+        CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+    };
+    if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS)) > CurrentLevel->MaxSecretPercentage)
+    {
+        CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
+        CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
+        CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
+    };
+    
+    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            SetActivator(Players(i).TID);
+            
+            FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
+            
+            XPBonus = XPTable[Players(i).Level] / 100;
+            Player.XP += XPBonus;
+            
+            HudMessage("Monsters Killed Bonus!\n%d XP Bonus\n", XPBonus,
+                       HUDMSG_FADEOUT, 0, CR_BRICK, 1.5, 0.4, 3.0, 3.0);
+        };
+        
+        SetActivator(0, AAPTR_NULL);
+        
+        CurrentLevel->KillBonus = true;
+    };
+
+    if (CurrentLevel->MaxItemPercentage >= 100 && !CurrentLevel->ItemsBonus)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            SetActivator(Players(i).TID);
+            
+            FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
+            
+            HealThing(SHIELD_HEALTH);
+            Players(i).EP = Players(i).EPMax;
+            
+            HudMessage("Items Found Bonus!\nFull HP/EP Restore\n",
+                       HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 3.0);
+        };
+        
+        SetActivator(0, AAPTR_NULL);
+        
+        CurrentLevel->ItemsBonus = true;
+    };
+
+    if (CurrentLevel->MaxSecretPercentage >= 100 && !CurrentLevel->SecretsBonus)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            SetActivator(Players(i).TID);
+            
+            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
+            
+            RankBonus = RankTable[Players(i).RankLevel] / 20;
+            Players(i).Rank += RankBonus;
+
+            HudMessage("Secrets Found Bonus!\n%d Rank Bonus\n", RankBonus,
+                       HUDMSG_FADEOUT, 0, CR_YELLOW, 1.5, 0.8, 3.0, 3.0);
+        };
+        
+        SetActivator(0, AAPTR_NULL);
+        
+        CurrentLevel->SecretsBonus = true;
+    };
+    
+    if (CurrentLevel->KillBonus && CurrentLevel->ItemsBonus && CurrentLevel->SecretsBonus && !CurrentLevel->AllBonus)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            SetActivator(Players(i).TID);
+            
+            FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
+            
+            XPBonus = XPTable[Players(i).Level] / 100;
+            RankBonus = RankTable[Players(i).RankLevel] / 20;
+            
+            Players(i).XP += XPBonus;
+            Players(i).Rank += RankBonus;
+            
+            HealThing(SHIELD_HEALTH);
+            Players(i).EP = Players(i).EPMax;
+            
+            HudMessage("\caMonsters Killed Bonus!\n\cnItems Found Bonus!\n\ckSecrets Found Bonus!\n\n\cj%d XP Bonus\n\ck%d Rank Bonus\n\cnFull HP/EP Restore\n",
+                       XPBonus, RankBonus,
+                       HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.2, 5.0, 5.0);
+            
+            // Payout Bonus Increase
+            Players(i).PayBonus++;
+        };
+        
+        SetActivator(0, AAPTR_NULL);
+        
+        CurrentLevel->AllBonus = true;
+        CalculateBonusMaps();
+    };
+    
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_HARMONIZEDAURAS) && !CurrentLevel->EventCompleted)
+    {
+        // All Auras and Harmonized Destruction events are ended by killing everything on the map
+        if (Timer() > 4)
+        {
+            AmbientSound("misc/secret", 127);
+            SetFont("BIGFONT");
+            HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+            SetFont("SMALLFONT");
+        };
+        
+        CurrentLevel->EventCompleted = true;
+    };
+    
+    Delay(1);
+    
+    ItemsLastFound = ItemsFound;
+    
+    goto Start;
+};
+
+script void CalculateBonusMaps()
+{
+    int Count = 0;
+    
+    for (int i = 0; i < KnownLevels.Position; i++)
+        if (((LevelInfo *)KnownLevels.Data)[i].AllBonus)
+            Count++;
+    
+    AllBonusMaps = Count;
+};
+
+function int LevelSort(void const *Left, void const *Right)
+{
+    LevelInfo LeftLevel = *((LevelInfo *)Left);
+    LevelInfo RightLevel = *((LevelInfo *)Right);
+    
+    // Sort order: Outpost, Arena, Normal Map, Secret Map
+    
+    int LeftScore = LeftLevel.LevelNum + (LeftLevel.SecretMap ? 1000 : 0) + (LeftLevel.UACBase ? -2000 : 0) + (LeftLevel.UACArena ? -1000 : 0);
+    int RightScore = RightLevel.LevelNum + (RightLevel.SecretMap ? 1000 : 0) + (RightLevel.UACBase ? -2000 : 0) + (RightLevel.UACArena ? -1000 : 0);
+    
+    if (LeftScore < RightScore) return -1;
+    if (LeftScore > RightScore) return 1;
+    
+    return 0;
+};
+
 function void AddAdditionalMonsters()
 {
     if (CurrentLevel->AdditionalMonsters < 1 || CurrentLevel->Event == MAPEVENT_MEGABOSS)
@@ -366,6 +574,161 @@ function void AddAdditionalMonsters()
     else
         DynamicLootGenerator("DRPGGenericMonsterDropper", CurrentLevel->AdditionalMonsters);
 };
+
+function LevelInfo *FindLevelInfo(str MapName)
+{
+    if (MapName == nullptr)
+        MapName = StrParam("%N\n", PRINTNAME_LEVEL);
+    
+    for (int i = 0; i < KnownLevels.Position; i++)
+        if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
+            return &((LevelInfo *)KnownLevels.Data)[i];
+    
+    return NULL;
+};
+
+function int FindLevelInfoIndex(str MapName)
+{
+    if (MapName == nullptr)
+        MapName = StrParam("%N\n", PRINTNAME_LEVEL);
+    
+    for (int i = 0; i < KnownLevels.Position; i++)
+        if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
+            return i;
+    
+    return 0; // Default to the Outpost because we don't actually know where we are
+};
+
+acscript void AddUnknownMap(str Name, str DisplayName, int LevelNumber, int Secret)
+{
+    while (KnownLevels.Data == NULL)
+        Delay(1);
+    
+    if (FindLevelInfo(Name) != NULL)
+        return; // This map was already unlocked, so ignore it
+    
+    LevelInfo *NewMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+    NewMap->LumpName = Name;
+    NewMap->NiceName = DisplayName;
+    NewMap->LevelNum = LevelNumber;
+    NewMap->SecretMap = Secret;
+    NewMap->UACBase = false;
+    NewMap->UACArena = false;
+    NewMap->SecretMap = false;
+    NewMap->NeedsRealInfo = true;
+};
+
+// Level exit script
+// Can't use NamedExecute in xlat, lame
+acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
+{
+    int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
+    bool Waiting = true;
+    
+    // Megabosses prevent you from leaving until they are killed
+    // Hell Unleashed prevents you from leaving until you have opened the box
+    if ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
+    {
+        AmbientSound("mission/gottarget2", 127);
+        
+        SetHudSize(640, 480, false);
+        SetFont("BIGFONT");
+        HudMessageBold("\cgA mysterious force prevents you from leaving!\n",
+                       HUDMSG_TYPEON | HUDMSG_LOG, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
+        SetHudSize(0, 0, false);
+        SetFont("SMALLFONT");
+        
+        // In Hell Unleashed, spawn waves of enemies to spite the player for trying to leave without opening the box
+        if (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive)
+            while (!CurrentLevel->HellUnleashedActive)
+            {
+                HellUnleashedSpawnMonsters();
+                Delay(35 * 30);
+            };
+        
+        // Wait until the event is over
+        while ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
+            Delay(35 * 5);
+    };
+    
+    // Environmental Hazard triggers a security lockdown until the hazard level is cleared
+    if (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && !CurrentLevel->EventCompleted)
+    {
+        AmbientSound("transfer/fail", 127);
+        
+        SetHudSize(640, 480, false);
+        SetFont("BIGFONT");
+        HudMessageBold("Level \cg%d\c- Security Lockdown is currently in effect.\nCannot transfer until \cjenvironmental hazard\c- is \cjclear\c-.\n", CurrentLevel->HazardLevel,
+                       HUDMSG_TYPEON | HUDMSG_LOG, 0, CR_GREEN, 320.4, 160.0, 3.0, 0.03, 0.5);
+        SetHudSize(0, 0, false);
+        SetFont("SMALLFONT");
+        
+        while (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && !CurrentLevel->EventCompleted)
+            Delay(35 * 5);
+    };
+    
+    // How long it took to reach the exit
+    int ExitTime = Timer() / 35;
+    if (CurrentLevel->ShortestTime > ExitTime)
+        CurrentLevel->ShortestTime = ExitTime;
+    
+    // Prevent level exit until everyone is outside the menu
+    if (InMultiplayer && PlayerCount() > 1)
+        while (Waiting)
+        {
+            Waiting = false;
+            
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (Players(i).InMenu || Players(i).InShop || Players(i).OutpostMenu > 0)
+                    Waiting = true;
+            
+            Delay(35 * 3);
+        };
+    
+    // Check par time and give bonus if you beat it
+    if (ParTime > 0 && ExitTime < ParTime && (CurrentLevel && !CurrentLevel->ParBonus))
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i)) continue;
+            
+            SetActivator(Players(i).TID);
+            int RankBonus = RankTable[Players(i).RankLevel] / 20;
+            
+            SetFont("SMALLFONT");
+            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
+            HudMessage("Par Time Beaten!\n%d Rank Bonus\n", RankBonus, HUDMSG_FADEOUT, 0, CR_GOLD, 1.5, 0.5, 3.0, 2.0);
+            
+            Players(i).Rank += RankBonus;
+        };
+        
+        AmbientSound("misc/parbonus", 127);
+        
+        if (CurrentLevel)
+            CurrentLevel->ParBonus = true;
+        
+        Delay(35 * 5);
+    };
+    
+    if (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
+        CurrentLevel->EventCompleted = true; // These don't actually end until you leave the map normally
+    
+    CurrentLevel->Completed = true; // We finished the map
+    
+    UsedSecretExit = Secret;
+    PreviousLevel = CurrentLevel;
+    PreviousLevelNum = CurrentLevel->LevelNum;
+    if (!CurrentLevel->SecretMap)
+        PreviousPrimaryLevelNum = CurrentLevel->LevelNum;
+
+    // Now exit the level
+    if (Secret)
+        Exit_Secret(0)
+    else
+        Exit_Normal(0);
+};
+
+// Map Events -----------------------------------------------------------------
 
 function bool CheckMapEvent(int Event)
 {
@@ -722,25 +1085,80 @@ script void SetupMapEvent()
     };
 };
 
-script void SetupMapMissions()
+script void SetupOutpostEvent()
 {
-    for (int i = 0; i < MAX_PLAYERS; i++)
+    // TODO: Outpost Invasions, Power Fluctuations, etc
+    return;
+};
+
+script void ResetMapEvent() unloading
+{
+    // Remove the active event if it's been completed
+    if (CurrentLevel && CurrentLevel->Event && CurrentLevel->EventCompleted)
     {
-        // Player is currently not in-game
-        if (!PlayerInGame(i)) continue;
+        // And reset the skill for these
+        if (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
+            ChangeSkill(CurrentSkill);
         
-        // Kill
-        if (Players(i).Mission.Active && Players(i).Mission.Type == MT_KILL)
-        {
-            int Amount = Players(i).Mission.Amount - Players(i).Mission.Current;
-            DynamicLootGenerator(GetMissionMonsterActor(Players(i).Mission.Monster->Actor), Amount);
-        };
-        
-        // Assassination
-        if (Players(i).Mission.Active && Players(i).Mission.Type == MT_ASSASSINATION)
-            DynamicLootGenerator(GetMissionMonsterActor(Players(i).Mission.Monster->Actor), 1);
+        CurrentLevel->Event = MAPEVENT_NONE;
+        CurrentLevel->EventCompleted = false;
     };
 };
+
+function bool SpawnEventActor(str Actor, int TID)
+{
+    fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
+    fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
+    fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
+    fixed Z = GetActorZ(Players(0).TID);
+    bool Spawned = Spawn(Actor, X, Y, Z, TID, 0);
+    
+    if (!CheckSight(TID, Players(0).TID, 0) || !Spawned)
+    {
+        Thing_Remove(TID);
+        return false;
+    }
+    else
+        return true;
+};
+
+acscript void SetMapEvent(int Level, int ID)
+{
+    LevelInfo *MapToChange = NULL;
+    
+    if (Level == 0)
+        MapToChange = CurrentLevel
+    else if (Level < 0 || Level >= KnownLevels.Position)
+        MapToChange = NULL
+    else
+        MapToChange = &((LevelInfo *)KnownLevels.Data)[Level];
+    
+    if (MapToChange == NULL)
+    {
+        Log("\cgYou attempt black voodoo magic and fail.\n");
+        
+        if (Random(1, 6) == 1) // Roll for critical failure
+            DamageThing(1000000);
+        
+        return;
+    };
+    
+    MapToChange->Event = ID;
+    
+    if (MapToChange->Event == MAPEVENT_HARMONIZEDAURAS)
+        MapToChange->AuraType = Random(0, AURA_MAX);
+    
+    if (MapToChange->Event == MAPEVENT_TOXICHAZARD)
+    {
+        MapToChange->HazardLevel = 5;
+        MapToChange->RadLeft = 100;
+    };
+    
+    if (CurrentLevel == MapToChange)
+        Log("\cjYou will need to warp back to this level to see changes take effect.\n");
+};
+
+// Event - Megaboss -----------------------------------------------------------
 
 script void MegaBossEvent()
 {
@@ -845,6 +1263,8 @@ script void MegaBossEvent()
         Delay(1);
     };
 };
+
+// Event - Environmental Hazard -----------------------------------------------
 
 script void EnvironmentalHazard()
 {
@@ -1034,6 +1454,8 @@ script void EnvironmentalHazardDisarm()
     HudMessageBold("Radiation cleared\n", HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_GREEN, 0.5, 0.25, 2.0, 1.0);
     AmbientSound("radiation/cleared", 127);
 };
+
+// Event - Thermonuclear Bomb -------------------------------------------------
 
 script void ThermonuclearBombEvent()
 {
@@ -1246,6 +1668,8 @@ acscript void ThermonuclearBombExplode()
     CurrentLevel->BombExplode = true;
 };
 
+// Event - Low Power ----------------------------------------------------------
+
 script void LowPowerEvent()
 {
     int GeneratorTID = UniqueTID();
@@ -1310,7 +1734,8 @@ acscript void PowerGeneratorActivate()
     };
 };
 
-// TODO: Calculate which monster should spawn based on their base threat level and average player levels
+// Event - One-Monster --------------------------------------------------------
+
 script void OneMonsterEvent()
 {
     bool Extras = (CompatMode == COMPAT_EXTRAS);
@@ -1340,6 +1765,8 @@ script void OneMonsterEvent()
     
     CurrentLevel->EventCompleted = true;
 };
+
+// Event - Hell Unleashed -----------------------------------------------------
 
 script void HellUnleashedEvent()
 {
@@ -1457,6 +1884,8 @@ script void HellUnleashedSpawnMonsters()
     };
 };
 
+// Event - Harmonized Destruction ---------------------------------------------
+
 script void HarmonizedDestructionEvent()
 {
     if (AveragePlayerLevel() < 20 && CurrentLevel->AuraType == AURA_MAX)
@@ -1492,6 +1921,8 @@ script void HarmonizedDestructionEvent()
     SetHudSize(0, 0, false);
 };
 
+// Bonus Events ---------------------------------------------------------------
+
 script void RainbowEvent()
 {
     SetMusic("RAINBOWS");
@@ -1516,418 +1947,4 @@ script void RainbowEvent()
     
     Delay(1);
     goto Start;
-};
-
-script void SetupOutpostEvent()
-{
-    // TODO: Outpost Invasions, Power Fluctuations, etc
-    return;
-};
-
-script void MapLoop()
-{
-    int XPBonus;
-    int RankBonus;
-    
-    int ItemsFound;
-    int SecretsFound;
-    
-    int ItemsLastFound = 0;
-    
-    Delay(5); // Allow Map Events to change the monster/item counts
-    
-    Start:
-    
-    // Mission Trackers
-    ItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
-    SecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
-    
-    if (ItemsFound > ItemsLastFound)
-    {
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i) || Players(i).Mission.Type != MT_ITEMS)
-                continue;
-            
-            Players(i).Mission.Current += ItemsFound - ItemsLastFound;
-        };
-    };
-    
-    // These should be unique-only, because they're not secrets anymore once
-    // you know about them.
-    if (SecretsFound > CurrentLevel->UniqueSecrets)
-    {
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i))
-                continue;
-            
-            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
-            
-            RankBonus = RankTable[Players(i).RankLevel] / 100;
-            Players(i).Rank += RankBonus;
-            
-            if (Players(i).Mission.Type != MT_SECRETS)
-                continue;
-
-            Players(i).Mission.Current += SecretsFound - CurrentLevel->UniqueSecrets;
-        };
-        
-        CurrentLevel->UniqueSecrets = SecretsFound;
-    };
-    
-    // Kills/Item/Secrets special bonuses
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
-    {
-        CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
-        CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
-        CurrentLevel->MaxMonsterPercentage = CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
-    };
-    if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS)) > CurrentLevel->MaxItemPercentage)
-    {
-        CurrentLevel->MaxItemsFound = GetLevelInfo(LEVELINFO_FOUND_ITEMS);
-        CurrentLevel->MaxTotalItems = GetLevelInfo(LEVELINFO_TOTAL_ITEMS);
-        CurrentLevel->MaxItemPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
-    };
-    if (CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS)) > CurrentLevel->MaxSecretPercentage)
-    {
-        CurrentLevel->MaxSecretsFound = GetLevelInfo(LEVELINFO_FOUND_SECRETS);
-        CurrentLevel->MaxTotalSecrets = GetLevelInfo(LEVELINFO_TOTAL_SECRETS);
-        CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
-    };
-    
-    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
-    {
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i))
-                continue;
-            
-            SetActivator(Players(i).TID);
-            
-            FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
-            
-            XPBonus = XPTable[Players(i).Level] / 100;
-            Player.XP += XPBonus;
-            
-            HudMessage("Monsters Killed Bonus!\n%d XP Bonus\n", XPBonus,
-                       HUDMSG_FADEOUT, 0, CR_BRICK, 1.5, 0.4, 3.0, 3.0);
-        };
-        
-        SetActivator(0, AAPTR_NULL);
-        
-        CurrentLevel->KillBonus = true;
-    };
-
-    if (CurrentLevel->MaxItemPercentage >= 100 && !CurrentLevel->ItemsBonus)
-    {
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i))
-                continue;
-            
-            SetActivator(Players(i).TID);
-            
-            FadeRange(0, 255, 255, 0.25, 0, 255, 255, 0, 1.0);
-            
-            HealThing(SHIELD_HEALTH);
-            Players(i).EP = Players(i).EPMax;
-            
-            HudMessage("Items Found Bonus!\nFull HP/EP Restore\n",
-                       HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 3.0);
-        };
-        
-        SetActivator(0, AAPTR_NULL);
-        
-        CurrentLevel->ItemsBonus = true;
-    };
-
-    if (CurrentLevel->MaxSecretPercentage >= 100 && !CurrentLevel->SecretsBonus)
-    {
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i))
-                continue;
-            
-            SetActivator(Players(i).TID);
-            
-            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
-            
-            RankBonus = RankTable[Players(i).RankLevel] / 20;
-            Players(i).Rank += RankBonus;
-
-            HudMessage("Secrets Found Bonus!\n%d Rank Bonus\n", RankBonus,
-                       HUDMSG_FADEOUT, 0, CR_YELLOW, 1.5, 0.8, 3.0, 3.0);
-        };
-        
-        SetActivator(0, AAPTR_NULL);
-        
-        CurrentLevel->SecretsBonus = true;
-    };
-    
-    if (CurrentLevel->KillBonus && CurrentLevel->ItemsBonus && CurrentLevel->SecretsBonus && !CurrentLevel->AllBonus)
-    {
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i))
-                continue;
-            
-            SetActivator(Players(i).TID);
-            
-            FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
-            
-            XPBonus = XPTable[Players(i).Level] / 100;
-            RankBonus = RankTable[Players(i).RankLevel] / 20;
-            
-            Players(i).XP += XPBonus;
-            Players(i).Rank += RankBonus;
-            
-            HealThing(SHIELD_HEALTH);
-            Players(i).EP = Players(i).EPMax;
-            
-            HudMessage("\caMonsters Killed Bonus!\n\cnItems Found Bonus!\n\ckSecrets Found Bonus!\n\n\cj%d XP Bonus\n\ck%d Rank Bonus\n\cnFull HP/EP Restore\n",
-                       XPBonus, RankBonus,
-                       HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.2, 5.0, 5.0);
-            
-            // Payout Bonus Increase
-            Players(i).PayBonus++;
-        };
-        
-        SetActivator(0, AAPTR_NULL);
-        
-        CurrentLevel->AllBonus = true;
-        CalculateBonusMaps();
-    };
-    
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) >= 100 && (CurrentLevel->Event == MAPEVENT_ALLAURAS || CurrentLevel->Event == MAPEVENT_HARMONIZEDAURAS) && !CurrentLevel->EventCompleted)
-    {
-        // All Auras and Harmonized Destruction events are ended by killing everything on the map
-        if (Timer() > 4)
-        {
-            AmbientSound("misc/secret", 127);
-            SetFont("BIGFONT");
-            HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
-            SetFont("SMALLFONT");
-        };
-        
-        CurrentLevel->EventCompleted = true;
-    };
-    
-    Delay(1);
-    
-    ItemsLastFound = ItemsFound;
-    
-    goto Start;
-};
-
-// Level exit script
-// Can't use NamedExecute in xlat, lame
-acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
-{
-    int ParTime = GetLevelInfo(LEVELINFO_PAR_TIME);
-    bool Waiting = true;
-    
-    // Megabosses prevent you from leaving until they are killed
-    // Hell Unleashed prevents you from leaving until you have opened the box
-    if ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
-    {
-        AmbientSound("mission/gottarget2", 127);
-        
-        SetHudSize(640, 480, false);
-        SetFont("BIGFONT");
-        HudMessageBold("\cgA mysterious force prevents you from leaving!\n",
-                       HUDMSG_TYPEON | HUDMSG_LOG, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
-        SetHudSize(0, 0, false);
-        SetFont("SMALLFONT");
-        
-        // In Hell Unleashed, spawn waves of enemies to spite the player for trying to leave without opening the box
-        if (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive)
-            while (!CurrentLevel->HellUnleashedActive)
-            {
-                HellUnleashedSpawnMonsters();
-                Delay(35 * 30);
-            };
-        
-        // Wait until the event is over
-        while ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
-            Delay(35 * 5);
-    };
-    
-    // Environmental Hazard triggers a security lockdown until the hazard level is cleared
-    if (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && !CurrentLevel->EventCompleted)
-    {
-        AmbientSound("transfer/fail", 127);
-        
-        SetHudSize(640, 480, false);
-        SetFont("BIGFONT");
-        HudMessageBold("Level \cg%d\c- Security Lockdown is currently in effect.\nCannot transfer until \cjenvironmental hazard\c- is \cjclear\c-.\n", CurrentLevel->HazardLevel,
-                       HUDMSG_TYPEON | HUDMSG_LOG, 0, CR_GREEN, 320.4, 160.0, 3.0, 0.03, 0.5);
-        SetHudSize(0, 0, false);
-        SetFont("SMALLFONT");
-        
-        while (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && !CurrentLevel->EventCompleted)
-            Delay(35 * 5);
-    };
-    
-    // How long it took to reach the exit
-    int ExitTime = Timer() / 35;
-    if (CurrentLevel->ShortestTime > ExitTime)
-        CurrentLevel->ShortestTime = ExitTime;
-    
-    // Prevent level exit until everyone is outside the menu
-    if (InMultiplayer && PlayerCount() > 1)
-        while (Waiting)
-        {
-            Waiting = false;
-            
-            for (int i = 0; i < MAX_PLAYERS; i++)
-                if (Players(i).InMenu || Players(i).InShop || Players(i).OutpostMenu > 0)
-                    Waiting = true;
-            
-            Delay(35 * 3);
-        };
-    
-    // Check par time and give bonus if you beat it
-    if (ParTime > 0 && ExitTime < ParTime && (CurrentLevel && !CurrentLevel->ParBonus))
-    {
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (!PlayerInGame(i)) continue;
-            
-            SetActivator(Players(i).TID);
-            int RankBonus = RankTable[Players(i).RankLevel] / 20;
-            
-            SetFont("SMALLFONT");
-            FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
-            HudMessage("Par Time Beaten!\n%d Rank Bonus\n", RankBonus, HUDMSG_FADEOUT, 0, CR_GOLD, 1.5, 0.5, 3.0, 2.0);
-            
-            Players(i).Rank += RankBonus;
-        };
-        
-        AmbientSound("misc/parbonus", 127);
-        
-        if (CurrentLevel)
-            CurrentLevel->ParBonus = true;
-        
-        Delay(35 * 5);
-    };
-    
-    if (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
-        CurrentLevel->EventCompleted = true; // These don't actually end until you leave the map normally
-    
-    CurrentLevel->Completed = true; // We finished the map
-    
-    UsedSecretExit = Secret;
-    PreviousLevel = CurrentLevel;
-    PreviousLevelNum = CurrentLevel->LevelNum;
-    if (!CurrentLevel->SecretMap)
-        PreviousPrimaryLevelNum = CurrentLevel->LevelNum;
-
-    // Now exit the level
-    if (Secret)
-        Exit_Secret(0)
-    else
-        Exit_Normal(0);
-};
-
-script void ResetMapEvent() unloading
-{
-    // Remove the active event if it's been completed
-    if (CurrentLevel && CurrentLevel->Event && CurrentLevel->EventCompleted)
-    {
-        // And reset the skill for these
-        if (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
-            ChangeSkill(CurrentSkill);
-        
-        CurrentLevel->Event = MAPEVENT_NONE;
-        CurrentLevel->EventCompleted = false;
-    };
-};
-
-function bool SpawnEventActor(str Actor, int TID)
-{
-    fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
-    fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
-    fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
-    fixed Z = GetActorZ(Players(0).TID);
-    bool Spawned = Spawn(Actor, X, Y, Z, TID, 0);
-    
-    if (!CheckSight(TID, Players(0).TID, 0) || !Spawned)
-    {
-        Thing_Remove(TID);
-        return false;
-    }
-    else
-        return true;
-};
-
-function LevelInfo *FindLevelInfo(str MapName)
-{
-    if (MapName == nullptr)
-        MapName = StrParam("%N\n", PRINTNAME_LEVEL);
-    
-    for (int i = 0; i < KnownLevels.Position; i++)
-        if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
-            return &((LevelInfo *)KnownLevels.Data)[i];
-    
-    return NULL;
-};
-
-function int FindLevelInfoIndex(str MapName)
-{
-    if (MapName == nullptr)
-        MapName = StrParam("%N\n", PRINTNAME_LEVEL);
-    
-    for (int i = 0; i < KnownLevels.Position; i++)
-        if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
-            return i;
-    
-    return 0; // Default to the Outpost because we don't actually know where we are
-};
-
-script void CalculateBonusMaps()
-{
-    int Count = 0;
-    
-    for (int i = 0; i < KnownLevels.Position; i++)
-        if (((LevelInfo *)KnownLevels.Data)[i].AllBonus)
-            Count++;
-    
-    AllBonusMaps = Count;
-};
-
-acscript void SetMapEvent(int Level, int ID)
-{
-    LevelInfo *MapToChange = NULL;
-    
-    if (Level == 0)
-        MapToChange = CurrentLevel
-    else if (Level < 0 || Level >= KnownLevels.Position)
-        MapToChange = NULL
-    else
-        MapToChange = &((LevelInfo *)KnownLevels.Data)[Level];
-    
-    if (MapToChange == NULL)
-    {
-        Log("\cgYou attempt black voodoo magic and fail.\n");
-        
-        if (Random(1, 6) == 1) // Roll for critical failure
-            DamageThing(1000000);
-        
-        return;
-    };
-    
-    MapToChange->Event = ID;
-    
-    if (MapToChange->Event == MAPEVENT_HARMONIZEDAURAS)
-        MapToChange->AuraType = Random(0, AURA_MAX);
-    
-    if (MapToChange->Event == MAPEVENT_TOXICHAZARD)
-    {
-        MapToChange->HazardLevel = 5;
-        MapToChange->RadLeft = 100;
-    };
-    
-    if (CurrentLevel == MapToChange)
-        Log("\cjYou will need to warp back to this level to see changes take effect.\n");
 };
