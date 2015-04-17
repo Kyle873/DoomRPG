@@ -261,7 +261,13 @@ script void MapInit() open
     if (GameSkill() >= 5)
     {
         AddMiniboss();
-        HellSkillTransport();
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i))
+                continue;
+            
+            HellSkillTransport(i);
+        };
     };
     
     if (CurrentLevel)
@@ -759,8 +765,10 @@ script void AddMiniboss()
 };
 
 // Non-mission version of Reinforcements
-script void HellSkillTransport()
+script void HellSkillTransport(int player)
 {
+    SetActivator(Players(player).TID);
+    
     bool DRLA = (CompatMode == COMPAT_DRLA);
     int MonsterDataAmount;
     MonsterInfoPtr[MAX_TEMP_MONSTERS] MonsterList;
@@ -785,7 +793,9 @@ script void HellSkillTransport()
             MonsterList[MonsterListLength++] = TempMonster;
     };
     
-    while (ThingCount(T_NONE, 0))
+    //Log("%d monsters\n", MonsterListLength);
+    
+    while (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) < 100)
     {
         Delay(35 * 30);
         
@@ -806,7 +816,7 @@ script void HellSkillTransport()
         TID = UniqueTID();
         Success = false;
         SpawnTries = 0;
-        CurrentRadius = 2048;
+        CurrentRadius = 1024;
         
         while (!Success && SpawnTries < 3)
         {
@@ -820,7 +830,7 @@ script void HellSkillTransport()
             Z = GetActorFloorZ(TID);
             Thing_Remove(TID);
             
-            Success = Spawn(MonsterList[MonsterIndex]->Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
+            Success = Spawn(GetMissionMonsterActor(MonsterList[MonsterIndex]->Actor), X + SpawnX, Y + SpawnY, Z, TID, 0);
             
             bool IsBoss = CheckFlag(TID, "BOSS");
             
@@ -846,6 +856,7 @@ script void HellSkillTransport()
         
         if (Success)
         {
+            //Log("Spawned %s\n", MonsterList[MonsterIndex]->Name);
             Thing_Hate(TID, Player.TID);
             Thing_ChangeTID(TID, 0); // Get rid of the ID
             Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
