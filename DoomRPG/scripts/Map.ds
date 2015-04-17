@@ -257,6 +257,13 @@ script void MapInit() open
     DisableEvent = false;
     WaitingForReplacements = false;
     
+    // Hell Skill has some additional challenges
+    if (GameSkill() >= 5)
+    {
+        AddMiniboss();
+        HellSkillTransport();
+    };
+    
     if (CurrentLevel)
         MapLoop();
 };
@@ -726,6 +733,124 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Exit_Secret(0)
     else
         Exit_Normal(0);
+};
+
+// Hell Skill modifiers -------------------------------------------------------
+
+// Non-mission version of Assassination
+script void AddMiniboss()
+{
+    if (MonsterID <= 1) return; // No monsters, no miniboss.
+    
+    int Chosen = Random(1, MonsterID - 1);
+    int LevelMod = 4 * Player.Level + Random(0, 100);
+    
+    Monsters[Chosen].Level += LevelMod;
+    Monsters[Chosen].Level /= 2; // Shadow Auras always double their level
+    Monsters[Chosen].NeedReinit = true;
+    
+    // Shadow Aura
+    for (int i = 0; i < AURA_MAX; i++)
+        Monsters[Chosen].Aura.Type[i].Active = true;
+    
+    // EVIL LAUGH OF WARNING
+    if (Monsters[Chosen].Threat >= 10)
+        LocalAmbientSound("mission/gottarget2", 127);
+};
+
+// Non-mission version of Reinforcements
+script void HellSkillTransport()
+{
+    bool DRLA = (CompatMode == COMPAT_DRLA);
+    int MonsterDataAmount;
+    MonsterInfoPtr[MAX_TEMP_MONSTERS] MonsterList;
+    int MonsterListLength;
+    int BossesSpawned = 0;
+    
+    // Build a list of monsters
+    if (DRLA)
+        MonsterDataAmount = MAX_DEF_MONSTERS_DRLA
+    else
+        MonsterDataAmount = MAX_DEF_MONSTERS;
+    
+    for (int i = 0; i < MonsterDataAmount && MonsterListLength < MAX_TEMP_MONSTERS; i++)
+    {
+        MonsterInfoPtr TempMonster;
+        if (DRLA)
+            TempMonster = &MonsterDataDRLA[i]
+        else
+            TempMonster = &MonsterData[i];
+    
+        if (TempMonster->Difficulty <= 2 + AveragePlayerLevel() * 2)
+            MonsterList[MonsterListLength++] = TempMonster;
+    };
+    
+    while (ThingCount(T_NONE, 0))
+    {
+        Delay(35 * 30);
+        
+        fixed X = GetActorX(0);
+        fixed Y = GetActorY(0);
+        fixed Z = GetActorZ(0);
+        int MonsterIndex;
+        fixed SpawnX;
+        fixed SpawnY;
+        int TID;
+        bool Success;
+        int SpawnTries;
+        int CurrentRadius;
+        
+        // Stop spawning if time is frozen
+        while (IsTimeFrozen()) Delay(1);
+        
+        TID = UniqueTID();
+        Success = false;
+        SpawnTries = 0;
+        CurrentRadius = 2048;
+        
+        while (!Success && SpawnTries < 3)
+        {
+            MonsterIndex = Random(0, MonsterListLength - 1);
+            
+            SpawnX = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
+            SpawnY = RandomFixed(-(fixed)CurrentRadius, (fixed)CurrentRadius);
+            
+            // Get the floor Z position at this spot
+            SpawnForced("MapSpot", X + SpawnX, Y + SpawnY, Z, TID, 0);
+            Z = GetActorFloorZ(TID);
+            Thing_Remove(TID);
+            
+            Success = Spawn(MonsterList[MonsterIndex]->Actor, X + SpawnX, Y + SpawnY, Z, TID, 0);
+            
+            bool IsBoss = CheckFlag(TID, "BOSS");
+            
+            if (Success)
+                Success = CheckSight(0, TID, 0);
+            if (Success)
+                Success = !IsBoss || (!Random (0, 3) && BossesSpawned < 3);
+            
+            if (!Success)
+            {
+                // Try again, closer to the player each time, up to 3 times, before giving up.
+                Thing_Remove(TID);
+                CurrentRadius /= 2;
+            }
+            else
+            {
+                if (IsBoss)
+                    BossesSpawned++;
+            };
+            
+            SpawnTries++;
+        };
+        
+        if (Success)
+        {
+            Thing_Hate(TID, Player.TID);
+            Thing_ChangeTID(TID, 0); // Get rid of the ID
+            Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
+        };
+    };
 };
 
 // Map Events -----------------------------------------------------------------
