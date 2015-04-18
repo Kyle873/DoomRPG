@@ -54,16 +54,40 @@ acscript void OpenShop(bool OpenLocker) net
     };
 };
 
+script void UpdateShopAutoList()
+{
+    ArrayCreate(&Player.AutoSellList,  "AUSL\x00", 64, sizeof(ItemInfoPtr));
+    ArrayCreate(&Player.AutoStoreList, "AUST\x00", 64, sizeof(ItemInfoPtr));
+    
+    for (int i = 0; i < ItemCategories; i++)
+        for (int j = 0; j < ItemMax[i]; j++)
+        {
+            ItemInfoPtr Item = &ItemData[i][j];
+            
+            if (Player.AutoSellList.Position == Player.AutoSellList.Size)
+                ArrayResize(&Player.AutoSellList);
+            if (Player.AutoStoreList.Position == Player.AutoStoreList.Size)
+                ArrayResize(&Player.AutoStoreList);
+            
+            if (Player.ItemAutoMode[i][j] == AT_SELL)
+                ((ItemInfoPtr *)Player.AutoSellList.Data)[Player.AutoSellList.Position++] = Item
+            else if (Player.ItemAutoMode[i][j] == AT_STORE)
+                ((ItemInfoPtr *)Player.AutoStoreList.Data)[Player.AutoStoreList.Position++] = Item;
+        };
+};
+
 script void ShopItemAutoHandler()
 {
     int[ITEM_CATEGORIES][ITEM_MAX] Items;
     int[ITEM_CATEGORIES][ITEM_MAX] PrevItems;
     
+    UpdateShopAutoList();
+    
     while (true)
     {
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         
-        // Check Inventory of current items
+        // For post-checks
         if (GetCVar("drpg_pickup_behavior") > 0)
             for (int i = 0; i < ItemCategories; i++)
                 for (int j = 0; j < ItemMax[i]; j++)
@@ -71,55 +95,91 @@ script void ShopItemAutoHandler()
         
         // Auto-Sell
         if (Player.RankLevel > 0 || CurrentLevel->UACBase)
-            for (int i = 0; i < ItemCategories; i++)
-                for (int j = 0; j < ItemMax[i]; j++)
+            for (int i = 0; i < Player.AutoSellList.Position; i++)
+            {
+                ItemInfoPtr Item = ((ItemInfoPtr *)Player.AutoSellList.Data)[i];
+                
+                if (CheckInventory(Item->Actor) > 0)
                 {
-                    ItemInfoPtr Item = &ItemData[i][j];
-                    
-                    if ((Player.ItemAutoMode[i][j] == AT_SELL && CheckInventory(Item->Actor) > 0) || (!Player.InShop && GetCVar("drpg_pickup_behavior") == 1 && Buttons & BT_SPEED && Items[i][j] > PrevItems[i][j]))
+                    // DoomRL Compatibility
+                    if (CompatMode == COMPAT_DRLA)
                     {
-                        // DoomRL Compatibility
-                        if (CompatMode == COMPAT_DRLA)
-                        {
-                            int Total = CheckInventory(Item->Actor);
-                            while (Total-- > 0)
-                                RemoveDRLAItem(i, j);
-                        };
-                        
-                        SellItem(Item->Actor, true, true);
+                        int Total = CheckInventory(Item->Actor);
+                        while (Total-- > 0)
+                            RemoveDRLAItem(Item->Category, Item->Index);
                     };
+                    
+                    SellItem(Item->Actor, true, true);
                 };
+            };
         
         // Auto-Store
         bool deposited = false;
         if (Player.EP >= LOCKER_EPRATE)
+            for (int i = 0; i < Player.AutoStoreList.Position; i++)
+            {
+                ItemInfoPtr Item = ((ItemInfoPtr *)Player.AutoStoreList.Data)[i];
+                
+                if (CheckInventory(Item->Actor) > 0)
+                {
+                    // Special handling for DRLA weapons since you can only keep one weapon with mods in the locker
+                    if (CompatMode == COMPAT_DRLA && Item->Category == 0 && Player.Locker[Item->Category][Item->Index] > 0) continue;
+                    
+                    while (CheckInventory(Item->Actor) > 0 && Player.EP >= LOCKER_EPRATE)
+                    {
+                        DepositItem(Item->Category, Item->Index, false, true);
+                        deposited = true;
+                    };
+                    
+                    if (deposited)
+                        ActivatorSound("shop/autostore", 127);
+                };
+            };
+        
+        Delay(4);
+        
+        // Run-pickup behavior stuff
+        if (GetCVar("drpg_pickup_behavior") > 0 && Buttons & BT_SPEED)
+        {
             for (int i = 0; i < ItemCategories; i++)
                 for (int j = 0; j < ItemMax[i]; j++)
                 {
                     ItemInfoPtr Item = &ItemData[i][j];
                     
-                    if ((Player.ItemAutoMode[i][j] == AT_STORE && CheckInventory(Item->Actor) > 0) || (!Player.InShop && GetCVar("drpg_pickup_behavior") == 2 && Buttons & BT_SPEED && Items[i][j] > PrevItems[i][j]))
-                    {
-                        // Special handling for DRLA weapons since you can only keep one weapon with mods in the locker
-                        if (CompatMode == COMPAT_DRLA && i == 0 && Player.Locker[i][j] > 0) continue;
-                        
-                        while (CheckInventory(Item->Actor) > 0 && Player.EP >= LOCKER_EPRATE)
+                    bool deposited = false;
+                    // Auto-Sell
+                    if (!Player.InShop && GetCVar("drpg_pickup_behavior") == 1 && Items[i][j] > PrevItems[i][j])
+                        if (CheckInventory(Item->Actor) > 0)
                         {
-                            DepositItem(i, j, false, true);
-                            deposited = true;
+                            // DoomRL Compatibility
+                            if (CompatMode == COMPAT_DRLA)
+                            {
+                                int Total = CheckInventory(Item->Actor);
+                                while (Total-- > 0)
+                                    RemoveDRLAItem(i, j);
+                            };
+                            
+                            SellItem(Item->Actor, true, true);
+                        }
+                    // Auto-Store
+                    else if (!Player.InShop && GetCVar("drpg_pickup_behavior") == 2 && Items[i][j] > PrevItems[i][j])
+                        if (CheckInventory(Item->Actor) > 0)
+                        {
+                            // Special handling for DRLA weapons since you can only keep one weapon with mods in the locker
+                            if (CompatMode == COMPAT_DRLA && i == 0 && Player.Locker[i][j] > 0) continue;
+                            
+                            while (CheckInventory(Item->Actor) > 0 && Player.EP >= LOCKER_EPRATE)
+                            {
+                                DepositItem(i, j, false, true);
+                                deposited = true;
+                            };
+                            
+                            if (deposited)
+                                ActivatorSound("shop/autostore", 127);
                         };
-                        
-                        if (deposited)
-                            ActivatorSound("shop/autostore", 127);
-                    };
                 };
+        };
         
-        if (GetCVar("drpg_toaster"))
-            Delay(35)
-        else
-            Delay(1);
-        
-        // Transfer current items to previous items
         if (GetCVar("drpg_pickup_behavior") > 0)
             for (int i = 0; i < ItemCategories; i++)
                 for (int j = 0; j < ItemMax[i]; j++)
@@ -332,6 +392,8 @@ function void ShopLoop()
                 Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_NONE;
             ActivatorSound("menu/move", 127);
         };
+        
+        UpdateShopAutoList();
     };
     if (Buttons == BT_ALTATTACK && OldButtons != BT_ALTATTACK && Player.LockerMode)
     {
