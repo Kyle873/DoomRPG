@@ -744,13 +744,15 @@ script void MonsterInitStats(int StatFlags)
 
 script void MonsterAggressionHandler()
 {
+    script bool MonsterHasTarget() { return SetActivator(0, AAPTR_TARGET); };
+    
     // Delay Stagger
     Delay(GetMonsterID(0) % 4);
     
     // Pointer
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
-    int Energy = Stats->Energy;
+    int Capacity = Stats->Capacity;
     
     Start:
     
@@ -763,9 +765,15 @@ script void MonsterAggressionHandler()
     if (ClassifyActor(0) & ACTOR_WORLD)
         return;
     
-    Energy = Stats->Energy;
+    if (!MonsterHasTarget())
+    {
+        Delay(10);
+        goto Start;
+    };
+
+    Capacity = Stats->Capacity;
     
-    fixed Aggression = 0.25 + (Energy * 0.00475);
+    fixed Aggression = 0.25 + (Capacity * 0.00475);
     
     if (Aggression < 1.0)
     {
