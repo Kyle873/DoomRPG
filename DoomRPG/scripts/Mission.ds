@@ -430,9 +430,27 @@ function void GetTargetMonster(MissionInfo *Mission)
         else
             TempMonster = &MonsterData[i];
         
-        if (TempMonster->Difficulty > ((Mission->Difficulty + 1) * 11) - 11 &&
-            TempMonster->Difficulty < ((Mission->Difficulty + 1) * 11) + 11)
-            PotentialMonsters[NumPotentialMonsters++] = TempMonster;
+        if (Mission->Type != MT_KILL)
+        {
+            if (TempMonster->Difficulty > ((Mission->Difficulty + 1) * 11) - 11 &&
+                TempMonster->Difficulty < ((Mission->Difficulty + 1) * 11) + 11)
+                PotentialMonsters[NumPotentialMonsters++] = TempMonster;
+        }
+        else
+        {
+            if (TempMonster->Difficulty > ((Mission->Difficulty + 1) * 11) - 33 &&
+                TempMonster->Difficulty < ((Mission->Difficulty + 1) * 11) + 33 &&
+                !TempMonster->Boss)
+                PotentialMonsters[NumPotentialMonsters++] = TempMonster;
+        };
+    };
+    
+    if (NumPotentialMonsters < 1)
+    {
+        Log("\cgERROR: \c-GetTargetMonster for %s mission on difficulty %d has no monsters!\n", Mission->Type == MT_KILL? "kill" : "assassination", Mission->Difficulty + 1);
+        Mission->Monster = nullptr;
+        Mission->Amount = 0;
+        return;
     };
     
     MonsterInfoPtr MonsterPtr = PotentialMonsters[Random(0, NumPotentialMonsters - 1)];
