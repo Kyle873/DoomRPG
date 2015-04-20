@@ -430,6 +430,9 @@ function void GetTargetMonster(MissionInfo *Mission)
         else
             TempMonster = &MonsterData[i];
         
+        int TestDifficulty = TempMonster->Difficulty + (10 * TempMonster->ThreatLevel);
+        int TestAmount = (30 + (320 * Mission->Difficulty)) / TestDifficulty;
+        
         if (Mission->Type != MT_KILL)
         {
             if (TempMonster->Difficulty > ((Mission->Difficulty + 1) * 11) - 11 &&
@@ -438,10 +441,8 @@ function void GetTargetMonster(MissionInfo *Mission)
         }
         else
         {
-            if (TempMonster->Difficulty > ((Mission->Difficulty + 1) * 11) - 33 &&
-                TempMonster->Difficulty < ((Mission->Difficulty + 1) * 11) + 33 &&
-                !TempMonster->Boss && ((40 + (166 * Mission->Difficulty)) / TempMonster->Difficulty) > 1 &&
-                ((40 + (166 * Mission->Difficulty)) / TempMonster->Difficulty) < 50)
+            if (!TempMonster->Boss && TestAmount >= 5 &&
+                TestAmount <= 40)
                 PotentialMonsters[NumPotentialMonsters++] = TempMonster;
         };
     };
@@ -457,7 +458,8 @@ function void GetTargetMonster(MissionInfo *Mission)
     MonsterInfoPtr MonsterPtr = PotentialMonsters[Random(0, NumPotentialMonsters - 1)];
     
     // Now that we know the monster type, we can calculate an amount
-    int BaseAmount = (40 + (166 * Mission->Difficulty)) / MonsterPtr->Difficulty;
+    int EffectiveDifficulty = MonsterPtr->Difficulty + (10 * MonsterPtr->ThreatLevel);
+    int BaseAmount = (30 + (320 * Mission->Difficulty)) / EffectiveDifficulty;
     Amount = Random((fixed)BaseAmount * 0.8, (fixed)BaseAmount * 1.2);
     
     // Insert info into the passed struct
