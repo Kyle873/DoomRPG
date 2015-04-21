@@ -655,16 +655,41 @@ script void MonsterInitStats(int StatFlags)
     // Apply the aura effects
     if (Stats->Aura.Type[AURA_WHITE].Active) // White Aura - XP
     {
-        MonsterStrength += Random(MonsterLevel, MonsterLevel * GameSkill());
-        MonsterDefense += Random(MonsterLevel, MonsterLevel * GameSkill());
-        MonsterVitality += Random(MonsterLevel, MonsterLevel * GameSkill());
-        MonsterEnergy += Random(MonsterLevel, MonsterLevel * GameSkill());
-        MonsterRegeneration += Random(MonsterLevel, MonsterLevel * GameSkill());
-        MonsterAgility += Random(MonsterLevel, MonsterLevel * GameSkill());
-        MonsterCapacity += Random(MonsterLevel, MonsterLevel * GameSkill());
-        MonsterLuck += Random(MonsterLevel, MonsterLevel * GameSkill());
-        
         MonsterLevel *= 2;
+        
+        // Recalculate the stats, since the level changed
+        MonsterStrength = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterDefense = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterVitality = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterEnergy = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterRegeneration = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterAgility = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterCapacity = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterLuck = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        
+        if (GetCVar("drpg_monster_specialize"))
+        {
+            // Cut Stats
+            if (StatEffect[0] == 1) MonsterStrength /= 2;
+            if (StatEffect[1] == 1) MonsterDefense /= 2;
+            if (StatEffect[2] == 1) MonsterVitality /= 2;
+            if (StatEffect[3] == 1) MonsterEnergy /= 2;
+            if (StatEffect[4] == 1) MonsterRegeneration /= 2;
+            if (StatEffect[5] == 1) MonsterAgility /= 2;
+            if (StatEffect[6] == 1) MonsterCapacity /= 2;
+            if (StatEffect[7] == 1) MonsterLuck /= 2;
+            
+            // Specialized Stats
+            if (StatEffect[0] == 2) MonsterStrength *= Random(2, 4);
+            if (StatEffect[1] == 2) MonsterDefense *= Random(2, 4);
+            if (StatEffect[2] == 2) MonsterVitality *= Random(2, 4);
+            if (StatEffect[3] == 2) MonsterEnergy *= Random(2, 4);
+            if (StatEffect[4] == 2) MonsterRegeneration *= Random(2, 4);
+            if (StatEffect[5] == 2) MonsterAgility *= Random(2, 4);
+            if (StatEffect[6] == 2) MonsterCapacity *= Random(2, 4);
+            if (StatEffect[7] == 2) MonsterLuck *= Random(2, 4);
+        };
+        
         GiveInventory("DRPGWhiteAuraGiver", 1);
         MonsterLevelupHandler();
     };
