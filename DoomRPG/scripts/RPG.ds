@@ -21,7 +21,7 @@
 #include "Utils.dh"
 
 // Version
-const str Version = "v0.9.13 Beta - Phat Lewt Edition";
+const str Version = "v0.9.14 Beta - Pew Pew Turrets";
 
 // Flags
 static bool Transported;
@@ -842,6 +842,9 @@ script void ItemHandler()
             // Invalid item, continue
             if (ItemTIDs[i] == 0) continue;
             
+            // This item was picked up or otherwise removed
+            if (ClassifyActor(ItemTIDs[i]) == ACTOR_NONE || ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
+            
             // Iterate players and check distances
             bool NoClip = false;
             for (int j = 0; j < MAX_PLAYERS; j++)
@@ -893,7 +896,7 @@ script void ItemHandler()
 acscript void ItemInit()
 {
     // Delay while the Items array is being initialized
-    while (!ItemsInitialized) Delay(4);
+    while (!ItemsInitialized) Delay(1);
     
     // [KS] Some items cease existing once they're added to inventory
     // If that's the case, return early so we don't add empty item info
@@ -943,11 +946,10 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     fixed UpperY = GetActorY(0);
     int LevelNum = CurrentLevel->LevelNum;
     int Items = 0;
-    int Instructions = 0;
     int Iterations = 0;
     
     // Initial delay to make sure all items have been added/initialized in the level
-    Delay(5);
+    while (!ItemsInitialized) Delay(1);
     
     // Determine the max amount of items to create if it's not specifically specified
     if (MaxItems == 0)
@@ -1007,32 +1009,7 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         bool Spawned = Spawn("MapSpotGravity", X, Y, Z, TID, A);
         if (Spawned)
         {
-            bool Remove = true;
-            
-            for (int i = 0; ItemTIDs[i] != -1; i++)
-            {
-                // If this spot is blank, skip it
-                if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
-                
-                // Randomly continue for variance
-                if (Random(1, 4) == 1) continue;
-                
-                bool CanSee = CheckSight(ItemTIDs[i], TID, 0);
-                
-                // [KS] Don't spawn stuff on special-effects flats like skyfloor or blackness, or at extreme height differences, because more often than not those are used as void space filler or instakill floors.
-                // Examples: Epic2 MAP14, SF2012 MAP02, some CC4 maps.
-                bool BadFloor = (CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF"));
-                
-                if (CanSee && !BadFloor && Abs(Z - GetActorZ(ItemTIDs[i])) <= 128)
-                {
-                    Remove = false;
-                    break;
-                };
-                
-                Instructions++;
-                if ((Instructions % 500) == 0)
-                    Delay(1);
-            };
+            bool Remove = DynamicLootGeneratorCheckRemoval(TID, Z);
             
             Thing_Remove(TID);
             if (!Remove)
@@ -1043,13 +1020,41 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         };
         
         if (GetCVar("drpg_debug"))
-            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\cdActor: \c-%s\n\ccInstructions: %d\n\cdIteration: %d\n\ciBoundaries: %k-%k, %k-%k\n\nX: %k\nY: %k\nZ: %k\n", Items, MaxItems, Actor, Instructions, Iterations, LowerX, UpperX, LowerY, UpperY, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
+            HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\cdActor: \c-%s\n\cdIteration: %d\n\ciBoundaries: %k-%k, %k-%k\n\nX: %k\nY: %k\nZ: %k\n", Items, MaxItems, Actor, Iterations, LowerX, UpperX, LowerY, UpperY, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
         
         Iterations++;
     };
     
     if (GetCVar("drpg_debug"))
         Log("\cdDebug: \c-Dynamic Loot Generation created \cd%d\c- items of type \cd%s\n", MaxItems, Actor);
+};
+
+script bool DynamicLootGeneratorCheckRemoval(int TID, fixed Z)
+{
+    bool Remove = true;
+    
+    for (int i = 0; ItemTIDs[i] != -1; i++)
+    {
+        // If this spot is blank, skip it
+        if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
+        
+        // Randomly continue for variance
+        if (Random(1, 4) == 1) continue;
+        
+        bool CanSee = CheckSight(ItemTIDs[i], TID, 0);
+        
+        // [KS] Don't spawn stuff on special-effects flats like skyfloor or blackness, or at extreme height differences, because more often than not those are used as void space filler or instakill floors.
+        // Examples: Epic2 MAP14, SF2012 MAP02, some CC4 maps.
+        bool BadFloor = (CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF"));
+        
+        if (CanSee && !BadFloor && Abs(Z - GetActorZ(ItemTIDs[i])) <= 128)
+        {
+            Remove = false;
+            break;
+        };
+    };
+    
+    return Remove;
 };
 
 // Quick Heal

@@ -78,7 +78,7 @@ script void MapInit() open
     
     if (CurrentLevel == NULL) // New map - We need to create new info for it
     {
-        CurrentLevel = &(((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++]);
+        CurrentLevel = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
         CurrentLevel->LevelNum = 0;
         CurrentLevel->NeedsRealInfo = true;
         
@@ -628,6 +628,7 @@ acscript void AddUnknownMap(str Name, str DisplayName, int LevelNumber, int Secr
     NewMap->UACBase = false;
     NewMap->UACArena = false;
     NewMap->SecretMap = false;
+    NewMap->Completed = false;
     NewMap->NeedsRealInfo = true;
 };
 
@@ -922,6 +923,9 @@ function bool CheckMapEvent(int Event)
 
 script void DecideMapEvent(LevelInfo *TargetLevel)
 {
+    if (GetCVar("drpg_debug"))
+        Log ("\cdDEBUG: \chDeciding event for \cd%s\n", TargetLevel->LumpName);
+
     static str[MAPEVENT_MAX] EventNames =
     {
         "None";
@@ -947,7 +951,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     
     // We need to clear all of the event data before choosing one
     
-    CurrentLevel->EventCompleted = false;
+    TargetLevel->EventCompleted = false;
     
     // Megaboss
     TargetLevel->MegabossActor = NULL;
@@ -1106,7 +1110,7 @@ script void PassingEvents() open
             
             for (int i = 0; i < KnownLevels.Position; i++)
             {
-                LevelInfo *ThisLevel = &(((LevelInfo *)KnownLevels.Data)[i]);
+                LevelInfo *ThisLevel = &((LevelInfo *)KnownLevels.Data)[i];
                 
                 if (!ThisLevel->Completed)
                 {

@@ -385,41 +385,6 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
     };
     
     // --------------------------------------------------
-    // Commands
-    // 
-    
-    {
-        "Command Module - Idle"; 1; 5;
-        "Allows you to command the turret to wait at it's current location";
-        "";
-        "Issuing this command will tell the turret to wait";
-    };
-    {
-        "Command Module - Wander"; 1; 5;
-        "Allows you to command the turret to wander around it's current location";
-        "";
-        "Issuing this command will tell the turret to wander";
-    };
-    {
-        "Command Module - Orbit"; 1; 10;
-        "Allows you to command the turret to orbit around your location";
-        "";
-        "Issuing this command will tell the turret to orbit";
-    };
-    {
-        "Command Module - Target"; 1; 20;
-        "Allows you to command the turret to attack your current target";
-        "";
-        "Issuing this command will tell the turret to attack your current target";
-    };
-    {
-        "Command Module - Control"; 1; 50;
-        "Allows you to remotely control the turret";
-        "";
-        "Issuing this command will switch your control over to the turret";
-    };
-
-    // --------------------------------------------------
     // Battery
     // 
     
@@ -502,6 +467,12 @@ TurretSpace TurretUpgrade[MAX_UPGRADES] TurretUpgradeData =
         "Upgrades decrease cash flow required when in maintenance";
         "";
     };
+    
+    // --------------------------------------------------
+    // Commands
+    // 
+    
+    // Pending Completion™
 };
 
 script void TurretLoop() enter
@@ -558,9 +529,6 @@ script void TurretLoop() enter
         // Set Flags
         Player.Turret.Init = true;
         Player.Turret.PaidForRepair = true;
-        
-        // Spawn the Turret
-        TurretSpawn();
     };
     
     while (Player.Turret.Active)
@@ -850,6 +818,7 @@ script void TurretLoopMaintenance() enter
     if (Player.Turret.Maintenance && !CheckInventory("DRPGCredits"))
     {
         Player.Turret.Maintenance = false;
+        PrintError("Maintenance has been postponed because you have run out of money");
         ActivatorSound("menu/error", 127);
     };
     
@@ -1416,11 +1385,6 @@ acscript void TurretCommandWheel() enter
         TU_SENSORS_MODULEFINDER;
         TU_SENSORS_ITEMFINDER;
         TU_SENSORS_SUPPLYFINDER;
-        TU_COMMAND_IDLE;
-        TU_COMMAND_WANDER;
-        TU_COMMAND_ORBIT;
-        TU_COMMAND_TARGET;
-        TU_COMMAND_CONTROL;
     };
     
     Start:
@@ -2342,51 +2306,6 @@ function void TurretCommand(int Index)
         Player.Turret.SensorMode = TSM_CRATE;
         TurretSensors();
     };
-    
-    if (Index == TU_COMMAND_IDLE)
-    {
-        ActivatorSound("menu/move", 127);
-        if (Player.Turret.Command == TC_IDLE)
-            Player.Turret.Command = TC_NONE
-        else
-            Player.Turret.Command = TC_IDLE;
-    };
-
-    if (Index == TU_COMMAND_WANDER)
-    {
-        ActivatorSound("menu/move", 127);
-        if (Player.Turret.Command == TC_WANDER)
-            Player.Turret.Command = TC_NONE
-        else
-            Player.Turret.Command = TC_WANDER;
-    };
-    
-    if (Index == TU_COMMAND_ORBIT)
-    {
-        ActivatorSound("menu/move", 127);
-        if (Player.Turret.Command == TC_ORBIT)
-            Player.Turret.Command = TC_NONE
-        else
-            Player.Turret.Command = TC_ORBIT;
-    };
-    
-    if (Index == TU_COMMAND_TARGET)
-    {
-        ActivatorSound("menu/move", 127);
-        if (Player.Turret.Command == TC_TARGET)
-            Player.Turret.Command = TC_NONE
-        else
-            Player.Turret.Command = TC_TARGET;
-    };
-    
-    if (Index == TU_COMMAND_CONTROL)
-    {
-        ActivatorSound("menu/move", 127);
-        if (Player.Turret.Command == TC_CONTROL)
-            Player.Turret.Command = TC_NONE
-        else
-            Player.Turret.Command = TC_CONTROL;
-    };
 };
 
 function bool TurretStim()
@@ -2630,4 +2549,9 @@ acscript void FullTurret()
     
     for (int i = 1; i < TU_MAX; i++)
         Player.Turret.Upgrade[i] = TurretUpgradeData[i].MaxLevel;
+        
+    Delay(1);
+    
+    Player.Turret.Health = Player.Turret.HealthMax;
+    TurretSpawn();
 };
