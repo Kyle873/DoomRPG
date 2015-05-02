@@ -1465,26 +1465,6 @@ function void DrawTurretInfo(fixed X, fixed Y, int Index)
     case TU_SENSORS_SUPPLYFINDER:
         Info = "\cdGo";
         break;
-    case TU_COMMAND_IDLE:
-        if (Player.Turret.Command == TC_IDLE)
-            Info = "\cdON";
-        break;
-    case TU_COMMAND_WANDER:
-        if (Player.Turret.Command == TC_WANDER)
-            Info = "\cdON";
-        break;
-    case TU_COMMAND_ORBIT:
-        if (Player.Turret.Command == TC_ORBIT)
-            Info = "\cdON";
-        break;
-    case TU_COMMAND_TARGET:
-        if (Player.Turret.Command == TC_TARGET)
-            Info = "\cdON";
-        break;
-    case TU_COMMAND_CONTROL:
-        if (Player.Turret.Command == TC_CONTROL)
-            Info = "\cdON";
-        break;
     case TU_BATTERY_CAPACITY:
         Info = StrParam("\ck%s\n", FormatTime(Player.Turret.BatteryMax * 35));
         break;
@@ -1545,43 +1525,47 @@ function void DrawTurretTimers(fixed X, fixed Y)
     
     int VialType = (Timer() / 35) % STIM_MAX;
     
-    // Charge Timer
-    SetFont("BIGFONT");
-    HudMessage("%s\n", FormatTime(Player.Turret.ChargeTimer * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y, 0.05);
-    if (Player.Turret.Maintenance && Player.Turret.ChargeTimer > 0)
-        PrintSpritePulse("TCharge", 0, X + 0.1, Y - 3.0, 0.5, 32.0, 0.5)
-    else
-        PrintSprite("TCharge", 0, X + 0.1, Y - 3.0, 0.05);
-    
-    // Repair Timer
-    SetFont("BIGFONT");
-    HudMessage("%s\n", FormatTime(Player.Turret.RepairTimer * 35), HUDMSG_PLAIN, 0, (Player.Turret.PaidForRepair ? CR_BRICK : CR_RED), X + 64.1, Y, 0.05);
-    if (Player.Turret.Maintenance && Player.Turret.RepairTimer > 0)
-        PrintSpritePulse("TRepair", 0, X + 64.1, Y - 3.0, 0.5, 32.0, 0.5)
-    else
-        PrintSprite("TRepair", 0, X + 64.1, Y - 3.0, 0.05);
-    
-    // Refit Timer
-    SetFont("BIGFONT");
-    HudMessage("%s\n", FormatTime(Player.Turret.RefitTimer * 35), HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 128.1, Y, 0.05);
-    if (Player.Turret.Maintenance && Player.Turret.RefitTimer > 0)
-        PrintSpritePulse("TRefit", 0, X + 128.1, Y - 3.0, 0.5, 32.0, 0.5)
-    else
-        PrintSprite("TRefit", 0, X + 128.1, Y - 3.0, 0.05);
-    
-    // Stim Timer
-    if (Player.Turret.Upgrade[TU_ASSIST_INJECTOR])
+    // Timers
+    if (Player.Turret.Init)
     {
+        // Charge Timer
         SetFont("BIGFONT");
-        if (Player.Turret.StimTimer > 0)
-        {
-            HudMessage("%s\n", FormatTime(Player.Turret.StimTimer * 35), HUDMSG_PLAIN, 0, CR_GREY, X + 204.1, Y, 0.05);
-            PrintSpritePulse("STCAA0", 0, X + 204.1 - 16.0, Y - 3.0 + 2.0, 0.5, 32.0, 0.5);
-        }
+        HudMessage("%s\n", FormatTime(Player.Turret.ChargeTimer * 35), HUDMSG_PLAIN, 0, CR_YELLOW, X + 0.1, Y, 0.05);
+        if (Player.Turret.Maintenance && Player.Turret.ChargeTimer > 0)
+            PrintSpritePulse("TCharge", 0, X + 0.1, Y - 3.0, 0.5, 32.0, 0.5)
         else
+            PrintSprite("TCharge", 0, X + 0.1, Y - 3.0, 0.05);
+        
+        // Repair Timer
+        SetFont("BIGFONT");
+        HudMessage("%s\n", FormatTime(Player.Turret.RepairTimer * 35), HUDMSG_PLAIN, 0, (Player.Turret.PaidForRepair ? CR_BRICK : CR_RED), X + 64.1, Y, 0.05);
+        if (Player.Turret.Maintenance && Player.Turret.RepairTimer > 0)
+            PrintSpritePulse("TRepair", 0, X + 64.1, Y - 3.0, 0.5, 32.0, 0.5)
+        else
+            PrintSprite("TRepair", 0, X + 64.1, Y - 3.0, 0.05);
+        
+        // Refit Timer
+        SetFont("BIGFONT");
+        HudMessage("%s\n", FormatTime(Player.Turret.RefitTimer * 35), HUDMSG_PLAIN, 0, CR_LIGHTBLUE, X + 128.1, Y, 0.05);
+        if (Player.Turret.Maintenance && Player.Turret.RefitTimer > 0)
+            PrintSpritePulse("TRefit", 0, X + 128.1, Y - 3.0, 0.5, 32.0, 0.5)
+        else
+            PrintSprite("TRefit", 0, X + 128.1, Y - 3.0, 0.05);
+        
+        // Stim Timer
+        if (Player.Turret.Upgrade[TU_ASSIST_INJECTOR])
         {
-            HudMessage("Ready\n", HUDMSG_PLAIN, 0, CR_GREEN, X + 204.1, Y, 0.05);
-            PrintSprite(VialSprites[VialType], 0, X + 204.1 - 16.0 + 4.0, Y - 3.0 + 18.0, 0.05);
+            SetFont("BIGFONT");
+            if (Player.Turret.StimTimer > 0)
+            {
+                HudMessage("%s\n", FormatTime(Player.Turret.StimTimer * 35), HUDMSG_PLAIN, 0, CR_GREY, X + 204.1, Y, 0.05);
+                PrintSpritePulse("STCAA0", 0, X + 204.1 - 16.0, Y - 3.0 + 2.0, 0.5, 32.0, 0.5);
+            }
+            else
+            {
+                HudMessage("Ready\n", HUDMSG_PLAIN, 0, CR_GREEN, X + 204.1, Y, 0.05);
+                PrintSprite(VialSprites[VialType], 0, X + 204.1 - 16.0 + 4.0, Y - 3.0 + 18.0, 0.05);
+            };
         };
     };
 };
@@ -1615,9 +1599,6 @@ function void MenuInput()
             
             if (Player.MenuIndex == MAX_MENU - 1)
                 OpenShop(false)
-            // TEMPORARY
-            else if (Player.MenuIndex == 5 && !GetCVar("drpg_debug"))
-                PrintError("Turret functionality is currently disabled during normal play")
             else
             {
                 ActivatorSound("menu/move", 127);
@@ -2169,10 +2150,16 @@ function void UpgradeTurret(int Index)
             {
                 TurretDespawn();
                 Player.Turret.RefitTimer += Player.Turret.Upgrade[Index] * (10 - Player.Turret.Upgrade[TU_HARDWARE_SPECS]);
+            }
+            else // Build
+            {
+                Player.Turret.Health = 100;
+                Player.Turret.RefitTimer += 60;
+                
+                // Automatically start maintenance to begin building the turret
+                if (CheckInventory("DRPGCredits") > 0)
+                    Player.Turret.Maintenance = true;
             };
-            // Uncomment when ready
-            // else // Build
-                // Player.Turret.RefitTimer += 60;
         }
         else
         {
