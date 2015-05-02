@@ -538,6 +538,7 @@ script void MapLoop()
             SetFont("BIGFONT");
             HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
             SetFont("SMALLFONT");
+            MapEventReward();
         };
         
         CurrentLevel->EventCompleted = true;
@@ -921,10 +922,51 @@ function bool CheckMapEvent(int Event)
     return false;
 };
 
+function void MapEventReward()
+{
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        // Player is not in-game
+        if (!PlayerInGame(i)) continue;
+        
+        SetActivator(Players(i).TID);
+        
+        if (Player.Level > 0)
+        {
+            int Credits = 1000 * Player.Level;
+            int Modules = 250 * Player.Level;
+            str Message = "";
+            
+            switch (CurrentLevel->Event)
+            {
+            case MAPEVENT_TOXICHAZARD:
+                Message = "Radiation Cleared";
+                break;
+            case MAPEVENT_NUCLEARBOMB:
+                Message = "Bomb Disarmed";
+                break;
+            case MAPEVENT_LOWPOWER:
+                Message = "Backup Power Restored";
+                break;
+            case MAPEVENT_ALLAURAS:
+            case MAPEVENT_ONEMONSTER:
+            case MAPEVENT_HARMONIZEDAURAS:
+                Message = "Area Secured";
+                break;
+            };
+            
+            ActivatorSound("mission/complete", 127);
+            PrintMessage(StrParam("\cd%s\n\n\cf+%d Credits\n\cd+%d Modules\n", Message, Credits, Modules));
+            GiveInventory("DRPGCredits", Credits);
+            GiveInventory("DRPGModule", Modules);
+        };
+    };
+};
+
 script void DecideMapEvent(LevelInfo *TargetLevel)
 {
     if (GetCVar("drpg_debug"))
-        Log ("\cdDEBUG: \chDeciding event for \cd%s\n", TargetLevel->LumpName);
+        Log("\cdDEBUG: \chDeciding event for \cd%s\n", TargetLevel->LumpName);
 
     static str[MAPEVENT_MAX] EventNames =
     {
@@ -1596,6 +1638,8 @@ script void EnvironmentalHazardDisarm()
     SetFont("BIGFONT");
     HudMessageBold("Radiation cleared\n", HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_GREEN, 0.5, 0.25, 2.0, 1.0);
     AmbientSound("radiation/cleared", 127);
+    
+    MapEventReward();
 };
 
 // Event - Thermonuclear Bomb -------------------------------------------------
@@ -1714,14 +1758,7 @@ script void ThermonuclearBombEvent()
         AmbientSound("nuke/disarmed", 127);
         SetMusic("*");
         
-        // Level/Rank up
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (Players(i).Level < MAX_LEVELS)
-                Players(i).XP = XPTable[Players(i).Level];
-            if (Players(i).RankLevel < MAX_RANK)
-                Players(i).Rank = RankTable[Players(i).RankLevel];
-        };
+        MapEventReward();
     }
     else if (!BombDisarmed || CurrentLevel->BombExplode) // Epic failure, explode everyone to die
     {
@@ -1852,6 +1889,7 @@ script void LowPowerEvent()
         Light_Glow(i, 160, 96, 35 * 3);
         Sector_SetColor(i, 255, 128, 32, 0);
     };
+    MapEventReward();
     
     // Remove generator power cells from the players
     while (true)
@@ -1905,6 +1943,7 @@ script void OneMonsterEvent()
     
     AmbientSound("misc/secret", 127);
     HudMessageBold("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0);
+    MapEventReward();
     
     CurrentLevel->EventCompleted = true;
 };
