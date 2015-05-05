@@ -825,7 +825,7 @@ script void ItemHandler()
     {
         ItemTIDs[i] = -1;
         
-        if ((Timer() % 5) == 0)
+        if ((i % 15000) == 0)
             Delay(1);
     };
     
@@ -947,6 +947,7 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     int LevelNum = CurrentLevel->LevelNum;
     int Items = 0;
     int Iterations = 0;
+    int NumItems = 0;
     
     // Initial delay to make sure all items have been added/initialized in the level
     while (!ItemsInitialized) Delay(1);
@@ -980,7 +981,9 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     // Find the furthest item from the player to determine some approximate boundaries to work with
     for (int i = 0; ItemTIDs[i] != -1; i++)
     {
-        if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
+        if (ClassifyActor(ItemTIDs[i]) == ACTOR_NONE) continue;
+        
+        NumItems = i + 1;
         
         fixed ItemX = GetActorX(ItemTIDs[i]);
         fixed ItemY = GetActorY(ItemTIDs[i]);
@@ -991,7 +994,12 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         if (UpperY < ItemY) UpperY = ItemY;
     };
     
-    Delay(1);
+    if (NumItems < 1)
+    {
+        Delay(1);
+        DynamicLootGenerator(Actor, MaxItems);
+        return;
+    };
     
     while (Items < MaxItems)
     {
@@ -1023,10 +1031,18 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
             HudMessage("\cfGenerating Loot\n\cd%d \cj/ \cd%d\n\n\cdActor: \c-%s\n\cdIteration: %d\n\ciBoundaries: %k-%k, %k-%k\n\nX: %k\nY: %k\nZ: %k\n", Items, MaxItems, Actor, Iterations, LowerX, UpperX, LowerY, UpperY, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
         
         Iterations++;
+        
+        if (Iterations == 8000) // Trick to restart ourselves if we ran out of iterations
+        {
+            if (GetCVar("drpg_debug"))
+                Log("\cdDebug: \c-Dynamic Loot Generation created \cd%d\c- items of type \cd%s\c- and is restarting to place more\n", Items, Actor);
+            DynamicLootGenerator(Actor, MaxItems - Items);
+            return;
+        };
     };
     
     if (GetCVar("drpg_debug"))
-        Log("\cdDebug: \c-Dynamic Loot Generation created \cd%d\c- items of type \cd%s\n", MaxItems, Actor);
+        Log("\cdDebug: \c-Dynamic Loot Generation created \cd%d\c- items of type \cd%s\n", Items, Actor);
 };
 
 script bool DynamicLootGeneratorCheckRemoval(int TID, fixed Z)
