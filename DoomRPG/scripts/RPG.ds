@@ -607,6 +607,134 @@ acscript int AddHealthDirect(int HealthAmount, int MaxPercent)
     return 1;
 };
 
+acscript void GiveTip()
+{
+    struct TipInfo
+    {
+        str Title;
+        str Tip;
+    };
+    
+    static TipInfo[MAX_TIPS] Tips =
+    {
+        // Level/Rank
+        { "\cjLevel";                           "Your level determines your basic strength and progress through the game. Your level is increased by killing monsters, completing missions and achieving combos."; };
+        { "\ckRank";                            "Your rank determines your standing within the UAC. Rank will determine how much money you are paid by the UAC as well as the discount you will recieve when purchasing items from the shop."; };
+        { "\ctCombo";                           "The combo system allows you to kill enemies in rapid succession in order to gain bonus XP and Rank. When an enemy is killed, you will gain +1 to your combo counter and your combo timer will reset. When your timer reaches its cooldown point, indicated by the split between the red and green in the bar, it will add the indicated XP and Rank to your totals and calculate a bonus (the green number). If you keep incrementing your combo during the cooldown period, you can keep stacking XP and Rank into the bonus. When the combo timer ends, your combo will be completely reset and your bonus will be added to your totals."; };
+        { "\ckPay Bonus";                       "Your pay bonus is shown to the right of your payout information. A higher pay bonus will yield better payouts. Your pay bonus can be increased by completing missions and achieving 100% level completion."; };
+        
+        // Currencies
+        { "\cfCredits";                         "Credits are the universal currency used by the UAC and are used for purchasing goods in the shop."; };
+        { "\cdModules";                         "Modules are used to upgrade your stats and skills. They are typically given by level ups, missions and completing level events as well as occasionally being dropped by monsters and found in the world."; };
+        { "\ccTurret Parts";                    "Turret parts are used to build and upgrade your turret. They can be found by disassembling broken-down turrets you find in the world."; };
+        
+        // Stats
+        { "\cgStrength";                        "Your Strength stat determines the extra damage you deal with all types of attacks."; };
+        { "\cdDefense";                         "Your Defense stat determines your resistance to all forms of damage."; };
+        { "\caVitality";                        "Your Vitality stat determines your max health and health regeneration rate."; };
+        { "\cnEnergy";                          "Your Energy stat determines your max EP and EP regeneration rate."; };
+        { "\ctRegeneration";                    "Your Regeneration stat determines your regeneration rate and the time that Regeneration Spheres last."; };
+        { "\ciAgility";                         "Your Agility stat governs your movement, jumping and fire speeds as well as your survival bonus."; };
+        { "\chCapacity";                        "Your Capacity stat determines your ammo carrying capacity, how many compounds of each type you can carry for Stims as well as how many inventory items you can hold"; };
+        { "\cfLuck";                            "Your Luck stat determines which items can drop as well as the chance which they will drop. Luck also affects several other hidden factors as well."; };
+        
+        // Stats Extended
+        { "\ciSurvival Bonus";                  "Survival Bonus is a special attribute which works as a last stand mechanic. When you take a hit that would kill you and your survival bonus is triggered, you will not be killed by the attack."; };
+        { "\cdPerks";                           "Perks are special enhancements that you receive when you upgrade a stat to 100 points or more."; };
+        { "\cgStat Cap";                        "You can only increase a stat to a maximum of 100. You can increase a stat past 100 up to the maximum of your current level + 100."; };
+        
+        // Skills
+        { "\cnEP";                              "Energy Points are needed in order to use skills. They can also be used to charge your Shield and to deposit and withdraw items from your personal locker while not in the Outpost."; };
+        { "\cnOverdrive";                       StrParam("You can Overdrive a skill by holding the \cd%K\c- button. Doing this will always use the skill, regardless of it's EP cost. However, this will bring your current EP into the negatives. When negative, you will suffer stat penalties and not be able to use any skills until your EP is restored past 0.\n", "+speed"); };
+        { "\cnAuras";                           "Auras are special passive abilities you can activate to give you temporary boosts to your stats. Auras will also affect teammates within it's radius, determined by your Energy stat"; };
+        
+        // Augmentations
+        { "\ckAugmentations";                   "Augmentations give you permenant bonuses to your stats while they are active."; };
+        { "\ckAugmentation Battery";            "Augmentations can only work while your augmentation battery has a charge. Your battery can be recharged by using augmentation batteries from your inventory or by recieving certain types of damage. Battery drain is determined by how many augmentations you have active and how high their levels are. The more augmentation active and the higher their levels, the quicker the battery will drain."; };
+        { "\ckAugmentation Slots";              "You can only activate as many augmentations as you have available slots for. To increase the number of slots you have, you must find an augmentation slot upgrade. Augmentation slot upgrades can be bought from the shop, found as rare drops from enemies or found in the world."; };
+        
+        // Shield
+        { "\cvShields";                         "Shields will protect you from taking direct damage by absorbing the damage into their own charge pool. When a shield takes damage, it's charge is directly affected and will be reduced by the damage's amount. When a shield's charge reaches 0, you will begin taking normal damage again."; };
+        { "\cvShield Components";               "Shields are built from 4 basic components which you can collect and customize during the game. The body is named after the manufacturer and is generally responsible for modifying the capacity of the Shield, but also evenly modifies the other stats as well. The battery is generally responsible for modifying the charge rate of the shield. The capacitor is generally responsible for modifying the charge rate and delay rate of the shield. Accessories give the shield unique effects and abilities which can be triggered in various ways."; };
+        { "\cvShield Stats";                    "Each shield has 4 stats which govern it's behavior and ability. Capacity determines the total amount of charge the shield can hold. Charge Rate determines the amount the charge pool will regenerate when a charge cycle is completed. Delay Rate determines the wait time that occurs when a charge cycle is inturrupted before charging will resume again. Charge interval determines the length between charge cycles."; };
+        { "\cvShield Charge Cycle";             "A charging cycle occurs based on the Charge Interval (default of 1 second) and increases the Shield's charge pool, determined by the Charge Rate. When the shield is struck, the charging cycle is inturrupted and a waiting period, determined by the Delay Rate, must complete before charging cycles will resume again."; };
+        
+        // Stims
+        { "\ccStims";                           "Stims are portable injected temporary stat increases. There are three forms of Stim vials that can be encountered: Stat vials, Booster vials and Powerup vials."; };
+        { "\ccStim Injectors";                  "Injectors are what are used to actually store the compounds for usage. Injectors can either be bought in the shop or found in the world. There are 4 different injector sizes, which hold varying amounts of compounds."; };
+        { "\ccStim Vials";                      "Vials are the items you pickup which contain the different kinds of compounds. Vials can be bought in the shop or found by killing enemies which have auras or elsewhere in the world."; };
+        { "\ccStim Stat Vials";                 "Stat vials increase their various corresponding stats when used."; };
+        { "\ccStim Booster Vials";              "Booster vials are special vials which have unique stat-related effects. Purifier vials increase the duration that stat vials will last. Potency vials increase all stats at once."; };
+        { "\ccStim Powerup Vials";              "Powerup vials give various special powers for a limited duration. Unlike the Stat stims, they are unaffected by Purifier vials, and their time is affected solely by the amount of vials put into the Stim."; };
+        { "\cdToxicity";                        "Toxicity is a measure of the radiation and toxins in your body. Toxicity is increased by taking radiation or toxin related damage, such as standing on damage floors. The higher your toxicity levels get, the more penalties you will suffer. If your toxicity levels reach 100%, you will die. Toxicity will naturally dissipate over time, the speed of which is determined by your Regeneration stat."; };
+        
+        // Turrets
+        { "\cdTurrets";                         "Turrets are portable sentry drones which can be built and equipped with multiple offensive and defensive upgrades and abilities to aid the user. Turrets must initially be built from turret parts, at which point the turret may be used and upgraded further as more parts become available."; };
+        { "\cdDestroyed Turrets";               "In the world, you will find destroyed turrets. These turrets can be scavenged for spare turret parts. Some turrets will be in better condition than others, allowing for more parts to be scavenged."; };
+        { "\cdTurret Maintenance";              StrParam("Your turret will need routine maintenance performed on it in order to keep it in working condition. There are three components to maintenance: charging, repairing and refitting. Charging will charge the turret's internal battery, allowing it to stay active on the field. Repairing will patch up the turret, restoring it's health. Refitting occurs when upgrades are performed on the turret, and must be allowed to finish before the turret can be used again. In order for maintenance to begin and to continue, a steady supply of Credits will be deducted from your account. To send the turret in for maintenance, in either the turret menu or with the turret command wheel open, press \cd%K\c-.", "+speed"); };
+        { "\cdTurret Deployment";               StrParam("To quickly deploy or deactivate your turret, use \cd%K\c- + \cd%K\c-.", "+speed", "+user2"); };
+        
+        // Monsters
+        { "\cgMonster Stats";                   "Like you, monsters also have a level and stats which will affect their abilities in various ways."; };
+        { "\cgMonster Auras";                   "Like you, monsters can also have one or multiple auras which will give them special abilities. Each aura a monster has will also double its respective stat."; };
+        { "\cgMonster Shadow Auras";            "Monsters which have all auras active at once will become a shadow enemy with extremely high stats and abilities for their level. These enemies will receive names and should be priority targets to take down, as their combined abilities can quickly overwhelm a player if they are not prepared."; };
+        { "\cgMonster Regeneration Cycle";      "Like you, monsters will regenerate a portion of their health every so often. The amount of health they will regenerate is determined by their regeneration stat."; };
+        { "\cgMonster Threat Level";            "Each monster has a threat level. Their threat level is determined by their level, stats and active auras and ranges from 0 to 10. Threat level can be used as a general way to gauge a monster's abilities and which ones should be prioritized when attacking. The higher a monster's threat level, the higher XP and Rank you will recieve for defeating them. Threat level is represented on a monster's health bar by the number of emblems present."; };
+        { "\cgMegabosses";                      "Under certain circumstances, you will encounter monsters known as megabosses. These bosses are extremely difficult, having special and unique behaviors which can quickly and effectively destroy you if not prepared. When killed, megabosses will provide a tremendous amount of loot as well as XP and Rank."; };
+        
+        // Status Effects
+        { "\caStatus Effects";                  "Status effects are debuffs which will affect you in different ways. You can get them from taking different types of damage or by exposing yourself to specific types of hazards. When inflicted with a status effect, it will last for a certain amount of time. Each status effect has 5 levels of intensity which are increasingly more detrimental to you. If you are hit with a status effect you already have, it will add to your current timer and potentially increase it's intensity."; };
+        { "\ccBlindness";                       "Blindness is a status effect which will darken your view and make it harder to see."; };
+        { "\cfConfusion";                       "Confusion is a status effect which will make your vision blurry and make it harder for you to aim and move."; };
+        { "\cqPoison";                          "Poison is a status effect which will deal direct health damage to you every second. It will not actually kill you if your health reaches a critical level."; };
+        { "\cdCorrosion";                       "Corrosion is a status effect which will deal damage to your armor every second."; };
+        { "\ciFatigue";                         "Fatigue is a status effect which will decrease your movement speed and jumping height."; };
+        { "\ctVirus";                           "Virus is a status effect which will stop you from regenerating."; };
+        { "\cnSilence";                         "Silence is a status effect which prevents you from using skills."; };
+        { "\cgCurse";                           "Curse is a status effect which increases the amount of damage you take."; };
+        { "\cvEMP";                             "EMP is a status effect which will completely disable your shields and augmentations and not allow you to re-enable them. It will also drain your augmentation battery."; };
+        { "\cdRadiation";                       "Radiation is a status effect which slowly increases your toxicity levels. It will not increase your toxicity past 85%."; };
+        
+        // Outpost/Arena
+        { "\cqOutpost";                         "The UAC Outpost is the main hub of operations where you can perform various activites, access various facilities and stock up between levels. You can transport to the Outpost at any time using the Transport skill."; };
+        { "\cgArena";                           "In the arena, you can fight waves of enemies for XP, Rank and loot."; };
+        { "\cdLevel Transporter";               "In the Outpost, you can use the level transporter to view stats on all the levels you have visited and to transport back to them at will."; };
+        { "\cdSkill Computer";                  "In the Outpost, you can use the skill computer to change the current skill level without the need to restart the game."; };
+        { "\cdMinigames";                       "In the Outpost, there are minigames which you can play in order to win items using your gold and platinum chips."; };
+        { "\cgPractice Target";                 "In the Outpost, you can shoot the target in order to gauge the amount of damage your weapons are doing."; };
+        
+        // Missions
+        { "\cdMissions";                        "You can accept different missions in the Outpost in order to gain XP, Rank, Credits, Modules and items. There are several different types of missions at varying difficulty levels you can undertake. The available missions will refresh each time you visit the Outpost."; };
+        { "\cdCollection Missions";             "You must collect a specific number of a specified item to complete the mission. These items are found scattered around the world."; };
+        { "\caKill Missions";                   "You must kill a given amount of enemies of the same type to complete the mission."; };
+        { "\caKill Auras Missions";             "You must Kill a given amount of enemies which have at least one aura to complete the mission."; };
+        { "\caKill Reinforcements Missions";    "While in the field, monsters will spawn in around you. You must kill a given amount of them to complete the mission."; };
+        { "\cgAssassination Missions";          "You must eliminate the specified enemy, which will be located somewhere in the level and will always have a shadow aura to complete the mission."; };
+        { "\ckFind Secrets Missions";           "You must find the given amount of unique secrets to complete the mission."; };
+        { "\cnFind Items Missions";             "You must find the given amount of items to complete the mission."; };
+        { "\ctAchieve Combo Missions";          "You must get your combo to the given amount to complete the mission."; };
+        
+        // Shop/Locker
+        { "\cfShop";                            "The shop is where you can go to purchase and sell the various equipment and items you can find during the game. The shop also contains a locker system, where you may withdraw and deposit items for later usage."; };
+        { "\chLocker";                          StrParam("You can access the locker system via the shop and deposit/withdraw your items there. Withdrawing and depositing items has a 1%% cost to your EP per use outside the Outpost. You can switch between the shop and locker using the \cd%K\c- key.\n", "+jump"); };
+        { "\cfShop Cards";                      "While playing, you may find UAC cards which provide you with a discount as well as other benefits. Finding a new card will replace your old card with the upgraded version. Discount benefits from a card will only apply when shopping at the Outpost."; };
+        
+        // Level Events
+        // TODO: Describe each event
+        { "\cdLevel Events";                    "When entering a level, sometimes unique level-wide events will happen. Each event has it's own unique characteristics and conditions for ending the event."; };
+        { "\cdRolling Level Events";            "Level events will not only occur when entering a level, but previous levels which you have visited will also sometimes contain events and require revisiting in order to participate in the event."; };
+    };
+    
+    int TipID = Random(0, MAX_TIPS - 1);
+    fixed HoldTime = StrLen(Tips[TipID].Tip) * 0.1;
+    
+    SetHudSize(0, 0, false);
+    SetFont("BIGFONT");
+    HudMessage("%s\n", Tips[TipID].Title, HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.7, HoldTime, 3.0);
+    SetFont("SMALLFONT");
+    HudMessage("%s\n", Tips[TipID].Tip, HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, -0.725, HoldTime, 3.0);
+};
+
 // Handles Weapon Firing Speed
 script void WeaponSpeed()
 {
@@ -1905,6 +2033,7 @@ function void CheckKeys()
             {
                 if (!PlayerInGame(j)) continue;
                 if (CheckActorInventory(Players(j).TID, Keycards[i])) continue;
+                
                 SetActorInventory(Players(j).TID, Keycards[i], 1);
             };
         };
