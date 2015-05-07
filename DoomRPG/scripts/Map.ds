@@ -2201,34 +2201,33 @@ script void TeleportCracksEvent()
 
 script void TeleporterCrackView(int PlayerID)
 {
+    SetActivator(Players(PlayerID).TID);
     fixed ViewTimeMax = 35.0 * RandomFixed(1.0, 3.0);
-    fixed ViewTime = ViewTimeMax;
+    fixed ViewTime = 0;
     fixed Intensity = RandomFixed(1.0, 5.0);
     
     Start:
     
-    if (ViewTime <= 0) return;
+    if (ViewTime >= ViewTimeMax) return;
     
     SetHudSize(640, 480, true);
     SetFont(StrParam("P%iVIEW\n", PlayerID + 1));
     
     fixed ViewCycle = Timer() / (120.0 - (10.0 * Intensity));
-    fixed ViewDist = 9.6 * Intensity * (ViewTime-- / ViewTimeMax);
+    fixed ViewDist = 25.0 * Intensity * (ViewTime++ / ViewTimeMax);
+    fixed Angle1 = RandomFixed(0.0, 1.0);
+    fixed Angle2 = RandomFixed(0.0, 1.0);
     
-    // View Spinning
-    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 3, CR_UNTRANSLATED, 320, 240, 0.029);
+    // View Intensification
+    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 2, CR_UNTRANSLATED, 320, 240, 0.029);
     HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
-               320 + (int)(Cos(ViewCycle) * ViewDist),
-               240 + (int)(Sin(ViewCycle) * ViewDist),
-               0.029, 0.3);
+               320 + (int)(ViewDist * Cos(Angle1)),
+               240 + (int)(ViewDist * Sin(Angle1)),
+               0.029, 0.6 - (ViewTime / ViewTimeMax) / 2.0);
     HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, CR_UNTRANSLATED,
-               320 + (int)(Cos(ViewCycle + 0.333) * ViewDist),
-               240 + (int)(Sin(ViewCycle + 0.333) * ViewDist),
-               0.029, 0.6);
-    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 2, CR_UNTRANSLATED,
-               320 + (int)(Cos(ViewCycle + 0.667) * ViewDist),
-               240 + (int)(Sin(ViewCycle + 0.667) * ViewDist),
-               0.029, 0.9);
+               320 + (int)(ViewDist * Cos(Angle2)),
+               240 + (int)(ViewDist * Sin(Angle2)),
+               0.029, 0.6 - (ViewTime / ViewTimeMax) / 2.0);
     
     Delay(1);
     goto Start;
@@ -2247,23 +2246,13 @@ script void TeleporterCrack(int Source, int Destination)
             TeleportOther(Players(i).TID, Destination, true);
     };
     
-    if (++SpawnEnemyTimer >= 18 && !Random(0, 255))
+    if (++SpawnEnemyTimer >= 175 && Random(1, 2048) == 1)
     {
-        int MonsterDataAmount;
         MonsterInfoPtr TempMonster;
-        
         if (DRLA)
-            TempMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA)]
+            TempMonster = &MonsterDataDRLA[68] // Hellstorm Elemental
         else
-            TempMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS)];
-        
-        while (TempMonster->Boss == true)
-        {
-            if (DRLA)
-                TempMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA)]
-            else
-                TempMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS)];
-        };
+            TempMonster = &MonsterData[14]; // Archvile
         
         if (SpawnSpotFacing(GetMissionMonsterActor(TempMonster->Actor), Destination))
             SpawnSpotFacing("TeleportFog", Destination);
