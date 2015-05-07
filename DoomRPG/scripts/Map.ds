@@ -757,7 +757,7 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Delay(35 * 5);
     };
     
-    if (CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
+    if (CurrentLevel->Event == MAPEVENT_TELEPORTCRACKS || CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
         CurrentLevel->EventCompleted = true; // These don't actually end until you leave the map normally
     
     CurrentLevel->Completed = true; // We finished the map
@@ -947,6 +947,7 @@ function bool CheckMapEvent(int Event)
         case MAPEVENT_NUCLEARBOMB:
         case MAPEVENT_LOWPOWER:
         case MAPEVENT_ONEMONSTER:
+        case MAPEVENT_TELEPORTCRACKS:
         default:
             return true;
     };
@@ -995,7 +996,7 @@ function void MapEventReward()
     };
 };
 
-script void DecideMapEvent(LevelInfo *TargetLevel)
+script void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
 {
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \chDeciding event for \cd%s\n", TargetLevel->LumpName);
@@ -1012,6 +1013,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
         "One-Monster";
         "Hell Unleashed";
         "Harmonized Destruction";
+        "Cracks in the Veil";
         
         "RAINBOWS!";
         
@@ -1061,39 +1063,42 @@ script void DecideMapEvent(LevelInfo *TargetLevel)
     // Harmonized Destruction
     TargetLevel->AuraType = 0;
     
-    // Don't bother creating an event if the level has no monsters
-    if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
+    if (!FakeIt)
     {
-        TargetLevel->Event = MAPEVENT_NONE;
-        return;
-    };
-    
-    if (RandomFixed(0.0, 99.9) > GetCVarFixed("drpg_mapevent_chance") || DisableEvent)
-    {
-        TargetLevel->Event = MAPEVENT_NONE;
-        return; // No special event
-    };
-    
-    int Rerolls = 256; // Just in case *no* events are possible for some reason
-    while (TargetLevel->Event == MAPEVENT_NONE && Rerolls)
-    {
-        TargetLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
-        
-        if (GetCVar("drpg_debug"))
-            Log("\cdDEBUG: Trying \cj%s\n", EventNames[TargetLevel->Event]);
-        
-        if (!CheckMapEvent(TargetLevel->Event))
+        // Don't bother creating an event if the level has no monsters
+        if (GetLevelInfo(LEVELINFO_TOTAL_MONSTERS) == 0)
         {
-            if (GetCVar("drpg_debug"))
-                Log("\cdDEBUG: \cj%s\cg not possible\n", EventNames[TargetLevel->Event]);
             TargetLevel->Event = MAPEVENT_NONE;
+            return;
         };
         
-        Rerolls--;
+        if (RandomFixed(0.0, 99.9) > GetCVarFixed("drpg_mapevent_chance") || DisableEvent)
+        {
+            TargetLevel->Event = MAPEVENT_NONE;
+            return; // No special event
+        };
+        
+        int Rerolls = 256; // Just in case *no* events are possible for some reason
+        while (TargetLevel->Event == MAPEVENT_NONE && Rerolls)
+        {
+            TargetLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
+            
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: Trying \cj%s\n", EventNames[TargetLevel->Event]);
+            
+            if (!CheckMapEvent(TargetLevel->Event))
+            {
+                if (GetCVar("drpg_debug"))
+                    Log("\cdDEBUG: \cj%s\cg not possible\n", EventNames[TargetLevel->Event]);
+                TargetLevel->Event = MAPEVENT_NONE;
+            };
+            
+            Rerolls--;
+        };
+        
+        if (TargetLevel->Event == MAPEVENT_NONE)
+            return;
     };
-    
-    if (TargetLevel->Event == MAPEVENT_NONE)
-        return;
     
     if (GetCVar("drpg_debug") && TargetLevel->Event != MAPEVENT_NONE)
         Log("\cdDEBUG: Special Event on \cc%s\cd: \cg%s\n", TargetLevel->NiceName, EventNames[TargetLevel->Event]);
@@ -1263,6 +1268,11 @@ script void SetupMapEvent()
             HarmonizedDestructionEvent();
             break;
         
+        case MAPEVENT_TELEPORTCRACKS:
+            // Cracks in the Veil: Portals litter the level, slowly ripping it apart spatially.
+            TeleportCracksEvent();
+            break;
+        
         // Bonus Events
         // --------------------------------------------------
         
@@ -1362,14 +1372,7 @@ acscript void SetMapEvent(int Level, int ID)
     
     MapToChange->Event = ID;
     
-    if (MapToChange->Event == MAPEVENT_HARMONIZEDAURAS)
-        MapToChange->AuraType = Random(0, AURA_MAX);
-    
-    if (MapToChange->Event == MAPEVENT_TOXICHAZARD)
-    {
-        MapToChange->HazardLevel = 5;
-        MapToChange->RadLeft = 100;
-    };
+    DecideMapEvent(MapToChange, true);
     
     if (CurrentLevel == MapToChange)
         Log("\cjYou will need to warp back to this level to see changes take effect.\n");
@@ -1485,6 +1488,7 @@ script void MegaBossEvent()
 
 script void EnvironmentalHazard()
 {
+    // TODO: [03:23:14] <@Yholl/ID> Maybe fill the radiation event with Stalker style singularities that explode into cool stuff when the science machine sciences at them
     bool NeutralizerSpawned = false;
     int NeutralizerTID;
     SetMusic("EvHazard");
@@ -2133,6 +2137,98 @@ script void HarmonizedDestructionEvent()
     else
         HudMessage("A strange, malicious harmony fills the air.\nAnd frankly, it's terrifying.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0);
     SetHudSize(0, 0, false);
+};
+
+// Event - Cracks in the Veil -------------------------------------------------
+
+script void TeleportCracksEvent()
+{
+    SetMusic("Cracks");
+    
+    // Shuffle positions
+    for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
+    {
+        int X = Random(0, CurrentLevel->MonsterPositions.Position - 1);
+        Position TempPosition;
+        
+        TempPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[i] = ((Position *)CurrentLevel->MonsterPositions.Data)[X];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[X] = TempPosition;
+    };
+    
+    // Spawn the cracks
+    for (int i = 0; i < CurrentLevel->MonsterPositions.Position - 1; i += 2)
+    {
+        if (Random(0, 3))
+            continue;
+        
+        Position Source = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+        Position Destination = ((Position *)CurrentLevel->MonsterPositions.Data)[i + 1];
+        int InPortalTID = UniqueTID();
+        if (!Spawn("DRPGTeleportCrackIn", Source.X, Source.Y, Source.Z, InPortalTID, Source.Angle * 256))
+            continue;
+        
+        int OutPortalTID = UniqueTID();
+        if (!Spawn("DRPGTeleportCrackOut", Destination.X, Destination.Y, Destination.Z, OutPortalTID, Destination.Angle * 256))
+        {
+            Thing_Remove(InPortalTID);
+            continue;
+        };
+        
+        TeleporterCrack(InPortalTID, OutPortalTID);
+    };
+    
+    while (true)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i)) continue;
+            Radius_Quake2(Players(i).TID, 4, 20, 0, 16, "world/quake");
+        };
+        AmbientSound("misc/teleport", 127);
+        
+        Delay(Random(35 * 2, 35 * 20));
+    };
+};
+
+script void TeleporterCrack(int Source, int Destination)
+{
+    bool DRLA = (CompatMode == COMPAT_DRLA);
+    int SpawnEnemyTimer = 0;
+    
+    Start:
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (Distance(Source, Players(i).TID) <= 32.0)
+            TeleportOther(Players(i).TID, Destination, true);
+    };
+    
+    if (++SpawnEnemyTimer >= 18 && !Random(0, 255))
+    {
+        int MonsterDataAmount;
+        MonsterInfoPtr TempMonster;
+        
+        if (DRLA)
+            TempMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA)]
+        else
+            TempMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS)];
+        
+        while (TempMonster->Boss == true)
+        {
+            if (DRLA)
+                TempMonster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA)]
+            else
+                TempMonster = &MonsterData[Random(0, MAX_DEF_MONSTERS)];
+        };
+        
+        if (SpawnSpotFacing(GetMissionMonsterActor(TempMonster->Actor), Destination))
+            SpawnSpotFacing("TeleportFog", Destination);
+        
+        SpawnEnemyTimer = 0;
+    };
+    
+    Delay(4);
+    goto Start;
 };
 
 // Bonus Events ---------------------------------------------------------------
