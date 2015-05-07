@@ -167,6 +167,9 @@ script void Init() enter
         
         // Setup HUD stuff
         Player.StatusTypeHUD = SE_NONE;
+
+        for (int i = 0; i < MAPEVENT_MAX; i++)
+            Player.SeenEventTip[i] = false;
         
         // Setup the Skill Wheel from the persistence CVARs
         for (int i = 0; i < MAX_SKILLKEYS; i++)
@@ -609,6 +612,9 @@ acscript int AddHealthDirect(int HealthAmount, int MaxPercent)
 
 acscript void GiveTip()
 {
+    if ((CurrentLevel->Event == MAPEVENT_SKILL_HELL && GameSkill() != 5) || (CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON && GameSkill() != 6))
+        return;
+    
     struct TipInfo
     {
         str Title;
@@ -619,7 +625,7 @@ acscript void GiveTip()
     {
         // Level/Rank
         { "\cjLevel";                           "Your level determines your basic strength and progress through the game. Your level is increased by killing monsters, completing missions and achieving combos."; };
-        { "\ckRank";                            "Your rank determines your standing within the UAC. Rank will determine how much money you are paid by the UAC as well as the discount you will recieve when purchasing items from the shop."; };
+        { "\ckRank";                            "Your rank determines your standing within the UAC. Rank will determine how much money you are paid by the UAC as well as the discount you will receive when purchasing items from the shop."; };
         { "\ctCombo";                           "The combo system allows you to kill enemies in rapid succession in order to gain bonus XP and Rank. When an enemy is killed, you will gain +1 to your combo counter and your combo timer will reset. When your timer reaches its cooldown point, indicated by the split between the red and green in the bar, it will add the indicated XP and Rank to your totals and calculate a bonus (the green number). If you keep incrementing your combo during the cooldown period, you can keep stacking XP and Rank into the bonus. When the combo timer ends, your combo will be completely reset and your bonus will be added to your totals."; };
         { "\ckPay Bonus";                       "Your pay bonus is shown to the right of your payout information. A higher pay bonus will yield better payouts. Your pay bonus can be increased by completing missions and achieving 100% level completion."; };
         
@@ -641,7 +647,7 @@ acscript void GiveTip()
         // Stats Extended
         { "\ciSurvival Bonus";                  "Survival Bonus is a special attribute which works as a last stand mechanic. When you take a hit that would kill you and your survival bonus is triggered, you will not be killed by the attack."; };
         { "\cdPerks";                           "Perks are special enhancements that you receive when you upgrade a stat to 100 points or more."; };
-        { "\cgStat Cap";                        "You can only increase a stat to a maximum of 100. You can increase a stat past 100 up to the maximum of your current level + 100."; };
+        { "\cgStat Cap";                        "You can only increase a stat past 100 up to the maximum of your current level + 100."; };
         
         // Skills
         { "\cnEP";                              "Energy Points are needed in order to use skills. They can also be used to charge your Shield and to deposit and withdraw items from your personal locker while not in the Outpost."; };
@@ -649,15 +655,15 @@ acscript void GiveTip()
         { "\cnAuras";                           "Auras are special passive abilities you can activate to give you temporary boosts to your stats. Auras will also affect teammates within it's radius, determined by your Energy stat"; };
         
         // Augmentations
-        { "\ckAugmentations";                   "Augmentations give you permenant bonuses to your stats while they are active."; };
-        { "\ckAugmentation Battery";            "Augmentations can only work while your augmentation battery has a charge. Your battery can be recharged by using augmentation batteries from your inventory or by recieving certain types of damage. Battery drain is determined by how many augmentations you have active and how high their levels are. The more augmentation active and the higher their levels, the quicker the battery will drain."; };
+        { "\ckAugmentations";                   "Augmentations give you permanent bonuses to your stats while they are active."; };
+        { "\ckAugmentation Battery";            "Augmentations can only work while your augmentation battery has a charge. Your battery can be recharged by using augmentation batteries from your inventory or by receiving certain types of damage. Battery drain is determined by how many augmentations you have active and how high their levels are. The more augmentation active and the higher their levels, the quicker the battery will drain."; };
         { "\ckAugmentation Slots";              "You can only activate as many augmentations as you have available slots for. To increase the number of slots you have, you must find an augmentation slot upgrade. Augmentation slot upgrades can be bought from the shop, found as rare drops from enemies or found in the world."; };
         
         // Shield
         { "\cvShields";                         "Shields will protect you from taking direct damage by absorbing the damage into their own charge pool. When a shield takes damage, it's charge is directly affected and will be reduced by the damage's amount. When a shield's charge reaches 0, you will begin taking normal damage again."; };
         { "\cvShield Components";               "Shields are built from 4 basic components which you can collect and customize during the game. The body is named after the manufacturer and is generally responsible for modifying the capacity of the Shield, but also evenly modifies the other stats as well. The battery is generally responsible for modifying the charge rate of the shield. The capacitor is generally responsible for modifying the charge rate and delay rate of the shield. Accessories give the shield unique effects and abilities which can be triggered in various ways."; };
-        { "\cvShield Stats";                    "Each shield has 4 stats which govern it's behavior and ability. Capacity determines the total amount of charge the shield can hold. Charge Rate determines the amount the charge pool will regenerate when a charge cycle is completed. Delay Rate determines the wait time that occurs when a charge cycle is inturrupted before charging will resume again. Charge interval determines the length between charge cycles."; };
-        { "\cvShield Charge Cycle";             "A charging cycle occurs based on the Charge Interval (default of 1 second) and increases the Shield's charge pool, determined by the Charge Rate. When the shield is struck, the charging cycle is inturrupted and a waiting period, determined by the Delay Rate, must complete before charging cycles will resume again."; };
+        { "\cvShield Stats";                    "Each shield has 4 stats which govern it's behavior and ability. Capacity determines the total amount of charge the shield can hold. Charge Rate determines the amount the charge pool will regenerate when a charge cycle is completed. Delay Rate determines the wait time that occurs when a charge cycle is interrupted before charging will resume again. Charge interval determines the length between charge cycles."; };
+        { "\cvShield Charge Cycle";             "A charging cycle occurs based on the Charge Interval (default of 1 second) and increases the Shield's charge pool, determined by the Charge Rate. When the shield is struck, the charging cycle is interrupted and a waiting period, determined by the Delay Rate, must complete before charging cycles will resume again."; };
         
         // Stims
         { "\ccStims";                           "Stims are portable injected temporary stat increases. There are three forms of Stim vials that can be encountered: Stat vials, Booster vials and Powerup vials."; };
@@ -679,7 +685,7 @@ acscript void GiveTip()
         { "\cgMonster Auras";                   "Like you, monsters can also have one or multiple auras which will give them special abilities. Each aura a monster has will also double its respective stat."; };
         { "\cgMonster Shadow Auras";            "Monsters which have all auras active at once will become a shadow enemy with extremely high stats and abilities for their level. These enemies will receive names and should be priority targets to take down, as their combined abilities can quickly overwhelm a player if they are not prepared."; };
         { "\cgMonster Regeneration Cycle";      "Like you, monsters will regenerate a portion of their health every so often. The amount of health they will regenerate is determined by their regeneration stat."; };
-        { "\cgMonster Threat Level";            "Each monster has a threat level. Their threat level is determined by their level, stats and active auras and ranges from 0 to 10. Threat level can be used as a general way to gauge a monster's abilities and which ones should be prioritized when attacking. The higher a monster's threat level, the higher XP and Rank you will recieve for defeating them. Threat level is represented on a monster's health bar by the number of emblems present."; };
+        { "\cgMonster Threat Level";            "Each monster has a threat level. Their threat level is determined by their level, stats and active auras and ranges from 0 to 10. Threat level can be used as a general way to gauge a monster's abilities and which ones should be prioritized when attacking. The higher a monster's threat level, the higher XP and Rank you will receive for defeating them. Threat level is represented on a monster's health bar by the number of emblems present."; };
         { "\cgMegabosses";                      "Under certain circumstances, you will encounter monsters known as megabosses. These bosses are extremely difficult, having special and unique behaviors which can quickly and effectively destroy you if not prepared. When killed, megabosses will provide a tremendous amount of loot as well as XP and Rank."; };
         
         // Status Effects
@@ -696,8 +702,8 @@ acscript void GiveTip()
         { "\cdRadiation";                       "Radiation is a status effect which slowly increases your toxicity levels. It will not increase your toxicity past 85%."; };
         
         // Outpost/Arena
-        { "\cqOutpost";                         "The UAC Outpost is the main hub of operations where you can perform various activites, access various facilities and stock up between levels. You can transport to the Outpost at any time using the Transport skill."; };
-        { "\cgArena";                           "In the arena, you can fight waves of enemies for XP, Rank and loot."; };
+        { "\cqOutpost";                         "The UAC Outpost is the main hub of operations where you can perform various activities, access various facilities and stock up between levels. You can transport to the Outpost at any time using the Transport skill."; };
+        { "\cgArena";                           "In the Arena, you can fight waves of enemies for XP, Rank and loot."; };
         { "\cdLevel Transporter";               "In the Outpost, you can use the level transporter to view stats on all the levels you have visited and to transport back to them at will."; };
         { "\cdSkill Computer";                  "In the Outpost, you can use the skill computer to change the current skill level without the need to restart the game."; };
         { "\cdMinigames";                       "In the Outpost, there are minigames which you can play in order to win items using your gold and platinum chips."; };
@@ -720,19 +726,50 @@ acscript void GiveTip()
         { "\cfShop Cards";                      "While playing, you may find UAC cards which provide you with a discount as well as other benefits. Finding a new card will replace your old card with the upgraded version. Discount benefits from a card will only apply when shopping at the Outpost."; };
         
         // Level Events
-        // TODO: Describe each event
         { "\cdLevel Events";                    "When entering a level, sometimes unique level-wide events will happen. Each event has it's own unique characteristics and conditions for ending the event."; };
         { "\cdRolling Level Events";            "Level events will not only occur when entering a level, but previous levels which you have visited will also sometimes contain events and require revisiting in order to participate in the event."; };
+    };
+    
+    static TipInfo[MAPEVENT_MAX] EventTips =
+    {
+        { ""; ""; }; // Never used
+        
+        { "\cgMegaboss Event";                  "All of the hostiles have vacated the area, and a very powerful creature is lurking about. Return to the Outpost if needed, and make sure you have the power and munitions to take down the death machine."; };
+        { "\cqEnvironmental Hazard Event";      "The area's covered in deadly radiation, but there is also a Radiation Neutralizer to fix the problem. Gather fuel and refill the Neutralizer whenever it runs low, until the radiation is brought down to safe levels."; };
+        { "\ciThermonuclear Bomb Event";        "Find as many keys as you can to disable the countdown. Worse comes to worst, you can hack through the key slots by using the bomb without keys, but it's going to take time to do so for each key missing, as indicated by the HUD. And make sure the bomb doesn't get shot!"; };
+        { "\cuLow Power Event";                 "The UAC had a major battle in this area, and the discards have been left behind when the area was damaged. Pluck some extra items out of the wreckage before they come back to clean up. You can even get some extra credits and modules if you restore the backup power before you leave."; };
+        { "\cdAll Auras Event";                 "All of the monsters have rather deadly magic auras. Understand their weaknesses, and attempt to stay away from some of them, as they are dangerous."; };
+        { "\cnOne-Monster Event";               "There is one species of demons currently occupying the area. Clearing the area of the hostiles will net you a bonus."; };
+        { "\cgHell Unleashed Event";            "Open the box, and partake in the rare contents within, but be warned: You will anger the demonic army, and they will pursue you endlessly until you are killed or leave the area. The longer you stay, the more likely they are to drop items, but the higher level they will become."; };
+        { "\cdHarmonized Destruction Event";    "All of the enemies in the area have one aura type. Get accustomed to the aura's strength and weakness and use it to your advantage. Don't get caught off-guard, as some monsters can and will have other auras as well."; };
+        { "\cdCracks in the Veil Event";        "The area is spatially unstable. Avoid stepping into the portals, as they will teleport you to other points in the area at random. Enemies will be teleported in as well."; };
+        
+        { "\cgR\ciA\ckI\cdN\chB\ctO\caW\cjS";   "SHE BROKE THE REALITY GENERATOR AGAIN! WE'RE DOOMED!"; };
+        
+        { "\caHell Event";                      "The difficulty level has increased to \caHell\c- for this area."; };
+        { "\cmArmageddon Event";                "The difficulty level has increased to \cmArmageddon\c- for this area."; };
     };
     
     int TipID = Random(0, MAX_TIPS - 1);
     fixed HoldTime = StrLen(Tips[TipID].Tip) * 0.1;
     
+    str TipTitle = Tips[TipID].Title;
+    str TipText = Tips[TipID].Tip;
+    
+    if (CurrentLevel->Event != MAPEVENT_NONE && !Player.SeenEventTip[CurrentLevel->Event])
+    {
+        TipTitle = EventTips[CurrentLevel->Event].Title;
+        TipText = EventTips[CurrentLevel->Event].Tip;
+        HoldTime = StrLen(Tips[TipID].Tip) * 0.1;
+        
+        Player.SeenEventTip[CurrentLevel->Event] = true;
+    };
+    
     SetHudSize(0, 0, false);
     SetFont("BIGFONT");
-    HudMessage("%s\n", Tips[TipID].Title, HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.7, HoldTime, 3.0);
+    HudMessage("%s\n", TipTitle, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_WHITE, 0.5, 0.7, HoldTime, 3.0);
     SetFont("SMALLFONT");
-    HudMessage("%s\n", Tips[TipID].Tip, HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, -0.725, HoldTime, 3.0);
+    HudMessage("%s\n", TipText, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_WHITE, 1.5, -0.725, HoldTime, 3.0);
 };
 
 // Handles Weapon Firing Speed
