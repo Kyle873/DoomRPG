@@ -1119,6 +1119,7 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     
     // Initial delay to make sure all items have been added/initialized in the level
     while (!ItemsInitialized) Delay(1);
+    Delay(4);
     
     // Determine the max amount of items to create if it's not specifically specified
     if (MaxItems == 0)
@@ -1160,13 +1161,6 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         if (UpperX < ItemX) UpperX = ItemX;
         if (LowerY > ItemY) LowerY = ItemY;
         if (UpperY < ItemY) UpperY = ItemY;
-    };
-    
-    if (NumItems < 1)
-    {
-        Delay(1);
-        DynamicLootGenerator(Actor, MaxItems);
-        return;
     };
     
     while (Items < MaxItems)
@@ -1645,7 +1639,7 @@ script void DefaultLoadout()
     {
         for (int i = 0; i < 8; i++)
         {
-            if (GetCVar(WeaponInfo[i][0]))
+            if (GetUserCVar(PlayerNumber(), WeaponInfo[i][0]))
             {
                 if (CompatMode == COMPAT_EXTRAS)
                 {
@@ -1669,18 +1663,18 @@ script void DefaultLoadout()
     };
     
     // Ammo
-    SetInventory("Clip", GetCVar("drpg_start_ammo_bullet"));
-    SetInventory("Shell", GetCVar("drpg_start_ammo_shell"));
-    SetInventory("RocketAmmo", GetCVar("drpg_start_ammo_rocket"));
-    SetInventory("Cell", GetCVar("drpg_start_ammo_cell"));
+    SetInventory("Clip", GetUserCVar(PlayerNumber(), "drpg_start_ammo_bullet"));
+    SetInventory("Shell", GetUserCVar(PlayerNumber(), "drpg_start_ammo_shell"));
+    SetInventory("RocketAmmo", GetUserCVar(PlayerNumber(), "drpg_start_ammo_rocket"));
+    SetInventory("Cell", GetUserCVar(PlayerNumber(), "drpg_start_ammo_cell"));
     
     // Armor
-    if (CompatMode != COMPAT_DRLA && GetCVar("drpg_start_armor") >= 0)
-        GiveInventory(ArmorInfo[GetCVar("drpg_start_armor")], 1);
+    if (CompatMode != COMPAT_DRLA && GetUserCVar(PlayerNumber(), "drpg_start_armor") >= 0)
+        GiveInventory(ArmorInfo[GetUserCVar(PlayerNumber(), "drpg_start_armor")], 1);
     
     // Active Augs
     int ActiveAugs = 0;
-    while (ActiveAugs < GetCVar("drpg_start_aug_amount"))
+    while (ActiveAugs < GetUserCVar(PlayerNumber(), "drpg_start_aug_amount"))
     {
         int Type = Random(0, AUG_MAX - 1);
         
@@ -1696,7 +1690,7 @@ script void DefaultLoadout()
     
     // Aug Canisters/Upgrades
     int AugItems = 0;
-    while (AugItems < GetCVar("drpg_start_aug_upgrades"))
+    while (AugItems < GetUserCVar(PlayerNumber(), "drpg_start_aug_upgrades"))
     {
         int Type = Random(0, 1);
         
@@ -1718,7 +1712,7 @@ script void DefaultLoadout()
     };
     
     // Aug Slots
-    Player.Augs.BaseSlots = GetCVar("drpg_start_aug_slots");
+    Player.Augs.BaseSlots = GetUserCVar(PlayerNumber(), "drpg_start_aug_slots");
     
     // Shield Parts
     for (int i = 0; i < 3; i++)
@@ -1731,24 +1725,24 @@ script void DefaultLoadout()
         };
         int[3] Total =
         {
-            GetCVar("drpg_start_shield_amount_body");
-            GetCVar("drpg_start_shield_amount_battery");
-            GetCVar("drpg_start_shield_amount_capacitor");
+            GetUserCVar(PlayerNumber(), "drpg_start_shield_amount_body");
+            GetUserCVar(PlayerNumber(), "drpg_start_shield_amount_battery");
+            GetUserCVar(PlayerNumber(), "drpg_start_shield_amount_capacitor");
         };
         int[3] Current;
         
         // Calculate total if we specify a type so that overflows or explosions don't happen
-        if (GetCVar("drpg_start_shield_type") >= 0)
-            if (Total[i] > Count[i][GetCVar("drpg_start_shield_type")])
-                Total[i] = Count[i][GetCVar("drpg_start_shield_type")];
+        if (GetUserCVar(PlayerNumber(), "drpg_start_shield_type") >= 0)
+            if (Total[i] > Count[i][GetUserCVar(PlayerNumber(), "drpg_start_shield_type")])
+                Total[i] = Count[i][GetUserCVar(PlayerNumber(), "drpg_start_shield_type")];
         
         while (Current[i] < Total[i])
         {
             int Category = Random(0, LOADOUT_SHIELDPARTS - 1);
             
             // Force the category type if the CVAR is set
-            if (GetCVar("drpg_start_shield_type") >= 0)
-                Category = GetCVar("drpg_start_shield_type");
+            if (GetUserCVar(PlayerNumber(), "drpg_start_shield_type") >= 0)
+                Category = GetUserCVar(PlayerNumber(), "drpg_start_shield_type");
             
             for (int j = 0; j < Count[i][Category]; j++)
             {
@@ -1773,18 +1767,18 @@ script void DefaultLoadout()
     };
 
     // Shield Accessories
-    int TotalAccessories = GetCVar("drpg_start_shield_amount_acc");
+    int TotalAccessories = GetUserCVar(PlayerNumber(), "drpg_start_shield_amount_acc");
     int Accessories = 0;
-    if (GetCVar("drpg_start_shield_type_acc") >= 0)
-        if (TotalAccessories > AccessoryCount[GetCVar("drpg_start_shield_type_acc")])
-            TotalAccessories = AccessoryCount[GetCVar("drpg_start_shield_type_acc")];
+    if (GetUserCVar(PlayerNumber(), "drpg_start_shield_type_acc") >= 0)
+        if (TotalAccessories > AccessoryCount[GetUserCVar(PlayerNumber(), "drpg_start_shield_type_acc")])
+            TotalAccessories = AccessoryCount[GetUserCVar(PlayerNumber(), "drpg_start_shield_type_acc")];
     while (Accessories < TotalAccessories)
     {
         int Category = Random(0, LOADOUT_SHIELDACCS - 1);
         
         // Force the category type if the CVAR is set
-        if (GetCVar("drpg_start_shield_type_acc") >= 0)
-            Category = GetCVar("drpg_start_shield_type_acc");
+        if (GetUserCVar(PlayerNumber(), "drpg_start_shield_type_acc") >= 0)
+            Category = GetUserCVar(PlayerNumber(), "drpg_start_shield_type_acc");
         
         for (int i = 0; i < AccessoryCount[Category]; i++)
         {
@@ -1805,7 +1799,7 @@ script void DefaultLoadout()
     // Stims
     int Injectors = 0;
     int Vials = 0;
-    while (Injectors < GetCVar("drpg_start_stim_injectors"))
+    while (Injectors < GetUserCVar(PlayerNumber(), "drpg_start_stim_injectors"))
     {
         switch (Random(1, 4))
         {
@@ -1832,7 +1826,7 @@ script void DefaultLoadout()
         if ((Timer() % 5) == 0)
             Delay(1);
     };
-    while (Vials < GetCVar("drpg_start_stim_vials"))
+    while (Vials < GetUserCVar(PlayerNumber(), "drpg_start_stim_vials"))
     {
         int Type = Random(0, STIM_MAX - 1);
         bool Maxed = true;
@@ -1844,10 +1838,10 @@ script void DefaultLoadout()
         if (Maxed) break;
         
         // Don't include Boosters
-        if (!GetCVar("drpg_start_stim_boosters") && Type >= StimStatsEnd && Type <= StimPowerupStart) continue;
+        if (!GetUserCVar(PlayerNumber(), "drpg_start_stim_boosters") && Type >= StimStatsEnd && Type <= StimPowerupStart) continue;
         
         // Don't include Powerups
-        if (!GetCVar("drpg_start_stim_powerups") && Type >= StimPowerupStart && Type <= StimPowerupEnd) continue;
+        if (!GetUserCVar(PlayerNumber(), "drpg_start_stim_powerups") && Type >= StimPowerupStart && Type <= StimPowerupEnd) continue;
         
         // Skip this one if this vial type is full
         if (Player.Stim.Vials[Type] >= Player.Capacity * 10) continue;
@@ -1861,7 +1855,7 @@ script void DefaultLoadout()
     
     // Minigame Chips
     int Chips = 0;
-    while (Chips < GetCVar("drpg_start_bonus_chips"))
+    while (Chips < GetUserCVar(PlayerNumber(), "drpg_start_bonus_chips"))
     {
         int Type = Random(0, 1);
         
@@ -1883,17 +1877,17 @@ script void DefaultLoadout()
     };
     
     // UAC Shop Card
-    if (GetCVar("drpg_start_bonus_shopcard") > 0)
+    if (GetUserCVar(PlayerNumber(), "drpg_start_bonus_shopcard") > 0)
     {
         // Diamond Card
-        if (GetCVar("drpg_start_bonus_shopcard") >= 5)
+        if (GetUserCVar(PlayerNumber(), "drpg_start_bonus_shopcard") >= 5)
             GiveInventory("DRPGDiamondUACCard", 1)
         else
-            GiveInventory("DRPGUACCard", GetCVar("drpg_start_bonus_shopcard"));
+            GiveInventory("DRPGUACCard", GetUserCVar(PlayerNumber(), "drpg_start_bonus_shopcard"));
     };
     
     // Payout Bonus
-    Player.PayBonus = GetCVar("drpg_start_bonus_payout");
+    Player.PayBonus = GetUserCVar(PlayerNumber(), "drpg_start_bonus_payout");
     
     // DRLA
     if (CompatMode == COMPAT_DRLA)
@@ -1902,14 +1896,14 @@ script void DefaultLoadout()
         bool FoundArmor = false;
         bool FoundBoots = false;
         int WeaponCount = 0;
-        int MaxWeaponCount = GetCVar("drpg_start_drla_weapon_amount");
+        int MaxWeaponCount = GetUserCVar(PlayerNumber(), "drpg_start_drla_weapon_amount");
         int ModPackCount = 0;
-        int ModPackMax = GetCVar("drpg_start_drla_modpacks");
+        int ModPackMax = GetUserCVar(PlayerNumber(), "drpg_start_drla_modpacks");
         
         // Weapons
-        if (GetCVar("drpg_start_drla_weapon_type") > 0)
-            if (MaxWeaponCount > DRLAWeaponCount[GetCVar("drpg_start_drla_weapon_type") - 1])
-                MaxWeaponCount = DRLAWeaponCount[GetCVar("drpg_start_drla_weapon_type") - 1];
+        if (GetUserCVar(PlayerNumber(), "drpg_start_drla_weapon_type") > 0)
+            if (MaxWeaponCount > DRLAWeaponCount[GetUserCVar(PlayerNumber(), "drpg_start_drla_weapon_type") - 1])
+                MaxWeaponCount = DRLAWeaponCount[GetUserCVar(PlayerNumber(), "drpg_start_drla_weapon_type") - 1];
         while (WeaponCount < MaxWeaponCount)
         {
             for (int i = 0; i < LOADOUT_DRLAWEAPONS; i++)
@@ -1917,8 +1911,8 @@ script void DefaultLoadout()
                 FoundWeapon = false;
                 
                 // Force the weapon type if the CVAR is set
-                if (GetCVar("drpg_start_drla_weapon_type") >= 0)
-                    i = GetCVar("drpg_start_drla_weapon_type");
+                if (GetUserCVar(PlayerNumber(), "drpg_start_drla_weapon_type") >= 0)
+                    i = GetUserCVar(PlayerNumber(), "drpg_start_drla_weapon_type");
                 
                 for (int j = 0; j < DRLAWeaponCount[i]; j++)
                     if (Random(1, 10) == 1 && !CheckInventory(DRLAWeaponTypes[i][j]->Actor))
@@ -1939,19 +1933,19 @@ script void DefaultLoadout()
         GiveInventory("RLWeaponLimit", WeaponCount);
         
         // Armor
-        if (GetCVar("drpg_start_drla_armor") >= -1)
+        if (GetUserCVar(PlayerNumber(), "drpg_start_drla_armor") >= -1)
             while (!FoundArmor)
             {
                 for (int i = 0; i < LOADOUT_DRLAARMORS; i++)
                 {
                     // If there is nothing in this category, skip it
-                    if (GetCVar("drpg_start_drla_armor") >= 0 && DRLAArmorCount[GetCVar("drpg_start_drla_armor")] == 0)
+                    if (GetUserCVar(PlayerNumber(), "drpg_start_drla_armor") >= 0 && DRLAArmorCount[GetUserCVar(PlayerNumber(), "drpg_start_drla_armor")] == 0)
                     {
                         FoundArmor = true;
                         continue;
                     }
-                    else if (GetCVar("drpg_start_drla_armor") >= 0) // Force the armor type if the CVAR is setup
-                        i = GetCVar("drpg_start_drla_armor");
+                    else if (GetUserCVar(PlayerNumber(), "drpg_start_drla_armor") >= 0) // Force the armor type if the CVAR is setup
+                        i = GetUserCVar(PlayerNumber(), "drpg_start_drla_armor");
                     
                     for (int j = 0; j < DRLAArmorCount[i]; j++)
                         if (Random(1, 10) == 1)
@@ -1970,19 +1964,19 @@ script void DefaultLoadout()
             };
             
         // Boots
-        if (GetCVar("drpg_start_drla_boots") >= -1)
+        if (GetUserCVar(PlayerNumber(), "drpg_start_drla_boots") >= -1)
             while (!FoundBoots)
             {
                 for (int i = 0; i < LOADOUT_DRLAARMORS; i++)
                 {
                     // If there is nothing in this category, skip it
-                    if (GetCVar("drpg_start_drla_boots") >= 0 && DRLABootsCount[GetCVar("drpg_start_drla_boots")] == 0)
+                    if (GetUserCVar(PlayerNumber(), "drpg_start_drla_boots") >= 0 && DRLABootsCount[GetUserCVar(PlayerNumber(), "drpg_start_drla_boots")] == 0)
                     {
                         FoundBoots = true;
                         continue;
                     }
-                    else if (GetCVar("drpg_start_drla_boots") >= 0) // Force the boots type if the CVAR is setup
-                        i = GetCVar("drpg_start_drla_boots");
+                    else if (GetUserCVar(PlayerNumber(), "drpg_start_drla_boots") >= 0) // Force the boots type if the CVAR is setup
+                        i = GetUserCVar(PlayerNumber(), "drpg_start_drla_boots");
                     
                     for (int j = 0; j < DRLABootsCount[i]; j++)
                         if (Random(1, 10) == 1)
@@ -2011,7 +2005,7 @@ script void DefaultLoadout()
             if (PlayerClass(0) != 2 && ModPackCount >= 4) break;
             
             // Skip exotic modpacks if the selection is disabled
-            if (Type > 3 && !GetCVar("drpg_start_drla_modpacks_amount")) continue;
+            if (Type > 3 && !GetUserCVar(PlayerNumber(), "drpg_start_drla_modpacks_amount")) continue;
             
             GiveInventory(DRLAModPacks[Type], 1);
             ModPackCount++;
