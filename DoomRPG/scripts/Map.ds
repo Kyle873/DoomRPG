@@ -211,7 +211,9 @@ script void MapInit() open
                 // Player has the tips CVAR disabled
                 if (!GetUserCVar(i, "drpg_tips")) continue;
                 
+                SetActivator(Players(i).TID);
                 GiveTip();
+                SetActivator(0, AAPTR_NULL);
             };
             
             CurrentLevel->NeedsRealInfo = false;
@@ -260,6 +262,24 @@ script void MapInit() open
     
     // Set up the currently in-effect map event
     SetupMapEvent();
+    
+    // Also give a tip for events if they're new to the player
+    if (CurrentLevel->Event != MAPEVENT_NONE)
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Player is not in-game
+            if (!PlayerInGame(i)) continue;
+            
+            // Player has the tips CVAR disabled
+            if (!GetUserCVar(i, "drpg_tips")) continue;
+            
+            // Player has seen this event before
+            if (Players(i).SeenEventTip[CurrentLevel->Event]) continue;
+            
+            SetActivator(Players(i).TID);
+            GiveTip();
+            SetActivator(0, AAPTR_NULL);
+        };
     
     AddAdditionalMonsters();
     

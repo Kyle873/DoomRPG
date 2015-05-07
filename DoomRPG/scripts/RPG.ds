@@ -167,6 +167,9 @@ script void Init() enter
         
         // Setup HUD stuff
         Player.StatusTypeHUD = SE_NONE;
+
+        for (int i = 0; i < MAPEVENT_MAX; i++)
+            Player.SeenEventTip[i] = false;
         
         // Setup the Skill Wheel from the persistence CVARs
         for (int i = 0; i < MAX_SKILLKEYS; i++)
@@ -609,6 +612,9 @@ acscript int AddHealthDirect(int HealthAmount, int MaxPercent)
 
 acscript void GiveTip()
 {
+    if ((CurrentLevel->Event == MAPEVENT_SKILL_HELL && GameSkill() != 5) || (CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON && GameSkill() != 6))
+        return;
+    
     struct TipInfo
     {
         str Title;
@@ -697,7 +703,7 @@ acscript void GiveTip()
         
         // Outpost/Arena
         { "\cqOutpost";                         "The UAC Outpost is the main hub of operations where you can perform various activites, access various facilities and stock up between levels. You can transport to the Outpost at any time using the Transport skill."; };
-        { "\cgArena";                           "In the arena, you can fight waves of enemies for XP, Rank and loot."; };
+        { "\cgArena";                           "In the Arena, you can fight waves of enemies for XP, Rank and loot."; };
         { "\cdLevel Transporter";               "In the Outpost, you can use the level transporter to view stats on all the levels you have visited and to transport back to them at will."; };
         { "\cdSkill Computer";                  "In the Outpost, you can use the skill computer to change the current skill level without the need to restart the game."; };
         { "\cdMinigames";                       "In the Outpost, there are minigames which you can play in order to win items using your gold and platinum chips."; };
@@ -720,19 +726,49 @@ acscript void GiveTip()
         { "\cfShop Cards";                      "While playing, you may find UAC cards which provide you with a discount as well as other benefits. Finding a new card will replace your old card with the upgraded version. Discount benefits from a card will only apply when shopping at the Outpost."; };
         
         // Level Events
-        // TODO: Describe each event
         { "\cdLevel Events";                    "When entering a level, sometimes unique level-wide events will happen. Each event has it's own unique characteristics and conditions for ending the event."; };
         { "\cdRolling Level Events";            "Level events will not only occur when entering a level, but previous levels which you have visited will also sometimes contain events and require revisiting in order to participate in the event."; };
+    };
+    
+    static TipInfo[MAPEVENT_MAX] EventTips =
+    {
+        { ""; ""; }; // Never used
+        
+        { "\cgMegaboss Event";                  "All of the hostiles have vacated the area, and a very powerful creature is lurking about. Return to the Outpost if needed, and make sure you have the power and munitions to take down the death machine."; };
+        { "\cqEnvironmental Hazard Event";      "The area's covered in deadly radiation, but there is also a Radiation Neutralizer to fix the problem. Gather fuel and refill the Neutralizer whenever it runs low, until the radiation is brought down to safe levels."; };
+        { "\ciThermonuclear Bomb Event";        "Find as many keys as you can to disable the countdown. Worse comes to worst, you can hack through the key slots by using the bomb without keys, but it's going to take time to do so for each key missing, as indicated by the HUD. And make sure the bomb doesn't get shot!"; };
+        { "\cuLow Power Event";                 "The UAC had a major battle in this area, and the discards have been left behind when the area was damaged. Pluck some extra items out of the wreckage before they come back to clean up. You can even get some extra credits and modules if you restore the backup power before you leave."; };
+        { "\cdAll Auras Event";                 "All of the monsters have rather deadly magic auras. Understand their weaknesses, and attempt to stay away from some of them, as they are dangerous."; };
+        { "\cnOne-Monster Event";               "There is one species of demons currently occupying the area. Clearing the area of the hostiles will net you a bonus."; };
+        { "\cgHell Unleashed Event";            "Open the box, and partake in the rare contents within, but be warned: You will anger the demonic army, and they will pursue you endlessly until you are killed or leave the area. The longer you stay, the more likely they are to drop items, but the higher level they will become."; };
+        { "\cdHarmonized Destruction Event";    "All of the enemies in the area have one aura type. Get accustomed to the aura's strength and weakness and use it to your advantage. Don't get caught off-guard, as some monsters can and will have other auras as well."; };
+        
+        { "\cgR\ciA\ckI\cdN\chB\ctO\caW\cjS";   "SHE BROKE THE REALITY GENERATOR AGAIN! WE'RE DOOMED!"; };
+        
+        { "\caHell Event";                      "The difficulty level has increased to \caHell\c- for this area."; };
+        { "\cmArmageddon Event";                "The difficulty level has increased to \cmArmageddon\c- for this area."; };
     };
     
     int TipID = Random(0, MAX_TIPS - 1);
     fixed HoldTime = StrLen(Tips[TipID].Tip) * 0.1;
     
+    str TipTitle = Tips[TipID].Title;
+    str TipText = Tips[TipID].Tip;
+    
+    if (CurrentLevel->Event != MAPEVENT_NONE && !Player.SeenEventTip[CurrentLevel->Event])
+    {
+        TipTitle = EventTips[CurrentLevel->Event].Title;
+        TipText = EventTips[CurrentLevel->Event].Tip;
+        HoldTime = StrLen(Tips[TipID].Tip) * 0.1;
+        
+        Player.SeenEventTip[CurrentLevel->Event] = true;
+    };
+    
     SetHudSize(0, 0, false);
     SetFont("BIGFONT");
-    HudMessage("%s\n", Tips[TipID].Title, HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.7, HoldTime, 3.0);
+    HudMessage("%s\n", TipTitle, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_WHITE, 0.5, 0.7, HoldTime, 3.0);
     SetFont("SMALLFONT");
-    HudMessage("%s\n", Tips[TipID].Tip, HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, -0.725, HoldTime, 3.0);
+    HudMessage("%s\n", TipText, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_WHITE, 1.5, -0.725, HoldTime, 3.0);
 };
 
 // Handles Weapon Firing Speed
