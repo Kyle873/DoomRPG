@@ -88,7 +88,7 @@ script void ShopItemAutoHandler()
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         
         // For post-checks
-        if (GetCVar("drpg_pickup_behavior") > 0)
+        if (GetActivatorCVar("drpg_pickup_behavior") > 0)
             for (int i = 0; i < ItemCategories; i++)
                 for (int j = 0; j < ItemMax[i]; j++)
                     Items[i][j] = CheckInventory(ItemData[i][j].Actor);
@@ -137,7 +137,7 @@ script void ShopItemAutoHandler()
             };
         
         // Run-pickup behavior stuff
-        if (GetCVar("drpg_pickup_behavior") > 0 && Buttons & BT_SPEED)
+        if (GetActivatorCVar("drpg_pickup_behavior") > 0 && Buttons & BT_SPEED)
         {
             for (int i = 0; i < ItemCategories; i++)
                 for (int j = 0; j < ItemMax[i]; j++)
@@ -146,7 +146,7 @@ script void ShopItemAutoHandler()
                     
                     bool deposited = false;
                     // Auto-Sell
-                    if (!Player.InShop && GetCVar("drpg_pickup_behavior") == 1 && Items[i][j] > PrevItems[i][j])
+                    if (!Player.InShop && GetActivatorCVar("drpg_pickup_behavior") == 1 && Items[i][j] > PrevItems[i][j])
                         if (CheckInventory(Item->Actor) > 0)
                         {
                             // DoomRL Compatibility
@@ -160,7 +160,7 @@ script void ShopItemAutoHandler()
                             SellItem(Item->Actor, true, true);
                         };
                     // Auto-Store
-                    if (!Player.InShop && GetCVar("drpg_pickup_behavior") == 2 && Items[i][j] > PrevItems[i][j])
+                    if (!Player.InShop && GetActivatorCVar("drpg_pickup_behavior") == 2 && Items[i][j] > PrevItems[i][j])
                         if (CheckInventory(Item->Actor) > 0)
                         {
                             // Special handling for DRLA weapons since you can only keep one weapon with mods in the locker
@@ -180,7 +180,7 @@ script void ShopItemAutoHandler()
         
         Delay(4);
         
-        if (GetCVar("drpg_pickup_behavior") > 0)
+        if (GetActivatorCVar("drpg_pickup_behavior") > 0)
             for (int i = 0; i < ItemCategories; i++)
                 for (int j = 0; j < ItemMax[i]; j++)
                     PrevItems[i][j] = Items[i][j];
@@ -204,7 +204,7 @@ function void ShopLoop()
     SellPrice = GetSellPrice(nullptr, 1);
     
     // Set the HUD Size
-    SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+    SetHudSize(GetActivatorCVar("drpg_menu_width"), GetActivatorCVar("drpg_menu_height"), true);
 
     // Force Locker mode if the Shop Anywhere CVAR is off
     if (!GetCVar("drpg_shoptype") && !CurrentLevel->UACBase)
@@ -340,7 +340,7 @@ function void ShopLoop()
             Player.ShopIndex++;
             if (Player.ShopIndex > ItemMax[Player.ShopPage] - 1) Player.ShopIndex = ItemMax[Player.ShopPage] - 1;
         };
-    if (Buttons & BT_USE && (Player.DelayTimer > 35.0 * GetCVarFixed("drpg_menu_repeat") ? true : !(OldButtons & BT_USE)) && !Player.MenuBlock)
+    if (Buttons & BT_USE && (Player.DelayTimer > 35.0 * GetActivatorCVarFixed("drpg_menu_repeat") ? true : !(OldButtons & BT_USE)) && !Player.MenuBlock)
         if (Buttons & BT_SPEED)
         {
             if (Player.LockerMode)
@@ -427,7 +427,7 @@ function void BuyItem(str Item)
     // If you're not the required rank, return
     if (ItemPtr->Rank > Player.RankLevel)
     {
-        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
         {
             PrintError("You are not a high enough Rank to buy this item");
             ActivatorSound("menu/error", 127);
@@ -439,7 +439,7 @@ function void BuyItem(str Item)
     // If the item (or category) is flagged to never be buyable, return
     if (ItemPtr->Rank == -1 || ItemCategoryFlags[Player.ShopPage] & CF_NOBUY)
     {
-        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
         {
             PrintError("You cannot buy this item");
             ActivatorSound("menu/error", 127);
@@ -451,7 +451,7 @@ function void BuyItem(str Item)
     // If you don't have enough Credits, return
     if (CheckInventory("DRPGCredits") < ItemPtr->Price - ItemPtr->Price * Player.ShopDiscount / 100)
     {
-        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
         {
             PrintError("You don't have enough Credits to buy this item");
             ActivatorSound("menu/error", 127);
@@ -463,7 +463,7 @@ function void BuyItem(str Item)
     // If the item has no cost, return
     if (Cost == 0)
     {
-        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
             ActivatorSound("menu/error", 127);
         
         return;
@@ -487,7 +487,7 @@ function void BuyItem(str Item)
         ActivatorSound("menu/buy", 127);
         TakeInventory("DRPGCredits", Cost);
     }
-    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+    else if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
     {
         PrintError("Could not teleport the requested item to your location");
         ActivatorSound("menu/error", 127);
@@ -536,7 +536,7 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     // You must be at least Rank 1 or in the Outpost to sell items
     if (Player.RankLevel == 0 && !CurrentLevel->UACBase)
     {
-        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
         {
             PrintError("You cannot sell items outside the Outpost until you reach the first rank");
             ActivatorSound("menu/error", 127);
@@ -548,7 +548,7 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     // If you're on a page that doesn't allow selling or you don't have any of the required item, fail
     if (!AutoSold && (CheckInventory(Item) == 0 || ItemCategoryFlags[Player.ShopPage] & CF_NOSELL))
     {
-        if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+        if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
         {
             PrintError("You cannot sell these items");
             ActivatorSound("menu/error", 127);
@@ -578,7 +578,7 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
         TakeInventory(Item, Amount);
         GiveInventory("DRPGCredits", SellCost);
     }
-    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+    else if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
     {
         PrintError("You are not carrying any of the specified item");
         ActivatorSound("menu/error", 127);
@@ -651,7 +651,7 @@ function void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
         if (!NoSound)
             ActivatorSound("menu/move", 127);
     }
-    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat") && !NoSound)
+    else if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat") && !NoSound)
     {
         if (Player.EP < LOCKER_EPRATE)
             PrintError("Not enough EP to deposit this item")
@@ -706,7 +706,7 @@ function void WithdrawItem(int Page, int Index)
             Player.EP -= LOCKER_EPRATE;
         ActivatorSound("menu/move", 127);
     }
-    else if (Player.DelayTimer <= 35.0 * GetCVarFixed("drpg_menu_repeat"))
+    else if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
     {
         if (Player.EP < LOCKER_EPRATE)
             PrintError("Not enough EP to withdraw this item")
