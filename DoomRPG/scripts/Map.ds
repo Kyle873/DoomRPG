@@ -2237,16 +2237,21 @@ script void TeleporterCrack(int Source, int Destination)
 {
     bool DRLA = (CompatMode == COMPAT_DRLA);
     int SpawnEnemyTimer = 0;
+    bool CloseToPlayer;
     
     Start:
+    CloseToPlayer = false;
     
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
         if (Distance(Source, Players(i).TID) <= 32.0)
             TeleportOther(Players(i).TID, Destination, true);
+        
+        if (Distance(Destination, Players(i).TID) <= 2048.0)
+            CloseToPlayer = true;
     };
     
-    if (++SpawnEnemyTimer >= 263 && Random(1, 4096) == 1)
+    if (++SpawnEnemyTimer >= 263 && Random(1, 4096) == 1 && CloseToPlayer)
     {
         MonsterInfoPtr TempMonster;
         if (DRLA)
