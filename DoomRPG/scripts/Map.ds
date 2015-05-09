@@ -439,7 +439,7 @@ script void MapLoop()
     };
     
     // Kills/Item/Secrets special bonuses
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_ONEMONSTER && CurrentLevel->Event != MAPEVENT_DRLA_FEEDINGFRENZY)
     {
         CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
         CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
@@ -458,7 +458,7 @@ script void MapLoop()
         CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
     };
     
-    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
+    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -1271,6 +1271,15 @@ script void SetupMapEvent()
         case MAPEVENT_TELEPORTCRACKS:
             // Cracks in the Veil: Portals litter the level, slowly ripping it apart spatially.
             TeleportCracksEvent();
+            break;
+        
+        // DRLA Events
+        // --------------------------------------------------
+        
+        case MAPEVENT_DRLA_FEEDINGFRENZY:
+            // T     H     E    Y      4   R    E      C  0   M  I    N   G
+            //     %   !  &        F    3   E  D       F   1   E   5   H
+            FeedingFrenzyEvent();
             break;
         
         // Bonus Events
@@ -2266,6 +2275,129 @@ script void TeleporterCrack(int Source, int Destination)
     };
     
     Delay(4);
+    goto Start;
+};
+
+// DRLA Event - Feeding Frenzy ------------------------------------------------
+
+script void FeedingFrenzyEvent()
+{
+    bool Spawned;
+    bool Spotted;
+    int TID;
+    int BossType;
+    int Index;
+    Position *ChosenPosition;
+    
+    SetMusic("");
+    
+    for (int i = 0; i <= SHORT_MAX; i++)
+    {
+        Light_Stop(i);
+        Light_Glow(i, 64, 96, 35 * 30);
+        Sector_SetColor(i, 255, 64, 64, 128);
+    };
+    
+    // Replace them with corpses
+    for (int i = 1; i < MonsterID; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        Monsters[i].ReplaceActor = "DRPGRLGibbedStuff";
+    };
+    
+    WaitingForReplacements = false;
+    
+    Delay(35 * 10);
+    
+    // Ambient Music
+    SetMusic("FeedThem");
+    
+    int ActiveHungry = 0;
+    int LastActiveHungry = 0;
+    int KilledHungry = 0;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+        FeedingFrenzyVisualHorror(i);
+    
+    while (ThingCountName("RLArmageddonLostSoulRPG", 0) < 10)
+    {
+        Position SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[Random(0, CurrentLevel->MonsterPositions.Position)];
+        
+        int SpotTID = UniqueTID();
+        
+        Spawn("MapSpot", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, SpotTID, SpawnPosition.Angle * 256);
+        
+        bool VisibleToPlayer = false;
+        
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            if (CheckSight(SpotTID, Players(i).TID, CSF_NOBLOCKALL))
+                VisibleToPlayer = true;
+        
+        Thing_Remove(SpotTID);
+        
+        if (VisibleToPlayer)
+            continue;
+        
+        Spawn("RLArmageddonLostSoulRPG", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, 0, SpawnPosition.Angle * 256);
+    };
+    
+    while (true)
+    {
+        ActiveHungry = ThingCountName("RLArmageddonLostSoulRPG", 0);
+        
+        if (ActiveHungry < LastActiveHungry)
+            KilledHungry += (LastActiveHungry - ActiveHungry) * GameSkill();
+        
+        for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
+        {
+            if (Random(0, 1200) > KilledHungry)
+                continue;
+            
+            Position SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+            
+            int SpotTID = UniqueTID();
+            
+            Spawn("MapSpot", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, SpotTID, SpawnPosition.Angle * 256);
+            
+            bool VisibleToPlayer = false;
+            
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (CheckSight(SpotTID, Players(i).TID, CSF_NOBLOCKALL))
+                    VisibleToPlayer = true;
+            
+            Thing_Remove(SpotTID);
+            
+            if (VisibleToPlayer)
+                continue;
+            
+            Spawn("RLArmageddonLostSoulRPG", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, 0, SpawnPosition.Angle * 256);
+        };
+        
+        Delay(35 * 5);
+        
+        LastActiveHungry = ActiveHungry;
+    };
+};
+
+script void FeedingFrenzyVisualHorror(int PlayerID)
+{
+    SetActivator(0, AAPTR_PLAYER1 << PlayerID);
+    
+    Start:
+    
+    NoiseAlert(0, 0);
+    
+    SetHudSize(640, 480, true);
+    SetFont(StrParam("P%iVIEW\n", PlayerID + 1));
+    
+    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
+               320 + Random(-8, 8),
+               240 + Random(-8, 8),
+               0.029, 0.25);
+    
+    Delay(1);
     goto Start;
 };
 
