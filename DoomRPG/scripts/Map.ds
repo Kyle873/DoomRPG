@@ -439,7 +439,7 @@ script void MapLoop()
     };
     
     // Kills/Item/Secrets special bonuses
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_ONEMONSTER && CurrentLevel->Event != MAPEVENT_DRLA_FEEDINGFRENZY)
     {
         CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
         CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
@@ -458,7 +458,7 @@ script void MapLoop()
         CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
     };
     
-    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus && CurrentLevel->Event != MAPEVENT_ONEMONSTER)
+    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -757,7 +757,7 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Delay(35 * 5);
     };
     
-    if (CurrentLevel->Event == MAPEVENT_TELEPORTCRACKS || CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
+    if (CurrentLevel->Event == MAPEVENT_TELEPORTCRACKS || CurrentLevel->Event == MAPEVENT_DRLA_FEEDINGFRENZY || CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
         CurrentLevel->EventCompleted = true; // These don't actually end until you leave the map normally
     
     CurrentLevel->Completed = true; // We finished the map
@@ -922,6 +922,16 @@ function bool CheckMapEvent(int Event)
                 return false;
             return true;
         
+        case MAPEVENT_DRLA_FEEDINGFRENZY:
+            if (CompatMode != COMPAT_DRLA || AveragePlayerLevel() < 20)
+                return false;
+            return true;
+        
+        case MAPEVENT_DRLA_OVERMIND:
+            if (CompatMode != COMPAT_DRLA || AveragePlayerLevel() < 40)
+                return false;
+            return true;
+        
         case MAPEVENT_BONUS_RAINBOWS:
             if (Random(0, 15) || !GetCVar("drpg_bonus_events"))
                 return false;
@@ -1014,6 +1024,9 @@ script void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
         "Hell Unleashed";
         "Harmonized Destruction";
         "Cracks in the Veil";
+        
+        "Feeding Frenzy";
+        "Whispers of Darkness";
         
         "RAINBOWS!";
         
@@ -1273,6 +1286,20 @@ script void SetupMapEvent()
             TeleportCracksEvent();
             break;
         
+        // DRLA Events
+        // --------------------------------------------------
+        
+        case MAPEVENT_DRLA_FEEDINGFRENZY:
+            // T     H     E    Y      4   R    E      C  0   M  I    N   G
+            //     %   !  &        F    3   E  D       F   1   E   5   H
+            FeedingFrenzyEvent();
+            break;
+        
+        case MAPEVENT_DRLA_OVERMIND:
+            // Whispers of Darkness: The Overmind is watching. The Overmind is close. One of us. One of us. One of us.
+            WhispersofDarknessEvent();
+            break;
+        
         // Bonus Events
         // --------------------------------------------------
         
@@ -1438,7 +1465,7 @@ script void MegaBossEvent()
         };
         
         Index++;
-        if (Index > MonsterID)
+        if (Index >= CurrentLevel->MonsterPositions.Position)
             Index = 0;
         
         Delay(1);
@@ -2266,6 +2293,374 @@ script void TeleporterCrack(int Source, int Destination)
     };
     
     Delay(4);
+    goto Start;
+};
+
+// DRLA Event - Feeding Frenzy ------------------------------------------------
+
+script void FeedingFrenzyEvent()
+{
+    bool Spawned;
+    bool Spotted;
+    int TID;
+    int BossType;
+    int Index;
+    Position *ChosenPosition;
+    
+    SetMusic("");
+    
+    for (int i = 0; i <= SHORT_MAX; i++)
+    {
+        Light_Stop(i);
+        Light_Glow(i, 64, 96, 35 * 30);
+        Sector_SetColor(i, 255, 64, 64, 128);
+    };
+    
+    // Replace them with corpses
+    for (int i = 1; i < MonsterID; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        Monsters[i].ReplaceActor = "DRPGRLGibbedStuff";
+    };
+    
+    WaitingForReplacements = false;
+    
+    Delay(35 * 10);
+    
+    // Ambient Music
+    SetMusic("FeedThem");
+    
+    int ActiveHungry = 0;
+    int LastActiveHungry = 0;
+    int KilledHungry = 0;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+        FeedingFrenzyVisualHorror(i);
+    
+    while (ThingCountName("RLArmageddonLostSoulRPG", 0) < 10)
+    {
+        Position SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[Random(0, CurrentLevel->MonsterPositions.Position)];
+        
+        int SpotTID = UniqueTID();
+        
+        Spawn("MapSpot", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, SpotTID, SpawnPosition.Angle * 256);
+        
+        bool VisibleToPlayer = false;
+        
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            if (CheckSight(SpotTID, Players(i).TID, CSF_NOBLOCKALL))
+                VisibleToPlayer = true;
+        
+        Thing_Remove(SpotTID);
+        
+        if (VisibleToPlayer)
+            continue;
+        
+        Spawn("RLArmageddonLostSoulRPG", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, 0, SpawnPosition.Angle * 256);
+    };
+    
+    while (true)
+    {
+        ActiveHungry = ThingCountName("RLArmageddonLostSoulRPG", 0);
+        
+        if (ActiveHungry < LastActiveHungry)
+            KilledHungry += (LastActiveHungry - ActiveHungry) * GameSkill();
+        
+        for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
+        {
+            if (Random(0, 1200) > KilledHungry)
+                continue;
+            
+            Position SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+            
+            int SpotTID = UniqueTID();
+            
+            Spawn("MapSpot", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, SpotTID, SpawnPosition.Angle * 256);
+            
+            bool VisibleToPlayer = false;
+            
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (CheckSight(SpotTID, Players(i).TID, CSF_NOBLOCKALL))
+                    VisibleToPlayer = true;
+            
+            Thing_Remove(SpotTID);
+            
+            if (VisibleToPlayer)
+                continue;
+            
+            Spawn("RLArmageddonLostSoulRPG", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, 0, SpawnPosition.Angle * 256);
+        };
+        
+        Delay(35 * 5);
+        
+        LastActiveHungry = ActiveHungry;
+    };
+};
+
+script void FeedingFrenzyVisualHorror(int PlayerID)
+{
+    SetActivator(0, AAPTR_PLAYER1 << PlayerID);
+    
+    Start:
+    
+    NoiseAlert(0, 0);
+    
+    SetHudSize(640, 480, true);
+    SetFont(StrParam("P%iVIEW\n", PlayerID + 1));
+    
+    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
+               320 + Random(-8, 8),
+               240 + Random(-8, 8),
+               0.029, 0.25);
+    
+    Delay(1);
+    goto Start;
+};
+
+// DRLA Event - Whispers of Darkness ------------------------------------------
+
+script void WhispersofDarknessEvent()
+{
+    bool Spawned;
+    bool Spotted;
+    int TID;
+    int BossType;
+    int Index;
+    int MonsterIndex;
+    Position *ChosenPosition;
+    
+    // Ambient Music
+    SetMusic("Overmind", 0);
+    
+    // Sector Lighting
+    for (int i = 0; i <= SHORT_MAX; i++)
+    {
+        Sector_SetColor(i, 255, 0, 0, 255);
+        Light_Glow(i, 160, 192, 30);
+    };
+    
+    // Replace them with nothing
+    for (int i = 1; i < MonsterID; i++)
+    {
+        if (!Monsters[i].Init)
+            continue;
+        
+        Monsters[i].ReplaceActor = "None";
+    };
+    
+    WaitingForReplacements = false;
+    Delay(1); // Monsters disappear!
+    
+    // Shuffle positions
+    for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
+    {
+        int X = Random(0, CurrentLevel->MonsterPositions.Position - 1);
+        Position TempPosition;
+        
+        TempPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[i] = ((Position *)CurrentLevel->MonsterPositions.Data)[X];
+        ((Position *)CurrentLevel->MonsterPositions.Data)[X] = TempPosition;
+    };
+    
+    // Spawning
+    while (!Spawned)
+    {
+        TID = UniqueTID();
+        ChosenPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[Index];
+        Spawned = Spawn("RLCyberneticSpiderMastermindRPG", ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
+        
+        if (GetCVar("drpg_debug"))
+            Log("\cdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", CurrentLevel->MegabossActor->Actor, Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
+        
+        // Successful spawn
+        if (Spawned)
+        {
+            SpawnForced("TeleportFog", ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, 0, 0);
+            Delay(1);
+            MonsterIndex = GetMonsterID(TID);
+            
+            Monsters[MonsterIndex].Level += ((250 / MAX_PLAYERS) * PlayerCount());
+            Monsters[MonsterIndex].Level /= 4;
+            Monsters[MonsterIndex].NeedReinit = true;
+            
+            // Shadow Aura
+            for (int i = 0; i < AURA_MAX; i++)
+                Monsters[MonsterIndex].Aura.Type[i].Active = true;
+
+            if (GetCVar("drpg_debug"))
+                Log("\cdDEBUG: \cgShadow Overmind successfully spawned\n");
+        };
+        
+        Index++;
+        if (Index >= CurrentLevel->MonsterPositions.Position)
+            Index = 0;
+        
+        Delay(1);
+    };
+    
+    AmbientSound("spiderovermind/whisper", 127);
+    
+    // Horrible, horrible things.
+    WhispersofDarknessBackgroundCreepiness();
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        
+        WhispersofDarknessMindRaper(i);
+        WhispersofDarknessVisionIntensifier(i);
+    };
+    
+    // Loop
+    while (true)
+    {
+        if (!Spotted)
+        {
+            // Check LOS
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (CheckSight(TID, Players(i).TID, 0))
+                {
+                    SetMusic("Overmind", 1);
+                    Spotted = true;
+                    break;
+                };
+        };
+        
+        // Defeated
+        if (GetActorProperty(TID, APROP_Health) <= 0)
+        {
+            SetMusic("");
+            CurrentLevel->EventCompleted = true;
+            return;
+        };
+        
+        Delay(1);
+    };
+};
+
+script void WhispersofDarknessBackgroundCreepiness()
+{
+    AmbientSound("misc/gzdoom.exe", 127);
+    Delay(1);
+    while (true)
+    {
+        if ((Timer() % 5565) == 0)
+            AmbientSound("misc/gzdoom.exe", 127);
+        
+        Delay(1);
+    };
+};
+
+script void WhispersofDarknessMindRaper(int PlayerID)
+{
+    SetActivator(0, AAPTR_PLAYER1 << PlayerID);
+    
+    Start:
+    
+    if (GetActorProperty(0, APROP_Health) <= 0 || CurrentLevel->EventCompleted)
+        return;
+    
+    if (GetActorProperty(0, APROP_Health) == 1)
+    {
+        SetPlayerProperty(0, false, PROP_BUDDHA);
+        SetPlayerProperty(0, false, PROP_INVULNERABILITY);
+        Thing_Damage2(0, 6666666, "Mindrape");
+        ActivatorSound("spiderovermind/laugh", 127);
+    }
+    else
+        SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) - 1);
+    
+    Delay(Random(35, 70));
+    goto Start;
+};
+
+script void WhispersofDarknessVisionIntensifier(int PlayerID)
+{
+    SetActivator(0, AAPTR_PLAYER1 << PlayerID);
+    
+    int MindblastTime = 1;
+    int MindblastTimeMax = 1;
+    bool ShowOvermind = false;
+    
+    Start:
+    
+    if (GetActorProperty(0, APROP_Health) <= 0 || CurrentLevel->EventCompleted)
+        return;
+    
+    if (--MindblastTime == 0)
+    {
+        Delay(Random(35 * 20, 35 * 60));
+        
+        MindblastTime = Random(35 * 2, 35 * 4);
+        MindblastTimeMax = MindblastTime;
+    };
+    
+    if (MindblastTime == MindblastTimeMax)
+    {
+        if (!Random(0, 7))
+            StatusEffect(SE_BLIND, Random(30, 60), Random(1, 5));
+        
+        if (!Random(0, 7))
+            StatusEffect(SE_CONFUSION, Random(30, 60), Random(1, 5));
+        
+        if (!Random(0, 3))
+        {
+            ShowOvermind = true;
+            for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
+            {
+                if (!Random(0, 7))
+                    continue;
+                
+                Position SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+                
+                int SpotTID = UniqueTID();
+                
+                Spawn("MapSpot", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, SpotTID, SpawnPosition.Angle * 256);
+                
+                bool VisibleToPlayer = false;
+                
+                for (int i = 0; i < MAX_PLAYERS; i++)
+                    if (CheckSight(SpotTID, Players(i).TID, CSF_NOBLOCKALL))
+                        VisibleToPlayer = true;
+                
+                Thing_Remove(SpotTID);
+                
+                if (!VisibleToPlayer)
+                    continue;
+                
+                if (!Spawn("RLCyberneticArachnotronRPG", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, 0, SpawnPosition.Angle * 256))
+                    Spawn("RLCyberneticImpRPG", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, 0, SpawnPosition.Angle * 256);
+            };
+        };
+        
+        if (ShowOvermind)
+            LocalAmbientSound("spiderovermind/laugh", 127)
+        else
+            LocalAmbientSound("spiderovermind/whisper", 32);
+    };
+    
+    SetHudSize(640, 480, true);
+    
+    SetFont(StrParam("P%iVIEW\n", PlayerID + 1));
+    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, CR_UNTRANSLATED,
+               320 + Random(-8, 8),
+               240 + Random(-8, 8),
+               0.029, (((fixed)MindblastTime / (fixed)MindblastTimeMax) * 0.66));
+    
+    if (ShowOvermind)
+    {
+        SetFont("OVERMIND");
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
+                   320 + Random(-4, 4),
+                   240 + Random(-4, 4),
+                   0.029, (((fixed)MindblastTime / (fixed)MindblastTimeMax) * 0.66));
+    };
+    
+    Delay(1);
+    
     goto Start;
 };
 
