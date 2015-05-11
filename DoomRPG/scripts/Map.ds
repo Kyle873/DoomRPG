@@ -439,7 +439,7 @@ script void MapLoop()
     };
     
     // Kills/Item/Secrets special bonuses
-    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_ONEMONSTER && CurrentLevel->Event != MAPEVENT_DRLA_FEEDINGFRENZY)
+    if (CalcPercent(GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS)) > CurrentLevel->MaxMonsterPercentage && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_DRLA_OVERMIND && CurrentLevel->Event != MAPEVENT_ONEMONSTER && CurrentLevel->Event != MAPEVENT_DRLA_FEEDINGFRENZY)
     {
         CurrentLevel->MaxMonstersKilled = GetLevelInfo(LEVELINFO_KILLED_MONSTERS);
         CurrentLevel->MaxTotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
@@ -458,7 +458,7 @@ script void MapLoop()
         CurrentLevel->MaxSecretPercentage = CalcPercent(GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
     };
     
-    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus)
+    if (CurrentLevel->MaxMonsterPercentage >= 100 && !CurrentLevel->KillBonus && CurrentLevel->Event != MAPEVENT_MEGABOSS && CurrentLevel->Event != MAPEVENT_DRLA_OVERMIND && CurrentLevel->Event != MAPEVENT_ONEMONSTER && CurrentLevel->Event != MAPEVENT_DRLA_FEEDINGFRENZY)
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
@@ -674,7 +674,7 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
     
     // Megabosses prevent you from leaving until they are killed
     // Hell Unleashed prevents you from leaving until you have opened the box
-    if ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
+    if ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_DRLA_OVERMIND && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
     {
         AmbientSound("mission/gottarget2", 127);
         
@@ -694,7 +694,7 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
             };
         
         // Wait until the event is over
-        while ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
+        while ((CurrentLevel->Event == MAPEVENT_MEGABOSS && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_DRLA_OVERMIND && !CurrentLevel->EventCompleted) || (CurrentLevel->Event == MAPEVENT_HELLUNLEASHED && !CurrentLevel->HellUnleashedActive))
             Delay(35 * 5);
     };
     
@@ -2556,12 +2556,18 @@ script void WhispersofDarknessBackgroundCreepiness()
 
 script void WhispersofDarknessMindRaper(int PlayerID)
 {
-    SetActivator(0, AAPTR_PLAYER1 << PlayerID);
-    
     Start:
     
-    if (GetActorProperty(0, APROP_Health) <= 0 || CurrentLevel->EventCompleted)
+    SetActivator(0, AAPTR_PLAYER1 << PlayerID);
+    
+    if (CurrentLevel->EventCompleted)
         return;
+    
+    if (GetActorProperty(0, APROP_Health) <= 0)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     if (GetActorProperty(0, APROP_Health) == 1)
     {
@@ -2579,16 +2585,22 @@ script void WhispersofDarknessMindRaper(int PlayerID)
 
 script void WhispersofDarknessVisionIntensifier(int PlayerID)
 {
-    SetActivator(0, AAPTR_PLAYER1 << PlayerID);
-    
     int MindblastTime = 1;
     int MindblastTimeMax = 1;
     bool ShowOvermind = false;
     
     Start:
     
-    if (GetActorProperty(0, APROP_Health) <= 0 || CurrentLevel->EventCompleted)
+    SetActivator(0, AAPTR_PLAYER1 << PlayerID);
+    
+    if (CurrentLevel->EventCompleted)
         return;
+    
+    if (GetActorProperty(0, APROP_Health) <= 0)
+    {
+        Delay(35);
+        goto Start;
+    };
     
     if (--MindblastTime == 0)
     {
