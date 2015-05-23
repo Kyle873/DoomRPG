@@ -78,12 +78,19 @@ script void MapInit() open
     
     if (CurrentLevel == NULL) // New map - We need to create new info for it
     {
-        CurrentLevel = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
-        CurrentLevel->LevelNum = 0;
-        CurrentLevel->NeedsRealInfo = true;
-        
         if (KnownLevels.Position == KnownLevels.Size)
             ArrayResize(&KnownLevels);
+        
+        CurrentLevel = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+        
+        if (KnownLevels.Data == NULL)
+        {
+            Log("\cgWARNING: \caCould not allocate level info!\n");
+            return;
+        };
+        
+        CurrentLevel->LevelNum = 0;
+        CurrentLevel->NeedsRealInfo = true;
     };
     
     if (CurrentLevel->NeedsRealInfo)
@@ -2280,13 +2287,13 @@ script void TeleporterCrack(int Source, int Destination)
     
     if (++SpawnEnemyTimer >= 263 && Random(1, 4096) == 1 && CloseToPlayer)
     {
-        MonsterInfoPtr TempMonster;
+        str TempMonster;
         if (DRLA)
-            TempMonster = &MonsterDataDRLA[68] // Hellstorm Elemental
+            TempMonster = "RLArmageddonPainElemental"
         else
-            TempMonster = &MonsterData[14]; // Archvile
+            TempMonster = "ArchVile";
         
-        if (SpawnSpotFacing(GetMissionMonsterActor(TempMonster->Actor), Destination))
+        if (SpawnSpotFacing(GetMissionMonsterActor(TempMonster), Destination))
             SpawnSpotFacing("TeleportFog", Destination);
         
         SpawnEnemyTimer = 0;

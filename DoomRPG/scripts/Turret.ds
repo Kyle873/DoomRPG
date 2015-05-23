@@ -1720,6 +1720,8 @@ script void TurretAI(int TID)
                     HasTarget = false;
                     TargetForced = false;
                     TargetTID = 0;
+                    TargetOriginalTID = 0;
+                    LosingInterestTime = 0;
                 };
             }
             else
@@ -1800,6 +1802,11 @@ script void TurretAI(int TID)
         };
     };
     
+    /* Turret Status Debug
+    SetHudSize(640, 480, 1);
+    HudMessageBold("Turret Status\n\nHas Target: %s\nTarget Forced: %s\nTarget Original TID: %d\nTarget TID: %d\nInterest Time: %d\n", HasTarget? "Yes" : "No", TargetForced? "Yes" : "No", TargetOriginalTID, TargetTID, LosingInterestTime, HUDMSG_FADEOUT, 864, CR_GREEN, 32.1, 32.1, 1.0, 1.0);
+    */
+    
     if (!HasTarget)
     {
         // Idle routine
@@ -1862,6 +1869,7 @@ script void TurretAI(int TID)
                     TurretForcePlayerTargetTID(TargetTID);
                     SetPointer(AAPTR_TARGET, TargetTID);
                     HasTarget = true;
+                    TargetForced = false;
                 }
                 else
                     SetActorState(0, "ScanForEnemies");
@@ -1995,6 +2003,9 @@ script void TurretAI(int TID)
             Cooldown = true;
         };
         
+        if (Cooldown)
+            SpawnForced("DRPGTurretCooldownIcon", GetActorX(0), GetActorY(0), GetActorZ(0) + 40.0, 0, 0);
+        
         if (!(Timer() % 16))
             HeatLevel -= 8;
     }
@@ -2058,53 +2069,50 @@ script bool TurretCheckTargetSuitable()
     int OriginalTargetTID;
     int NewTargetTID = UniqueTID();
     
-    SetActivator(0, AAPTR_TARGET);
-    OriginalTargetTID = ActivatorTID();
-    Thing_ChangeTID(0, NewTargetTID);
+    if (!SetActivator(0, AAPTR_TARGET))
+        return false;
     
-    int ActorInfo = ClassifyActor(NewTargetTID);
-    if (ActorInfo == ACTOR_WORLD || ActorInfo & ACTOR_DEAD || CheckFlag(NewTargetTID, "NONSHOOTABLE") || !CheckFlag(NewTargetTID, "SHOOTABLE") || CheckFlag(NewTargetTID, "FRIENDLY") || CheckFlag(NewTargetTID, "NEVERTARGET") || !CheckFlag(NewTargetTID, "ISMONSTER"))
+    int ActorInfo = ClassifyActor(0);
+    if (ActorInfo == ACTOR_WORLD || ActorInfo & ACTOR_DEAD || CheckFlag(0, "NONSHOOTABLE") || !CheckFlag(0, "SHOOTABLE") || CheckFlag(0, "FRIENDLY") || CheckFlag(0, "NEVERTARGET") || !CheckFlag(0, "ISMONSTER"))
         Suitable = false;
     
-    Thing_ChangeTID(0, OriginalTargetTID);
     return Suitable;
 };
 
 script bool TurretCheckTargetDead()
 {
-    bool TargetDead = true;
+    bool TargetDead = false;
     int OriginalTargetTID;
     int NewTargetTID = UniqueTID();
     
-    SetActivator(0, AAPTR_TARGET);
-    OriginalTargetTID = ActivatorTID();
-    Thing_ChangeTID(0, NewTargetTID);
-    
-    int ActorInfo = ClassifyActor(NewTargetTID);
+    if (!SetActivator(0, AAPTR_TARGET))
+        return true;
+
+    int ActorInfo = ClassifyActor(0);
     if (ActorInfo == ACTOR_WORLD || ActorInfo & ACTOR_DEAD)
         TargetDead = true;
     
-    Thing_ChangeTID(0, OriginalTargetTID);
     return TargetDead;
 };
 
 script void TurretGetAttention(int MonsterTID, int TurretTID)
 {
-    SetActivator(MonsterTID);
+    if (!SetActivator(MonsterTID))
+        return;
+    
     SetPointer(AAPTR_TARGET, TurretTID);
 };
 
 script void TurretForceTargetTID(int NewTID)
 {
-    if (!SetActivator(0, AAPTR_TARGET))
-        return;
-    
-    Thing_ChangeTID(0, NewTID);
+    if (SetActivator(0, AAPTR_TARGET))
+        Thing_ChangeTID(0, NewTID);
 };
 
 script void TurretForcePlayerTargetTID(int NewTID)
 {
-    SetActivator(0, AAPTR_FRIENDPLAYER);
+    if (!SetActivator(0, AAPTR_FRIENDPLAYER))
+        return;
     
     if (SetActivator(0, AAPTR_PLAYER_GETTARGET))
         Thing_ChangeTID(0, NewTID);
@@ -2112,14 +2120,16 @@ script void TurretForcePlayerTargetTID(int NewTID)
 
 script int TurretGetOwningPlayer()
 {
-    SetActivator(0, AAPTR_FRIENDPLAYER);
+    if (!SetActivator(0, AAPTR_FRIENDPLAYER))
+        return -1;
     
     return PlayerNumber();
 };
 
 script int TurretGetPlayerTarget()
 {
-    SetActivator(0, AAPTR_FRIENDPLAYER);
+    if (!SetActivator(0, AAPTR_FRIENDPLAYER))
+        return 0;
     
     if (SetActivator(0, AAPTR_PLAYER_GETTARGET))
         return ActivatorTID();
@@ -2129,7 +2139,8 @@ script int TurretGetPlayerTarget()
 
 script bool TurretWantsToSwitchToPlayerTarget()
 {
-    SetActivator(0, AAPTR_FRIENDPLAYER);
+    if (!SetActivator(0, AAPTR_FRIENDPLAYER))
+        return false;
     
     return GetPlayerInput(-1, MODINPUT_BUTTONS) & BT_ATTACK && GetPlayerInput(-1, MODINPUT_BUTTONS) & BT_SPEED;
 };

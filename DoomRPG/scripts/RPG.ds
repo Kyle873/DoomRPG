@@ -1167,6 +1167,9 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         if (UpperY < ItemY) UpperY = ItemY;
     };
     
+    if (NumItems < 1) // [KS] If we can't find any possible positions to spawn anything, fuck it.
+        return;
+    
     while (Items < MaxItems)
     {
         int TID = UniqueTID();
@@ -2108,7 +2111,26 @@ function void CheckCompatibility()
         CompatMode = COMPAT_DRLA;
         SetInventory("DRPGDRLAActive", 1);
         Thing_Remove(TID);
-        return;
+        
+        Success = SpawnForced("RLBaronOfHell", 0, 0, 0, TID, 0);
+        if (!Success)
+        {
+            SetHudSize(640, 480);
+            FadeRange(0, 0, 0, 1.0, 0, 0, 0, 1.0, 0);
+            
+            HudMessageBold("\cgLISTEN UP\n\n\c-You currently have \cfDoomRL Arsenal\c- loaded. In order for this mod to work with DoomRPG, you also need the \cfDoomRL Monster Pack\c-. Go here to download it: http://tinyurl.com/DoomRLArsenal\n\nThanks.\n", HUDMSG_PLAIN | HUDMSG_LOG, 772, CR_WHITE, 0.1, 0.1, 0.01);
+            
+            SetFont("BigFont");
+            HudMessageBold("LISTEN UP\n", HUDMSG_PLAIN, 772, CR_RED, 320.4, 200.0, 0.01);
+            
+            SetFont("SmallFont");
+            HudMessageBold("You currently have \cfDoomRL Arsenal\c- loaded. In order for this mod to work with DoomRPG, you also need the \cfDoomRL Monster Pack\c-. Go here to download it: http://tinyurl.com/DoomRLArsenal\n\nThanks.\n", HUDMSG_PLAIN, 773, CR_WHITE, 320.4, 232.0, 0.01);
+        }
+        else
+        {
+            Thing_Remove(TID);
+            return;
+        };
     };
 };
 
