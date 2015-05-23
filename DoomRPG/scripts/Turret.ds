@@ -1720,6 +1720,8 @@ script void TurretAI(int TID)
                     HasTarget = false;
                     TargetForced = false;
                     TargetTID = 0;
+                    TargetOriginalTID = 0;
+                    LosingInterestTime = 0;
                 };
             }
             else
@@ -1800,6 +1802,11 @@ script void TurretAI(int TID)
         };
     };
     
+    /* Turret Status Debug
+    SetHudSize(640, 480, 1);
+    HudMessageBold("Turret Status\n\nHas Target: %s\nTarget Forced: %s\nTarget Original TID: %d\nTarget TID: %d\nInterest Time: %d\n", HasTarget? "Yes" : "No", TargetForced? "Yes" : "No", TargetOriginalTID, TargetTID, LosingInterestTime, HUDMSG_FADEOUT, 864, CR_GREEN, 32.1, 32.1, 1.0, 1.0);
+    */
+    
     if (!HasTarget)
     {
         // Idle routine
@@ -1862,6 +1869,7 @@ script void TurretAI(int TID)
                     TurretForcePlayerTargetTID(TargetTID);
                     SetPointer(AAPTR_TARGET, TargetTID);
                     HasTarget = true;
+                    TargetForced = false;
                 }
                 else
                     SetActorState(0, "ScanForEnemies");
@@ -2073,7 +2081,7 @@ script bool TurretCheckTargetSuitable()
 
 script bool TurretCheckTargetDead()
 {
-    bool TargetDead = true;
+    bool TargetDead = false;
     int OriginalTargetTID;
     int NewTargetTID = UniqueTID();
     
