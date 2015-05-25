@@ -1862,7 +1862,7 @@ script void TurretAI(int TID)
             
             if (Weapon != TW_NONE && !(Timer() % 35))
             {
-                if (TurretGetPlayerTarget() != 0)
+                if (TurretGetPlayerTarget() != 0 && TurretGetPlayerTarget() != ActivatorTID())
                 {
                     TargetTID = UniqueTID();
                     TargetOriginalTID = TurretGetPlayerTarget();
@@ -2650,8 +2650,6 @@ function int TurretSensorDistanceComparison(void const *ItemPtr1, void const *It
 
 function void TurretSpawn()
 {
-    int TID = UniqueTID();
-    
     if (GetActorProperty(0, APROP_Health) <= 0) return;
     
     if (Player.Turret.Battery <= 0)
@@ -2682,6 +2680,7 @@ function void TurretSpawn()
         return;
     };
     
+    int TID = UniqueTID();
     const fixed Distance = 80.0;
     fixed X = GetActorX(0) + (80.0 * Cos(GetActorAngle(0)));
     fixed Y = GetActorY(0) + (80.0 * Sin(GetActorAngle(0)));
@@ -2699,7 +2698,7 @@ function void TurretSpawn()
         SpawnForced("DRPGTurretTeleport", X, Y, Z - 32.0, 0, 0);
         
         if (Player.Turret.Health > 0)
-            SetActorProperty(Player.Turret.TID, APROP_Health, Player.Turret.Health);
+            SetActorProperty(TID, APROP_Health, Player.Turret.Health);
         
         TurretAI(TID);
         
@@ -2723,6 +2722,7 @@ function void TurretDespawn()
     PlaySound(Player.Turret.TID, "turret/despawn", CHAN_BODY, 1.0, false, ATTN_NORM);
     SpawnForced("DRPGTurretTeleport", GetActorX(Player.Turret.TID), GetActorY(Player.Turret.TID), GetActorZ(Player.Turret.TID) - 32.0, 0, 0);
     Thing_Remove(Player.Turret.TID);
+    Player.Turret.TID = 0;
 };
 
 // Debugging
