@@ -1621,6 +1621,7 @@ script void TurretAI(int TID)
     fixed TurretSpeed = GetUserCVarFixed(PlayerID, "drpg_turret_movespeed");
     bool NeedsTeleport = false;
     bool HasTarget = false;
+    bool TargetAssignedTID = false;
     bool TargetForced = false;
     bool AnnouncedTarget = false;
     int LosingInterestTime = 0;
@@ -1690,38 +1691,38 @@ script void TurretAI(int TID)
         break;
     };
     
-    HasTarget = TurretCheckTarget();
-    
     // Target handling
+    HasTarget = TurretCheckTarget() && !TurretCheckTargetIsSelf();
+    if (HasTarget)
+    {
+        TargetTID = UniqueTID();
+        TargetOriginalTID = TurretGetTargetTID();
+        TargetAssignedTID = TurretForceTargetTID(TargetTID);
+    }
+    else
+    {
+        TargetTID = 0;
+        TargetOriginalTID = 0;
+    };
+    
     if (HasTarget)
     {
         if ((!TurretCheckTargetSuitable() && !TargetForced) || TurretCheckTargetDead())
         {
-            Thing_ChangeTID(TargetTID, TargetOriginalTID);
             SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
             HasTarget = false;
             TargetForced = false;
-            TargetTID = 0;
         }
         else
         {
-            TargetOriginalTID = GetActorProperty(0, APROP_TargetTID);
-            TargetTID = UniqueTID();
-            
-            TurretForceTargetTID(TargetTID);
-            
             if (!CheckSight(0, TargetTID, CSF_NOFAKEFLOORS) && !TargetForced)
             {
                 LosingInterestTime++;
                 
                 if (LosingInterestTime >= 35 * MaxInterestTime)
                 {
-                    Thing_ChangeTID(TargetTID, TargetOriginalTID);
                     SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
                     HasTarget = false;
-                    TargetForced = false;
-                    TargetTID = 0;
-                    TargetOriginalTID = 0;
                     LosingInterestTime = 0;
                 };
             }
@@ -1736,21 +1737,9 @@ script void TurretAI(int TID)
     };
     
     // Player is ordering us to switch targets
-    if (CurrentCommand == TC_DRAW_FIRE && TurretGetPlayerTarget() != 0 && TurretGetPlayerTarget() != TargetTID && TurretWantsToSwitchToPlayerTarget())
+    if (CurrentCommand == TC_DRAW_FIRE && TurretCheckPlayerTarget() && TurretWantsToSwitchToPlayerTarget())
     {
-        if (HasTarget)
-        {
-            // Release previous target
-            Thing_ChangeTID(TargetTID, TargetOriginalTID);
-            SetPointer(AAPTR_TARGET, 0, AAPTR_NULL);
-            HasTarget = false;
-            TargetTID = 0;
-        };
-        
-        TargetTID = UniqueTID();
-        TargetOriginalTID = TurretGetPlayerTarget();
-        TurretForcePlayerTargetTID(TargetTID);
-        SetPointer(AAPTR_TARGET, TargetTID);
+        TurretSyncWithPlayerTarget();
         HasTarget = true;
         TargetForced = true;
         SetActorState(0, "Targeting");
@@ -1863,21 +1852,17 @@ script void TurretAI(int TID)
             
             if (Weapon != TW_NONE && !(Timer() % 35))
             {
-                if (TurretGetPlayerTarget() != 0 && TurretGetPlayerTarget() != ActivatorTID())
+                if (TurretCheckPlayerTarget())
                 {
-                    TargetTID = UniqueTID();
-                    TargetOriginalTID = TurretGetPlayerTarget();
-                    TurretForcePlayerTargetTID(TargetTID);
-                    SetPointer(AAPTR_TARGET, TargetTID);
+                    TurretSyncWithPlayerTarget();
                     HasTarget = true;
-                    TargetForced = false;
                 }
                 else
                     SetActorState(0, "ScanForEnemies");
             };
         };
     }
-    else
+    else if (TargetAssignedTID)
     {
         // Battle routine - Circle around the target and fire at it, keeping a distance away.
         
@@ -2013,8 +1998,11 @@ script void TurretAI(int TID)
     else if (Cooldown)
         Cooldown = false;
     
-    if (HasTarget)
+    if (TargetAssignedTID)
+    {
         Thing_ChangeTID(TargetTID, TargetOriginalTID);
+        TargetAssignedTID = false;
+    };
     
     /* Aim debugging assist
     if (GetCVar("drpg_debug"))
@@ -2064,6 +2052,19 @@ script bool TurretCheckTarget()
     return SetActivator(0, AAPTR_TARGET);
 };
 
+script bool TurretCheckTargetIsSelf()
+{
+    return IsPointerEqual(AAPTR_TARGET, AAPTR_DEFAULT);
+};
+
+script bool TurretCheckPlayerTarget()
+{
+    if (!SetActivator(0, AAPTR_FRIENDPLAYER))
+        return false;
+    
+    return SetActivator(0, AAPTR_PLAYER_GETTARGET);
+};
+
 script bool TurretCheckTargetSuitable()
 {
     bool Suitable = true;
@@ -2104,19 +2105,47 @@ script void TurretGetAttention(int MonsterTID, int TurretTID)
     SetPointer(AAPTR_TARGET, TurretTID);
 };
 
-script void TurretForceTargetTID(int NewTID)
+script bool TurretForceTargetTID(int NewTID)
 {
-    if (SetActivator(0, AAPTR_TARGET))
+    SetActivator(0, AAPTR_TARGET | AAPTR_NULL);
+    
+    if (ClassifyActor(0) != ACTOR_WORLD)
+    {
         Thing_ChangeTID(0, NewTID);
+        return true;
+    };
+    
+    return false;
 };
 
-script void TurretForcePlayerTargetTID(int NewTID)
+script void TurretSyncWithPlayerTarget()
 {
-    if (!SetActivator(0, AAPTR_FRIENDPLAYER))
-        return;
+    int EnemyOriginalTID = 0;
+    int EnemyTID = 0;
+    int TurretOriginalTID = ActivatorTID();
+    int TurretTID = UniqueTID();
+    Thing_ChangeTID(0, TurretTID);
     
-    if (SetActivator(0, AAPTR_PLAYER_GETTARGET))
-        Thing_ChangeTID(0, NewTID);
+    if (!SetActivator(0, AAPTR_FRIENDPLAYER))
+    {
+        Thing_ChangeTID(TurretTID, TurretOriginalTID);
+        return;
+    };
+    
+    if (SetActivator(0, AAPTR_PLAYER_GETTARGET | AAPTR_NULL) && ClassifyActor(0) != ACTOR_WORLD)
+    {
+        EnemyOriginalTID = ActivatorTID();
+        EnemyTID = UniqueTID();
+        Thing_ChangeTID(0, EnemyTID);
+        
+        SetActivator(TurretTID);
+        SetPointer(AAPTR_TARGET, EnemyTID);
+    };
+    
+    if (EnemyTID != 0)
+        Thing_ChangeTID(EnemyTID, EnemyOriginalTID);
+    
+    Thing_ChangeTID(TurretTID, TurretOriginalTID);
 };
 
 script int TurretGetOwningPlayer()
@@ -2127,12 +2156,9 @@ script int TurretGetOwningPlayer()
     return PlayerNumber();
 };
 
-script int TurretGetPlayerTarget()
+script int TurretGetTargetTID()
 {
-    if (!SetActivator(0, AAPTR_FRIENDPLAYER))
-        return 0;
-    
-    if (SetActivator(0, AAPTR_PLAYER_GETTARGET))
+    if (SetActivator(0, AAPTR_TARGET | AAPTR_NULL) && ClassifyActor(0) != ACTOR_WORLD)
         return ActivatorTID();
     
     return 0;
