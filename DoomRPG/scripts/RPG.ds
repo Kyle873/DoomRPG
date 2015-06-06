@@ -1287,7 +1287,10 @@ acscript void ToggleFocusMode() net
 acscript void FocusMode()
 {
     int PrevEP = Player.EP;
-    int Time = 35;
+    int RegenWindupSpeed = ((35 * 60) - ((35 * 50) * Player.Regeneration / 200));
+    if (RegenWindupSpeed < 35) // Enforce a 1-second wind-up at least
+        RegenWindupSpeed = 35;
+    int RegenDelay = RegenWindupSpeed / 15;
     
     // Return if you're already at max EP
     if (Player.EP >= Player.EPMax) return;
@@ -1302,17 +1305,22 @@ acscript void FocusMode()
         fixed Y = GetActorY(0) + Sin((fixed)Timer() / 64.0) * 32.0;
         fixed Z = GetActorZ(0);
         
+        Player.EPRate = 0;
+        
         PlaySound(0, "misc/epfocus", CHAN_BODY, 0.5, true, ATTN_NORM);
         SpawnForced("DRPGEPFocusAura", X, Y, Z, 0, 0);
         DrawProgressBar("\cnFocusing", Percent);
         
-        if ((Timer() % 35) == 0)
-            Time--;
-        if (Time < 1)
-            Time = 1;
+        if (RegenWindupSpeed > 1)
+            RegenWindupSpeed--;
         
-        if ((Timer() % Time) == 0)
+        if (RegenDelay > 0)
+            RegenDelay--
+        else
+        {
             Player.EP++;
+            RegenDelay = RegenWindupSpeed / 15;
+        };
         
         if (Buttons > 0 || Player.EP >= Player.EPMax)
             Player.Focusing = false;
