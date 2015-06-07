@@ -323,13 +323,19 @@ script void ReduceMonsterCount(bool *WaitLock)
         return;
     };
     
-    if (TotalMonsters * GetCVar("drpg_monster_population") / 100 == TotalMonsters)
+    int DesiredMonsterCount = TotalMonsters;
+    
+    DesiredMonsterCount = DesiredMonsterCount * GetCVar("drpg_monster_population") / 100;
+    if (GetCVar("drpg_monster_limit") > 0 && DesiredMonsterCount > GetCVar("drpg_monster_limit"))
+        DesiredMonsterCount = GetCVar("drpg_monster_limit");
+    
+    if (TotalMonsters == DesiredMonsterCount)
     {
         *WaitLock = false;
         return;
     };
     
-    int MonstersToRemove = TotalMonsters - (TotalMonsters * GetCVar("drpg_monster_population") / 100);
+    int MonstersToRemove = TotalMonsters - DesiredMonsterCount;
     
     if (MonstersToRemove < 0)
     {
@@ -2191,25 +2197,31 @@ script void TeleportCracksEvent()
     };
     
     // Spawn the cracks
-    for (int i = 0; i < CurrentLevel->MonsterPositions.Position - 1; i += 2)
+    bool SpawnedCracks = false;
+    
+    while (!SpawnedCracks)
     {
-        if (Random(0, 3))
-            continue;
-        
-        Position Source = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
-        Position Destination = ((Position *)CurrentLevel->MonsterPositions.Data)[i + 1];
-        int InPortalTID = UniqueTID();
-        if (!Spawn("DRPGTeleportCrackIn", Source.X, Source.Y, Source.Z, InPortalTID, Source.Angle * 256))
-            continue;
-        
-        int OutPortalTID = UniqueTID();
-        if (!Spawn("DRPGTeleportCrackOut", Destination.X, Destination.Y, Destination.Z, OutPortalTID, Destination.Angle * 256))
+        for (int i = 0; i < CurrentLevel->MonsterPositions.Position - 1; i += 2)
         {
-            Thing_Remove(InPortalTID);
-            continue;
+            if (Random(0, 3))
+                continue;
+            
+            Position Source = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+            Position Destination = ((Position *)CurrentLevel->MonsterPositions.Data)[i + 1];
+            int InPortalTID = UniqueTID();
+            if (!Spawn("DRPGTeleportCrackIn", Source.X, Source.Y, Source.Z, InPortalTID, Source.Angle * 256))
+                continue;
+            
+            int OutPortalTID = UniqueTID();
+            if (!Spawn("DRPGTeleportCrackOut", Destination.X, Destination.Y, Destination.Z, OutPortalTID, Destination.Angle * 256))
+            {
+                Thing_Remove(InPortalTID);
+                continue;
+            };
+            
+            SpawnedCracks = true;
+            TeleporterCrack(InPortalTID, OutPortalTID);
         };
-        
-        TeleporterCrack(InPortalTID, OutPortalTID);
     };
     
     // Crack effects
