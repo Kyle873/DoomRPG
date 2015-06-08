@@ -17,7 +17,7 @@ int BulletTimeTimer;
 
 int[MAX_CATEGORIES] SkillCategoryMax =
 {
-    4; 8; 9; 5; 17; 7;
+    4; 8; 9; 6; 17; 7;
 };
 
 AddressSpace MapArray SkillSpace;
@@ -239,6 +239,15 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             "Soul Steal"; 500; 1; SoulSteal;
             {
                 "Kill the target, stealing their health and soul";
+            };
+        };
+        {
+            "Disruption"; 50; 4; Disruption;
+            {
+                "Temporarily disables an enemy's auras";
+                "Temporarily disables an enemy's auras\n\cdAffects Shadows auras";
+                "Temporarily disables enemies' auras\n\cdAffects Shadows auras\nDisrupts all enemies in a small radius";
+                "Temporarily disables enemies' auras\n\cdAffects Shadows auras\nDisrupts all enemies in a large radius";
             };
         };
     };
@@ -1430,6 +1439,71 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
     
     FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
     ActivatorSound("skills/soulsteal", 127);
+    return true;
+};
+
+acscript bool Disruption(SkillLevelInfo *SkillLevel, void *Data)
+{
+    int PlayerNum = PlayerNumber();
+    int UniqueMonsterTID = UniqueTID();
+    int RealMonsterTID;
+    int BeforeHealthAmount;
+    int AfterHealthAmount;
+    bool AllowsXP;
+    
+    if (SkillLevel->CurrentLevel >= 3)
+    {
+        if (SkillLevel->CurrentLevel == 4)
+            GiveInventory("DRPGAreaDisruptionLarge", 1)
+        else
+            GiveInventory("DRPGAreaDisruptionSmall", 1);
+
+        FadeRange(0, 64, 255, 0.5, 0, 64, 255, 0.0, 0.25);
+        ActivatorSound("skills/disruption", 127);
+        
+        return true;
+    };
+    
+    // Move activation to the user's target
+    if (!SetActivatorToTarget(Players(PlayerNum).TID))
+    {
+        SetActivator(Players(PlayerNum).TID);
+        PrintError("You have no target");
+        ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    // Refund - If the target isn't actually a valid monster
+    if (!Stats->Init || !(ClassifyActor(0) & ACTOR_MONSTER))
+    {
+        SetActivator(Players(PlayerNum).TID);
+        PrintError("Target is not a valid enemy");
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    // Refund - If the target can't be disrupted (eg. has no aura)
+    if (!MonsterHasAura(Stats) || (MonsterHasShadowAura(Stats) && SkillLevel->CurrentLevel < 2))
+    {
+        SetActivator(Players(PlayerNum).TID);
+        PrintError("Target cannot be disrupted");
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
+        return false;
+    };
+    
+    SetInventory("DRPGMonsterDisrupted", 35 * 30);
+    
+    // Move activation back to the user
+    SetActivator(Players(PlayerNum).TID);
+    
+    // Reset the temporary TID
+    Thing_ChangeTID(UniqueMonsterTID, RealMonsterTID);
+    
+    FadeRange(0, 64, 255, 0.5, 0, 64, 255, 0.0, 0.25);
+    ActivatorSound("skills/disruption", 127);
     return true;
 };
 
