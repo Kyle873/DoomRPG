@@ -1003,6 +1003,10 @@ script void MonsterStatsHandler()
         StatsChanged = false;
     };
     
+    // Disruption timer
+    if (CheckInventory("DRPGMonsterDisrupted"))
+        TakeInventory("DRPGMonsterDisrupted", 4);
+    
     Delay(4);
     goto Start;
 };
@@ -1065,6 +1069,10 @@ script void MonsterAuraDisplayHandler()
     if (Stats->Target > 0)
         SpawnForced("DRPGAssassinationIcon", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height) + 16.0 + (Sin(Timer() / 64.0) * 8.0), 0, 0);
     
+    // Spawn Disruption Icon
+    if (CheckInventory("DRPGMonsterDisrupted"))
+        SpawnForced("DRPGDisruptionIcon", GetActorX(0), GetActorY(0), GetActorZ(0) + GetActorPropertyFixed(0, APROP_Height) + 16.0 + (Sin(Timer() / 64.0) * 8.0), 0, 0);
+    
     if (ClassifyActor(0) & ACTOR_DEAD)
         return;
     
@@ -1113,8 +1121,11 @@ script void MonsterLevelupHandler()
     if (Stats->Level >= 1000)
         goto Start;
     
+    if (!Stats->Aura.Type[AURA_WHITE].Active || CheckInventory("DRPGMonsterDisrupted"))
+        goto Start;
+    
     // White Aura monsters levelup monsters near them
-    if (Stats->Aura.Type[AURA_WHITE].Active)
+    if (Stats->Aura.Type[AURA_WHITE].Active && !CheckInventory("DRPGMonsterDisrupted"))
         for (int i = 0; i < MAX_PLAYERS; i++) // LOS Check on players
             if (CheckSight(0, Players(i).TID, 0))
             {
@@ -1123,10 +1134,6 @@ script void MonsterLevelupHandler()
                 GiveInventory("DRPGMonsterLevelupGiver", 1);
                 break;
             };
-    
-    // Return here if the White Aura is no longer active
-    if (!Stats->Aura.Type[AURA_WHITE].Active)
-        return;
     
     goto Start;
 };
@@ -1158,7 +1165,7 @@ script void MonsterEPDrainHandler()
     if (!CheckInventory("DRPGMonsterEPDrainHandler"))
         return;
     
-    if (!Stats->Aura.Type[AURA_BLUE].Active)
+    if (!Stats->Aura.Type[AURA_BLUE].Active || CheckInventory("DRPGMonsterDisrupted"))
     {
         Delay(35);
         goto Start;
@@ -1250,7 +1257,7 @@ script void MonsterRegenerationHandler()
     SetActorProperty(0, APROP_Health, GetActorProperty(0, APROP_Health) + RegenAmount);
     Stats->RegenHealth += RegenAmount;
     
-    if (Stats->Aura.Type[AURA_PURPLE].Active)
+    if (Stats->Aura.Type[AURA_PURPLE].Active && !CheckInventory("DRPGMonsterDisrupted"))
         GiveInventory("DRPGMonsterRadiusHealer", 1);
     
     // Prevent going over 100%
@@ -1310,7 +1317,7 @@ script void MonsterDamageRetaliationHandler()
     if (!CheckInventory("DRPGMonsterDamageRetaliationHandler"))
         return;
     
-    if (!Stats->Aura.Type[AURA_RED].Active)
+    if (!Stats->Aura.Type[AURA_RED].Active || CheckInventory("DRPGMonsterDisrupted"))
     {
         Delay(35);
         goto Start;
@@ -1409,7 +1416,7 @@ script void MonsterMoneyDrainHandler()
     if (!CheckInventory("DRPGMonsterMoneyDrainHandler"))
         return;
     
-    if (!Stats->Aura.Type[AURA_YELLOW].Active)
+    if (!Stats->Aura.Type[AURA_YELLOW].Active || CheckInventory("DRPGMonsterDisrupted"))
     {
         Delay(35);
         goto Start;
@@ -1475,7 +1482,7 @@ script void MonsterAmmoDrainHandler()
     if (!CheckInventory("DRPGMonsterAmmoDrainHandler"))
         return;
     
-    if (!Stats->Aura.Type[AURA_DARKBLUE].Active)
+    if (!Stats->Aura.Type[AURA_DARKBLUE].Active || CheckInventory("DRPGMonsterDisrupted"))
     {
         Delay(35);
         goto Start;
@@ -1496,8 +1503,8 @@ script void MonsterAmmoDrainHandler()
             // [KS] We'll give the player 30 seconds of ammo if they were full at stat max.
             int ClipSteal = (int)((fixed)Stats->Capacity / 7.5);
             int ShellSteal = (int)((fixed)Stats->Capacity / 30);
-            int RocketSteal = (int)((fixed)Stats->Capacity / 30);
-            int CellSteal = (int)((fixed)Stats->Capacity / 5);
+            int RocketSteal = (int)((fixed)Stats->Capacity / 60);
+            int CellSteal = (int)((fixed)Stats->Capacity / 20);
             
             if (ClipSteal < 2) ClipSteal = 2;
             if (ShellSteal < 1) ShellSteal = 1;
@@ -1567,7 +1574,7 @@ script void MonsterFellowResurrectionHandler()
     if (!CheckInventory("DRPGMonsterFellowResurrectionHandler"))
         return;
     
-    if (!Stats->Aura.Type[AURA_PINK].Active)
+    if (!Stats->Aura.Type[AURA_PINK].Active || CheckInventory("DRPGMonsterDisrupted"))
     {
         Delay(35);
         goto Start;
@@ -1606,7 +1613,7 @@ script void MonsterEpicVisitTimeHandler()
     if (!CheckInventory("DRPGMonsterEpicVisitTimeHandler"))
         return;
     
-    if (!Stats->Aura.Type[AURA_ORANGE].Active)
+    if (!Stats->Aura.Type[AURA_ORANGE].Active || CheckInventory("DRPGMonsterDisrupted"))
     {
         Delay(35);
         goto Start;
