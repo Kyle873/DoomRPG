@@ -861,6 +861,7 @@ script void MonsterStatsHandler()
     int OldEnergy;
     int OldLuck;
     bool StatsChanged;
+    bool MonsterWasDisrupted = false;
     
     Start:
     
@@ -1005,7 +1006,48 @@ script void MonsterStatsHandler()
     
     // Disruption timer
     if (CheckInventory("DRPGMonsterDisrupted"))
+    {
+        if (!MonsterWasDisrupted)
+        {
+            if (Stats->Aura.Type[AURA_WHITE].Active)
+                GiveInventory("DRPGWhiteAuraRemover", 1);
+            if (Stats->Aura.Type[AURA_RED].Active)
+                GiveInventory("DRPGRedAuraRemover", 1);
+            if (Stats->Aura.Type[AURA_GREEN].Active)
+                GiveInventory("DRPGGreenAuraRemover", 1);
+            if (Stats->Aura.Type[AURA_PINK].Active)
+                GiveInventory("DRPGPinkAuraRemover", 1);
+            if (Stats->Aura.Type[AURA_BLUE].Active)
+                GiveInventory("DRPGBlueAuraRemover", 1);
+            if (Stats->Aura.Type[AURA_ORANGE].Active) 
+                GiveInventory("DRPGOrangeAuraRemover", 1);
+            
+            ActivatorSound("skills/disruption", 127);
+            MonsterWasDisrupted = true;
+        };
+        
         TakeInventory("DRPGMonsterDisrupted", 4);
+    }
+    else
+    {
+        if (MonsterWasDisrupted)
+        {
+            if (Stats->Aura.Type[AURA_WHITE].Active)
+                GiveInventory("DRPGWhiteAuraGiver", 1);
+            if (Stats->Aura.Type[AURA_RED].Active)
+                GiveInventory("DRPGRedAuraGiver", 1);
+            if (Stats->Aura.Type[AURA_GREEN].Active)
+                GiveInventory("DRPGGreenAuraGiver", 1);
+            if (Stats->Aura.Type[AURA_PINK].Active)
+                GiveInventory("DRPGPinkAuraGiver", 1);
+            if (Stats->Aura.Type[AURA_BLUE].Active)
+                GiveInventory("DRPGBlueAuraGiver", 1);
+            if (Stats->Aura.Type[AURA_ORANGE].Active) 
+                GiveInventory("DRPGOrangeAuraGiver", 1);
+            
+            MonsterWasDisrupted = false;
+        };
+    };
     
     Delay(4);
     goto Start;
