@@ -1219,30 +1219,38 @@ function char *StringToCharP(str Source)
 // ----------------------------------------------------------------------------
 
 /* Table of CRCs of all 8-bit messages. */
-static unsigned long[512] crc_table;
+unsigned long[32768] crc_table;
 
 /* Flag: has the table been computed? Initially false. */
-static bool crc_table_computed = false;
+bool crc_table_computed = false;
 
 /* Make the table for a fast CRC. */
 script void make_crc_table()
 {
     unsigned long c;
-    int n, k;
+    int n;
 
-    for (n = 0; n < 512; n++)
+    for (n = 0; n < 64; n++)
     {
-        c = (unsigned long) n;
-        for (k = 0; k < 8; k++)
+        make_crc_piece(512 * n);
+    };
+    crc_table_computed = false;
+};
+
+script void make_crc_piece(int start)
+{
+    for (int n = 0; n < 512; n++)
+    {
+        unsigned long c = (unsigned long) start + n;
+        for (int k = 0; k < 8; k++)
         {
             if (c & 1)
                 c = 0xEDB88320L ^ (c >> 1)
             else
                 c = c >> 1;
         };
-        crc_table[n] = c;
+        crc_table[start + n] = c;
     };
-    crc_table_computed = false;
 };
 
 /* Update a running CRC with the bytes buf[0..len-1]--the CRC
@@ -1254,14 +1262,22 @@ script unsigned long update_crc(unsigned long crclx, char const *buf, int len)
 {
     unsigned long c = crclx;
     int n;
-    if (len > 512) len = 512;
+    if (len > 32768) len = 32768;
 
     if (!crc_table_computed)
     make_crc_table();
 
-    for (n = 0; n < len; n++)
+    for (n = 0; n < 64; n++)
+        c = do_crc_piece(buf, c, 512 * n, len);
+    
+    return c;
+};
+
+script unsigned long do_crc_piece(char const *buf, unsigned long c, int start, int stop)
+{
+    for (int n = 0; n < 512 && start + n < stop; n++)
     {
-        c = crc_table[(c ^ buf[n]) & 0xFF] ^ (c >> 8);
+        c = crc_table[(c ^ buf[start + n]) & 0xFF] ^ (c >> 8);
     };
     
     return c;
