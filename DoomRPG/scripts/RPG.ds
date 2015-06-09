@@ -1287,10 +1287,11 @@ acscript void ToggleFocusMode() net
 acscript void FocusMode()
 {
     int PrevEP = Player.EP;
-    int RegenWindupSpeed = ((35 * 60) - ((35 * 50) * Player.Regeneration / 200));
+    int RegenWindupSpeed = ((35 * 40) - ((35 * 35) * Player.Regeneration / 200));
     if (RegenWindupSpeed < 35) // Enforce a 1-second wind-up at least
         RegenWindupSpeed = 35;
-    int RegenDelay = RegenWindupSpeed / 15;
+    int StartWindupSpeed = RegenWindupSpeed;
+    int RegenDelay = (RegenWindupSpeed * (Player.EPTime / 4)) / StartWindupSpeed;
     
     // Return if you're already at max EP
     if (Player.EP >= Player.EPMax) return;
@@ -1300,7 +1301,7 @@ acscript void FocusMode()
     while (Player.Focusing)
     {
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int Percent = (int)(((fixed)(Player.EP - PrevEP) / (fixed)(Player.EPMax - PrevEP)) * 100.0);
+        int Percent = 100 - (RegenWindupSpeed * 100 / StartWindupSpeed);
         fixed X = GetActorX(0) + Cos((fixed)Timer() / 64.0) * 32.0;
         fixed Y = GetActorY(0) + Sin((fixed)Timer() / 64.0) * 32.0;
         fixed Z = GetActorZ(0);
@@ -1318,8 +1319,8 @@ acscript void FocusMode()
             RegenDelay--
         else
         {
-            Player.EP++;
-            RegenDelay = RegenWindupSpeed / 15;
+            Player.EP += Player.EPAmount;
+            RegenDelay = (RegenWindupSpeed * (Player.EPTime / 4)) / StartWindupSpeed;
         };
         
         if (Buttons > 0 || Player.EP >= Player.EPMax)
