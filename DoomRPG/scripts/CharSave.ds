@@ -27,6 +27,7 @@
         - Both Level and Rank Level are stored in 1 byte each
     Stats
         - Each is stored in 1 byte since they will never go above 200 by normal means
+          [KS] They can be negative but we can't handle that so just ignore it in that case
     Skills
         - Each skill level is stored in 1 byte
     Skill Wheel
@@ -664,6 +665,10 @@ script void PopulateCharData(CharSaveInfo *Info)
         (Player.Stim.Active ? Player.Stim.PrevStats[STAT_LUCK] : Player.Luck);
     };
     
+    for (int i = 0; i < STAT_MAX; i++)
+        if (Info->Stats[i] < 0)
+            Info->Stats[i] = 0;
+
     // Skills
     for (int i = 0; i < MAX_CATEGORIES; i++)
         for (int j = 0; j < MAX_SKILLS; j++)
@@ -733,11 +738,6 @@ script void PopulateCharData(CharSaveInfo *Info)
     for (int i = 0; i < DRLA_MAX_TOKENS; i++)
         if (CheckInventory(DRLATokens[i]))
             Info->DRLATokens[i] = true;
-    
-    /* Calculate Checksum - TODO: Broken D:
-    Info->Checksum = CreateChecksum(Info);
-    Info->Checksum = CalculateChecksum(Info->Checksum);
-    */
 };
 
 script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
@@ -867,20 +867,22 @@ script void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     
     // Verify Checksum
     Info->Checksum = HexToInteger(String + StringPos, 8);
-    StringPos += 8;
+    //StringPos += 8;
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-Saved CRC is %d (%X)\n", Info->Checksum, Info->Checksum);
+    
+    auto unsigned int Checksum = (unsigned int)(crc(String, StringPos));
+    
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-CRC for recalled character is %d (%X)\n", Checksum, Checksum);
     
     Info->Version = Version;
-    
-    /* Calculate Checksum - TODO: Broken
-    auto int Checksum = CreateChecksum(Info);
-    Checksum = CalculateChecksum(Checksum);
     
     if (Checksum != Info->Checksum)
     {
         Info->Version = -3;
         return;
     };
-    */
 };
 
 script char const *MakeSaveString(CharSaveInfo *Info)
@@ -1066,6 +1068,10 @@ script char const *MakeSaveString(CharSaveInfo *Info)
         pos += 1;
     };
     
+    Info->Checksum = (unsigned int)(crc(SaveString, pos));
+    if (GetCVar("drpg_debug"))
+        Log("\cdDEBUG: \c-CRC for save character is %d (%X)\n", Info->Checksum, Info->Checksum);
+    
     // Checksum
     SaveString[pos + 7] = ToHexChar(Info->Checksum);
     SaveString[pos + 6] = ToHexChar(Info->Checksum >> 4);
@@ -1209,69 +1215,80 @@ function char *StringToCharP(str Source)
     return Destination;
 };
 
-function int CreateChecksum(CharSaveInfo *Info)
+// CRC ALGORITHM
+// ----------------------------------------------------------------------------
+
+/* Table of CRCs of all 8-bit messages. */
+unsigned long[32768] crc_table;
+
+/* Flag: has the table been computed? Initially false. */
+bool crc_table_computed = false;
+
+/* Make the table for a fast CRC. */
+script void make_crc_table()
 {
-    auto int Checksum = 0;
-    
-    Checksum ^= Info->Version;
-    Checksum ^= Info->CompatMode;
-    
-    Checksum ^= Info->Level;
-    Checksum ^= Info->RankLevel;
-    
-    for (int i = 0; i < STAT_MAX; i++)
-        Checksum ^= Info->Stats[i];
-    
-    for (int i = 0; i < MAX_CATEGORIES; i++)
-        for (int j = 0; j < MAX_SKILLS; j++)
-            Checksum ^= Info->Skills[i][j];
-    
-    for (int i = 0; i < MAX_SKILLKEYS; i++)
+    unsigned long c;
+    int n;
+
+    for (n = 0; n < 64; n++)
     {
-        Checksum ^= Info->SkillWheel[i][0];
-        Checksum ^= Info->SkillWheel[i][1];
+        make_crc_piece(512 * n);
     };
-    
-    for (int i = 0; i < AUG_MAX; i++)
-        Checksum ^= Info->Augs[i];
-    
-    for (int i = 0; i < STIM_MAX; i++)
-        Checksum ^= Info->Stims[i];
-    
-    for (int i = 0; i < TU_MAX; i++)
-        Checksum ^= Info->TurretUpgrades[i];
-    
-    Checksum ^= Info->Credits;
-    Checksum ^= Info->Modules;
-    Checksum ^= Info->Battery;
-    Checksum ^= Info->Toxicity;
-    Checksum ^= Info->PayBonus;
-    Checksum ^= Info->ArenaWave;
-    
-    for (int i = 0; i < ITEM_CATEGORIES; i++)
-        for (int j = 0; j < ITEM_MAX; j++)
-        {
-            Checksum ^= Info->Locker[i][j] + (i * 256) + j;
-            
-            if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
-                for (int k = 0; k < DRLA_MODPACK_SIZE; k++)
-                    Checksum ^= Info->WeaponMods[j][k] + j;
-        };
-    
-    for (int i = 0; i < ITEM_CATEGORIES; i++)
-        for (int j = 0; j < ITEM_MAX; j++)
-            Checksum ^= Info->ItemAutoMode[i][j] << (j % 32);
-    
-    for (int i = 0; i < DRLA_MAX_TOKENS; i++)
-        Checksum ^= Info->DRLATokens[i];
-    
-    return Checksum;
+    crc_table_computed = false;
 };
 
-function int CalculateChecksum(int Value)
+script void make_crc_piece(int start)
 {
-    if (GetCVar("drpg_debug"))
-        Log("\cdDEBUG: \c-Passed Checksum is %d, Calculated Checksum is %d (%X)\n", Value, (Value * 8) / 2, (Value * 8) / 2);
-    
-    return (Value * 8) / 2;
+    for (int n = 0; n < 512; n++)
+    {
+        unsigned long c = (unsigned long) start + n;
+        for (int k = 0; k < 8; k++)
+        {
+            if (c & 1)
+                c = 0xEDB88320L ^ (c >> 1)
+            else
+                c = c >> 1;
+        };
+        crc_table[start + n] = c;
+    };
 };
+
+/* Update a running CRC with the bytes buf[0..len-1]--the CRC
+should be initialized to all 1's, and the transmitted value
+is the 1's complement of the final running CRC (see the
+crc() routine below)). */
+
+script unsigned long update_crc(unsigned long crclx, char const *buf, int len)
+{
+    unsigned long c = crclx;
+    int n;
+    if (len > 32768) len = 32768;
+
+    if (!crc_table_computed)
+    make_crc_table();
+
+    for (n = 0; n < 64; n++)
+        c = do_crc_piece(buf, c, 512 * n, len);
+    
+    return c;
+};
+
+script unsigned long do_crc_piece(char const *buf, unsigned long c, int start, int stop)
+{
+    for (int n = 0; n < 512 && start + n < stop; n++)
+    {
+        c = crc_table[(c ^ buf[start + n]) & 0xFF] ^ (c >> 8);
+    };
+    
+    return c;
+};
+
+/* Return the CRC of the bytes buf[0..len-1]. */
+script unsigned long crc(char const *buf, int len)
+{
+    unsigned long i = update_crc(0xFFFFFFFFL, buf, len) ^ 0xFFFFFFFFL;
+    crc_table_computed = false;
+    return i;
+};
+
+// ----------------------------------------------------------------------------

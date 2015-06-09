@@ -1332,7 +1332,15 @@ acscript void MissionBBS()
     
     // if you're already in a menu, terminate
     if (Player.InMenu || Player.InShop || Player.OutpostMenu == OMENU_BBS) return;
-
+    
+    // You need at least 1 Rank to get a mission
+    if (Player.RankLevel == 0)
+    {
+        PrintError("You cannot accept any missions until you reach the first rank");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
     // Make sure the Rewards List is finished Processing
     if (!RewardsInit || !MissionInit)
     {
@@ -1399,8 +1407,13 @@ acscript void MissionBBS()
             if (Index > MAX_MISSIONS - 1)
             {
                 Index = 0;
-                if (Difficulty < MAX_DIFFICULTIES - 1)
-                    Difficulty++
+                if (Difficulty < Player.RankLevel - 1)
+                {
+                    if (Difficulty >= MAX_DIFFICULTIES - 1)
+                        Difficulty = MAX_DIFFICULTIES - 1
+                    else
+                        Difficulty++;
+                }
                 else
                     Index = MAX_MISSIONS - 1;
             };
@@ -1423,8 +1436,13 @@ acscript void MissionBBS()
             if (Index > MAX_MISSIONS - 1)
             {
                 Index = 0;
-                if (Difficulty < MAX_DIFFICULTIES - 1)
-                    Difficulty++
+                if (Difficulty < Player.RankLevel - 1)
+                {
+                    if (Difficulty >= MAX_DIFFICULTIES - 1)
+                        Difficulty = MAX_DIFFICULTIES - 1
+                    else
+                        Difficulty++;
+                }
                 else
                     Index = MAX_MISSIONS - 1;
             };
