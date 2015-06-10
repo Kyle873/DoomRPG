@@ -238,7 +238,7 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
         {
             "Soul Steal"; 500; 1; SoulSteal;
             {
-                "Kill the target, stealing their health and soul";
+                "Kill a target below 25% health, stealing their health and soul";
             };
         };
         {
@@ -1326,25 +1326,40 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
         "DRPGSoulYellow";
     };
     
+    static str[SOUL_MAX] SoulTypesStat =
+    {
+        "DRPGSoulRed";
+        "DRPGSoulGreen";
+        "DRPGSoulPink";
+        "DRPGSoulBlue";
+        "DRPGSoulPurple";
+        "DRPGSoulOrange";
+        "DRPGSoulDarkBlue";
+        "DRPGSoulYellow";
+    };
+    
     int PlayerNum = PlayerNumber();
     int UniqueMonsterTID = UniqueTID();
     int RealMonsterTID;
-    int BeforeHealthAmount;
-    int AfterHealthAmount;
-    bool AllowsXP;
-    
-    // Move activation to the user's target
-    SetActivatorToTargetExtended(Players(PlayerNum).TID);
-    
-    // Pointer
-    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
     
     // Refund - If the Player has no target
-    if (ActivatorTID() == Players(PlayerNum).TID)
+    if (!SetActivatorToTargetExtended(Players(PlayerNum).TID))
     {
         SetActivator(Players(PlayerNum).TID);
         PrintError("You have no target");
         ActivatorSound("menu/error", 127);
+        return false;
+    };
+    
+    // Pointer
+    MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
+    
+    // Refund - If the target is too far away
+    if (Distance(0, Players(PlayerNum).TID) > 1024.0)
+    {
+        SetActivator(Players(PlayerNum).TID);
+        PrintError("Target is too far away");
+        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
     };
     
@@ -1366,8 +1381,8 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
         return false;
     };
     
-    // Refund - If the target is not weak enough (Below 10% Health)
-    if (CalcPercent(GetActorProperty(0, APROP_Health), Stats->HealthMax) > 10)
+    // Refund - If the target is not weak enough (Below 25% Health)
+    if (CalcPercent(GetActorProperty(0, APROP_Health), Stats->HealthMax) > 25)
     {
         SetActivator(Players(PlayerNum).TID);
         PrintError("Target is not weak enough");
@@ -1375,64 +1390,35 @@ acscript bool SoulSteal(SkillLevelInfo *SkillLevel, void *Data)
         return false;
     };
     
-    // Leech Amount
-    int LeechAmount = (int)((fixed)Stats->HealthMax * ((fixed)SkillLevel->CurrentLevel / 10.0));
-    if (LeechAmount < 1)
-        LeechAmount = 1;
-    
     // Don't gain XP from this
-    AllowsXP = !(Stats->Flags & MF_NOXP);
-    if (AllowsXP)
-        Stats->Flags |= MF_NOXP;
+    Stats->Flags |= MF_NOXP;
     
-    // Temporary changing of TID to handle giving XP properly
+    // Temporary changing of TID to handle missions properly
     RealMonsterTID = ActivatorTID();
     Thing_ChangeTID(0, UniqueMonsterTID);
     
-    BeforeHealthAmount = GetActorProperty(0, APROP_Health);
+    int LeechAmount = GetActorProperty(0, APROP_Health);
     
-    // Damage Enemy
+    // Kill it
     SetActivator(Players(PlayerNum).TID);
-    SetActorProperty(UniqueMonsterTID, APROP_Health, GetActorProperty(UniqueMonsterTID, APROP_Health) - LeechAmount);
+    SetActorProperty(UniqueMonsterTID, APROP_Health, 0);
     SetActivator(UniqueMonsterTID);
-    
-    AfterHealthAmount = GetActorProperty(0, APROP_Health);
-    if (AfterHealthAmount < 0)
-        AfterHealthAmount = 0;
-    
-    LeechAmount = BeforeHealthAmount - AfterHealthAmount; // Only heal based on how much we *actually* took
-    
-    // Red Aura retaliates! (if it isn't dead)
-    SetInventory("DRPGMonsterEPAttacked", 1);
-    
+
     // Drop the Soul
-    if (GetActorProperty(0, APROP_Health) <= 0)
+    if (MonsterHasAura(Stats))
     {
-        if (MonsterHasAura(Stats))
-        {
-            for (int i = 0; i < AURA_MAX; i++)
-                if (Stats->Aura.Type[i].Active)
-                    DropMonsterItem(PlayerNum, 0, SoulTypes[i], 256);
-        }
-        else
-            DropMonsterItem(PlayerNum, 0, SoulTypes[Random(0, SOUL_MAX - 1)], 256);
+        for (int i = 0; i < AURA_MAX; i++)
+            if (Stats->Aura.Type[i].Active)
+                DropMonsterItem(PlayerNum, 0, SoulTypes[i], 256);
     }
-    else if (AllowsXP) // Stats->Flags &= ~MF_NOXP; // TODO: Notify DavidPH that this doesn't work
-        Stats->Flags &= ~0x02;
+    else
+        DropMonsterItem(PlayerNum, 0, SoulTypesStat[BestStat(Stats)], 256);
     
     // Move activation back to the user
     SetActivator(Players(PlayerNum).TID);
     
     // Reset the temporary TID
     Thing_ChangeTID(UniqueMonsterTID, RealMonsterTID);
-    
-    // Late Refund - If we did no damage to the target at all
-    if (!LeechAmount)
-    {
-        PrintError("No damage was dealt to the target");
-        ThingSound(Players(PlayerNum).TID, "menu/error", 127);
-        return false;
-    };
     
     // Heal the user
     AddHealthDirect(LeechAmount, 100);
