@@ -763,6 +763,50 @@ function int FindPlayerID(int TID)
     return -1;
 };
 
+function bool SetActivatorToTargetExtended(int TID, int NumCycles)
+{
+    if (NumCycles == 0) NumCycles = 31;
+    fixed OriginX = GetActorX(TID);
+    fixed OriginY = GetActorY(TID);
+    fixed OriginZ = GetActorZ(TID);
+    fixed OriginAngle = GetActorAngle(TID);
+    fixed OriginPitch = GetActorPitch(TID);
+    bool GotTarget = false;
+    int SecondaryCheckerTID = UniqueTID();
+    
+    if (SetActivatorToTarget(TID))
+        return true;
+    
+    for (int i = 1; i < NumCycles; i++)
+    {
+        fixed CheckDistance = i * 1024.0;
+        fixed NewX = OriginX + (CheckDistance * Cos(OriginAngle) * Cos(-OriginPitch));
+        fixed NewY = OriginY + (CheckDistance * Sin(OriginAngle) * Cos(-OriginPitch));
+        fixed NewZ = OriginZ + (CheckDistance * Sin(-OriginPitch));
+        
+        if (!Spawn("MapSpot", NewX, NewY, NewZ, SecondaryCheckerTID, 0))
+        {
+            break;
+        };
+        
+        SetActorAngle(SecondaryCheckerTID, OriginAngle);
+        SetActorPitch(SecondaryCheckerTID, OriginPitch);
+        
+        if (SetActivator(SecondaryCheckerTID, AAPTR_GET_LINETARGET) && CheckSight(TID, 0, 0))
+        {
+            GotTarget = true;
+            Thing_Remove(SecondaryCheckerTID);
+            break;
+        }
+        else
+            SetActivator(TID);
+        
+        Thing_Remove(SecondaryCheckerTID);
+    };
+    
+    return GotTarget;
+};
+
 function bool IsTimeFrozen()
 {
     for (int i = 0; i < MAX_PLAYERS; i++)
