@@ -242,10 +242,11 @@ SkillSpace Skill[MAX_CATEGORIES][MAX_SKILLS] SkillData =
             };
         };
         {
-            "Disruption"; 50; 4; Disruption;
+            "Disruption"; 50; 5; Disruption;
             {
                 "Temporarily disables an enemy's auras";
                 "Temporarily disables an enemy's auras\n\cdAffects Shadows auras";
+                "Temporarily disables an enemy's auras\n\cdAffects Shadows auras\nTargeted enemy drops stolen items";
                 "Temporarily disables enemies' auras\n\cdAffects Shadows auras\nDisrupts all enemies in a small radius";
                 "Temporarily disables enemies' auras\n\cdAffects Shadows auras\nDisrupts all enemies in a large radius";
             };
@@ -1437,9 +1438,9 @@ acscript bool Disruption(SkillLevelInfo *SkillLevel, void *Data)
     int AfterHealthAmount;
     bool AllowsXP;
     
-    if (SkillLevel->CurrentLevel >= 3)
+    if (SkillLevel->CurrentLevel >= 4)
     {
-        if (SkillLevel->CurrentLevel == 4)
+        if (SkillLevel->CurrentLevel == 5)
             GiveInventory("DRPGAreaDisruptionLarge", 1)
         else
             GiveInventory("DRPGAreaDisruptionSmall", 1);
@@ -1478,6 +1479,47 @@ acscript bool Disruption(SkillLevelInfo *SkillLevel, void *Data)
         PrintError("Target cannot be disrupted");
         ThingSound(Players(PlayerNum).TID, "menu/error", 127);
         return false;
+    };
+    
+    if (SkillLevel->CurrentLevel == 3)
+    {
+        // Drop stolen ammo
+        if (Stats->Aura.Type[AURA_DARKBLUE].Active)
+        {
+            int Count = 0;
+            while (CheckInventory("Clip") >= 10)
+            {
+                DropMonsterItem(PlayerNum, 0, "DRPGStolenClip", 256);
+                TakeInventory("Clip", 10);
+                if ((Count++ % 1000) == 0) Delay(1);
+            };
+            while (CheckInventory("Shell") >= 4)
+            {
+                DropMonsterItem(PlayerNum, 0, "DRPGStolenShell", 256);
+                TakeInventory("Shell", 4);
+                if ((Count++ % 1000) == 0) Delay(1);
+            };
+            while (CheckInventory("RocketAmmo") >= 1)
+            {
+                DropMonsterItem(PlayerNum, 0, "DRPGStolenRocketAmmo", 256);
+                TakeInventory("RocketAmmo", 1);
+                if ((Count++ % 1000) == 0) Delay(1);
+            };
+            while (CheckInventory("Cell") >= 20)
+            {
+                DropMonsterItem(PlayerNum, 0, "DRPGStolenCell", 256);
+                TakeInventory("Cell", 20);
+                if ((Count++ % 1000) == 0) Delay(1);
+            };
+        };
+        
+        // Drop stolen credits
+        int StolenCredits = CheckInventory("DRPGCredits") - Stats->Capacity;
+        if (Stats->Aura.Type[AURA_YELLOW].Active && StolenCredits)
+        {
+            DropMoney(PlayerNum, 0, StolenCredits);
+            TakeInventory("DRPGCredits", StolenCredits);
+        };
     };
     
     SetInventory("DRPGMonsterDisrupted", 35 * 30);
