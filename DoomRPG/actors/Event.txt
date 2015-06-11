@@ -867,3 +867,244 @@ ACTOR DRPGTeleportCrackOut
         Loop
     }
 }
+
+// Map Event - 12 Hours 'til Doomsday
+// --------------------------------------------------
+
+Actor DRPGDoomsdayDelayedExplosion
+{
+    Radius 4
+    Height 8
+    Speed 20
+    Damage 0
+    Projectile
+    DamageType "Fire"
+    RenderStyle Add
+    
+    -NoGravity
+    -NoBlockmap
+    -Randomize
+    +SkyExplode
+    +ThruActors
+    
+    States
+    {
+    Spawn:
+        TNT1 A 1
+        Wait
+    Death:
+        TNT1 A 0 A_NoGravity
+        TNT1 A 0 A_SetTics(Random(70,175))
+        TNT1 A 0 A_PlaySound("drpgmarines/largeexp")
+        TNT1 A 0 A_Quake (1, 8, 0, 1024, "")
+        TNT1 A 0 A_Quake (6, 8, 0, 512, "")
+        MEXP A 3 Bright A_Explode
+        MEXP BCDEF 3 Bright
+        Stop
+    }
+}
+
+Actor DRPGDoomsdayMortarBlast
+{
+    Radius 4
+    Height 8
+    
+    +NoInteraction
+    
+    States
+    {
+    Spawn:
+        TNT1 AAAAAAAAAAAAAAAA 0 NoDelay A_CustomMissile("DRPGDoomsdayDelayedExplosion", 0, 0, FRandom(0, 360), CMF_AIMDIRECTION, FRandom(15, 90))
+        Stop
+    }
+}
+
+Actor DRPGDoomsdayFireBloodRainSpawner
+{
+    Radius 4
+    Height 8
+    
+    +NoInteraction
+    
+    States
+    {
+    Spawn:
+        TNT1 AAAAAAAA 0 NoDelay A_SpawnItemEx("DRPGDoomsdayFireRainCheck", Random(-2048,2048), Random(-2048,2048), 0, 2, 2, -2, 0, SXF_NOCHECKPOSITION, 128)
+        TNT1 AAAAAAAA 0 A_SpawnItemEx("DRPGDoomsdayBloodRainCheck", Random(-2048,2048), Random(-2048,2048), 0, 4, 4, -2, 0, SXF_NOCHECKPOSITION, 128)
+        Stop
+    }
+}
+
+Actor DRPGDoomsdayBloodRainCheck
+{
+    Radius 4
+    Height 8
+    
+    +NoInteraction
+    
+    States
+    {
+    Spawn:
+        TNT1 A 1
+        TNT1 A 0 A_JumpIf(!CallACS("CheckActorSky"), "Remove")
+        TNT1 A 0 A_CheckSight("Remove")
+        TNT1 A 0 A_SpawnItemEx("DRPGDoomsdayBloodRain", 0, 0, CeilingZ - Z - 10, 2, 2, -12, 0, SXF_NOCHECKPOSITION)
+        Stop
+    Remove:
+        TNT1 A 0
+        Stop
+    }
+}
+
+actor DRPGDoomsdayBloodRain
+{
+    Scale 0.75
+    Radius 4
+    Height 8
+    Mass 1
+    
+    +Corpse
+    +NoGravity
+    +NotOnAutomap
+    +NoTeleport
+    +NoBlockmap
+    +MoveWithSector
+    
+    states
+    {
+    Spawn:
+        FBLD A 0 A_SpawnItemEx("DRPGDoomsdayBloodRainTrail", 0, 0, 0, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION)
+        FBLD A 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD A 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD A 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD A 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD B 0 A_SpawnItemEx("DRPGDoomsdayBloodRainTrail", 0, 0, 0, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION)
+        FBLD B 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD B 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD B 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD B 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD C 0 A_SpawnItemEx("DRPGDoomsdayBloodRainTrail", 0, 0, 0, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION)
+        FBLD C 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD C 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD C 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD C 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD D 0 A_SpawnItemEx("DRPGDoomsdayBloodRainTrail", 0, 0, 0, 0, 0, 0, 0, SXF_TRANSFERTRANSLATION)
+        FBLD D 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD D 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD D 1 A_JumpIf(waterlevel > 1, "Remove")
+        FBLD D 1 A_JumpIf(waterlevel > 1, "Remove")
+        loop
+    Crash:
+        FBLD A 0 A_Gravity
+        FBLD A 0 A_PlaySound("gibbage/blood",0)
+        FBLD A 0 A_Jump(64,4)
+        FBLD A 0 A_Jump(128,4)
+        FBLD A 0 A_Jump(192,4)
+        FBLD A 0 A_Jump(255,4)
+        BSPT A 175
+        Goto FadeOutA
+        BSPT B 175
+        Goto FadeOutB
+        BSPT C 175
+        Goto FadeOutC
+        BSPT D 175
+        Goto FadeOutD
+    FadeOutA:
+        BSPT A 1 A_Fadeout(0.025)
+        loop
+    FadeOutB:
+        BSPT B 1 A_Fadeout(0.025)
+        loop
+    FadeOutC:
+        BSPT C 1 A_Fadeout(0.025)
+        loop
+    FadeOutD:
+        BSPT D 1 A_Fadeout(0.025)
+        loop
+    Remove:
+        TNT1 A 0 
+        stop
+    }
+}
+
+actor DRPGDoomsdayBloodRainTrail
+{
+    Scale 0.70
+    Mass 1
+    
+    +NotOnAutomap
+    +LowGravity
+    +NoTeleport
+    +NoBlockmap
+    
+    states
+    {
+    Spawn:
+        BTRL A 4 A_JumpIf(waterlevel > 1, "Remove")
+        BTRL B 4 A_JumpIf(waterlevel > 1, "Remove")
+        BTRL C 4 A_JumpIf(waterlevel > 1, "Remove")
+        BTRL D 4 A_JumpIf(waterlevel > 1, "Remove")
+        stop
+    Remove:
+        TNT1 A 0 
+        stop
+    }
+}
+
+Actor DRPGDoomsdayFireRainCheck
+{
+    Radius 4
+    Height 8
+    
+    +NoInteraction
+    
+    States
+    {
+    Spawn:
+        TNT1 A 1
+        TNT1 A 0 A_JumpIf(!CallACS("CheckActorSky"), "Remove")
+        TNT1 A 0 A_CheckSight("Remove")
+        TNT1 A 0 A_SpawnItemEx("DRPGDoomsdayFireRain", 0, 0, CeilingZ - Z - 10, 2, 2, -4, 0, SXF_NOCHECKPOSITION)
+        Stop
+    Remove:
+        TNT1 A 0
+        Stop
+    }
+}
+
+actor DRPGDoomsdayFireRain
+{
+    RenderStyle Add
+    Scale 0.5
+    Radius 4
+    Height 8
+    Mass 1
+    
+    Projectile
+    +NotOnAutomap
+    
+    states
+    {
+    Spawn:
+        BRBA A 1 Bright A_SpawnItemEx("DRPGDoomsdayFireRainTrail", FRandom(-4,4), FRandom(-4,4), FRandom(-4,4), 0, 0, 0, 0, SXF_TRANSFERTRANSLATION)
+        loop
+    Death:
+        BRBA ABCDEFGHIJ 2 Bright
+        stop
+    }
+}
+
+actor DRPGDoomsdayFireRainTrail
+{
+    RenderStyle Add
+    Scale 0.25
+    
+    +NoInteraction
+    
+    states
+    {
+    Spawn:
+        BRBA ABCDEFGHIJ 2 Bright
+        stop
+    }
+}
