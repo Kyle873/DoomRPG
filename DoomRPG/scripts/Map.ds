@@ -770,7 +770,7 @@ acscript void MapExit(bool Secret) @ MAP_EXIT_SCRIPTNUM
         Delay(35 * 5);
     };
     
-    if (CurrentLevel->Event == MAPEVENT_TELEPORTCRACKS || CurrentLevel->Event == MAPEVENT_DRLA_FEEDINGFRENZY || CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
+    if (CurrentLevel->Event == MAPEVENT_TELEPORTCRACKS || CurrentLevel->Event == MAPEVENT_DOOMSDAY || CurrentLevel->Event == MAPEVENT_DRLA_FEEDINGFRENZY || CurrentLevel->Event == MAPEVENT_SKILL_HELL || CurrentLevel->Event == MAPEVENT_SKILL_ARMAGEDDON)
         CurrentLevel->EventCompleted = true; // These don't actually end until you leave the map normally
     
     CurrentLevel->Completed = true; // We finished the map
@@ -935,6 +935,11 @@ function bool CheckMapEvent(int Event)
                 return false;
             return true;
         
+        case MAPEVENT_DOOMSDAY:
+            if (AveragePlayerLevel() < 20 || Random(0, 3))
+                return false;
+            return true;
+        
         case MAPEVENT_DRLA_FEEDINGFRENZY:
             if (CompatMode != COMPAT_DRLA || AveragePlayerLevel() < 20)
                 return false;
@@ -1037,6 +1042,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
         "Hell Unleashed";
         "Harmonized Destruction";
         "Cracks in the Veil";
+        "12 Hours 'til Doomsday";
         
         "Feeding Frenzy";
         "Whispers of Darkness";
@@ -1260,7 +1266,7 @@ script void SetupMapEvent()
             break;
         
         case MAPEVENT_NUCLEARBOMB:
-            // Thermonuclear Bomb: A Thermonuclear Bomb spawns next to you on map start. You have PAR * 3 to escape before it explodes.
+            // Thermonuclear Bomb: A Thermonuclear Bomb spawns next to you on map start. You have PAR * 2 to escape before it explodes.
             ThermonuclearBombEvent();
             break;
         
@@ -1297,6 +1303,11 @@ script void SetupMapEvent()
         case MAPEVENT_TELEPORTCRACKS:
             // Cracks in the Veil: Portals litter the level, slowly ripping it apart spatially.
             TeleportCracksEvent();
+            break;
+        
+        case MAPEVENT_DOOMSDAY:
+            // 12 Hours 'til Doomsday: You have PAR * 5 until doomsday.
+            DoomsdayEvent();
             break;
         
         // DRLA Events
@@ -2313,6 +2324,111 @@ script void TeleporterCrack(int Source, int Destination)
     
     Delay(4);
     goto Start;
+};
+
+// Event - 12 Hours 'til Doomsday ---------------------------------------------
+
+script void DoomsdayEvent()
+{
+    ChangeSky("FIRESK00", "-");
+    
+    for (int i = 0; i <= SHORT_MAX; i++)
+        Sector_SetColor(i, 255, 128, 64, 0);
+    
+    for (int i = 0; i < MonsterID; i++)
+    {
+        if (!Monsters[i].Init || Random(0, 3))
+            continue;
+        
+        Monsters[i].Aura.Type[AURA_RED].Active = true;
+        
+        Monsters[i].NeedReinit = true;
+    };
+    
+    // Calculate Doomsday time
+    CurrentLevel->DoomTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 5 : GetCVar("drpg_default_par_seconds") * 5) * 35;
+    
+    SetMusic("");
+    
+    Delay(35);
+    
+    // Warning message
+    SetHudSize(640, 480, false);
+    SetFont("BIGFONT");
+    HudMessageBold("\cgThe smell of a massacre...\n\n\ciTime until Doomsday: %s\n",
+                   FormatTime(CurrentLevel->DoomTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
+    SetHudSize(0, 0, false);
+    
+    Delay(35 * 4);
+    
+    SetMusic("Doomsday");
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        
+        DoomsdayFirebomb(Players(i).TID);
+        DoomsdayFlameRain(Players(i).TID);
+    };
+    
+    // Wait Loop
+    while (CurrentLevel->DoomTime > 0)
+    {
+        CurrentLevel->DoomTime--;
+        Delay(1);
+    };
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        
+        SetActorProperty(Players(i).TID, APROP_Health, -1000000);
+        FadeRange(255, 255, 255, 1.0, 255, 255, 255, 0.0, 2.0);
+        ActivatorSound("nuke/detonate", 127);
+        Radius_Quake2(0, 9, 70, 0, 512, "None");
+    };
+    
+    SetMusic("");
+    
+    if (GameType() == GAME_NET_COOPERATIVE)
+    {
+        Delay(35);
+        
+        ChangeLevel(DefaultOutpost->LumpName, 0, CHANGELEVEL_NOINTERMISSION, CurrentSkill);
+    };
+};
+
+script void DoomsdayFirebomb(int PlayerTID)
+{
+    SetActivator(PlayerTID);
+    
+    while (CurrentLevel->Event == MAPEVENT_DOOMSDAY && CurrentLevel->DoomTime > 0)
+    {
+        Delay(Random(35 * 30, 35 * 90));
+        SpawnSpotFacing("DRPGDoomsdayMortarBlast", 0, 0);
+        Radius_Quake2(0, 6, 16, 0, 512, "None");
+        FadeRange(255, 128, 64, 0.33, 255, 128, 64, 0.0, 0.5);
+        ActivatorSound("drpgmarines/bulletexp", 127);
+    };
+};
+
+script void DoomsdayFlameRain(int PlayerTID)
+{
+    SetActivator(PlayerTID);
+    
+    while (CurrentLevel->Event == MAPEVENT_DOOMSDAY)
+    {
+        Delay(1);
+        SpawnSpot("DRPGDoomsdayFireBloodRainSpawner", 0, 0, 0);
+    };
+};
+
+script void DoomsdaySupplement() respawn
+{
+    if (CurrentLevel->Event == MAPEVENT_DOOMSDAY && CurrentLevel->DoomTime == 0)
+        SetActorProperty(0, APROP_Health, -1000000);
 };
 
 // DRLA Event - Feeding Frenzy ------------------------------------------------
