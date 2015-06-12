@@ -275,18 +275,24 @@ acscript void RadiationDamage(int damageamount)
     Thing_ChangeTID(mytid, oldtid);
 };
 
-acscript void CorrosiveDamage(int damageamount)
+acscript void CauseCorrosion()
 {
     if (CheckInventory("PowerIronFeet") || CheckInventory("DRPGSkillIronFeet"))
         return;
     
-    int mytid = UniqueTID();
-    int oldtid = ActivatorTID();
+    if (Random(0, 3))
+        return;
     
-    Thing_ChangeTID(0, mytid);
-    SetActivator(0, AAPTR_NULL);
-    Thing_Damage2(mytid, damageamount, "Slime");
-    Thing_ChangeTID(mytid, oldtid);
+    if (CheckInventory("BasicArmor") && Random(0, 3))
+    {
+        if (!Player.StatusType[SE_CORROSION] || Player.StatusTimer[SE_CORROSION] < 10500)
+            TryStatusEffect(SE_CORROSION, Random(1, 10), Random(1, 3));
+    }
+    else
+    {
+        if (!Player.StatusType[SE_CORROSION] || Player.StatusTimer[SE_POISON] < 10500)
+            TryStatusEffect(SE_POISON, Random(1, 10), Random(1, 3));
+    };
 };
 
 acscript int ShieldRemoveArmor()
