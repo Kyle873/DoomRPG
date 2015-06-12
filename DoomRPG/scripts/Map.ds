@@ -976,6 +976,7 @@ function bool CheckMapEvent(int Event)
         case MAPEVENT_LOWPOWER:
         case MAPEVENT_ONEMONSTER:
         case MAPEVENT_TELEPORTCRACKS:
+        case MAPEVENT_ACIDRAIN:
         default:
             return true;
     };
@@ -1094,6 +1095,51 @@ script void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
     
     // Harmonized Destruction
     TargetLevel->AuraType = 0;
+    
+    // [KS] Super-special events for super-special levels (and by "special" I of course mean retarded)
+    // [KS] PS: I hate you already.
+    if (GetLevelInfo(LEVELINFO_CLUSTERNUM) == 1 && GetLevelInfo(LEVELINFO_LEVELNUM) == 8)
+    {
+        // Phobos Anomaly
+        // Tags: 666 (Floor_LowerToLowest)
+        return;
+    }
+    else if (GetLevelInfo(LEVELINFO_CLUSTERNUM) == 2 && GetLevelInfo(LEVELINFO_LEVELNUM) == 18)
+    {
+        // Tower of Babel
+        // Tags: None, level ends
+        return;
+    }
+    else if (GetLevelInfo(LEVELINFO_CLUSTERNUM) == 3 && GetLevelInfo(LEVELINFO_LEVELNUM) == 38)
+    {
+        // Dis
+        // Tags: None, level ends
+        return;
+    }
+    else if (GetLevelInfo(LEVELINFO_CLUSTERNUM) == 4 && GetLevelInfo(LEVELINFO_LEVELNUM) == 36)
+    {
+        // Against Thee Wickedly
+        // Tags: 666 (Door_Open)
+        return;
+    }
+    else if (GetLevelInfo(LEVELINFO_CLUSTERNUM) == 4 && GetLevelInfo(LEVELINFO_LEVELNUM) == 38)
+    {
+        // Unto the Cruel
+        // Tags: 666 (Floor_LowerToLowest)
+        return;
+    }
+    else if (GetLevelInfo(LEVELINFO_CLUSTERNUM) == 6 && GetLevelInfo(LEVELINFO_LEVELNUM) == 7)
+    {
+        // Dead Simple
+        // Tags: 666 (Floor_LowerToLowest), 667 (Floor_RaiseByTexture)
+        return;
+    }
+    else if (GetLevelInfo(LEVELINFO_CLUSTERNUM) == 11 && GetLevelInfo(LEVELINFO_LEVELNUM) == 7)
+    {
+        // Baron's Banquet
+        // Tags: 666 (Floor_LowerToLowest), 667 (Floor_RaiseByTexture)
+        return;
+    };
     
     if (!FakeIt)
     {
@@ -1310,6 +1356,11 @@ script void SetupMapEvent()
             DoomsdayEvent();
             break;
         
+        case MAPEVENT_ACIDRAIN:
+            // Vicious Downpour: Outdoor areas rain poison.
+            ViciousDownpourEvent();
+            break;
+        
         // DRLA Events
         // --------------------------------------------------
         
@@ -1332,7 +1383,7 @@ script void SetupMapEvent()
             RainbowEvent();
             break;
         
-        // Bonus Events
+        // Skill Events
         // --------------------------------------------------
         
         case MAPEVENT_SKILL_HELL:
@@ -2411,6 +2462,12 @@ script void DoomsdayFirebomb(int PlayerTID)
         Radius_Quake2(0, 6, 16, 0, 512, "None");
         FadeRange(255, 128, 64, 0.33, 255, 128, 64, 0.0, 0.5);
         ActivatorSound("drpgmarines/bulletexp", 127);
+        if (CurrentLevel->DoomTime < (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 2 : GetCVar("drpg_default_par_seconds") * 2))
+        {
+            Delay(35);
+            Radius_Quake2(0, 3, 316, 0, 1024, "doomsday/moonshake");
+            Delay(316);
+        };
     };
 };
 
@@ -2429,6 +2486,31 @@ script void DoomsdaySupplement() respawn
 {
     if (CurrentLevel->Event == MAPEVENT_DOOMSDAY && CurrentLevel->DoomTime == 0)
         SetActorProperty(0, APROP_Health, -1000000);
+};
+
+// Map Event - Vicious Downpour -----------------------------------------------
+
+script void ViciousDownpourEvent()
+{
+    SpawnForced("DRPGRainAmbiance", 0, 0, 0, 0, 0);
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        
+        AcidRain(Players(i).TID);
+    };
+};
+
+script void AcidRain(int PlayerTID)
+{
+    SetActivator(PlayerTID);
+    
+    while (CurrentLevel->Event == MAPEVENT_ACIDRAIN)
+    {
+        Delay(1);
+        SpawnSpot("DRPGViciousRainSpawner", 0, 0, 0);
+    };
 };
 
 // DRLA Event - Feeding Frenzy ------------------------------------------------
