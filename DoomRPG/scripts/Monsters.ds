@@ -634,14 +634,19 @@ script void MonsterInitStats(int StatFlags)
         if (!HasAura) AuraNumber = 0;
 
         // Run through and decide on which Auras it should have
-        while (AuraNumber > 0)
+        for (int i = 0; i < AURA_MAX; i++)
         {
-            int AuraType = Random(0, AURA_MAX - 1);
-            if (Stats->Aura.Type[AuraType].Active)
-                continue;
+            if (AuraNumber == 0)
+                break;
             
-            Stats->Aura.Type[AuraType].Active = true;
+            Stats->Aura.Type[i].Active = true;
             AuraNumber--;
+            
+            int SwapWith = Random(0, AURA_MAX - 1);
+            bool Temp = Stats->Aura.Type[i].Active;
+            
+            Stats->Aura.Type[i].Active = Stats->Aura.Type[SwapWith].Active;
+            Stats->Aura.Type[SwapWith].Active = Temp;
         };
         
         // Are You A Bad Enough Dude?
@@ -2204,8 +2209,6 @@ function void CapMonsterStats(MonsterStatsPtr Stats)
 {
     if (Stats->Level <= 0)
         Stats->Level = 1;
-    if (Stats->Level > 1000)
-        Stats->Level = 1000;
     if (Stats->Level > 1000)
         Stats->Level = 1000;
     if (Stats->Strength > 1000)
