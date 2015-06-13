@@ -142,8 +142,12 @@ acscript void UseStim(bool Force) net
     for (int i = StimStatsStart; i < StimStatsEnd + 2; i++)
         if (Player.Stim.Current[i] > 0)
         {
+            int InitialTime = 35 * (60 + (Player.Stim.Current[STIM_PURIFIER] * 30));
+            InitialTime -= InitialTime * Player.StimImmunity / 100;
+            
             Player.Stim.Active = true;
-            Player.Stim.Timer += 35 * (60 + (Player.Stim.Current[STIM_PURIFIER] * 30));
+            Player.Stim.Timer += InitialTime;
+            
             if (Player.Stim.Timer >= Player.Stim.TimerMax)
                 Player.Stim.TimerMax = Player.Stim.Timer;
         };
@@ -166,7 +170,11 @@ acscript void UseStim(bool Force) net
     for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
         if (Player.Stim.Current[i] > 0)
         {
-            Player.Stim.PowerupTimer[i] += (35 * Player.Stim.Current[i]) * 30;
+            int InitialTime = (35 * Player.Stim.Current[i]) * 30;
+            InitialTime -= InitialTime * Player.StimImmunity / 100;
+            
+            Player.Stim.PowerupTimer[i] += InitialTime;
+            
             if (Player.Stim.PowerupTimer[i] > Player.Stim.PowerupTimerMax[i])
                 Player.Stim.PowerupTimerMax[i] = Player.Stim.PowerupTimer[i];
         };
@@ -178,6 +186,9 @@ acscript void UseStim(bool Force) net
     
     // Add Toxicity
     Player.Toxicity += Player.Stim.Toxicity;
+    
+    // Add Immunity
+    Player.StimImmunity += Player.Stim.Toxicity * 5;
     
     // Apply current Stim to last used Stim
     for (int i = 0; i < STIM_MAX; i++)
