@@ -918,7 +918,7 @@ script void HellSkillTransport(int player)
 
 // Map Events -----------------------------------------------------------------
 
-function bool CheckMapEvent(int Event)
+function bool CheckMapEvent(int Event, LevelInfo *TargetLevel)
 {
     switch (Event)
     {
@@ -938,7 +938,7 @@ function bool CheckMapEvent(int Event)
             return true;
         
         case MAPEVENT_DOOMSDAY:
-            if (AveragePlayerLevel() < 20 || Random(0, 3))
+            if (AveragePlayerLevel() < 20 || Random(0, 3) || TargetLevel->Completed)
                 return false;
             return true;
         
@@ -1168,7 +1168,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
             if (GetCVar("drpg_debug"))
                 Log("\cdDEBUG: Trying \cj%s\n", EventNames[TargetLevel->Event]);
             
-            if (!CheckMapEvent(TargetLevel->Event))
+            if (!CheckMapEvent(TargetLevel->Event, TargetLevel))
             {
                 if (GetCVar("drpg_debug"))
                     Log("\cdDEBUG: \cj%s\cg not possible\n", EventNames[TargetLevel->Event]);
