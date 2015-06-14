@@ -979,6 +979,7 @@ function bool CheckMapEvent(int Event)
         case MAPEVENT_ONEMONSTER:
         case MAPEVENT_TELEPORTCRACKS:
         case MAPEVENT_ACIDRAIN:
+        case MAPEVENT_DARKZONE:
         default:
             return true;
     };
@@ -1046,6 +1047,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
         "Harmonized Destruction";
         "Cracks in the Veil";
         "12 Hours 'til Doomsday";
+        "The Dark Zone";
         
         "Feeding Frenzy";
         "Whispers of Darkness";
@@ -1361,6 +1363,10 @@ script void SetupMapEvent()
         case MAPEVENT_ACIDRAIN:
             // Vicious Downpour: Outdoor areas rain poison.
             ViciousDownpourEvent();
+            break;
+        
+        case MAPEVENT_DARKZONE:
+            DarkZoneEvent();
             break;
         
         // DRLA Events
@@ -2408,7 +2414,7 @@ script void DoomsdayEvent()
     // Warning message
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessageBold("\cgThe smell of a massacre...\n\n\ciTime until Doomsday: %s\n",
+    HudMessageBold("The smell of a massacre...\n\n\ciTime until Doomsday: %s\n",
                    FormatTime(CurrentLevel->DoomTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
     SetHudSize(0, 0, false);
     
@@ -2428,6 +2434,16 @@ script void DoomsdayEvent()
     // Wait Loop
     while (CurrentLevel->DoomTime > 0)
     {
+        if (CurrentLevel->DoomTime == (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) : GetCVar("drpg_default_par_seconds")) * 35)
+        {
+            AmbientSound ("doomsday/doombell", 127);
+            
+            SetHudSize(640, 480, false);
+            SetFont("BIGFONT");
+            HudMessageBold("Hurry, there is not much time...\n", HUDMSG_TYPEON, 0, CR_BRICK, 320.4, 160.0, 3.0, 0.03, 0.5);
+            SetHudSize(0, 0, false);
+        };
+        
         CurrentLevel->DoomTime--;
         Delay(1);
     };
@@ -2490,7 +2506,7 @@ script void DoomsdaySupplement() respawn
         SetActorProperty(0, APROP_Health, -1000000);
 };
 
-// Map Event - Vicious Downpour -----------------------------------------------
+// Event - Vicious Downpour ---------------------------------------------------
 
 script void ViciousDownpourEvent()
 {
@@ -2514,6 +2530,86 @@ script void AcidRain(int PlayerTID)
     {
         Delay(1);
         SpawnSpot("DRPGViciousRainSpawner", 0, 0, 0);
+    };
+};
+
+// Event - The Dark Zone ------------------------------------------------------
+
+script void DarkZoneEvent()
+{
+    int ShadowTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 2 : GetCVar("drpg_default_par_seconds") * 2) * 35;
+    int ShadowTimeMax = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 2 : GetCVar("drpg_default_par_seconds") * 2) * 35;
+    int Color = 16 + (ShadowTime * 239 / ShadowTimeMax);
+    int LastColor = 0;
+    
+    SetMusic("DarkZone");
+    ChangeSky("BlackSky", "-");
+    
+    for (int i = 0; i <= SHORT_MAX; i++)
+        Light_Fade(i, 16, ShadowTime);
+
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        
+        DarkZoneFloorMist(Players(i).TID);
+    };
+    
+    // Wait Loop
+    while (ShadowTime > 0)
+    {
+        ShadowTime--;
+        
+        Color = 16 + (ShadowTime * 239 / ShadowTimeMax);
+        if (Color != LastColor)
+        {
+            for (int i = 0; i <= SHORT_MAX; i++)
+                Sector_SetColor(i, 128 + (Color / 2), Color, 170 + (Color / 3), 0);
+            
+            LastColor = Color;
+        };
+        
+        Delay(1);
+    };
+    
+    SetHudSize(640, 480, false);
+    SetFont("BIGFONT");
+    HudMessageBold("The Shadows have arrived...\n", HUDMSG_TYPEON, 0, CR_PURPLE, 320.4, 160.0, 3.0, 0.03, 0.5);
+    AmbientSound("darkzone/arrived", 127);
+    SetHudSize(0, 0, false);
+    
+    while (true)
+    {
+        for (int i = 0; i < MonsterID; i++)
+        {
+            if (!Monsters[i].Init || MonsterHasShadowAura(&(Monsters[i])) || ClassifyActor(Monsters[i].TID) & ACTOR_DEAD && !CanRaiseActor(Monsters[i].TID))
+                continue;
+            
+            if (ClassifyActor(Monsters[i].TID) & ACTOR_DEAD)
+                Thing_Raise(Monsters[i].TID);
+            
+            for (int a = 0; a < AURA_MAX; ++a)
+                Monsters[i].Aura.Type[a].Active = true;
+            
+            Monsters[i].NeedReinit = true;
+            SpawnSpotFacing("ArchvileFire", Monsters[i].TID, 0);
+            break;
+        };
+        
+        Delay(35 * Random(20, 60));
+    };
+    
+};
+
+script void DarkZoneFloorMist(int PlayerTID)
+{
+    SetActivator(PlayerTID);
+    
+    while (CurrentLevel->Event == MAPEVENT_DARKZONE)
+    {
+        Delay(1);
+        SpawnSpot("DRPGPurpleFloorMistSpawner", 0, 0, 0);
     };
 };
 

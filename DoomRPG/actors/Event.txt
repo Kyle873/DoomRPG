@@ -1231,3 +1231,84 @@ actor DRPGAcidRainDamage : CustomInventory
         Stop
     }
 }
+
+// Map Event - The Dark Zone
+// --------------------------------------------------
+
+Actor DRPGPurpleFloorMistSpawner
+{
+    Radius 4
+    Height 8
+    
+    +NoInteraction
+    
+    States
+    {
+    Spawn:
+        TNT1 AAAAAAAAAAAAAAAA 0 NoDelay A_SpawnItemEx("DRPGPurpleFloorMistCheck", Random(-1024,1024), Random(-1024,1024), 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 AAAAAAAAAAAAAAAA 0 A_SpawnItemEx("DRPGPurpleFloorMistCheck", Random(-1024,1024), Random(-1024,1024), 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        Stop
+    }
+}
+
+Actor DRPGPurpleFloorMistCheck
+{
+    Radius 4
+    Height 8
+    
+    +NoInteraction
+    
+    States
+    {
+    Spawn:
+        TNT1 A 1
+        TNT1 A 0 A_CheckSight("Remove")
+        TNT1 A 0 A_SpawnItemEx("DRPGPurpleFloorMist", 0, 0, FloorZ - Z + 16, FRandom(-0.5,0.5), FRandom(-0.5,0.5), FRandom(-0.1,0.1), 0, SXF_NOCHECKPOSITION)
+        Stop
+    Remove:
+        TNT1 A 0
+        Stop
+    }
+}
+
+actor DRPGPurpleFloorMist
+{
+    RenderStyle Translucent
+    Alpha 0
+    XScale 0.075
+    YScale 0.075
+    Radius 2
+    Height 2
+    Mass 1
+    Damage 0
+    
+    +NoInteraction
+    +NotOnAutomap
+    
+    States
+    {
+    Spawn:
+        PTCL G 0 NoDelay A_Jump(256, "Sprite1", "Sprite2", "Sprite3", "Sprite4")
+        goto FadeIn
+    Sprite1:
+        PTCL G 0
+        goto FadeIn
+    Sprite2:
+        PTCL H 0
+        goto FadeIn
+    Sprite3:
+        PTCL I 0
+        goto FadeIn
+    Sprite4:
+        PTCL J 0
+        goto FadeIn
+    FadeIn:
+        PTCL "#" 1 A_FadeIn (0.005)
+        PTCL "#" 0 A_JumpIf (alpha >= 0.5, "Death")
+        loop
+    Death:
+        PTCL "#" 35
+        PTCL "#" 1 A_FadeOut (0.005)
+        wait
+    }
+}
