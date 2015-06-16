@@ -183,77 +183,88 @@ acscript void UseCrate(int ID)
 
 acscript void CrateHack()
 {
-    int[NODE_MAX] NodeMax =
+    CrateInfo CrateLocal *Crate = &Crates[Player.CrateID];
+    
+    if (!Crate->HacksGenerated)
     {
-        8; 8; 1; 2; 2; 1; 1; 1;
-    };
-    
-    HackNode[MAX_NODES] Nodes;
-    bool Hacking = true;
-    int GenTotal = 0;
-    int GenType = 0;
-    int[NODE_MAX] GenNodes;
-    int Tries = 3;
-    int X = Random(25, 275);
-    int Direction = (Random(1, 2) == 1 ? -1 : 1);
-    
-    // DRLA - Technician gets bonuses
-    if (CompatMode == COMPAT_DRLA && PlayerClass(PlayerNumber()) == 2)
-    {
-        NodeMax[NODE_CRITFAIL] /= 4;
-        NodeMax[NODE_EXPLODE] /= 4;
-        NodeMax[NODE_XP] *= 2;
-        NodeMax[NODE_RANK] *= 2;
-        NodeMax[NODE_RETRY] *= 2;
-        NodeMax[NODE_ADD] *= 2;
-    };
-    
-    // Initialize things
-    for (int i = 0; i < MAX_NODES; i++)
-        Nodes[i].Active = false;
-    for (int i = 0; i < NODE_MAX; i++)
-        GenNodes[i] = 0;
-    
-    // Generate Nodes
-    while (GenType < NODE_MAX)
-    {
-        bool Conflict = false;
-        int Start = Random(0, 300 - 12);
-        int End = 4 * Random(1, 2);
+        Crate->Tries = 3;
         
-        // Make sure we don't generate over the max amount of allowed node types
-        if (GenNodes[GenType] >= NodeMax[GenType])
+        Crate->NodeMax =
         {
-            GenType++;
-            continue;
+            8; 8; 1; 2; 2; 1; 1; 1;
         };
         
-        // Make sure there are no node conflicts
+        // DRLA - Technician gets bonuses
+        if (CompatMode == COMPAT_DRLA && PlayerClass(PlayerNumber()) == 2)
+        {
+            Crate->NodeMax[NODE_CRITFAIL] /= 4;
+            Crate->NodeMax[NODE_EXPLODE] /= 4;
+            Crate->NodeMax[NODE_XP] *= 2;
+            Crate->NodeMax[NODE_RANK] *= 2;
+            Crate->NodeMax[NODE_RETRY] *= 2;
+            Crate->NodeMax[NODE_ADD] *= 2;
+        };
+        
+        // Initialize things
         for (int i = 0; i < MAX_NODES; i++)
-            if (Nodes[i].Active && !Conflict)
-                for (int j = 0; j < End; j++)
-                    if (Start + j >= Nodes[i].Start && Start + j <= Nodes[i].Start + Nodes[i].End)
-                    {
-                        Conflict = true;
-                        break;
-                    };
+            Crate->Nodes[i].Active = false;
+        for (int i = 0; i < NODE_MAX; i++)
+            Crate->GenNodes[i] = 0;
         
-        // Get new coordinates due to a conflict
-        if (Conflict)
-            continue;
+        script bool GenerateCrateNodes(CrateInfo CrateLocal *Crate)
+        {
+            int StopCount = 4000;
+            
+            while (Crate->GenType < NODE_MAX)
+            {
+                bool Conflict = false;
+                int Start = Random(0, 300 - 12);
+                int End = 4 * Random(1, 2);
+                
+                // Make sure we don't generate over the max amount of allowed node types
+                if (Crate->GenNodes[Crate->GenType] >= Crate->NodeMax[Crate->GenType])
+                {
+                    Crate->GenType++;
+                    continue;
+                };
+                
+                // Make sure there are no node conflicts
+                for (int i = 0; i < MAX_NODES; i++)
+                    if (Crate->Nodes[i].Active && !Conflict)
+                        for (int j = 0; j < End; j++)
+                            if (Start + j >= Crate->Nodes[i].Start && Start + j <= Crate->Nodes[i].Start + Crate->Nodes[i].End)
+                            {
+                                Conflict = true;
+                                break;
+                            };
+                
+                // Get new coordinates due to a conflict
+                if (Conflict)
+                    continue;
+                
+                // Setup Node
+                Crate->Nodes[Crate->GenTotal].Active = true;
+                Crate->Nodes[Crate->GenTotal].Type = Crate->GenType;
+                Crate->Nodes[Crate->GenTotal].Start = Start;
+                Crate->Nodes[Crate->GenTotal].End = End;
+                
+                Crate->GenTotal++;
+                Crate->GenNodes[Crate->GenType]++;
+                
+                if (StopCount-- == 0)
+                    return false;
+            };
+            
+            Crate->HacksGenerated = true;
+            return true;
+        };
         
-        // Setup Node
-        Nodes[GenTotal].Active = true;
-        Nodes[GenTotal].Type = GenType;
-        Nodes[GenTotal].Start = Start;
-        Nodes[GenTotal].End = End;
-        
-        GenTotal++;
-        GenNodes[GenType]++;
-        
-        if ((Timer() % 5) == 0)
-            Delay(1);
+        while (!GenerateCrateNodes(Crate));
     };
+    
+    bool Hacking = true;
+    int X = Random(25, 275);
+    int Direction = (Random(1, 2) == 1 ? -1 : 1);
     
     // Prevent the use input from leaking into the input handling below (aka exploding a crate immediately in your face)
     Delay(4);
@@ -283,11 +294,11 @@ acscript void CrateHack()
         
         // Nodes
         for (int i = 0; i < MAX_NODES; i++)
-            if (Nodes[i].Active)
-                DrawBar(StrParam("HackNod%d\n", Nodes[i].Type + 1), 10 + Nodes[i].Start, 120, Nodes[i].End, true);
+            if (Crate->Nodes[i].Active)
+                DrawBar(StrParam("HackNod%d\n", Crate->Nodes[i].Type + 1), 10 + Crate->Nodes[i].Start, 120, Crate->Nodes[i].End, true);
         
         // Back
-        DrawBar(StrParam("HackBor%d\n", Tries), 10, 120, 300, true);
+        DrawBar(StrParam("HackBor%d\n", Crate->Tries), 10, 120, 300, true);
         PrintSprite("HackBack", 0, 10.1, 120.0, 0.05);
         
         // Move Cursor
@@ -314,19 +325,20 @@ acscript void CrateHack()
             
             // Check Nodes
             for (int i = 0; i < MAX_NODES; i++)
-                if (Nodes[i].Active)
-                    if (X >= Nodes[i].Start && X <= Nodes[i].Start + Nodes[i].End)
+                if (Crate->Nodes[i].Active)
+                    if (X >= Crate->Nodes[i].Start && X <= Crate->Nodes[i].Start + Crate->Nodes[i].End)
                     {
                         HitNothing = false;
-                        Nodes[i].Active = false;
+                        Crate->Nodes[i].Active = false;
                         
-                        switch (Nodes[i].Type)
+                        switch (Crate->Nodes[i].Type)
                         {
                         case NODE_CRITFAIL:
                             ActivatorSound("hacking/critfail", 127);
                             SetFont("SMALLFONT");
                             HudMessage("Security Lockdown Triggered!\n", HUDMSG_FADEOUT, 0, CR_RED, 160.0, 140.0, 2.0, 1.0);
                             Crates[Player.CrateID].HackingCooldown += 35 * 60;
+                            Crate->Tries = 3;
                             Hacking = false;
                             break;
                         case NODE_EXPLODE:
@@ -362,8 +374,8 @@ acscript void CrateHack()
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
                             HudMessage("Extra Try\n", HUDMSG_FADEOUT, 0, CR_BLUE, 160.0, 140.0, 2.0, 1.0);
-                            if (Tries < 3)
-                                Tries++;
+                            if (Crate->Tries < 3)
+                                Crate->Tries++;
                             break;
                         case NODE_ADD:
                             ActivatorSound("hacking/select", 127);
@@ -387,13 +399,14 @@ acscript void CrateHack()
             if (HitNothing)
             {
                 ActivatorSound("hacking/select", 127);
-                Tries--;
+                Crate->Tries--;
                 
                 // You fail it
-                if (Tries <= 0)
+                if (Crate->Tries <= 0)
                 {
                     ActivatorSound("hacking/fail", 127);
                     Crates[Player.CrateID].HackingCooldown += 35 * 30;
+                    Crate->Tries = 3;
                     Hacking = false;
                 };
             };
