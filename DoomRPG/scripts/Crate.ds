@@ -96,6 +96,12 @@ acscript void InitCrate()
     else
         SetActorState(0, "Normal");
     
+    for (int x = 0; x < CRATE_MAX_ITEMS; x++)
+    {
+        Crates[CrateID].Active[x] = false;
+        Crates[CrateID].Item[x] = nullptr;
+    };
+    
     CrateID++;
 };
 
@@ -420,12 +426,7 @@ function void GenerateCrate(int ID, int Amount)
             Log("\cgWARNING: Couldn't find the backpack item!\n");
         };
         
-        int NumPlayers = 0;
-        
-        // Count the number of players
-        for (int j = 0; j < MAX_PLAYERS; j++)
-            if (PlayerInGame(j))
-                NumPlayers++;
+        int NumPlayers = PlayerCount();
         
         // Create a backpack for every player in the game
         for (int j = 0; j < NumPlayers; j++)
@@ -438,8 +439,16 @@ function void GenerateCrate(int ID, int Amount)
     
     for (; i < Amount; i++)
     {
+        ItemInfoPtr item = GetRewardItem(Crates[ID].Rarity);
+        
+        if (item == GetBlankItem())
+        {
+            i--;
+            continue;
+        };
+        
         Crates[ID].Active[i] = true;
-        Crates[ID].Item[i] = GetRewardItem(Crates[ID].Rarity);
+        Crates[ID].Item[i] = item;
     };
 };
 
@@ -618,7 +627,7 @@ acscript void DumpCrate()
         {
             if (!Crates[i].Active[j]) continue;
             
-            Log("  %s (%s)\n", Crates[i].Item[j]->Name, Crates[i].Item[j]->Actor);
+            Log("%d. %s (%s)\n", j, Crates[i].Item[j]->Name, Crates[i].Item[j]->Actor);
         };
     };
 };
