@@ -5,7 +5,9 @@
 #include "Stats.dh"
 #include "Utils.dh"
 
-static str[MAX_DIFFICULTIES] CrateRarityNames =
+AddressSpace MapArray CrateLocal;
+
+CrateLocal str[MAX_DIFFICULTIES] const CrateRarityNames =
 {
     "\ccBasic";
     "\cjCommon";
@@ -18,8 +20,8 @@ static str[MAX_DIFFICULTIES] CrateRarityNames =
     "\cfSupreme";
 };
 
-int CrateID = 0;
-ItemSpace CrateInfo[CRATE_MAX] Crates;
+CrateLocal int CrateID = 0;
+CrateLocal CrateInfo[CRATE_MAX] Crates;
 
 script void CrateLoop() open
 {
@@ -95,6 +97,12 @@ acscript void InitCrate()
         SetActorState(0, "Firewall")
     else
         SetActorState(0, "Normal");
+    
+    for (int x = 0; x < CRATE_MAX_ITEMS; x++)
+    {
+        Crates[CrateID].Active[x] = false;
+        Crates[CrateID].Item[x] = nullptr;
+    };
     
     CrateID++;
 };
@@ -420,12 +428,7 @@ function void GenerateCrate(int ID, int Amount)
             Log("\cgWARNING: Couldn't find the backpack item!\n");
         };
         
-        int NumPlayers = 0;
-        
-        // Count the number of players
-        for (int j = 0; j < MAX_PLAYERS; j++)
-            if (PlayerInGame(j))
-                NumPlayers++;
+        int NumPlayers = PlayerCount();
         
         // Create a backpack for every player in the game
         for (int j = 0; j < NumPlayers; j++)
@@ -438,8 +441,16 @@ function void GenerateCrate(int ID, int Amount)
     
     for (; i < Amount; i++)
     {
+        ItemInfoPtr item = GetRewardItem(Crates[ID].Rarity);
+        
+        if (item == GetBlankItem())
+        {
+            i--;
+            continue;
+        };
+        
         Crates[ID].Active[i] = true;
-        Crates[ID].Item[i] = GetRewardItem(Crates[ID].Rarity);
+        Crates[ID].Item[i] = item;
     };
     
     // DRLA Set shenanigans
@@ -759,12 +770,12 @@ function void DrawCrate()
         {
             int Index = j + (i * Width);
             
-            ItemInfoPtr ItemSpace *Item = &Crates[Player.CrateID].Item[Index];
+            ItemInfoPtr ItemSpace Item = Crates[Player.CrateID].Item[Index];
             bool Active = Crates[Player.CrateID].Active[Index];
-            str Icon = (* Item)->Sprite.Name;
-            str Name = (* Item)->Name;
-            int IconXOff = (* Item)->Sprite.XOff;
-            int IconYOff = (* Item)->Sprite.YOff;
+            str Icon = Item->Sprite.Name;
+            str Name = Item->Name;
+            int IconXOff = Item->Sprite.XOff;
+            int IconYOff = Item->Sprite.YOff;
             
             // Setup X and Y
             X = 26.0 + BaseX;
@@ -873,7 +884,7 @@ acscript void DumpCrate()
         {
             if (!Crates[i].Active[j]) continue;
             
-            Log("  %s (%s)\n", Crates[i].Item[j]->Name, Crates[i].Item[j]->Actor);
+            Log("%d. %s (%s)\n", j, Crates[i].Item[j]->Name, Crates[i].Item[j]->Actor);
         };
     };
 };
