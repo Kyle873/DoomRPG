@@ -548,7 +548,7 @@ script void TurretLoop() enter
         Player.Turret.PaidForRepair = true;
     };
     
-    while (Player.Turret.Active)
+    while (Player.Turret.Active && Player.Turret.TID != 0)
     {
         // Pre-health check
         Health = GetActorProperty(Player.Turret.TID, APROP_Health);
@@ -663,21 +663,24 @@ script void TurretLoop() enter
                 };
                 
                 // Armor
-                SetActivator(Players(i).TID); // Yay maxhax because GetArmorInfo() has no playernum param D:
-                if (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] > 0 && CheckInventory("Armor") > 0 && CheckInventory("Armor") < GetArmorInfo(ARMORINFO_ACTUALSAVEAMOUNT) && ((Timer() + 35) % (35 * (30 - (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] * 2.5)))) == 0)
+                if (SetActivator(Players(i).TID)) // Yay maxhax because GetArmorInfo() has no playernum param D:
                 {
-                    for (fixed j = 0.0; j <= 1.0; j += 0.01)
+                    if (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] > 0 && CheckInventory("Armor") > 0 && CheckInventory("Armor") < GetArmorInfo(ARMORINFO_ACTUALSAVEAMOUNT) && ((Timer() + 35) % (35 * (30 - (Players(PlayerNum).Turret.Upgrade[TU_ASSIST_ARMOR] * 2.5)))) == 0)
                     {
-                        fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
-                        fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
-                        fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
+                        for (fixed j = 0.0; j <= 1.0; j += 0.01)
+                        {
+                            fixed X = Lerp(GetActorX(Players(PlayerNum).Turret.TID), GetActorX(Players(i).TID), j);
+                            fixed Y = Lerp(GetActorY(Players(PlayerNum).Turret.TID), GetActorY(Players(i).TID), j);
+                            fixed Z = Lerp(GetActorZ(Players(PlayerNum).Turret.TID), GetActorZ(Players(i).TID) + 32.0, j);
+                            
+                            SpawnForced("DRPGTurretParticleAssistArmor", X, Y, Z, 0, 0);
+                        };
                         
-                        SpawnForced("DRPGTurretParticleAssistArmor", X, Y, Z, 0, 0);
+                        GiveInventory("ArmorBonus", 1);
                     };
                     
-                    GiveInventory("ArmorBonus", 1);
+                    SetActivator(Players(PlayerNum).TID);
                 };
-                SetActivator(Players(PlayerNum).TID);
                 
                 // Aug Battery
                 if (Player.Turret.Upgrade[TU_ASSIST_AUG] > 0 && Players(i).Augs.Battery < Players(i).Augs.BatteryMax && ((Timer() + 26) % (35 * (30 - (Player.Turret.Upgrade[TU_ASSIST_AUG] * 2.5)))) == 0)
