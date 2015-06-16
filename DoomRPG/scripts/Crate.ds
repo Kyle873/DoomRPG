@@ -482,7 +482,7 @@ function void GenerateCrate(int ID, int Amount)
             } [32] Items;
         };
         
-        static SetInfo[MAX_DRLA_SETS] SetItems =
+        SetInfo[MAX_DRLA_SETS] const SetItems =
         {
             {
                 "Death From Above"; "RLDeathFromAboveSetBonusActive"; false;
@@ -679,7 +679,8 @@ function void GenerateCrate(int ID, int Amount)
             {
                 for (int j = 0; SetItems[i].Items[j].Name != nullptr; j++)
                 {
-                    ItemInfoPtr ItemPtr = FindItem(SetItems[i].Items[j].Name);
+                    str PickupItemName = StrParam("%sPickup\n", SetItems[i].Items[j].Name);
+                    ItemInfoPtr ItemPtr = FindItem(PickupItemName);
                     fixed Chance = SetItems[i].Items[j].Chance * (1.0 + (Crates[ID].Rarity * 0.125));
                     fixed Pick = RandomFixed(0.0, 100.0);
                     
@@ -700,7 +701,7 @@ function void GenerateCrate(int ID, int Amount)
                     if (Pick <= Chance)
                     {
                         // Couldn't find the item
-                        if (ItemPtr == nullptr) continue;
+                        if (ItemPtr == GetBlankItem()) continue;
                         
                         Crates[ID].Active[SetAmount] = true;
                         Crates[ID].Item[SetAmount] = ItemPtr;
