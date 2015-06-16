@@ -331,11 +331,9 @@ script void Loop()
     if (Player.InShop)
         ShopLoop();
     
-    // Menu freezing/dimming
+    // Menu dimming
     if (Player.InMenu || Player.InShop || Player.OutpostMenu > 0)
     {
-        if (GetCVar("drpg_menufreeze") && !InMultiplayer)
-            GiveInventory("DRPGMenuFreezer", 1);
         if (GetCVar("drpg_menudim") && !Player.StatusType[SE_BLIND])
             FadeRange(0, 0, 0, 0.5, 0, 0, 0, 0.0, 0.25);
     };
@@ -369,10 +367,6 @@ script void Loop()
     SetActorProperty(Player.TID, APROP_SpawnHealth, Player.HealthMax);
     SetActorPropertyFixed(Player.TID, APROP_Speed, Player.Speed);
     SetActorPropertyFixed(Player.TID, APROP_JumpZ, Player.JumpHeight);
-    
-    // Make you invincible while in the Menus and if menu freezing is enabled
-    if ((Player.InMenu || Player.InShop) && GetCVar("drpg_menufreeze"))
-        SetActorProperty(Player.TID, APROP_DamageFactor, 0);
     
     // Store your current weapon in the Player Weapon array
     PlayerWeapon[PlayerNumber()] = GetWeapon();
@@ -852,7 +846,7 @@ script void AutosaveHandler()
             ++DamageTimer;
         Player.AutosaveTimerReset = false;
         
-        if ((Player.InMenu || Player.InShop || Player.OutpostMenu > 0) && !GetCVar("drpg_menufreeze"))
+        if (Player.InMenu || Player.InShop || Player.OutpostMenu > 0)
             DamageTimer = ASAVE_SAFETIME;
         
         if (!SaveTimer)
