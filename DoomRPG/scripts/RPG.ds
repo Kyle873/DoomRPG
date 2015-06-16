@@ -109,12 +109,21 @@ script void Init() enter
     // Wait until globals are initialized
     while (!GlobalsInitialized) Delay(1);
     
+    // Delay to allow for item data to initialize
+    Delay(3);
+    
     // [KS] This needs to be done on its' own, so death exits don't rob you of your TID and break EVERYTHING EVER FFS
     if (ActivatorTID() == 0)
     {
         AssignTIDs();
         if (!InTitle) // Don't give equipment on the title screen
+        {
+            if (!Player.FirstRun)
+                Player.Capacity = GetActivatorCVar("drpg_start_capacity");
+            
+            SortStartingItems();
             DefaultLoadout();
+        };
     };
     
     if (!Player.FirstRun)
@@ -1473,110 +1482,107 @@ script void Respawn() respawn
     };
 };
 
-// Gives the player their default loadout based on their starting options
-script void DefaultLoadout()
+static str[LOADOUT_WEAPONS][3] WeaponInfo =
 {
-    static str[LOADOUT_WEAPONS][3] WeaponInfo =
-    {
-        // CVAR, Vanilla Actor, Extras Actor
-        
-        { "drpg_start_weapon_chainsaw";         "DRPGChainsaw";         "Chainsaw1";        };
-        { "drpg_start_weapon_pistol";           "DRPGPistol";           "Pistol1";          };
-        { "drpg_start_weapon_shotgun";          "DRPGShotgun";          "Shotgun1";         };
-        { "drpg_start_weapon_ssg";              "DRPGSuperShotgun";     "SSG";              };
-        { "drpg_start_weapon_chaingun";         "DRPGChaingun";         "Chaingun1";        };
-        { "drpg_start_weapon_rocketlauncher";   "DRPGRocketLauncher";   "RocketLauncher1";  };
-        { "drpg_start_weapon_plasmarifle";      "DRPGPlasmaRIfle";      "Plasmagun";        };
-        { "drpg_start_weapon_bfg";              "DRPGBFG9001";          "BFG9001";          };
-    };
-    static str[LOADOUT_ARMORS] ArmorInfo =
-    {
-        "DRPGGreenArmorEffect";
-        "DRPGBlueArmorEffect";
-        "DRPGYellowArmorEffect";
-        "DRPGRedArmorEffect";
-        "DRPGWhiteArmorEffect";
-        "DRPGReinforcedGreenArmorEffect";
-        "DRPGReinforcedBlueArmorEffect";
-        "DRPGReinforcedYellowArmorEffect";
-        "DRPGReinforcedRedArmorEffect";
-        "DRPGReinforcedWhiteArmorEffect";
-    };
-    static str[LOADOUT_SHIELDPARTS] ShieldPartColorCodes =
-    {
-        "\cv";  // Capacity +
-        "\ch";  // Capacity -
-        "\cd";  // Charge Rate +
-        "\cq";  // Charge Rate -
-        "\cr";  // Delay Rate +
-        "\cg";  // Delay Rate -
-    };
-    static str[LOADOUT_SHIELDACCS] ShieldAccessoryColorCodes =
-    {
-        "\cg";  // Strength / Damage
-        "\ca";  // Vitality / Health
-        "\ci";  // Agility / Speed
-        "\cd";  // Defense / Armor
-        "\cf";  // Luck / Money
-        "\cn";  // Energy
-        "\ch";  // Capacity / Ammo
-        "\ck";  // Rank
-        "\cc";  // Augmentation
-        "\cq";  // Powerup
-        "\cj";  // Misc / Multi-Category
-    };
-    static str[LOADOUT_DRLAWEAPONS] DRLAWeaponColorCodes =
-    {
-        "";     // Common
-        "\cv";  // Assembled
-        "\ct";  // Exotic
-        "\ci";  // Superior
-        "\cd";  // Unique
-        "\cg";  // Demonic
-        "\cf";  // Legendary
-    };
-    static str[LOADOUT_DRLAARMORS] DRLAArmorColorCodes =
-    {
-        "";     // Common
-        "\cv";  // Assembled
-        "\ct";  // Exotic
-        "\cc";  // Onyx
-        "\cd";  // Unique
-        "\cf";  // Legendary
-    };
-    static str[LOADOUT_DRLAMODPACKS] DRLAModPacks =
-    {
-        "RLPowerModItem";
-        "RLBulkModItem";
-        "RLAgilityModItem";
-        "RLTechnicalModItem";
-        "RLSniperModItem";
-        "RLFirestormModItem";
-        "RLNanoModItem";
-        "RLOnyxModItem";
-    };
+    // CVAR, Vanilla Actor, Extras Actor
     
-    // Shield Databases
-    ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_BODIES] ShieldBodyTypes;
-    ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_BATTERIES] ShieldBatteryTypes;
-    ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_CAPACITORS] ShieldCapacitorTypes;
-    ItemInfoPtr[LOADOUT_SHIELDACCS][MAX_ACCESSORIES] ShieldAccessoryTypes;
-    static int[LOADOUT_SHIELDPARTS] BodyCount;
-    static int[LOADOUT_SHIELDPARTS] BatteryCount;
-    static int[LOADOUT_SHIELDPARTS] CapacitorCount;
-    int[LOADOUT_SHIELDACCS] AccessoryCount;
-    
-    // DRLA Databases
-    ItemInfoPtr[LOADOUT_DRLAWEAPONS][ITEM_MAX] DRLAWeaponTypes;
-    ItemInfoPtr[LOADOUT_DRLAARMORS][ITEM_MAX] DRLAArmorTypes;
-    ItemInfoPtr[LOADOUT_DRLAARMORS][ITEM_MAX] DRLABootsTypes;
-    int[LOADOUT_DRLAWEAPONS] DRLAWeaponCount;
-    int[LOADOUT_DRLAARMORS] DRLAArmorCount;
-    int[LOADOUT_DRLAARMORS] DRLABootsCount;
-    
-    // Delay to allow for item data to initialize
-    Delay(4);
-    
+    { "drpg_start_weapon_chainsaw";         "DRPGChainsaw";         "Chainsaw1";        };
+    { "drpg_start_weapon_pistol";           "DRPGPistol";           "Pistol1";          };
+    { "drpg_start_weapon_shotgun";          "DRPGShotgun";          "Shotgun1";         };
+    { "drpg_start_weapon_ssg";              "DRPGSuperShotgun";     "SSG";              };
+    { "drpg_start_weapon_chaingun";         "DRPGChaingun";         "Chaingun1";        };
+    { "drpg_start_weapon_rocketlauncher";   "DRPGRocketLauncher";   "RocketLauncher1";  };
+    { "drpg_start_weapon_plasmarifle";      "DRPGPlasmaRifle";      "Plasmagun";        };
+    { "drpg_start_weapon_bfg";              "DRPGBFG9000";          "BFG9001";          };
+};
+static str[LOADOUT_ARMORS] ArmorInfo =
+{
+    "DRPGGreenArmorEffect";
+    "DRPGBlueArmorEffect";
+    "DRPGYellowArmorEffect";
+    "DRPGRedArmorEffect";
+    "DRPGWhiteArmorEffect";
+    "DRPGReinforcedGreenArmorEffect";
+    "DRPGReinforcedBlueArmorEffect";
+    "DRPGReinforcedYellowArmorEffect";
+    "DRPGReinforcedRedArmorEffect";
+    "DRPGReinforcedWhiteArmorEffect";
+};
+static str[LOADOUT_SHIELDPARTS] ShieldPartColorCodes =
+{
+    "\cv";  // Capacity +
+    "\ch";  // Capacity -
+    "\cd";  // Charge Rate +
+    "\cq";  // Charge Rate -
+    "\cr";  // Delay Rate +
+    "\cg";  // Delay Rate -
+};
+static str[LOADOUT_SHIELDACCS] ShieldAccessoryColorCodes =
+{
+    "\cv";  // Shield Capacity
+    "\cg";  // Strength / Damage
+    "\ca";  // Vitality / Health
+    "\ci";  // Agility / Speed
+    "\cd";  // Defense / Armor / Shield Charge
+    "\cf";  // Luck / Money
+    "\cn";  // Energy
+    "\ch";  // Capacity / Ammo
+    "\ck";  // Rank
+    "\cc";  // Augmentation
+    "\cq";  // Powerup
+    "\cj";  // Misc / Multi-Category
+};
+static str[LOADOUT_DRLAWEAPONS] DRLAWeaponColorCodes =
+{
+    "";     // Common
+    "\cv";  // Assembled
+    "\ct";  // Exotic
+    "\ci";  // Superior
+    "\cd";  // Unique
+    "\cg";  // Demonic
+    "\cf";  // Legendary
+};
+static str[LOADOUT_DRLAARMORS] DRLAArmorColorCodes =
+{
+    "";     // Common
+    "\cv";  // Assembled
+    "\ct";  // Exotic
+    "\cc";  // Onyx
+    "\cd";  // Unique
+    "\cf";  // Legendary
+};
+static str[LOADOUT_DRLAMODPACKS] DRLAModPacks =
+{
+    "RLPowerModItem";
+    "RLBulkModItem";
+    "RLAgilityModItem";
+    "RLTechnicalModItem";
+    "RLSniperModItem";
+    "RLFirestormModItem";
+    "RLNanoModItem";
+    "RLOnyxModItem";
+};
+
+// Shield Databases
+static ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_BODIES] ShieldBodyTypes;
+static ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_BATTERIES] ShieldBatteryTypes;
+static ItemInfoPtr[LOADOUT_SHIELDPARTS][MAX_CAPACITORS] ShieldCapacitorTypes;
+static ItemInfoPtr[LOADOUT_SHIELDACCS][MAX_ACCESSORIES] ShieldAccessoryTypes;
+static int[LOADOUT_SHIELDPARTS] BodyCount;
+static int[LOADOUT_SHIELDPARTS] BatteryCount;
+static int[LOADOUT_SHIELDPARTS] CapacitorCount;
+static int[LOADOUT_SHIELDACCS] AccessoryCount;
+
+// DRLA Databases
+static ItemInfoPtr[LOADOUT_DRLAWEAPONS][ITEM_MAX] DRLAWeaponTypes;
+static ItemInfoPtr[LOADOUT_DRLAARMORS][ITEM_MAX] DRLAArmorTypes;
+static ItemInfoPtr[LOADOUT_DRLAARMORS][ITEM_MAX] DRLABootsTypes;
+static int[LOADOUT_DRLAWEAPONS] DRLAWeaponCount;
+static int[LOADOUT_DRLAARMORS] DRLAArmorCount;
+static int[LOADOUT_DRLAARMORS] DRLABootsCount;
+
+script void SortStartingItems()
+{
     // Build Shield and DRLA item databases based on their respective items' color codes
     for (int i = 0; i < MAX_BODIES; i++)
         for (int j = 0; j < LOADOUT_SHIELDPARTS; j++)
@@ -1656,7 +1662,11 @@ script void DefaultLoadout()
                 break;
             };
         };
-    
+};
+
+// Gives the player their default loadout based on their starting options
+script void DefaultLoadout()
+{
     // Weapons
     if (CompatMode != COMPAT_DRLA)
     {
@@ -1695,209 +1705,186 @@ script void DefaultLoadout()
     if (CompatMode != COMPAT_DRLA && GetActivatorCVar("drpg_start_armor") >= 0)
         GiveInventory(ArmorInfo[GetActivatorCVar("drpg_start_armor")], 1);
     
-    // Active Augs
-    int ActiveAugs = 0;
-    while (ActiveAugs < GetActivatorCVar("drpg_start_aug_amount"))
+    script GiveAugs()
     {
-        int Type = Random(0, AUG_MAX - 1);
+        // Active Augs
+        int ActiveAugs = 0;
+        while (ActiveAugs < GetActivatorCVar("drpg_start_aug_amount"))
+        {
+            int Type = Random(0, AUG_MAX - 1);
+            
+            // Skip this aug if it's already active
+            if (Player.Augs.Level[Type] > 0) continue;
+            
+            Player.Augs.Level[Type]++;
+            ActiveAugs++;
+        };
         
-        // Skip this aug if it's already active
-        if (Player.Augs.Level[Type] > 0) continue;
+        // Aug Canisters/Upgrades
+        GiveInventory("DRPGAugCanister", GetActivatorCVar("drpg_start_aug_canisters"));
+        GiveInventory("DRPGAugUpgradeCanister", GetActivatorCVar("drpg_start_aug_upgrades"));
         
-        Player.Augs.Level[Type]++;
-        ActiveAugs++;
-        
-        if ((Timer() % 5) == 0)
-            Delay(1);
+        // Aug Slots
+        Player.Augs.BaseSlots = GetActivatorCVar("drpg_start_aug_slots");
     };
     
-    // Aug Canisters/Upgrades
-    int AugItems = 0;
-    while (AugItems < GetActivatorCVar("drpg_start_aug_upgrades"))
+    GiveAugs();
+    
+    script void GiveShieldParts()
     {
-        int Type = Random(0, 1);
-        
-        // Check if one or the other is max
-        if (CheckInventory("DRPGAugCanister") >= 100)
-            Type = 1;
-        if (CheckInventory("DRPGAugUpgradeCanister") >= 100)
-            Type = 0;
-        
-        if (Type == 1)
-            GiveInventory("DRPGAugCanister", 1)
-        else
-            GiveInventory("DRPGAugUpgradeCanister", 1);
-        
-        AugItems++;
-        
-        if ((Timer() % 5) == 0)
-            Delay(1);
+        // Shield Parts
+        for (int i = 0; i < 3; i++)
+        {
+            int *[3] Count =
+            {
+                &BodyCount[0];
+                &BatteryCount[0];
+                &CapacitorCount[0];
+            };
+            int[3] Total =
+            {
+                GetActivatorCVar("drpg_start_shield_amount_body");
+                GetActivatorCVar("drpg_start_shield_amount_battery");
+                GetActivatorCVar("drpg_start_shield_amount_capacitor");
+            };
+            int[3] Current;
+            
+            // Calculate total if we specify a type so that overflows or explosions don't happen
+            if (GetActivatorCVar("drpg_start_shield_type") >= 0)
+                if (Total[i] > Count[i][GetActivatorCVar("drpg_start_shield_type")])
+                    Total[i] = Count[i][GetActivatorCVar("drpg_start_shield_type")];
+            
+            while (Current[i] < Total[i])
+            {
+                int Category = Random(0, LOADOUT_SHIELDPARTS - 1);
+                
+                // Force the category type if the CVAR is set
+                if (GetActivatorCVar("drpg_start_shield_type") >= 0)
+                    Category = GetActivatorCVar("drpg_start_shield_type");
+                
+                for (int j = 0; j < Count[i][Category]; j++)
+                {
+                    ItemInfoPtr *[3] Type;
+                    
+                    Type[0] = &ShieldBodyTypes[Category][j];
+                    Type[1] = &ShieldBatteryTypes[Category][j];
+                    Type[2] = &ShieldCapacitorTypes[Category][j];
+                    
+                    if (!CheckInventory((*(Type[i]))->Actor))
+                    {
+                        GiveInventory((*(Type[i]))->Actor, 1);
+                        Current[i]++;
+                        break;
+                    };
+                };
+            };
+        };
     };
     
-    // Aug Slots
-    Player.Augs.BaseSlots = GetActivatorCVar("drpg_start_aug_slots");
-    
-    // Shield Parts
-    for (int i = 0; i < 3; i++)
+    GiveShieldParts();
+
+    script void GiveShieldAccessories()
     {
-        int *[3] Count =
-        {
-            &BodyCount[0];
-            &BatteryCount[0];
-            &CapacitorCount[0];
-        };
-        int[3] Total =
-        {
-            GetActivatorCVar("drpg_start_shield_amount_body");
-            GetActivatorCVar("drpg_start_shield_amount_battery");
-            GetActivatorCVar("drpg_start_shield_amount_capacitor");
-        };
-        int[3] Current;
+        // Shield Accessories
+        int TotalAccessories = GetActivatorCVar("drpg_start_shield_amount_acc");
+        int Accessories = 0;
+        if (GetActivatorCVar("drpg_start_shield_type_acc") >= 0)
+            if (TotalAccessories > AccessoryCount[GetActivatorCVar("drpg_start_shield_type_acc")])
+                TotalAccessories = AccessoryCount[GetActivatorCVar("drpg_start_shield_type_acc")];
         
-        // Calculate total if we specify a type so that overflows or explosions don't happen
-        if (GetActivatorCVar("drpg_start_shield_type") >= 0)
-            if (Total[i] > Count[i][GetActivatorCVar("drpg_start_shield_type")])
-                Total[i] = Count[i][GetActivatorCVar("drpg_start_shield_type")];
-        
-        while (Current[i] < Total[i])
+        while (Accessories < TotalAccessories)
         {
-            int Category = Random(0, LOADOUT_SHIELDPARTS - 1);
+            int Category = Random(0, LOADOUT_SHIELDACCS - 1);
             
             // Force the category type if the CVAR is set
-            if (GetActivatorCVar("drpg_start_shield_type") >= 0)
-                Category = GetActivatorCVar("drpg_start_shield_type");
+            if (GetActivatorCVar("drpg_start_shield_type_acc") >= 0)
+                Category = GetActivatorCVar("drpg_start_shield_type_acc");
             
-            for (int j = 0; j < Count[i][Category]; j++)
+            for (int i = 0; i < AccessoryCount[Category]; i++)
             {
-                ItemInfoPtr *[3] Type =
-                {
-                    &ShieldBodyTypes[Category][j];
-                    &ShieldBatteryTypes[Category][j];
-                    &ShieldCapacitorTypes[Category][j];
-                };
+                ItemInfoPtr Type = ShieldAccessoryTypes[Category][i];
                 
-                if (!CheckInventory((*(Type[i]))->Actor))
+                if (!CheckInventory(Type->Actor))
                 {
-                    GiveInventory((*(Type[i]))->Actor, 1);
-                    Current[i]++;
+                    GiveInventory(Type->Actor, 1);
+                    Accessories++;
                     break;
                 };
             };
-            
-            if ((Timer() % 5) == 0)
-                Delay(1);
         };
     };
-
-    // Shield Accessories
-    int TotalAccessories = GetActivatorCVar("drpg_start_shield_amount_acc");
-    int Accessories = 0;
-    if (GetActivatorCVar("drpg_start_shield_type_acc") >= 0)
-        if (TotalAccessories > AccessoryCount[GetActivatorCVar("drpg_start_shield_type_acc")])
-            TotalAccessories = AccessoryCount[GetActivatorCVar("drpg_start_shield_type_acc")];
-    while (Accessories < TotalAccessories)
-    {
-        int Category = Random(0, LOADOUT_SHIELDACCS - 1);
-        
-        // Force the category type if the CVAR is set
-        if (GetActivatorCVar("drpg_start_shield_type_acc") >= 0)
-            Category = GetActivatorCVar("drpg_start_shield_type_acc");
-        
-        for (int i = 0; i < AccessoryCount[Category]; i++)
-        {
-            ItemInfoPtr *Type = &ShieldAccessoryTypes[Category][i];
-            
-            if (!CheckInventory((*Type)->Actor))
-            {
-                GiveInventory((*Type)->Actor, 1);
-                Accessories++;
-                break;
-            };
-        };
-        
-        if ((Timer() % 5) == 0)
-            Delay(1);
-    };
+    
+    GiveShieldAccessories();
     
     // Stims
-    int Injectors = 0;
-    int Vials = 0;
-    while (Injectors < GetActivatorCVar("drpg_start_stim_injectors"))
+    script void GiveStims()
     {
-        switch (Random(1, 4))
+        int Injectors = 0;
+        
+        while (Injectors < GetActivatorCVar("drpg_start_stim_injectors"))
         {
-        case 1: // Small
-            if (CheckInventory("DRPGStimSmall") >= 1000) continue;
-            GiveInventory("DRPGStimSmall", 1);
-            break;
-        case 2: // Medium
-            if (CheckInventory("DRPGStimMedium") >= 1000) continue;
-            GiveInventory("DRPGStimMedium", 1);
-            break;
-        case 3: // Large
-            if (CheckInventory("DRPGStimLarge") >= 1000) continue;
-            GiveInventory("DRPGStimLarge", 1);
-            break;
-        case 4: // XL
-            if (CheckInventory("DRPGStimXL") >= 1000) continue;
-            GiveInventory("DRPGStimXL", 1);
-            break;
+            switch (Random(1, 4))
+            {
+            case 1: // Small
+                if (CheckInventory("DRPGStimSmall") >= 1000) continue;
+                GiveInventory("DRPGStimSmall", 1);
+                break;
+            case 2: // Medium
+                if (CheckInventory("DRPGStimMedium") >= 1000) continue;
+                GiveInventory("DRPGStimMedium", 1);
+                break;
+            case 3: // Large
+                if (CheckInventory("DRPGStimLarge") >= 1000) continue;
+                GiveInventory("DRPGStimLarge", 1);
+                break;
+            case 4: // XL
+                if (CheckInventory("DRPGStimXL") >= 1000) continue;
+                GiveInventory("DRPGStimXL", 1);
+                break;
+            };
+            
+            Injectors++;
         };
-        
-        Injectors++;
-        
-        if ((Timer() % 5) == 0)
-            Delay(1);
-    };
-    while (Vials < GetActivatorCVar("drpg_start_stim_vials"))
-    {
-        int Type = Random(0, STIM_MAX - 1);
-        bool Maxed = true;
-        
-        // Check to make sure all the vials aren't maxed
-        for (int i = 0; i < STIM_MAX; i++)
-            if (Player.Stim.Vials[i] < Player.Capacity * 10)
-                Maxed = false;
-        if (Maxed) break;
-        
-        // Don't include Boosters
-        if (!GetActivatorCVar("drpg_start_stim_boosters") && Type >= StimStatsEnd && Type <= StimPowerupStart) continue;
-        
-        // Don't include Powerups
-        if (!GetActivatorCVar("drpg_start_stim_powerups") && Type >= StimPowerupStart && Type <= StimPowerupEnd) continue;
-        
-        // Skip this one if this vial type is full
-        if (Player.Stim.Vials[Type] >= Player.Capacity * 10) continue;
-        
-        Player.Stim.Vials[Type]++;
-        Vials++;
-        
-        if ((Timer() % 5) == 0)
-            Delay(1);
     };
     
-    // Minigame Chips
-    int Chips = 0;
-    while (Chips < GetActivatorCVar("drpg_start_bonus_chips"))
+    GiveStims();
+    
+    script void GiveVials()
     {
-        int Type = Random(0, 1);
+        int Vials = 0;
+        int MaxVials = GetActivatorCVar("drpg_start_stim_vials");
+        if (MaxVials > 3000) MaxVials = 3000;
         
-        // Check if one or the other is max
-        if (CheckInventory("DRPGChipGold") >= 1000)
-            Type = 1;
-        if (CheckInventory("DRPGChipPlatinum") >= 1000)
-            Type = 0;
-        
-        if (Type == 1)
-            GiveInventory("DRPGChipGold", 1)
-        else
-            GiveInventory("DRPGChipPlatinum", 1);
-        
-        Chips++;
-        
-        if ((Timer() % 5) == 0)
-            Delay(1);
+        while (Vials < MaxVials)
+        {
+            int Type = Random(0, STIM_MAX - 1);
+            bool Maxed = true;
+            
+            // Check to make sure all the vials aren't maxed
+            for (int i = 0; i < STIM_MAX; i++)
+                if (Player.Stim.Vials[i] < Player.Capacity * 10)
+                    Maxed = false;
+            if (Maxed) break;
+            
+            // Don't include Boosters
+            if (!GetActivatorCVar("drpg_start_stim_boosters") && Type >= StimStatsEnd && Type <= StimPowerupStart) continue;
+            
+            // Don't include Powerups
+            if (!GetActivatorCVar("drpg_start_stim_powerups") && Type >= StimPowerupStart && Type <= StimPowerupEnd) continue;
+            
+            // Skip this one if this vial type is full
+            if (Player.Stim.Vials[Type] >= Player.Capacity * 10) continue;
+            
+            Player.Stim.Vials[Type]++;
+            Vials++;
+        };
     };
+    
+    GiveVials();
+    
+    // Minigame Chips
+    GiveInventory("DRPGChipGold", GetActivatorCVar("drpg_start_bonus_goldchips"));
+    GiveInventory("DRPGChipPlatinum", GetActivatorCVar("drpg_start_bonus_platchips"));
     
     // UAC Shop Card
     if (GetActivatorCVar("drpg_start_bonus_shopcard") > 0)
@@ -1913,7 +1900,7 @@ script void DefaultLoadout()
     Player.PayBonus = GetActivatorCVar("drpg_start_bonus_payout");
     
     // DRLA
-    if (CompatMode == COMPAT_DRLA)
+    script void GiveDRLAEquipment()
     {
         bool FoundWeapon = false;
         bool FoundArmor = false;
@@ -1925,8 +1912,8 @@ script void DefaultLoadout()
         
         // Weapons
         if (GetActivatorCVar("drpg_start_drla_weapon_type") > 0)
-            if (MaxWeaponCount > DRLAWeaponCount[GetActivatorCVar("drpg_start_drla_weapon_type") - 1])
-                MaxWeaponCount = DRLAWeaponCount[GetActivatorCVar("drpg_start_drla_weapon_type") - 1];
+            if (MaxWeaponCount > DRLAWeaponCount[GetActivatorCVar("drpg_start_drla_weapon_type")])
+                MaxWeaponCount = DRLAWeaponCount[GetActivatorCVar("drpg_start_drla_weapon_type")];
         while (WeaponCount < MaxWeaponCount)
         {
             for (int i = 0; i < LOADOUT_DRLAWEAPONS; i++)
@@ -1948,9 +1935,6 @@ script void DefaultLoadout()
                 
                 if (FoundWeapon)
                     break;
-                
-                if ((Timer() % 5) == 0)
-                    Delay(1);
             };
         };
         GiveInventory("RLWeaponLimit", WeaponCount);
@@ -1980,9 +1964,6 @@ script void DefaultLoadout()
                     
                     if (FoundArmor)
                         break;
-                    
-                    if ((Timer() % 5) == 0)
-                        Delay(1);
                 };
             };
             
@@ -2011,9 +1992,6 @@ script void DefaultLoadout()
                     
                     if (FoundBoots)
                         break;
-                    
-                    if ((Timer() % 5) == 0)
-                        Delay(1);
                 };
             };
         
@@ -2032,11 +2010,11 @@ script void DefaultLoadout()
             
             GiveInventory(DRLAModPacks[Type], 1);
             ModPackCount++;
-            
-            if ((Timer() % 5) == 0)
-                Delay(1);
         };
     };
+    
+    if (CompatMode == COMPAT_DRLA)
+        GiveDRLAEquipment();
 };
 
 // Apply values to global vars visible on the HUD
