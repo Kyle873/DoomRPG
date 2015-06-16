@@ -4,43 +4,60 @@
 #include "Shield.dh"
 #include "Utils.dh"
 
-AddressSpace MapArray ItemSpace;
+AddressSpace GlobalArray(3) ItemSpace;
 
-int ItemCategories = 8; // 8 vanilla, 7 reserved for compatibility, 1 at the end for all the misc hidden stuff
+ItemSpace bool ItemsInitialized;
 
-str[ITEM_CATEGORIES] ItemCategoryNames =
+ItemSpace int ItemCategories;
+
+ItemSpace str[ITEM_CATEGORIES] ItemCategoryNames;
+ItemSpace int[ITEM_CATEGORIES] ItemCategoryFlags;
+ItemSpace int[ITEM_CATEGORIES] ItemMax;
+
+ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData;
+
+ItemSpace bool ItemRanksRemoved;
+ItemSpace ItemInfoPtr[ITEM_CATEGORIES * ITEM_MAX] RewardList;
+ItemSpace int MaxRewards;
+ItemSpace bool RewardsInit;
+
+script void BuildItemData()
 {
-    "\cgWeapons";
-    "\ceAmmo";
-    "\caHealth";
-    "\cdArmor";
-    "\cqPowerups";
-    "\cvShield Parts";
-    "\ckStims/Augs/Turret";
-    "\cfLoot";
-};
-
-int[ITEM_CATEGORIES] ItemCategoryFlags =
-{
-    CF_NONE;                // Weapons
-    CF_NOSELL;              // Ammo
-    CF_NONE;                // Health
-    CF_NONE;                // Armor
-    CF_NONE;                // Powerups
-    CF_NONE;                // Shield Parts
-    CF_NONE;                // Stims/Augs/Turret Parts
-    CF_NOBUY | CF_NODROP;   // Loot
-};
-
-int[ITEM_CATEGORIES] ItemMax =
-{
-    8; 11; 8; 11; 11; 1; 32; MAX_LOOT;
-};
-
-ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
-{
-    // Actor, Name, Price, Minimum Rank, Not Storable
+    if (ItemsInitialized) return;
     
+    ItemCategories = 8; // 8 vanilla, 7 reserved for compatibility, 1 at the end for all the misc hidden stuff
+    
+    ItemCategoryNames =
+    {
+        "\cgWeapons";
+        "\ceAmmo";
+        "\caHealth";
+        "\cdArmor";
+        "\cqPowerups";
+        "\cvShield Parts";
+        "\ckStims/Augs/Turret";
+        "\cfLoot";
+    };
+    
+    ItemCategoryFlags =
+    {
+        CF_NONE;                // Weapons
+        CF_NOSELL;              // Ammo
+        CF_NONE;                // Health
+        CF_NONE;                // Armor
+        CF_NONE;                // Powerups
+        CF_NONE;                // Shield Parts
+        CF_NONE;                // Stims/Augs/Turret Parts
+        CF_NOBUY | CF_NODROP;   // Loot
+    };
+    
+    ItemMax =
+    {
+        8; 11; 8; 11; 11; 1; 32; MAX_LOOT;
+    };
+    
+    // Actor, Name, Price, Minimum Rank, Not Storable
+    ItemData[0] =
     // Weapons
     {
         { "DRPGChainsaw";               "Chainsaw";                         300;        0;  { "CSAWA0"; 31; 23; }; };
@@ -53,6 +70,7 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
         { "DRPGBFG9000";                "BFG9000";                          5000;       1;  { "BFUGA0"; 31; 38; }; };
     };
     
+    ItemData[1] =
     // Ammo
     {
         { "DRPGClip";                   "Clip";                             10;         0;  { "CLIPA0"; 2;  11; }; };
@@ -68,6 +86,7 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
         { "DRPGBigBackpack";            "Big Backpack";                     5000;       1;  { "GPAKA0"; 11; 29; }; };
     };
 
+    ItemData[2] =
     // Health
     {
         { "DRPGStimpack";               "Stimpack";                         50;         0;  { "STIMA0"; 7;  15; }; };
@@ -80,6 +99,7 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
         { "DRPGContinue";               "Continue";                         50000;      4;  { "CONTA0"; 14; 48; }; };
     };
 
+    ItemData[3] =
     // Armor
     {
         { "DRPGArmorBonus";             "Armor Bonus";                      1;          0;  { "BON2A0"; 7;  13; }; };
@@ -95,6 +115,7 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
         { "DRPGReinforcedWhiteArmor";   "Reinforced White Armor";           20000;      4;  { "ARX5A0"; 15; 17; }; };
     };
     
+    ItemData[4] =
     // Powerups
     {
         { "DRPGInvulnerabilityCharge";  "Invulnerability Charge";           25000;      2;  { "CRG2A0"; 6;  22; }; };
@@ -110,11 +131,13 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
         { "DRPGImmunityCrystal";        "Immunity Crystal";                 100000;     8;  { "CRYS";   -7; -4; }; };
     };
     
+    ItemData[5] =
     // Shield Parts - Built Dynamically
     {
         { "DRPGBasicShieldPackage";     "Basic Shield Package";             5000;       0;  { "SHPAA0"; 16; 32; }; };
     };
 
+    ItemData[6] =
     // Stims/Augmentations/Turret Parts
     {
         { "DRPGStimSmall";              "Small Stim";                       1000;       0;  { "STIMB0"; 16; 29; }; };
@@ -151,6 +174,7 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
         { "DRPGTurretPart";             "Turret Part";                      1000;       1;  { "TPRTA0"; 29; 21; }; };
     };
     
+    ItemData[7] =
     // Generic Loot
     {
         { "DRPGLootMedicalSupplies";    "Medical Supplies";                 100;        0;  { "LT01A0"; 7;  15; }; };
@@ -167,15 +191,7 @@ ItemSpace ItemInfo[ITEM_CATEGORIES][ITEM_MAX] ItemData =
         { "DRPGLootExperimentalParts";  "Experimental Parts";               500;        0;  { "LT12A0"; 15; 21; }; };
         { "DRPGLootDemonArtifact";      "Demon Artifacts";                  500;        0;  { "LT13A0"; 12; 22; }; };
     };
-};
-
-ItemSpace bool ItemRanksRemoved;
-ItemSpace ItemInfo[ITEM_CATEGORIES * ITEM_MAX] RewardList;
-ItemSpace int MaxRewards;
-ItemSpace bool RewardsInit;
-
-script void BuildItemData()
-{
+    
     int Index = 1;
     
     // Shield Page
@@ -719,8 +735,6 @@ script void BuildItemData()
     if (GetCVar("drpg_debug"))
         RemoveItemRanks();
     
-    Delay(1);
-    
     // We need this here now because DRLA is special
     // [KS] YES IT GODDAMN IS, KYLE
     for (int i = 0; i <= ItemCategories; i++)
@@ -730,60 +744,72 @@ script void BuildItemData()
             ItemData[i][j].Index = j;
         };
     
-    // Populate the reward list
-    MaxRewards = 0;
-    for (int i = 0; i < ItemCategories; i++)
+    script void PopulateRewards()
     {
-        // Don't pick worthless ammo or loot
-        if (i == 1 || i == 7)
-            continue;
-        
-        for (int j = 0; j < ItemMax[i]; j++)
+        // Populate the reward list
+        MaxRewards = 0;
+        for (int i = 0; i < ItemCategories; i++)
         {
-            // Don't pick cheap stuff like a Pistol or Armor Bonus
-            if (ItemData[i][j].Price < 100)
+            // Don't pick worthless ammo or loot
+            if (i == 1 || i == 7)
                 continue;
             
-            RewardList[MaxRewards] = ItemData[i][j];
-            
-            // DoomRL Compatibility
-            if (CompatMode == COMPAT_DRLA)
-                if (i == 0) // Weapons
-                    RewardList[MaxRewards].Actor = StrParam("%sPickup\n", RewardList[MaxRewards].Actor);
-            
-            ++MaxRewards;
+            for (int j = 0; j < ItemMax[i]; j++)
+            {
+                // Don't pick cheap stuff like a Pistol or Armor Bonus
+                if (ItemData[i][j].Price < 100)
+                    continue;
+                
+                RewardList[MaxRewards] = &ItemData[i][j];
+                
+                // DoomRL Compatibility
+                //if (CompatMode == COMPAT_DRLA)
+                //    if (i == 0) // Weapons
+                //        RewardList[MaxRewards].Actor = StrParam("%sPickup\n", RewardList[MaxRewards].Actor);
+                
+                ++MaxRewards;
+            };
         };
     };
     
-    Delay(1);
+    PopulateRewards();
     
     // Borrow the gnome sort method from the standard library because it's nice
-    int RewardIndex = 0;
-    int Instructions = 0;
-    while (RewardIndex < MaxRewards - 1)
+    script bool SortRewards()
     {
-        if (RewardList[RewardIndex].Price > RewardList[RewardIndex + 1].Price)
+        int RewardIndex = 0;
+        int Instructions = 0;
+        while (RewardIndex < MaxRewards - 1)
         {
-            ItemInfo Temp = RewardList[RewardIndex];
-            RewardList[RewardIndex] = RewardList[RewardIndex + 1];
-            RewardList[RewardIndex + 1] = Temp;
+            if (RewardList[RewardIndex]->Price > RewardList[RewardIndex + 1]->Price)
+            {
+                ItemInfoPtr Temp = RewardList[RewardIndex];
+                RewardList[RewardIndex] = RewardList[RewardIndex + 1];
+                RewardList[RewardIndex + 1] = Temp;
+                
+                RewardIndex -= 2;
+                
+                if (RewardIndex < 0) RewardIndex = 0;
+            }
+            else
+                ++RewardIndex;
             
-            RewardIndex -= 2;
-            
-            if (RewardIndex < 0) RewardIndex = 0;
-        }
-        else
-            ++RewardIndex;
+            // Because DRLA has a million weapons to sort
+            if (Instructions++ >= 20000)
+                return false;
+        };
         
-        // Because DRLA has a million weapons to sort and this will crash if we don't delay here
-        if (!(Instructions % 1000)) Delay(1);
-        ++Instructions;
+        return true;
     };
+    
+    while (!SortRewards()); // [KS] hue hue I am a horrible person
     
     // Reward List is done processing
     RewardsInit = true;
     if (GetCVar("drpg_debug"))
         Log("\cdDEBUG: \c-Finished Processing Rewards List (%d Tics Taken)\n", Timer());
+    
+    ItemsInitialized = true;
 };
 
 function int ShieldInversePriceSort(void const *Left, void const *Right)
@@ -817,7 +843,7 @@ function ItemInfoPtr GetRewardItem(int Difficulty)
         SliceLength += MaxRewards % MAX_DIFFICULTIES;
     
     int Index = Random(SliceStart, (SliceStart + SliceLength) - 1);
-    ItemInfoPtr Reward = &RewardList[Index];
+    ItemInfoPtr Reward = RewardList[Index];
     
     /* Some extra stuff to catch errors and spit out debug logging
     if (GetCVar("drpg_debug"))
