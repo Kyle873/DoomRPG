@@ -158,7 +158,7 @@ function void CheckCombo()
         Player.ComboTimer = COMBO_MAX - 1;
     
     // Subtract the combo timer each tic
-    if ((Player.Combo > 0 || Player.ComboTimer < COMBO_MAX) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGPowerStimChrono") && !CheckInventory("DRPGMenuFreezer"))
+    if ((Player.Combo > 0 || Player.ComboTimer < COMBO_MAX) && !CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGPowerStimChrono"))
         Player.ComboTimer--;
     
     // Reset values if you start the combo again while it was cooling down
@@ -291,7 +291,7 @@ function void CheckRank()
     };
     
     // Payment
-    if (!CheckInventory("PowerTimeFreezer") && !CheckInventory("DRPGMenuFreezer"))
+    if (!CheckInventory("PowerTimeFreezer"))
         Player.PayTimer--;
     if (Player.PayTimer <= 0)
     {
@@ -617,71 +617,68 @@ function void DoRegen()
         Player.EPRate = 0;
     
     // Now increment the timers
-    if (!CheckInventory("DRPGMenuFreezer"))
+    int Buttons = GetPlayerInput(PlayerNumber(), MODINPUT_BUTTONS);
+    
+    // Regen Boost
+    if (Player.RegenBoostTimer > 0)
     {
-        int Buttons = GetPlayerInput(PlayerNumber(), MODINPUT_BUTTONS);
+        fixed X = GetActorX(0);
+        fixed Y = GetActorY(0);
+        fixed Z = GetActorZ(0);
+        int Angle = GetActorAngle(0) * 256;
+        SpawnForced("DRPGRegenSphereEffect", X, Y, Z + 32.0, AuraTID, Angle);
         
-        // Regen Boost
-        if (Player.RegenBoostTimer > 0)
-        {
-            fixed X = GetActorX(0);
-            fixed Y = GetActorY(0);
-            fixed Z = GetActorZ(0);
-            int Angle = GetActorAngle(0) * 256;
-            SpawnForced("DRPGRegenSphereEffect", X, Y, Z + 32.0, AuraTID, Angle);
-            
-            Player.HPRate += Player.RegenBoostTimer / (GameSkill() * GameSkill());
-            Player.EPRate += Player.RegenBoostTimer / (GameSkill() * GameSkill());
-            Player.RegenBoostTimer--;
-            
-            // Pass Radius and Height to the Auras for DECORATE usage
-            SetUserVariable(AuraTID, "user_radius", (int)GetActorPropertyFixed(Player.TID, APROP_Radius));
-            SetUserVariable(AuraTID, "user_height", (int)GetActorPropertyFixed(Player.TID, APROP_Height));
-            Thing_ChangeTID(AuraTID, 0);
-        };
+        Player.HPRate += Player.RegenBoostTimer / (GameSkill() * GameSkill());
+        Player.EPRate += Player.RegenBoostTimer / (GameSkill() * GameSkill());
+        Player.RegenBoostTimer--;
         
-        // Regeneration Perk - Exponentially increase Health/Energy regeneration rates up to 4x as they lower
-        if (Player.Perks[STAT_REGENERATION])
-        {
-            // Health
-            fixed Health = Player.ActualHealth;
-            fixed MaxHealth = Player.HealthMax;
-            
-            fixed Multiplier = (1.0 - ((fixed)Health / (fixed)MaxHealth)) * 1.77;
-            HPAmount += Multiplier * Multiplier;
-            
-            // EP
-            fixed EP = Abs(Player.EP);
-            fixed MaxEP = Player.EPMax;
-            
-            fixed Multiplier = (1.0 - ((fixed)EP / (fixed)MaxEP)) * 1.77;
-            EPAmount += Multiplier * Multiplier;
-        };
+        // Pass Radius and Height to the Auras for DECORATE usage
+        SetUserVariable(AuraTID, "user_radius", (int)GetActorPropertyFixed(Player.TID, APROP_Radius));
+        SetUserVariable(AuraTID, "user_height", (int)GetActorPropertyFixed(Player.TID, APROP_Height));
+        Thing_ChangeTID(AuraTID, 0);
+    };
+    
+    // Regeneration Perk - Exponentially increase Health/Energy regeneration rates up to 4x as they lower
+    if (Player.Perks[STAT_REGENERATION])
+    {
+        // Health
+        fixed Health = Player.ActualHealth;
+        fixed MaxHealth = Player.HealthMax;
         
-        // Movement/Crouching/Idling mechanics
-        if (GetCVar("drpg_regen_movement"))
-        {
-            if (IsPlayerMoving()) // Movement - 50% Regen Rate
-            {
-                Player.HPRate += HPAmount;
-                Player.EPRate += EPAmount;
-            }
-            else if (Buttons & BT_CROUCH) // Crouch - 150% Regen Rate
-            {
-                Player.HPRate += HPAmount + 3;
-                Player.EPRate += EPAmount + 3;
-            }
-            else // Idle - 100% Regen Rate
-            {
-                Player.HPRate += HPAmount + 2;
-                Player.EPRate += EPAmount + 2;
-            };
-        }
-        else
+        fixed Multiplier = (1.0 - ((fixed)Health / (fixed)MaxHealth)) * 1.77;
+        HPAmount += Multiplier * Multiplier;
+        
+        // EP
+        fixed EP = Abs(Player.EP);
+        fixed MaxEP = Player.EPMax;
+        
+        fixed Multiplier = (1.0 - ((fixed)EP / (fixed)MaxEP)) * 1.77;
+        EPAmount += Multiplier * Multiplier;
+    };
+    
+    // Movement/Crouching/Idling mechanics
+    if (GetCVar("drpg_regen_movement"))
+    {
+        if (IsPlayerMoving()) // Movement - 50% Regen Rate
         {
             Player.HPRate += HPAmount;
             Player.EPRate += EPAmount;
+        }
+        else if (Buttons & BT_CROUCH) // Crouch - 150% Regen Rate
+        {
+            Player.HPRate += HPAmount + 3;
+            Player.EPRate += EPAmount + 3;
+        }
+        else // Idle - 100% Regen Rate
+        {
+            Player.HPRate += HPAmount + 2;
+            Player.EPRate += EPAmount + 2;
         };
+    }
+    else
+    {
+        Player.HPRate += HPAmount;
+        Player.EPRate += EPAmount;
     };
 };
 
@@ -999,9 +996,6 @@ function void ToxicityDamage()
 
 function void CheckStatusEffects()
 {
-    // Return if menu freezing is enabled
-    if (CheckInventory("DRPGMenuFreezer")) return;
-    
     if (Player.StatusType[SE_BLIND]) // Blind
         FadeRange(0, 0, 0, (0.5 + (Player.StatusIntensity[SE_BLIND] * 0.1)) - (Sin(Timer() / 128.0) * 0.25), 0, 0, 0, 0.0, 0.5);
     
