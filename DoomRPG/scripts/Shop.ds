@@ -100,17 +100,7 @@ script void ShopItemAutoHandler()
                 ItemInfoPtr Item = ((ItemInfoPtr *)Player.AutoSellList.Data)[i];
                 
                 if (CheckInventory(Item->Actor) > 0)
-                {
-                    // DoomRL Compatibility
-                    if (CompatMode == COMPAT_DRLA)
-                    {
-                        int Total = CheckInventory(Item->Actor);
-                        while (Total-- > 0)
-                            RemoveDRLAItem(Item->Category, Item->Index);
-                    };
-                    
                     SellItem(Item->Actor, true, true);
-                };
             };
         
         // Auto-Store
@@ -148,17 +138,8 @@ script void ShopItemAutoHandler()
                     // Auto-Sell
                     if (!Player.InShop && GetActivatorCVar("drpg_pickup_behavior") == 1 && Items[i][j] > PrevItems[i][j])
                         if (CheckInventory(Item->Actor) > 0)
-                        {
-                            // DoomRL Compatibility
-                            if (CompatMode == COMPAT_DRLA)
-                            {
-                                int Total = CheckInventory(Item->Actor);
-                                while (Total-- > 0)
-                                    RemoveDRLAItem(i, j);
-                            };
-                            
                             SellItem(Item->Actor, true, true);
-                        };
+                    
                     // Auto-Store
                     if (!Player.InShop && GetActivatorCVar("drpg_pickup_behavior") == 2 && Items[i][j] > PrevItems[i][j])
                         if (CheckInventory(Item->Actor) > 0)
@@ -560,13 +541,10 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
     if (SellAll)
         Amount = CheckInventory(Item);
     
+    ItemInfoPtr Info = FindItem(Item);
+    
     // Get Sell Price
     SellCost = GetSellPrice(Item, Amount);
-    
-    // DoomRL Compatibility
-    if (CompatMode == COMPAT_DRLA && !AutoSold)
-        for (int i = 1; i <= Amount; i++)
-            RemoveDRLAItem(Player.ShopPage, Player.ShopIndex);
     
     // Sell the Item
     if (CheckInventory(Item) >= Amount)
@@ -576,6 +554,12 @@ function int SellItem(str Item, bool SellAll, bool AutoSold)
         else
             ActivatorSound("credits/payout", 127);
         TakeInventory(Item, Amount);
+        
+        // DoomRL Compatibility
+        if (CompatMode == COMPAT_DRLA)
+            for (int i = 0; i < Amount; i++)
+                RemoveDRLAItem(Info->Category, Info->Index);
+        
         GiveInventory("DRPGCredits", SellCost);
     }
     else if (Player.DelayTimer <= 35.0 * GetActivatorCVarFixed("drpg_menu_repeat"))
