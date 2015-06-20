@@ -450,11 +450,6 @@ function void BuyItem(str Item)
         return;
     };
     
-    // DoomRL Compatibility
-    if (CompatMode == COMPAT_DRLA)
-        if (Player.ShopPage == 0) // Weapons
-            Item = StrParam("%sPickup\n", Item);
-    
     if (CurrentLevel->UACBase && !GetCVar("drpg_shoptype"))
         Spawned = SpawnSpotForced(Item, ShopSpotID, 0, 0)
     else
@@ -655,18 +650,26 @@ function void WithdrawItem(int Page, int Index)
                 return;
             };
             
-            // Re-add the mods onto the weapon
-            SetInventory(StrParam("%sModLimit\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Total);
-            SetInventory(StrParam("%sPowerMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Power);
-            SetInventory(StrParam("%sBulkMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Bulk);
-            SetInventory(StrParam("%sAgilityMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Agility);
-            SetInventory(StrParam("%sTechnicalMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Technical);
-            SetInventory(StrParam("%sSniperMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Sniper);
-            SetInventory(StrParam("%sFirestormMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Firestorm);
-            SetInventory(StrParam("%sNanoMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Nano);
-            SetInventory(StrParam("%sDemonArtifacts\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Artifacts);
-            
-            SpawnForced(StrParam("%sPickup\n", ItemPtr->Actor), GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+            int WeaponTID = UniqueTID();
+            if (Player.WeaponMods[Player.ShopIndex].Total > 0) // Weapon was modded
+            {
+                // Re-add the mods onto the weapon
+                SpawnForced(StrParam("%sPickupModded\n", ItemPtr->Actor), GetActorX(0), GetActorY(0), GetActorZ(0), WeaponTID, 0);
+                
+                GiveActorInventory(WeaponTID, StrParam("%sModLimit\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Total);
+                GiveActorInventory(WeaponTID, StrParam("%sPowerMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Power);
+                GiveActorInventory(WeaponTID, StrParam("%sBulkMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Bulk);
+                GiveActorInventory(WeaponTID, StrParam("%sAgilityMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Agility);
+                GiveActorInventory(WeaponTID, StrParam("%sTechnicalMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Technical);
+                GiveActorInventory(WeaponTID, StrParam("%sSniperMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Sniper);
+                GiveActorInventory(WeaponTID, StrParam("%sFirestormMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Firestorm);
+                GiveActorInventory(WeaponTID, StrParam("%sNanoMod\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Nano);
+                GiveActorInventory(WeaponTID, StrParam("%sDemonArtifacts\n", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Artifacts);
+            }
+            else
+            {
+                SpawnForced(ItemPtr->Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
+            };
         }
         else if (Page == 1) // Ammo
             GiveInventory(ItemPtr->Actor, 1)
