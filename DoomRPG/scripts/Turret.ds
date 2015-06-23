@@ -1629,7 +1629,6 @@ script void TurretAI(int TID)
     bool AnnouncedTarget = false;
     int LosingInterestTime = 0;
     int MaxInterestTime = GetUserCVar(PlayerID, "drpg_turret_pursuittime");
-    int GoalTID = 0;
     int TargetTID = 0;
     int TargetOriginalTID = 0;
     int TravelTime = 0;
@@ -1646,6 +1645,7 @@ script void TurretAI(int TID)
     fixed EnemyAngle;
     fixed EnemyPitch;
     fixed DodgeDirection;
+    fixed TurretIdleRotation = 0.0;
     
     Start:
     
@@ -1780,18 +1780,18 @@ script void TurretAI(int TID)
     // Spawn a goal flag if we need to hold our position
     if (CurrentCommand == TC_HOLD_POSITION)
     {
-        if (!GoalTID)
+        if (!GetUserVariable(0, "user_goal_tid"))
         {
-            GoalTID = UniqueTID();
-            SpawnForced("DRPGTurretGoalFlag", GetActorX(0), GetActorY(0), GetActorFloorZ(0), GoalTID, GetActorAngle(0) * 256);
+            SetUserVariable(0, "user_goal_tid", UniqueTID());
+            SpawnForced("DRPGTurretGoalFlag", GetActorX(0), GetActorY(0), GetActorFloorZ(0), GetUserVariable(0, "user_goal_tid"), GetActorAngle(0) * 256);
         };
     }
     else
     {
-        if (GoalTID)
+        if (GetUserVariable(0, "user_goal_tid"))
         {
-            Thing_Remove(GoalTID);
-            GoalTID = 0;
+            Thing_Remove(GetUserVariable(0, "user_goal_tid"));
+            SetUserVariable(0, "user_goal_tid", 0);
         };
     };
     
@@ -1809,19 +1809,22 @@ script void TurretAI(int TID)
         
         if (CurrentCommand == TC_HOLD_POSITION)
         {
-            if (Distance(0, GoalTID) > 80.0)
+            if (Distance(0, GetUserVariable(0, "user_goal_tid")) > 80.0)
             {
-                TurretAngle = VectorAngle(GetActorX(GoalTID) - GetActorX(0), GetActorY(GoalTID) - GetActorY(0));
-                TurretPitch = VectorAngle(Distance(0, GoalTID), GetActorZ(GoalTID) - GetActorZ(0));
+                TurretAngle = VectorAngle(GetActorX(GetUserVariable(0, "user_goal_tid")) - GetActorX(0), GetActorY(GetUserVariable(0, "user_goal_tid")) - GetActorY(0));
+                TurretPitch = VectorAngle(Distance(0, GetUserVariable(0, "user_goal_tid")), GetActorZ(GetUserVariable(0, "user_goal_tid")) - GetActorZ(0));
                 
                 TurretTurn(TurretAngle, TurretPitch);
                 TurretFly(TurretAngle, TurretPitch, TurretSpeed);
                 
+                TurretIdleRotation = 0.0;
                 TravelTime++;
             }
             else
             {
-                TurretTurn(GetActorAngle(GoalTID), 0);
+                TurretTurn(GetActorAngle(GetUserVariable(0, "user_goal_tid")) + TurretIdleRotation, 0);
+                
+                TurretIdleRotation += 0.014;
             };
             
             if (Weapon != TW_NONE && !(Timer() % 35))
@@ -1921,10 +1924,10 @@ script void TurretAI(int TID)
                 
                 TurretFly(EnemyAngle - 0.25, 0, TurretSpeed);
                 
-                TurretAngle = VectorAngle(GetActorX(GoalTID) - GetActorX(0), GetActorY(GoalTID) - GetActorY(0));
-                TurretPitch = VectorAngle(Distance(0, GoalTID), GetActorZ(GoalTID) - GetActorZ(0));
+                TurretAngle = VectorAngle(GetActorX(GetUserVariable(0, "user_goal_tid")) - GetActorX(0), GetActorY(GetUserVariable(0, "user_goal_tid")) - GetActorY(0));
+                TurretPitch = VectorAngle(Distance(0, GetUserVariable(0, "user_goal_tid")), GetActorZ(GetUserVariable(0, "user_goal_tid")) - GetActorZ(0));
                 
-                if (Distance(0, GoalTID) > 80.0)
+                if (Distance(0, GetUserVariable(0, "user_goal_tid")) > 80.0)
                 {
                     TurretFly(TurretAngle, TurretPitch, TurretSpeed);
                     TurretTurn(TurretAngle, TurretPitch);
@@ -2748,6 +2751,7 @@ function void TurretDespawn()
     
     Player.Turret.Active = false;
     Player.Turret.SensorsActive = false;
+    Thing_Remove(GetUserVariable(Player.Turret.TID, "user_goal_tid"));
     
     PlaySound(Player.Turret.TID, "turret/despawn", CHAN_BODY, 1.0, false, ATTN_NORM);
     SpawnForced("DRPGTurretTeleport", GetActorX(Player.Turret.TID), GetActorY(Player.Turret.TID), GetActorZ(Player.Turret.TID) - 32.0, 0, 0);
