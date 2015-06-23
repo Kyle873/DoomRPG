@@ -1043,6 +1043,8 @@ script void ItemHandler()
                 fixed Dist = Distance(ItemTIDs[i], Players(j).TID);
                 fixed Height = GetActorPropertyFixed(Players(j).TID, APROP_Height);
                 fixed Divisor = (Dist - 16.0) + Dist;
+                fixed Angle = VectorAngle (GetActorX(Players(j).TID) - GetActorX(ItemTIDs[i]), GetActorY(Players(j).TID) - GetActorY(ItemTIDs[i]));
+                fixed Pitch = VectorAngle (Dist, GetActorZ(Players(j).TID) - GetActorZ(ItemTIDs[i]));
                 fixed Amount;
                 fixed X;
                 fixed Y;
@@ -1055,11 +1057,11 @@ script void ItemHandler()
                     Amount = 16.0 / Divisor;
                 
                 // Calculate the lerped positions
-                X = Lerp(GetActorX(ItemTIDs[i]), GetActorX(Players(j).TID), Amount);
-                Y = Lerp(GetActorY(ItemTIDs[i]), GetActorY(Players(j).TID), Amount);
-                Z = Lerp(GetActorZ(ItemTIDs[i]), GetActorZ(Players(j).TID) + 32.0, Amount);
+                X = (Amount * 16.0) * Cos(Angle) * Cos(Pitch);
+                Y = (Amount * 16.0) * Sin(Angle) * Cos(Pitch);
+                Z = (Amount * 16.0) * Sin(Pitch);
                 
-                SetActorPosition(ItemTIDs[i], X, Y, Z, false);
+                SetActorVelocity(ItemTIDs[i], X, Y, Z, true);
                 NoClip = true;
             };
             
