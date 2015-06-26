@@ -30,11 +30,16 @@ script void MapInit() open
     // Running the game for the first time
     if (KnownLevels.Data == NULL)
     {
+        if (GetCVar("drpg_monster_mapweight") < 1)
+            SetCVar("drpg_monster_mapweight", 1);
+        if (GetCVar("drpg_monster_mapweight") > 1000)
+            SetCVar("drpg_monster_mapweight", 1000);
+        int StartMapNum = GetCVar("drpg_monster_mapweight");
         CurrentSkill = GameSkill() - 1;
         UsedSecretExit = false;
         PreviousLevelSecret = false;
-        PreviousLevelNum = 0;
-        PreviousPrimaryLevelNum = 0;
+        PreviousLevelNum = StartMapNum - 1;
+        PreviousPrimaryLevelNum = StartMapNum - 1;
         ArrayCreate(&KnownLevels, "LVLS\x00", 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
         PreviousLevel = NULL;
@@ -145,6 +150,11 @@ script void MapInit() open
                 PreviousLevelNum++;
                 if (!UsedSecretExit)
                     PreviousLevelNum = ++PreviousPrimaryLevelNum;
+                
+                if (PreviousLevelNum > 1000)
+                    PreviousLevelNum = 1000;
+                if (PreviousPrimaryLevelNum > 1000)
+                    PreviousPrimaryLevelNum = 1000;
                 
                 CurrentLevel->LevelNum = PreviousLevelNum;
                 CurrentLevel->SecretMap = UsedSecretExit;
