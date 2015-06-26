@@ -297,6 +297,9 @@ function void CheckStim()
         "DRPGPowerStimMagnetic";
     };
     
+    // Toxicity multiplier for Potency and Purifier stims
+    int StimToxicityMultiplier = 1 + Player.Stim.Current[STIM_POTENCY] + Player.Stim.Current[STIM_PURIFIER];
+    
     // Stim maximum capacities
     if (Player.Stim.Size == 1) // Small
         Player.Stim.Capacity = 10;
@@ -313,13 +316,13 @@ function void CheckStim()
     // Toxicity From amount of different compounds
     for (int i = 0; i < STIM_MAX; i++)
         if (Player.Stim.Current[i] > 0)
-            Player.Stim.Toxicity++;
+            Player.Stim.Toxicity += StimToxicityMultiplier;
     
     // Toxicity from total amount of compounds
-    Player.Stim.Toxicity += Player.Stim.Amount / 5;
+    Player.Stim.Toxicity += (Player.Stim.Amount * StimToxicityMultiplier) / 5;
     
     // Toxicity added Based on Skill
-    Player.Stim.Toxicity += GameSkill();
+    Player.Stim.Toxicity += GameSkill() * StimToxicityMultiplier;
     
     // Calculate the current Stim amount
     Player.Stim.Amount = 0;
