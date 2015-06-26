@@ -505,7 +505,10 @@ acscript void LevelTransport()
             MapType = "UAC Arena";
         HudMessage("%s\n", TeleDest->NiceName, HUDMSG_FADEOUT, MENU_ID + 1, TitleColor, 32.1, 64.1, 0.05, 0.5);
         SetFont("SMALLFONT");
-        HudMessage("%s - %s\n", TeleDest->LumpName, MapType, HUDMSG_FADEOUT, MENU_ID + 2, CR_ORANGE, 32.1, 80.1, 0.05, 0.5);
+        if (TeleDest->LevelNum > 0)
+            HudMessage("%s, level %d - %s\n", TeleDest->LumpName, TeleDest->LevelNum, MapType, HUDMSG_FADEOUT, MENU_ID + 2, CR_ORANGE, 32.1, 80.1, 0.05, 0.5)
+        else
+            HudMessage("%s - %s\n", TeleDest->LumpName, MapType, HUDMSG_FADEOUT, MENU_ID + 2, CR_DARKGREEN, 32.1, 80.1, 0.05, 0.5);
         
         if (!TeleDest->NeedsRealInfo && !TeleDest->UACBase && !TeleDest->UACArena)
         {
@@ -595,10 +598,34 @@ acscript void LevelTransport()
                 break;
             };
             
+            int MonsterAvgLevel = 0;
+            int MonsterMinLevel = 0;
+            int MonsterMaxLevel = 0;
+            
+            if (1)
+            {
+                int MonsterLevelType = GetCVar("drpg_monster_levels");
+                fixed MonsterLevelWeight = GetCVarFixed("drpg_monster_level_weight");
+                fixed MonsterMapWeight = GetCVarFixed("drpg_monster_map_weight");
+                fixed MonsterRandomMinWeight = GetCVarFixed("drpg_monster_random_min_mult");
+                fixed MonsterRandomMaxWeight = GetCVarFixed("drpg_monster_random_max_mult");
+                int MonsterLevelNum = TeleDest->LevelNum;
+                
+                // Calculate Monster Level
+                if (MonsterLevelType == 1 || MonsterLevelType == 3) // Player Level
+                    MonsterAvgLevel += (int)((fixed)AveragePlayerLevel() * MonsterLevelWeight);
+                if (MonsterLevelType == 2 || MonsterLevelType == 3) // Map Number
+                    MonsterAvgLevel += (int)((fixed)MonsterLevelNum * MonsterMapWeight);
+                
+                MonsterMinLevel = MonsterAvgLevel * MonsterRandomMinWeight;
+                MonsterMaxLevel = MonsterAvgLevel * MonsterRandomMaxWeight;
+            };
+            
             SetFont("BIGFONT");
             HudMessage("Area Status\n", HUDMSG_FADEOUT, MENU_ID + 8, CR_GREEN, 32.1, 152.1, 0.05, 0.5);
             SetFont("SMALLFONT");
-            HudMessage("%s\n", AreaText, HUDMSG_FADEOUT, MENU_ID + 9, CR_WHITE, 32.1, 168.1, 0.05, 0.5);
+            HudMessage("Monster level (Approx.): %d - %d\n", MonsterMinLevel, MonsterMaxLevel, HUDMSG_FADEOUT, MENU_ID + 9, CR_WHITE, 32.1, 168.1, 0.05, 0.5);
+            HudMessage("%s\n", AreaText, HUDMSG_FADEOUT, MENU_ID + 10, CR_WHITE, 32.1, 184.1, 0.05, 0.5);
         }
         else if (!TeleDest->NeedsRealInfo && TeleDest->UACBase)
         {
