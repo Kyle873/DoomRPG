@@ -2,127 +2,128 @@
 // ROCKET LAUNCHER
 //*****************
 
-
 Actor DRPGRocketLauncherExtras : DRPGRocketLauncher replaces RocketLauncher
 {
+    Inventory.PickupSound "weapons/rlan/pickup"
     Weapon.SlotNumber 5
-    weapon.selectionorder 250
-    inventory.pickupsound "weapons/rlan/pickup"
-    weapon.upsound "weapons/rlan/draw"
+    Weapon.SelectionOrder 250
+    Weapon.UpSound "weapons/rlan/draw"
     
-    states
-	{
-	Select:
-		RLAN A 1 A_Raise
-		loop
-	Deselect:
-		TNT1 A 0 A_Lower
-		RLAN A 1 A_Lower
-		loop
-	Ready:
-		RLAN A 1 A_WeaponReady
-		loop
-	Fire:
-		RLAF A 2 A_firecustommissile("Rocket1",0,1)
-		TNT1 A 0 A_GunFlash
-		TNT1 A 0 A_FireCustomMissile("RocketLSmokeSpawner",0,0,0,-15)
-		RLAF BCDEF 2
-		RLAN DCB 2
-		RLAN A 2 A_Refire
-		goto ready
-	Flash:
-		TNT1 A 3 A_light2
-		TNT1 A 3 A_light1
-		goto lightdone
-	}
+    States
+    {
+    Select:
+        RLAN A 1 A_Raise
+        Loop
+    Deselect:
+        RLAN A 0 A_Lower
+        RLAN A 1 A_Lower
+        Loop
+    Ready:
+        RLAN A 1 A_WeaponReady
+        Loop
+    Fire:
+        RLAF A 2 A_FireCustomMissile("DRPGRocketExtras",0,1)
+        RLAN A 0 A_GunFlash
+        RLAN A 0 A_FireCustomMissile("RocketLSmokeSpawner",0,0,0,-15)
+        RLAF BCDEF 2
+        RLAN DCB 2
+        RLAN A 2 A_Refire
+        Goto Ready
+    Flash:
+        TNT1 A 3 A_Light2
+        TNT1 A 3 A_Light1
+        Goto LightDone
+    }
 }
 
 Actor RocketLSmokeSpawner
 {
-		Radius 1
-		Height 1
-		Speed 20
-		PROJECTILE
-		+NOCLIP
-		States
-		{
-		Spawn:
-			TNT1 A 1 Thing_ChangeTID(0,390)
-			TNT1 A 0 A_SpawnItem("RocketLSmoke",0,3)
-			Stop
-		}
+    Radius 1
+    Height 1
+    Speed 20
+    
+    Projectile
+    +NOCLIP
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_SpawnItem("RocketLSmoke",0,3)
+        Stop
+    }
 }
 
 
 actor RocketLSmoke : ShotSmoke
 {
-	 scale 0.15
+    Scale 0.15
 }
 
-Actor Rocket1 : Rocket replaces Rocket
+Actor DRPGRocketExtras : Rocket replaces Rocket
 {
--ROCKETTRAIL
-+THRUGHOST
-+MTHRUSPECIES
-decal bigscorch
-seesound "weapons/rlan/fire"
-deathsound "weapons/rlan/explosion"
-states
-	{
-	Spawn:
-		MISL A 1 bright A_CustomMissile("Rocket1Trail",random(-2,2),random(-2,2))
-		loop
-	Death:
-TNT1 A 0
-TNT1 A 0 A_Scream
-TNT1 A 0 A_ChangeFlag("FORCEXYBILLBOARD",1)
-TNT1 A 0 A_custommissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
-TNT1 A 0 A_custommissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
-TNT1 A 0 A_custommissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
-TNT1 A 0 A_custommissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
-TNT1 A 0 A_custommissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
-TNT1 A 0 A_custommissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
-TNT1 A 0 A_custommissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
-		REXP G 4 bright A_Explode
-		REXP HIJK 4 bright 
-		stop
-	}
+    DamageType "Fire"
+    Decal "BigScorch"
+    SeeSound "weapons/rlan/fire"
+    DeathSound "weapons/rlan/explosion"
+
+    -ROCKETTRAIL
+    +THRUGHOST
+    +MTHRUSPECIES
+    
+    states
+    {
+    Spawn:
+        MISL A 1 Bright NoDelay A_CustomMissile("Rocket1Trail",random(-2,2),random(-2,2))
+        Loop
+    Death:
+        REXP G 0 A_Scream
+        REXP G 0 A_ChangeFlag("FORCEXYBILLBOARD",1)
+        REXP G 0 A_CustomMissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
+        REXP G 0 A_CustomMissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
+        REXP G 0 A_CustomMissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
+        REXP G 0 A_CustomMissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
+        REXP G 0 A_CustomMissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
+        REXP G 0 A_CustomMissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
+        REXP G 0 A_CustomMissile("SmokingPiece",random(0,16),random(-8,8),random(-360,360),2,random(10,70))
+        REXP G 4 Bright A_Explode
+        REXP HIJK 4 Bright 
+        Stop
+    }
 }
 
 Actor Rocket1Trail
 {
-+NOTDMATCH
-+NOCLIP +NOBLOCKMAP
-+NOGRAVITY
-+NOINTERACTION
-scale 0.1
-renderstyle translucent
-alpha 0.25
-states
-	{
-	Spawn:
-		SMOK ABCDEFGHIJKLMNOPQ 1 Thing_ChangeTID(0,390)
-		stop
-	}
+    Scale 0.1
+    RenderStyle Translucent
+    Alpha 0.25
+
+    +NOINTERACTION
+
+    States
+    {
+    Spawn:
+        SMOK ABCDEFGHIJKLMNOPQ 1
+        Stop
+    }
 }
  
 Actor SmokingPiece : DebrisGeneral
 {
--NOGRAVITY
-speed 12
-gravity 0.7
-states
-		{
-		Spawn:
-		TNT1 A 0
-		TNT1 A 1 Thing_ChangeTID(0,390)
-		TNT1 A 1 A_SpawnItem("SmokingPieceSmoke")
-		wait
-		}
+    Speed 12
+    Gravity 0.7
+    
+    -NOGRAVITY
+    
+    States
+    {
+    Spawn:
+        TNT1 A 1 NoDelay A_SpawnItem("SmokingPieceSmoke")
+        Wait
+    }
 }
 
 Actor SmokingPieceSmoke : ShotSmokeTrail
 {
-scale 0.06
-alpha 0.5
+    Scale 0.06
+    Alpha 0.5
 }
