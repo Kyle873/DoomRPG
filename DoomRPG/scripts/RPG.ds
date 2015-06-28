@@ -1198,6 +1198,34 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         bool Spawned = Spawn("MapSpotGravity", X, Y, Z, TID, A);
         if (Spawned)
         {
+            script bool DynamicLootGeneratorCheckRemoval(int TID, fixed Z)
+            {
+                bool Remove = true;
+                
+                for (int i = 0; ItemTIDs[i] != -1; i++)
+                {
+                    // If this spot is blank, skip it
+                    if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
+                    
+                    // Randomly continue for variance
+                    if (Random(1, 4) == 1) continue;
+                    
+                    bool CanSee = CheckSight(ItemTIDs[i], TID, 0);
+                    
+                    // [KS] Don't spawn stuff on special-effects flats like skyfloor or blackness, or at extreme height differences, because more often than not those are used as void space filler or instakill floors.
+                    // Examples: Epic2 MAP14, SF2012 MAP02, some CC4 maps.
+                    bool BadFloor = (CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF"));
+                    
+                    if (CanSee && !BadFloor && Abs(Z - GetActorZ(ItemTIDs[i])) <= 24)
+                    {
+                        Remove = false;
+                        break;
+                    };
+                };
+                
+                return Remove;
+            };
+
             bool Remove = DynamicLootGeneratorCheckRemoval(TID, Z);
             
             Thing_Remove(TID);
@@ -1224,34 +1252,6 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     
     if (GetCVar("drpg_debug"))
         Log("\cdDebug: \c-Dynamic Loot Generation created \cd%d\c- items of type \cd%s\n", Items, Actor);
-};
-
-script bool DynamicLootGeneratorCheckRemoval(int TID, fixed Z)
-{
-    bool Remove = true;
-    
-    for (int i = 0; ItemTIDs[i] != -1; i++)
-    {
-        // If this spot is blank, skip it
-        if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
-        
-        // Randomly continue for variance
-        if (Random(1, 4) == 1) continue;
-        
-        bool CanSee = CheckSight(ItemTIDs[i], TID, 0);
-        
-        // [KS] Don't spawn stuff on special-effects flats like skyfloor or blackness, or at extreme height differences, because more often than not those are used as void space filler or instakill floors.
-        // Examples: Epic2 MAP14, SF2012 MAP02, some CC4 maps.
-        bool BadFloor = (CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF"));
-        
-        if (CanSee && !BadFloor && Abs(Z - GetActorZ(ItemTIDs[i])) <= 128)
-        {
-            Remove = false;
-            break;
-        };
-    };
-    
-    return Remove;
 };
 
 // Quick Heal
