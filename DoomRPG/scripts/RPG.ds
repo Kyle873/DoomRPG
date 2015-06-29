@@ -754,7 +754,7 @@ acscript void GiveTip()
         { "\cqVicious Downpour";                "It's raining acidic substances. Best to wear a radiation suit if you plan to head outdoors."; };
         { "\ctThe Dark Zone";                   "This is no ordinary mist. The evil fog will slowly sap away the light from its' surroundings. Once that happens, enemies will begin to resurrect and become infused with Shadow Auras. Sticking around here for long is not recommended without preparation."; };
         
-        { "\cg...";                             "\caC          O        N     S         U       M       E                    \cgY       O          U"; };
+        { "\caC       O     N   S    U    M    E         \cgY   O     U"; "Tip: Run."; };
         { "\cmWhispers of Darkness";            "\cg\"He who fights with monsters should look to it that he himself does not become a monster. \caAnd when you gaze long into an abyss, \cuthe abyss also gazes into you.\""; };
         
         
@@ -762,6 +762,8 @@ acscript void GiveTip()
         
         { "\caHell Event";                      "The difficulty level has increased to \caHell\c- for this area."; };
         { "\cmArmageddon Event";                "The difficulty level has increased to \cmArmageddon\c- for this area."; };
+
+        { "\cgSinstorm";                        "You're getting close to the source of the invasion. The demonic legion is pulling all of its' last stops. Expect frequent battles with shadow enemies, and reinforcements to pour in relentlessly. Be careful when traversing outdoors, as the fire rain will harm you as well."; };
     };
     
     int TipID = Random(0, MAX_TIPS - 1);
@@ -1198,6 +1200,34 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
         bool Spawned = Spawn("MapSpotGravity", X, Y, Z, TID, A);
         if (Spawned)
         {
+            script bool DynamicLootGeneratorCheckRemoval(int TID, fixed Z)
+            {
+                bool Remove = true;
+                
+                for (int i = 0; ItemTIDs[i] != -1; i++)
+                {
+                    // If this spot is blank, skip it
+                    if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
+                    
+                    // Randomly continue for variance
+                    if (Random(1, 4) == 1) continue;
+                    
+                    bool CanSee = CheckSight(ItemTIDs[i], TID, 0);
+                    
+                    // [KS] Don't spawn stuff on special-effects flats like skyfloor or blackness, or at extreme height differences, because more often than not those are used as void space filler or instakill floors.
+                    // Examples: Epic2 MAP14, SF2012 MAP02, some CC4 maps.
+                    bool BadFloor = (CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF"));
+                    
+                    if (CanSee && !BadFloor && Abs(Z - GetActorZ(ItemTIDs[i])) <= 24)
+                    {
+                        Remove = false;
+                        break;
+                    };
+                };
+                
+                return Remove;
+            };
+
             bool Remove = DynamicLootGeneratorCheckRemoval(TID, Z);
             
             Thing_Remove(TID);
@@ -1224,34 +1254,6 @@ script void DynamicLootGenerator(str Actor, int MaxItems)
     
     if (GetCVar("drpg_debug"))
         Log("\cdDebug: \c-Dynamic Loot Generation created \cd%d\c- items of type \cd%s\n", Items, Actor);
-};
-
-script bool DynamicLootGeneratorCheckRemoval(int TID, fixed Z)
-{
-    bool Remove = true;
-    
-    for (int i = 0; ItemTIDs[i] != -1; i++)
-    {
-        // If this spot is blank, skip it
-        if (ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
-        
-        // Randomly continue for variance
-        if (Random(1, 4) == 1) continue;
-        
-        bool CanSee = CheckSight(ItemTIDs[i], TID, 0);
-        
-        // [KS] Don't spawn stuff on special-effects flats like skyfloor or blackness, or at extreme height differences, because more often than not those are used as void space filler or instakill floors.
-        // Examples: Epic2 MAP14, SF2012 MAP02, some CC4 maps.
-        bool BadFloor = (CheckActorFloorTexture(TID, "F_SKY1") || CheckActorFloorTexture(TID, "F_SKY2") || CheckActorFloorTexture(TID, "BLACK") || CheckActorFloorTexture(TID, "FBLACK") || CheckActorFloorTexture(TID, "ALLBLAKF"));
-        
-        if (CanSee && !BadFloor && Abs(Z - GetActorZ(ItemTIDs[i])) <= 128)
-        {
-            Remove = false;
-            break;
-        };
-    };
-    
-    return Remove;
 };
 
 // Quick Heal

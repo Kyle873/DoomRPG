@@ -497,6 +497,7 @@ script void TurretLoop() enter
     int PlayerNum = PlayerNumber();
     int Health;
     int PrevHealth;
+    bool TeleportTriggered = false;
     
     Start:
     
@@ -566,6 +567,7 @@ script void TurretLoop() enter
             Player.Turret.Destroyed = true;
             Player.Turret.PaidForRepair = false;
             TurretDespawn();
+            break;
         };
         
         // Nametag
@@ -714,13 +716,20 @@ script void TurretLoop() enter
             };
         
         // Emergency Teleport
-        if (Player.Turret.TeleportEnabled && CalcPercent(Player.ActualHealth, Player.HealthMax) <= 10 && Player.Turret.TeleportTimer <= 0)
+        if (Player.Turret.TeleportEnabled && CalcPercent(Player.ActualHealth, Player.HealthMax) <= 10 && Player.Turret.TeleportTimer <= 0 && !TeleportTriggered)
         {
             SetInventory("ArtiTeleport", 1);
             UseInventory("ArtiTeleport");
             
             SetUserVariable(Player.Turret.TID, "user_needs_teleport", 1);
-        };
+            Player.Turret.TeleportTimer = 35 * 60;
+            TeleportTriggered = true;
+        }
+        else if (Player.Turret.TeleportTimer > 0)
+            Player.Turret.TeleportTimer--;
+        
+        if (TeleportTriggered && CalcPercent(Player.ActualHealth, Player.HealthMax) > 10)
+            TeleportTriggered = false;
         
         // Generators
         if (Player.Turret.HitTimer <= 0)

@@ -4,91 +4,87 @@
 
 Actor DRPGChainsawExtras : DRPGChainsaw replaces Chainsaw
 {
-	Weapon.SelectionOrder 220
-	Inventory.PickupSound "weapons/csawpkup"
-	Weapon.UpSound "weapons/chainsaw/draw"
-	Weapon.ReadySound "blank"
-	
-	States
-	{
-	Select:
-		SAWI A 1 A_Raise
-		Loop
-	Deselect:
-		TNT1 A 0 A_StopsoundEx("SoundSlot5")
-		TNT1 A 0 A_StopSound(7)
-		SAWI A 1 A_Lower
-		Goto Deselect+1
-	Ready:
-		SAWI ABCDEF 1 A_WeaponReady
-		SAWI ABCDEF 0 A_Playsound("weapons/chainsaw/idle", 7)
-		Goto Ready
-	Fire:
-		SAWG A 0 A_StopSound(7)
-		SAWG A 1 A_Playsound("weapons/chainsaw/start", 6)
-		SAWG BCD 1
-	Hold:
-		SAWG E 1 offset(1, 32) A_Saw("", "weapons/sawhit", 2, "ChainsawPuffSpawner")
-		SAWG F 1 offset(-2, 33)
-		SAWG G 1 offset(2, 31)
-		SAWG F 1 offset(3, 30)
-		SAWG E 1 offset(2, 31) A_Saw("", "weapons/sawhit", 2, "ChainsawPuffSpawner")
-        SAWG D 1 offset(-1, 32)
-        SAWG D 2 offset(-2, 33)
-		SAWG D 0 A_playsoundEx("weapons/chainsaw/loop","SoundSlot5",1)
-		SAWG D 1 A_ReFire
-		SAWG C 1 A_StopsoundEx("SoundSlot5")
-		SAWG B 1 A_Playsound("weapons/chainsaw/stop")
-		SAWG A 1 
-		Goto Ready
-	}
+    Inventory.PickupSound "weapons/csawpkup"
+    Weapon.SlotNumber 1
+    Weapon.SlotPriority 1
+    Weapon.SelectionOrder 220
+    Weapon.UpSound "weapons/chainsaw/draw"
+    Weapon.ReadySound "blank"
+    
+    States
+    {
+    Select:
+        SAWI A 1 A_Raise
+        Loop
+    Deselect:
+        TNT1 A 0 A_PlaySound("weapons/csawpkup", CHAN_WEAPON)
+        SAWI A 1 A_Lower
+        Goto Deselect+1
+    Ready:
+        SAWI ABCDEF 1 A_WeaponReady
+        SAWI ABCDEF 0 A_PlaySound("weapons/chainsaw/idle", CHAN_WEAPON)
+        Goto Ready
+    Fire:
+        SAWG A 1 A_PlaySound("weapons/chainsaw/start", CHAN_WEAPON)
+        SAWG BCD 1
+    Hold:
+        SAWG E 1 Offset(1, 32) A_Saw("", "weapons/sawhit", 2, "ChainsawPuffSpawner")
+        SAWG F 1 Offset(-2, 33)
+        SAWG G 1 Offset(2, 31)
+        SAWG F 1 Offset(3, 30)
+        SAWG E 1 Offset(2, 31) A_Saw("", "weapons/sawhit", 2, "ChainsawPuffSpawner")
+        SAWG D 1 Offset(-1, 32)
+        SAWG D 2 Offset(-2, 33)
+        SAWG D 0 A_PlaySound("weapons/chainsaw/loop", CHAN_WEAPON, 1)
+        SAWG D 1 A_ReFire
+        SAWG B 1 A_PlaySound("weapons/chainsaw/stop", CHAN_WEAPON)
+        SAWI ABCDEFABCDEFABCDEFABCDEFABCDEF 1 A_WeaponReady
+        Goto Ready
+    }
 }
 
 Actor ChainsawPuffSpawner
 {
-	+DONTSPLASH
-	+NOGRAVITY
-	+NOINTERACTION
-	
-	States
-	{
-	Spawn:
-		TNT1 A 0
-		TNT1 A 0 A_SpawnItem("ChainsawPuff",0,0)
-		Stop
-	}
+    +DONTSPLASH
+    +NOGRAVITY
+    +NOINTERACTION
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_SpawnItem("ChainsawPuff",0,0)
+        Stop
+    }
 }
 
 Actor ChainsawPuff : BulletPuffed
 {
-	Scale 0.15
-	Alpha 0.6
-	
-	States
-	{
-	Spawn:
-		TNT1 A 0
-		TNT1 A 0 A_custommissile("WallPart", 0, 0, Random(0, 360), 2, Random(-20, 80))
-		TNT1 A 0 A_custommissile("WallPart", 0, 0, Random(0, 360), 2, Random(-20, 80))
-		TNT1 A 0 A_custommissile("WallPart", 0, 0, Random(0, 360), 2, Random(-20, 80))
-		TNT1 A 0 A_custommissile("WallPart", 0, 0, Random(0, 360), 2, Random(-20, 80))
-		TNT1 A 0 A_SpawnItem("ShotSmoke")
-		TNT1 A 0 A_Jump(100, 2)
-		TNT1 A 0 A_SpawnItem("RicochetSaw")
-		BPUF ABCD 1 bright
-		TNT1 A 0
-		Stop
-	}
+    Scale 0.15
+    Alpha 0.6
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_CustomMissile("WallPart", 0, 0, Random(0, 360), 2, Random(-20, 80))
+        TNT1 A 0 A_CustomMissile("WallPart", 0, 0, Random(0, 360), 2, Random(-20, 80))
+        TNT1 A 0 A_CustomMissile("WallPart", 0, 0, Random(0, 360), 2, Random(-20, 80))
+        TNT1 A 0 A_CustomMissile("WallPart", 0, 0, Random(0, 360), 2, Random(-20, 80))
+        TNT1 A 0 A_SpawnItem("ShotSmoke")
+        TNT1 A 0 A_Jump(100, 2)
+        TNT1 A 0 A_SpawnItem("RicochetSaw")
+        BPUF ABCD 1 bright
+        TNT1 A 0
+        Stop
+    }
 }
 
 Actor RicochetSaw : BulletSpark
 {
-	States
-	{
-	Spawn:
-		TNT1 A 0
-		TNT1 A 0 A_PlaySound("weapons/chainsaw/hitwall")
-		TNT1 AAAAAAAAAAAAAAAAAAAAAAAAA 0 A_CustomMissile("BulletSpark", 0, 0, Random(0, 360), 2, Random(10, 60))
-		Stop
-	}
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_PlaySound("weapons/chainsaw/hitwall")
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAA 0 A_CustomMissile("BulletSpark", 0, 0, Random(0, 360), 2, Random(10, 60))
+        Stop
+    }
 }

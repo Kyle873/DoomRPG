@@ -960,6 +960,9 @@ function bool CheckMapEvent(int Event, LevelInfo *TargetLevel)
 {
     switch (Event)
     {
+        case MAPEVENT_SPECIAL_SINSTORM:
+            return false;
+        
         case MAPEVENT_MEGABOSS:
             if (AveragePlayerLevel() < 50)
                 return false;
@@ -1187,7 +1190,7 @@ script void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
         // Icon of Sin
         // Blurb about a demon spitter and the game ending finale here.
         
-        TargetLevel->Event = MAPEVENT_DOOMSDAY;
+        TargetLevel->Event = MAPEVENT_SPECIAL_SINSTORM;
         return;
     };
     
@@ -1458,6 +1461,14 @@ script void SetupMapEvent()
             SetFont("BIGFONT");
             HudMessage("A foul misfortune sweeps the land, turning up the darkest creatures. There is no God now.\n", HUDMSG_FADEOUT, 0, CR_GREY, 320.4, 150.0, 1.0, 19.0);
             SetHudSize(0, 0, false);
+            break;
+        
+        // Map-Specific Special Events
+        // --------------------------------------------------
+        
+        case MAPEVENT_SPECIAL_SINSTORM:
+            // Sinstorm: MAP30 event - More Shadows than usual, plus occasional teleport rifts that open up and spill out monsters
+            SinstormEvent();
             break;
         
         // Standard Level
@@ -2663,6 +2674,80 @@ script void DarkZoneFloorMist(int PlayerTID)
     {
         Delay(1);
         SpawnSpot("DRPGPurpleFloorMistSpawner", 0, 0, 0);
+    };
+};
+
+// Special Map Events
+
+// MAP30 Special Event - Sinstorm ---------------------------------------------
+
+script void SinstormEvent()
+{
+    ChangeSky("FIRESK00", "-");
+    
+    for (int i = 0; i <= SHORT_MAX; i++)
+        Sector_SetColor(i, 255, 128, 64, 0);
+    
+    for (int i = 0; i < MonsterID; i++)
+    {
+        if (!Monsters[i].Init || Random(0, 7))
+            continue;
+        
+        for (int j = 0; j < AURA_MAX; j++)
+            Monsters[i].Aura.Type[j].Active = true;
+        
+        Monsters[i].NeedReinit = true;
+    };
+    
+    SetMusic("");
+    
+    Delay(35);
+    
+    // Warning message
+    SetHudSize(640, 480, false);
+    SetFont("BIGFONT");
+    HudMessageBold("The Icon of Sin senses your approach.\n", HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5);
+    AmbientSound ("doomsday/doombell", 127);
+    SetHudSize(0, 0, false);
+    
+    Delay(35 * 4);
+    
+    SetMusic("Sinstorm");
+    
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        
+        DoomsdayFlameRain(Players(i).TID);
+        SinstormSpawner(Players(i).TID);
+    };
+};
+
+script void SinstormSpawner(int PlayerTID)
+{
+    SetActivator(PlayerTID);
+    
+    while (true)
+    {
+        Delay(35 * 45);
+        
+        bool Success = false;
+        int Tries = 10;
+        int TID = UniqueTID();
+        
+        while (Tries-- > 0)
+        {
+            Success = Spawn("DRPGSinstormRift", GetActorX(0) + RandomFixed(-1024, 1024), GetActorY(0) + RandomFixed(-1024, 1024), GetActorFloorZ(0), TID, 0);
+            
+            if (Success)
+                Success = CheckSight(0, TID, 0);
+            
+            if (!Success)
+                Thing_Remove(TID)
+            else
+                break;
+        };
     };
 };
 
