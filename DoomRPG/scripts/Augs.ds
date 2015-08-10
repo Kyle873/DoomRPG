@@ -161,6 +161,33 @@ acscript void DisableAugs(bool NoDrain)
     ActivatorSound("aug/disable", 127);
 };
 
+acscript void ReactivateDisabledAugs() net
+{
+    // Check that we *can* activate augs.
+    if (Player.StatusType[SE_EMP] || Player.Augs.Battery <= 0)
+        return;
+    
+    for (int i = 0; i < AUG_MAX; i++)
+    {
+        // If there aren't enough slots left to equip any more augs, then don't try to activate any more.
+        if (Player.Augs.SlotsUsed >= Player.Augs.Slots)
+            break;
+        
+        if (CheckInventory(AugData[i].TokenActor) && !Player.Augs.Active[i] && Player.Augs.Level[i] > 0)
+            EquipAug(i);
+    };
+    
+    ClearDisabledAugs();
+};
+
+function void ClearDisabledAugs()
+{
+    for (int i = 0; i < AUG_MAX; i++)
+    {
+        TakeInventory(AugData[i].TokenActor, AugData[i].MaxLevel);
+    };
+};
+
 acscript void AddBattery(int Amount)
 {
     int PrevBattery = Player.Augs.Battery;
