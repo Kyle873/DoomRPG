@@ -26,6 +26,7 @@ AugSpace AugInfo[AUG_MAX] AugData =
             "3x Damage";
             "4x Damage";
         };
+        "DRPGAugTokenStrength";
     };
     {
         "Dermal Armor"; 5;
@@ -36,6 +37,7 @@ AugSpace AugInfo[AUG_MAX] AugData =
             "+20% Damage Reduction";
             "+25% Damage Reduction";
         };
+        "DRPGAugTokenDefense";
     };
     {
         "Pain Inhibitor"; 7;
@@ -48,6 +50,7 @@ AugSpace AugInfo[AUG_MAX] AugData =
             "+20% Status Effect Resist";
             "+25% Status Effect Resist";
         };
+        "DRPGAugTokenVitality";
     };
     {
         "Psi Projector"; 9;
@@ -62,6 +65,7 @@ AugSpace AugInfo[AUG_MAX] AugData =
             "20% Skill Cost Refund";
             "25% Skill Cost Refund";
         };
+        "DRPGAugTokenEnergy";
     };
     {
         "Adrenaline Booster"; 8;
@@ -75,6 +79,7 @@ AugSpace AugInfo[AUG_MAX] AugData =
             "+15 Second Toxicity Regen Time";
             "+20 Second Toxicity Regen Time";
         };
+        "DRPGAugTokenRegen";
     };
     {
         "Wired Reflexes"; 4;
@@ -88,6 +93,7 @@ AugSpace AugInfo[AUG_MAX] AugData =
             "+20% Survival Chance";
             "+25% Survival Chance";
         };
+        "DRPGAugTokenAgility";
     };
     {
         "Weight Distributor"; 3;
@@ -96,6 +102,7 @@ AugSpace AugInfo[AUG_MAX] AugData =
             "4x Ammo Limits";
             "2x Stim Vial Capacity";
         };
+        "DRPGAugTokenCapacity";
     };
     {
         "Precognition Unit"; 6;
@@ -107,6 +114,7 @@ AugSpace AugInfo[AUG_MAX] AugData =
             "3x Luck Drop Chances";
             "4x Luck Drop Chances";
         };
+        "DRPGAugTokenLuck";
     };
     {
         "Battery Recharger"; 8;
@@ -120,24 +128,12 @@ AugSpace AugInfo[AUG_MAX] AugData =
             "+3.5 Recharge Rate";
             "+4 Recharge Rate";
         };
+        "DRPGAugTokenBattery";
     };
 };
 
 acscript void DisableAugs(bool NoDrain)
 {
-    auto str[AUG_MAX] AugTokens =
-    {
-        "DRPGAugTokenStrength";
-        "DRPGAugTokenDefense";
-        "DRPGAugTokenVitality";
-        "DRPGAugTokenEnergy";
-        "DRPGAugTokenRegen";
-        "DRPGAugTokenAgility";
-        "DRPGAugTokenCapacity";
-        "DRPGAugTokenLuck";
-        "DRPGAugTokenBattery";
-    };
-    
     // Disable Augs and give tokens designating which Augs were disabled
     for (int i = 0; i < AUG_MAX; i++)
     {
@@ -145,14 +141,13 @@ acscript void DisableAugs(bool NoDrain)
         {
             // Disable Aug
             Player.Augs.Active[i] = false;
+            SetInventory(AugData[i].TokenActor, Player.Augs.Level[i]);
             
             // Screen fuckery
             SetHudSize(640, 480, false);
             SetFont("AugDView");
             HudMessage("A\n", HUDMSG_FADEOUT | HUDMSG_ADDBLEND, 0, CR_UNTRANSLATED, 320.0, 240.0, 3.0, 0.5);
         };
-        
-        SetInventory(AugTokens[i], Player.Augs.Level[i]);
     };
     
     // Reset Aug slots
@@ -164,6 +159,33 @@ acscript void DisableAugs(bool NoDrain)
     
     // Disabled sound
     ActivatorSound("aug/disable", 127);
+};
+
+acscript void ReactivateDisabledAugs() net
+{
+    // Check that we *can* activate augs.
+    if (Player.StatusType[SE_EMP] || Player.Augs.Battery <= 0)
+        return;
+    
+    for (int i = 0; i < AUG_MAX; i++)
+    {
+        // If there aren't enough slots left to equip any more augs, then don't try to activate any more.
+        if (Player.Augs.SlotsUsed >= Player.Augs.Slots)
+            break;
+        
+        if (CheckInventory(AugData[i].TokenActor) && !Player.Augs.Active[i] && Player.Augs.Level[i] > 0)
+            EquipAug(i);
+    };
+    
+    ClearDisabledAugs();
+};
+
+function void ClearDisabledAugs()
+{
+    for (int i = 0; i < AUG_MAX; i++)
+    {
+        TakeInventory(AugData[i].TokenActor, AugData[i].MaxLevel);
+    };
 };
 
 acscript void AddBattery(int Amount)
