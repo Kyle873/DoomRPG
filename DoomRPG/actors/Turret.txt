@@ -955,16 +955,36 @@ actor DRPGDestroyedTurret : SwitchableDecoration
         Loop
     Active:
     Disassemble:
-        TNT1 A 0 A_SpawnItemEx("DRPGTurretPart",
+        TNT1 A 0 A_SpawnItemEx("DRPGDestroyedTurretPartSpawner",
+            0, 0, 0,
             Cos(user_angleoff * user_loop) * 32,
             Sin(user_angleoff * user_loop) * 32,
-            CeilingZ - 8, 0, 0, 0)
+            0, 0, 0, 0)
         TNT1 A 0 A_SetUserVar("user_loop", user_loop - 1)
         TNT1 A 0 A_JumpIf(user_loop == 0, "Death")
         Loop
     Death:
         TNT1 A 0 A_PlaySound("misc/transport", CHAN_5, 1.0, false, 2.0)
         TNT1 A 0 A_SpawnItemEx("DRPGTurretTeleport")
+        Stop
+    }
+}
+
+Actor DRPGDestroyedTurretPartSpawner
+{
+    +NOBLOCKMAP
+    +NODROPOFF
+    +NOTELEPORT
+    +SLIDESONWALLS
+    
+    States
+    {
+    Spawn:
+        TNT1 A 1
+        Goto Death
+    
+    Death:
+        TNT1 A 0 A_SpawnItemEx("DRPGTurretPart")
         Stop
     }
 }
