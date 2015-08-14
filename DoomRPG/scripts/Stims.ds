@@ -189,6 +189,8 @@ acscript void UseStim(bool Force) net
     
     // Add Immunity
     Player.StimImmunity += Player.Stim.Toxicity * 5;
+    if (Player.StimImmunity > 100)
+        Player.StimImmunity = 100;
     
     // Apply current Stim to last used Stim
     for (int i = 0; i < STIM_MAX; i++)
@@ -216,6 +218,138 @@ acscript void UseStim(bool Force) net
     FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
     if (!Turret)
         TossStim();
+};
+
+acscript void ThrowAwayStim() net
+{
+    if (Player.Stim.Size == 0)
+    {
+        PrintError("You don't have an injector ready");
+        ActivatorSound("menu/error", 127);
+        return;
+    };
+    
+    if (Player.Stim.Amount == 0)
+    {
+        switch (Player.Stim.Size)
+        {
+        case 1:
+            GiveInventory("DRPGStimSmall", 1);
+            break;
+        case 2:
+            GiveInventory("DRPGStimMedium", 1);
+            break;
+        case 3:
+            GiveInventory("DRPGStimLarge", 1);
+            break;
+        case 4:
+            GiveInventory("DRPGStimXL", 1);
+            break;
+        };
+        
+        Player.Stim.Size = 0;
+        PrintMessage("Stored away the empty injector for later use");
+        ActivatorSound("menu/leave", 127);
+        return;
+    };
+    
+    // [KS] I'm witty.
+    if (Player.Stim.Toxicity >= 200)
+    {
+        switch (Random(1, 5))
+        {
+        case 1:
+            PrintMessage("It seemed like a good idea at the time\n\nPerhaps there was a little too much alcohol involved then");
+            break;
+        case 2:
+            PrintMessage("If you were Russian... You would still say this is Overkill");
+            break;
+        case 3:
+            PrintMessage("You imagine that a mixture like that would probably work better as a chemical explosive");
+            break;
+        case 4:
+            PrintMessage("That stim would've turned you more demon than the demons");
+            break;
+        case 5:
+            PrintMessage("Threw away the entirely unusable stim");
+            break;
+        };
+    }
+    else if (Player.Stim.Toxicity >= 150)
+    {
+        switch (Random(1, 5))
+        {
+        case 1:
+            PrintMessage("If it could kill an elephant, it probably shouldn't be going into you");
+            break;
+        case 2:
+            PrintMessage("You managed to make a mixture more potent than most forms of party drinks");
+            break;
+        case 3:
+            PrintMessage("You could smell the toxicity from off-planet");
+            break;
+        case 4:
+            PrintMessage("You consider throwing it at the enemies instead\nNah, it'd just make them angrier");
+            break;
+        case 5:
+            PrintMessage("Threw away the unusable stim");
+            break;
+        };
+    }
+    else if (Player.Stim.Toxicity >= 100)
+    {
+        switch (Random(1, 5))
+        {
+        case 1:
+            PrintMessage("Congratulations, you've produced death");
+            break;
+        case 2:
+            PrintMessage("You carefully examine the stim, and notice it's unsuitable for humans");
+            break;
+        case 3:
+            PrintMessage("You may want to lay up on the stat boosters a little next time");
+            break;
+        case 4:
+            PrintMessage("Well that stim's no good now");
+            break;
+        case 5:
+            PrintMessage("Threw away the toxic stim");
+            break;
+        };
+    }
+    else
+    {
+        switch (Random(1, 5))
+        {
+        case 1:
+            PrintMessage("You decide there are better methods of dealing with the whole monster problem");
+            break;
+        case 2:
+            PrintMessage("You decide now is not the time for injections");
+            break;
+        case 3:
+            PrintMessage("You decide you don't need the stim now");
+            break;
+        case 4:
+            PrintMessage("You chuck away the stim, having no need for it");
+            break;
+        case 5:
+            PrintMessage("Threw away the stim");
+            break;
+        };
+    };
+
+    // Clear the Stim
+    Player.Stim.Size = 0;
+    Player.Stim.Amount = 0;
+    for (int i = 0; i < STIM_MAX; i++)
+        Player.Stim.Current[i] = 0;
+    
+    // FX
+    ClearToxicityMeter();
+    TossStim();
+    
+    ActivatorSound("menu/leave", 127);
 };
 
 acscript void TossStim()
