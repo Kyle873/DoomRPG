@@ -76,6 +76,23 @@ script void UpdateShopAutoList()
         };
 };
 
+function void ShopItemTryAutoDeposit(ItemInfoPtr Item)
+{
+    bool deposited = false;
+    
+    // Special handling for DRLA weapons since you can only keep one weapon with mods in the locker
+    if (CompatMode == COMPAT_DRLA && Item->Category == 0 && Player.Locker[Item->Category][Item->Index] > 0) return;
+    
+    while (CheckInventory(Item->Actor) > 0 && (Player.EP >= LOCKER_EPRATE || CurrentLevel->UACBase))
+    {
+        DepositItem(Item->Category, Item->Index, false, true);
+        deposited = true;
+    };
+    
+    if (deposited)
+        ActivatorSound("shop/autostore", 127);
+};
+
 script void ShopItemAutoHandler()
 {
     int[ITEM_CATEGORIES][ITEM_MAX] Items;
@@ -94,36 +111,30 @@ script void ShopItemAutoHandler()
                     Items[i][j] = CheckInventory(ItemData[i][j].Actor);
         
         // Auto-Sell
-        if (Player.RankLevel > 0 || CurrentLevel->UACBase)
+        bool CanSellItems = Player.RankLevel > 0 || CurrentLevel->UACBase;
+        bool UseAutoDepositFallback = GetActivatorCVar("drpg_autosell_lockerfallback");
+        if (CanSellItems || UseAutoDepositFallback)
             for (int i = 0; i < Player.AutoSellList.Position; i++)
             {
                 ItemInfoPtr Item = ((ItemInfoPtr *)Player.AutoSellList.Data)[i];
                 
                 if (CheckInventory(Item->Actor) > 0)
-                    SellItem(Item->Actor, true, true);
+                {
+                    if (CanSellItems)
+                        SellItem(Item->Actor, true, true)
+                    else if (UseAutoDepositFallback)
+                        ShopItemTryAutoDeposit(Item);
+                };
             };
         
         // Auto-Store
-        bool deposited = false;
         if (Player.EP >= LOCKER_EPRATE || CurrentLevel->UACBase)
             for (int i = 0; i < Player.AutoStoreList.Position; i++)
             {
                 ItemInfoPtr Item = ((ItemInfoPtr *)Player.AutoStoreList.Data)[i];
                 
                 if (CheckInventory(Item->Actor) > 0)
-                {
-                    // Special handling for DRLA weapons since you can only keep one weapon with mods in the locker
-                    if (CompatMode == COMPAT_DRLA && Item->Category == 0 && Player.Locker[Item->Category][Item->Index] > 0) continue;
-                    
-                    while (CheckInventory(Item->Actor) > 0 && (Player.EP >= LOCKER_EPRATE || CurrentLevel->UACBase))
-                    {
-                        DepositItem(Item->Category, Item->Index, false, true);
-                        deposited = true;
-                    };
-                    
-                    if (deposited)
-                        ActivatorSound("shop/autostore", 127);
-                };
+                    ShopItemTryAutoDeposit(Item);
             };
         
         // Run-pickup behavior stuff
@@ -134,7 +145,6 @@ script void ShopItemAutoHandler()
                 {
                     ItemInfoPtr Item = &ItemData[i][j];
                     
-                    bool deposited = false;
                     // Auto-Sell
                     if (!Player.InShop && GetActivatorCVar("drpg_pickup_behavior") == 1 && Items[i][j] > PrevItems[i][j])
                         if (CheckInventory(Item->Actor) > 0)
@@ -142,20 +152,7 @@ script void ShopItemAutoHandler()
                     
                     // Auto-Store
                     if (!Player.InShop && GetActivatorCVar("drpg_pickup_behavior") == 2 && Items[i][j] > PrevItems[i][j])
-                        if (CheckInventory(Item->Actor) > 0)
-                        {
-                            // Special handling for DRLA weapons since you can only keep one weapon with mods in the locker
-                            if (CompatMode == COMPAT_DRLA && i == 0 && Player.Locker[i][j] > 0) continue;
-                            
-                            while (CheckInventory(Item->Actor) > 0 && (Player.EP >= LOCKER_EPRATE || CurrentLevel->UACBase))
-                            {
-                                DepositItem(i, j, false, true);
-                                deposited = true;
-                            };
-                        };
-                    
-                    if (deposited)
-                        ActivatorSound("shop/autostore", 127);
+                        ShopItemTryAutoDeposit(Item);
                 };
         };
         
