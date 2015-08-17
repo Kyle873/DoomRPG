@@ -549,6 +549,13 @@ script void TurretLoop() enter
         Player.Turret.PaidForRepair = true;
     };
     
+    // Sanity check. Without this, using `kill monsters` (or being really unlucky) while the turret is active will semi-destroy it, making it impossible to deploy or repair.
+    if (Player.Turret.Health >= Player.Turret.HealthMax)
+    {
+        Player.Turret.Destroyed = false;
+        Player.Turret.PaidForRepair = true;
+    };
+    
     while (Player.Turret.Active && Player.Turret.TID != 0)
     {
         // Pre-health check
@@ -2349,8 +2356,8 @@ function bool TurretLoadAmmo(int Type)
 
 function void TurretCommand(int Index)
 {
-    // Don't issue the command if you don't have the base upgrade yet or your turret is destroyed or in maintenance
-    if (!Player.Turret.Upgrade[Index] || Player.Turret.Destroyed || Player.Turret.Maintenance) return;
+    // Don't issue the command if you don't have the base upgrade yet
+    if (!Player.Turret.Upgrade[Index]) return;
     
     if (Index == TU_BUILD)
     {
@@ -2359,6 +2366,9 @@ function void TurretCommand(int Index)
         else
             TurretSpawn();
     };
+    
+    // Do these checks after TurretSpawn/TurretDespawn, because TurretSpawn will print its own errors for these conditions, and these conditions aren't even possible for TurretDespawn.
+    if (Player.Turret.Destroyed || Player.Turret.Maintenance) return;
     
     if (Index == TU_WEAPON_BULLET && Player.Turret.Active)
     {
