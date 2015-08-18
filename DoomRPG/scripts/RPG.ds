@@ -439,68 +439,71 @@ script void PlayerDamage()
     DamageTaken = BeforeDamage - GetActorProperty(Player.TID, APROP_Health);
     ShieldDamageAmount = 0;
     
-    if (DamageTaken > 0)
+    if (Player.DamageType != DT_DIRECT)
     {
-        Player.AutosaveTimerReset = true;
-        
-        // Find Monster ID
-        MonsterID = FindMonster(Player.DamageTID);
-        
-        // Calculate monster crit/status chance
-        LuckChance = (fixed)Monsters[MonsterID].Luck / 20.0;
-        EnergyLevel = (fixed)Monsters[MonsterID].Energy / 12.5;
-        
-        // Calculate a critical hit
-        if (Player.DamageTID > 0 && MonsterID > 0)
-            if (RandomFixed(0.0, 100.0) <= EnergyLevel)
-            {
-                DamageTaken *= 2;
-                Critical = true;
-            };
-        
-        AugDamage(DamageTaken);
-        ToxicityDamage();
-        if (MonsterID > 0)
-            StatusDamage(DamageTaken, LuckChance, Critical)
-        else
-            StatusDamage(DamageTaken, RandomFixed(0.0, 100.0), Critical);
-        ResetRegen();
-        DamageHUD(DamageTaken, Critical);
-    };
-    
-    // Reset attacker's ID and critical damage state
-    Player.DamageTID = -1;
-    Critical = false;
-    
-    if (DamageTaken > 0 && Player.Shield.Active)
-        ShieldTimerReset();
-    
-    if (DamageTaken > 0 && Player.Shield.Active && Player.Shield.Charge > 0)
-    {
-        ShieldDamageAmount = DamageTaken; // For callback
-        if (ShieldDamageAmount > Player.Shield.Charge)
-            ShieldDamageAmount = Player.Shield.Charge;
-        
-        Player.Shield.Charge -= DamageTaken;
-        Player.Shield.Full = false;
-        
-        ShieldDamage(ShieldDamageAmount);
-        
-        if (Player.Shield.Charge <= 0)
+        if (DamageTaken > 0)
         {
-            if (Player.Shield.Charge < 0)
+            Player.AutosaveTimerReset = true;
+            
+            // Find Monster ID
+            MonsterID = FindMonster(Player.DamageTID);
+            
+            // Calculate monster crit/status chance
+            LuckChance = (fixed)Monsters[MonsterID].Luck / 20.0;
+            EnergyLevel = (fixed)Monsters[MonsterID].Energy / 12.5;
+            
+            // Calculate a critical hit
+            if (Player.DamageTID > 0 && MonsterID > 0)
+                if (RandomFixed(0.0, 100.0) <= EnergyLevel)
+                {
+                    DamageTaken *= 2;
+                    Critical = true;
+                };
+            
+            AugDamage(DamageTaken);
+            ToxicityDamage();
+            if (MonsterID > 0)
+                StatusDamage(DamageTaken, LuckChance, Critical)
+            else
+                StatusDamage(DamageTaken, RandomFixed(0.0, 100.0), Critical);
+            ResetRegen();
+            DamageHUD(DamageTaken, Critical);
+        };
+        
+        // Reset attacker's ID and critical damage state
+        Player.DamageTID = -1;
+        Critical = false;
+        
+        if (DamageTaken > 0 && Player.Shield.Active)
+            ShieldTimerReset();
+        
+        if (DamageTaken > 0 && Player.Shield.Active && Player.Shield.Charge > 0)
+        {
+            ShieldDamageAmount = DamageTaken; // For callback
+            if (ShieldDamageAmount > Player.Shield.Charge)
+                ShieldDamageAmount = Player.Shield.Charge;
+            
+            Player.Shield.Charge -= DamageTaken;
+            Player.Shield.Full = false;
+            
+            ShieldDamage(ShieldDamageAmount);
+            
+            if (Player.Shield.Charge <= 0)
             {
-                DamageTaken = -Player.Shield.Charge;
-                Player.ActualHealth -= DamageTaken;
-                Player.Shield.Charge = 0;
+                if (Player.Shield.Charge < 0)
+                {
+                    DamageTaken = -Player.Shield.Charge;
+                    Player.ActualHealth -= DamageTaken;
+                    Player.Shield.Charge = 0;
+                }
+                else
+                    DamageTaken = 0;
+                
+                ShieldBroken();
             }
             else
                 DamageTaken = 0;
-            
-            ShieldBroken();
-        }
-        else
-            DamageTaken = 0;
+        };
     };
     
     if (DamageTaken > 0)
@@ -658,7 +661,7 @@ acscript void GiveTip()
         
         // Skills
         { "\cnEP";                              "Energy Points are needed in order to use skills. They can also be used to charge your Shield and to deposit and withdraw items from your personal locker while not in the Outpost."; };
-        { "\cnOverdrive";                       StrParam("You can Overdrive a skill by holding the \cd%K\c- button. Doing this will always use the skill, regardless of it's EP cost. However, this will bring your current EP into the negatives. When negative, you will suffer stat penalties and not be able to use any skills until your EP is restored past 0.\n", "+speed"); };
+        { "\cnOverdrive";                       StrParam("You can Overdrive a skill by holding the \cd%K\c- button. Doing this will always use the skill, regardless of it's EP cost. However, this will bring your current EP into the negatives. When negative, you will suffer stat penalties and not be able to use any skills until your EP is restored past 0. Push it too far, and you'll also lose health!\n", "+speed"); };
         { "\cnAuras";                           "Auras are special passive abilities you can activate to give you temporary boosts to your stats. Auras will also affect teammates within it's radius, determined by your Energy stat"; };
         
         // Augmentations

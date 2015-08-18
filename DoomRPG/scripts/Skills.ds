@@ -752,7 +752,19 @@ acscript void UseSkill(int Key) net
             
             // EFF-C13 Shield Accessory
             if (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_MORESKILLS || Random(1, 4) == 1)
+            {
+                int EPMin = -Player.EPMax / 2;
                 Player.EP -= EPCost;
+                
+                if (Player.EP < EPMin)
+                {
+                    // Overdriving *too* hard will hurt!
+                    int OverdriveDamage = EPMin - Player.EP;
+                    Log("Overdriving this skill has damaged your health!\n");
+                    Player.EP = EPMin;
+                    Thing_Damage2(0, OverdriveDamage, "DirectHealthDamage");
+                };
+            };
             
             // TUFF-MAG3 Shield Accessory
             if (Player.Shield.Active && Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_SKILLTOSHIELD)
