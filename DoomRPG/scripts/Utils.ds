@@ -1795,6 +1795,7 @@ function void DrawProgressBar(str Message, int Percent)
 function void RemoveDRLAItem(int Category, int Index)
 {
     str ItemActor = ItemData[Category][Index].Actor;
+    
     if (Category == 0) // Weapons
     {
         // Wipe the modpacks off the weapon
@@ -1811,22 +1812,21 @@ function void RemoveDRLAItem(int Category, int Index)
         TakeInventory("RLWeaponLimit", 1);
         CheckDRLASetWeapons();
     }
-    else if (Category == 3) // Armor
+    else if (Category == 3 || Category == 9) // Armor/Boots
         TakeInventory("RLArmorInInventory", 1)
     else if (Category == 8) // Mod Packs
     {
-        if (Index == 8) // Special handling case for Armor Modpack
-            TakeInventory("RLArmorModItemInInventory", 1)
+        if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
+            TakeInventory("RLScavengerModLimit", 1)
         else
-        {
-            if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
-                TakeInventory("RLScavengerModLimit", 1)
-            else
-                TakeInventory("RLModLimit", 1);
-        };
+            TakeInventory("RLModLimit", 1);
     }
-    else if (Category == 9) // Boots
-        TakeInventory("RLArmorInInventory", 1);
+    else if (ItemActor == "RLHatredSkull" || // Skulls
+             ItemActor == "RLBloodSkull" ||
+             ItemActor == "RLFireSkull")
+        TakeInventory("RLSkullLimit", 1)
+    else if (ItemActor == "RLArmorModItem") // Armor Modpack
+        TakeInventory("RLArmorModItemInInventory", 1);
 };
 
 function void GiveDRLAArmorToken(str ArmorType)
