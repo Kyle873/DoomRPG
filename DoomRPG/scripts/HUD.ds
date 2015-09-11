@@ -1060,28 +1060,54 @@ script void DRLAHUD() enter
         int Weapons = CheckInventory("RLWeaponLimit");
         int Armors = CheckInventory("RLArmorInInventory");
         int ModPacks = (IsTechnician ? CheckInventory("RLScavengerModLimit") : CheckInventory("RLModLimit"));
+        int Skulls = CheckInventory("RLSkullLimit");
         
         SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
          
-        // Weapon, Armor and Modpacks counters
+        // Counters
         if (!(GetCVar("drpg_debug_drla") & DDM_NOLIMITS))
         {
-            SetFont("BIGFONT");
-            if (Weapons >= 6)
-                HudMessage("%d\n", Weapons, HUDMSG_ALPHA, 0, CR_GOLD, X - 108.0, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
-            else
-                HudMessage("%d\n", Weapons, HUDMSG_PLAIN, 0, CR_WHITE, X - 108.0, Y + 12.0, 0.05);
-            if (Armors >= DRLA_ARMOR_MAX)
-                HudMessage("%d\n", Armors, HUDMSG_ALPHA, 0, CR_GOLD, X - 81.0, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
-            else
-                HudMessage("%d\n", Armors, HUDMSG_PLAIN, 0, CR_WHITE, X - 81.0, Y + 12.0, 0.05);
-            if ((!IsTechnician && ModPacks >= 4) || (IsTechnician && ModPacks >= 8))
-                HudMessage("%d\n", ModPacks, HUDMSG_ALPHA, 0, CR_GOLD, X - 54.0, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
-            else
-                HudMessage("%d\n", ModPacks, HUDMSG_PLAIN, 0, CR_WHITE, X - 54.0, Y + 12.0, 0.05);
-            PrintSprite("PISGX0", 0, X - 96.0, Y + 12.0, 0.05);
-            PrintSprite("HARMOR", 0, X - 81.0, Y + 4.0, 0.05);
-            PrintSprite("GMODICON", 0, X - 53.0, Y, 0.05);
+            fixed XOff = X - 54.0; // +27.0 offset
+            
+            if (Skulls > 0)
+            {
+                SetFont("BIGFONT");
+                if (Skulls >= DRLA_SKULL_MAX)
+                    HudMessage("%d\n", Skulls, HUDMSG_ALPHA, 0, CR_GOLD, XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
+                else
+                    HudMessage("%d\n", Skulls, HUDMSG_PLAIN, 0, CR_WHITE, XOff, Y + 12.0, 0.05);
+                PrintSprite("ISKLA0", 0, XOff + 11.0, Y + 16.0, 0.05);
+                XOff -= 27.0;
+            };
+            if (ModPacks > 0)
+            {
+                SetFont("BIGFONT");
+                if ((!IsTechnician && ModPacks >= 4) || (IsTechnician && ModPacks >= 8))
+                    HudMessage("%d\n", ModPacks, HUDMSG_ALPHA, 0, CR_GOLD, XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
+                else
+                    HudMessage("%d\n", ModPacks, HUDMSG_PLAIN, 0, CR_WHITE, XOff, Y + 12.0, 0.05);
+                PrintSprite("GMODICON", 0, XOff + 1.0, Y, 0.05);
+                XOff -= 27.0;
+            };
+            if (Armors > 0)
+            {
+                SetFont("BIGFONT");
+                if (Armors >= DRLA_ARMOR_MAX)
+                    HudMessage("%d\n", Armors, HUDMSG_ALPHA, 0, CR_GOLD, XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
+                else
+                    HudMessage("%d\n", Armors, HUDMSG_PLAIN, 0, CR_WHITE, XOff, Y + 12.0, 0.05);
+                PrintSprite("HARMOR", 0, XOff + 1.0, Y + 4.0, 0.05);
+                XOff -= 27.0;
+            };
+            if (Weapons > 0)
+            {
+                SetFont("BIGFONT");
+                if (Weapons >= 6)
+                    HudMessage("%d\n", Weapons, HUDMSG_ALPHA, 0, CR_GOLD, XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25))
+                else
+                    HudMessage("%d\n", Weapons, HUDMSG_PLAIN, 0, CR_WHITE, XOff, Y + 12.0, 0.05);
+                PrintSprite("PISGX0", 0, XOff + 11.0, Y + 12.0, 0.05);
+            };
         };
         
         for (int i = 0; i < ItemMax[0]; i++)
