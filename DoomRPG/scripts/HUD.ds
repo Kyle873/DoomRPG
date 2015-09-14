@@ -1128,6 +1128,7 @@ script void DRLAHUD() enter
                 int[2] Sniper = { CheckInventory(StrParam("%sSniperMod\n", ItemPtr->Actor)); 0; };
                 int[2] Firestorm = { CheckInventory(StrParam("%sFirestormMod\n", ItemPtr->Actor)); 0; };
                 int[2] Nano = { CheckInventory(StrParam("%sNanoMod\n", ItemPtr->Actor)); 0; };
+                int[2] DemonArtifacts = { CheckInventory(StrParam("%sDemonArtifacts\n", ItemPtr->Actor)); 0; };
                 
                 // Determine total modpacks and the color char to use
                 if (CheckInventory("RLStandardWeaponToken"))
@@ -1191,13 +1192,15 @@ script void DRLAHUD() enter
                 {
                     Duel = true;
                     Name = "\cdTwin WSTE-M5 Shotguns";
-                };
+                }
+                else if (CheckWeapon("RLUzi") && CheckInventory("RLUziDemonArtifacts")) // Duel Uzis
+                    Duel = true;
                 
                 // Name
                 SetFont("RLFONT");
                 HudMessage("%s%s\n", Color, Name, HUDMSG_PLAIN, 0, CR_WHITE, X, Y - 20.0, 0.05);
                 
-                // Duke 2 RIfle special icon fancyness
+                // Duke 2 Rifle special icon fancyness
                 if (CheckWeapon("RLDuke2Rifle"))
                 {
                     static str[5] const DukeModIcons =
@@ -1242,7 +1245,28 @@ script void DRLAHUD() enter
                 }
                 else // Everything else
                 {
+                    // Demonic Weapons special artifact icons and animation
+                    if (CheckInventory("RLDemonicWeaponToken"))
+                    {
+                        int Count = DemonArtifacts[0] + DemonArtifacts[1];
+                        int Add = 0;
+                        int Radius = 24 + (int)(Sin((fixed)Offset / 64.0) * 4.0);
+                        
+                        // Draw the mods
+                        for (int i = 0; i < Count; i++)
+                        {
+                            fixed Angle = -0.25 + ((1.0 / Count) * Add++) + Offset;
+                            fixed XOff = X + (Radius * Cos(Angle));
+                            fixed YOff = Y + (Radius * Sin(Angle));
+                            PrintSpritePulse("DMNAA0", 0, (int)XOff + 16.0, (int)YOff + 44.0, 0.5, 256.0, 0.25);
+                        };
+                        
+                        // Offset
+                        Offset += 0.005;
+                    };
+                    
                     // Mod Packs
+                    SetFont("SMALLFONT");
                     /* TODO: Turn this into a loop
                      * Maybe I'll bring these back if I can come up with a decent way to get the actual total mods the weapon can ahve
                        otherwise right now it's just too inaccurate to be useful
@@ -1269,6 +1293,8 @@ script void DRLAHUD() enter
                         HudMessage("%d\n", Firestorm[0], HUDMSG_PLAIN, 0, CR_ORANGE, X + 20.0, Y + 20.0, 0.05);
                     if (Nano[0] > 0)
                         HudMessage("%d\n", Nano[0], HUDMSG_PLAIN, 0, CR_WHITE, X + 30.0, Y + 20.0, 0.05);
+                    if (DemonArtifacts[0] > 0)
+                        HudMessage("%d\n", DemonArtifacts[0], HUDMSG_PLAIN, 0, CR_DARKRED, X + 40.0, Y + 20.0, 0.05);
                     if (Power[1] > 0)
                         HudMessage("%d\n", Power[1], HUDMSG_PLAIN, 0, CR_RED, X - 30.0, Y + 32.0, 0.05);
                     if (Bulk[1] > 0)
@@ -1283,6 +1309,8 @@ script void DRLAHUD() enter
                         HudMessage("%d\n", Firestorm[1], HUDMSG_PLAIN, 0, CR_ORANGE, X + 20.0, Y + 32.0, 0.05);
                     if (Nano[1] > 0)
                         HudMessage("%d\n", Nano[1], HUDMSG_PLAIN, 0, CR_WHITE, X + 30.0, Y + 32.0, 0.05);
+                    if (DemonArtifacts[1] > 0)
+                        HudMessage("%d\n", DemonArtifacts[1], HUDMSG_PLAIN, 0, CR_DARKRED, X + 40.0, Y + 32.0, 0.05);
                 };
                 
                 // Drop Icon
@@ -1300,7 +1328,8 @@ script void DRLAHUD() enter
                         PrintSprite(JackelItem->Sprite.Name, 0, X + JackelItem->Sprite.XOff, Y + JackelItem->Sprite.YOff + (int)(Sin((fixed)Timer() / 128.0) * 4.0), 0.05);
                         PrintSprite(CasullItem->Sprite.Name, 0, X + CasullItem->Sprite.XOff + 32.0, Y + CasullItem->Sprite.YOff + (int)(Cos((fixed)Timer() / 128.0) * 4.0), 0.05);
                     }
-                    else if (CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonShotgunsDemonArtifacts")) // Twin WSTE-M5's
+                    else if (CheckWeapon("RLUzi") && CheckInventory("RLUziDemonArtifacts") ||
+                             CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonShotgunsDemonArtifacts")) // Everything else that is just duel wielding
                     {
                         PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff + (int)(Sin((fixed)Timer() / 128.0) * 4.0), 0.05);
                         PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff + 32.0, Y + ItemPtr->Sprite.YOff + (int)(Cos((fixed)Timer() / 128.0) * 4.0), 0.05);
@@ -1311,7 +1340,7 @@ script void DRLAHUD() enter
                     if (CheckInventory("RLUsePowerMod") || CheckInventory("RLUseBulkMod") ||
                         CheckInventory("RLUseAgilityMod") || CheckInventory("RLUseTechnicalMod") ||
                         CheckInventory("RLUseFirestormMod") || CheckInventory("RLUseSniperMod") ||
-                        CheckInventory("RLUseNanoMod"))
+                        CheckInventory("RLUseNanoMod") || CheckInventory("RLUseDemonArtifact"))
                         PrintSpritePulse(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff, 0.75, 32.0, 0.25)
                     else
                         PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff, 0.05);
