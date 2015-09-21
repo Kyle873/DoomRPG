@@ -25,7 +25,8 @@ namespace DoomRPG
         Marine,
         Scout,
         Technician,
-        Renegade
+        Renegade,
+        Demolitionist
     }
 
     public enum MultiplayerMode

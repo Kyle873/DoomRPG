@@ -18,7 +18,7 @@ namespace DoomRPG
 {
     public partial class FormMain : Form
     {
-        Version version = new Version(0, 9, 4);
+        Version version = new Version(0, 9, 5);
         Config config = new Config();
         string currentBranch = string.Empty;
         List<PatchInfo> patches = new List<PatchInfo>();
