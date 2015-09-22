@@ -569,7 +569,7 @@ str GenerateName(str Actor, str Tag)
     // Megabosses
     if (Contains(Actor, "Megaboss"))
     {
-        if (Tag == "Pride")
+        if (Tag == "Pride") // TODO: may have to change this
             return GenerateMegabossName(0);
         if (Tag == "Sloth")
             return GenerateMegabossName(6);
@@ -636,16 +636,15 @@ str GenerateMonsterName()
     }
     else
         NameType = Random(1, 5);
-    if (NameType == 1) // (Prefix) (Name) the (Suffix)
-        FinalName = StrParam("%s%s %s, the %s", Color, Prefix, Name, Suffix);
-    if (NameType == 2) // (Prefix) (Name)
-        FinalName = StrParam("%s%s %s", Color, Prefix, Name);
-    if (NameType == 3) // (Name) the (Suffix)
-        FinalName = StrParam("%s%s the %s", Color, Name, Suffix);
-    if (NameType == 4) // (Name)
-        FinalName = StrParam("%s%s", Color, Name);
-    if (NameType == 5) // (Prefix) (Prefix) (Name)
-        FinalName = StrParam("%s%s, %s %s", Color, Prefix, Prefix2, Name);
+    
+    switch (NameType)
+    {
+    case 1: FinalName = StrParam("%s%s %s, the %s", Color, Prefix, Name, Suffix); break; // (Prefix) (Name) the (Suffix)
+    case 2: FinalName = StrParam("%s%s %s", Color, Prefix, Name);                 break; // (Prefix) (Name)
+    case 3: FinalName = StrParam("%s%s the %s", Color, Name, Suffix);             break; // (Name) the (Suffix)
+    case 4: FinalName = StrParam("%s%s", Color, Name);                            break; // (Name)
+    case 5: FinalName = StrParam("%s%s, %s %s", Color, Prefix, Prefix2, Name);    break; // (Prefix) (Prefix) (Name)
+    }
     
     return FinalName;
 }
