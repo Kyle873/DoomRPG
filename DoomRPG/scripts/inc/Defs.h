@@ -1,6 +1,12 @@
+#ifndef DOOMRPG__SCRIPTS__DEFS_H
+#define DOOMRPG__SCRIPTS__DEFS_H
+
 #include <ACS_ZDoom.h>
 #include <stdbool.h>
 #include <stdio.h>
+
+#pragma GDCC STRENT_LITERAL ON
+#pragma GDCC FIXED_LITERAL  ON
 
 #define ACS_EndHudMessage2      ACS_EndHudMessageX
 #define ACS_EndHudMessage3      ACS_EndHudMessageXX
@@ -8,6 +14,54 @@
 #define ACS_EndHudMessageBold2  ACS_EndHudMessageBoldX
 #define ACS_EndHudMessageBold3  ACS_EndHudMessageBoldXX
 #define ACS_EndHudMessageBold4  ACS_EndHudMessageBoldXXX
+
+#define HudMessage(flags, id, color, x, y, hold, opt1, opt2, opt3, ...) \
+	( \
+		ACS_BeginHudMessage(), \
+		__nprintf_str(__VA_ARGS__), \
+		ACS_MoreHudMessage(), \
+		ACS_OptHudMessage(flags, id, color, x, y, hold), \
+		ACS_EndHudMessage4(opt1, opt2, opt3) \
+	)
+#define PrintBold(...) \
+	( \
+		ACS_BeginPrintBold(), \
+		__nprintf_str(__VA_ARGS__), \
+		ACS_EndPrint() \
+	)
+#define Print(...) \
+	( \
+		ACS_BeginPrint(), \
+		__nprintf_str(__VA_ARGS__), \
+		ACS_EndPrint() \
+	)
+#define StrParam(...) \
+	( \
+		ACS_BeginStrParam(), \
+		__nprintf_str(__VA_ARGS__), \
+		ACS_EndStrParam() \
+	)
+#define PrintSprite(spr, id, x, y, delay) \
+	( \
+		ACS_SetFont(spr), \
+		ACS_HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, x, y, delay, 0.0, 0.0, 0.0, "A") \
+	)
+#define ClearMessage(id) \
+	( \
+		ACS_HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "") \
+	)
+#define Log(...) \
+	( \
+		ACS_BeginLog(), \
+		__nprintf_str(__VA_ARGS__), \
+		ACS_EndLog() \
+	)
+#define PlayerName(n) \
+	( \
+		ACS_BeginPrint(), \
+		ACS_PrintName(n), \
+		ACS_EndStrParam() \
+	)
 
 #define string  __str
 #define fixed   __fixed
@@ -54,3 +108,6 @@
 
 #define sflag_puke      [[script("Net")]]
 #define sflag_client    [[script("Clientside")]]
+
+#endif // DOOMRPG__SCRIPTS__DEFS_H
+
