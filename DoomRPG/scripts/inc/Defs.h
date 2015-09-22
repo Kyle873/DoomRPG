@@ -119,7 +119,7 @@
 #define PI                      3.14159265359
 
 // Type definitions
-typedef __str string;
+typedef __str str;
 
 // --------------------------------------------------
 // Arena
