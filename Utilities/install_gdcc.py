@@ -20,6 +20,7 @@ def retrievebuild ():
             continue
 
         version, dummy, link = linksline.partition(": ")
+        break
 
     if link is None:
         raise IOError("Couldn't retrieve GDCC link from gdcc_version.txt")
