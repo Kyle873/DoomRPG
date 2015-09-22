@@ -1,6 +1,9 @@
 #ifndef DOOMRPG__SCRIPTS__DEFS_H
 #define DOOMRPG__SCRIPTS__DEFS_H
 
+// We need this
+#define ACS_SHORT_NAMES
+
 #include <ACS_ZDoom.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -11,59 +14,59 @@
 #pragma GDCC FIXED_LITERAL  ON
 
 // Aliases
-#define ACS_EndHudMessage2      ACS_EndHudMessageX
-#define ACS_EndHudMessage3      ACS_EndHudMessageXX
-#define ACS_EndHudMessage4      ACS_EndHudMessageXXX
-#define ACS_EndHudMessageBold2  ACS_EndHudMessageBoldX
-#define ACS_EndHudMessageBold3  ACS_EndHudMessageBoldXX
-#define ACS_EndHudMessageBold4  ACS_EndHudMessageBoldXXX
+#define EndHudMessage2      EndHudMessageX
+#define EndHudMessage3      EndHudMessageXX
+#define EndHudMessage4      EndHudMessageXXX
+#define EndHudMessageBold2  EndHudMessageBoldX
+#define EndHudMessageBold3  EndHudMessageBoldXX
+#define EndHudMessageBold4  EndHudMessageBoldXXX
 
 #define HudMessage(flags, id, color, x, y, hold, opt1, opt2, opt3, ...) \
     ( \
-        ACS_BeginHudMessage(), \
+        BeginHudMessage(), \
         __nprintf_str(__VA_ARGS__), \
-        ACS_MoreHudMessage(), \
-        ACS_OptHudMessage(flags, id, color, x, y, hold), \
-        ACS_EndHudMessage4(opt1, opt2, opt3) \
+        MoreHudMessage(), \
+        OptHudMessage(flags, id, color, x, y, hold), \
+        EndHudMessage4(opt1, opt2, opt3) \
     )
 #define PrintBold(...) \
     ( \
-        ACS_BeginPrintBold(), \
+        BeginPrintBold(), \
         __nprintf_str(__VA_ARGS__), \
-        ACS_EndPrint() \
+        EndPrint() \
     )
 #define Print(...) \
     ( \
-        ACS_BeginPrint(), \
+        BeginPrint(), \
         __nprintf_str(__VA_ARGS__), \
-        ACS_EndPrint() \
+        EndPrint() \
     )
 #define StrParam(...) \
     ( \
-        ACS_BeginStrParam(), \
+        BeginStrParam(), \
         __nprintf_str(__VA_ARGS__), \
-        ACS_EndStrParam() \
+        EndStrParam() \
     )
 #define PrintSprite(spr, id, x, y, delay) \
     ( \
-        ACS_SetFont(spr), \
-        ACS_HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, x, y, delay, 0.0, 0.0, 0.0, "A") \
+        SetFont(spr), \
+        HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, x, y, delay, 0.0, 0.0, 0.0, "A") \
     )
 #define ClearMessage(id) \
     ( \
-        ACS_HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "") \
+        HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "") \
     )
 #define Log(...) \
     ( \
-        ACS_BeginLog(), \
+        BeginLog(), \
         __nprintf_str(__VA_ARGS__), \
-        ACS_EndLog() \
+        EndLog() \
     )
 #define PlayerName(n) \
     ( \
-        ACS_BeginPrint(), \
-        ACS_PrintName(n), \
-        ACS_EndStrParam() \
+        BeginPrint(), \
+        PrintName(n), \
+        EndStrParam() \
     )
 
 // Script declaration stuff
