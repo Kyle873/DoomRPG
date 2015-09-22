@@ -19,52 +19,52 @@
 #define ACS_EndHudMessageBold4  ACS_EndHudMessageBoldXXX
 
 #define HudMessage(flags, id, color, x, y, hold, opt1, opt2, opt3, ...) \
-	( \
-		ACS_BeginHudMessage(), \
-		__nprintf_str(__VA_ARGS__), \
-		ACS_MoreHudMessage(), \
-		ACS_OptHudMessage(flags, id, color, x, y, hold), \
-		ACS_EndHudMessage4(opt1, opt2, opt3) \
-	)
+    ( \
+        ACS_BeginHudMessage(), \
+        __nprintf_str(__VA_ARGS__), \
+        ACS_MoreHudMessage(), \
+        ACS_OptHudMessage(flags, id, color, x, y, hold), \
+        ACS_EndHudMessage4(opt1, opt2, opt3) \
+    )
 #define PrintBold(...) \
-	( \
-		ACS_BeginPrintBold(), \
-		__nprintf_str(__VA_ARGS__), \
-		ACS_EndPrint() \
-	)
+    ( \
+        ACS_BeginPrintBold(), \
+        __nprintf_str(__VA_ARGS__), \
+        ACS_EndPrint() \
+    )
 #define Print(...) \
-	( \
-		ACS_BeginPrint(), \
-		__nprintf_str(__VA_ARGS__), \
-		ACS_EndPrint() \
-	)
+    ( \
+        ACS_BeginPrint(), \
+        __nprintf_str(__VA_ARGS__), \
+        ACS_EndPrint() \
+    )
 #define StrParam(...) \
-	( \
-		ACS_BeginStrParam(), \
-		__nprintf_str(__VA_ARGS__), \
-		ACS_EndStrParam() \
-	)
+    ( \
+        ACS_BeginStrParam(), \
+        __nprintf_str(__VA_ARGS__), \
+        ACS_EndStrParam() \
+    )
 #define PrintSprite(spr, id, x, y, delay) \
-	( \
-		ACS_SetFont(spr), \
-		ACS_HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, x, y, delay, 0.0, 0.0, 0.0, "A") \
-	)
+    ( \
+        ACS_SetFont(spr), \
+        ACS_HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, x, y, delay, 0.0, 0.0, 0.0, "A") \
+    )
 #define ClearMessage(id) \
-	( \
-		ACS_HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "") \
-	)
+    ( \
+        ACS_HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "") \
+    )
 #define Log(...) \
-	( \
-		ACS_BeginLog(), \
-		__nprintf_str(__VA_ARGS__), \
-		ACS_EndLog() \
-	)
+    ( \
+        ACS_BeginLog(), \
+        __nprintf_str(__VA_ARGS__), \
+        ACS_EndLog() \
+    )
 #define PlayerName(n) \
-	( \
-		ACS_BeginPrint(), \
-		ACS_PrintName(n), \
-		ACS_EndStrParam() \
-	)
+    ( \
+        ACS_BeginPrint(), \
+        ACS_PrintName(n), \
+        ACS_EndStrParam() \
+    )
 
 // Script declaration stuff
 #define far_ptr         __far
@@ -129,52 +129,52 @@ typedef __str string;
 
 enum EArenaStates
 {
-	ARENA_INTERMISSION,
-	ARENA_WAITING,
-	ARENA_READY,
-	ARENA_ACTIVE,
+    ARENA_INTERMISSION,
+    ARENA_WAITING,
+    ARENA_READY,
+    ARENA_ACTIVE,
 };
 
 enum EArenaModTypes
 {
-	AMOD_NONE,
-	AMOD_NOREGEN,
-	AMOD_MAX,
+    AMOD_NONE,
+    AMOD_NOREGEN,
+    AMOD_MAX,
 };
 
 enum EArenaEventTypes
 {
-	AEVENT_RANDOM = -1,
-	AEVENT_NONE = 0,
-	AEVENT_BLACKOUT,
-	AEVENT_FOGGY,
-	AEVENT_LAVA,
-	AEVENT_GRAYSCALE,
-	AEVENT_MAX,
+    AEVENT_RANDOM = -1,
+    AEVENT_NONE = 0,
+    AEVENT_BLACKOUT,
+    AEVENT_FOGGY,
+    AEVENT_LAVA,
+    AEVENT_GRAYSCALE,
+    AEVENT_MAX,
 };
 
 enum EArenaBonusTypes
 {
-	ABONUS_SELECT,
-	ABONUS_FULLEP,
-	ABONUS_MONEYDROP,
-	ABONUS_CHIPDROP,
-	ABONUS_AMMODROP,
-	ABONUS_HEALTHDROP,
-	ABONUS_ARMORDROP,
-	ABONUS_WEAPONDROP,
-	ABONUS_POWERUPDROP,
-	ABONUS_STIMDROP,
-	ABONUS_CRATEDROP,
-	ABONUS_MODDROP,
-	ABONUS_KEYDROP,
-	ABONUS_MAX,
+    ABONUS_SELECT,
+    ABONUS_FULLEP,
+    ABONUS_MONEYDROP,
+    ABONUS_CHIPDROP,
+    ABONUS_AMMODROP,
+    ABONUS_HEALTHDROP,
+    ABONUS_ARMORDROP,
+    ABONUS_WEAPONDROP,
+    ABONUS_POWERUPDROP,
+    ABONUS_STIMDROP,
+    ABONUS_CRATEDROP,
+    ABONUS_MODDROP,
+    ABONUS_KEYDROP,
+    ABONUS_MAX,
 };
 
 enum EArenaKeyTimerTypes
 {
-	AKTIMER_STOP,
-	AKTIMER_CONTINUE,
+    AKTIMER_STOP,
+    AKTIMER_CONTINUE,
 };
 
 // --------------------------------------------------
@@ -185,16 +185,16 @@ enum EArenaKeyTimerTypes
 
 enum EAugTypes
 {
-	AUG_STRENGTH,
-	AUG_DEFENSE,
-	AUG_VITALITY,
-	AUG_ENERGY,
-	AUG_REGENERATION,
-	AUG_AGILITY,
-	AUG_CAPACITY,
-	AUG_LUCK,
-	AUG_BATTERY,
-	AUG_MAX,
+    AUG_STRENGTH,
+    AUG_DEFENSE,
+    AUG_VITALITY,
+    AUG_ENERGY,
+    AUG_REGENERATION,
+    AUG_AGILITY,
+    AUG_CAPACITY,
+    AUG_LUCK,
+    AUG_BATTERY,
+    AUG_MAX,
 };
 
 // --------------------------------------------------
@@ -219,15 +219,15 @@ enum EAugTypes
 
 enum ENodeTypes
 {
-	NODE_CRITFAIL,  // Red
-	NODE_EXPLODE,   // Orange
-	NODE_UNLOCK,    // Blue
-	NODE_XP,        // White
-	NODE_RANK,      // Yellow
-	NODE_RETRY,     // Dark Blue
-	NODE_ADD,       // Light Blue
-	NODE_RARITY,    // Purple
-	NODE_MAX,
+    NODE_CRITFAIL,  // Red
+    NODE_EXPLODE,   // Orange
+    NODE_UNLOCK,    // Blue
+    NODE_XP,        // White
+    NODE_RANK,      // Yellow
+    NODE_RETRY,     // Dark Blue
+    NODE_ADD,       // Light Blue
+    NODE_RARITY,    // Purple
+    NODE_MAX,
 };
 
 // --------------------------------------------------
@@ -251,11 +251,11 @@ enum ENodeTypes
 
 enum ECategoryFlags
 {
-	CF_NONE     = 0x0,
-	CF_NOSELL   = 0x1,
-	CF_NOBUY    = 0x2,
-	CF_NOSTORE  = 0x4,
-	CF_NODROP   = 0x8,
+    CF_NONE     = 0x0,
+    CF_NOSELL   = 0x1,
+    CF_NOBUY    = 0x2,
+    CF_NOSTORE  = 0x4,
+    CF_NODROP   = 0x8,
 };
 
 // --------------------------------------------------
@@ -269,42 +269,42 @@ enum ECategoryFlags
 
 enum EMapEvents
 {
-	MAPEVENT_NONE,
+    MAPEVENT_NONE,
 
-	MAPEVENT_MEGABOSS,
-	MAPEVENT_TOXICHAZARD,
-	MAPEVENT_NUCLEARBOMB,
-	MAPEVENT_LOWPOWER,
-	MAPEVENT_ALLAURAS,
-	MAPEVENT_ONEMONSTER,
-	MAPEVENT_HELLUNLEASHED,
-	MAPEVENT_HARMONIZEDAURAS,
-	MAPEVENT_TELEPORTCRACKS,
-	MAPEVENT_DOOMSDAY,
-	MAPEVENT_ACIDRAIN,
-	MAPEVENT_DARKZONE,
+    MAPEVENT_MEGABOSS,
+    MAPEVENT_TOXICHAZARD,
+    MAPEVENT_NUCLEARBOMB,
+    MAPEVENT_LOWPOWER,
+    MAPEVENT_ALLAURAS,
+    MAPEVENT_ONEMONSTER,
+    MAPEVENT_HELLUNLEASHED,
+    MAPEVENT_HARMONIZEDAURAS,
+    MAPEVENT_TELEPORTCRACKS,
+    MAPEVENT_DOOMSDAY,
+    MAPEVENT_ACIDRAIN,
+    MAPEVENT_DARKZONE,
 
-	MAPEVENT_DRLA_FEEDINGFRENZY,
-	MAPEVENT_DRLA_OVERMIND,
+    MAPEVENT_DRLA_FEEDINGFRENZY,
+    MAPEVENT_DRLA_OVERMIND,
 
-	MAPEVENT_BONUS_RAINBOWS,
+    MAPEVENT_BONUS_RAINBOWS,
 
-	MAPEVENT_SKILL_HELL,
-	MAPEVENT_SKILL_ARMAGEDDON,
+    MAPEVENT_SKILL_HELL,
+    MAPEVENT_SKILL_ARMAGEDDON,
 
-	MAPEVENT_SPECIAL_SINSTORM,
+    MAPEVENT_SPECIAL_SINSTORM,
 
-	MAPEVENT_MAX
+    MAPEVENT_MAX
 };
 
 enum EUACOutpostEvents
 {
-	UACEVENT_NONE,
+    UACEVENT_NONE,
 
-	UACEVENT_INVASION,
-	UACEVENT_LOWPOWER,
+    UACEVENT_INVASION,
+    UACEVENT_LOWPOWER,
 
-	UACEVENT_MAX
+    UACEVENT_MAX
 };
 
 // --------------------------------------------------
@@ -318,39 +318,39 @@ enum EUACOutpostEvents
 
 enum EMenuPages
 {
-	MENUPAGE_MAIN,
-	MENUPAGE_STATS,
-	MENUPAGE_AUGS,
-	MENUPAGE_SKILLS,
-	MENUPAGE_SHIELD,
-	MENUPAGE_STIMS,
-	MENUPAGE_TURRET,
-	MENUPAGE_MAX
+    MENUPAGE_MAIN,
+    MENUPAGE_STATS,
+    MENUPAGE_AUGS,
+    MENUPAGE_SKILLS,
+    MENUPAGE_SHIELD,
+    MENUPAGE_STIMS,
+    MENUPAGE_TURRET,
+    MENUPAGE_MAX
 };
 
 enum EStatPages
 {
-	STATPAGE_STATS,
-	STATPAGE_STATXP,
-	STATPAGE_PERKS,
-	STATPAGE_TEAM,
-	STATPAGE_MAX
+    STATPAGE_STATS,
+    STATPAGE_STATXP,
+    STATPAGE_PERKS,
+    STATPAGE_TEAM,
+    STATPAGE_MAX
 };
 
 enum ESHieldPages
 {
-	SHIELDPAGE_BODY,
-	SHIELDPAGE_BATTERY,
-	SHIELDPAGE_CAPACITOR,
-	SHIELDPAGE_ACCESSORY,
-	SHIELDPAGE_MAX
+    SHIELDPAGE_BODY,
+    SHIELDPAGE_BATTERY,
+    SHIELDPAGE_CAPACITOR,
+    SHIELDPAGE_ACCESSORY,
+    SHIELDPAGE_MAX
 };
 
 enum ETurretPages
 {
-	TURRETPAGE_COMMAND,
-	TURRETPAGE_UPGRADE,
-	TURRETPAGE_MAX
+    TURRETPAGE_COMMAND,
+    TURRETPAGE_UPGRADE,
+    TURRETPAGE_MAX
 };
 
 // --------------------------------------------------
@@ -371,15 +371,15 @@ enum ETurretPages
 
 enum EMissionTypes
 {
-	MT_COLLECT,
-	MT_KILL,
-	MT_KILLAURAS,
-	MT_REINFORCEMENTS,
-	MT_ASSASSINATION,
-	MT_SECRETS,
-	MT_ITEMS,
-	MT_COMBO,
-	MT_MAX
+    MT_COLLECT,
+    MT_KILL,
+    MT_KILLAURAS,
+    MT_REINFORCEMENTS,
+    MT_ASSASSINATION,
+    MT_SECRETS,
+    MT_ITEMS,
+    MT_COMBO,
+    MT_MAX
 };
 
 // --------------------------------------------------
@@ -393,24 +393,24 @@ enum EMissionTypes
 
 enum EMonsterFlags
 {
-	MF_BOSS         = 0x0001,
-	MF_NOXP         = 0x0002,
-	MF_NOSTATS      = 0x0004,
-	MF_NOAURA       = 0x0008,
-	MF_NOPAYKILL    = 0x0010,
-	MF_NODROPS      = 0x0020,
-	MF_NOHEALTHBAR  = 0x0040,
-	MF_NOWEAKEN     = 0x0080,
-	MF_MEGABOSS     = 0x0100,
-	MF_NAMEGEN      = 0x0200,
-	MF_NOAURAGEN    = 0x0400, // [KS] Separate from NoAura to tell MonsterInit that we've acquired an aura through other means.
-	MF_RANKLOSS     = 0x0800
+    MF_BOSS         = 0x0001,
+    MF_NOXP         = 0x0002,
+    MF_NOSTATS      = 0x0004,
+    MF_NOAURA       = 0x0008,
+    MF_NOPAYKILL    = 0x0010,
+    MF_NODROPS      = 0x0020,
+    MF_NOHEALTHBAR  = 0x0040,
+    MF_NOWEAKEN     = 0x0080,
+    MF_MEGABOSS     = 0x0100,
+    MF_NAMEGEN      = 0x0200,
+    MF_NOAURAGEN    = 0x0400, // [KS] Separate from NoAura to tell MonsterInit that we've acquired an aura through other means.
+    MF_RANKLOSS     = 0x0800
 };
 
 enum EMonsterStatFlags
 {
-	SF_PLAYERTARGET = 0x01,
-	SF_RECREATE     = 0x02
+    SF_PLAYERTARGET = 0x01,
+    SF_RECREATE     = 0x02
 };
 
 // --------------------------------------------------
@@ -694,31 +694,31 @@ enum ESoulTypes
 
 enum EStatTypes
 {
-	STAT_STRENGTH,
-	STAT_DEFENSE,
-	STAT_VITALITY,
-	STAT_ENERGY,
-	STAT_REGENERATION,
-	STAT_AGILITY,
-	STAT_CAPACITY,
-	STAT_LUCK,
-	STAT_MAX
+    STAT_STRENGTH,
+    STAT_DEFENSE,
+    STAT_VITALITY,
+    STAT_ENERGY,
+    STAT_REGENERATION,
+    STAT_AGILITY,
+    STAT_CAPACITY,
+    STAT_LUCK,
+    STAT_MAX
 };
 
 enum EStatusEffects
 {
-	SE_NONE = -1,
-	SE_BLIND,
-	SE_CONFUSION,
-	SE_POISON,
-	SE_CORROSION,
-	SE_FATIGUE,
-	SE_VIRUS,
-	SE_SILENCE,
-	SE_CURSE,
-	SE_EMP,
-	SE_RADIATION,
-	SE_MAX
+    SE_NONE = -1,
+    SE_BLIND,
+    SE_CONFUSION,
+    SE_POISON,
+    SE_CORROSION,
+    SE_FATIGUE,
+    SE_VIRUS,
+    SE_SILENCE,
+    SE_CURSE,
+    SE_EMP,
+    SE_RADIATION,
+    SE_MAX
 };
 
 // --------------------------------------------------
@@ -727,26 +727,26 @@ enum EStatusEffects
 
 enum EStimCompounds
 {
-	STIM_STRENGTH,
-	STIM_DEFENSE,
-	STIM_VITALITY,
-	STIM_ENERGY,
-	STIM_REGENERATION,
-	STIM_AGILITY,
-	STIM_CAPACITY,
-	STIM_LUCK,
-	STIM_PURIFIER,
-	STIM_POTENCY,
-	STIM_INDESTRUCTIBLE,
-	STIM_SHADOW,
-	STIM_INFINITY,
-	STIM_CHRONO,
-	STIM_ADRENALINE,
-	STIM_GRAVITY,
-	STIM_VAMPIRE,
-	STIM_RAGE,
-	STIM_MAGNETIC,
-	STIM_MAX
+    STIM_STRENGTH,
+    STIM_DEFENSE,
+    STIM_VITALITY,
+    STIM_ENERGY,
+    STIM_REGENERATION,
+    STIM_AGILITY,
+    STIM_CAPACITY,
+    STIM_LUCK,
+    STIM_PURIFIER,
+    STIM_POTENCY,
+    STIM_INDESTRUCTIBLE,
+    STIM_SHADOW,
+    STIM_INFINITY,
+    STIM_CHRONO,
+    STIM_ADRENALINE,
+    STIM_GRAVITY,
+    STIM_VAMPIRE,
+    STIM_RAGE,
+    STIM_MAGNETIC,
+    STIM_MAX
 };
 
 // --------------------------------------------------
@@ -759,128 +759,128 @@ enum EStimCompounds
 
 enum ETurretUpgrades
 {
-	// Build
-	TU_BUILD,
+    // Build
+    TU_BUILD,
 
-	// Weapons
-	TU_WEAPON_BULLET,
-	TU_WEAPON_BULLET_DAMAGE,
-	TU_WEAPON_BULLET_CAPACITY,
-	TU_WEAPON_BULLET_ROF,
-	TU_WEAPON_PELLET,
-	TU_WEAPON_PELLET_DAMAGE,
-	TU_WEAPON_PELLET_CAPACITY,
-	TU_WEAPON_PELLET_ROF,
-	TU_WEAPON_PELLET_SPREAD,
-	TU_WEAPON_PELLET_AMOUNT,
-	TU_WEAPON_ROCKET,
-	TU_WEAPON_ROCKET_DAMAGE,
-	TU_WEAPON_ROCKET_CAPACITY,
-	TU_WEAPON_ROCKET_ROF,
-	TU_WEAPON_ROCKET_SEEKING,
-	TU_WEAPON_PLASMA,
-	TU_WEAPON_PLASMA_DAMAGE,
-	TU_WEAPON_PLASMA_CAPACITY,
-	TU_WEAPON_PLASMA_ROF,
-	TU_WEAPON_RAILGUN,
-	TU_WEAPON_RAILGUN_DAMAGE,
-	TU_WEAPON_RAILGUN_CAPACITY,
-	TU_WEAPON_RAILGUN_ROF,
-	TU_WEAPON_RAILGUN_RIPPING,
-	TU_AMMO_AUTOLOADER,
-	TU_AMMO_NANOGEN,
-	TU_AMMO_NANOGEN_BULLET,
-	TU_AMMO_NANOGEN_SHELL,
-	TU_AMMO_NANOGEN_ROCKET,
-	TU_AMMO_NANOGEN_CELL,
-	TU_WEAPON_SELFDESTRUCT,
+    // Weapons
+    TU_WEAPON_BULLET,
+    TU_WEAPON_BULLET_DAMAGE,
+    TU_WEAPON_BULLET_CAPACITY,
+    TU_WEAPON_BULLET_ROF,
+    TU_WEAPON_PELLET,
+    TU_WEAPON_PELLET_DAMAGE,
+    TU_WEAPON_PELLET_CAPACITY,
+    TU_WEAPON_PELLET_ROF,
+    TU_WEAPON_PELLET_SPREAD,
+    TU_WEAPON_PELLET_AMOUNT,
+    TU_WEAPON_ROCKET,
+    TU_WEAPON_ROCKET_DAMAGE,
+    TU_WEAPON_ROCKET_CAPACITY,
+    TU_WEAPON_ROCKET_ROF,
+    TU_WEAPON_ROCKET_SEEKING,
+    TU_WEAPON_PLASMA,
+    TU_WEAPON_PLASMA_DAMAGE,
+    TU_WEAPON_PLASMA_CAPACITY,
+    TU_WEAPON_PLASMA_ROF,
+    TU_WEAPON_RAILGUN,
+    TU_WEAPON_RAILGUN_DAMAGE,
+    TU_WEAPON_RAILGUN_CAPACITY,
+    TU_WEAPON_RAILGUN_ROF,
+    TU_WEAPON_RAILGUN_RIPPING,
+    TU_AMMO_AUTOLOADER,
+    TU_AMMO_NANOGEN,
+    TU_AMMO_NANOGEN_BULLET,
+    TU_AMMO_NANOGEN_SHELL,
+    TU_AMMO_NANOGEN_ROCKET,
+    TU_AMMO_NANOGEN_CELL,
+    TU_WEAPON_SELFDESTRUCT,
 
-	// Armor
-	TU_ARMOR_PLATING,
-	TU_ARMOR_PLATING_MELEE,
-	TU_ARMOR_PLATING_BULLET,
-	TU_ARMOR_PLATING_FIRE,
-	TU_ARMOR_PLATING_PLASMA,
-	TU_ARMOR_PLATING_BLAST,
-	TU_ARMOR_MODULE_REFLECT,
-	TU_ARMOR_MODULE_REPAIR,
-	TU_ARMOR_MODULE_PHASE,
+    // Armor
+    TU_ARMOR_PLATING,
+    TU_ARMOR_PLATING_MELEE,
+    TU_ARMOR_PLATING_BULLET,
+    TU_ARMOR_PLATING_FIRE,
+    TU_ARMOR_PLATING_PLASMA,
+    TU_ARMOR_PLATING_BLAST,
+    TU_ARMOR_MODULE_REFLECT,
+    TU_ARMOR_MODULE_REPAIR,
+    TU_ARMOR_MODULE_PHASE,
 
-	// Assist
-	TU_ASSIST_HEALTH,
-	TU_ASSIST_ARMOR,
-	TU_ASSIST_AUG,
-	TU_ASSIST_SHIELD,
-	TU_ASSIST_INJECTOR,
-	TU_ASSIST_INJECTOR_TYPE,
-	TU_ASSIST_INJECTOR_AMOUNT,
-	TU_ASSIST_INJECTOR_POTENCY,
-	TU_ASSIST_TELEPORT,
-	TU_ASSIST_TEAM,
+    // Assist
+    TU_ASSIST_HEALTH,
+    TU_ASSIST_ARMOR,
+    TU_ASSIST_AUG,
+    TU_ASSIST_SHIELD,
+    TU_ASSIST_INJECTOR,
+    TU_ASSIST_INJECTOR_TYPE,
+    TU_ASSIST_INJECTOR_AMOUNT,
+    TU_ASSIST_INJECTOR_POTENCY,
+    TU_ASSIST_TELEPORT,
+    TU_ASSIST_TEAM,
 
-	// Sensors
-	TU_SENSORS,
-	TU_SENSORS_MODULEFINDER,
-	TU_SENSORS_ITEMFINDER,
-	TU_SENSORS_SUPPLYFINDER,
+    // Sensors
+    TU_SENSORS,
+    TU_SENSORS_MODULEFINDER,
+    TU_SENSORS_ITEMFINDER,
+    TU_SENSORS_SUPPLYFINDER,
 
-	// Battery
-	TU_BATTERY_CAPACITY,
-	TU_BATTERY_GENERATOR_KINETIC,
-	TU_BATTERY_GENERATOR_ILLUMINATION,
-	TU_BATTERY_GENERATOR_FORCE,
-	TU_BATTERY_GENERATOR_THERMAL,
-	TU_BATTERY_GENERATOR_PLASMA,
-	TU_BATTERY_GENERATOR_NUCLEAR,
+    // Battery
+    TU_BATTERY_CAPACITY,
+    TU_BATTERY_GENERATOR_KINETIC,
+    TU_BATTERY_GENERATOR_ILLUMINATION,
+    TU_BATTERY_GENERATOR_FORCE,
+    TU_BATTERY_GENERATOR_THERMAL,
+    TU_BATTERY_GENERATOR_PLASMA,
+    TU_BATTERY_GENERATOR_NUCLEAR,
 
-	// Hardware
-	TU_HARDWARE_BATTERY,
-	TU_HARDWARE_BUILD,
-	TU_HARDWARE_PART,
-	TU_HARDWARE_SPECS,
-	TU_HARDWARE_FABRICATION,
+    // Hardware
+    TU_HARDWARE_BATTERY,
+    TU_HARDWARE_BUILD,
+    TU_HARDWARE_PART,
+    TU_HARDWARE_SPECS,
+    TU_HARDWARE_FABRICATION,
 
-	// Commands
-	TU_COMMAND_RECALL,
-	TU_COMMAND_DRAW_FIRE,
-	TU_COMMAND_HOLD_POSITION,
+    // Commands
+    TU_COMMAND_RECALL,
+    TU_COMMAND_DRAW_FIRE,
+    TU_COMMAND_HOLD_POSITION,
 
-	// Maximum
-	TU_MAX
+    // Maximum
+    TU_MAX
 };
 
 enum ETurretWeapon
 {
-	TW_NONE,
-	TW_BULLET,
-	TW_PELLET,
-	TW_ROCKET,
-	TW_PLASMA,
-	TW_RAILGUN,
-	TW_MAX
+    TW_NONE,
+    TW_BULLET,
+    TW_PELLET,
+    TW_ROCKET,
+    TW_PLASMA,
+    TW_RAILGUN,
+    TW_MAX
 };
 
 enum ETurretProjectile
 {
-	TP_ROCKET,
-	TP_PLASMA,
-	TP_MAX
+    TP_ROCKET,
+    TP_PLASMA,
+    TP_MAX
 };
 
 enum ETurretSensorModes
 {
-	TSM_NONE,
-	TSM_MODULES,
-	TSM_ITEMS,
-	TSM_CRATE
+    TSM_NONE,
+    TSM_MODULES,
+    TSM_ITEMS,
+    TSM_CRATE
 };
 
 enum ETurretCommands
 {
-	TC_NONE,
-	TC_DRAW_FIRE,
-	TC_HOLD_POSITION,
-	TC_MAX
+    TC_NONE,
+    TC_DRAW_FIRE,
+    TC_HOLD_POSITION,
+    TC_MAX
 };
 
 // --------------------------------------------------
@@ -894,36 +894,91 @@ enum ETurretCommands
 
 enum EAmmoTypes
 {
-	AMMO_CLIP = 1,
-	AMMO_SHELL,
-	AMMO_ROCKET,
-	AMMO_CELL
+    AMMO_CLIP = 1,
+    AMMO_SHELL,
+    AMMO_ROCKET,
+    AMMO_CELL
 };
 
 enum EImmunityCrystalTypes
 {
-	IC_RANDOM,
-	IC_BULLET,
-	IC_MELEE,
-	IC_FIRE,
-	IC_PLASMA,
-	IC_MAX
+    IC_RANDOM,
+    IC_BULLET,
+    IC_MELEE,
+    IC_FIRE,
+    IC_PLASMA,
+    IC_MAX
 };
 
 enum EKeyStates
 {
-	KEY_PRESSED,
-	KEY_ONLYPRESSED,
-	KEY_UP,
-	KEY_DOWN
+    KEY_PRESSED,
+    KEY_ONLYPRESSED,
+    KEY_UP,
+    KEY_DOWN
 };
 
 enum ELogLevels
 {
-	LOG_NORMAL,
-	LOG_DEBUG,
-	LOG_WARNING,
-	LOG_ERROR
+    LOG_NORMAL,
+    LOG_DEBUG,
+    LOG_WARNING,
+    LOG_ERROR
+};
+
+// --------------------------------------------------
+// Common Structures
+//
+
+struct DynamicArray
+{
+    char Name[5];
+    int Position;
+    int Size;
+    int ItemSize;
+    void *Data;
+};
+
+struct InterpData
+{
+    long Value;
+    long OldValue;
+
+    long StartValue;
+    long DisplayValue;
+
+    int Timer;
+    int TimerMax;
+    int TimerMaxCap;
+};
+
+struct Position
+{
+    fixed X;
+    fixed Y;
+    fixed Z;
+    fixed Angle;
+    fixed Pitch;
+};
+
+struct AuraInfo
+{
+    int Time;
+    fixed Range;
+    bool Team;
+    bool DefenseBoost;
+
+    struct
+    {
+        bool Active;
+        int Level;
+    } Type[AURA_MAX];
+};
+
+struct TurretSensorItem
+{
+    int TID;
+    int Category;
 };
 
 #endif // DOOMRPG__SCRIPTS__DEFS_H
