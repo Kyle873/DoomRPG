@@ -76,11 +76,11 @@ typedef MegabossInfo MonsterSpace const *MegabossInfoPtr;
 AddressSpace extern MapArraySpace MonsterStatsSpace;
 typedef MonsterStats MonsterStatsSpace *MonsterStatsPtr;
 
-extern MonsterStatsSpace int MonsterID;
-extern MonsterStatsSpace MonsterStats Monsters[MAX_MONSTERS];
-extern MonsterSpace MonsterInfo const MonsterData[MAX_DEF_MONSTERS];
-extern MonsterSpace MonsterInfo const MonsterDataDRLA[MAX_DEF_MONSTERS_DRLA];
-extern MonsterSpace MegabossInfo const MegaBosses[MAX_MEGABOSSES];
+extern int MonsterStatsSpace MonsterID;
+extern MonsterStats MonsterStatsSpace Monsters[MAX_MONSTERS];
+extern MonsterInfo MonsterSpace const MonsterData[MAX_DEF_MONSTERS];
+extern MonsterInfo MonsterSpace const MonsterDataDRLA[MAX_DEF_MONSTERS_DRLA];
+extern MegabossInfo MonsterSpace const MegaBosses[MAX_MEGABOSSES];
 
 NamedScript DECORATE void MonsterInit(int);
 NamedScript Console  void MonsterSet(int, int, int);

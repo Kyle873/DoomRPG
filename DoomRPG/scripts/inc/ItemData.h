@@ -54,16 +54,16 @@ typedef struct
 
 typedef ItemInfo ItemSpace *ItemInfoPtr;
 
-extern ItemSpace bool ItemsInitialized;
-extern ItemSpace int ItemCategories;
-extern ItemSpace str ItemCategoryNames[ITEM_CATEGORIES];
-extern ItemSpace int ItemCategoryFlags[ITEM_CATEGORIES];
-extern ItemSpace int ItemMax[ITEM_CATEGORIES];
-extern ItemSpace ItemInfo ItemData[ITEM_CATEGORIES][ITEM_MAX];
-extern ItemSpace bool ItemRanksRemoved;
-extern ItemSpace ItemInfoPtr RewardList[ITEM_CATEGORIES * ITEM_MAX];
-extern ItemSpace int MaxRewards;
-extern ItemSpace bool RewardsInit;
+extern bool ItemSpace ItemsInitialized;
+extern int ItemSpace ItemCategories;
+extern str ItemSpace ItemCategoryNames[ITEM_CATEGORIES];
+extern int ItemSpace ItemCategoryFlags[ITEM_CATEGORIES];
+extern int ItemSpace ItemMax[ITEM_CATEGORIES];
+extern ItemInfo ItemSpace ItemData[ITEM_CATEGORIES][ITEM_MAX];
+extern bool ItemSpace ItemRanksRemoved;
+extern ItemInfoPtr ItemSpace RewardList[ITEM_CATEGORIES * ITEM_MAX];
+extern int ItemSpace MaxRewards;
+extern bool ItemSpace RewardsInit;
 
 NamedScript void BuildItemData();
 

@@ -48,9 +48,9 @@ AddressSpace extern GlobalArraySpace ShieldSpace;
 typedef ShieldPart ShieldSpace *ShieldPartPtr;
 typedef ShieldAccessory ShieldSpace *ShieldAccsPtr;
 
-extern ShieldSpace int ShieldPartsMax[3];
-extern ShieldSpace ShieldPart ShieldParts[3][MAX_PARTS];
-extern ShieldSpace ShieldAccessory ShieldAccessories[MAX_ACCESSORIES];
+extern int ShieldSpace ShieldPartsMax[3];
+extern ShieldPart ShieldSpace ShieldParts[3][MAX_PARTS];
+extern ShieldAccessory ShieldSpace ShieldAccessories[MAX_ACCESSORIES];
 
 NamedScript void BuildShieldParts();
 NamedScript void ShieldTimer();

@@ -424,7 +424,7 @@ typedef struct
 } PlayerData;
 
 // Version
-extern MapRegister str Version;
+extern str MapRegister Version;
 
 // Flags
 extern bool Transported;
@@ -438,8 +438,8 @@ extern str PlayerWeapon[MAX_PLAYERS];
 extern PlayerData _PlayerData[MAX_PLAYERS];
 
 // Item TIDs
-extern MapRegister bool ItemTIDsInitialized;
-extern MapArray int ItemTIDs[MAX_ITEMS];
+extern bool MapRegister ItemTIDsInitialized;
+extern int MapArray ItemTIDs[MAX_ITEMS];
 
 // --------------------------------------------------
 // Multiplayer HUD

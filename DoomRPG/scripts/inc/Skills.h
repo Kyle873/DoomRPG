@@ -26,10 +26,10 @@ typedef struct Skill SkillSpace *SkillPtr;
 
 extern struct Skill SkillSpace SkillData[MAX_CATEGORIES][MAX_SKILLS];
 
-extern MapRegister bool Overdrive;
-extern MapRegister int BulletTimeTimer;
+extern bool MapRegister Overdrive;
+extern int MapRegister BulletTimeTimer;
 
-extern MapArray int SkillCategoryMax[MAX_CATEGORIES];
+extern int MapArray SkillCategoryMax[MAX_CATEGORIES];
 
 NamedScript Type_ENTER void SkillWheel();
 NamedScript KeyBind void UseSkill(int);

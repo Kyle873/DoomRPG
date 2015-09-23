@@ -15,9 +15,9 @@ typedef struct
     int Max;
 } DroppedItem;
 
-extern MapRegister int AuraTID;
-extern MapArray str SkillLevels[6];
-extern MapArray str AuraIcons[AURA_MAX];
+extern int MapRegister AuraTID;
+extern str MapArray SkillLevels[6];
+extern str MapArray AuraIcons[AURA_MAX];
 
 NamedScript DECORATE int InOutpost();
 NamedScript DECORATE int GetUniqueTID();
