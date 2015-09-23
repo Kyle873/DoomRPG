@@ -9,7 +9,7 @@ typedef struct
     int Level;
 } SkillLevelInfo;
 
-typedef bool (*SkillUseScript NamedScript Console)(struct SkillLevelInfo *, void *);
+typedef bool (*SkillUseScript NamedScript Console)(SkillLevelInfo *, void *);
 
 typedef struct
 {
@@ -22,9 +22,9 @@ typedef struct
 } Skill;
 
 AddressSpace extern MapArraySpace SkillSpace;
-typedef struct Skill SkillSpace *SkillPtr;
+typedef Skill SkillSpace *SkillPtr;
 
-extern struct Skill SkillSpace SkillData[MAX_CATEGORIES][MAX_SKILLS];
+extern Skill SkillSpace SkillData[MAX_CATEGORIES][MAX_SKILLS];
 
 extern bool MapRegister Overdrive;
 extern int MapRegister BulletTimeTimer;

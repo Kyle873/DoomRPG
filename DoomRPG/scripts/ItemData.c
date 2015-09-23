@@ -7,20 +7,20 @@
 
 AddressSpace GlobalArraySpace ItemSpace Address(3);
 
-ItemSpace bool ItemsInitialized;
+bool ItemSpace ItemsInitialized;
 
-ItemSpace int ItemCategories;
+int ItemSpace ItemCategories;
 
-ItemSpace str ItemCategoryNames[ITEM_CATEGORIES];
-ItemSpace int ItemCategoryFlags[ITEM_CATEGORIES];
-ItemSpace int ItemMax[ITEM_CATEGORIES];
+str ItemSpace ItemCategoryNames[ITEM_CATEGORIES];
+int ItemSpace ItemCategoryFlags[ITEM_CATEGORIES];
+int ItemSpace ItemMax[ITEM_CATEGORIES];
 
-ItemSpace ItemInfo ItemData[ITEM_CATEGORIES][ITEM_MAX];
+ItemInfo ItemSpace ItemData[ITEM_CATEGORIES][ITEM_MAX];
 
-ItemSpace bool ItemRanksRemoved;
-ItemSpace ItemInfoPtr RewardList[ITEM_CATEGORIES * ITEM_MAX];
-ItemSpace int MaxRewards;
-ItemSpace bool RewardsInit;
+bool ItemSpace ItemRanksRemoved;
+ItemInfoPtr ItemSpace RewardList[ITEM_CATEGORIES * ITEM_MAX];
+int ItemSpace MaxRewards;
+bool ItemSpace RewardsInit;
 
 NamedScriptSync void PopulateRewards()
 {
