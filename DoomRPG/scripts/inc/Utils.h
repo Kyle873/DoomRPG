@@ -16,8 +16,8 @@ typedef struct
 } DroppedItem;
 
 extern int MapRegister AuraTID;
-extern str MapArray SkillLevels[6];
-extern str MapArray AuraIcons[AURA_MAX];
+extern str const SkillLevels[6];
+extern str const AuraIcons[AURA_MAX + 1];
 
 NamedScript DECORATE int InOutpost();
 NamedScript DECORATE int GetUniqueTID();
@@ -41,6 +41,7 @@ NamedScript DECORATE int StatusEffectSeverity(int);
 NamedScript DECORATE int StatusEffectTimer(int);
 NamedScript DECORATE int ImmunityCrystalCheck();
 NamedScript DECORATE void RainbowTranslationPulse(int);
+NamedScript DECORATE int CheckActorSky();
 
 // Monsters
 NamedScript DECORATE void HealMonster(int, int);
@@ -60,7 +61,7 @@ NamedScript DECORATE void AddToxicity(int);
 NamedScript DECORATE void AddStimImmunity(int);
 NamedScript DECORATE void ClearBurnout();
 NamedScript KeyBind  void PurgeDrops();
-NamedScript          void CheckArmorStats();
+NamedScript Console  void CheckArmorStats();
 
 bool StatsCapped();
 OptionalArgs(1) int CalculatePay(int);
@@ -108,7 +109,7 @@ bool FireProjectile(str);
 bool Nova(str, int);
 
 // Auras
-NamedScript void GetAuraTokens();
+NamedScript DECORATE void GetAuraTokens();
 void SpawnAuras(int, bool);
 bool IsStealth(int);
 bool PlayerHasAura(int);
@@ -119,17 +120,15 @@ bool MonsterHasShadowAura(MonsterStatsPtr);
 // Drawing
 NamedScript void PrintTextWiggle(char *, int, int, int, int, fixed, fixed, fixed, fixed);
 NamedScript void DrawStatUp(int);
-void PrintSprite(str, int, fixed, fixed, fixed);
 void PrintSpriteFade(str, int, fixed, fixed, fixed, fixed);
 void PrintSpriteAlpha(str, int, fixed, fixed, fixed, fixed);
 OptionalArgs(1) void PrintSpritePulse(str, int, fixed, fixed, fixed, fixed, fixed, bool);
 OptionalArgs(2) void PrintMessage(str, int, fixed);
 void PrintError(str);
-void ClearMessage(int);
 void DrawBattery();
-void DrawMissionInfo(MissionInfo *, fixed, fixed, bool);
 void DrawShieldInfo(int, fixed, fixed);
 void DrawShieldModel(int, fixed, fixed);
+void DrawMissionInfo(MissionInfo *, fixed, fixed, bool);
 OptionalArgs(1) void DrawBar(str, int, int, int, bool);
 void DrawProgressBar(str, int);
 

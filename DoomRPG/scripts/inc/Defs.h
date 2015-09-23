@@ -29,6 +29,14 @@
         OptHudMessage(flags, id, color, x, y, hold), \
         EndHudMessage4(opt1, opt2, opt3) \
     )
+#define HudMessageBold(flags, id, color, x, y, hold, opt1, opt2, opt3, ...) \
+    ( \
+        BeginHudMessage(), \
+        __nprintf_str(__VA_ARGS__), \
+        MoreHudMessage(), \
+        OptHudMessage(flags, id, color, x, y, hold), \
+        EndHudMessageBold4(opt1, opt2, opt3) \
+    )
 #define PrintBold(...) \
     ( \
         BeginPrintBold(), \
@@ -119,10 +127,30 @@
 // Macro functions
 #define MAKE_ID(a, b, c, d) ((int)((a) | ((b) << 8) | ((c) << 16) | ((d) << 24)))
 
+// Aliases
+#define CallACS(script)         ACS_NamedExecuteWithResult((script))
+#define Arbitrator              (PlayerNumber() == 0)
+#define InMultiplayer           (GameType() == GAME_NET_COOPERATIVE)
+#define InTitle                 (GameType() == GAME_TITLE_MAP)
+#define GetMonsterID(N)         GetActorProperty((N), APROP_Score)
+#define SetMonsterID(N, O)      SetActorProperty((N), APROP_Score, (O))
+#define Clamp(Low, N, High)     (N < Low ? Low : N > High ? High : N)
+#define GetActivatorCVar(i)     GetUserCVar(PlayerNumber(), (i))
+#define SetActivatorCVar(i, j)  SetUserCVar(PlayerNumber(), (i), (j))
+#define GetActivatorCVarFixed(i)    GetUserCVarFixed(PlayerNumber(), (i))
+#define SetActivatorCVarFixed(i, j) SetUserCVarFixed(PlayerNumber(), (i), (j))
+#define GetActivatorCVarString(i)       GetUserCVarString(PlayerNumber(), (i))
+#define SetActivatorCVarString(i, j)    SetUserCVarString(PlayerNumber(), (i), (j))
+
 // Constants
 #define MAX_PLAYERS             8
 #define PLAYER_TID              31337
 #define PI                      3.14159265359
+
+// Struct Aliases
+#define Players(N)              _PlayerData[(N)]
+#define Player                  _PlayerData[PlayerNumber()]
+#define Skills                  SkillData // Temporary until I'm not lazy
 
 // Type definitions
 typedef __str str;
