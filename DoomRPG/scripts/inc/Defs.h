@@ -70,48 +70,48 @@
     )
 
 // Script declaration stuff
-#define far_ptr         __far
-#define script_local    __loc
-#define string_table    __str_ars
+#define FarPtr      __far
+#define ScriptLocal __loc
+#define StringTable __str_ars
 
-#define address_space       __addrdef
-#define space_map_array     __map_arr
-#define space_hub_array     __wld_arr
-#define space_global_array  __gbl_arr
+#define AddressSpace        __addrdef
+#define MapArraySpace       __map_arr
+#define WorldArraySpace     __wld_arr
+#define GlobalArraySpace    __gbl_arr
 
-#define reserved_reg    __loc_reg
-#define map_reg         __map_reg
-#define hub_reg         __wld_reg
-#define global_reg      __gbl_reg
+#define AutoRegister    __loc_reg
+#define MapRegister     __map_reg
+#define WorldRegister   __wld_reg
+#define GlobalRegister  __gbl_reg
 
-#define reserved_array  __loc_ars
-#define map_array       __map_ars
-#define hub_array       __wld_ars
-#define global_array    __gbl_ars
+#define AutoArray       __loc_ars
+#define MapArray        __map_ars
+#define WorldArray      __wld_ars
+#define GlobalArray     __gbl_ars
 
-#define opt_args(N)     [[optional_args(N)]]
+#define OptionalArgs(N) [[optional_args(N)]]
 
-#define decorate        [[extern("ACS")]]
-#define levelspec       [[extern("ACS")]]
-#define keybind         [[extern("ACS"), script("Net")]]
+#define DECORATE        [[extern("ACS")]]
+#define MapSpecial      [[extern("ACS")]]
+#define KeyBind         [[extern("ACS"), script("Net")]]
 
-#define number_script(N)        [[call("ScriptI"), address(N)]]
-#define named_script            [[call("ScriptS")]]
-#define number_script_sync(N)   [[call("SScriptI"), address(N)]]
-#define named_script_sync       [[call("SScriptS")]]
+#define NumberedScript(N)       [[call("ScriptI"), address(N)]]
+#define NamedScript             [[call("ScriptS")]]
+#define NumberedScriptSync(N)   [[call("SScriptI"), address(N)]]
+#define NamedScriptSync         [[call("SScriptS")]]
 
-#define type_open       [[script("Open")]]
-#define type_unloading  [[script("Unloading")]]
-#define type_lightning  [[script("Lightning")]]
+#define Type_OPEN       [[script("Open")]]
+#define Type_UNLOADING  [[script("Unloading")]]
+#define Type_LIGHTNING  [[script("Lightning")]]
 
-#define type_enter      [[script("Enter")]]
-#define type_return     [[script("Return")]]
-#define type_respawn    [[script("Respawn")]]
-#define type_death      [[script("Death")]]
-#define type_disconnect [[script("Disconnect")]]
+#define Type_ENTER      [[script("Enter")]]
+#define Type_RETURN     [[script("Return")]]
+#define Type_RESPAWN    [[script("Respawn")]]
+#define Type_DEATH      [[script("Death")]]
+#define Type_DISCONNECT [[script("Disconnect")]]
 
-#define sflag_puke      [[script("Net")]]
-#define sflag_client    [[script("Clientside")]]
+#define Flag_Puke       [[script("Net")]]
+#define Flag_ClientSide [[script("Clientside")]]
 
 // Macro functions
 #define MAKE_ID(a, b, c, d) ((int)((a) | ((b) << 8) | ((c) << 16) | ((d) << 24)))
