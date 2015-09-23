@@ -9,21 +9,23 @@ import os, shutil
 USE_64BIT_BINARIES = (sys.maxsize > 2 ** 32)
 
 def retrievebuild ():
-    linksfile = io.open("gdcc_version.txt", "rt")
-
     link = None
-    for linksline in linksfile:
-        if not linksline.startswith("GDCC"):
-            continue
-
-        if USE_64BIT_BINARIES and linksline.startswith("GDCC32"):
-            continue
-
-        version, dummy, link = linksline.partition(": ")
-        break
+    
+    if USE_64BIT_BINARIES:
+        try:
+            link = urllib2.urlopen("https://www.dropbox.com/sh/e4msp35vxp61ztg/AACzzIcbcyFrRhGMamDGcdhMa/gdcc_latest_win64.txt?dl=1").read().strip()
+        except Exception:
+            pass
+    else:
+        try:
+            link = urllib2.urlopen("https://www.dropbox.com/sh/e4msp35vxp61ztg/AACi9gkSHBKE25Uikv6DUFFUa/gdcc_latest_win32.txt?dl=1").read().strip()
+        except Exception:
+            pass
 
     if link is None:
-        raise IOError("Couldn't retrieve GDCC link from gdcc_version.txt")
+        raise IOError("Couldn't retrieve GDCC link from Dropbox")
+    
+    link = link.replace("?dl=0", "?dl=1")
     
     destfile = io.open("gdcc.7z", "w+b")
     data = urllib2.urlopen(link.strip())
