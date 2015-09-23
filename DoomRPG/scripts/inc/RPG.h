@@ -4,18 +4,18 @@
 #include "Defs.h"
 //#include "GUI.h"
 #include "ItemData.h"
-//#include "Skills.h"
+#include "Skills.h"
 
 // Forward Declarations
-struct MonsterInfo;
-struct ShieldPart;
-struct ShieldAccessory;
+typedef struct MonsterInfo;
+typedef struct ShieldPart;
+typedef struct ShieldAccessory;
 
 AddressSpace extern GlobalArraySpace ItemSpace;
 AddressSpace extern MapArraySpace MonsterSpace;
 AddressSpace extern GlobalArraySpace ShieldSpace;
 
-struct MissionInfo
+typedef struct
 {
     // Basic
     bool Active;
@@ -27,16 +27,16 @@ struct MissionInfo
     long int RewardRank;
     int RewardCredits;
     int RewardModules;
-    //struct ItemInfo ItemSpace *RewardItem;
+    struct ItemInfo ItemSpace *RewardItem;
     
     // Mission Data
-    //struct ItemInfo ItemSpace *Item;
-    //struct MonsterInfo MonsterSpace const *Monster;
+    struct ItemInfo ItemSpace *Item;
+    //MonsterInfo MonsterSpace const *Monster;
     int Current;
     int Amount;
-};
+} MissionInfo;
 
-struct TurretUpgrade
+typedef struct _turretupgrade
 {
     str Name;
     int MaxLevel;
@@ -46,10 +46,10 @@ struct TurretUpgrade
     str UpgradeInfo;
     str CommandInfo;
     
-    //struct TurretUpgrade *Prereq;
-};
+    struct _turretupgrade *Prereq;
+} TurretUpgrade;
 
-struct PlayerData
+typedef struct
 {
     int TID;
     int PlayerView;
@@ -189,8 +189,8 @@ struct PlayerData
     int ShopPage;
     
     // Skill Info
-    //struct SkillLevelInfo SkillLevel[MAX_CATEGORIES][MAX_SKILLS];
-    //struct AuraInfo Aura;
+    SkillLevelInfo SkillLevel[MAX_CATEGORIES][MAX_SKILLS];
+    AuraInfo Aura;
     bool AuraBonus;
     fixed SkillRefundMult;
     bool SkillWheelOpen;
@@ -233,13 +233,13 @@ struct PlayerData
     
     // GUI
     bool GUIOpen;
-    //struct MouseInfo Mouse;
-    //struct GUIWindow * Window[MAX_WINDOWS];
+    //MouseInfo Mouse;
+    //GUIWindow * Window[MAX_WINDOWS];
     
     // Auto-Sell/Auto-Store
     int ItemAutoMode[ITEM_CATEGORIES][ITEM_MAX];
-    //struct DynamicArray AutoSellList;
-    //struct DynamicArray AutoStoreList;
+    DynamicArray AutoSellList;
+    DynamicArray AutoStoreList;
     
     // Toxicity Meter
     int ToxicTimer;
@@ -264,7 +264,7 @@ struct PlayerData
     bool SeenEventTip[MAPEVENT_MAX];
     
     // Associated Drops
-    //struct DynamicArray DropTID;
+    DynamicArray DropTID;
     
     // Structception
     struct
@@ -302,7 +302,7 @@ struct PlayerData
         // Accessories
         int AccessoryBattery;
         int AccessoryTimer;
-        //struct Position AccessoryPosition;
+        Position AccessoryPosition;
         
         // Armor
         str ArmorType;
@@ -386,7 +386,7 @@ struct PlayerData
         struct
         {
             bool Enabled;
-            //struct DynamicArray Array;
+            DynamicArray Array;
             int CurrentPosition;
             int PulseDelay;
             int CheckDelay;
@@ -395,7 +395,7 @@ struct PlayerData
         struct
         {
             bool Enabled;
-            //struct DynamicArray Array;
+            DynamicArray Array;
             int CurrentPosition;
             int PulseDelay;
             int CheckDelay;
@@ -421,8 +421,8 @@ struct PlayerData
         fixed HeightOffset;
     } Turret;
     
-    //struct MissionInfo Mission;
-};
+    MissionInfo Mission;
+} PlayerData;
 
 // Version
 extern MapRegister str Version;

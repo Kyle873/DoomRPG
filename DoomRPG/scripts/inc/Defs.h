@@ -95,6 +95,7 @@
 
 #define DECORATE        [[extern("ACS")]]
 #define MapSpecial      [[extern("ACS")]]
+#define Console         [[extern("ACS")]]
 #define KeyBind         [[extern("ACS"), script("Net")]]
 
 #define NumberedScript(N)       [[call("ScriptI"), address(N)]]
@@ -935,16 +936,16 @@ enum ELogLevels
 // Common Structures
 //
 
-struct DynamicArray
+typedef struct
 {
     char Name[5];
     int Position;
     int Size;
     int ItemSize;
     void *Data;
-};
+} DynamicArray;
 
-struct InterpData
+typedef struct
 {
     long Value;
     long OldValue;
@@ -955,18 +956,18 @@ struct InterpData
     int Timer;
     int TimerMax;
     int TimerMaxCap;
-};
+} InterpData;
 
-struct Position
+typedef struct
 {
     fixed X;
     fixed Y;
     fixed Z;
     fixed Angle;
     fixed Pitch;
-};
+} Position;
 
-struct AuraInfo
+typedef struct
 {
     int Time;
     fixed Range;
@@ -978,13 +979,13 @@ struct AuraInfo
         bool Active;
         int Level;
     } Type[AURA_MAX];
-};
+} AuraInfo;
 
-struct TurretSensorItem
+typedef struct
 {
     int TID;
     int Category;
-};
+} TurretSensorItem;
 
 #endif // DOOMRPG__SCRIPTS__DEFS_H
 

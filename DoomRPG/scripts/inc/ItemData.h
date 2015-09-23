@@ -31,7 +31,7 @@ AddressSpace extern GlobalArraySpace ItemSpace;
     ItemMax[ItemCategory] = ItemIndex
 
 // Item Definition
-struct ItemInfo
+typedef struct
 {
     str Actor;
     str Name;
@@ -50,7 +50,7 @@ struct ItemInfo
     // Only used for the Shop Special and specific DRLA checks
     int Category;
     int Index;
-};
+} ItemInfo;
 
 typedef struct ItemInfo ItemSpace *ItemInfoPtr;
 
