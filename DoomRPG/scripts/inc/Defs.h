@@ -89,6 +89,8 @@
 #define WorldArray      __wld_ars
 #define GlobalArray     __gbl_ars
 
+#define Address(N)      [[address(N)]]
+
 #define OptionalArgs(N) [[optional_args(N)]]
 
 #define DECORATE        [[extern("ACS")]]
