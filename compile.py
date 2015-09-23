@@ -1,10 +1,15 @@
 #!python2.7
 
-import os, subprocess
+import os, subprocess, sys
 
-C_COMPILER   = os.path.join ("Utilities", "GDCC", "gdcc-cc.exe")
-ASM_COMPILER = os.path.join ("Utilities", "GDCC", "gdcc-as.exe")
-LINKER       = os.path.join ("Utilities", "GDCC", "gdcc-ld.exe")
+# Add Utilities\GDCC to the list of directories to look for GDCC executables
+execpaths = os.environ["PATH"].split(os.pathsep)
+execpaths.append (os.path.join ("Utilities", "GDCC"))
+os.environ["PATH"] = os.pathsep.join (execpaths)
+
+C_COMPILER   = "gdcc-cc"
+ASM_COMPILER = "gdcc-as"
+LINKER       = "gdcc-ld"
 
 LIBC_SOURCES    = os.path.join ("Utilities", "GDCC", "lib", "src", "libc")
 LIBGDCC_SOURCES = os.path.join ("Utilities", "GDCC", "lib", "src", "libGDCC")
