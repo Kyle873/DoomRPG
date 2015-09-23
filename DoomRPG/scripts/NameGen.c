@@ -540,7 +540,7 @@ str GenerateName(str Actor, str Tag)
             bool Female = false;
             
             // Check female actors
-            if (StrICmp(Actor, "RLFormerHumanBattleRifle3RPG") || StrICmp(Actor, "RLEliteHumanBattleRifle2RPG"))
+            if (!StrICmp(Actor, "RLFormerHumanBattleRifle3RPG") || !StrICmp(Actor, "RLEliteHumanBattleRifle2RPG"))
                 Female = true;
             
             return GenerateZombieName(Female);
@@ -560,7 +560,7 @@ str GenerateName(str Actor, str Tag)
         bool Female = false;
         
         // Check female actors
-        if (StrICmp(Actor, "DRPGMarineFemGuardBattleRifle") || StrICmp(Actor, "DRPGMarineFemBattleRifle"))
+        if (!StrICmp(Actor, "DRPGMarineFemGuardBattleRifle") || !StrICmp(Actor, "DRPGMarineFemBattleRifle"))
             Female = true;
         
         return GenerateMarineName(Female);
@@ -569,9 +569,9 @@ str GenerateName(str Actor, str Tag)
     // Megabosses
     if (Contains(Actor, "Megaboss"))
     {
-        if (StrICmp(Tag, "Pride"))
+        if (!StrICmp(Tag, "Pride"))
             return GenerateMegabossName(0);
-        if (StrICmp(Tag, "Sloth"))
+        if (!StrICmp(Tag, "Sloth"))
             return GenerateMegabossName(6);
     }
     
