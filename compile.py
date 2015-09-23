@@ -86,6 +86,8 @@ def compile_objects (path):
 
 def link_library (objlist, libraryname):
     """Links a list of loose object files into a library."""
+    if not os.access (OUTPUTDIR, os.F_OK):
+        os.mkdir (OUTPUTDIR)
     
     commandline = [LINKER]
     commandline += OPTIONS
