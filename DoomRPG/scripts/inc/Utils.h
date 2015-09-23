@@ -2,7 +2,7 @@
 #define _UTILS_DH_
 
 #include "Defs.h"
-//#include "Monsters.h"
+#include "Monsters.h"
 
 AddressSpace extern GlobalArraySpace ItemSpace;
 
@@ -112,9 +112,9 @@ NamedScript void GetAuraTokens();
 void SpawnAuras(int, bool);
 bool IsStealth(int);
 bool PlayerHasAura(int);
-//bool MonsterHasAura(MonsterStatsPtr);
+bool MonsterHasAura(MonsterStatsPtr);
 bool PlayerHasShadowAura(int);
-//bool MonsterHasShadowAura(MonsterStatsPtr);
+bool MonsterHasShadowAura(MonsterStatsPtr);
 
 // Drawing
 NamedScript void PrintTextWiggle(char *, int, int, int, int, fixed, fixed, fixed, fixed);

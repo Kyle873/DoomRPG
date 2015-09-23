@@ -5,11 +5,10 @@
 //#include "GUI.h"
 #include "ItemData.h"
 #include "Skills.h"
+#include "Shield.h"
+#include "Monsters.h"
 
 // Forward Declarations
-typedef struct MonsterInfo;
-typedef struct ShieldPart;
-typedef struct ShieldAccessory;
 
 AddressSpace extern GlobalArraySpace ItemSpace;
 AddressSpace extern MapArraySpace MonsterSpace;
@@ -27,11 +26,11 @@ typedef struct
     long int RewardRank;
     int RewardCredits;
     int RewardModules;
-    struct ItemInfo ItemSpace *RewardItem;
+    ItemInfo ItemSpace *RewardItem;
     
     // Mission Data
-    struct ItemInfo ItemSpace *Item;
-    //MonsterInfo MonsterSpace const *Monster;
+    ItemInfo ItemSpace *Item;
+    MonsterInfo MonsterSpace const *Monster;
     int Current;
     int Amount;
 } MissionInfo;
@@ -282,10 +281,10 @@ typedef struct
     struct
     {
         // Current Parts
-        struct ShieldPart ShieldSpace *Body;
-        struct ShieldPart ShieldSpace *Battery;
-        struct ShieldPart ShieldSpace *Capacitor;
-        struct ShieldAccessory ShieldSpace *Accessory;
+        ShieldPart ShieldSpace *Body;
+        ShieldPart ShieldSpace *Battery;
+        ShieldPart ShieldSpace *Capacitor;
+        ShieldAccessory ShieldSpace *Accessory;
         
         // Flags
         bool Active;
@@ -436,7 +435,7 @@ extern int CompatMode;
 extern str PlayerWeapon[MAX_PLAYERS];
 
 // Structs
-extern struct PlayerData _PlayerData[MAX_PLAYERS];
+extern PlayerData _PlayerData[MAX_PLAYERS];
 
 // Item TIDs
 extern MapRegister bool ItemTIDsInitialized;
