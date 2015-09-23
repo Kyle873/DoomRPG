@@ -630,7 +630,7 @@ str GenerateMonsterName()
     if (CheckFlag(0, "BOSS"))
     {
         if (Random(1, 2) == 1)
-            NameType = 1
+            NameType = 1;
         else
             NameType = 3;
     }
