@@ -133,22 +133,22 @@ typedef __str str;
 
 #define ARENA_HOLDTIME (35)
 
-enum EArenaStates
+typedef enum
 {
     ARENA_INTERMISSION,
     ARENA_WAITING,
     ARENA_READY,
     ARENA_ACTIVE,
-};
+} EArenaStates;
 
-enum EArenaModTypes
+typedef enum
 {
     AMOD_NONE,
     AMOD_NOREGEN,
     AMOD_MAX,
-};
+} EArenaModTypes;
 
-enum EArenaEventTypes
+typedef enum
 {
     AEVENT_RANDOM = -1,
     AEVENT_NONE = 0,
@@ -157,9 +157,9 @@ enum EArenaEventTypes
     AEVENT_LAVA,
     AEVENT_GRAYSCALE,
     AEVENT_MAX,
-};
+} EArenaEventTypes;
 
-enum EArenaBonusTypes
+typedef enum
 {
     ABONUS_SELECT,
     ABONUS_FULLEP,
@@ -175,13 +175,13 @@ enum EArenaBonusTypes
     ABONUS_MODDROP,
     ABONUS_KEYDROP,
     ABONUS_MAX,
-};
+} EArenaBonusTypes;
 
-enum EArenaKeyTimerTypes
+typedef enum
 {
     AKTIMER_STOP,
     AKTIMER_CONTINUE,
-};
+} EArenaKeyTimerTypes;
 
 // --------------------------------------------------
 // Augmentations
@@ -189,7 +189,7 @@ enum EArenaKeyTimerTypes
 
 #define MAX_AUG_LEVEL (9)
 
-enum EAugTypes
+typedef enum
 {
     AUG_STRENGTH,
     AUG_DEFENSE,
@@ -201,7 +201,7 @@ enum EAugTypes
     AUG_LUCK,
     AUG_BATTERY,
     AUG_MAX,
-};
+} EAugTypes;
 
 // --------------------------------------------------
 // CharSave
@@ -223,7 +223,7 @@ enum EAugTypes
 #define MAX_DRLA_SETS           18
 #define MAX_NODES               32
 
-enum ENodeTypes
+typedef enum
 {
     NODE_CRITFAIL,  // Red
     NODE_EXPLODE,   // Orange
@@ -234,7 +234,7 @@ enum ENodeTypes
     NODE_ADD,       // Light Blue
     NODE_RARITY,    // Purple
     NODE_MAX,
-};
+} ENodeTypes;
 
 // --------------------------------------------------
 // Health Bars
@@ -255,14 +255,14 @@ enum ENodeTypes
 #define ITEM_CATEGORIES         16
 #define ITEM_MAX                256
 
-enum ECategoryFlags
+typedef enum
 {
     CF_NONE     = 0x0,
     CF_NOSELL   = 0x1,
     CF_NOBUY    = 0x2,
     CF_NOSTORE  = 0x4,
     CF_NODROP   = 0x8,
-};
+} ECategoryFlags;
 
 // --------------------------------------------------
 // Map
@@ -273,7 +273,7 @@ enum ECategoryFlags
 
 #define MAP_EXIT_SCRIPTNUM      30000
 
-enum EMapEvents
+typedef enum
 {
     MAPEVENT_NONE,
 
@@ -301,9 +301,9 @@ enum EMapEvents
     MAPEVENT_SPECIAL_SINSTORM,
 
     MAPEVENT_MAX
-};
+} EMapEvents;
 
-enum EUACOutpostEvents
+typedef enum
 {
     UACEVENT_NONE,
 
@@ -311,7 +311,7 @@ enum EUACOutpostEvents
     UACEVENT_LOWPOWER,
 
     UACEVENT_MAX
-};
+} EUACOutpostEvents;
 
 // --------------------------------------------------
 // Menu
@@ -322,7 +322,7 @@ enum EUACOutpostEvents
 #define MENU_ID                 (MAKE_ID('M', 'E', 'N', 'U'))
 #define TOXMETER_ID             (MAKE_ID('T', 'O', 'X', 'I'))
 
-enum EMenuPages
+typedef enum
 {
     MENUPAGE_MAIN,
     MENUPAGE_STATS,
@@ -332,32 +332,32 @@ enum EMenuPages
     MENUPAGE_STIMS,
     MENUPAGE_TURRET,
     MENUPAGE_MAX
-};
+} EMenuPages;
 
-enum EStatPages
+typedef enum
 {
     STATPAGE_STATS,
     STATPAGE_STATXP,
     STATPAGE_PERKS,
     STATPAGE_TEAM,
     STATPAGE_MAX
-};
+} EStatPages;
 
-enum ESHieldPages
+typedef enum
 {
     SHIELDPAGE_BODY,
     SHIELDPAGE_BATTERY,
     SHIELDPAGE_CAPACITOR,
     SHIELDPAGE_ACCESSORY,
     SHIELDPAGE_MAX
-};
+} EShieldPages;
 
-enum ETurretPages
+typedef enum
 {
     TURRETPAGE_COMMAND,
     TURRETPAGE_UPGRADE,
     TURRETPAGE_MAX
-};
+} ETurretPages;
 
 // --------------------------------------------------
 // Minigame
@@ -375,7 +375,7 @@ enum ETurretPages
 #define MAX_DIFFICULTIES        9
 #define MAX_LOOT                13
 
-enum EMissionTypes
+typedef enum
 {
     MT_COLLECT,
     MT_KILL,
@@ -386,7 +386,7 @@ enum EMissionTypes
     MT_ITEMS,
     MT_COMBO,
     MT_MAX
-};
+} EMissionTypes;
 
 // --------------------------------------------------
 // Monsters
@@ -397,7 +397,7 @@ enum EMissionTypes
 #define MAX_TEMP_MONSTERS       100
 #define MAX_MEGABOSSES          2
 
-enum EMonsterFlags
+typedef enum
 {
     MF_BOSS         = 0x0001,
     MF_NOXP         = 0x0002,
@@ -411,13 +411,13 @@ enum EMonsterFlags
     MF_NAMEGEN      = 0x0200,
     MF_NOAURAGEN    = 0x0400, // [KS] Separate from NoAura to tell MonsterInit that we've acquired an aura through other means.
     MF_RANKLOSS     = 0x0800
-};
+} EMonsterFlags;
 
-enum EMonsterStatFlags
+typedef enum
 {
     SF_PLAYERTARGET = 0x01,
     SF_RECREATE     = 0x02
-};
+} EMonsterStatFlags;
 
 // --------------------------------------------------
 // Namegen
@@ -445,7 +445,7 @@ enum EMonsterStatFlags
 #define MAX_CREDITS_MUSIC       3
 
 // TODO: 0-based
-enum EOutpostMenu
+typedef enum
 {
     OMENU_LEVELTRANSPORT = 1,
     OMENU_SKILLCOMPUTER,
@@ -457,35 +457,35 @@ enum EOutpostMenu
     OMENU_MINIGAMES,
     OMENU_STIMINJECTOR,
     OMENU_MAX
-};
+} EOutpostMenu;
 
-enum EOutpostMusicType
+typedef enum
 {
     OUTPOST_MUSIC_NORMAL,
     OUTPOST_MUSIC_COMBAT,
     OUTPOST_MUSIC_BOSS,
     OUTPOST_MUSIC_CREDITS,
     OUTPOST_MUSIC_MAX
-};
+} EOutpostMusicType;
 
 // TODO: 0-based
-enum EOutpostRegenType
+typedef enum
 {
     OREGEN_HEALTH = 1,
     OREGEN_ARMOR,
     OREGEN_EP,
     OREGEN_AUG,
     OREGEN_MAX
-};
+} EOutpostRegenType;
 
-enum EShopSPecialType
+typedef enum
 {
     SHOPSPECIAL_MINMAX,
     SHOPSPECIAL_LEVEL,
     SHOPSPECIAL_RANK,
     SHOPSPECIAL_CREDITS,
     SHOPSPECIAL_LUCK
-};
+} EShopSpecialType;
 
 // --------------------------------------------------
 // Popoffs
@@ -494,7 +494,7 @@ enum EShopSPecialType
 #define DNUM_DIGITS             7
 #define DNUM_MONSTER_DIV        500
 
-enum EDamageNumberTypes
+typedef enum
 {
     DNUM_NORMAL,
     DNUM_CRITICAL,
@@ -506,7 +506,7 @@ enum EDamageNumberTypes
     DNUM_EPLOSS,
     DNUM_SHIELDGAIN,
     DNUM_SHIELDLOSS
-};
+} EDamageNumberTypes;
 
 // --------------------------------------------------
 // RPG
@@ -525,14 +525,14 @@ enum EDamageNumberTypes
 #define LOADOUT_DRLAARMORS      6
 #define LOADOUT_DRLAMODPACKS    8
 
-enum ECompatibilityMode
+typedef enum
 {
     COMPAT_NONE,
     COMPAT_EXTRAS,
     COMPAT_DRLA
-};
+} ECompatibilityMode;
 
-enum EDamageTypes
+typedef enum
 {
     DT_NONE = -1,
     DT_NORMAL = 0,
@@ -543,12 +543,12 @@ enum EDamageTypes
     DT_PLASMA,
     DT_LIGHTNING,
     DT_MAX
-};
+} EDamageTypes;
 
-enum EDebugDRLAMode
+typedef enum
 {
     DDM_NOLIMITS = 0x01,
-};
+} EDebugDRLAMode;
 
 // --------------------------------------------------
 // Shield
@@ -561,7 +561,7 @@ enum EDebugDRLAMode
 #define MAX_CAPACITORS          15
 #define MAX_ACCESSORIES         66
 
-enum EShieldPassive
+typedef enum
 {
     SHIELD_PASS_NONE,
     SHIELD_PASS_KILLSCHARGE,
@@ -582,7 +582,7 @@ enum EShieldPassive
     SHIELD_PASS_BLOODYSHIELDSOREAL,
     SHIELD_PASS_HATEHATEHATE,
     SHIELD_PASS_MAX
-};
+} EShieldPassive;
 
 // --------------------------------------------------
 // Shop
@@ -590,13 +590,13 @@ enum EShieldPassive
 
 #define LOCKER_EPRATE           (Player.EPMax * 100 / 10000)
 
-enum EItemAutoTypes
+typedef enum
 {
     AT_NONE,
     AT_SELL,
     AT_STORE,
     AT_MAX
-};
+} EItemAutoTypes;
 
 // --------------------------------------------------
 // Skills
@@ -608,7 +608,7 @@ enum EItemAutoTypes
 #define MAX_SUMMONS             10
 #define MAX_SKILLKEYS           8
 
-enum EAuraTypes
+typedef enum
 {
     AURA_RED,
     AURA_GREEN,
@@ -620,9 +620,9 @@ enum EAuraTypes
     AURA_DARKBLUE,
     AURA_YELLOW,
     AURA_MAX
-};
+} EAuraTypes;
 
-enum ESoulTypes
+typedef enum
 {
     SOUL_RED,
     SOUL_GREEN,
@@ -634,7 +634,7 @@ enum ESoulTypes
     SOUL_DARKBLUE,
     SOUL_YELLOW,
     SOUL_MAX
-};
+} ESoulTypes;
 
 // --------------------------------------------------
 // Stats
@@ -698,7 +698,7 @@ enum ESoulTypes
 #define DRLA_SKULL_MAX          DRLA_ARMOR_MAX
 #define DRLA_DEVICE_MAX         4 + (Player.Capacity / 50)
 
-enum EStatTypes
+typedef enum
 {
     STAT_STRENGTH,
     STAT_DEFENSE,
@@ -709,9 +709,9 @@ enum EStatTypes
     STAT_CAPACITY,
     STAT_LUCK,
     STAT_MAX
-};
+} EStatTypes;
 
-enum EStatusEffects
+typedef enum
 {
     SE_NONE = -1,
     SE_BLIND,
@@ -725,13 +725,13 @@ enum EStatusEffects
     SE_EMP,
     SE_RADIATION,
     SE_MAX
-};
+} EStatusEffects;
 
 // --------------------------------------------------
 // Stim
 //
 
-enum EStimCompounds
+typedef enum
 {
     STIM_STRENGTH,
     STIM_DEFENSE,
@@ -753,7 +753,7 @@ enum EStimCompounds
     STIM_RAGE,
     STIM_MAGNETIC,
     STIM_MAX
-};
+} EStimCompounds;
 
 // --------------------------------------------------
 // Turret
@@ -763,7 +763,7 @@ enum EStimCompounds
 #define MAX_COMMANDS            20
 #define TURRET_BATTERY_CHARGE   60 * 3
 
-enum ETurretUpgrades
+typedef enum
 {
     // Build
     TU_BUILD,
@@ -853,9 +853,9 @@ enum ETurretUpgrades
 
     // Maximum
     TU_MAX
-};
+} ETurretUpgrades;
 
-enum ETurretWeapon
+typedef enum
 {
     TW_NONE,
     TW_BULLET,
@@ -864,30 +864,30 @@ enum ETurretWeapon
     TW_PLASMA,
     TW_RAILGUN,
     TW_MAX
-};
+} ETurretWeapon;
 
-enum ETurretProjectile
+typedef enum
 {
     TP_ROCKET,
     TP_PLASMA,
     TP_MAX
-};
+} ETurretProjectile;
 
-enum ETurretSensorModes
+typedef enum
 {
     TSM_NONE,
     TSM_MODULES,
     TSM_ITEMS,
     TSM_CRATE
-};
+} ETurretSensorModes;
 
-enum ETurretCommands
+typedef enum
 {
     TC_NONE,
     TC_DRAW_FIRE,
     TC_HOLD_POSITION,
     TC_MAX
-};
+} ETurretCommands;
 
 // --------------------------------------------------
 // Utils
@@ -898,15 +898,15 @@ enum ETurretCommands
 #define PAY_ID                  (MAKE_ID('P', 'A', 'Y', 'O'))
 #define BATTERY_ID              (MAKE_ID('B', 'A', 'T', 'T'))
 
-enum EAmmoTypes
+typedef enum
 {
     AMMO_CLIP = 1,
     AMMO_SHELL,
     AMMO_ROCKET,
     AMMO_CELL
-};
+} EAmmoTypes;
 
-enum EImmunityCrystalTypes
+typedef enum
 {
     IC_RANDOM,
     IC_BULLET,
@@ -914,23 +914,23 @@ enum EImmunityCrystalTypes
     IC_FIRE,
     IC_PLASMA,
     IC_MAX
-};
+} EImmunityCrystalTypes;
 
-enum EKeyStates
+typedef enum
 {
     KEY_PRESSED,
     KEY_ONLYPRESSED,
     KEY_UP,
     KEY_DOWN
-};
+} EKeyStates;
 
-enum ELogLevels
+typedef enum
 {
     LOG_NORMAL,
     LOG_DEBUG,
     LOG_WARNING,
     LOG_ERROR
-};
+} ELogLevels;
 
 // --------------------------------------------------
 // Common Structures
