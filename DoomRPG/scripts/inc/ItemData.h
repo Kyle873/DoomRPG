@@ -52,16 +52,16 @@ typedef struct
     int Index;
 } ItemInfo;
 
-typedef struct ItemInfo ItemSpace *ItemInfoPtr;
+typedef ItemInfo ItemSpace *ItemInfoPtr;
 
 extern ItemSpace bool ItemsInitialized;
 extern ItemSpace int ItemCategories;
 extern ItemSpace str ItemCategoryNames[ITEM_CATEGORIES];
 extern ItemSpace int ItemCategoryFlags[ITEM_CATEGORIES];
 extern ItemSpace int ItemMax[ITEM_CATEGORIES];
-extern ItemSpace struct ItemInfo ItemData[ITEM_CATEGORIES][ITEM_MAX];
+extern ItemSpace ItemInfo ItemData[ITEM_CATEGORIES][ITEM_MAX];
 extern ItemSpace bool ItemRanksRemoved;
-extern ItemSpace struct ItemInfo RewardList[ITEM_CATEGORIES * ITEM_MAX];
+extern ItemSpace ItemInfoPtr RewardList[ITEM_CATEGORIES * ITEM_MAX];
 extern ItemSpace int MaxRewards;
 extern ItemSpace bool RewardsInit;
 
