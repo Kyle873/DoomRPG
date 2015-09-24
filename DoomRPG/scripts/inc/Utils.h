@@ -118,6 +118,11 @@ bool PlayerHasShadowAura(int);
 bool MonsterHasShadowAura(MonsterStatsPtr);
 
 // Drawing
+int HudMessage(char const *Format, ...);
+OptionalArgs(3) void EndHudMessageSelect(bool bold, int flags, int id, str color, fixed x, fixed y, fixed holdtime, fixed opt1, fixed opt2, fixed opt3);
+#define EndHudMessage(...) ( EndHudMessageSelect(false, __VA_ARGS__) )
+#define EndHudMessageBold(...) ( EndHudMessageSelect(true, __VA_ARGS__) )
+
 NamedScript void PrintTextWiggle(char *, int, int, int, int, fixed, fixed, fixed, fixed);
 NamedScript void DrawStatUp(int);
 void PrintSpriteFade(str, int, fixed, fixed, fixed, fixed);

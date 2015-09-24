@@ -1493,6 +1493,30 @@ bool MonsterHasShadowAura(MonsterStatsPtr Stats)
 // Drawing
 // 
 
+int HudMessage(char const *Format, ...)
+{
+    va_list Args;
+    int NumChars;
+    va_start (Args, Format);
+    
+    BeginPrint ();
+    NumChars = __vnprintf (Format, Args);
+    
+    va_end (Args);
+    return NumChars;
+}
+
+OptionalArgs(3) void EndHudMessageSelect(bool bold, int flags, int id, string color, fixed x, fixed y, fixed holdtime, fixed opt1, fixed opt2, fixed opt3)
+{
+    if (alpha == 0.0k) alpha = 1.0k;
+    MoreHudMessage ();
+    OptHudMessageS (flags, id, color, x, y, holdtime);
+    if (!bold)
+        EndHudMessage4 (opt1, opt2, opt3);
+    else
+        EndHudMessageBold4 (opt1, opt2, opt3);
+}
+
 NamedScript void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fixed HoldTime, fixed Speed, fixed Spacing, fixed Radius)
 {
     int Time = (int)(HoldTime * 35.0);
@@ -1506,7 +1530,8 @@ NamedScript void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fi
         {
             fixed XOff = (fixed)X + (Spacing * i);
             fixed YOff = (fixed)Y + Sin((Timer() + i) / Speed) * Radius;
-            HudMessage("%c\n", Text[i], HUDMSG_PLAIN | HUDMSG_ALPHA, ID + i, Color, (int)XOff, (int)YOff, 0.05, ((fixed)Time / (fixed)TimeMax));
+            HudMessage("%c\n", Text[i]);
+            EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA, ID + i, Color, (int)XOff, (int)YOff, 0.05, ((fixed)Time / (fixed)TimeMax));
         };
         
         Time--;
@@ -1602,10 +1627,10 @@ void PrintSpritePulse(str Sprite, int ID, fixed X, fixed Y, fixed Alpha, fixed S
 {
     SetFont(Sprite);
     
-    //if (AddBlend)
-    //    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius))
-    //else
-    //    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
+    if (AddBlend)
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius))
+    else
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
 }
 
 void PrintMessage(str Message, int ID, fixed Offset)
@@ -1641,7 +1666,7 @@ void DrawBattery()
     SetHudSize(Width, Height, false);
     PrintSpriteFade("AUGBATT", BATTERY_ID, X + 0.4, Y + 0.4, HoldTime, FadeTime);
     SetFont("BIGFONT");
-   // HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, BATTERY_ID + 1, CR_YELLOW, X + 24.0, Y - 10.0, HoldTime, FadeTime);
+    HudMessage("%d%%\n", Player.Augs.Battery, HUDMSG_FADEOUT, BATTERY_ID + 1, CR_YELLOW, X + 24.0, Y - 10.0, HoldTime, FadeTime);
 }
 
 void DrawShieldInfo(int ID, fixed X, fixed Y)
@@ -1665,13 +1690,13 @@ void DrawShieldInfo(int ID, fixed X, fixed Y)
         
         // Shield Stats
         HudMessage(" \CvCapacity: %d / %d\n", CurrentPlayer->Shield.Charge, CurrentPlayer->Shield.Capacity, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 8.1, 0.05);
-        //if (CurrentPlayer->Shield.Accessory && CurrentPlayer->Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
-        //    HudMessage(" \CgDoes not recharge automatically\n", HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05)
-        //else
-        //{
-        //    HudMessage(" \CdCharge: %d\n", CurrentPlayer->Shield.ChargeRate, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05);
-        //    HudMessage(" \CaDelay: %k\n", CurrentPlayer->Shield.DelayRate, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 24.1, 0.05);
-        //};
+        if (CurrentPlayer->Shield.Accessory && CurrentPlayer->Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
+            HudMessage(" \CgDoes not recharge automatically\n", HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05)
+        else
+        {
+            HudMessage(" \CdCharge: %d\n", CurrentPlayer->Shield.ChargeRate, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05);
+            HudMessage(" \CaDelay: %k\n", CurrentPlayer->Shield.DelayRate, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 24.1, 0.05);
+        }
         
         // Draw Shield Model
         DrawShieldModel(ID, X - 14.0, Y + 33.0);

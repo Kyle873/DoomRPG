@@ -21,22 +21,6 @@
 #define EndHudMessageBold3  EndHudMessageBoldXX
 #define EndHudMessageBold4  EndHudMessageBoldXXX
 
-#define HudMessage(flags, id, color, x, y, hold, opt1, opt2, opt3, ...) \
-    ( \
-        BeginHudMessage(), \
-        __nprintf_str(__VA_ARGS__), \
-        MoreHudMessage(), \
-        OptHudMessage(flags, id, color, x, y, hold), \
-        EndHudMessage4(opt1, opt2, opt3) \
-    )
-#define HudMessageBold(flags, id, color, x, y, hold, opt1, opt2, opt3, ...) \
-    ( \
-        BeginHudMessage(), \
-        __nprintf_str(__VA_ARGS__), \
-        MoreHudMessage(), \
-        OptHudMessage(flags, id, color, x, y, hold), \
-        EndHudMessageBold4(opt1, opt2, opt3) \
-    )
 #define PrintBold(...) \
     ( \
         BeginPrintBold(), \
