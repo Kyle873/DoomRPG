@@ -4,18 +4,8 @@
 #include "Defs.h"
 #include "Monsters.h"
 
-AddressSpace extern GlobalArraySpace ItemSpace;
-
-// Used by DropInventory()
-typedef struct
-{
-    str Actor;
-    bool NoDrop;
-    bool TakeAll;
-    int Max;
-} DroppedItem;
-
-extern int MapRegister AuraTID;
+extern int const AuraTID;
+extern str const ColorNames[22];
 extern str const SkillLevels[6];
 extern str const AuraIcons[AURA_MAX + 1];
 
@@ -118,10 +108,10 @@ bool PlayerHasShadowAura(int);
 bool MonsterHasShadowAura(MonsterStatsPtr);
 
 // Drawing
-int HudMessage(char const *Format, ...);
+int HudMessage(str Format, ...);
 OptionalArgs(3) void EndHudMessageSelect(bool bold, int flags, int id, str color, fixed x, fixed y, fixed holdtime, fixed opt1, fixed opt2, fixed opt3);
-#define EndHudMessage(...) ( EndHudMessageSelect(false, __VA_ARGS__) )
-#define EndHudMessageBold(...) ( EndHudMessageSelect(true, __VA_ARGS__) )
+#define EndHudMessage(...) EndHudMessageSelect(false, __VA_ARGS__)
+#define EndHudMessageBold(...) EndHudMessageSelect(true, __VA_ARGS__)
 
 NamedScript void PrintTextWiggle(char *, int, int, int, int, fixed, fixed, fixed, fixed);
 NamedScript void DrawStatUp(int);

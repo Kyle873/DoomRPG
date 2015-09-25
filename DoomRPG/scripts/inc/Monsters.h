@@ -3,84 +3,11 @@
 
 #include "Defs.h"
 
-typedef struct
-{
-    // Basic
-    int TID;
-    str Actor;
-    str ReplaceActor;
-    Position position;
-    int Flags;
-    int RenderStyle;
-    int SpawnHealth;
-    int HealthMax;
-    int RegenHealth;
-    
-    // Properties
-    fixed Speed;
-    fixed Height;
-    fixed Radius;
-    
-    // Flags
-    bool Init;
-    bool NeedReinit;
-    bool HealthBar;
-    bool Named;
-    bool Reinforcement;
-    bool MegaBoss;
-    
-    // Missions
-    int Target;
-    
-    // Stats
-    int Level;
-    int Threat;
-    int Strength;
-    int Defense;
-    int Vitality;
-    int Energy;
-    int Regeneration;
-    int Agility;
-    int Capacity;
-    int Luck;
-    
-    // Auras
-    AuraInfo Aura;
-} MonsterStats;
-
-typedef struct
-{
-    str Actor;
-    str Name;
-    
-    // This monster's relative threat level as a percentage
-    int Difficulty;
-    int ThreatLevel;
-    // These guys are in short supply
-    bool Boss;
-    
-    // Special event text for One Monster level events
-    str Feeling;
-} MonsterInfo;
-
-typedef struct
-{
-    str Actor;
-    str Music;
-} MegabossInfo;
-
-AddressSpace extern MapArraySpace MonsterSpace;
-typedef MonsterInfo MonsterSpace const *MonsterInfoPtr;
-typedef MegabossInfo MonsterSpace const *MegabossInfoPtr;
-
-AddressSpace extern MapArraySpace MonsterStatsSpace;
-typedef MonsterStats MonsterStatsSpace *MonsterStatsPtr;
-
-extern int MonsterStatsSpace MonsterID;
-extern MonsterStats MonsterStatsSpace Monsters[MAX_MONSTERS];
-extern MonsterInfo MonsterSpace const MonsterData[MAX_DEF_MONSTERS];
-extern MonsterInfo MonsterSpace const MonsterDataDRLA[MAX_DEF_MONSTERS_DRLA];
-extern MegabossInfo MonsterSpace const MegaBosses[MAX_MEGABOSSES];
+extern int RPGMap MonsterID;
+extern MonsterStats RPGMap Monsters[MAX_MONSTERS];
+extern MonsterInfo const MonsterData[MAX_DEF_MONSTERS];
+extern MonsterInfo const MonsterDataDRLA[MAX_DEF_MONSTERS_DRLA];
+extern MegabossInfo const MegaBosses[MAX_MEGABOSSES];
 
 NamedScript DECORATE void MonsterInit(int);
 NamedScript Console  void MonsterSet(int, int, int);

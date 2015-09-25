@@ -3,8 +3,6 @@
 
 #include "Defs.h"
 
-AddressSpace extern GlobalArraySpace ItemSpace;
-
 #define ITEMDATA_LIST \
     int ItemCategory; \
     int ItemIndex
@@ -30,40 +28,16 @@ AddressSpace extern GlobalArraySpace ItemSpace;
 #define ITEMDATA_CATEGORY_END \
     ItemMax[ItemCategory] = ItemIndex
 
-// Item Definition
-typedef struct
-{
-    str Actor;
-    str Name;
-    
-    int Price;
-    int Rank;
-    
-    // Sprite information
-    struct
-    {
-        str Name;
-        int XOff;
-        int YOff;
-    } Sprite;
-    
-    // Only used for the Shop Special and specific DRLA checks
-    int Category;
-    int Index;
-} ItemInfo;
-
-typedef ItemInfo ItemSpace *ItemInfoPtr;
-
-extern bool ItemSpace ItemsInitialized;
-extern int ItemSpace ItemCategories;
-extern str ItemSpace ItemCategoryNames[ITEM_CATEGORIES];
-extern int ItemSpace ItemCategoryFlags[ITEM_CATEGORIES];
-extern int ItemSpace ItemMax[ITEM_CATEGORIES];
-extern ItemInfo ItemSpace ItemData[ITEM_CATEGORIES][ITEM_MAX];
-extern bool ItemSpace ItemRanksRemoved;
-extern ItemInfoPtr ItemSpace RewardList[ITEM_CATEGORIES * ITEM_MAX];
-extern int ItemSpace MaxRewards;
-extern bool ItemSpace RewardsInit;
+extern bool RPGGlobal ItemsInitialized;
+extern int RPGGlobal ItemCategories;
+extern str RPGGlobal ItemCategoryNames[ITEM_CATEGORIES];
+extern int RPGGlobal ItemCategoryFlags[ITEM_CATEGORIES];
+extern int RPGGlobal ItemMax[ITEM_CATEGORIES];
+extern ItemInfo RPGGlobal ItemData[ITEM_CATEGORIES][ITEM_MAX];
+extern bool RPGGlobal ItemRanksRemoved;
+extern ItemInfoPtr RPGGlobal RewardList[ITEM_CATEGORIES * ITEM_MAX];
+extern int RPGGlobal MaxRewards;
+extern bool RPGGlobal RewardsInit;
 
 NamedScript void BuildItemData();
 

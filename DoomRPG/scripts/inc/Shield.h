@@ -3,54 +3,9 @@
 
 #include "Defs.h"
 
-typedef struct
-{
-    str Actor;
-    str Name;
-    str Icon;
-    
-    int Capacity;
-    int ChargeRate;
-    fixed DelayRate;
-} ShieldPart;
-
-typedef void (*ShieldAccModScript NamedScript)();
-typedef void (*ShieldAccEquipScript NamedScript)();
-typedef void (*ShieldAccUnequipScript NamedScript)(bool);
-typedef void (*ShieldAccDamageScript NamedScript)(int);
-typedef void (*ShieldAccBreakScript NamedScript)();
-typedef int  (*ShieldAccChargeScript NamedScript)(int);
-typedef void (*ShieldAccOverchargeScript NamedScript)(int);
-typedef bool (*ShieldAccFastChargeScript NamedScript)();
-typedef void (*ShieldAccFullChargeScript NamedScript)();
-
-typedef struct
-{
-    str Actor;
-    str Name;
-    str Icon;
-    int Price;
-    str Description;
-    EShieldPassive PassiveEffect;
-    
-    ShieldAccModScript          Modifier;
-    ShieldAccEquipScript        Equip;
-    ShieldAccUnequipScript      Unequip;
-    ShieldAccDamageScript       Damage;
-    ShieldAccBreakScript        Break;
-    ShieldAccChargeScript       Charge;
-    ShieldAccOverchargeScript   Overcharge;
-    ShieldAccFastChargeScript   FastCharge;
-    ShieldAccFullChargeScript   FullCharge;
-} ShieldAccessory;
-
-AddressSpace extern GlobalArraySpace ShieldSpace;
-typedef ShieldPart ShieldSpace *ShieldPartPtr;
-typedef ShieldAccessory ShieldSpace *ShieldAccsPtr;
-
-extern int ShieldSpace ShieldPartsMax[3];
-extern ShieldPart ShieldSpace ShieldParts[3][MAX_PARTS];
-extern ShieldAccessory ShieldSpace ShieldAccessories[MAX_ACCESSORIES];
+extern int const ShieldPartsMax[3];
+extern ShieldPart const ShieldParts[3][MAX_PARTS];
+extern ShieldAccessory const ShieldAccessories[MAX_ACCESSORIES];
 
 NamedScript void BuildShieldParts();
 NamedScript void ShieldTimer();

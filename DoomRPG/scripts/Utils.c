@@ -1,11 +1,15 @@
-#include "RPG.h"
+#include "Defs.h"
+
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "Augs.h"
-#include "Defs.h"
 #include "ItemData.h"
 #include "Map.h"
 #include "Mission.h"
 #include "Outpost.h"
+#include "RPG.h"
 #include "Shield.h"
 #include "Shop.h"
 #include "Skills.h"
@@ -16,7 +20,33 @@
 // Variables
 // 
 
-int MapRegister AuraTID = 20000;
+int const AuraTID = 20000;
+
+str const ColorNames[22] =
+{
+    "Brick",
+    "Tan",
+    "Grey",
+    "Green",
+    "Brown",
+    "Gold",
+    "Red",
+    "Blue",
+    "Orange",
+    "White",
+    "Yellow",
+    "Untranslated",
+    "Black",
+    "Light Blue",
+    "Cream",
+    "Olive",
+    "Dark Green",
+    "Dark Red",
+    "Dark Brown",
+    "Purple",
+    "Dark Grey",
+    "Cyan"
+};
 
 // Skill Level Names
 str const SkillLevels[6] =
@@ -499,7 +529,8 @@ NamedScript KeyBind void SetSkill(int NewSkill)
 {
     if (NewSkill < 0 || NewSkill > (CompatMode == COMPAT_DRLA ? 5 : 4))
     {
-        HudMessage("Invalid Skill Level\n", HUDMSG_FADEOUT, 0, CR_RED, 0.5, 0.5, 2.0, 1.0);
+        HudMessage("Invalid Skill Level");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Red", 0.5, 0.5, 2.0, 1.0);
         return;
     }
     
@@ -508,8 +539,8 @@ NamedScript KeyBind void SetSkill(int NewSkill)
     CurrentSkill = NewSkill;
     ActivatorSound("misc/skillchange", 127);
     SetFont("BIGFONT");
-    HudMessageBold("\CjSkill Level has been changed to\n\n%s\n", SkillLevels[NewSkill],
-                   HUDMSG_FADEOUT, 0, CR_WHITE, 1.5, 0.5, 2.0, 1.0);
+    HudMessage("\CjSkill Level has been changed to\n\n%s", SkillLevels[NewSkill]);
+    EndHudMessageBold(HUDMSG_FADEOUT, 0, "White", 1.5, 0.5, 2.0, 1.0);
    
     // YOU FOOL!
     if (NewSkill == 5)
@@ -591,7 +622,8 @@ NamedScript KeyBind void Respec(bool DoStats, bool DoSkills)
     // FX
     FadeRange(255, 255, 255, 0.75, 0, 0, 0, 0.0, 2.5);
     SetFont("BIGFONT");
-    HudMessage("Respec Complete\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.5, 2.5, 2.5);
+    HudMessage("Respec Complete");
+    EndHudMessage(HUDMSG_FADEOUT, 0, "White", 0.5, 0.5, 2.5, 2.5);
     ActivatorSound("misc/secret", 127);
 }
 
@@ -1228,7 +1260,7 @@ bool Nova(str Type, int Projectiles)
 NamedScript DECORATE void GetAuraTokens()
 {
     MonsterStatsPtr Stats = &Monsters[GetMonsterID(0)];
-    AuraInfo MonsterStatsSpace *Aura = &Stats->Aura;
+    AuraInfo RPGMap *Aura = &Stats->Aura;
     
     if (Aura->Type[AURA_RED].Active)
         SetInventory("DRPGRedAuraToken", 1);
@@ -1279,7 +1311,7 @@ void SpawnAuras(int TID, bool ForceFancy)
     int SimpleType = GetCVar("drpg_simple_auras");
     bool Simple = (IsPlayer ? (SimpleType == 1 || SimpleType == 3) : (SimpleType == 2 || SimpleType == 3));
     AuraInfo *PlayerAura = &Players(FindPlayerID(TID)).Aura;
-    AuraInfo MonsterStatsSpace *MonsterAura = &Monsters[GetMonsterID(TID)].Aura;
+    AuraInfo RPGMap *MonsterAura = &Monsters[GetMonsterID(TID)].Aura;
     int AuraCount = 0;
     int AuraAdd = 0;
     
@@ -1493,24 +1525,23 @@ bool MonsterHasShadowAura(MonsterStatsPtr Stats)
 // Drawing
 // 
 
-int HudMessage(char const *Format, ...)
+int HudMessage(str Format, ...)
 {
     va_list Args;
     int NumChars;
     va_start (Args, Format);
     
     BeginPrint ();
-    NumChars = __vnprintf (Format, Args);
+    NumChars = __vnprintf_str (Format, Args);
     
     va_end (Args);
     return NumChars;
 }
 
-OptionalArgs(3) void EndHudMessageSelect(bool bold, int flags, int id, string color, fixed x, fixed y, fixed holdtime, fixed opt1, fixed opt2, fixed opt3)
+OptionalArgs(3) void EndHudMessageSelect(bool bold, int flags, int id, str color, fixed x, fixed y, fixed holdtime, fixed opt1, fixed opt2, fixed opt3)
 {
-    if (alpha == 0.0k) alpha = 1.0k;
     MoreHudMessage ();
-    OptHudMessageS (flags, id, color, x, y, holdtime);
+    OptHudMessageS (flags | HUDMSG_COLORSTRING, id, color, x, y, holdtime);
     if (!bold)
         EndHudMessage4 (opt1, opt2, opt3);
     else
@@ -1530,8 +1561,8 @@ NamedScript void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fi
         {
             fixed XOff = (fixed)X + (Spacing * i);
             fixed YOff = (fixed)Y + Sin((Timer() + i) / Speed) * Radius;
-            HudMessage("%c\n", Text[i]);
-            EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA, ID + i, Color, (int)XOff, (int)YOff, 0.05, ((fixed)Time / (fixed)TimeMax));
+            HudMessage("%c", Text[i]);
+            EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA, ID + i, ColorNames[Color], (int)XOff, (int)YOff, 0.05, ((fixed)Time / (fixed)TimeMax));
         };
         
         Time--;
@@ -1628,7 +1659,7 @@ void PrintSpritePulse(str Sprite, int ID, fixed X, fixed Y, fixed Alpha, fixed S
     SetFont(Sprite);
     
     if (AddBlend)
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius))
+        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_ADDBLEND, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
     else
         HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA, ID, CR_UNTRANSLATED, X, Y, 0.05, Alpha + (Sin((fixed)Timer() / Speed) * Radius));
 }
@@ -1691,7 +1722,7 @@ void DrawShieldInfo(int ID, fixed X, fixed Y)
         // Shield Stats
         HudMessage(" \CvCapacity: %d / %d\n", CurrentPlayer->Shield.Charge, CurrentPlayer->Shield.Capacity, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 8.1, 0.05);
         if (CurrentPlayer->Shield.Accessory && CurrentPlayer->Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
-            HudMessage(" \CgDoes not recharge automatically\n", HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05)
+            HudMessage(" \CgDoes not recharge automatically\n", HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05);
         else
         {
             HudMessage(" \CdCharge: %d\n", CurrentPlayer->Shield.ChargeRate, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 16.1, 0.05);
@@ -1744,21 +1775,21 @@ void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
     case MT_COLLECT:
         HudMessage("Type: \Ci%s\n", Mission->Item->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         if (Active)
-            HudMessage("Amount: \Cd%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05)
+            HudMessage("Amount: \Cd%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05);
         else
             HudMessage("Amount: \Cd%3d\C-        You have: \Cd%3d\n", Mission->Amount, CheckInventory(Mission->Item->Actor), HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05);
         break;
     case MT_KILL:
         HudMessage("Type: \Cg%s\n", Mission->Monster->Name, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         if (Active)
-            HudMessage("Amount: \Ca%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05)
+            HudMessage("Amount: \Ca%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05);
         else
             HudMessage("Amount: \Ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 144.0, 0.05);
         break;
     case MT_KILLAURAS:
     case MT_REINFORCEMENTS:
         if (Active)
-            HudMessage("Amount: \Ca%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+            HudMessage("Amount: \Ca%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         else
             HudMessage("Amount: \Ca%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         break;
@@ -1767,19 +1798,19 @@ void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
         break;
     case MT_SECRETS:
         if (Active)
-            HudMessage("Amount: \Ck%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+            HudMessage("Amount: \Ck%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         else
             HudMessage("Amount: \Ck%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         break;
     case MT_ITEMS:
         if (Active)
-            HudMessage("Amount: \Cn%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+            HudMessage("Amount: \Cn%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         else
             HudMessage("Amount: \Cn%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         break;
     case MT_COMBO:
         if (Active)
-            HudMessage("Amount: \Ct%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05)
+            HudMessage("Amount: \Ct%d / %d\n", Mission->Current, Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         else
             HudMessage("Amount: \Ct%d\n", Mission->Amount, HUDMSG_PLAIN, 0, CR_WHITE, X + 0.1, Y + 128.0, 0.05);
         break;
@@ -1793,7 +1824,7 @@ OptionalArgs(1) void DrawBar(str Fill, int X, int Y, int Amount, bool Pulse)
     
     for (int i = 0; i < Amount; i++)
         if (Pulse)
-            PrintSpriteAlpha(Fill, 0, X + 0.1 + (i * 1.0), Y, 0.05, 0.75 + Sin((Timer() + i) / 32.0) * 0.25)
+            PrintSpriteAlpha(Fill, 0, X + 0.1 + (i * 1.0), Y, 0.05, 0.75 + Sin((Timer() + i) / 32.0) * 0.25);
         else
             PrintSprite(Fill, 0, X + 0.1 + (i * 1.0), Y, 0.05);
 }
@@ -1833,23 +1864,23 @@ void RemoveDRLAItem(int Category, int Index)
         CheckDRLASetWeapons();
     }
     else if (Category == 3 || Category == 9) // Armor/Boots
-        TakeInventory("RLArmorInInventory", 1)
+        TakeInventory("RLArmorInInventory", 1);
     else if (Category == 8) // Mod Packs
     {
         if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
-            TakeInventory("RLScavengerModLimit", 1)
+            TakeInventory("RLScavengerModLimit", 1);
         else
             TakeInventory("RLModLimit", 1);
     }
     else if (ItemActor == "RLHatredSkull" || // Skulls
              ItemActor == "RLBloodSkull" ||
              ItemActor == "RLFireSkull")
-        TakeInventory("RLSkullLimit", 1)
+        TakeInventory("RLSkullLimit", 1);
     else if (ItemActor == "RLPhaseDevice" || // Phase Devices
              ItemActor == "RLHomingPhaseDevice" ||
              ItemActor == "RLRecallPhaseDevice" ||
              ItemActor == "RLExperimentalPhaseDevice")
-        TakeInventory("RLPhaseDeviceLimit", 1)
+        TakeInventory("RLPhaseDeviceLimit", 1);
     else if (ItemActor == "RLArmorModItem") // Armor Modpack
         TakeInventory("RLArmorModItemInInventory", 1);
 }
@@ -1857,7 +1888,7 @@ void RemoveDRLAItem(int Category, int Index)
 void GiveDRLAArmorToken(str ArmorType)
 {
     if (PlayerClass(PlayerNumber()) == 3) // Renegade
-        GiveInventory(StrParam("%sToken\n", StrLeft(ArmorType, StrLen(ArmorType) - 8)), 1)
+        GiveInventory(StrParam("%sToken\n", StrLeft(ArmorType, StrLen(ArmorType) - 8)), 1);
     else
         GiveInventory(StrParam("%sToken\n", ArmorType), 1);
 }
@@ -1865,7 +1896,7 @@ void GiveDRLAArmorToken(str ArmorType)
 void RemoveDRLAArmorToken(str ArmorType)
 {
     if (PlayerClass(PlayerNumber()) == 3) // Renegade
-        TakeInventory(StrParam("%sToken\n", StrLeft(ArmorType, StrLen(ArmorType) - 8)), 1)
+        TakeInventory(StrParam("%sToken\n", StrLeft(ArmorType, StrLen(ArmorType) - 8)), 1);
     else
         TakeInventory(StrParam("%sToken\n", ArmorType), 1);
 }
@@ -1904,7 +1935,7 @@ void CheckDRLASetWeapons()
         
         // Onslought
         "RLNuclearOnslaught"
-    }
+    };
     
     // Weapon portion of Nuclear Set Bonus Checking
     for (int i = 0; i < 15; i++)
@@ -2130,13 +2161,13 @@ str FormatTime(int t)
     
     // Minutes
     if (Hours > 0 && Minutes < 10)
-        Time = StrParam("%s0%d:\n", Time, Minutes)
+        Time = StrParam("%s0%d:\n", Time, Minutes);
     else
         Time = StrParam("%s%d:\n", Time, Minutes);
     
     // Seconds
     if (Seconds < 10)
-        Time = StrParam("%s0%d\n", Time, Seconds)
+        Time = StrParam("%s0%d\n", Time, Seconds);
     else
         Time = StrParam("%s%d\n", Time, Seconds);
     
@@ -2451,7 +2482,7 @@ OptionalArgs(1) void LogMessage(str Message, int Level)
 // Dynamic Arrays
 // 
 
-void ArrayCreate(DynamicArray *Array, char[5] Name, int InitSize, int ItemSize)
+void ArrayCreate(DynamicArray *Array, str Name, int InitSize, int ItemSize)
 {
     if (Array->Data != NULL)
         ArrayDestroy(Array);
@@ -2464,7 +2495,7 @@ void ArrayCreate(DynamicArray *Array, char[5] Name, int InitSize, int ItemSize)
     Array->Position = 0;
     Array->Size = InitSize;
     Array->ItemSize = ItemSize;
-    Array->Data = malloc(Array->ItemSize * Array->Size, PU_STATIC, NULL);
+    Array->Data = malloc(Array->ItemSize * Array->Size);
     
     if (!Array->Data)
     {
@@ -2489,11 +2520,11 @@ void ArrayResize(DynamicArray *Array)
     int OldSize = Array->Size;
     
     Array->Size *= 2;
-    void *tmp = realloc(Array->Data, Array->ItemSize * Array->Size, PU_STATIC, NULL);
+    void *tmp = realloc(Array->Data, Array->ItemSize * Array->Size);
     
     if (!tmp)
     {
-        Z_Free(Array->Data);
+        free(Array->Data);
         Log("\CgERROR: \C-Cannot resize dynamic array \Cj%s\n", Array->Name);
         return;
     }

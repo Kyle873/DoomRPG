@@ -4,11 +4,14 @@
 #include "RPG.h"
 #include "Monsters.h"
 
+AddressSpace extern MapArraySpace MissionLocal;
+AddressSpace extern GlobalArraySpace MissionGlobal;
+
 extern MissionInfo Missions[MAX_DIFFICULTIES][MAX_MISSIONS];
 
-extern str MapArray MissionDifficulties[MAX_DIFFICULTIES];
-extern str MapArray MissionTypes[MT_MAX];
-extern bool MapRegister MissionInit;
+extern str const MissionDifficulties[MAX_DIFFICULTIES];
+extern str const MissionTypes[MT_MAX];
+extern bool MissionLocal MissionInit;
 
 NamedScript OptionalArgs(1) void PopulateMissions(int /* = -1 */);
 NamedScript void InitMission();

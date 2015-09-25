@@ -5,22 +5,20 @@
 #include "Shield.h"
 #include "Utils.h"
 
-AddressSpace GlobalArraySpace ItemSpace Address(3);
+bool RPGGlobal ItemsInitialized;
 
-bool ItemSpace ItemsInitialized;
+int RPGGlobal ItemCategories;
 
-int ItemSpace ItemCategories;
+str RPGGlobal ItemCategoryNames[ITEM_CATEGORIES];
+int RPGGlobal ItemCategoryFlags[ITEM_CATEGORIES];
+int RPGGlobal ItemMax[ITEM_CATEGORIES];
 
-str ItemSpace ItemCategoryNames[ITEM_CATEGORIES];
-int ItemSpace ItemCategoryFlags[ITEM_CATEGORIES];
-int ItemSpace ItemMax[ITEM_CATEGORIES];
+ItemInfo RPGGlobal ItemData[ITEM_CATEGORIES][ITEM_MAX];
 
-ItemInfo ItemSpace ItemData[ITEM_CATEGORIES][ITEM_MAX];
-
-bool ItemSpace ItemRanksRemoved;
-ItemInfoPtr ItemSpace RewardList[ITEM_CATEGORIES * ITEM_MAX];
-int ItemSpace MaxRewards;
-bool ItemSpace RewardsInit;
+bool RPGGlobal ItemRanksRemoved;
+ItemInfoPtr RPGGlobal RewardList[ITEM_CATEGORIES * ITEM_MAX];
+int RPGGlobal MaxRewards;
+bool RPGGlobal RewardsInit;
 
 NamedScriptSync void PopulateRewards()
 {

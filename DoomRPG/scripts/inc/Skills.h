@@ -3,33 +3,14 @@
 
 #include "Defs.h"
 
-typedef struct
-{
-    int CurrentLevel;
-    int Level;
-} SkillLevelInfo;
+typedef Skill const *SkillPtr;
 
-typedef bool (*SkillUseScript NamedScript Console)(SkillLevelInfo *, void *);
+extern Skill const SkillData[MAX_CATEGORIES][MAX_SKILLS];
 
-typedef struct
-{
-    str Name;
-    int Cost;
-    int MaxLevel;
-    SkillUseScript Use;
-    str Description[MAX_LEVELS];
-    str Icon;
-} Skill;
+extern bool RPGMap Overdrive;
+extern int RPGMap BulletTimeTimer;
 
-AddressSpace extern MapArraySpace SkillSpace;
-typedef Skill SkillSpace *SkillPtr;
-
-extern Skill SkillSpace SkillData[MAX_CATEGORIES][MAX_SKILLS];
-
-extern bool MapRegister Overdrive;
-extern int MapRegister BulletTimeTimer;
-
-extern int MapArray SkillCategoryMax[MAX_CATEGORIES];
+extern int RPGMap SkillCategoryMax[MAX_CATEGORIES];
 
 NamedScript Type_ENTER void SkillWheel();
 NamedScript KeyBind void UseSkill(int);
