@@ -539,7 +539,7 @@ NamedScript KeyBind void SetSkill(int NewSkill)
     CurrentSkill = NewSkill;
     ActivatorSound("misc/skillchange", 127);
     SetFont("BIGFONT");
-    HudMessage("\CjSkill Level has been changed to\n\n%s", SkillLevels[NewSkill]);
+    HudMessage("\CjSkill Level has been changed to\n\n%S", SkillLevels[NewSkill]);
     EndHudMessageBold(HUDMSG_FADEOUT, 0, "White", 1.5, 0.5, 2.0, 1.0);
    
     // YOU FOOL!
@@ -707,7 +707,7 @@ NamedScript KeyBind void PurgeDrops()
 NamedScript Console void CheckArmorStats()
 {
     Log("\C[Orange]-- ARMOR STATS --");
-    Log("\C[Green]Class name: \C[White]%s", GetArmorInfoString(ARMORINFO_CLASSNAME));
+    Log("\C[Green]Class name: \C[White]%S", GetArmorInfoString(ARMORINFO_CLASSNAME));
     Log("\C[Green]Durability: \C[LightBlue]%i%%", GetArmorInfo(ARMORINFO_SAVEAMOUNT));
     Log("\C[Green]Protection: \C[Yellow]%k%%", GetArmorInfoFixed(ARMORINFO_SAVEPERCENT) * 100.0);
     Log("\C[Green]Max Absorb: \C[Grey]%i%%", GetArmorInfo(ARMORINFO_MAXABSORB));
@@ -1350,7 +1350,7 @@ void SpawnAuras(int TID, bool ForceFancy)
                     if (!Simple)
                         SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle);
                     else
-                        SpawnForced(StrParam("%sIndicator", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
+                        SpawnForced(StrParam("%SIndicator", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
                 }
             }
         }
@@ -1424,7 +1424,7 @@ void SpawnAuras(int TID, bool ForceFancy)
                     if (!Simple)
                         SpawnForced(AuraActors[i], X, Y, Z + Height / 2.0, AuraTID, Angle);
                     else
-                        SpawnForced(StrParam("%sIndicator", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
+                        SpawnForced(StrParam("%SIndicator", AuraActors[i]), X, Y, Z + Height + 8.0, 0, Angle);
                 }
         }
     }
@@ -1598,9 +1598,9 @@ NamedScript void DrawStatUp(int Stat)
     
     // Log
     if (InMultiplayer)
-        Log("%N\C-'s %s\C- has increased to \C%c%d", PlayerNumber() + 1, StatNames[Stat], StatNames[Stat][1], StatAmount[Stat]);
+        Log("%N\C-'s %S\C- has increased to \C%c%d", PlayerNumber() + 1, StatNames[Stat], StatNames[Stat][1], StatAmount[Stat]);
     else
-        Log("Your %s\C- has increased to \C%c%d", StatNames[Stat], StatNames[Stat][1], StatAmount[Stat]);
+        Log("Your %S\C- has increased to \C%c%d", StatNames[Stat], StatNames[Stat][1], StatAmount[Stat]);
     
     // Fade
     switch (Stat)
@@ -1632,7 +1632,7 @@ NamedScript void DrawStatUp(int Stat)
         SetHudSize(0, 0, false);
         
         SetFont("BIGFONT");
-        HudMessage("%s +", StatNames[Stat]);
+        HudMessage("%S +", StatNames[Stat]);
         EndHudMessage(HUDMSG_ALPHA, 0, "White", TextX, TextY, 0.05, Alpha);
         PrintSpriteAlpha(StrParam("STAT%d", Stat + 1), 0, 0.525 + XOff, 0.5 + YOff, 0.05, Alpha);
         
@@ -1680,7 +1680,7 @@ void PrintMessage(str Message, int ID, fixed Offset)
     
     SetHudSize(Width, Height, false);
     SetFont("BIGFONT");
-    HudMessage("%s", Message);
+    HudMessage("%S", Message);
     EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, ID, "White", Width / 2 + 0.4, Height / 2 + Offset, 3.0, 2.0);
 }
 
@@ -1692,7 +1692,7 @@ void PrintError(str Message)
     
     SetHudSize(Width, Height, false);
     SetFont("BIGFONT");
-    HudMessage("%s", Message);
+    HudMessage("%S", Message);
     EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 0, "Red", Width / 2 + 0.4, Height / 2 + 0.4, 2.0, 1.0);
 }
 
@@ -1720,16 +1720,16 @@ void DrawShieldInfo(int ID, fixed X, fixed Y)
     {
         // Epic Shield Name
         str ShieldName = "";
-        if (CurrentPlayer->Shield.Capacitor) ShieldName = StrParam("%s %s", ShieldName, CurrentPlayer->Shield.Capacitor->Name);
-        if (CurrentPlayer->Shield.Battery)   ShieldName = StrParam("%s \C-%s", ShieldName, CurrentPlayer->Shield.Battery->Name);
-        if (CurrentPlayer->Shield.Body)      ShieldName = StrParam("%s \C-%s", ShieldName, CurrentPlayer->Shield.Body->Name);
-        if (CurrentPlayer->Shield.Accessory) ShieldName = StrParam("%s \C-%s", ShieldName, CurrentPlayer->Shield.Accessory->Name);
-        ShieldName = StrParam("%s\C- Shield", ShieldName);
+        if (CurrentPlayer->Shield.Capacitor) ShieldName = StrParam("%S %S", ShieldName, CurrentPlayer->Shield.Capacitor->Name);
+        if (CurrentPlayer->Shield.Battery)   ShieldName = StrParam("%S \C-%S", ShieldName, CurrentPlayer->Shield.Battery->Name);
+        if (CurrentPlayer->Shield.Body)      ShieldName = StrParam("%S \C-%S", ShieldName, CurrentPlayer->Shield.Body->Name);
+        if (CurrentPlayer->Shield.Accessory) ShieldName = StrParam("%S \C-%S", ShieldName, CurrentPlayer->Shield.Accessory->Name);
+        ShieldName = StrParam("%S\C- Shield", ShieldName);
         
         SetFont("SMALLFONT");
         
         // Shield Name
-        HudMessage("%s", ShieldName);
+        HudMessage("%S", ShieldName);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 0.1, 0.05);
         
         // Shield Stats
@@ -1780,9 +1780,9 @@ void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
 {
     // Basic Info
     SetFont("BIGFONT");
-    HudMessage("Type: %s", MissionTypes[Mission->Type]);
+    HudMessage("Type: %S", MissionTypes[Mission->Type]);
     EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y, 0.05);
-    HudMessage("Difficulty: %s", MissionDifficulties[Mission->Difficulty]);
+    HudMessage("Difficulty: %S", MissionDifficulties[Mission->Difficulty]);
     EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 16.0, 0.05);
     HudMessage("XP: %lu", Mission->RewardXP);
     EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 32.0, 0.05);
@@ -1792,14 +1792,14 @@ void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
     EndHudMessage(HUDMSG_PLAIN, 0, "Gold", X + 0.1, Y + 64.0, 0.05);
     HudMessage("Modules: %d", Mission->RewardModules);
     EndHudMessage(HUDMSG_PLAIN, 0, "Green", X + 0.1, Y + 80.0, 0.05);
-    HudMessage("\CiItem: \C-%s", Mission->RewardItem->Name);
+    HudMessage("\CiItem: \C-%S", Mission->RewardItem->Name);
     EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 96.1, 0.05);
     
     // Mission Objective
     switch (Mission->Type)
     {
     case MT_COLLECT:
-        HudMessage("Type: \Ci%s", Mission->Item->Name);
+        HudMessage("Type: \Ci%S", Mission->Item->Name);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 128.0, 0.05);
         if (Active)
         {
@@ -1813,7 +1813,7 @@ void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
         }
         break;
     case MT_KILL:
-        HudMessage("Type: \Cg%s", Mission->Monster->Name);
+        HudMessage("Type: \Cg%S", Mission->Monster->Name);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 128.0, 0.05);
         if (Active)
         {
@@ -1840,7 +1840,7 @@ void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
         }
         break;
     case MT_ASSASSINATION:
-        HudMessage("Type: \Cg%s", Mission->Monster->Name);
+        HudMessage("Type: \Cg%S", Mission->Monster->Name);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 128.0, 0.05);
         break;
     case MT_SECRETS:
@@ -1898,7 +1898,7 @@ void DrawProgressBar(str Message, int Percent)
 {
     SetHudSize(320, 240, false);
     SetFont("SMALLFONT");
-    HudMessage("%s: %d%%", Message, Percent);
+    HudMessage("%S: %d%%", Message, Percent);
     EndHudMessage(HUDMSG_PLAIN, 0, "Green", 160.4, 200.4, 0.05);
     SetHudClipRect(60, 200 - 6, (int)((fixed)Percent * 2.02), 200 + 6);
     PrintSpritePulse("FillBar", 0, 160.4, 200.4, 0.75, 32.0, 0.25, true);
@@ -1916,15 +1916,15 @@ void RemoveDRLAItem(int Category, int Index)
     if (Category == 0) // Weapons
     {
         // Wipe the modpacks off the weapon
-        SetInventory(StrParam("%sModLimit", ItemActor), 0);
-        SetInventory(StrParam("%sPowerMod", ItemActor), 0);
-        SetInventory(StrParam("%sBulkMod", ItemActor), 0);
-        SetInventory(StrParam("%sAgilityMod", ItemActor), 0);
-        SetInventory(StrParam("%sTechnicalMod", ItemActor), 0);
-        SetInventory(StrParam("%sSniperMod", ItemActor), 0);
-        SetInventory(StrParam("%sFirestormMod", ItemActor), 0);
-        SetInventory(StrParam("%sNanoMod", ItemActor), 0);
-        SetInventory(StrParam("%sDemonArtifacts", ItemActor), 0);
+        SetInventory(StrParam("%SModLimit", ItemActor), 0);
+        SetInventory(StrParam("%SPowerMod", ItemActor), 0);
+        SetInventory(StrParam("%SBulkMod", ItemActor), 0);
+        SetInventory(StrParam("%SAgilityMod", ItemActor), 0);
+        SetInventory(StrParam("%STechnicalMod", ItemActor), 0);
+        SetInventory(StrParam("%SSniperMod", ItemActor), 0);
+        SetInventory(StrParam("%SFirestormMod", ItemActor), 0);
+        SetInventory(StrParam("%SNanoMod", ItemActor), 0);
+        SetInventory(StrParam("%SDemonArtifacts", ItemActor), 0);
         
         TakeInventory("RLWeaponLimit", 1);
         CheckDRLASetWeapons();
@@ -1954,17 +1954,17 @@ void RemoveDRLAItem(int Category, int Index)
 void GiveDRLAArmorToken(str ArmorType)
 {
     if (PlayerClass(PlayerNumber()) == 3) // Renegade
-        GiveInventory(StrParam("%sToken", StrLeft(ArmorType, StrLen(ArmorType) - 8)), 1);
+        GiveInventory(StrParam("%SToken", StrLeft(ArmorType, StrLen(ArmorType) - 8)), 1);
     else
-        GiveInventory(StrParam("%sToken", ArmorType), 1);
+        GiveInventory(StrParam("%SToken", ArmorType), 1);
 }
 
 void RemoveDRLAArmorToken(str ArmorType)
 {
     if (PlayerClass(PlayerNumber()) == 3) // Renegade
-        TakeInventory(StrParam("%sToken", StrLeft(ArmorType, StrLen(ArmorType) - 8)), 1);
+        TakeInventory(StrParam("%SToken", StrLeft(ArmorType, StrLen(ArmorType) - 8)), 1);
     else
-        TakeInventory(StrParam("%sToken", ArmorType), 1);
+        TakeInventory(StrParam("%SToken", ArmorType), 1);
 }
 
 void CheckDRLASetWeapons()
@@ -2227,15 +2227,15 @@ str FormatTime(int t)
     
     // Minutes
     if (Hours > 0 && Minutes < 10)
-        Time = StrParam("%s0%d:", Time, Minutes);
+        Time = StrParam("%S0%d:", Time, Minutes);
     else
-        Time = StrParam("%s%d:", Time, Minutes);
+        Time = StrParam("%S%d:", Time, Minutes);
     
     // Seconds
     if (Seconds < 10)
-        Time = StrParam("%s0%d", Time, Seconds);
+        Time = StrParam("%S0%d", Time, Seconds);
     else
-        Time = StrParam("%s%d", Time, Seconds);
+        Time = StrParam("%S%d", Time, Seconds);
     
     return Time;
 }
@@ -2531,17 +2531,17 @@ OptionalArgs(1) void LogMessage(str Message, int Level)
     bool DebugMode = (ActivatorTID() == Player.TID ? GetCVar("drpg_debug") : GetActivatorCVar("drpg_debug"));
     
     if (Level == LOG_DEBUG)
-        Message = StrParam("\CdDEBUG: \C-%s", Message);
+        Message = StrParam("\CdDEBUG: \C-%S", Message);
     if (Level == LOG_WARNING)
-        Message = StrParam("\CiWARNING: \C-%s", Message);
+        Message = StrParam("\CiWARNING: \C-%S", Message);
     if (Level == LOG_ERROR)
-        Message = StrParam("\CgERROR: \C-%s", Message);
+        Message = StrParam("\CgERROR: \C-%S", Message);
     
     // Don't log the message if the caller isn't in Debug Mode
     if (Level == LOG_DEBUG && !DebugMode)
         return;
     
-    Log("%s", Message);
+    Log("%S", Message);
 }
 
 // --------------------------------------------------
@@ -2556,7 +2556,7 @@ void ArrayCreate(DynamicArray *Array, str Name, int InitSize, int ItemSize)
     Array->Name = Name;
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDynamicArray: Allocating \Cj%s", Array->Name);
+        Log("\CdDynamicArray: Allocating \Cj%S", Array->Name);
     
     Array->Position = 0;
     Array->Size = InitSize;
@@ -2565,12 +2565,12 @@ void ArrayCreate(DynamicArray *Array, str Name, int InitSize, int ItemSize)
     
     if (!Array->Data)
     {
-        Log("\CgERROR: \C-Could not allocate space for array \Cj%s", Array->Name);
+        Log("\CgERROR: \C-Could not allocate space for array \Cj%S", Array->Name);
         return;
     }
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDynamicArray: \Cj%s\Cd @ %p", Array->Name, Array->Data);
+        Log("\CdDynamicArray: \Cj%S\Cd @ %p", Array->Name, Array->Data);
     
     memset(Array->Data, 0xAAAAAAAA, Array->Size * Array->ItemSize);
 }
@@ -2579,7 +2579,7 @@ void ArrayResize(DynamicArray *Array)
 {
     if (Array->Data == NULL)
     {
-        Log("\CgERROR: \C-Tried to resize destroyed array \Cj%s", Array->Name);
+        Log("\CgERROR: \C-Tried to resize destroyed array \Cj%S", Array->Name);
         return;
     }
     
@@ -2591,12 +2591,12 @@ void ArrayResize(DynamicArray *Array)
     if (!tmp)
     {
         free(Array->Data);
-        Log("\CgERROR: \C-Cannot resize dynamic array \Cj%s", Array->Name);
+        Log("\CgERROR: \C-Cannot resize dynamic array \Cj%S", Array->Name);
         return;
     }
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDynamicArray: Resizing array \Cj%s\Cd @ %p to \Cj%d\Cd elements", Array->Name, Array->Data, Array->Size);
+        Log("\CdDynamicArray: Resizing array \Cj%S\Cd @ %p to \Cj%d\Cd elements", Array->Name, Array->Data, Array->Size);
     
     Array->Data = tmp;
     
@@ -2606,7 +2606,7 @@ void ArrayResize(DynamicArray *Array)
 void ArrayDestroy(DynamicArray *Array)
 {
     if (GetCVar("drpg_debug"))
-        Log("\CdDynamicArray: Destroying array \Cj%s\Cd @ %p", Array->Name, Array->Data);
+        Log("\CdDynamicArray: Destroying array \Cj%S\Cd @ %p", Array->Name, Array->Data);
     
     free(Array->Data);
     
@@ -2615,10 +2615,10 @@ void ArrayDestroy(DynamicArray *Array)
     Array->ItemSize = 0;
     Array->Data = NULL;
 }
-
+/*
 void ArrayDump(DynamicArray *Array)
 {
-    Log("\CiDynamicArray \Cj%s\C- @ %p", Array->Name, Array->Data);
+    Log("\CiDynamicArray \Cj%S\C- @ %p", Array->Name, Array->Data);
     Log("\Cd* Array size: \Cj%d", Array->Size);
     Log("\Cd* Item bytesize: \Cj%d", Array->ItemSize);
     Log("\Cd* End Position: \Cj%d", Array->Position);
@@ -2630,11 +2630,12 @@ void ArrayDump(DynamicArray *Array)
     {
         str DataString = StrParam("  %X: ", i);
         for (int b = 0; b < Array->ItemSize; b++)
-            DataString = StrParam("%s%X ", DataString, (char)((char *)Array->Data)[Array->ItemSize * i + b]);
+            DataString = StrParam("%S%X ", DataString, (char)((char *)Array->Data)[Array->ItemSize * i + b]);
         
         if (i >= Array->Position)
-            DataString = StrParam("%s\Cj(\CgUnused\Cj)", DataString);
+            DataString = StrParam("%S\Cj(\CgUnused\Cj)", DataString);
         
-        Log("%s", DataString);
+        Log("%S", DataString);
     }
 }
+*/

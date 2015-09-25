@@ -179,6 +179,6 @@ OptionalArgs(1) void LogMessage(str, int /* = LOG_NORMAL */);
 void ArrayCreate(DynamicArray *, char *, int, int);
 void ArrayResize(DynamicArray *);
 void ArrayDestroy(DynamicArray *);
-void ArrayDump(DynamicArray *);
+//void ArrayDump(DynamicArray *);
 
 #endif
