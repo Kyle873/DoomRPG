@@ -998,6 +998,75 @@ typedef struct
     int Max;
 } DroppedItem;
 
+// Augmentations
+
+typedef struct
+{
+    str Name;
+    int MaxLevel;
+    str Description[MAX_AUG_LEVEL];
+    str TokenActor;
+} AugInfo;
+
+// Charsave
+
+typedef struct
+{
+    // Version / Compatibility Flag
+    int Version;
+    int CompatMode;
+    
+    // Level / Rank Level
+    int Level;
+    int RankLevel;
+    
+    // Stats
+    int Stats[STAT_MAX];
+    
+    // Skills
+    int Skills[MAX_CATEGORIES][MAX_SKILLS];
+    
+    // Skill Wheel
+    int SkillWheel[MAX_SKILLKEYS][2];
+    
+    // Augmentations
+    int Augs[AUG_MAX];
+    
+    // Stims
+    int Stims[STIM_MAX];
+    
+    // Turret Upgrades
+    int TurretUpgrades[TU_MAX];
+    
+    // Misc
+    int Credits;
+    int Modules;
+    int GoldChips;
+    int PlatinumChips;
+    int ShopCard;
+    int Battery;
+    int Toxicity;
+    int PayBonus;
+    int ArenaWave;
+    
+    // Locker
+    int Locker[ITEM_CATEGORIES][ITEM_MAX];
+    int WeaponMods[ITEM_MAX][DRLA_MODPACK_SIZE];
+    
+    // Auto-Sell
+    int ItemAutoMode[ITEM_CATEGORIES][ITEM_MAX];
+    
+    // ----- COMPATIBILITY EXTENSIONS -----
+    
+    // DRLA Tokens
+    bool DRLATokens[DRLA_MAX_TOKENS];
+    
+    // ------------------------------------
+    
+    // Checksum
+    unsigned int Checksum;
+} CharSaveInfo;
+
 // Items
 
 // Item Definition

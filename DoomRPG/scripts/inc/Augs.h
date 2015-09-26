@@ -3,18 +3,9 @@
 
 #include "Defs.h"
 
-typedef struct
-{
-    str Name;
-    int MaxLevel;
-    str Description[MAX_AUG_LEVEL];
-    str TokenActor;
-} AugInfo;
+typedef AugInfo RPGMap *AugInfoPtr;
 
-AddressSpace extern MapArraySpace AugSpace;
-typedef AugInfo AugSpace *AugInfoPtr;
-
-extern AugInfo AugSpace AugData[AUG_MAX];
+extern AugInfo RPGMap AugData[AUG_MAX];
 
 NamedScript DECORATE OptionalArgs(1) void DisableAugs(bool);
 NamedScript DECORATE void ReactivateDisabledAugs();
