@@ -3,8 +3,6 @@
 
 #include "Defs.h"
 
-typedef AugInfo RPGMap *AugInfoPtr;
-
 extern AugInfo RPGMap AugData[AUG_MAX];
 
 NamedScript DECORATE OptionalArgs(1) void DisableAugs(bool);

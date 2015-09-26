@@ -230,10 +230,10 @@ typedef enum
 // Crate
 //
 
-#define CRATE_MAX               256
-#define CRATE_MAX_ITEMS         54
-#define MAX_DRLA_SETS           18
-#define MAX_NODES               32
+#define CRATE_MAX       256
+#define CRATE_MAX_ITEMS 54
+#define MAX_DRLA_SETS   18
+#define MAX_NODES       32
 
 typedef enum
 {
@@ -247,6 +247,39 @@ typedef enum
     NODE_RARITY,    // Purple
     NODE_MAX,
 } ENodeTypes;
+
+// --------------------------------------------------
+// GUI
+//
+
+#define MAX_WINDOWS     16
+#define MAX_CONTROLS    64
+#define MAX_LIST        256
+#define MAX_OPTIONS     16
+
+#define WINDOW_MAIN     0
+#define WINDOW_STATS    1
+#define WINDOW_AUGS     2
+#define WINDOW_SKILLS   3
+
+// Label Alignments
+typedef enum
+{
+    LA_CENTER,
+    LA_LEFT,
+    LA_RIGHT,
+    LA_CENTERTOP,
+    LA_LEFTTOP,
+    LA_RIGHTTOP
+} ELabelAlignment;
+
+// Tooltip Types
+typedef enum
+{
+    TT_BASIC,
+    TT_TITLE,
+    TT_COMPLEX
+} ETooltipType;
 
 // --------------------------------------------------
 // Health Bars
@@ -1008,6 +1041,8 @@ typedef struct
     str TokenActor;
 } AugInfo;
 
+typedef AugInfo RPGMap *AugInfoPtr;
+
 // Charsave
 
 typedef struct
@@ -1067,6 +1102,177 @@ typedef struct
     unsigned int Checksum;
 } CharSaveInfo;
 
+// GUI
+
+struct MouseInfo
+{
+    int X;
+    int Y;
+    int XAdd;
+    int YAdd;
+    int Buttons;
+    int OldButtons;
+    bool LeftButton;
+    bool RightButton;
+    bool LeftButtonDown;
+    bool RightButtonDown;
+};
+
+// Pre-define control structs for the GUIWindow
+extern struct _guiwindow;
+extern struct _guilabel;
+extern struct _guiicon;
+extern struct _guibutton;
+extern struct _guibar;
+extern struct _guilist;
+extern struct _guitooltip;
+extern struct _guicontextmenu;
+
+// GUI Event Function Pointers
+typedef void (*LabelEventFunc)(struct _guilabel *);
+typedef void (*IconEventFunc)(struct _guiicon *);
+typedef void (*ButtonEventFunc)(struct _guibutton *);
+typedef void (*BarEventFunc)(struct _guibar *);
+typedef void (*ListEventFunc)(struct _guilist *);
+typedef void (*ContextMenuEventFunc)(int);
+
+typedef struct _guiwindow
+{
+    str Title;
+    int X;
+    int Y;
+    int Width;
+    int Height;
+    bool Dragging;
+    bool Focused;
+    bool Visible;
+    bool RolledUp;
+    bool CanClose;
+    bool CanRoll;
+    
+    // Controls
+    struct _guilabel    *[MAX_CONTROLS] Labels;
+    struct _guiicon     *[MAX_CONTROLS] Icons;
+    struct _guibutton   *[MAX_CONTROLS] Buttons;
+    struct _guibar      *[MAX_CONTROLS] Bars;
+    struct _guilist     *[MAX_CONTROLS] Lists;
+} GUIWindow;
+
+typedef struct _guilabel
+{
+    str Text;
+    int Alignment;
+    int X;
+    int Y;
+    int Width;
+    int Height;
+    int Color;
+    bool Big;
+    bool Visible;
+    
+    struct _guiwindow *Window;
+    struct _guitooltip *Tooltip;
+    struct _guicontextmenu *ContextMenu;
+} GUILabel;
+
+typedef struct _guiicon
+{
+    str Texture;
+    int X;
+    int Y;
+    int XOff;
+    int YOff;
+    int Width;
+    int Height;
+    bool CalculateSize;
+    bool Visible;
+    
+    struct _guiwindow *Window;
+    struct _guitooltip *Tooltip;
+    struct _guicontextmenu *ContextMenu;
+    
+    IconEventFunc OnClick;
+} GUIIcon;
+
+typedef struct _guibutton
+{
+    str Text;
+    int X;
+    int Y;
+    int Width;
+    int Height;
+    int Color;
+    int HoverColor;
+    bool Big;
+    bool Visible;
+    
+    struct _guiwindow *Window;
+    struct _guitooltip *Tooltip;
+    struct _guicontextmenu *ContextMenu;
+    
+    ButtonEventFunc OnClick;
+} GUIButton;
+
+typedef struct _guibar
+{
+    int X;
+    int Y;
+    int Width;
+    int Height;
+    int Value;
+    int ValueMax;
+    str Texture;
+    bool Visible;
+    
+    struct _guiwindow *Window;
+    struct _guitooltip *Tooltip;
+    struct _guicontextmenu *ContextMenu;
+} GUIBar;
+
+typedef struct _guilist
+{
+    int X;
+    int Y;
+    int Shown;
+    int Offset;
+    int Selected;
+    str[MAX_LIST] Entries;
+    int[MAX_LIST] Colors;
+    int[MAX_LIST] HoverColors;
+    bool Visible;
+    
+    struct _guiwindow *Window;
+    struct _guitooltip *Tooltip;
+    struct _guicontextmenu *ContextMenu;
+    
+    ListEventFunc OnClick;
+} GUIList;
+
+typedef struct _guitooltip
+{
+    int Type;
+    str Title;
+    str Text;
+    int Color;
+    int Width;
+    int Height;
+    str Icon;
+    int IconXOff;
+    int IconYOff;
+    bool NoBack;
+} GUITooltip;
+
+typedef struct _guicontextmenu
+{
+    int X;
+    int Y;
+    
+    str[MAX_OPTIONS] Name;
+    ContextMenuEventFunc[MAX_OPTIONS] OnClick;
+    
+    int Data;
+} GUIContextMenu;
+
 // Items
 
 // Item Definition
@@ -1092,6 +1298,44 @@ typedef struct
 } ItemInfo;
 
 typedef ItemInfo RPGGlobal *ItemInfoPtr;
+
+// Crates
+
+struct HackNode
+{
+    bool Active;
+    int Type;
+    int Start;
+    int End;
+};
+
+struct CrateInfo
+{
+    bool Generated;
+    bool SupplyDrop;
+    bool Firewall;
+    bool Empty;
+    int TID;
+    int Amount;
+    int Rarity;
+    
+    bool[CRATE_MAX_ITEMS] Active;
+    ItemInfoPtr[CRATE_MAX_ITEMS] Item;
+    
+    // Hacking Minigame
+    bool HacksGenerated;
+    int Hacking;
+    int HackingCooldown;
+    
+    int Tries;
+    
+    int[NODE_MAX] NodeMax;
+    
+    HackNode[MAX_NODES] Nodes;
+    int GenTotal;
+    int GenType;
+    int[NODE_MAX] GenNodes;
+};
 
 // Skills
 
