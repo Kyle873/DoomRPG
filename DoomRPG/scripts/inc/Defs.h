@@ -1151,11 +1151,11 @@ typedef struct _guiwindow
     bool CanRoll;
     
     // Controls
-    struct _guilabel    *[MAX_CONTROLS] Labels;
-    struct _guiicon     *[MAX_CONTROLS] Icons;
-    struct _guibutton   *[MAX_CONTROLS] Buttons;
-    struct _guibar      *[MAX_CONTROLS] Bars;
-    struct _guilist     *[MAX_CONTROLS] Lists;
+    struct _guilabel    * Labels[MAX_CONTROLS];
+    struct _guiicon     * Icons[MAX_CONTROLS];
+    struct _guibutton   * Buttons[MAX_CONTROLS];
+    struct _guibar      * Bars[MAX_CONTROLS];
+    struct _guilist     * Lists[MAX_CONTROLS];
 } GUIWindow;
 
 typedef struct _guilabel
@@ -1236,9 +1236,9 @@ typedef struct _guilist
     int Shown;
     int Offset;
     int Selected;
-    str[MAX_LIST] Entries;
-    int[MAX_LIST] Colors;
-    int[MAX_LIST] HoverColors;
+    str Entries[MAX_LIST];
+    int Colors[MAX_LIST];
+    int HoverColors[MAX_LIST];
     bool Visible;
     
     struct _guiwindow *Window;
@@ -1267,8 +1267,8 @@ typedef struct _guicontextmenu
     int X;
     int Y;
     
-    str[MAX_OPTIONS] Name;
-    ContextMenuEventFunc[MAX_OPTIONS] OnClick;
+    str Name[MAX_OPTIONS];
+    ContextMenuEventFunc OnClick[MAX_OPTIONS];
     
     int Data;
 } GUIContextMenu;
@@ -1301,15 +1301,15 @@ typedef ItemInfo RPGGlobal *ItemInfoPtr;
 
 // Crates
 
-struct HackNode
+typedef struct
 {
     bool Active;
     int Type;
     int Start;
     int End;
-};
+} HackNode;
 
-struct CrateInfo
+typedef struct
 {
     bool Generated;
     bool SupplyDrop;
@@ -1319,8 +1319,8 @@ struct CrateInfo
     int Amount;
     int Rarity;
     
-    bool[CRATE_MAX_ITEMS] Active;
-    ItemInfoPtr[CRATE_MAX_ITEMS] Item;
+    bool Active[CRATE_MAX_ITEMS];
+    ItemInfoPtr Item[CRATE_MAX_ITEMS];
     
     // Hacking Minigame
     bool HacksGenerated;
@@ -1329,13 +1329,13 @@ struct CrateInfo
     
     int Tries;
     
-    int[NODE_MAX] NodeMax;
+    int NodeMax[NODE_MAX];
     
-    HackNode[MAX_NODES] Nodes;
+    HackNode Nodes[MAX_NODES];
     int GenTotal;
     int GenType;
-    int[NODE_MAX] GenNodes;
-};
+    int GenNodes[NODE_MAX];
+} CrateInfo;
 
 // Skills
 
