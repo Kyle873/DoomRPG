@@ -1,7 +1,7 @@
 #ifndef DOOMRPG_ARENA_H
 #define DOOMRPG_ARENA_H
 
-#include "Defs.dh"
+#include "Defs.h"
 
 int RPGGlobal ArenaMaxWave;
 
@@ -21,15 +21,15 @@ int RPGMap ArenaMod;
 int RPGMap ArenaEnvironment;
 int RPGMap ArenaKey;
 
-str RPGMap ArenaMods[AMOD_MAX];
-str RPGMap ArenaEvents[AEVENT_MAX];
-str RPGMap ArenaBonus[ABONUS_MAX];
-str RPGMap Monsters[MAX_DEF_MONSTERS];
+str const ArenaMods[AMOD_MAX];
+str const ArenaEvents[AEVENT_MAX];
+str const ArenaBonus[ABONUS_MAX];
+str const Monsters[MAX_DEF_MONSTERS];
 
-NamedScript void ArenaLoop();
-NamedScript void ArenaStop();
-NamedScript void SetArena(int, int, int);
-NamedScript void ArenaChooseBonus();
+NamedScript MapSpecial void ArenaLoop();
+NamedScript MapSpecial void ArenaStop();
+NamedScript MapSpecial void SetArena(int, int, int);
+NamedScript MapSpecial void ArenaChooseBonus();
 
 void ArenaGetBonus(int);
 void DropArenaItem(str);
