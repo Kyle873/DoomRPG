@@ -3,8 +3,6 @@
 
 #include "Defs.h"
 
-typedef Skill const *SkillPtr;
-
 extern Skill const SkillData[MAX_CATEGORIES][MAX_SKILLS];
 
 extern bool RPGMap Overdrive;

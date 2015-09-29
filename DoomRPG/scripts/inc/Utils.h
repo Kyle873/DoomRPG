@@ -2,7 +2,6 @@
 #define _UTILS_DH_
 
 #include "Defs.h"
-#include "Monsters.h"
 
 extern int const AuraTID;
 extern str const ColorNames[22];

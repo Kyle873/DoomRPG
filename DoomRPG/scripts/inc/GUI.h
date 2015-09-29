@@ -1,6 +1,8 @@
 #ifndef DOOMRPG_GUI_H
 #define DOOMRPG_GUI_H
 
+#include "Defs.h"
+
 NamedScript void ToggleGUI();
 
 NamedScript void CheckCursor();

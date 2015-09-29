@@ -1,6 +1,8 @@
 #ifndef DOOMRPG_CHARSAVE_H
 #define DOOMRPG_CHARSAVE_H
 
+#include "Defs.h"
+
 NamedScript KeyBind void SaveCharacter();
 NamedScript KeyBind void LoadCharacter();
 NamedScript void DumpCharacter();

@@ -1,6 +1,8 @@
 #ifndef _OUTPOST_DH_
 #define _OUTPOST_DH_
 
+#include "Defs.h"
+
 extern int OutpostNotoriety;
 
 // Spawn Spots and TIDs

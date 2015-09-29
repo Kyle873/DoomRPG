@@ -1010,6 +1010,8 @@ typedef struct GUIBar_S         GUIBar;
 typedef struct GUIList_S        GUIList;
 typedef struct GUITooltip_S     GUITooltip;
 typedef struct GUIContextMenu_S GUIContextMenu;
+// Health Bars
+typedef struct HUDBarInfo_S     HUDBarInfo;
 // Items
 typedef struct ItemInfo_S       ItemInfo;
 // Crates
@@ -1028,9 +1030,15 @@ typedef struct MonsterInfo_S    MonsterInfo;
 typedef struct MegabossInfo_S   MegabossInfo;
 // Missions
 typedef struct MissionInfo_S    MissionInfo;
+// Minigames
+typedef struct MinigameData_S   MinigameData;
 // Turret
 typedef struct TurretUpgrade_S      TurretUpgrade;
 typedef struct TurretSensorItem_S   TurretSensorItem;
+// Map
+typedef struct LevelInfo_S      LevelInfo;
+// PDA
+typedef struct PDAMessage_S     PDAMessage;
 // RPG
 typedef struct PlayerData_S     PlayerData;
 
@@ -1040,6 +1048,7 @@ typedef MonsterInfo const       *MonsterInfoPtr;
 typedef MegabossInfo const      *MegabossInfoPtr;
 typedef ShieldPart const        *ShieldPartPtr;
 typedef ShieldAccessory const   *ShieldAccsPtr;
+typedef TurretUpgrade const     *TurretUpgradePtr;
 
 // Globals
 typedef ItemInfo RPGGlobal  *ItemInfoPtr;

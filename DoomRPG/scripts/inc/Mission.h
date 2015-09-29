@@ -1,8 +1,7 @@
 #ifndef _MISSIONS_DH_
 #define _MISSIONS_DH_
 
-#include "RPG.h"
-#include "Monsters.h"
+#include "Defs.h"
 
 AddressSpace extern MapArraySpace MissionLocal;
 AddressSpace extern GlobalArraySpace MissionGlobal;

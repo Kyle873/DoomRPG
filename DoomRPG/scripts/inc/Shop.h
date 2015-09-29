@@ -1,7 +1,7 @@
 #ifndef _SHOP_DH_
 #define _SHOP_DH_
 
-#include "ItemData.h"
+#include "Defs.h"
 
 // Global Shop Card Rank
 extern int GlobalShopCard;

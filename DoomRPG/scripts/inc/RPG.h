@@ -2,11 +2,6 @@
 #define _RPG_DH_
 
 #include "Defs.h"
-//#include "GUI.h"
-#include "ItemData.h"
-#include "Skills.h"
-#include "Shield.h"
-#include "Monsters.h"
 
 // Version
 extern str const Version;

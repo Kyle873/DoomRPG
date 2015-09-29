@@ -494,6 +494,51 @@ struct MegabossInfo_S
     str Music;
 };
 
+// Health Bars
+
+struct HUDBarInfo_S
+{
+    // Is this referencing a player or enemy?
+    bool IsPlayer;
+    // Is the actor friendly?
+    bool Friendly;
+    
+    // Basic
+    str Actor;
+    str NameColor;
+    str Name;
+    int Level;
+    int Rank;
+    int Flags;
+    struct AuraInfo_S Aura;
+    
+    // Health, Armor, Shield
+    int Health;
+    int HealthMax;
+    int SpawnHealth;
+    int Armor;
+    int ArmorMax;
+    bool ShieldActive;
+    int Shield;
+    int ShieldMax;
+    
+    // Stats
+    int Strength;
+    int Defense;
+    int Vitality;
+    int Energy;
+    int Regeneration;
+    int Agility;
+    int Capacity;
+    int Luck;
+    
+    // Position
+    fixed X;
+    fixed Y;
+    fixed Z;
+    fixed Height;
+};
+
 // Missions
 
 struct MissionInfo_S
@@ -517,6 +562,13 @@ struct MissionInfo_S
     int Amount;
 };
 
+// Minigames
+
+struct MinigameData_S
+{
+    bool Ingame;
+};
+
 // Turret
 
 struct TurretUpgrade_S
@@ -536,6 +588,105 @@ struct TurretSensorItem_S
 {
     int TID;
     int Category;
+};
+
+// Map
+
+struct LevelInfo_S
+{
+    // MAPINFO Level Number
+    int LevelNum;
+    
+    // If we start in the Outpost, we set this on MAP01 to tell ourselves that
+    // we need to replace the placeholder info with real info.
+    bool NeedsRealInfo;
+    
+    // Map is an Outpost or an Arena
+    bool UACBase;
+    bool UACArena;
+    
+    // Name data
+    str LumpName;
+    str NiceName;
+    
+    // Level stats
+    bool Completed;
+    
+    int MaxMonstersKilled;
+    int MaxTotalMonsters;
+    int MaxMonsterPercentage;
+    int MaxItemsFound;
+    int MaxTotalItems;
+    int MaxItemPercentage;
+    int MaxSecretsFound;
+    int MaxTotalSecrets;
+    int MaxSecretPercentage;
+    int ShortestTime;
+    int UniqueSecrets;
+    
+    // Par/Sucks time
+    int Par;
+    int Sucks;
+    
+    // 100% Bonuses
+    bool KillBonus;
+    bool ItemsBonus;
+    bool SecretsBonus;
+    bool AllBonus;
+    bool ParBonus;
+    
+    // Miscellaneous
+    int AdditionalMonsters;
+    bool SecretMap;
+    
+    // Event stuff
+    struct DynamicArray_S MonsterPositions;
+    unsigned int Event;
+    bool EventCompleted;
+    
+    // Megaboss Event
+    struct MegabossInfo_S *MegabossActor;
+    
+    // Environmental Hazard Event
+    int HazardLevel;
+    int RadLeft;
+    int GeneratorFuel;
+    
+    // Thermonuclear Bomb event
+    int BombTime;
+    bool BombExplode;
+    bool BombAnnouncing;
+    bool BombKeyActive[MAX_NUKE_KEYS];
+    bool BombKeyDisarming[MAX_NUKE_KEYS];
+    int BombKeyTimer[MAX_NUKE_KEYS];
+    
+    // Low Power Event
+    bool PowerGeneratorActive;
+    
+    // One Monster Event
+    struct MonsterInfo_S *SelectedMonster;
+    
+    // Hell Unleashed Event
+    int HellUnleashedActive;
+    int PandoraBoxTID;
+    fixed LevelAdd;
+    fixed RareAdd;
+    
+    // Harmonized Destruction event
+    int AuraType;
+    
+    // Doomsday Event
+    int DoomTime;
+};
+
+// PDA
+
+struct PDAMessage_S
+{
+    str Text;
+    fixed X;
+    fixed Y;
+    int ID;
 };
 
 // RPG
