@@ -24,7 +24,7 @@ int RPGMap ArenaKey;
 str const ArenaMods[AMOD_MAX];
 str const ArenaEvents[AEVENT_MAX];
 str const ArenaBonus[ABONUS_MAX];
-str const Monsters[MAX_DEF_MONSTERS];
+str const ArenaMonsters[MAX_DEF_MONSTERS];
 
 NamedScript MapSpecial void ArenaLoop();
 NamedScript MapSpecial void ArenaStop();

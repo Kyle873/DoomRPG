@@ -56,7 +56,7 @@ str const ArenaBonus[ABONUS_MAX] =
     "\CjKey Drop"
 };
 
-str const Monsters[MAX_DEF_MONSTERS] =
+str const ArenaMonsters[MAX_DEF_MONSTERS] =
 {
     "ZombieMan", "ShotgunGuy", "DoomImp", "Demon", "Spectre", "ChaingunGuy",
     "HellKnight", "BaronOfHell", "Cacodemon", "LostSoul",
@@ -558,7 +558,7 @@ void ArenaSpawnMobs()
             MonsterID = 0;
         
         // Spawn the monster
-        if (!Random(0, 2) && SpawnSpotFacing(Monsters[MonsterID], i, ArenaMonstersTID))
+        if (!Random(0, 2) && SpawnSpotFacing(ArenaMonsters[MonsterID], i, ArenaMonstersTID))
         {
             SpawnSpotForced("TeleportFog", i, 0, 0);
             Spawned++;
@@ -573,7 +573,7 @@ void ArenaSpawnMobs()
         {
             int SpotTID = ArenaSpotSpawns + Random(0, 30);
             
-            if (SpawnSpotFacing(Monsters[Random(15, 16)], SpotTID, ArenaMonstersTID))
+            if (SpawnSpotFacing(ArenaMonsters[Random(15, 16)], SpotTID, ArenaMonstersTID))
             {
                 SpawnSpot("TeleportFog", SpotTID, 0, 0);
                 break;
