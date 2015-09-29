@@ -8,6 +8,7 @@
 #include "ItemData.h"
 #include "Map.h"
 #include "Mission.h"
+#include "Monsters.h"
 #include "Outpost.h"
 #include "RPG.h"
 #include "Shield.h"
