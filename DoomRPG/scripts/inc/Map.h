@@ -1,5 +1,5 @@
-#ifndef _MAP_DH_
-#define _MAP_DH_
+#ifndef DOOMRPG_MAP_H
+#define DOOMRPG_MAP_H
 
 #include "Monsters.h"
 
