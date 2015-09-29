@@ -986,8 +986,10 @@ AddressSpace extern WorldArraySpace     RPGWorld;
 AddressSpace extern GlobalArraySpace    RPGGlobal;
 
 // --------------------------------------------------
-// Type aliases for structs
+// Needed structures and type definitions
 //
+
+#include "Structs.h"
 
 // Generic
 typedef struct DynamicArray_S   DynamicArray;
@@ -1032,8 +1034,20 @@ typedef struct TurretSensorItem_S   TurretSensorItem;
 // RPG
 typedef struct PlayerData_S     PlayerData;
 
-
 // Pointer types
-typedef AugInfo RPGMap *AugInfoPtr;
+// Constants
+typedef MonsterInfo const       *MonsterInfoPtr;
+typedef MegabossInfo const      *MegabossInfoPtr;
+typedef ShieldPart const        *ShieldPartPtr;
+typedef ShieldAccessory const   *ShieldAccsPtr;
+
+// Globals
+typedef ItemInfo RPGGlobal  *ItemInfoPtr;
+
+// Hub-Locals
+
+// Map-Locals
+typedef AugInfo RPGMap      *AugInfoPtr;
+typedef MonsterStats RPGMap *MonsterStatsPtr;
 
 #endif // DOOMRPG_DEFS_H

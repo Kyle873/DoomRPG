@@ -35,7 +35,7 @@ extern int RPGGlobal ItemCategoryFlags[ITEM_CATEGORIES];
 extern int RPGGlobal ItemMax[ITEM_CATEGORIES];
 extern ItemInfo RPGGlobal ItemData[ITEM_CATEGORIES][ITEM_MAX];
 extern bool RPGGlobal ItemRanksRemoved;
-extern ItemInfoPtr RPGGlobal RewardList[ITEM_CATEGORIES * ITEM_MAX];
+extern ItemInfoPtr RewardList[ITEM_CATEGORIES * ITEM_MAX];
 extern int RPGGlobal MaxRewards;
 extern bool RPGGlobal RewardsInit;
 

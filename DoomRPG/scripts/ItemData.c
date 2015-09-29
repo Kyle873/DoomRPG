@@ -16,7 +16,7 @@ int RPGGlobal ItemMax[ITEM_CATEGORIES];
 ItemInfo RPGGlobal ItemData[ITEM_CATEGORIES][ITEM_MAX];
 
 bool RPGGlobal ItemRanksRemoved;
-ItemInfoPtr RPGGlobal RewardList[ITEM_CATEGORIES * ITEM_MAX];
+ItemInfoPtr RewardList[ITEM_CATEGORIES * ITEM_MAX];
 int RPGGlobal MaxRewards;
 bool RPGGlobal RewardsInit;
 

@@ -1,8 +1,6 @@
 #ifndef DOOMRPG_STRUCTS_H
 #define DOOMRPG_STRUCTS_H
 
-#include "Defs.h"
-
 // --------------------------------------------------
 // Common Structures
 //
