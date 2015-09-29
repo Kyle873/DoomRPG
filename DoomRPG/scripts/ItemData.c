@@ -214,6 +214,11 @@ NamedScript void BuildItemData()
             // Apply Price
             ItemData[5][ItemIndex].Price = ShieldPartCost;
             
+            // Item self-reference info for DRLA checks
+            // [KS] How long has this been missing now? Holy hell.
+            ItemData[5][ItemIndex].Category = 5;
+            ItemData[5][ItemIndex].Index = ItemIndex;
+            
             // Rank
             ItemData[5][ItemIndex].Rank = j / 1.5;
             
@@ -242,6 +247,9 @@ NamedScript void BuildItemData()
         ItemData[5][ItemIndex].Name = StrParam("Shield Accessory - %s\n", Accessory->Name);
         ItemData[5][ItemIndex].Price = Accessory->Price;
         ItemData[5][ItemIndex].Rank = i * (MAX_RANK / 2) / MAX_ACCESSORIES; // This makes all accessories available by SSgt +
+        
+        ItemData[5][ItemIndex].Category = 5;
+        ItemData[5][ItemIndex].Index = ItemIndex;
         
         // Sprite Info
         ItemData[5][ItemIndex].Sprite.Name = Accessory->Icon;
