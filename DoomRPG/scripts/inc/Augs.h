@@ -1,5 +1,5 @@
-#ifndef _AUGS_DH_
-#define _AUGS_DH_
+#ifndef DOOMRPG_AUGS_H
+#define DOOMRPG_AUGS_H
 
 #include "Defs.h"
 

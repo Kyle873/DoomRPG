@@ -1,5 +1,5 @@
-#ifndef _CHARSAVE_DH_
-#define _CHARSAVE_DH_
+#ifndef DOOMRPG_CHARSAVE_H
+#define DOOMRPG_CHARSAVE_H
 
 NamedScript KeyBind void SaveCharacter();
 NamedScript KeyBind void LoadCharacter();

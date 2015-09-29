@@ -1,5 +1,5 @@
-#ifndef _ARENA_DH_
-#define _ARENA_DH_
+#ifndef DOOMRPG_ARENA_H
+#define DOOMRPG_ARENA_H
 
 #include "Defs.dh"
 

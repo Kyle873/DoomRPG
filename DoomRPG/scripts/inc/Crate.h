@@ -1,5 +1,5 @@
-#ifndef _CRATE_DH_
-#define _CRATE_DH_
+#ifndef DOOMRPG_CRATE_H
+#define DOOMRPG_CRATE_H
 
 extern str const CrateRarityNames[MAX_DIFFICULTIES];
 extern int RPGMap CrateID;

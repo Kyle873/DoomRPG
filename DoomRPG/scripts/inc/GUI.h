@@ -1,5 +1,5 @@
-#ifndef _GUI_DH_
-#define _GUI_DH_
+#ifndef DOOMRPG_GUI_H
+#define DOOMRPG_GUI_H
 
 NamedScript void ToggleGUI();
 
