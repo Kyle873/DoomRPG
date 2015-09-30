@@ -1058,5 +1058,6 @@ typedef ItemInfo RPGGlobal  *ItemInfoPtr;
 // Map-Locals
 typedef AugInfo RPGMap      *AugInfoPtr;
 typedef MonsterStats RPGMap *MonsterStatsPtr;
+typedef Skill RPGGlobal     *SkillPtr;
 
 #endif // DOOMRPG_DEFS_H

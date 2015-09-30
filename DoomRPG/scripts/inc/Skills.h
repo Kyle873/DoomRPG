@@ -3,12 +3,11 @@
 
 #include "Defs.h"
 
-extern Skill const SkillData[MAX_CATEGORIES][MAX_SKILLS];
-
-extern bool RPGMap Overdrive;
 extern int RPGMap BulletTimeTimer;
 
-extern int RPGMap SkillCategoryMax[MAX_CATEGORIES];
+extern int RPGGlobal SkillCategoryMax[MAX_CATEGORIES];
+
+extern Skill RPGGlobal SkillData[MAX_CATEGORIES][MAX_SKILLS];
 
 NamedScript Type_ENTER void SkillWheel();
 NamedScript KeyBind void UseSkill(int);

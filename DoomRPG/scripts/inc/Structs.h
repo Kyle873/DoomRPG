@@ -357,7 +357,7 @@ struct SkillLevelInfo_S
     int Level;
 };
 
-typedef bool (*SkillUseScript NamedScript Console)(struct _skilllevelinfo *, void *);
+typedef bool (*SkillUseScript)(struct SkillLevelInfo_S *, void *) NamedScript Console;
 
 struct Skill_S
 {
@@ -848,6 +848,7 @@ struct PlayerData_S
     int SkillPowerupCooldown;
     int SkillSupplyCooldown;
     bool Focusing;
+    bool Overdrive;
     
     // Status Effects
     bool StatusType[SE_MAX];
