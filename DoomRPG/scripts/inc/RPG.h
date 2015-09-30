@@ -25,23 +25,20 @@ extern int RPGMap ItemTIDs[MAX_ITEMS];
 // Multiplayer HUD
 // 
 
-// HUD Item Counts
-extern int GlobalArray Address(18) Credits[MAX_PLAYERS];
-
 // Energy Points (EP)
-extern int GlobalArray Address(2) EP[MAX_PLAYERS];
+extern int EPArray Address(0) EP[MAX_PLAYERS];
 
 // Shield
-extern int GlobalArray Address(50) Shield[MAX_PLAYERS];
-extern int GlobalArray Address(51) ShieldCapacity[MAX_PLAYERS];
-extern int GlobalArray Address(52) ShieldHealth[MAX_PLAYERS];
+extern int ShieldArray Address(0) Shield[MAX_PLAYERS];
+extern int ShieldCapacityArray Address(0) ShieldCapacity[MAX_PLAYERS];
+extern int ShieldHealthArray Address(0) ShieldHealth[MAX_PLAYERS];
 
 NamedScript KeyBind void QuickHeal(bool);
 NamedScript KeyBind void ToggleFocusMode();
-NamedScript KeyBind void FocusMode();
-NamedScript void StatusEffect(int, int, int);
-NamedScript int AddHealth(int, int);
-NamedScript int AddHealthDirect(int, int);
+NamedScript void FocusMode();
+NamedScript DECORATE void StatusEffect(int, int, int);
+NamedScript DECORATE int AddHealth(int, int);
+NamedScript DECORATE int AddHealthDirect(int, int);
 NamedScript void GiveTip();
 
 NamedScript Type_OPEN void GlobalInit();
@@ -53,7 +50,7 @@ NamedScript void StatRandomizer();
 NamedScript void AutosaveHandler();
 NamedScript Type_OPEN void ShopSpecialHandler();
 NamedScript void ItemHandler();
-NamedScript void ItemInit();
+NamedScript DECORATE void ItemInit();
 NamedScript OptionalArgs(1) void DynamicLootGenerator(str, int);
 NamedScript Type_DEATH void Dead();
 NamedScript Type_RESPAWN void Respawn();

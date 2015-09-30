@@ -7,9 +7,9 @@
 extern int GlobalShopCard;
 
 // Shop Special
-extern bool      ShopSpecialBought;
-extern int       ShopSpecialTimer;
-extern ItemInfo *ShopSpecialItem;
+extern bool               ShopSpecialBought;
+extern int                ShopSpecialTimer;
+extern ItemInfo RPGGlobal *ShopSpecialItem;
 
 extern int MapRegister ShopSpotID;
 

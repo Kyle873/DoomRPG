@@ -985,6 +985,12 @@ AddressSpace extern MapArraySpace       RPGMap;
 AddressSpace extern WorldArraySpace     RPGWorld;
 AddressSpace extern GlobalArraySpace    RPGGlobal;
 
+AddressSpace extern GlobalArraySpace    EPArray;
+
+AddressSpace extern GlobalArraySpace    ShieldArray;
+AddressSpace extern GlobalArraySpace    ShieldCapacityArray;
+AddressSpace extern GlobalArraySpace    ShieldHealthArray;
+
 // --------------------------------------------------
 // Needed structures and type definitions
 //

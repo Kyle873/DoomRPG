@@ -175,7 +175,7 @@ OptionalArgs(1) bool CheckInput(int, int /* = KEY_PRESSED */);
 OptionalArgs(1) void LogMessage(str, int /* = LOG_NORMAL */);
 
 // Dynamic Arrays
-void ArrayCreate(DynamicArray *, char *, int, int);
+void ArrayCreate(DynamicArray *, str, int, int);
 void ArrayResize(DynamicArray *);
 void ArrayDestroy(DynamicArray *);
 //void ArrayDump(DynamicArray *);
