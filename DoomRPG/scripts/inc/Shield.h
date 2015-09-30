@@ -15,10 +15,10 @@ NamedScript void ShieldTimerReset();
 NamedScript bool ActivateShield();
 NamedScript bool DeactivateShield();
 
-NamedScript void AMShieldCharge();
+NamedScript DECORATE void AMShieldCharge();
 NamedScript KeyBind void ToggleShield();
-NamedScript void AddShield(int);
-NamedScript void AddRemoteShield(int, int);
+NamedScript DECORATE void AddShield(int);
+NamedScript DECORATE void AddRemoteShield(int, int);
 
 // Accessory Equip/Unequip
 void RemoveShieldAccessory();

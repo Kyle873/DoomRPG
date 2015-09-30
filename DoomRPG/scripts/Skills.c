@@ -1,4 +1,4 @@
-#include "RPG.h"
+#include "Defs.h"
 
 #include "Arena.h"
 #include "Crate.h"
@@ -6,8 +6,7 @@
 #include "Menu.h"
 #include "Monsters.h"
 #include "Outpost.h"
-#include "Shield.h"
-#include "Shop.h"
+#include "RPG.h"
 #include "Skills.h"
 #include "Stats.h"
 #include "Utils.h"

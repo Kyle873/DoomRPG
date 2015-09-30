@@ -396,15 +396,15 @@ struct ShieldPart_S
     fixed DelayRate;
 };
 
-typedef void (*ShieldAccModScript NamedScript)();
-typedef void (*ShieldAccEquipScript NamedScript)();
-typedef void (*ShieldAccUnequipScript NamedScript)(bool);
-typedef void (*ShieldAccDamageScript NamedScript)(int);
-typedef void (*ShieldAccBreakScript NamedScript)();
-typedef int  (*ShieldAccChargeScript NamedScript)(int);
-typedef void (*ShieldAccOverchargeScript NamedScript)(int);
-typedef bool (*ShieldAccFastChargeScript NamedScript)();
-typedef void (*ShieldAccFullChargeScript NamedScript)();
+typedef void (*ShieldAccModScript)() NamedScript;
+typedef void (*ShieldAccEquipScript)() NamedScript;
+typedef void (*ShieldAccUnequipScript)(bool) NamedScript;
+typedef void (*ShieldAccDamageScript)(int) NamedScript;
+typedef void (*ShieldAccBreakScript)() NamedScript;
+typedef int  (*ShieldAccChargeScript)(int) NamedScript;
+typedef void (*ShieldAccOverchargeScript)(int) NamedScript;
+typedef bool (*ShieldAccFastChargeScript)() NamedScript;
+typedef void (*ShieldAccFullChargeScript)() NamedScript;
 
 struct ShieldAccessory_S
 {
@@ -925,10 +925,10 @@ struct PlayerData_S
     struct
     {
         // Current Parts
-        struct ShieldPart_S *Body;
-        struct ShieldPart_S *Battery;
-        struct ShieldPart_S *Capacitor;
-        struct ShieldAccessory_S *Accessory;
+        struct ShieldPart_S const *Body;
+        struct ShieldPart_S const *Battery;
+        struct ShieldPart_S const *Capacitor;
+        struct ShieldAccessory_S const *Accessory;
         
         // Flags
         bool Active;
