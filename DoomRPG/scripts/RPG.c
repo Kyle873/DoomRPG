@@ -62,7 +62,7 @@ NamedScript Type_OPEN void GlobalInit()
     if (!GlobalsInitialized)
     {
         // Version Info
-        Log("\CnDoom RPG %s (Compiled on %s at %s) loaded!\n", Version, __DATE__, __TIME__);
+        Log("\CnDoom RPG %s (Compiled on %s at %s) loaded!", Version, __DATE__, __TIME__);
         
         // Compatibility checking
         CheckCompatibility();
@@ -190,8 +190,8 @@ NamedScript Type_ENTER void Init()
         // Setup the Skill Wheel from the persistence CVARs
         for (int i = 0; i < MAX_SKILLKEYS; i++)
         {
-            Player.SkillCategory[i] = GetActivatorCVar(StrParam("drpg_skillwheel_category_%d\n", i + 1));
-            Player.SkillIndex[i] = GetActivatorCVar(StrParam("drpg_skillwheel_index_%d\n", i + 1));
+            Player.SkillCategory[i] = GetActivatorCVar(StrParam("drpg_skillwheel_category_%d", i + 1));
+            Player.SkillIndex[i] = GetActivatorCVar(StrParam("drpg_skillwheel_index_%d", i + 1));
         }
         
         // Transport should always be known
@@ -220,8 +220,8 @@ NamedScript Type_ENTER void Init()
         Player.ActualHealth = Player.HealthMax;
     
     // Apply camera textures and vars
-    SetCameraToTexture(Player.TID, StrParam("P%iVIEW\n", PlayerNumber() + 1), 110);
-    SetCameraToTexture(Player.TID, StrParam("P%iSVIEW\n", PlayerNumber() + 1), 90);
+    SetCameraToTexture(Player.TID, StrParam("P%iVIEW", PlayerNumber() + 1), 110);
+    SetCameraToTexture(Player.TID, StrParam("P%iSVIEW", PlayerNumber() + 1), 90);
     Player.PlayerView = PlayerNumber();
     
     // Remove Aura if the keep Aura CVAR is off
@@ -535,7 +535,8 @@ NamedScript void PlayerDamage()
                 SetHudSize(320, 200, false);
                 PrintSpriteFade("CONTA0", 0, 172.0, 160.0, 0.5, 1.5);
                 SetFont("BIGFONT");
-                HudMessage("Used a Continue!\n", HUDMSG_FADEOUT, 0, CR_GOLD, 160.0, 140.0, 0.5, 1.5);
+                HudMessage("Used a Continue!");
+                EndHudMessage(HUDMSG_FADEOUT, 0, "Gold", 160.0, 140.0, 0.5, 1.5);
             }
             
             // Survival Bonus
@@ -550,7 +551,8 @@ NamedScript void PlayerDamage()
                 ActivatorSound("health/survive", 127);
                 SetHudSize(320, 200, false);
                 SetFont("BIGFONT");
-                HudMessage("Agility Save!\n", HUDMSG_FADEOUT, 0, CR_ORANGE, 160.0, 140.0, 0.5, 0.5);
+                HudMessage("Agility Save!");
+                EndHudMessage(HUDMSG_FADEOUT, 0, "Orange", 160.0, 140.0, 0.5, 0.5);
                 PrintSpriteFade("AGISAVE", 0, 160.0, 140.0, 0.5, 0.5);
             }
         }
@@ -674,7 +676,7 @@ NamedScript void GiveTip()
         
         // Skills
         { "\CnEP",                              "Energy Points are needed in order to use skills. They can also be used to charge your Shield and to deposit and withdraw items from your personal locker while not in the Outpost.", },
-        { "\CnOverdrive",                       StrParam("You can Overdrive a skill by holding the \Cd%K\C- button. Doing this will always use the skill, regardless of it's EP cost. However, this will bring your current EP into the negatives. When negative, you will suffer stat penalties and not be able to use any skills until your EP is restored past 0.\n", "+speed"), },
+        { "\CnOverdrive",                       StrParam("You can Overdrive a skill by holding the \Cd%K\C- button. Doing this will always use the skill, regardless of it's EP cost. However, this will bring your current EP into the negatives. When negative, you will suffer stat penalties and not be able to use any skills until your EP is restored past 0.", "+speed"), },
         { "\CnAuras",                           "Auras are special passive abilities you can activate to give you temporary boosts to your stats. Auras will also affect teammates within it's radius, determined by your Energy stat", },
         
         // Augmentations
@@ -745,7 +747,7 @@ NamedScript void GiveTip()
         
         // Shop/Locker
         { "\CfShop",                            "The shop is where you can go to purchase and sell the various equipment and items you can find during the game. The shop also contains a locker system, where you may withdraw and deposit items for later usage.", },
-        { "\ChLocker",                          StrParam("You can access the locker system via the shop and deposit/withdraw your items there. Withdrawing and depositing items has a 1%% cost to your EP per use outside the Outpost. You can switch between the shop and locker using the \Cd%K\C- key.\n", "+jump"), },
+        { "\ChLocker",                          StrParam("You can access the locker system via the shop and deposit/withdraw your items there. Withdrawing and depositing items has a 1%% cost to your EP per use outside the Outpost. You can switch between the shop and locker using the \Cd%K\C- key.", "+jump"), },
         { "\CfShop Cards",                      "While playing, you may find UAC cards which provide you with a discount as well as other benefits. Finding a new card will replace your old card with the upgraded version. Discount benefits from a card will only apply when shopping at the Outpost.", },
         
         // Level Events
@@ -799,12 +801,16 @@ NamedScript void GiveTip()
     
     SetHudSize(0, 0, false);
     // Shove it in the console as one line
-    HudMessage("%s\n\n\C-%s\n", TipTitle, TipText, HUDMSG_PLAIN | HUDMSG_LOG, 9998, CR_WHITE, 0, 0, 1);
-    HudMessage("\n", HUDMSG_PLAIN, 9998, CR_WHITE, 0, 0, 1);
+    HudMessage("%s\n\n\C-%s", TipTitle, TipText);
+    EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 9998, "White", 0, 0, 1);
+    HudMessage("");
+    EndHudMessage(HUDMSG_PLAIN, 9998, "White", 0, 0, 1);
     SetFont("BIGFONT");
-    HudMessage("%s\n", TipTitle, HUDMSG_FADEOUT, MAKE_ID('1','T','I','P'), CR_WHITE, 0.5, 0.7, HoldTime, 3.0);
+    HudMessage("%s", TipTitle);
+    EndHudMessage(HUDMSG_FADEOUT, MAKE_ID('1','T','I','P'), "White", 0.5, 0.7, HoldTime, 3.0);
     SetFont("SMALLFONT");
-    HudMessage("%s\n", TipText, HUDMSG_FADEOUT, MAKE_ID('2','T','I','P'), CR_WHITE, 1.5, -0.725, HoldTime, 3.0);
+    HudMessage("%s", TipText);
+    EndHudMessage(HUDMSG_FADEOUT, MAKE_ID('2','T','I','P'), "White", 1.5, -0.725, HoldTime, 3.0);
 }
 
 // Handles Weapon Firing Speed
@@ -932,7 +938,7 @@ NamedScript Type_OPEN void ShopSpecialHandler()
             break;
         }
         if (GetCVar("drpg_debug"))
-            Log("\CdDEBUG: Shop Special \C-Min/Max Calculated: \Ca%d \C-/ \Cd%d\n", MinValue, MaxValue);
+            Log("\CdDEBUG: Shop Special \C-Min/Max Calculated: \Ca%d \C-/ \Cd%d", MinValue, MaxValue);
         
         // Blank out the item until a new one is found
         ShopSpecialItem = GetBlankItem();
@@ -1000,9 +1006,9 @@ NamedScript Type_OPEN void ShopSpecialHandler()
         if (GetCVar("drpg_debug"))
         {
             if (ShopSpecialItem == GetBlankItem())
-                Log("\CdDEBUG: Shop Special expired! \CaNo new item generated\n");
+                Log("\CdDEBUG: Shop Special expired! \CaNo new item generated");
             else
-                Log("\CdDEBUG: Shop Special expired! Now \Cj%s\n", ShopSpecialItem->Name);
+                Log("\CdDEBUG: Shop Special expired! Now \Cj%s", ShopSpecialItem->Name);
         }
     }
     
@@ -1110,7 +1116,7 @@ NamedScript DECORATE void ItemInit()
         if (ItemTIDs[i] == -1)
         {
             //if (GetCVar("drpg_debug"))
-            //    Log("\CdDEBUG: \C-Item \Cd%s\C- added (Index \Cd%d\C-)\n", GetActorClass(0), i);
+            //    Log("\CdDEBUG: \C-Item \Cd%s\C- added (Index \Cd%d\C-)", GetActorClass(0), i);
             
             // Doesn't have a TID, so assign it one
             if (ActivatorTID() == 0)
@@ -1193,7 +1199,7 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
     if (MaxItems == 0)
     {
         if (GetCVar("drpg_debug"))
-            Log("\CdDebug: \C-Skipped item generation.\n");
+            Log("\CdDebug: \C-Skipped item generation.");
         return;
     }
     else if (MaxItems < 0)
@@ -1255,21 +1261,24 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
         }
         
         if (GetCVar("drpg_debug"))
-            HudMessage("\CfGenerating Loot\n\Cd%d \Cj/ \Cd%d\n\n\CdActor: \C-%s\n\CdIteration: %d\n\CiBoundaries: %k-%k, %k-%k\n\nX: %k\nY: %k\nZ: %k\n", Items, MaxItems, Actor, Iterations, LowerX, UpperX, LowerY, UpperY, X, Y, Z, HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), CR_WHITE, 1.5, 0.8, 1.5, 0.5);
+        {
+            HudMessage("\CfGenerating Loot\n\Cd%d \Cj/ \Cd%d\n\n\CdActor: \C-%s\n\CdIteration: %d\n\CiBoundaries: %k-%k, %k-%k\n\nX: %k\nY: %k\nZ: %k", Items, MaxItems, Actor, Iterations, LowerX, UpperX, LowerY, UpperY, X, Y, Z);
+            EndHudMessage(HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), "White", 1.5, 0.8, 1.5, 0.5);
+        }
         
         Iterations++;
         
         if (Iterations == 8000) // Trick to restart ourselves if we ran out of iterations
         {
             if (GetCVar("drpg_debug"))
-                Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%s\C- and is restarting to place more\n", Items, Actor);
+                Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%s\C- and is restarting to place more", Items, Actor);
             DynamicLootGenerator(Actor, MaxItems - Items);
             return;
         }
     }
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%s\n", Items, Actor);
+        Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%s", Items, Actor);
 }
 
 // Quick Heal
@@ -1449,7 +1458,8 @@ NamedScript Type_RESPAWN void Respawn()
             Player.XP -= XPPenalty;
             Player.Rank -= RankPenalty;
             SetFont("BIGFONT");
-            HudMessage("\CjXP -%d\n\CkRank -%d\n", XPPenalty, RankPenalty, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_WHITE, 1.5, 0.75, 2.0, 2.0);
+            HudMessage("\CjXP -%d\n\CkRank -%d", XPPenalty, RankPenalty);
+            EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 0, "White", 1.5, 0.75, 2.0, 2.0);
         }
     }
     
@@ -1471,8 +1481,8 @@ NamedScript Type_RESPAWN void Respawn()
     }
     
     // Apply camera textures and vars
-    SetCameraToTexture(Player.TID, StrParam("P%iVIEW\n", PlayerNumber() + 1), 110);
-    SetCameraToTexture(Player.TID, StrParam("P%iSVIEW\n", PlayerNumber() + 1), 90);
+    SetCameraToTexture(Player.TID, StrParam("P%iVIEW", PlayerNumber() + 1), 110);
+    SetCameraToTexture(Player.TID, StrParam("P%iSVIEW", PlayerNumber() + 1), 90);
     Player.PlayerView = PlayerNumber();
     
     // Run Scripts
@@ -2100,7 +2110,7 @@ void CheckCompatibility()
     int TID = UniqueTID();
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: \C-Checking Compatibility...\n");
+        Log("\CdDEBUG: \C-Checking Compatibility...");
     
     CompatMode = COMPAT_NONE;
     
@@ -2109,7 +2119,7 @@ void CheckCompatibility()
     if (Success)
     {
         if (GetCVar("drpg_debug"))
-            Log("\CdDEBUG: \CaExtras\C- detected\n");
+            Log("\CdDEBUG: \CaExtras\C- detected");
         CompatMode = COMPAT_EXTRAS;
         Thing_Remove(TID);
         return;
@@ -2120,7 +2130,7 @@ void CheckCompatibility()
     if (Success)
     {
         if (GetCVar("drpg_debug"))
-            Log("\CdDEBUG: \CdDoomRL \C-detected\n");
+            Log("\CdDEBUG: \CdDoomRL \C-detected");
         CompatMode = COMPAT_DRLA;
         SetInventory("DRPGDRLAActive", 1);
         Thing_Remove(TID);
@@ -2131,13 +2141,16 @@ void CheckCompatibility()
             SetHudSize(640, 480);
             FadeRange(0, 0, 0, 1.0, 0, 0, 0, 1.0, 0);
             
-            //HudMessageBold("\CgLISTEN UP\n\n\C-You currently have \CfDoomRL Arsenal\C- loaded. In order for this mod to work with DoomRPG, you also need the \CfDoomRL Monster Pack\C-. Go here to download it: http://tinyurl.com/DoomRLArsenal\n\nThanks.\n", HUDMSG_PLAIN | HUDMSG_LOG, 772, CR_WHITE, 0.1, 0.1, 0.01);
+            HudMessage("\CgLISTEN UP\n\n\C-You currently have \CfDoomRL Arsenal\C- loaded. In order for this mod to work with DoomRPG, you also need the \CfDoomRL Monster Pack\C-. Go here to download it: http://tinyurl.com/DoomRLArsenal\n\nThanks.");
+            EndHudMessageBold(HUDMSG_PLAIN | HUDMSG_LOG, 772, "White", 0.1, 0.1, 0.01);
             
             SetFont("BigFont");
-            //HudMessageBold("LISTEN UP\n", HUDMSG_PLAIN, 772, CR_RED, 320.4, 200.0, 0.01);
+            HudMessage("LISTEN UP");
+            EndHudMessageBold(HUDMSG_PLAIN, 772, "Red", 320.4, 200.0, 0.01);
             
             SetFont("SmallFont");
-            //HudMessageBold("You currently have \CfDoomRL Arsenal\C- loaded. In order for this mod to work with DoomRPG, you also need the \CfDoomRL Monster Pack\C-. Go here to download it: http://tinyurl.com/DoomRLArsenal\n\nThanks.\n", HUDMSG_PLAIN, 773, CR_WHITE, 320.4, 232.0, 0.01);
+            HudMessage("You currently have \CfDoomRL Arsenal\C- loaded. In order for this mod to work with DoomRPG, you also need the \CfDoomRL Monster Pack\C-. Go here to download it: http://tinyurl.com/DoomRLArsenal\n\nThanks.");
+            EndHudMessageBold(HUDMSG_PLAIN, 773, "White", 320.4, 232.0, 0.01);
         }
         else
         {
@@ -2153,5 +2166,5 @@ void AssignTIDs()
     Thing_ChangeTID(0, Player.TID);
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: Player TID: %d\n", Player.TID);
+        Log("\CdDEBUG: Player TID: %d", Player.TID);
 }
