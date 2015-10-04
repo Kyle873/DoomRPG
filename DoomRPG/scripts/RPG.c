@@ -128,7 +128,7 @@ NamedScript Type_ENTER void Init()
             if (!Player.FirstRun)
                 Player.Capacity = GetActivatorCVar("drpg_start_capacity");
             
-            SortStartingItems();
+            Loadout_SortStartingItems();
             DefaultLoadout();
         }
     }

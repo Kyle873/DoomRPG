@@ -5,7 +5,7 @@
 
 NamedScript void DamageNumbers();
 NamedScript void InfoPopoffs();
-NamedScript void ModulePopoffs();
+NamedScript DECORATE void ModulePopoffs();
 
 void Popoff(int, int, int, str, bool);
 int GetDigit(int, int);
