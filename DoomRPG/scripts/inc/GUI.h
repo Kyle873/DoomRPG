@@ -3,7 +3,7 @@
 
 #include "Defs.h"
 
-NamedScript void ToggleGUI();
+NamedScript Console void ToggleGUI();
 
 NamedScript void CheckCursor();
 NamedScript void CheckGUI();

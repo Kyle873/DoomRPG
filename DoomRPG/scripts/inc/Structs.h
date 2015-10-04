@@ -147,11 +147,11 @@ extern struct GUITooltip_S;
 extern struct GUIContextMenu_S;
 
 // GUI Event Function Pointers
-typedef void (*LabelEventFunc)(struct _guilabel *);
-typedef void (*IconEventFunc)(struct _guiicon *);
-typedef void (*ButtonEventFunc)(struct _guibutton *);
-typedef void (*BarEventFunc)(struct _guibar *);
-typedef void (*ListEventFunc)(struct _guilist *);
+typedef void (*LabelEventFunc)(struct GUILabel_S *);
+typedef void (*IconEventFunc)(struct GUIIcon_S *);
+typedef void (*ButtonEventFunc)(struct GUIButton_S *);
+typedef void (*BarEventFunc)(struct GUIBar_S *);
+typedef void (*ListEventFunc)(struct GUIList_S *);
 typedef void (*ContextMenuEventFunc)(int);
 
 struct GUIWindow_S
