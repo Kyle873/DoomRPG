@@ -398,50 +398,50 @@ NamedScript Console void MonsterDump()
         return;
     }
     
-    Log("\Ca===== MONSTER INFORMATION =====\n");
-    Log(" Actor: %s\n", GetActorClass(0));
-    Log(" Replacement Actor: %s\n", Stats->ReplaceActor);
-    Log(" Position: %k, %k, %k\n", Stats->spawnPos.X, Stats->spawnPos.Y, Stats->spawnPos.Z);
-    Log(" Tag: %s\n", GetActorPropertyString(0, APROP_NameTag));
-    Log(" Height: %k\n", GetActorPropertyFixed(0, APROP_Height));
-    Log(" Radius: %k\n", GetActorPropertyFixed(0, APROP_Radius));
-    Log(" Speed: %k\n", GetActorPropertyFixed(0, APROP_Speed));
-    Log(" TID: %d\n", ActivatorTID());
-    Log(" ID: %d\n", GetMonsterID(0));
+    Log("\Ca===== MONSTER INFORMATION =====");
+    Log(" Actor: %s", GetActorClass(0));
+    Log(" Replacement Actor: %s", Stats->ReplaceActor);
+    Log(" Position: %k, %k, %k", Stats->spawnPos.X, Stats->spawnPos.Y, Stats->spawnPos.Z);
+    Log(" Tag: %s", GetActorPropertyString(0, APROP_NameTag));
+    Log(" Height: %k", GetActorPropertyFixed(0, APROP_Height));
+    Log(" Radius: %k", GetActorPropertyFixed(0, APROP_Radius));
+    Log(" Speed: %k", GetActorPropertyFixed(0, APROP_Speed));
+    Log(" TID: %d", ActivatorTID());
+    Log(" ID: %d", GetMonsterID(0));
     
     if (GetMonsterID(0) != 0)
     {
-        Log("\Cf===== MONSTER FLAGS =====\n");
-        Log(" Init: %d\n", Stats->Init);
-        Log(" Named: %d\n", Stats->Named);
-        Log(" HealthBar: %d\n", Stats->HealthBar);
-        Log(" RenderStyle: %d\n", Stats->RenderStyle);
-        Log(" DRPG Flags: %d\n", Stats->Flags);
-        Log(" Reinforcement: %d\n", Stats->Reinforcement);
-        Log(" Assassination Target: %d\n", Stats->Target);
-        Log(" MegaBoss: %d\n", Stats->MegaBoss);
+        Log("\Cf===== MONSTER FLAGS =====");
+        Log(" Init: %d", Stats->Init);
+        Log(" Named: %d", Stats->Named);
+        Log(" HealthBar: %d", Stats->HealthBar);
+        Log(" RenderStyle: %d", Stats->RenderStyle);
+        Log(" DRPG Flags: %d", Stats->Flags);
+        Log(" Reinforcement: %d", Stats->Reinforcement);
+        Log(" Assassination Target: %d", Stats->Target);
+        Log(" MegaBoss: %d", Stats->MegaBoss);
         
-        Log("\Cd===== MONSTER STATS =====\n");
-        Log(" Level: %d\n", Stats->Level);
-        Log(" Threat: %d\n", Stats->Threat);
-        Log(" Spawn Health: %d\n", Stats->SpawnHealth);
-        Log(" Health Max: %d\n", Stats->HealthMax);
-        Log(" Health Regenerated: %d\n", Stats->RegenHealth);
-        Log(" Base Speed: %d\n", Stats->Speed);
-        Log(" \CgStrength: %d\n", Stats->Strength);
-        Log(" \CdDefense: %d\n", Stats->Defense);
-        Log(" \CaVitality: %d\n", Stats->Vitality);
-        Log(" \CnEnergy: %d\n", Stats->Energy);
-        Log(" \CtRegeneration: %d\n", Stats->Regeneration);
-        Log(" \CiAgility: %d\n", Stats->Agility);
-        Log(" \ChCapacity: %d\n", Stats->Capacity);
-        Log(" \CkLuck: %d\n", Stats->Luck);
+        Log("\Cd===== MONSTER STATS =====");
+        Log(" Level: %d", Stats->Level);
+        Log(" Threat: %d", Stats->Threat);
+        Log(" Spawn Health: %d", Stats->SpawnHealth);
+        Log(" Health Max: %d", Stats->HealthMax);
+        Log(" Health Regenerated: %d", Stats->RegenHealth);
+        Log(" Base Speed: %d", Stats->Speed);
+        Log(" \CgStrength: %d", Stats->Strength);
+        Log(" \CdDefense: %d", Stats->Defense);
+        Log(" \CaVitality: %d", Stats->Vitality);
+        Log(" \CnEnergy: %d", Stats->Energy);
+        Log(" \CtRegeneration: %d", Stats->Regeneration);
+        Log(" \CiAgility: %d", Stats->Agility);
+        Log(" \ChCapacity: %d", Stats->Capacity);
+        Log(" \CkLuck: %d", Stats->Luck);
         
-        Log("\Cd===== MONSTER AURAS =====\n");
-        Log(" Time: %s\n", FormatTime(Stats->Aura.Time));
+        Log("\Cd===== MONSTER AURAS =====");
+        Log(" Time: %s", FormatTime(Stats->Aura.Time));
         for (int i = 0; i < AURA_MAX; i++) // TODO: Make this prettier
             if (Stats->Aura.Type[i].Active)
-                Log(" Active: %d\n", i);
+                Log(" Active: %d", i);
     }
 }
 
@@ -513,7 +513,7 @@ OptionalArgs(1) NamedScript void MonsterInitStats(int StatFlags)
     
     // Randomization Weight
     if (RandomMinWeight > RandomMaxWeight)
-        Log("\CgERROR: \C-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!\n");
+        Log("\CgERROR: \C-Monster Random Min Multiplier cannot be above Monster Random Max Multiplier!");
     else
         MonsterLevel = (int)(MonsterLevel * RandomFixed(RandomMinWeight, RandomMaxWeight));
     
@@ -1808,7 +1808,7 @@ NamedScript void MonsterDeath()
         fixed Radius = GetActorPropertyFixed(Players(Killer).TID, APROP_Radius);
         
         ThingSound(Players(Killer).TID, "credits/payout", 127);
-        Log("\CdLUDICROUS CREDITS!\n");
+        Log("\CdLUDICROUS CREDITS!");
         
         for (int i = 0; i < 100; i++)
         {
@@ -1964,7 +1964,7 @@ NamedScript void MonsterDeath()
     
     // Drop Nuke Keys during the Thermonuclear Bomb Map Event
     if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && CurrentLevel->Event == MAPEVENT_NUCLEARBOMB && (Random(1, 2) == 1 || Stats->Flags & MF_BOSS || Stats->Flags & MF_MEGABOSS))
-        DropMonsterItem(Killer, 0, StrParam("DRPGNukeKey%d\n", Random(1, MAX_NUKE_KEYS)), 256);
+        DropMonsterItem(Killer, 0, StrParam("DRPGNukeKey%d", Random(1, MAX_NUKE_KEYS)), 256);
     
     // Drop Generator Power Cells during the Low Power Event
     if (!(Stats->Flags & MF_NODROPS) && !GetActorProperty(0, APROP_Friendly) && CurrentLevel->Event == MAPEVENT_LOWPOWER && !CurrentLevel->PowerGeneratorActive)
@@ -1985,7 +1985,7 @@ NamedScript void MonsterDeath()
         if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
             CreditsAmount *= 4;
         
-        // Log("\CfInitial Amount: %d\n\CfLuck Mult: %d\n\CfMin: %d\n\CfMax: %d\n\CfAmount: %d\n", CheckInventory("DRPGCredits"), LuckMult, CreditsMin, CreditsMax, CreditsAmount);
+        // Log("\CfInitial Amount: %d\n\CfLuck Mult: %d\n\CfMin: %d\n\CfMax: %d\n\CfAmount: %d", CheckInventory("DRPGCredits"), LuckMult, CreditsMin, CreditsMax, CreditsAmount);
         DropMoney(Killer, 0, CreditsAmount);
     }
     
@@ -2058,7 +2058,7 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
     
     if (!MonsterListLength)
     {
-        Log("\CiWARNING: \CaReinforcement Mission on %s\Ca has no monsters!\n", MissionDifficulties[Difficulty]);
+        Log("\CiWARNING: \CaReinforcement Mission on %s\Ca has no monsters!", MissionDifficulties[Difficulty]);
         return;
     }
     
@@ -2145,7 +2145,7 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
             Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
             
             if (GetCVar("drpg_debug"))
-                Log("\CdDEBUG: \C-Reinforcements Spawning Index %d (\Ca%s\C-)\n", MonsterIndex, MonsterList[MonsterIndex]->Name);
+                Log("\CdDEBUG: \C-Reinforcements Spawning Index %d (\Ca%s\C-)", MonsterIndex, MonsterList[MonsterIndex]->Name);
         }
     }
 }
