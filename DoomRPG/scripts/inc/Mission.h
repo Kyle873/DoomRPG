@@ -3,16 +3,13 @@
 
 #include "Defs.h"
 
-AddressSpace extern MapArraySpace MissionLocal;
-AddressSpace extern GlobalArraySpace MissionGlobal;
-
 extern MissionInfo Missions[MAX_DIFFICULTIES][MAX_MISSIONS];
 
 extern str const MissionDifficulties[MAX_DIFFICULTIES];
 extern str const MissionTypes[MT_MAX];
-extern bool MissionLocal MissionInit;
+extern bool RPGMap MissionInit;
 
-NamedScript OptionalArgs(1) void PopulateMissions(int /* = -1 */);
+NamedScript void PopulateMissions();
 NamedScript void InitMission();
 NamedScript void MissionDeathCheck(int, MonsterStatsPtr);
 
