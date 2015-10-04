@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdfix.h>
+#include <limits.h>
 
 // Sanity pragmas
 #pragma GDCC STRENT_LITERAL ON
@@ -438,7 +439,7 @@ typedef enum
 //
 #define MAX_MONSTERS            16384
 #define MAX_DEF_MONSTERS        17
-#define MAX_DEF_MONSTERS_DRLA   71
+#define MAX_DEF_MONSTERS_DRLA   72
 #define MAX_TEMP_MONSTERS       100
 #define MAX_MEGABOSSES          2
 

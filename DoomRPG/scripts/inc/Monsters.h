@@ -22,7 +22,7 @@ OptionalArgs(1) NamedScript void MonsterInitStats(int);
 NamedScript void MonsterStatsHandler();
 NamedScript void MonsterAuraDisplayHandler();
 NamedScript void MonsterAggressionHandler();
-OptionalArgs(1) NamedScript void MonsterLevelupHandler(bool);
+NamedScript void MonsterLevelupHandler();
 NamedScript void MonsterEPDrainHandler();
 NamedScript void MonsterRegenerationHandler();
 NamedScript void MonsterDamageRetaliationHandler();
