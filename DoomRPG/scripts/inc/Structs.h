@@ -1,6 +1,10 @@
 #ifndef DOOMRPG_STRUCTS_H
 #define DOOMRPG_STRUCTS_H
 
+AddressSpace extern MapArraySpace       RPGMap;
+AddressSpace extern WorldArraySpace     RPGWorld;
+AddressSpace extern GlobalArraySpace    RPGGlobal;
+
 // --------------------------------------------------
 // Common Structures
 //
@@ -553,10 +557,10 @@ struct MissionInfo_S
     long int RewardRank;
     int RewardCredits;
     int RewardModules;
-    struct ItemInfo_S const *RewardItem;
+    struct ItemInfo_S RPGGlobal *RewardItem;
     
     // Mission Data
-    struct ItemInfo_S const *Item;
+    struct ItemInfo_S RPGGlobal *Item;
     struct MonsterInfo_S const *Monster;
     int Current;
     int Amount;

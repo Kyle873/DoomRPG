@@ -215,8 +215,10 @@ MissionInfo CreateMission(int Difficulty)
     long int RewardRank = 0;
     int RewardCredits = 0;
     int RewardModules = 0;
-    ItemInfoPtr RewardItem = GetRewardItem(Difficulty);
-    static MissionInfo Mission;
+    ItemInfoPtr RewardItem;
+    MissionInfo Mission;
+    
+    RewardItem = GetRewardItem(Difficulty);
     
     // Calculate the rewards based on all Player's average Level and Rank
     // XPTable[Player.Level + 1] / (3 + MAX_DIFFICULTIES - Difficulty) + Random(0, XPTable[Player.Level + 1] / GameSkill());
@@ -229,11 +231,11 @@ MissionInfo CreateMission(int Difficulty)
         
         // Prevent overflows due to trying to check for a null table index
         if (Players(i).Level >= MAX_LEVEL)
-            XPNext = XPTable[MAX_LEVEL - 1]
+            XPNext = XPTable[MAX_LEVEL - 1];
         else
             XPNext = XPTable[Players(i).Level];
         if (Players(i).RankLevel >= MAX_RANK)
-            RankNext = RankTable[MAX_RANK - 1]
+            RankNext = RankTable[MAX_RANK - 1];
         else
             RankNext = RankTable[Players(i).RankLevel];
         
@@ -307,7 +309,7 @@ void CreateMissionAt(int Difficulty, int Index)
     Missions[Difficulty][Index] = CreateMission(Difficulty);
     
     // Resort the missions in this category
-    auto MissionInfo[MAX_MISSIONS] MissionsSorted;
+    auto MissionInfo MissionsSorted[MAX_MISSIONS];
     for (int i = 0; i < MAX_MISSIONS; i++)
         MissionsSorted[i] = Missions[Difficulty][i];
     qsort(MissionsSorted, MAX_MISSIONS, sizeof(MissionInfo), MissionTypeSort);
@@ -403,10 +405,10 @@ void ClearMission()
     Player.Mission.RewardXP = 0;
     Player.Mission.RewardRank = 0;
     Player.Mission.RewardCredits = 0;
-    Player.Mission.RewardItem = {};
+    Player.Mission.RewardItem = NULL;
     
-    Player.Mission.Item = {};
-    Player.Mission.Monster = {};
+    Player.Mission.Item = NULL;
+    Player.Mission.Monster = NULL;
     Player.Mission.Current = 0;
     Player.Mission.Amount = 0;
 }
@@ -415,12 +417,12 @@ void GetTargetMonster(MissionInfo *Mission)
 {
     bool DRLA = (CompatMode == COMPAT_DRLA);
     int Amount;
-    MonsterInfoPtr[MAX_TEMP_MONSTERS] PotentialMonsters;
+    MonsterInfoPtr PotentialMonsters[MAX_TEMP_MONSTERS];
     int NumPotentialMonsters;
     int MonsterDataAmount;
     
     if (DRLA)
-        MonsterDataAmount = MAX_DEF_MONSTERS_DRLA
+        MonsterDataAmount = MAX_DEF_MONSTERS_DRLA;
     else
         MonsterDataAmount = MAX_DEF_MONSTERS;
     
@@ -429,7 +431,7 @@ void GetTargetMonster(MissionInfo *Mission)
     {
         MonsterInfoPtr TempMonster;
         if (DRLA)
-            TempMonster = &MonsterDataDRLA[i]
+            TempMonster = &MonsterDataDRLA[i];
         else
             TempMonster = &MonsterData[i];
         
@@ -453,7 +455,7 @@ void GetTargetMonster(MissionInfo *Mission)
     if (NumPotentialMonsters < 1)
     {
         Log("\CgERROR: \C-GetTargetMonster for %s mission on difficulty %d has no monsters!", Mission->Type == MT_KILL? "kill" : "assassination", Mission->Difficulty + 1);
-        Mission->Monster = nullptr;
+        Mission->Monster = NULL;
         Mission->Amount = 0;
         return;
     }
@@ -493,7 +495,7 @@ int CalculateAverageDifficulty()
 str GetMissionMonsterActor(str Actor)
 {
     if (CompatMode == COMPAT_DRLA)
-        return StrParam("%sRPG", Actor)
+        return StrParam("%sRPG", Actor);
     else if (CompatMode == COMPAT_EXTRAS)
         return StrParam("DRPG%sExtras", Actor);
 
