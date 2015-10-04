@@ -128,7 +128,7 @@ NamedScript Type_ENTER void Init()
             if (!Player.FirstRun)
                 Player.Capacity = GetActivatorCVar("drpg_start_capacity");
             
-            Loadout_SortStartingItems();
+            SortStartingItems();
             DefaultLoadout();
         }
     }
@@ -1617,7 +1617,7 @@ static int Loadout_DRLAWeaponCount[LOADOUT_DRLAWEAPONS];
 static int Loadout_DRLAArmorCount[LOADOUT_DRLAARMORS];
 static int Loadout_DRLABootsCount[LOADOUT_DRLAARMORS];
 
-NamedScript void Loadout_SortStartingItems()
+NamedScript void SortStartingItems()
 {
     // Build Shield and DRLA item databases based on their respective items' color codes
     for (int i = 0; i < MAX_BODIES; i++)

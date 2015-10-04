@@ -54,7 +54,7 @@ NamedScript DECORATE void ItemInit();
 NamedScript OptionalArgs(1) void DynamicLootGenerator(str, int);
 NamedScript Type_DEATH void Dead();
 NamedScript Type_RESPAWN void Respawn();
-NamedScript void Loadout_SortStartingItems();
+NamedScript void SortStartingItems();
 NamedScript void DefaultLoadout();
 
 void CheckHUD();
