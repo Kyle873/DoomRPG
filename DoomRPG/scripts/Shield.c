@@ -472,7 +472,7 @@ ShieldAccessory const ShieldAccessories[MAX_ACCESSORIES] =
     {
         "DRPGShieldAccessory50",
         "\CvSKROO-G3",  "SHA2X0",   111111,
-        "\Cv+50 Capacity\C- for every \Cf10000 Credits\C- you currently have\nCaps at a maximum of \Cf1000000 Credits\C- and \Cv+5000 Capacity\n",
+        "\Cv+50 Capacity\C- for every \Cf10000 Credits\C- you currently have\nCaps at a maximum of \Cf1000000 Credits\C- and \Cv+5000 Capacity",
         SHIELD_PASS_NONE,
         McDuckMod, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     },

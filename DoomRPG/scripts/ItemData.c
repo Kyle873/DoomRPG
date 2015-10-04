@@ -177,8 +177,8 @@ NamedScript void BuildItemData()
             ShieldPartCost = 0;
 
             // Name
-            ItemData[5][ItemIndex].Actor = StrParam("%s\n", ShieldParts[i][j].Actor);
-            ItemData[5][ItemIndex].Name = StrParam("%s%s\C-\n", ShieldName, ShieldParts[i][j].Name);
+            ItemData[5][ItemIndex].Actor = StrParam("%s", ShieldParts[i][j].Actor);
+            ItemData[5][ItemIndex].Name = StrParam("%s%s\C-", ShieldName, ShieldParts[i][j].Name);
             
             // Price
             ShieldPartPtr PartPtr = &ShieldParts[i][j];
@@ -244,7 +244,7 @@ NamedScript void BuildItemData()
         ShieldAccsPtr Accessory = ShieldAccessoriesSorted[i];
         
         ItemData[5][ItemIndex].Actor = Accessory->Actor;
-        ItemData[5][ItemIndex].Name = StrParam("Shield Accessory - %s\n", Accessory->Name);
+        ItemData[5][ItemIndex].Name = StrParam("Shield Accessory - %s", Accessory->Name);
         ItemData[5][ItemIndex].Price = Accessory->Price;
         ItemData[5][ItemIndex].Rank = i * (MAX_RANK / 2) / MAX_ACCESSORIES; // This makes all accessories available by SSgt +
         
@@ -877,7 +877,7 @@ NamedScript void BuildItemData()
     // Reward List is done processing
     RewardsInit = true;
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: \C-Finished Processing Rewards List (%d Tics Taken)\n", Timer());
+        Log("\CdDEBUG: \C-Finished Processing Rewards List (%d Tics Taken)", Timer());
     
     ItemsInitialized = true;
 }
@@ -918,11 +918,11 @@ ItemInfoPtr GetRewardItem(int Difficulty)
     /* Some extra stuff to catch errors and spit out debug logging
     if (GetCVar("drpg_debug"))
     {
-        Log("\CdDEBUG: \C-Reward Item %s\C- (%s) picked\n", Reward->Name, Reward->Actor);
+        Log("\CdDEBUG: \C-Reward Item %s\C- (%s) picked", Reward->Name, Reward->Actor);
         
         if (Index > MaxRewards)
         {
-            Log("\CgERROR: \C-Tried to pick a reward past the max available reward index\n");
+            Log("\CgERROR: \C-Tried to pick a reward past the max available reward index");
             return nullptr;
         };
     }; */
@@ -985,23 +985,23 @@ NamedScript DECORATE void SpawnLuckItem()
 /*
 NamedScript Console void DumpItemData()
 {
-    Log("\Cd---------- BEGIN ITEMDATA DUMP ----------\n");
+    Log("\Cd---------- BEGIN ITEMDATA DUMP ----------");
     
     for (int i = 0; i < ItemCategories; i++)
     {
-        Log("\Cd---------- %s ----------\n", ItemCategoryNames[i]);
+        Log("\Cd---------- %s ----------", ItemCategoryNames[i]);
         
         for (int j = 0; j < ItemMax[i]; j++)
             Output ItemData[i][j];
     };
     
-    Log("\Cd---------- END ITEMDATA DUMP ----------\n");
+    Log("\Cd---------- END ITEMDATA DUMP ----------");
     
-    Log("\Cd---------- BEGIN REWARDLIST DUMP ----------\n");
+    Log("\Cd---------- BEGIN REWARDLIST DUMP ----------");
     
     for (int i = 0; i < MaxRewards; i++)
         Output *RewardList[i];
     
-    Log("\Cd---------- END REWARDLIST DUMP ----------\n");
+    Log("\Cd---------- END REWARDLIST DUMP ----------");
 }
 */

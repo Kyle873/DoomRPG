@@ -1020,22 +1020,22 @@ void CheckStatusEffects()
     if (Player.StatusType[SE_CONFUSION]) // Confusion
     {
         SetHudSize(640, 480, true);
-        SetFont(StrParam("P%iVIEW\n", PlayerNumber() + 1));
+        SetFont(StrParam("P%iVIEW", PlayerNumber() + 1));
         
         fixed ViewCycle = Timer() / (120.0 - (10.0 * Player.StatusIntensity[SE_CONFUSION]));
         fixed ViewDist = 9.6 * Player.StatusIntensity[SE_CONFUSION] * ((fixed)Player.StatusTimer[SE_CONFUSION] / (fixed)Player.StatusTimerMax[SE_CONFUSION]);
         
         // View Spinning
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 3, CR_UNTRANSLATED, 320, 240, 0.029);
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
+        HudMessage("A", HUDMSG_PLAIN | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 3, CR_UNTRANSLATED, 320, 240, 0.029);
+        HudMessage("A", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
                    320 + (int)(Cos(ViewCycle) * ViewDist),
                    240 + (int)(Sin(ViewCycle) * ViewDist),
                    0.029, 0.3);
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, CR_UNTRANSLATED,
+        HudMessage("A", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, CR_UNTRANSLATED,
                    320 + (int)(Cos(ViewCycle + 0.333) * ViewDist),
                    240 + (int)(Sin(ViewCycle + 0.333) * ViewDist),
                    0.029, 0.6);
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 2, CR_UNTRANSLATED,
+        HudMessage("A", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 2, CR_UNTRANSLATED,
                    320 + (int)(Cos(ViewCycle + 0.667) * ViewDist),
                    240 + (int)(Sin(ViewCycle + 0.667) * ViewDist),
                    0.029, 0.9);

@@ -138,7 +138,7 @@ NamedScript MapSpecial void ArenaLoop()
                     }
                     else
                     {
-                        PrintError("Someone is currently in a menu\n");
+                        PrintError("Someone is currently in a menu");
                         ActivatorSound("menu/error", 127);
                     }
                 }
