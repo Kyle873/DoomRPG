@@ -788,6 +788,119 @@ actor DRPGEPFocusAura
 }
 
 // --------------------------------------------------
+// Transport particles and FX
+//
+
+actor DRPGTransportEffect
+{
+    var int user_loop;
+    var int user_angle;
+    var int user_height;
+    var int user_direction;
+    var int user_iterations;
+    
+    +NOTIMEFREEZE
+    +NOINTERACTION
+    +NOTONAUTOMAP
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay A_SetUserVar("user_direction", 1)
+    Spawn2:
+        TNT1 A 0 A_SpawnItemEx("DRPGTransportEffectParticle",
+            Cos(user_angle) * 32,
+            Sin(user_angle) * 32,
+            user_height, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_Quake(9, 2, 0, 64, "")
+        TNT1 A 0 A_SetUserVar("user_angle", user_angle + 11.25)
+        TNT1 A 0 A_JumpIf(user_loop >= 8, "ReLoop")
+        TNT1 A 0 A_JumpIf(user_Angle >= 360 && user_direction == 1, "MoveUp")
+        TNT1 A 0 A_JumpIf(user_Angle >= 360 && user_direction == -1, "MoveDown")
+        Loop
+    MoveUp:
+        TNT1 A 0 A_SetUserVar("user_loop", user_loop + 1)
+        TNT1 A 0 A_SetUserVar("user_angle", 0)
+        TNT1 A 2 A_SetUserVar("user_height", user_height + 8)
+        Goto Spawn2
+    MoveDown:
+        TNT1 A 0 A_SetUserVar("user_loop", user_loop + 1)
+        TNT1 A 0 A_SetUserVar("user_angle", 0)
+        TNT1 A 2 A_SetUserVar("user_height", user_height - 8)
+        Goto Spawn2
+    ReLoop:
+        TNT1 A 0 A_SetUserVar("user_loop", 0)
+        TNT1 A 0 A_SetUserVar("user_direction", -user_direction)
+        TNT1 A 0 A_SetUserVar("user_iterations", user_iterations + 1)
+        TNT1 A 0 A_JumpIf(user_iterations >= 4, "Done")
+        TNT1 A 0 A_JumpIf(user_direction == 1, "SetDown")
+        TNT1 A 0 A_JumpIf(user_direction == -1, "SetUp")
+        Stop
+    SetUp:
+        TNT1 A 0 A_SetUserVar("user_height", 7 * 8)
+        Goto Spawn2
+    SetDown:
+        TNT1 A 0 A_SetUserVar("user_height", 0)
+        Goto Spawn2
+    Done:
+        TNT1 A 0
+        Stop
+    }
+}
+
+actor DRPGTransportEffectParticle
+{
+    +NOTIMEFREEZE
+    +NOINTERACTION
+    +NOTONAUTOMAP
+    
+    YScale 0.125
+    
+    Alpha 0.5
+    RenderStyle Add
+    
+    Translation "0 : 255 = %[0.0, 0.0, 0.0] : [0.0, 0.25, 0.0]"
+    
+    States
+    {
+    Spawn:
+        PBEA A 1 Bright
+        TNT1 A 0 A_FadeOut(0.025)
+        Loop
+    }
+}
+
+actor DRPGTransportSetNonShootable : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_ChangeFlag("SOLID", false)
+        TNT1 A 0 A_ChangeFlag("SHOOTABLE", false)
+        TNT1 A 0 A_ChangeFlag("NONSHOOTABLE", true)
+        Stop
+    }
+}
+
+actor DRPGTransportUnsetNonShootable : CustomInventory
+{
+    Inventory.MaxAmount 0
+    +INVENTORY.AUTOACTIVATE
+    
+    States
+    {
+    Pickup:
+        TNT1 A 0 A_ChangeFlag("SOLID", true)
+        TNT1 A 0 A_ChangeFlag("SHOOTABLE", true)
+        TNT1 A 0 A_ChangeFlag("NONSHOOTABLE", false)
+        Stop
+    }
+}
+
+// --------------------------------------------------
 // Immunity Crystal beams and FX
 //
 
@@ -799,7 +912,7 @@ Actor DRPGImmunityCrystalBeam
     
     Scale 4.0
     
-    Alpha 0.5 
+    Alpha 0.5
     RenderStyle Add
     
     States
