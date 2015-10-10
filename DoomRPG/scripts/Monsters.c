@@ -12,7 +12,7 @@
 
 int RPGMap MonsterID = 1;
 
-MonsterStats RPGMap Monsters[MAX_MONSTERS];
+NoInit MonsterStats RPGMap Monsters[MAX_MONSTERS];
 
 MonsterInfo const MonsterData[MAX_DEF_MONSTERS] =
 {

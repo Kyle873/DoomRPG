@@ -83,6 +83,7 @@
 #define GlobalArray     __gbl_ars
 
 #define Address(N)      [[address(N)]]
+#define NoInit          [[no_init]]
 
 #define OptionalArgs(N) [[optional_args(N)]]
 
