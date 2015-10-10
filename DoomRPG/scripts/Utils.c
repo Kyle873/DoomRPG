@@ -1932,6 +1932,8 @@ void RemoveDRLAItem(int Category, int Index)
     }
     else if (Category == 3 || Category == 9) // Armor/Boots
         TakeInventory("RLArmorInInventory", 1);
+    else if (ItemActor == "RLArmorModItem") // Armor Modpack
+        TakeInventory("RLArmorModItemInInventory", 1);
     else if (Category == 8) // Mod Packs
     {
         if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician
@@ -1948,8 +1950,6 @@ void RemoveDRLAItem(int Category, int Index)
              ItemActor == "RLRecallPhaseDevice" ||
              ItemActor == "RLExperimentalPhaseDevice")
         TakeInventory("RLPhaseDeviceLimit", 1);
-    else if (ItemActor == "RLArmorModItem") // Armor Modpack
-        TakeInventory("RLArmorModItemInInventory", 1);
 }
 
 void GiveDRLAArmorToken(str ArmorType)
