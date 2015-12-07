@@ -68,18 +68,18 @@
 #define StringTable __str_ars
 
 #define AddressSpace        __addrdef
-#define MapArraySpace       __map_arr
-#define WorldArraySpace     __wld_arr
+#define MapArraySpace       __mod_arr
+#define WorldArraySpace     __hub_arr
 #define GlobalArraySpace    __gbl_arr
 
 #define AutoRegister    __loc_reg
-#define MapRegister     __map_reg
-#define WorldRegister   __wld_reg
+#define MapRegister     __mod_reg
+#define WorldRegister   __hub_reg
 #define GlobalRegister  __gbl_reg
 
 #define AutoArray       __loc_ars
-#define MapArray        __map_ars
-#define WorldArray      __wld_ars
+#define MapArray        __mod_ars
+#define WorldArray      __hub_ars
 #define GlobalArray     __gbl_ars
 
 #define Address(N)      [[address(N)]]
