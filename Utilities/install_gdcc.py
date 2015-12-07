@@ -41,6 +41,16 @@ def extractbuild ():
     exename = os.path.join ("7zip", ("64" if USE_64BIT_BINARIES else "32"),
                             "7za.exe")
     arguments = [exename, "x", "-oGDCC", "gdcc.7z"]
+
+    if sys.platform.startswith("linux"):
+        try:
+            subprocess.call (["wine", "--version"])
+        except FileNotFoundError:
+            print ("You do not have Wine installed! You won't be able to run GDCC in this manner without it. Try adding it to your system path instead.")
+            raise
+        
+        arguments = ["wine", exename, "x", "-oGDCC", "gdcc.7z"]
+    
     subprocess.call (arguments)
     os.remove("gdcc.7z")
 
