@@ -521,6 +521,7 @@ str PowersuitNames[NAME_MAX_SUIT] =
     "Maj. Solo",
     "Gen. Belanger",
     "Sgt. Shivers",
+    "Gen. Rainbow Bacon",
 };
 
 str NameColors[NAME_MAX_COLORS] =

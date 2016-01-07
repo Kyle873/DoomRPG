@@ -1934,6 +1934,8 @@ void RemoveDRLAItem(int Category, int Index)
         TakeInventory("RLArmorInInventory", 1);
     else if (ItemActor == "RLArmorModItem") // Armor Modpack
         TakeInventory("RLArmorModItemInInventory", 1);
+    else if (ItemActor == "RLDemonArtifactItem") // Demon Artifacts [KS] THANKS YHOLL
+        TakeInventory("RLDemonArtifactLimit", 1);
     else if (Category == 8) // Mod Packs
     {
         if (PlayerClass(PlayerNumber()) == 2) // Special handling case for Technician

@@ -470,7 +470,7 @@ NamedScript void BuildItemData()
             ITEMDATA_DEF("RLHeavySuperShotgun",                     "Heavy Super Shotgun \Cv[Assembled]\C-",                  5200, -1, "HSSGX0", 27, 11);
             ITEMDATA_DEF("RLHeavyAssaultShotgun",                   "Heavy Assault Shotgun \Cv[Assembled]\C-",                3500, -1, "ASHOX0", 31, 27);
             ITEMDATA_DEF("RLHeavyPlasmaShotgun",                    "Heavy Plasma Shotgun \Cv[Assembled]\C-",                 8500, -1, "PSHOX0", 22, 14);
-            ITEMDATA_DEF("RLHeavyHuntingShotgun",                   "Heavy Hunting Shotgun \Cv[Assembled]\C-",                36000, 12, "HUNTX0",  0,  0);
+            ITEMDATA_DEF("RLHeavyHuntingShotgun",                   "Heavy Hunting Shotgun \Cv[Assembled]\C-",               36000, -1, "HUNTX0",  0,  0);
             
             // Piercing Blade Assembled Weapons
          // ITEMDATA_DEF("RLPiercingCombatKnife",                   "Piercing Blade \Cv[Assembled]\C-",                       1000, -1, "PKNIX0", 11, 13);
@@ -498,11 +498,11 @@ NamedScript void BuildItemData()
             ITEMDATA_DEF("RLHighPowerNuclearBFG9000",               "High Power Nuclear BFG9000 \Cv[Assembled]\C-",         180000, -1, "NUKBX0", 28, 18);
             
             ITEMDATA_DEF("RLHighPowerMarksmanRifle",                "High Power Marksman Rifle \Cv[Assembled]\C-",           22500, -1, "MRKRX0", 26, 18);
-            ITEMDATA_DEF("RLHighPowerVanguardRifle",                "High Power Vanguard Rifle \Cv[Assembled]\C-",           21000, 12, "QVANX0", 20, 15);
-            ITEMDATA_DEF("RLHighPowerHuntingRevolver",              "High Power Hunting Revolver \Cv[Assembled]\C-",         35000, 12, "HREVX0", 12, 14);
-            ITEMDATA_DEF("RLHighPowerThompson",                     "High Power Tommy Gun \Cv[Assembled]\C-",                20000, 12, "TGUNX0", 26, 13);
-            ITEMDATA_DEF("RLHighPowerPP7",                          "High Power PP7 \Cv[Assembled]\C-",                      18000, 12, "BPP7X0", 10, 12);
-            ITEMDATA_DEF("RLHighPowerRCP90",                        "RC-P120 \Cv[Assembled]\C-",                             50000, 12, "RCP1X0", 17, 16);
+            ITEMDATA_DEF("RLHighPowerVanguardRifle",                "High Power Vanguard Rifle \Cv[Assembled]\C-",           21000, -1, "QVANX0", 20, 15);
+            ITEMDATA_DEF("RLHighPowerHuntingRevolver",              "High Power Hunting Revolver \Cv[Assembled]\C-",         35000, -1, "HREVX0", 12, 14);
+            ITEMDATA_DEF("RLHighPowerThompson",                     "High Power Tommy Gun \Cv[Assembled]\C-",                20000, -1, "TGUNX0", 26, 13);
+            ITEMDATA_DEF("RLHighPowerPP7",                          "High Power PP7 \Cv[Assembled]\C-",                      18000, -1, "BPP7X0", 10, 12);
+            ITEMDATA_DEF("RLHighPowerRCP90",                        "RC-P120 \Cv[Assembled]\C-",                             50000, -1, "RCP1X0", 17, 16);
             
             // Plasmatic Shrapnel Assembled Weapons
             ITEMDATA_DEF("RLPlasmaticShrapnelShotgun",              "Plasmatic Shotgun \Cv[Assembled]\C-",                    4000, -1, "PKSGX0", 31, 17);
@@ -511,7 +511,7 @@ NamedScript void BuildItemData()
             ITEMDATA_DEF("RLPlasmaticShrapnelSuperShotgun",         "Plasmatic Super Shotgun \Cv[Assembled]\C-",             10000, -1, "NSSGX0", 27,  9);
             ITEMDATA_DEF("RLPlasmaticShrapnelAssaultShotgun",       "Plasmatic Assault Shotgun \Cv[Assembled]\C-",            8000, -1, "ASHOX0", 31, 27);
             ITEMDATA_DEF("RLPlasmaticShrapnelPlasmaShotgun",        "Overcharged Plasma Shotgun \Cv[Assembled]\C-",          22000, -1, "PSHOX0", 22, 14);
-            ITEMDATA_DEF("RLPlasmaticShrapnelHuntingShotgun",       "Plasmatic Hunting Shotgun \Ci[Superior]\C-",            36000, 12, "HUNTX0", 32, 12);
+            ITEMDATA_DEF("RLPlasmaticShrapnelHuntingShotgun",       "Plasmatic Hunting Shotgun \Cv[Assembled]\C-",           36000, -1, "HUNTX0", 32, 12);
             
             // Advanced Assembled Weapons
             ITEMDATA_DEF("RLDoubleChainsaw",                        "Double Chainsaw \Cv[Assembled]\C-",                      4500, -1, "DSAWX0", 31, 23);

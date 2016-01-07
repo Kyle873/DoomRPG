@@ -784,8 +784,8 @@ OptionalArgs(1) NamedScript void MonsterInitStats(int StatFlags)
     // Reinitialize the stats handler if recreation has occurred
     if (StatFlags & SF_RECREATE)
     {
-        Delay(1);
         Stats->NeedReinit = false;
+        Delay(1);
         MonsterStatsHandler();
     }
 }
@@ -902,6 +902,7 @@ NamedScript void MonsterStatsHandler()
     if (Stats->NeedReinit)
     {
         MonsterInitStats(SF_RECREATE);
+        TakeInventory("DRPGMonsterStatsHandler", 1);
         return;
     }
     

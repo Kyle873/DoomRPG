@@ -479,7 +479,7 @@ typedef enum
 #define NAME_MAX_MALE           56
 #define NAME_MAX_FEMALE         57
 #define NAME_MAX_LAST           97
-#define NAME_MAX_SUIT           4
+#define NAME_MAX_SUIT           5
 
 // --------------------------------------------------
 // Outpost
