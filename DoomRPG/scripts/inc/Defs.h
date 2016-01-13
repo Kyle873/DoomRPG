@@ -91,6 +91,7 @@
 #define MapSpecial      [[extern("ACS")]]
 #define Console         [[extern("ACS")]]
 #define KeyBind         [[extern("ACS"), script("Net")]]
+#define MenuEntry       [[extern("ACS"), script("Net")]]
 
 #define NumberedScript(N)       [[call("ScriptI"), address(N)]]
 #define NamedScript             [[call("ScriptS")]]
