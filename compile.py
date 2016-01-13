@@ -2,6 +2,23 @@
 
 import os, subprocess, sys
 
+TERMCAP_BOLD    = ""
+TERMCAP_WHITE   = ""
+TERMCAP_BLUE    = ""
+TERMCAP_RED     = ""
+TERMCAP_YELLOW  = ""
+TERMCAP_GREEN   = ""
+TERMCAP_RESET   = ""
+
+if sys.platform.startswith ("linux"):
+    TERMCAP_BOLD    = subprocess.check_output (("tput", "bold"), stderr=subprocess.STDOUT)
+    TERMCAP_WHITE   = subprocess.check_output (("tput", "setaf", "7"), stderr=subprocess.STDOUT)
+    TERMCAP_BLUE    = subprocess.check_output (("tput", "setaf", "4"), stderr=subprocess.STDOUT)
+    TERMCAP_RED     = subprocess.check_output (("tput", "setaf", "1"), stderr=subprocess.STDOUT)
+    TERMCAP_YELLOW  = subprocess.check_output (("tput", "setaf", "3"), stderr=subprocess.STDOUT)
+    TERMCAP_GREEN   = subprocess.check_output (("tput", "setaf", "2"), stderr=subprocess.STDOUT)
+    TERMCAP_RESET   = subprocess.check_output (("tput", "sgr0"), stderr=subprocess.STDOUT)
+
 # Add Utilities\GDCC to the list of directories to look for GDCC executables
 execpaths = os.environ["PATH"].split(os.pathsep)
 execpaths.append (os.path.join ("Utilities", "GDCC"))
@@ -65,18 +82,32 @@ def compile_objects (path):
                 commandline += OPTIONS
                 commandline += compileoptions
                 commandline += [filepath, objectpath]
-                print "- Compiling {}...".format (filename)
+                errormessage = ""
+                status = TERMCAP_BOLD + TERMCAP_GREEN + "OK" + TERMCAP_RESET
+                sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "{}".format (filename) + TERMCAP_RESET + "...")
+                sys.stdout.flush ()
                 try:
-                    out = subprocess.check_output (commandline, stderr=subprocess.STDOUT)
+                    out = subprocess.check_output (commandline, stderr=subprocess.STDOUT).strip()
                     if out:
-                        print "  - Compiler: {}".format (out)
+                        status = TERMCAP_BOLD + TERMCAP_YELLOW + "WARN" + TERMCAP_RESET
                         
                 except subprocess.CalledProcessError, err:
-                    print "  - Compile failed: \n    {}".format (err.output.strip())
+                    errormessage = err.output.strip()
+                    status = TERMCAP_BOLD + TERMCAP_RED + "FAIL" + TERMCAP_RESET
                     compile_failure = True
+                
+                finally:
+                    sys.stdout.write (status + "\n")
+                    sys.stdout.flush ()
+                    
+                    if out:
+                        print TERMCAP_BOLD + TERMCAP_YELLOW + "{}".format (out) + TERMCAP_RESET
+                    
+                    if errormessage:
+                        print TERMCAP_BOLD + TERMCAP_RED + "{}".format (errormessage) + TERMCAP_RESET
 
             else:
-                print "- {} is up to date.".format (filename)
+                print TERMCAP_BOLD + TERMCAP_BLUE + "{}".format (filename) + TERMCAP_RESET +  " is up to date."
             
             linkfiles.append (objectpath)
         
@@ -89,6 +120,8 @@ def link_library (objlist, libraryname):
     if not os.access (OUTPUTDIR, os.F_OK):
         os.mkdir (OUTPUTDIR)
     
+    errors = False
+    
     commandline = [LINKER]
     commandline += OPTIONS
     commandline += LINKEROPTIONS
@@ -98,15 +131,28 @@ def link_library (objlist, libraryname):
     commandline.append ("-o")
     commandline.append (os.path.join (OUTPUTDIR, libraryname))
 
-    print "+ Linking {}...".format (libraryname)
+    status = TERMCAP_BOLD + TERMCAP_GREEN + "OK" + TERMCAP_RESET
+    errormessage = ""
+    sys.stdout.write ("Linking {}...".format (libraryname))
+    sys.stdout.flush ()
     try:
         out = subprocess.check_output (commandline, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError, err:
+        status = TERMCAP_BOLD + TERMCAP_RED + "FAIL" + TERMCAP_RESET
+        out = ""
+        errormessage = err.output.strip()
+        errors = True
+    finally:
+        sys.stdout.write (status + "\n")
+        sys.stdout.flush ()
+        
         if out:
-            print "  - Linker: {}".format (out)
-            
-    except subprocess.CalledProcessError:
-        print "  - Link failed!"
-        raise
+            print TERMCAP_BOLD + TERMCAP_YELLOW + "{}".format (out) + TERMCAP_RESET
+        
+        if errormessage:
+            print TERMCAP_BOLD + TERMCAP_RED + "{}".format (errormessage) + TERMCAP_RESET
+    
+    return errors
 
 if __name__ == "__main__":
     if "clear" in sys.argv and os.access (OBJECTDIR, os.F_OK):
@@ -116,36 +162,36 @@ if __name__ == "__main__":
                 os.remove (os.path.join (OBJECTDIR, remname))
             except OSError: # Windows locked the file, don't caaaaare
                 pass
-    try:
-        final_objects = []
-        final_failure = False
-        failure, objects = compile_objects (LIBC_SOURCES)
-        final_objects += objects
-        if failure:
-            final_failure = True
+    
+    final_objects = []
+    final_failure = False
+    failure, objects = compile_objects (LIBC_SOURCES)
+    final_objects += objects
+    if failure:
+        final_failure = True
 
-        failure, objects = compile_objects (LIBGDCC_SOURCES)
-        final_objects += objects
-        if failure:
-            final_failure = True
+    failure, objects = compile_objects (LIBGDCC_SOURCES)
+    final_objects += objects
+    if failure:
+        final_failure = True
 
-        failure, objects = compile_objects (ACS_SOURCES)
-        final_objects += objects
-        if failure:
-            final_failure = True
+    failure, objects = compile_objects (ACS_SOURCES)
+    final_objects += objects
+    if failure:
+        final_failure = True
 
-        if final_failure:
-            print "X Errors were detected while attempting to compile."
-            print "X Review the errors, and press return to exit."
-            raw_input ("")
-            raise SystemExit
-        
-        link_library (objects, "DoomRPG.lib")
-        print "* Done! Press return to exit."
+    if final_failure:
+        print "X Errors were detected while attempting to compile."
+        print "X Review the errors, and press return to exit."
         raw_input ("")
-        
-    except subprocess.CalledProcessError, err:
-        print "X An error occurred while attempting to link:"
-        print "  {}".format (err.output.strip ())
-        print "X Review the error above, and press return to exit."
+        raise SystemExit
+    
+    final_failure = link_library (objects, "DoomRPG.lib")
+    if not final_failure:
+        print "Done! Press return to exit."
         raw_input ("")
+        raise SystemExit
+    else:
+        print "There were errors.\nPlease review above, then press return to exit."
+        raw_input ("")
+        raise SystemExit
