@@ -58,6 +58,7 @@ def run_command_status (commandline):
         output = subprocess.check_output (commandline, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError, err:
         output = err.output
+        output = output + "\nERROR: Program quit with error code {}".format (err.returncode)
         
     warningoutput = warning_regex.findall (output)
     if warningoutput:
