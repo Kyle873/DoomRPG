@@ -1,6 +1,9 @@
 #!python2.7
 
-import os, subprocess, sys
+import os, subprocess, sys, re
+
+warning_regex = re.compile ("^WARNING:.*$", re.MULTILINE)
+error_regex = re.compile ("^ERROR:.*$", re.MULTILINE)
 
 TERMCAP_BOLD    = ""
 TERMCAP_WHITE   = ""
@@ -19,13 +22,14 @@ if not sys.platform.startswith ("win32"):
     TERMCAP_GREEN   = subprocess.check_output (("tput", "setaf", "2"), stderr=subprocess.STDOUT)
     TERMCAP_RESET   = subprocess.check_output (("tput", "sgr0"), stderr=subprocess.STDOUT)
 else:
-    subprocess.check_output (("color", "1F"))
+    subprocess.call (("color", "1F"))
 
 # Add Utilities\GDCC to the list of directories to look for GDCC executables
 execpaths = os.environ["PATH"].split(os.pathsep)
 execpaths.append (os.path.join ("Utilities", "GDCC"))
 os.environ["PATH"] = os.pathsep.join (execpaths)
 
+STD_COMPILER = "gdcc-makelib"
 C_COMPILER   = "gdcc-cc"
 ASM_COMPILER = "gdcc-as"
 LINKER       = "gdcc-ld"
@@ -45,6 +49,38 @@ LINKEROPTIONS = []
 
 OBJECTDIR = os.path.join ("IR")
 OUTPUTDIR = os.path.join ("DoomRPG", "acs")
+
+def run_command_status (commandline):
+    status = TERMCAP_BOLD + TERMCAP_GREEN + "OK" + TERMCAP_RESET
+    errors = False
+    output = ""
+    try:
+        output = subprocess.check_output (commandline, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError, err:
+        output = err.output
+        
+    warningoutput = warning_regex.findall (output)
+    if warningoutput:
+        status = TERMCAP_BOLD + TERMCAP_YELLOW + "WARN" + TERMCAP_RESET
+    
+    erroroutput = error_regex.findall (output)
+    if erroroutput:
+        status = TERMCAP_BOLD + TERMCAP_RED + "FAIL" + TERMCAP_RESET
+        errors = True
+    
+    sys.stdout.write (status + "\n")
+    sys.stdout.flush ()
+    
+    # Write the warnings first since they're not as important
+    for warning in warningoutput:
+        sys.stdout.write (TERMCAP_BOLD + TERMCAP_YELLOW + warning + TERMCAP_RESET + "\n")
+    
+    for error in erroroutput:
+        sys.stdout.write (TERMCAP_BOLD + TERMCAP_RED + error + TERMCAP_RESET + "\n")
+    
+    sys.stdout.flush ()
+    
+    return errors
 
 def compile_objects (path):
     """Compiles a list of all files in <path> into IR objects, then returns the
@@ -84,30 +120,11 @@ def compile_objects (path):
                 commandline += OPTIONS
                 commandline += compileoptions
                 commandline += [filepath, objectpath]
-                errormessage = ""
-                status = TERMCAP_BOLD + TERMCAP_GREEN + "OK" + TERMCAP_RESET
+                
                 sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "{}".format (filename) + TERMCAP_RESET + "...")
                 sys.stdout.flush ()
-                try:
-                    out = subprocess.check_output (commandline, stderr=subprocess.STDOUT).strip()
-                    if out:
-                        status = TERMCAP_BOLD + TERMCAP_YELLOW + "WARN" + TERMCAP_RESET
-                        
-                except subprocess.CalledProcessError, err:
-                    out = ""
-                    errormessage = err.output.strip()
-                    status = TERMCAP_BOLD + TERMCAP_RED + "FAIL" + TERMCAP_RESET
-                    compile_failure = True
                 
-                finally:
-                    sys.stdout.write (status + "\n")
-                    sys.stdout.flush ()
-                    
-                    if out:
-                        print TERMCAP_BOLD + TERMCAP_YELLOW + "{}".format (out) + TERMCAP_RESET
-                    
-                    if errormessage:
-                        print TERMCAP_BOLD + TERMCAP_RED + "{}".format (errormessage) + TERMCAP_RESET
+                compile_failure = run_command_status (commandline)
 
             else:
                 print TERMCAP_BOLD + TERMCAP_BLUE + "{}".format (filename) + TERMCAP_RESET +  " is up to date."
@@ -130,34 +147,19 @@ def link_library (objlist, libraryname):
     commandline += LINKEROPTIONS
     for objectfile in objlist:
         commandline.append (objectfile)
-
+    
     commandline.append ("-o")
     commandline.append (os.path.join (OUTPUTDIR, libraryname))
-
-    status = TERMCAP_BOLD + TERMCAP_GREEN + "OK" + TERMCAP_RESET
-    errormessage = ""
+    
     sys.stdout.write ("Linking " + TERMCAP_BOLD + TERMCAP_BLUE + "{}".format (libraryname) + TERMCAP_RESET + "...")
     sys.stdout.flush ()
-    try:
-        out = subprocess.check_output (commandline, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError, err:
+    
+    errors = run_command_status (commandline)
+    if errors:
         try:
             os.remove (os.path.join (OUTPUTDIR, libraryname)) # Don't leave behind a partially-built library
         except OSError:
             pass
-        status = TERMCAP_BOLD + TERMCAP_RED + "FAIL" + TERMCAP_RESET
-        out = ""
-        errormessage = err.output.strip()
-        errors = True
-    finally:
-        sys.stdout.write (status + "\n")
-        sys.stdout.flush ()
-        
-        if out:
-            print TERMCAP_BOLD + TERMCAP_YELLOW + "{}".format (out) + TERMCAP_RESET
-        
-        if errormessage:
-            print TERMCAP_BOLD + TERMCAP_RED + "{}".format (errormessage) + TERMCAP_RESET
     
     return errors
 
@@ -166,6 +168,8 @@ def pause_if_necessary ():
         subprocess.check_output (("pause",))
 
 if __name__ == "__main__":
+    failure = False
+    objects = []
     if "clear" in sys.argv and os.access (OBJECTDIR, os.F_OK):
         print ("Starting a new clean compile")
         for remname in os.listdir (OBJECTDIR):
@@ -174,28 +178,19 @@ if __name__ == "__main__":
             except OSError: # Windows locked the file, don't caaaaare
                 pass
     
-    final_objects = []
-    final_failure = False
-    failure, objects = compile_objects (LIBC_SOURCES)
-    final_objects += objects
-    if failure:
-        final_failure = True
-
-    failure, objects = compile_objects (LIBGDCC_SOURCES)
-    final_objects += objects
-    if failure:
-        final_failure = True
-
-    failure, objects = compile_objects (ACS_SOURCES)
-    final_objects += objects
-    if failure:
-        final_failure = True
-
-    if not final_failure:
-        final_failure = link_library (objects, "DoomRPG.lib")
+    sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "GDCC libraries" + TERMCAP_RESET + "...")
+    status = TERMCAP_BOLD + TERMCAP_GREEN + "OK" + TERMCAP_RESET
+    failure = run_command_status ((STD_COMPILER, os.path.join (OBJECTDIR, "gdcc.obj")))
     
-    print "Finished compiling."
-    if final_failure:
-        print "There were errors. Please review the messages above."
+    if not failure:
+        failure, tobjects = compile_objects (ACS_SOURCES)
+
+    if not failure:
+        failure = link_library (objects, "DoomRPG.lib")
+    
+    if not failure:
+        print TERMCAP_BOLD + TERMCAP_GREEN + "Finished compiling." + TERMCAP_RESET
+    else:
+        print TERMCAP_BOLD + TERMCAP_RED + "There were errors. Please review the messages above." + TERMCAP_RESET
     
     pause_if_necessary ()
