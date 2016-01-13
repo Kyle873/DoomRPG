@@ -187,7 +187,6 @@ if __name__ == "__main__":
 
     if not failure:
         objects += tempobjs
-        print objects
         failure = link_library (objects, "DoomRPG.lib")
     
     if not failure:
