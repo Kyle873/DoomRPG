@@ -18,6 +18,8 @@ if sys.platform.startswith ("linux"):
     TERMCAP_YELLOW  = subprocess.check_output (("tput", "setaf", "3"), stderr=subprocess.STDOUT)
     TERMCAP_GREEN   = subprocess.check_output (("tput", "setaf", "2"), stderr=subprocess.STDOUT)
     TERMCAP_RESET   = subprocess.check_output (("tput", "sgr0"), stderr=subprocess.STDOUT)
+elif sys.platform.startswith ("win32"):
+    subprocess.check_output (("color", "1F"), stderr=subprocess.STDOUT)
 
 # Add Utilities\GDCC to the list of directories to look for GDCC executables
 execpaths = os.environ["PATH"].split(os.pathsep)
@@ -133,7 +135,7 @@ def link_library (objlist, libraryname):
 
     status = TERMCAP_BOLD + TERMCAP_GREEN + "OK" + TERMCAP_RESET
     errormessage = ""
-    sys.stdout.write ("Linking {}...".format (libraryname))
+    sys.stdout.write ("Linking " + TERMCAP_BOLD + TERMCAP_BLUE + "{}".format (libraryname) + TERMCAP_RESET + "...")
     sys.stdout.flush ()
     try:
         out = subprocess.check_output (commandline, stderr=subprocess.STDOUT)
