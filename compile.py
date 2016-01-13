@@ -179,14 +179,15 @@ if __name__ == "__main__":
                 pass
     
     sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "GDCC libraries" + TERMCAP_RESET + "...")
-    failure = run_command_status ((STD_COMPILER, os.path.join (OBJECTDIR, "gdcc.obj")))
+    failure = run_command_status ((STD_COMPILER, "-c", os.path.join (OBJECTDIR, "gdcc.obj")))
     
     if not failure:
-        objects.append ("gdcc.obj")
+        objects.append (os.path.join ("IR", "gdcc.obj"))
         failure, tempobjs = compile_objects (ACS_SOURCES)
 
     if not failure:
         objects += tempobjs
+        print objects
         failure = link_library (objects, "DoomRPG.lib")
     
     if not failure:
