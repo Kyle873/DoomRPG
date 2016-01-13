@@ -4,14 +4,14 @@
 #include "Defs.h"
 
 // Global Shop Card Rank
-extern int GlobalShopCard;
+extern RPGGlobal int GlobalShopCard;
 
 // Shop Special
-extern bool               ShopSpecialBought;
-extern int                ShopSpecialTimer;
-extern ItemInfo RPGGlobal *ShopSpecialItem;
+extern RPGGlobal bool        ShopSpecialBought;
+extern RPGGlobal int         ShopSpecialTimer;
+extern RPGGlobal ItemInfoPtr ShopSpecialItem;
 
-extern int MapRegister ShopSpotID;
+extern RPGMap int ShopSpotID;
 
 NamedScript MapSpecial void OpenShop(bool);
 

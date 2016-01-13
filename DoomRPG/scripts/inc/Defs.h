@@ -1,6 +1,10 @@
 #ifndef DOOMRPG_DEFS_H
 #define DOOMRPG_DEFS_H
 
+// Sanity pragmas
+#pragma GDCC STRENT_LITERAL ON
+#pragma GDCC FIXED_LITERAL  ON
+
 // We need this
 #define ACS_SHORT_NAMES
 
@@ -9,10 +13,6 @@
 #include <stdio.h>
 #include <stdfix.h>
 #include <limits.h>
-
-// Sanity pragmas
-#pragma GDCC STRENT_LITERAL ON
-#pragma GDCC FIXED_LITERAL  ON
 
 // Aliases
 #define EndHudMessage2      EndHudMessageX
@@ -113,6 +113,7 @@
 
 // Macro functions
 #define MAKE_ID(a, b, c, d) ((int)((a) | ((b) << 8) | ((c) << 16) | ((d) << 24)))
+#define NOP
 
 // Aliases
 #define CallACS(script)         ACS_NamedExecuteWithResult((script))

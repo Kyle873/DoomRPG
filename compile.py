@@ -43,7 +43,7 @@ ACS_INCLUDES = os.path.join ("DoomRPG", "scripts", "inc")
 # Compile options.
 OPTIONS = ['--bc-target=ZDoom']
 
-COMPILEROPTIONS = ['-i', ACS_INCLUDES]
+COMPILEROPTIONS = ['-i', ACS_INCLUDES, '--sys-include={}'.format (os.path.join ("Utilities", "GDCC", "lib", "inc", "C"))]
 ASSEMBLEROPTIONS = []
 LINKEROPTIONS = []
 
@@ -154,7 +154,7 @@ def link_library (objlist, libraryname):
     
     sys.stdout.write ("Linking " + TERMCAP_BOLD + TERMCAP_BLUE + "{}".format (libraryname) + TERMCAP_RESET + "...")
     sys.stdout.flush ()
-    
+
     errors = run_command_status (commandline)
     if errors:
         try:
@@ -179,11 +179,16 @@ if __name__ == "__main__":
             except OSError: # Windows locked the file, don't caaaaare
                 pass
     
-    sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "GDCC libraries" + TERMCAP_RESET + "...")
-    failure = run_command_status ((STD_COMPILER, "-c", os.path.join (OBJECTDIR, "gdcc.obj")))
+    sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "C libraries" + TERMCAP_RESET + "...")
+    failure = run_command_status ([STD_COMPILER] + OPTIONS + ["-c", "-o", os.path.join (OBJECTDIR, "libc.obj"), "libc"])
     
     if not failure:
-        objects.append (os.path.join ("IR", "gdcc.obj"))
+        objects.append (os.path.join ("IR", "libc.obj"))
+        sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "GDCC libraries" + TERMCAP_RESET + "...")
+        failure = run_command_status ([STD_COMPILER] + OPTIONS + ["-c", "-o", os.path.join (OBJECTDIR, "libGDCC.obj"), "libGDCC"])
+    
+    if not failure:
+        objects.append (os.path.join ("IR", "libGDCC.obj"))
         failure, tempobjs = compile_objects (ACS_SOURCES)
 
     if not failure:
