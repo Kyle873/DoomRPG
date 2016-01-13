@@ -22,7 +22,7 @@ if not sys.platform.startswith ("win32"):
     TERMCAP_GREEN   = subprocess.check_output (("tput", "setaf", "2"), stderr=subprocess.STDOUT)
     TERMCAP_RESET   = subprocess.check_output (("tput", "sgr0"), stderr=subprocess.STDOUT)
 else:
-    subprocess.call (("color", "1F"))
+    subprocess.call (("color", "1F"), shell=True)
 
 # Add Utilities\GDCC to the list of directories to look for GDCC executables
 execpaths = os.environ["PATH"].split(os.pathsep)
@@ -182,9 +182,11 @@ if __name__ == "__main__":
     failure = run_command_status ((STD_COMPILER, os.path.join (OBJECTDIR, "gdcc.obj")))
     
     if not failure:
-        failure, tobjects = compile_objects (ACS_SOURCES)
+        objects.append ("gdcc.obj")
+        failure, tempobjs = compile_objects (ACS_SOURCES)
 
     if not failure:
+        objects += tempobjs
         failure = link_library (objects, "DoomRPG.lib")
     
     if not failure:
