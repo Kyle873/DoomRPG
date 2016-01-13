@@ -109,6 +109,13 @@ def link_library (objlist, libraryname):
         raise
 
 if __name__ == "__main__":
+    if "clear" in sys.argv and os.access (OBJECTDIR, os.F_OK):
+        print ("Starting a new clean compile")
+        for remname in os.listdir (OBJECTDIR):
+            try:
+                os.remove (os.path.join (OBJECTDIR, remname))
+            except OSError: # Windows locked the file, don't caaaaare
+                pass
     try:
         final_objects = []
         final_failure = False
