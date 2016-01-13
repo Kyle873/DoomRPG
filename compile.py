@@ -140,6 +140,10 @@ def link_library (objlist, libraryname):
     try:
         out = subprocess.check_output (commandline, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError, err:
+        try:
+            os.remove (os.path.join (OUTPUTDIR, libraryname)) # Don't leave behind a partially-built library
+        except OSError:
+            pass
         status = TERMCAP_BOLD + TERMCAP_RED + "FAIL" + TERMCAP_RESET
         out = ""
         errormessage = err.output.strip()
@@ -183,8 +187,7 @@ if __name__ == "__main__":
         final_failure = True
 
     if final_failure:
-        print "X Errors were detected while attempting to compile."
-        print "X Review the errors, and press return to exit."
+        print "There were errors.\nPlease review above, then press return to exit."
         raw_input ("")
         raise SystemExit
     
