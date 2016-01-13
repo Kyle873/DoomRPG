@@ -179,7 +179,6 @@ if __name__ == "__main__":
                 pass
     
     sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "GDCC libraries" + TERMCAP_RESET + "...")
-    status = TERMCAP_BOLD + TERMCAP_GREEN + "OK" + TERMCAP_RESET
     failure = run_command_status ((STD_COMPILER, os.path.join (OBJECTDIR, "gdcc.obj")))
     
     if not failure:
