@@ -170,7 +170,7 @@ def pause_if_necessary ():
 if __name__ == "__main__":
     failure = False
     objects = []
-    if "clear" in sys.argv and os.access (OBJECTDIR, os.F_OK):
+    if "noclear" not in sys.argv and os.access (OBJECTDIR, os.F_OK):
         print ("Starting a new clean compile")
         for remname in os.listdir (OBJECTDIR):
             try:
