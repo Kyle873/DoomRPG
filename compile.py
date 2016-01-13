@@ -10,7 +10,7 @@ TERMCAP_YELLOW  = ""
 TERMCAP_GREEN   = ""
 TERMCAP_RESET   = ""
 
-if sys.platform.startswith ("linux"):
+if not sys.platform.startswith ("win32"):
     TERMCAP_BOLD    = subprocess.check_output (("tput", "bold"), stderr=subprocess.STDOUT)
     TERMCAP_WHITE   = subprocess.check_output (("tput", "setaf", "7"), stderr=subprocess.STDOUT)
     TERMCAP_BLUE    = subprocess.check_output (("tput", "setaf", "4"), stderr=subprocess.STDOUT)
@@ -18,8 +18,8 @@ if sys.platform.startswith ("linux"):
     TERMCAP_YELLOW  = subprocess.check_output (("tput", "setaf", "3"), stderr=subprocess.STDOUT)
     TERMCAP_GREEN   = subprocess.check_output (("tput", "setaf", "2"), stderr=subprocess.STDOUT)
     TERMCAP_RESET   = subprocess.check_output (("tput", "sgr0"), stderr=subprocess.STDOUT)
-elif sys.platform.startswith ("win32"):
-    subprocess.check_output (("color", "1F"), stderr=subprocess.STDOUT)
+else:
+    subprocess.check_output (("color", "1F"))
 
 # Add Utilities\GDCC to the list of directories to look for GDCC executables
 execpaths = os.environ["PATH"].split(os.pathsep)
@@ -94,6 +94,7 @@ def compile_objects (path):
                         status = TERMCAP_BOLD + TERMCAP_YELLOW + "WARN" + TERMCAP_RESET
                         
                 except subprocess.CalledProcessError, err:
+                    out = ""
                     errormessage = err.output.strip()
                     status = TERMCAP_BOLD + TERMCAP_RED + "FAIL" + TERMCAP_RESET
                     compile_failure = True
@@ -160,6 +161,10 @@ def link_library (objlist, libraryname):
     
     return errors
 
+def pause_if_necessary ():
+    if sys.platform.startswith ("win32"):
+        subprocess.check_output (("pause",))
+
 if __name__ == "__main__":
     if "clear" in sys.argv and os.access (OBJECTDIR, os.F_OK):
         print ("Starting a new clean compile")
@@ -186,17 +191,11 @@ if __name__ == "__main__":
     if failure:
         final_failure = True
 
-    if final_failure:
-        print "There were errors.\nPlease review above, then press return to exit."
-        raw_input ("")
-        raise SystemExit
-    
-    final_failure = link_library (objects, "DoomRPG.lib")
     if not final_failure:
-        print "Done! Press return to exit."
-        raw_input ("")
-        raise SystemExit
-    else:
-        print "There were errors.\nPlease review above, then press return to exit."
-        raw_input ("")
-        raise SystemExit
+        final_failure = link_library (objects, "DoomRPG.lib")
+    
+    print "Finished compiling."
+    if final_failure:
+        print "There were errors. Please review the messages above."
+    
+    pause_if_necessary ()
