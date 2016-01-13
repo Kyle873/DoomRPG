@@ -165,7 +165,7 @@ def link_library (objlist, libraryname):
 
 def pause_if_necessary ():
     if sys.platform.startswith ("win32"):
-        subprocess.check_output (("pause",))
+        subprocess.call (("pause",), shell=True)
 
 if __name__ == "__main__":
     failure = False
