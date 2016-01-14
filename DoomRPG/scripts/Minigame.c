@@ -7,7 +7,7 @@
 #include "RPG.h"
 #include "Utils.h"
 
-NamedScript MapSpecial void ItemRoulette(bool Rare)
+NamedScript void ItemRoulette(bool Rare)
 {
     ItemInfoPtr WheelItems[MAX_ROULETTE_ITEMS];
     bool Started = false;

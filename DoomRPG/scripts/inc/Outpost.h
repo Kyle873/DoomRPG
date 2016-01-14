@@ -6,53 +6,53 @@
 extern int OutpostNotoriety;
 
 // Spawn Spots and TIDs
-extern int MapRegister ShopSpecialTID;
-extern int MapRegister SecretTeleportTID;
-extern int MapRegister MarineSpotTID;
-extern int MapRegister NotorietySpotTID;
-extern int MapRegister MarineTID;
-extern int MapRegister MarineMaxTID;
-extern int MapRegister MarineBossTID;
-extern int MapRegister TurretTID;
-extern int MapRegister BossSpotTID;
-extern int MapRegister ForcefieldID;
-extern int MapRegister ForcefieldGeneratorID;
-extern int MapRegister GeneratorTID;
-extern int MapRegister EntrySectorID;
-extern int MapRegister HallTeleportSpotID;
-extern int MapRegister CameraTID;
-extern int MapRegister RiftSpotTID;
+extern int RPGMap ShopSpecialTID;
+extern int RPGMap SecretTeleportTID;
+extern int RPGMap MarineSpotTID;
+extern int RPGMap NotorietySpotTID;
+extern int RPGMap MarineTID;
+extern int RPGMap MarineMaxTID;
+extern int RPGMap MarineBossTID;
+extern int RPGMap TurretTID;
+extern int RPGMap BossSpotTID;
+extern int RPGMap ForcefieldID;
+extern int RPGMap ForcefieldGeneratorID;
+extern int RPGMap GeneratorTID;
+extern int RPGMap EntrySectorID;
+extern int RPGMap HallTeleportSpotID;
+extern int RPGMap CameraTID;
+extern int RPGMap RiftSpotTID;
 
 // Timers
-extern int MapRegister ForcefieldTimer;
+extern int RPGMap ForcefieldTimer;
 
 // Choices
-extern int MapRegister LevelChoice;
-extern int MapRegister SkillChoice;
-extern int MapRegister WaveChoice;
+extern int RPGMap LevelChoice;
+extern int RPGMap SkillChoice;
+extern int RPGMap WaveChoice;
 
 // Flags
-extern bool MapRegister MarinesHostile;
-extern bool MapRegister PowerOut;
-extern bool MapRegister BossDead;
-extern bool MapRegister Invasion;
+extern bool RPGMap MarinesHostile;
+extern bool RPGMap PowerOut;
+extern bool RPGMap BossDead;
+extern bool RPGMap Invasion;
 
 NamedScript void EnterOutpost();
-NamedScript void RegenArea(int);
-NamedScript void StimInjector();
-NamedScript void LevelTransport();
-NamedScript void SkillComputer();
-NamedScript void ToggleArena();
-NamedScript void PassArenaLine();
-NamedScript void SelectArenaWave();
-NamedScript void PissOffMarines(bool);
-NamedScript void ModuleConverter();
-NamedScript void CreditRoom(int);
-NamedScript void ShopSpecial();
-NamedScript void MissionBBS();
-NamedScript void MinigameHandler();
-NamedScript void OutpostSecret();
-NamedScript void PowerOutage();
+NamedScript MapSpecial void RegenArea(int);
+NamedScript MapSpecial void StimInjector();
+NamedScript MapSpecial void LevelTransport();
+NamedScript MapSpecial void SkillComputer();
+NamedScript MapSpecial void ToggleArena();
+NamedScript MapSpecial void PassArenaLine();
+NamedScript MapSpecial void SelectArenaWave();
+NamedScript MapSpecial void PissOffMarines(bool);
+NamedScript MapSpecial void ModuleConverter();
+NamedScript MapSpecial void CreditRoom(int);
+NamedScript MapSpecial void ShopSpecial();
+NamedScript MapSpecial void MissionBBS();
+NamedScript MapSpecial void MinigameHandler();
+NamedScript MapSpecial void OutpostSecret();
+NamedScript MapSpecial void PowerOutage();
 NamedScript void AlarmLoop();
 NamedScript void PlaceBoss();
 NamedScript void SpawnBoss();
