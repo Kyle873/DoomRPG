@@ -70,9 +70,6 @@ NamedScript Type_OPEN void GlobalInit()
         // Get the XP Curve from the CVAR
         XPCurve = GetCVar("drpg_xp_curve");
         
-        // Initial build of shield parts
-        BuildShieldParts();
-        
         // Initial build of ItemData
         BuildItemData();
         

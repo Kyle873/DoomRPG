@@ -649,7 +649,7 @@ struct LevelInfo_S
     bool EventCompleted;
     
     // Megaboss Event
-    struct MegabossInfo_S *MegabossActor;
+    struct MegabossInfo_S const *MegabossActor;
     
     // Environmental Hazard Event
     int HazardLevel;
@@ -668,7 +668,7 @@ struct LevelInfo_S
     bool PowerGeneratorActive;
     
     // One Monster Event
-    struct MonsterInfo_S *SelectedMonster;
+    struct MonsterInfo_S const *SelectedMonster;
     
     // Hell Unleashed Event
     int HellUnleashedActive;

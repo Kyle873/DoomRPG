@@ -114,6 +114,7 @@
 // Macro functions
 #define MAKE_ID(a, b, c, d) ((int)((a) | ((b) << 8) | ((c) << 16) | ((d) << 24)))
 #define NOP
+#define BLANKDYNAMICARRAY(arr) { arr.Name = ""; arr.Position = 0; arr.Size = 0; arr.ItemSize = 0; arr.Data = NULL; }
 
 // Aliases
 #define CallACS(script)         ACS_NamedExecuteWithResult((script))
