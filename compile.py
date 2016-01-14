@@ -34,8 +34,7 @@ C_COMPILER   = "gdcc-cc"
 ASM_COMPILER = "gdcc-as"
 LINKER       = "gdcc-ld"
 
-LIBC_SOURCES    = os.path.join ("Utilities", "GDCC", "lib", "src", "libc")
-LIBGDCC_SOURCES = os.path.join ("Utilities", "GDCC", "lib", "src", "libGDCC")
+LIB_PATH = os.path.join ("Utilities", "GDCC", "lib")
 
 ACS_SOURCES  = os.path.join ("DoomRPG", "scripts")
 ACS_INCLUDES = os.path.join ("DoomRPG", "scripts", "inc")
@@ -43,7 +42,7 @@ ACS_INCLUDES = os.path.join ("DoomRPG", "scripts", "inc")
 # Compile options.
 OPTIONS = ['--bc-target=ZDoom']
 
-COMPILEROPTIONS = ['-i', ACS_INCLUDES, '--sys-include={}'.format (os.path.join ("Utilities", "GDCC", "lib", "inc", "C"))]
+COMPILEROPTIONS = ['-i', ACS_INCLUDES, '--lib-path={}'.format (LIB_PATH)]
 ASSEMBLEROPTIONS = []
 LINKEROPTIONS = []
 
