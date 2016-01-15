@@ -3,16 +3,16 @@
 
 #include "Defs.h"
 
-int RPGMap HealthBarID;
-fixed RPGMap HealthBarX;
-fixed RPGMap HealthBarY;
+extern int RPGMap HealthBarID;
+extern fixed RPGMap HealthBarX;
+extern fixed RPGMap HealthBarY;
 
-bool RPGMap HealthBarClipEnabled;
-fixed RPGMap HealthBarAlpha;
-int RPGMap HealthBarClipX;
-int RPGMap HealthBarClipY;
-int RPGMap HealthBarClipWidth;
-int RPGMap HealthBarClipHeight;
+extern bool RPGMap HealthBarClipEnabled;
+extern fixed RPGMap HealthBarAlpha;
+extern int RPGMap HealthBarClipX;
+extern int RPGMap HealthBarClipY;
+extern int RPGMap HealthBarClipWidth;
+extern int RPGMap HealthBarClipHeight;
 
 NamedScript void HealthBars();
 

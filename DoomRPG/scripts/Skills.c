@@ -2399,7 +2399,7 @@ NamedScript Console bool Transport(SkillLevelInfo *SkillLevel, void *Data)
             
             // Drawing
             SetFont("BIGFONT");
-            HudMessage("\Cd%N\C- has requested Transport\n\C-Players: %d (\Cd%d\C-/\Cg%d\C-)\n\n\Cd%K\C- to Approve\n\Cd%K\C- to Deny",
+            HudMessage("\Cd%tS\C- has requested Transport\n\C-Players: %d (\Cd%d\C-/\Cg%d\C-)\n\n\Cd%jS\C- to Approve\n\Cd%jS\C- to Deny",
                        PlayerNumber() + 1, Players, PlayersApprove, PlayersDeny, "+use", "+speed");
             EndHudMessageBold(HUDMSG_FADEOUT, MENU_ID, "White", 0.5, 0.75, 1.0, 4.0);
             

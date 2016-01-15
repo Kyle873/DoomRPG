@@ -3,12 +3,12 @@
 
 #include "Defs.h"
 
-str const CompoundNames[STIM_MAX];
-str const CompoundColors[STIM_MAX];
-int const StimStatsStart;
-int const StimStatsEnd;
-int const StimPowerupStart;
-int const StimPowerupEnd;
+extern str const CompoundNames[STIM_MAX];
+extern str const CompoundColors[STIM_MAX];
+extern int const StimStatsStart;
+extern int const StimStatsEnd;
+extern int const StimPowerupStart;
+extern int const StimPowerupEnd;
 
 NamedScript KeyBind OptionalArgs(1) void UseStim(bool);
 NamedScript DECORATE void TossStim();

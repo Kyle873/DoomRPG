@@ -193,25 +193,25 @@ void ShopLoop()
     if (Player.LockerMode)
     {
         // Title and Page
-        HudMessage("\ChLocker \C-- %s\C- \Cd(%d/%d)", ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories);
+        HudMessage("\ChLocker \C-- %S\C- \Cd(%d/%d)", ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", 24.1, 24.0, 0.05);
         
         // EP Cost/Inventory Count
         if (GetCVar("drpg_inv_capacity"))
         {
-            HudMessage("%s%d EP \C-(Inventory: %d/%d)", (CurrentLevel->UACBase ? "\Cc" : "\Cn"), LOCKER_EPRATE, Player.InvItems, CheckInventoryMax());
+            HudMessage("%S%d EP \C-(Inventory: %d/%d)", (CurrentLevel->UACBase ? "\Cc" : "\Cn"), LOCKER_EPRATE, Player.InvItems, CheckInventoryMax());
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 24.1, 38.0, 0.05);
         }
         else
         {
-            HudMessage("%s%d EP", (CurrentLevel->UACBase ? "\Cc" : "\Cn"), LOCKER_EPRATE);
+            HudMessage("%S%d EP", (CurrentLevel->UACBase ? "\Cc" : "\Cn"), LOCKER_EPRATE);
             EndHudMessage(HUDMSG_PLAIN, 0, "Gold", 24.1, 38.0, 0.05);
         }
     }
     else
     {
         // Title and Page
-        HudMessage("\CfShop \C-- %s\C- \Cd(%d/%d)", ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories);
+        HudMessage("\CfShop \C-- %S\C- \Cd(%d/%d)", ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", 24.1, 24.0, 0.05);
         
         // Price
@@ -591,15 +591,15 @@ void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
                 
                 // Store the weapons modpack data
                 /*
-                Player.WeaponMods[Index][0] = CheckInventory(StrParam("%sModLimit", ItemPtr->Actor));
-                Player.WeaponMods[Index][1] = CheckInventory(StrParam("%sPowerMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][2] = CheckInventory(StrParam("%sBulkMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][3] = CheckInventory(StrParam("%sAgilityMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][4] = CheckInventory(StrParam("%sTechnicalMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][5] = CheckInventory(StrParam("%sSniperMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][6] = CheckInventory(StrParam("%sFirestormMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][7] = CheckInventory(StrParam("%sNanoMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][8] = CheckInventory(StrParam("%sDemonArtifacts", ItemPtr->Actor));
+                Player.WeaponMods[Index][0] = CheckInventory(StrParam("%SModLimit", ItemPtr->Actor));
+                Player.WeaponMods[Index][1] = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
+                Player.WeaponMods[Index][2] = CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor));
+                Player.WeaponMods[Index][3] = CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor));
+                Player.WeaponMods[Index][4] = CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor));
+                Player.WeaponMods[Index][5] = CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
+                Player.WeaponMods[Index][6] = CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
+                Player.WeaponMods[Index][7] = CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
+                Player.WeaponMods[Index][8] = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
                 */
                 
                 // Check DRLA set bonuses
@@ -653,17 +653,17 @@ void WithdrawItem(int Page, int Index)
             if (Player.WeaponMods[Player.ShopIndex].Total > 0 || Player.WeaponMods[Player.ShopIndex].Artifacts > 0) // Weapon was modded
             {
                 // Re-add the mods onto the weapon
-                SpawnForced(StrParam("%sPickupModded", ItemPtr->Actor), GetActorX(0), GetActorY(0), GetActorZ(0), WeaponTID, 0);
+                SpawnForced(StrParam("%SPickupModded", ItemPtr->Actor), GetActorX(0), GetActorY(0), GetActorZ(0), WeaponTID, 0);
                 
-                GiveActorInventory(WeaponTID, StrParam("%sModLimit", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Total);
-                GiveActorInventory(WeaponTID, StrParam("%sPowerMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Power);
-                GiveActorInventory(WeaponTID, StrParam("%sBulkMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Bulk);
-                GiveActorInventory(WeaponTID, StrParam("%sAgilityMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Agility);
-                GiveActorInventory(WeaponTID, StrParam("%sTechnicalMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Technical);
-                GiveActorInventory(WeaponTID, StrParam("%sSniperMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Sniper);
-                GiveActorInventory(WeaponTID, StrParam("%sFirestormMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Firestorm);
-                GiveActorInventory(WeaponTID, StrParam("%sNanoMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Nano);
-                GiveActorInventory(WeaponTID, StrParam("%sDemonArtifacts", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Artifacts);
+                GiveActorInventory(WeaponTID, StrParam("%SModLimit", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Total);
+                GiveActorInventory(WeaponTID, StrParam("%SPowerMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Power);
+                GiveActorInventory(WeaponTID, StrParam("%SBulkMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Bulk);
+                GiveActorInventory(WeaponTID, StrParam("%SAgilityMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Agility);
+                GiveActorInventory(WeaponTID, StrParam("%STechnicalMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Technical);
+                GiveActorInventory(WeaponTID, StrParam("%SSniperMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Sniper);
+                GiveActorInventory(WeaponTID, StrParam("%SFirestormMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Firestorm);
+                GiveActorInventory(WeaponTID, StrParam("%SNanoMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Nano);
+                GiveActorInventory(WeaponTID, StrParam("%SDemonArtifacts", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Artifacts);
             }
             else
             {
@@ -816,7 +816,7 @@ void DrawItemGrid()
             if (Player.ShopIndex == Index)
             {
                 SetFont("BIGFONT");
-                HudMessage("%s", Name);
+                HudMessage("%S", Name);
                 EndHudMessage(HUDMSG_PLAIN, 0, ((!Player.LockerMode && CanAfford) || Player.LockerMode ? "White" : "Red"), 24.1, 344.1, 0.05);
             }
             

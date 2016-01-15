@@ -3,10 +3,10 @@
 
 #include "Defs.h"
 
-long long int XPCurve;
+extern long long int XPCurve;
 
-int const SoftStatCap;
-int const HardStatCap;
+extern int const SoftStatCap;
+extern int const HardStatCap;
 
 extern long long int XPTable[MAX_LEVEL];
 extern long long int *StatTable;

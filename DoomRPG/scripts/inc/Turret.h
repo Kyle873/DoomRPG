@@ -3,7 +3,7 @@
 
 #include "Defs.h"
 
-TurretUpgrade RPGMap TurretUpgradeData[MAX_UPGRADES];
+extern TurretUpgrade RPGMap TurretUpgradeData[MAX_UPGRADES];
 
 NamedScript Type_ENTER void TurretCommandWheel();
 NamedScript void TurretSetOffset(int, int, int);

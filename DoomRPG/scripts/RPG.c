@@ -66,7 +66,7 @@ NamedScript Type_OPEN void GlobalInit()
     if (!GlobalsInitialized)
     {
         // Version Info
-        Log("\CnDoom RPG %s (Compiled on %s at %s) loaded!", Version, __DATE__, __TIME__);
+        Log("\CnDoom RPG %S (Compiled on %S at %S) loaded!", Version, __DATE__, __TIME__);
         
         // Compatibility checking
         CheckCompatibility();
@@ -677,7 +677,7 @@ NamedScript void GiveTip()
         
         // Skills
         { "\CnEP",                              "Energy Points are needed in order to use skills. They can also be used to charge your Shield and to deposit and withdraw items from your personal locker while not in the Outpost.", },
-        { "\CnOverdrive",                       StrParam("You can Overdrive a skill by holding the \Cd%K\C- button. Doing this will always use the skill, regardless of it's EP cost. However, this will bring your current EP into the negatives. When negative, you will suffer stat penalties and not be able to use any skills until your EP is restored past 0.", "+speed"), },
+        { "\CnOverdrive",                       StrParam("You can Overdrive a skill by holding the \Cd%jS\C- button. Doing this will always use the skill, regardless of it's EP cost. However, this will bring your current EP into the negatives. When negative, you will suffer stat penalties and not be able to use any skills until your EP is restored past 0.", "+speed"), },
         { "\CnAuras",                           "Auras are special passive abilities you can activate to give you temporary boosts to your stats. Auras will also affect teammates within it's radius, determined by your Energy stat", },
         
         // Augmentations
@@ -703,8 +703,8 @@ NamedScript void GiveTip()
         // Turrets
         { "\CdTurrets",                         "Turrets are portable sentry drones which can be built and equipped with multiple offensive and defensive upgrades and abilities to aid the user. Turrets must initially be built from turret parts, at which point the turret may be used and upgraded further as more parts become available.", },
         { "\CdDestroyed Turrets",               "In the world, you will find destroyed turrets. These turrets can be scavenged for spare turret parts. Some turrets will be in better condition than others, allowing for more parts to be scavenged.", },
-        { "\CdTurret Maintenance",              StrParam("Your turret will need routine maintenance performed on it in order to keep it in working condition. There are three components to maintenance: charging, repairing and refitting. Charging will charge the turret's internal battery, allowing it to stay active on the field. Repairing will patch up the turret, restoring it's health. Refitting occurs when upgrades are performed on the turret, and must be allowed to finish before the turret can be used again. In order for maintenance to begin and to continue, a steady supply of Credits will be deducted from your account. To send the turret in for maintenance, in either the turret menu or with the turret command wheel open, press \Cd%K\C-.", "+speed"), },
-        { "\CdTurret Deployment",               StrParam("To quickly deploy or deactivate your turret, use \Cd%K\C- + \Cd%K\C-.", "+speed", "+user2"), },
+        { "\CdTurret Maintenance",              StrParam("Your turret will need routine maintenance performed on it in order to keep it in working condition. There are three components to maintenance: charging, repairing and refitting. Charging will charge the turret's internal battery, allowing it to stay active on the field. Repairing will patch up the turret, restoring it's health. Refitting occurs when upgrades are performed on the turret, and must be allowed to finish before the turret can be used again. In order for maintenance to begin and to continue, a steady supply of Credits will be deducted from your account. To send the turret in for maintenance, in either the turret menu or with the turret command wheel open, press \Cd%jS\C-.", "+speed"), },
+        { "\CdTurret Deployment",               StrParam("To quickly deploy or deactivate your turret, use \Cd%jS\C- + \Cd%jS\C-.", "+speed", "+user2"), },
         
         // Monsters
         { "\CgMonster Stats",                   "Like you, monsters also have a level and stats which will affect their abilities in various ways.", },
@@ -748,7 +748,7 @@ NamedScript void GiveTip()
         
         // Shop/Locker
         { "\CfShop",                            "The shop is where you can go to purchase and sell the various equipment and items you can find during the game. The shop also contains a locker system, where you may withdraw and deposit items for later usage.", },
-        { "\ChLocker",                          StrParam("You can access the locker system via the shop and deposit/withdraw your items there. Withdrawing and depositing items has a 1%% cost to your EP per use outside the Outpost. You can switch between the shop and locker using the \Cd%K\C- key.", "+jump"), },
+        { "\ChLocker",                          StrParam("You can access the locker system via the shop and deposit/withdraw your items there. Withdrawing and depositing items has a 1%% cost to your EP per use outside the Outpost. You can switch between the shop and locker using the \Cd%jS\C- key.", "+jump"), },
         { "\CfShop Cards",                      "While playing, you may find UAC cards which provide you with a discount as well as other benefits. Finding a new card will replace your old card with the upgraded version. Discount benefits from a card will only apply when shopping at the Outpost.", },
         
         // Level Events
@@ -802,15 +802,15 @@ NamedScript void GiveTip()
     
     SetHudSize(0, 0, false);
     // Shove it in the console as one line
-    HudMessage("%s\n\n\C-%s", TipTitle, TipText);
+    HudMessage("%S\n\n\C-%S", TipTitle, TipText);
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 9998, "White", 0, 0, 1);
     HudMessage("");
     EndHudMessage(HUDMSG_PLAIN, 9998, "White", 0, 0, 1);
     SetFont("BIGFONT");
-    HudMessage("%s", TipTitle);
+    HudMessage("%S", TipTitle);
     EndHudMessage(HUDMSG_FADEOUT, MAKE_ID('1','T','I','P'), "White", 0.5, 0.7, HoldTime, 3.0);
     SetFont("SMALLFONT");
-    HudMessage("%s", TipText);
+    HudMessage("%S", TipText);
     EndHudMessage(HUDMSG_FADEOUT, MAKE_ID('2','T','I','P'), "White", 1.5, -0.725, HoldTime, 3.0);
 }
 
@@ -1009,7 +1009,7 @@ NamedScript Type_OPEN void ShopSpecialHandler()
             if (ShopSpecialItem == GetBlankItem())
                 Log("\CdDEBUG: Shop Special expired! \CaNo new item generated");
             else
-                Log("\CdDEBUG: Shop Special expired! Now \Cj%s", ShopSpecialItem->Name);
+                Log("\CdDEBUG: Shop Special expired! Now \Cj%S", ShopSpecialItem->Name);
         }
     }
     
@@ -1117,7 +1117,7 @@ NamedScript DECORATE void ItemInit()
         if (ItemTIDs[i] == -1)
         {
             //if (GetCVar("drpg_debug"))
-            //    Log("\CdDEBUG: \C-Item \Cd%s\C- added (Index \Cd%d\C-)", GetActorClass(0), i);
+            //    Log("\CdDEBUG: \C-Item \Cd%S\C- added (Index \Cd%d\C-)", GetActorClass(0), i);
             
             // Doesn't have a TID, so assign it one
             if (ActivatorTID() == 0)
@@ -1140,7 +1140,7 @@ NamedScript Console void ItemDump()
     for (int i = 0; i < MAX_ITEMS; i++)
     {
         if (ItemTIDs[i] == -1) break;
-        Log("\Cd%d\C-: \Cd%s", i, GetActorClass(ItemTIDs[i]));
+        Log("\Cd%d\C-: \Cd%S", i, GetActorClass(ItemTIDs[i]));
     }
     
     Log("\Cd  ===== ITEM ARRAY DATA END =====");
@@ -1263,7 +1263,7 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
         
         if (GetCVar("drpg_debug"))
         {
-            HudMessage("\CfGenerating Loot\n\Cd%d \Cj/ \Cd%d\n\n\CdActor: \C-%s\n\CdIteration: %d\n\CiBoundaries: %k-%k, %k-%k\n\nX: %k\nY: %k\nZ: %k", Items, MaxItems, Actor, Iterations, LowerX, UpperX, LowerY, UpperY, X, Y, Z);
+            HudMessage("\CfGenerating Loot\n\Cd%d \Cj/ \Cd%d\n\n\CdActor: \C-%S\n\CdIteration: %d\n\CiBoundaries: %k-%k, %k-%k\n\nX: %k\nY: %k\nZ: %k", Items, MaxItems, Actor, Iterations, LowerX, UpperX, LowerY, UpperY, X, Y, Z);
             EndHudMessage(HUDMSG_FADEOUT, MAKE_ID('L', 'O', 'O', 'T'), "White", 1.5, 0.8, 1.5, 0.5);
         }
         
@@ -1272,14 +1272,14 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
         if (Iterations == 8000) // Trick to restart ourselves if we ran out of iterations
         {
             if (GetCVar("drpg_debug"))
-                Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%s\C- and is restarting to place more", Items, Actor);
+                Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%S\C- and is restarting to place more", Items, Actor);
             DynamicLootGenerator(Actor, MaxItems - Items);
             return;
         }
     }
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%s", Items, Actor);
+        Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%S", Items, Actor);
 }
 
 // Quick Heal

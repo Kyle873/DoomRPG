@@ -488,14 +488,14 @@ void CheckStim()
                     i != STIM_ADRENALINE &&
                     i != STIM_RAGE &&
                     i != STIM_MAGNETIC)
-                    GiveInventory(StrParam("%s", StimPowerupActors[i - StimPowerupStart]), 1);
+                    GiveInventory(StrParam("%S", StimPowerupActors[i - StimPowerupStart]), 1);
                 
                 Player.Stim.PowerupTimer[i]--;
             }
             
             // Time Freeze Handling
             if (i == STIM_CHRONO && !IsPlayerMoving() && Player.Stim.PowerupTimer[i] > 0)
-                GiveInventory(StrParam("%s", StimPowerupActors[i - StimPowerupStart]), 1);
+                GiveInventory(StrParam("%S", StimPowerupActors[i - StimPowerupStart]), 1);
             
             // Regeneration Handling
             if (i == STIM_ADRENALINE && Player.Stim.PowerupTimer[i] > 0)

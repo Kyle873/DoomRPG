@@ -121,7 +121,7 @@ NamedScript void ItemRoulette(bool Rare)
         
         // Draw Name
         SetFont("BIGFONT");
-        HudMessage("%s", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
+        HudMessage("%S", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
         EndHudMessage(HUDMSG_PLAIN, 0, "White", 320, 240 + Radius + 32, 0.05);
         
         // Draw Box
@@ -253,7 +253,7 @@ NamedScript void ItemRoulette(bool Rare)
         {
             // Draw Name
             SetFont("BIGFONT");
-            HudMessage("%s", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
+            HudMessage("%S", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
             EndHudMessage(HUDMSG_FADEOUT, 0, (WheelItems[Selection] == GetBlankItem() ? "Red" : "Green"), 320, 240 + Radius + 32, 2.0, 1.0);
             
             // Draw Box

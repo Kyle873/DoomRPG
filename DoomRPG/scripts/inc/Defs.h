@@ -34,32 +34,22 @@
         __nprintf_str(__VA_ARGS__), \
         EndPrint() \
     )
-#define StrParam(...) \
-    ( \
-        BeginStrParam(), \
-        __nprintf_str(__VA_ARGS__), \
-        EndStrParam() \
-    )
 #define PrintSprite(spr, id, x, y, delay) \
     ( \
         SetFont(spr), \
-        HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, x, y, delay, 0.0, 0.0, 0.0, "A") \
+        HudMessage("A"), \
+        EndHudMessage(HUDMSG_PLAIN, id, "Untranslated", x, y, delay) \
     )
 #define ClearMessage(id) \
     ( \
-        HudMessage(HUDMSG_PLAIN, id, CR_UNTRANSLATED, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "") \
+        HudMessage(""), \
+        EndHudMessage(HUDMSG_PLAIN, id, "Untranslated", 0.0, 0.0, 0.0) \
     )
 #define Log(...) \
     ( \
         BeginLog(), \
         __nprintf_str(__VA_ARGS__), \
         EndLog() \
-    )
-#define PlayerName(n) \
-    ( \
-        BeginPrint(), \
-        PrintName(n), \
-        EndStrParam() \
     )
 
 // Script declaration stuff

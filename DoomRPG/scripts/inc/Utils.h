@@ -111,6 +111,7 @@ int HudMessage(str Format, ...);
 OptionalArgs(3) void EndHudMessageSelect(bool bold, int flags, int id, str color, fixed x, fixed y, fixed holdtime, fixed opt1, fixed opt2, fixed opt3);
 #define EndHudMessage(...) EndHudMessageSelect(false, __VA_ARGS__)
 #define EndHudMessageBold(...) EndHudMessageSelect(true, __VA_ARGS__)
+str StrParam(str Format, ...);
 
 NamedScript void PrintTextWiggle(char *, int, int, int, int, fixed, fixed, fixed, fixed);
 NamedScript void DrawStatUp(int);
@@ -144,7 +145,7 @@ fixed Distance(int, int);
 fixed Distance3D(fixed, fixed, fixed, fixed, fixed, fixed);
 fixed Distance2D(int, int, int, int);
 fixed Lerp(fixed, fixed, fixed);
-InterpData Interpolate(InterpData);
+void Interpolate(InterpData *);
 fixed Map(fixed, fixed, fixed, fixed, fixed);
 fixed Curve(fixed, fixed, fixed, fixed, fixed);
 fixed AltCurve(fixed, fixed, fixed, fixed, fixed);

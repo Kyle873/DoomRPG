@@ -1549,6 +1549,25 @@ OptionalArgs(3) void EndHudMessageSelect(bool bold, int flags, int id, str color
         EndHudMessageBold4 (opt1, opt2, opt3);
 }
 
+str StrParam(str Format, ...)
+{
+    va_list Args;
+    va_start (Args, Format);
+    
+    BeginStrParam();
+    __vnprintf_str(Format, Args);
+    
+    va_end (Args);
+    return EndStrParam();
+}
+
+str PlayerName(int n)
+{
+    BeginPrint();
+    PrintName(n);
+    return EndStrParam();
+}
+
 NamedScript void PrintTextWiggle(char *Text, int ID, int Color, int X, int Y, fixed HoldTime, fixed Speed, fixed Spacing, fixed Radius)
 {
     int Time = (int)(HoldTime * 35.0);
@@ -1599,7 +1618,7 @@ NamedScript void DrawStatUp(int Stat)
     
     // Log
     if (InMultiplayer)
-        Log("%N\C-'s %S\C- has increased to \C%c%d", PlayerNumber() + 1, StatNames[Stat], StatNames[Stat][1], StatAmount[Stat]);
+        Log("%tS\C-'s %S\C- has increased to \C%c%d", PlayerNumber() + 1, StatNames[Stat], StatNames[Stat][1], StatAmount[Stat]);
     else
         Log("Your %S\C- has increased to \C%c%d", StatNames[Stat], StatNames[Stat][1], StatAmount[Stat]);
     
@@ -2117,27 +2136,25 @@ fixed Lerp(fixed a, fixed b, fixed t)
     return ((1.0 - t) * a) + (t * b);
 }
 
-InterpData Interpolate(InterpData Data)
+void Interpolate(InterpData *Data)
 {
-    if (Data.Value != Data.OldValue)
+    if (Data->Value != Data->OldValue)
     {
-        Data.StartValue = Data.DisplayValue;
-        Data.TimerMax = Abs(Data.Value - Data.DisplayValue) * Data.TimerMaxCap;
-        if (Data.TimerMax > 35 * Data.TimerMaxCap)
-            Data.TimerMax = 35 * Data.TimerMaxCap;
-        Data.Timer = Data.TimerMax - 1;
+        Data->StartValue = Data->DisplayValue;
+        Data->TimerMax = Abs(Data->Value - Data->DisplayValue) * Data->TimerMaxCap;
+        if (Data->TimerMax > 35 * Data->TimerMaxCap)
+            Data->TimerMax = 35 * Data->TimerMaxCap;
+        Data->Timer = Data->TimerMax - 1;
     }
     
-    if (Data.Timer > 0)
+    if (Data->Timer > 0)
     {
-        long int Percent = (Data.TimerMax * Data.TimerMax) - (Data.Timer * Data.Timer);
-        Data.DisplayValue = Data.StartValue + (int)((long int)(Data.Value - Data.StartValue) * Percent / (Data.TimerMax * Data.TimerMax));
-        Data.Timer--;
+        long int Percent = (Data->TimerMax * Data->TimerMax) - (Data->Timer * Data->Timer);
+        Data->DisplayValue = Data->StartValue + (int)((long int)(Data->Value - Data->StartValue) * Percent / (Data->TimerMax * Data->TimerMax));
+        Data->Timer--;
     }
     else
-        Data.DisplayValue = Data.Value;
-    
-    return Data;
+        Data->DisplayValue = Data->Value;
 }
 
 /* Super SidDoyle Math Functions(TM)

@@ -75,7 +75,7 @@ void DrawBarText(HUDBarInfo *Info, str Text)
             
             if (HealthBarClipEnabled)
                 SetHudClipRect(X + HealthBarClipX, Y + HealthBarClipY, HealthBarClipWidth, HealthBarClipHeight);
-            HudMessage("%s", Text);
+            HudMessage("%S", Text);
             EndHudMessage(HUDMSG_FADEOUT | HUDMSG_ALPHA, HBAR_ID + HealthBarID++, "Untranslated", (int)X + HealthBarX, (int)Y + HealthBarY, 0.05, 0.1, HealthBarAlpha);
             SetHudClipRect(0, 0, 0, 0);
         }
@@ -93,7 +93,7 @@ void DrawBarText(HUDBarInfo *Info, str Text)
         SetHudSize(GetActivatorCVar("drpg_healthbars_width"), GetActivatorCVar("drpg_healthbars_height"), false);
         if (HealthBarClipEnabled)
             SetHudClipRect(X + HealthBarClipX, Y + HealthBarClipY, HealthBarClipWidth, HealthBarClipHeight);
-        HudMessage("%s", Text);
+        HudMessage("%S", Text);
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_ALPHA, HBAR_ID + HealthBarID++, "Untranslated", X + HealthBarX, Y + HealthBarY, 0.05, 0.1, HealthBarAlpha);
         SetHudClipRect(0, 0, 0, 0);
     }
@@ -159,7 +159,7 @@ NamedScript void HealthBars()
             Info.IsPlayer = true;
             
             Info.NameColor = "";
-            Info.Name = StrParam("%N", ID + 1);
+            Info.Name = StrParam("%tS", ID + 1);
             Info.Level = Players(ID).Level;
             Info.Rank = Players(ID).RankLevel;
             Info.Aura = Players(ID).Aura;
@@ -262,7 +262,7 @@ void DrawBarBase(HUDBarInfo *Info)
     if (GetActivatorCVar("drpg_healthbars_names"))
     {
         SetFont("BIGFONT");
-        DrawBarText(Info, StrParam("%s%s", Info->NameColor, Info->Name));
+        DrawBarText(Info, StrParam("%S%S", Info->NameColor, Info->Name));
     }
     
     HealthBarY += 24.0;

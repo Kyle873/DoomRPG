@@ -105,7 +105,7 @@ NamedScript MapSpecial void ArenaLoop()
             {
                 if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu)
                 {
-                    HudMessage("Press \Cd%K\C- to start the next wave\nPress \Cd%K\C- to exit the Arena", "+use" , "+speed");
+                    HudMessage("Press \Cd%jS\C- to start the next wave\nPress \Cd%jS\C- to exit the Arena", "+use" , "+speed");
                     EndHudMessage(HUDMSG_PLAIN, 0, "White", 1.5, 0.75, 0.05);
                 }
                 

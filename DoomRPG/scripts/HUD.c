@@ -90,11 +90,11 @@ NamedScript Type_ENTER void StatusEffectHUD()
             
             // Name / Intensity
             SetFont("SMALLFONT");
-            HudMessage("%s %s", StatusEffects[i], StatusNumerals[Player.StatusIntensity[i]]);
+            HudMessage("%S %S", StatusEffects[i], StatusNumerals[Player.StatusIntensity[i]]);
             EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA, 0, "White", X + 50.0, Y, 0.05, 0.75);
             
             // Time
-            HudMessage("%s", FormatTime(Player.StatusTimer[i]));
+            HudMessage("%S", FormatTime(Player.StatusTimer[i]));
             EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA, 0, StatusColors[i], X + 104.1, Y, 0.05, 0.75);
             
             // Bar
@@ -160,8 +160,8 @@ NamedScript Type_ENTER void CreditHUD()
     SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
     
     // Interpolation
-    Credits = Interpolate(Credits);
-    Modules = Interpolate(Modules);
+    Interpolate(&Credits);
+    Interpolate(&Modules);
     
     // Update the collection values
     if (Credits.Value != Credits.OldValue)
@@ -177,7 +177,7 @@ NamedScript Type_ENTER void CreditHUD()
     
     PrintSprite(CreditSprites[CreditColor], 0, X, Y + 12.0, 0.05);
     SetFont("BIGFONT");
-    HudMessage("%d", Credits.DisplayValue);
+    HudMessage("%ld", Credits.DisplayValue);
     EndHudMessage(HUDMSG_PLAIN, 0, "Gold", X + 16.1, Y, 0.05);
     if (CreditsCollected != 0)
     {
@@ -188,7 +188,7 @@ NamedScript Type_ENTER void CreditHUD()
     {
         PrintSprite("UMODA0", 0, X - 4.0, Y + 56.0, 0.05);
         SetFont("BIGFONT");
-        HudMessage("%d", Modules.DisplayValue);
+        HudMessage("%ld", Modules.DisplayValue);
         EndHudMessage(HUDMSG_PLAIN, 0, "Green", X + 16.1, Y + 24.0, 0.05);
         if (ModulesCollected != 0)
         {
@@ -244,10 +244,10 @@ NamedScript Type_ENTER void ComboHUD()
     Bonus.Value = Player.BonusGained;
     
     // Interpolation
-    Combo = Interpolate(Combo);
-    XP = Interpolate(XP);
-    Rank = Interpolate(Rank);
-    Bonus = Interpolate(Bonus);
+    Interpolate(&Combo);
+    Interpolate(&XP);
+    Interpolate(&Rank);
+    Interpolate(&Bonus);
     
     if (Player.Combo > 0 && Player.ComboTimer <= COMBO_MAX)
         TimerPercent = (int)(((fixed)Player.ComboTimer / (fixed)COMBO_MAX) * 100.0);
@@ -269,7 +269,7 @@ NamedScript Type_ENTER void ComboHUD()
     SetFont("BIGFONT");
     if (Combo.DisplayValue > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
-        HudMessage("%d", Combo.DisplayValue);
+        HudMessage("%ld", Combo.DisplayValue);
         EndHudMessage(HUDMSG_PLAIN, 0, "Purple", X + 0.1, Y + 10.0, 0.05);
     }
     if (XP.DisplayValue != 0 || GetActivatorCVar("drpg_hud_preview"))
@@ -363,7 +363,7 @@ NamedScript void StimHUD()
         
         // Time
         SetFont("BIGFONT");
-        HudMessage("%s", FormatTime(Player.Stim.Timer));
+        HudMessage("%S", FormatTime(Player.Stim.Timer));
         EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 110.1, Y, 0.05);
         
         // Icons
@@ -390,7 +390,7 @@ NamedScript void StimHUD()
                 TimerPercent = 100;
             
             SetFont("SMALLFONT");
-            HudMessage("%s", FormatTime(Player.Stim.PowerupTimer[i]));
+            HudMessage("%S", FormatTime(Player.Stim.PowerupTimer[i]));
             EndHudMessage(HUDMSG_PLAIN, 0, CompoundColors[i], X + 112.1, Y + 64.0, 0.05);
             DrawBar(StrParam("Stim%d", i + 1), X, Y + 64.0, TimerPercent, true);
             
@@ -432,7 +432,7 @@ NamedScript Type_ENTER void MissionHUD()
                 PrintSpriteFade(Player.Mission.Item->Sprite.Name, MISSION_ID + 1, X + Player.Mission.Item->Sprite.XOff - 40.0 + 0.4, Y + Player.Mission.Item->Sprite.YOff + 0.4, 2.0, 1.0);
                 break;
             case MT_KILL:
-                HudMessage("\Cg%s\n\C-%d / %d", Player.Mission.Monster->Name, Player.Mission.Current, Player.Mission.Amount);
+                HudMessage("\Cg%S\n\C-%d / %d", Player.Mission.Monster->Name, Player.Mission.Current, Player.Mission.Amount);
                 EndHudMessage(HUDMSG_FADEOUT, MISSION_ID, "Brick", X + 0.4, Y, 2.0, 1.0);
                 break;
             case MT_KILLAURAS:
@@ -491,7 +491,7 @@ NamedScript Type_ENTER void AuraTimerHUD()
         if (Player.Aura.Time > 0 || GetActivatorCVar("drpg_hud_preview"))
         {
             SetFont("BIGFONT");
-            HudMessage("%s", FormatTime(Player.Aura.Time));
+            HudMessage("%S", FormatTime(Player.Aura.Time));
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y, 0.05);
         }
         
@@ -542,7 +542,7 @@ NamedScript Type_ENTER void PowerupHUD()
     if (InvulnTime > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
-        HudMessage("%s", FormatTime(InvulnTime));
+        HudMessage("%S", FormatTime(InvulnTime));
         EndHudMessage(HUDMSG_PLAIN, 0, "Green", X, Y , 0.05);
         PrintSpritePulse("PINVA0", 0, X + 10.0, Y + 22.0, 0.75, 32.0, 0.25);
         X += 36.0;
@@ -569,7 +569,7 @@ NamedScript Type_ENTER void PowerupHUD()
             ActualInvisTime = GhostTime;
         
         SetFont("SMALLFONT");
-        HudMessage("%s", FormatTime(ActualInvisTime));
+        HudMessage("%S", FormatTime(ActualInvisTime));
         EndHudMessage(HUDMSG_PLAIN, 0, "LightBlue", X, Y, 0.05);
         PrintSpritePulse("PINSA0", 0, X + 10.0, Y + 38.0, 0.75, 32.0, 0.25);
         X += 36.0;
@@ -586,7 +586,7 @@ NamedScript Type_ENTER void PowerupHUD()
     if (FreezeTime > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
-        HudMessage("%s", FormatTime(FreezeTime));
+        HudMessage("%S", FormatTime(FreezeTime));
         EndHudMessage(HUDMSG_PLAIN, 0, "Green", X, Y, 0.05);
         PrintSpritePulse("TIMEA0", 0, X + 17.0, Y + 44.0, 0.75, 32.0, 0.25);
         X += 36.0;
@@ -602,7 +602,7 @@ NamedScript Type_ENTER void PowerupHUD()
     if (Player.RegenBoostTimer > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
-        HudMessage("%s", FormatTime(Player.RegenBoostTimer));
+        HudMessage("%S", FormatTime(Player.RegenBoostTimer));
         EndHudMessage(HUDMSG_PLAIN, 0, "Purple", X, Y, 0.05);
         PrintSpritePulse("REGNA0", 0, X + 12.0, Y + 37.0, 0.75, 32.0, 0.25);
         X += 36.0;
@@ -620,7 +620,7 @@ NamedScript Type_ENTER void PowerupHUD()
     if (LightAmpTime > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
-        HudMessage("%s", FormatTime(LightAmpTime));
+        HudMessage("%S", FormatTime(LightAmpTime));
         EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y, 0.05);
         PrintSpritePulse("PVISA0", 0, X + 13.0, Y + 8.0, 0.75, 32.0, 0.25);
         X += 36.0;
@@ -683,7 +683,7 @@ NamedScript Type_ENTER void PowerupHUD()
             Y = BaseY;
         }
         SetFont("SMALLFONT");
-        HudMessage("%s", FormatTime(IronFeetTime));
+        HudMessage("%S", FormatTime(IronFeetTime));
         EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y + 16.0, 0.05);
         PrintSpritePulse("SUITA0", 0, X + 10.0, Y + 66.0, 0.75, 32.0, 0.25);
         HaveIronFeet = true;
@@ -733,7 +733,7 @@ NamedScript Type_ENTER void EventHUD()
     if (CurrentLevel->Event == MAPEVENT_NUCLEARBOMB && CurrentLevel->BombTime > 0 && !CurrentLevel->EventCompleted)
     {
         SetFont("BIGFONT");
-        HudMessage("\CgT - %s", FormatTime(CurrentLevel->BombTime));
+        HudMessage("\CgT - %S", FormatTime(CurrentLevel->BombTime));
         EndHudMessage(HUDMSG_PLAIN, NUKE_ID, "Red", X + 0.1, Y + 0.1, 0.05);
         
         int KeyOffset = 0;
@@ -744,13 +744,13 @@ NamedScript Type_ENTER void EventHUD()
             
             // Timer
             SetFont("BIGFONT");
-            HudMessage("%s", FormatTime(CurrentLevel->BombKeyTimer[i]));
+            HudMessage("%S", FormatTime(CurrentLevel->BombKeyTimer[i]));
             EndHudMessage(HUDMSG_PLAIN, 0, (CurrentLevel->BombKeyDisarming[i] ? "Red" : "White"), X + (KeyOffset % 3 * 48.0), Y + 48.0 + (KeyOffset / 3 * 48.0), 0.05);
             
             // Key
             for (int j = 0; j < MAX_PLAYERS; j++)
                 if (CheckActorInventory(Players(j).TID, StrParam("DRPGNukeKey%d", i + 1)))
-                    PrintSprite(StrParam("%s", KeySprites[i]), 0, X - 12.0 + (KeyOffset % 3 * 48.0), Y + 52.0 + (KeyOffset / 3 * 48.0), 0.05);
+                    PrintSprite(StrParam("%S", KeySprites[i]), 0, X - 12.0 + (KeyOffset % 3 * 48.0), Y + 52.0 + (KeyOffset / 3 * 48.0), 0.05);
             
             // Icon
             PrintSprite(StrParam("E_NKEY%d", i + 1), 0, X + (KeyOffset % 3 * 48.0), Y + 34.0 + (KeyOffset / 3 * 48.0), 0.05);
@@ -780,7 +780,7 @@ NamedScript Type_ENTER void EventHUD()
         
         PrintSprite("RADMA0", 0, X + 33.1, Y + 56.1, 0.05);
         SetFont("SMALLFONT");
-        HudMessage("\CqToxicity: \Cd%d%%\n\CcGenerator status: %s \Ck(%s left)\n\CqSpare fuel tanks: \Cd%d", ((CurrentLevel->HazardLevel - 1) * 100) + CurrentLevel->RadLeft, GeneratorStatus, FormatTime(CurrentLevel->GeneratorFuel), CheckInventory("DRPGNeutralizerFuel"));
+        HudMessage("\CqToxicity: \Cd%d%%\n\CcGenerator status: %S \Ck(%S left)\n\CqSpare fuel tanks: \Cd%d", ((CurrentLevel->HazardLevel - 1) * 100) + CurrentLevel->RadLeft, GeneratorStatus, FormatTime(CurrentLevel->GeneratorFuel), CheckInventory("DRPGNeutralizerFuel"));
         EndHudMessage(HUDMSG_PLAIN, 0, "Red", X + 71.1, Y + 16.1, 0.05);
     }
     
@@ -801,7 +801,7 @@ NamedScript Type_ENTER void EventHUD()
     if (CurrentLevel->Event == MAPEVENT_DOOMSDAY)
     {
         SetFont("BIGFONT");
-        HudMessage("\CgDEATH IN %s", FormatTime(CurrentLevel->DoomTime));
+        HudMessage("\CgDEATH IN %S", FormatTime(CurrentLevel->DoomTime));
         EndHudMessage(HUDMSG_PLAIN, NUKE_ID, "Red", X + 0.1, Y + 0.1, 0.05);
     }
     
@@ -824,7 +824,7 @@ NamedScript Type_ENTER void CoopViewHUD()
         if (!Player.InMenu && !Player.InShop && !Player.OutpostMenu && !Player.InMinigame)
         {
             SetFont("BIGFONT");
-            HudMessage("%N", PlayerNumber() + 1);
+            HudMessage("%tS", PlayerNumber() + 1);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 8.0, 0.05);
             PrintSprite(StrParam("P%dSVIEW", Player.PlayerView + 1), 0, X + 0.1, Y + 0.1, 0.05);
         }
@@ -864,13 +864,13 @@ NamedScript void MultiplayerHUD()
             
             if (Players(i).Shield.Active)
             {
-                HudMessage("%N\C- (\Cv%d/%d\C-)", i + 1, Players(i).Shield.Charge, Players(i).Shield.Capacity);
+                HudMessage("%tS\C- (\Cv%d/%d\C-)", i + 1, Players(i).Shield.Charge, Players(i).Shield.Capacity);
                 EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA, 0, "White", X + 0.1, Y, 0.05, Alpha);
                 DrawBar("MPFill2", X, Y + 8.0, ShieldPercent, true);
             }
             else
             {
-                HudMessage("%N\C- (\Ca%d/%d\C-)", i + 1, Players(i).ActualHealth, Players(i).HealthMax);
+                HudMessage("%tS\C- (\Ca%d/%d\C-)", i + 1, Players(i).ActualHealth, Players(i).HealthMax);
                 EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA, 0, "White", X + 0.1, Y, 0.05, Alpha);
             }
             
@@ -921,7 +921,7 @@ NamedScript Type_ENTER void TurretHUD()
         Health.Value = Player.Turret.Health;
         
         // Interpolation
-        Health = Interpolate(Health);
+        Interpolate(&Health);
         
         // Determine Ammo Icon
         switch (Player.Turret.Weapon)
@@ -939,11 +939,11 @@ NamedScript Type_ENTER void TurretHUD()
             
             // Timers
             SetFont("BIGFONT");
-            HudMessage("%s", FormatTime(Player.Turret.ChargeTimer * 35));
+            HudMessage("%S", FormatTime(Player.Turret.ChargeTimer * 35));
             EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", X + 24.1, Y - 16.0, 0.05);
-            HudMessage("%s", FormatTime(Player.Turret.RepairTimer * 35));
+            HudMessage("%S", FormatTime(Player.Turret.RepairTimer * 35));
             EndHudMessage(HUDMSG_PLAIN, 0, (Player.Turret.PaidForRepair ? "Brick" : "Red"), X + 24.1, Y, 0.05);
-            HudMessage("%s", FormatTime(Player.Turret.RefitTimer * 35));
+            HudMessage("%S", FormatTime(Player.Turret.RefitTimer * 35));
             EndHudMessage(HUDMSG_PLAIN, 0, "LightBlue", X + 24.1, Y + 16.0, 0.05);
         }
         else if (!Player.Turret.Maintenance || GetActivatorCVar("drpg_hud_preview"))
@@ -955,9 +955,9 @@ NamedScript Type_ENTER void TurretHUD()
             
             // Health, Battery, Ammo
             SetFont("BIGFONT");
-            HudMessage("%d", Health.DisplayValue);
+            HudMessage("%ld", Health.DisplayValue);
             EndHudMessage(HUDMSG_PLAIN, 0, "Red", X + 24.1, Y - 16.0, 0.05);
-            HudMessage("%s", FormatTime(Player.Turret.Battery * 35));
+            HudMessage("%S", FormatTime(Player.Turret.Battery * 35));
             EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", X + 24.1, Y, 0.05);
             if (Player.Turret.Weapon != TW_NONE)
             {
@@ -1069,7 +1069,7 @@ NamedScript void DamageHUD(int Amount, bool Critical)
         {
             SetFont("BIGFONT");
             Color = "DarkRed";
-            Text = StrParam("%s\CrFATAL\n", Text);
+            Text = StrParam("%S\CrFATAL\n", Text);
             Time += 4.0;
         }
         
@@ -1077,7 +1077,7 @@ NamedScript void DamageHUD(int Amount, bool Critical)
         if (Critical)
         {
             SetFont("BIGFONT");
-            Text = StrParam("%s\CgCRITICAL\n", Text);
+            Text = StrParam("%S\CgCRITICAL\n", Text);
             Time += 1.0;
         }
         
@@ -1085,16 +1085,16 @@ NamedScript void DamageHUD(int Amount, bool Critical)
         if (Player.StatusTypeHUD >= 0)
         {
             SetFont("BIGFONT");
-            Text = StrParam("%s%s %s\n", Text, StatusEffects[Player.StatusTypeHUD], StatusNumerals[Player.StatusIntensity[Player.StatusTypeHUD]]);
+            Text = StrParam("%S%S %S\n", Text, StatusEffects[Player.StatusTypeHUD], StatusNumerals[Player.StatusIntensity[Player.StatusTypeHUD]]);
             Time += 1.0;
             Player.StatusTypeHUD = -1;
         }
         
         // Loss
-        Text = StrParam("%s%d", Text, Amount);
+        Text = StrParam("%S%d", Text, Amount);
         
         // Display
-        HudMessage("%s", Text);
+        HudMessage("%S", Text);
         EndHudMessage(HUDMSG_FADEOUT, 0, Color, 1.4 + RandomFixed(0.0, 0.4), 0.6 + RandomFixed(0.0, 0.3), 0.5, Time);
     }
 }
@@ -1227,18 +1227,18 @@ NamedScript Type_ENTER void DRLAHUD()
             if (CheckWeapon(ItemPtr->Actor))
             {
                 bool Duel = false;
-                str Name = StrParam("%s", ItemPtr->Name);
+                str Name = StrParam("%S", ItemPtr->Name);
                 str Color = "";
                 int TotalMax = 0;
-                int Total[2] = { CheckInventory(StrParam("%sModLimit", ItemPtr->Actor)), 0 };
-                int Power[2] = { CheckInventory(StrParam("%sPowerMod", ItemPtr->Actor)), 0 };
-                int Bulk[2] = { CheckInventory(StrParam("%sBulkMod", ItemPtr->Actor)), 0 };
-                int Agility[2] = { CheckInventory(StrParam("%sAgilityMod", ItemPtr->Actor)), 0 };
-                int Tech[2] = { CheckInventory(StrParam("%sTechnicalMod", ItemPtr->Actor)), 0 };
-                int Sniper[2] = { CheckInventory(StrParam("%sSniperMod", ItemPtr->Actor)), 0 };
-                int Firestorm[2] = { CheckInventory(StrParam("%sFirestormMod", ItemPtr->Actor)), 0 };
-                int Nano[2] = { CheckInventory(StrParam("%sNanoMod", ItemPtr->Actor)), 0 };
-                int DemonArtifacts[2] = { CheckInventory(StrParam("%sDemonArtifacts", ItemPtr->Actor)), 0 };
+                int Total[2] = { CheckInventory(StrParam("%SModLimit", ItemPtr->Actor)), 0 };
+                int Power[2] = { CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor)), 0 };
+                int Bulk[2] = { CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor)), 0 };
+                int Agility[2] = { CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor)), 0 };
+                int Tech[2] = { CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor)), 0 };
+                int Sniper[2] = { CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor)), 0 };
+                int Firestorm[2] = { CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor)), 0 };
+                int Nano[2] = { CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor)), 0 };
+                int DemonArtifacts[2] = { CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor)), 0 };
                 
                 // Determine total modpacks and the color char to use
                 if (CheckInventory("RLStandardWeaponToken"))
@@ -1308,7 +1308,7 @@ NamedScript Type_ENTER void DRLAHUD()
                 
                 // Name
                 SetFont("RLFONT");
-                HudMessage("%s%s", Color, Name);
+                HudMessage("%S%S", Color, Name);
                 EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y - 20.0, 0.05);
                 
                 // Duke 2 Rifle special icon fancyness

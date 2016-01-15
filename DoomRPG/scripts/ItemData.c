@@ -177,8 +177,8 @@ NamedScript void BuildItemData()
             ShieldPartCost = 0;
 
             // Name
-            ItemData[5][ItemIndex].Actor = StrParam("%s", ShieldParts[i][j].Actor);
-            ItemData[5][ItemIndex].Name = StrParam("%s%s\C-", ShieldName, ShieldParts[i][j].Name);
+            ItemData[5][ItemIndex].Actor = StrParam("%S", ShieldParts[i][j].Actor);
+            ItemData[5][ItemIndex].Name = StrParam("%S%S\C-", ShieldName, ShieldParts[i][j].Name);
             
             // Price
             ShieldPartPtr PartPtr = &ShieldParts[i][j];
@@ -244,7 +244,7 @@ NamedScript void BuildItemData()
         ShieldAccsPtr Accessory = ShieldAccessoriesSorted[i];
         
         ItemData[5][ItemIndex].Actor = Accessory->Actor;
-        ItemData[5][ItemIndex].Name = StrParam("Shield Accessory - %s", Accessory->Name);
+        ItemData[5][ItemIndex].Name = StrParam("Shield Accessory - %S", Accessory->Name);
         ItemData[5][ItemIndex].Price = Accessory->Price;
         ItemData[5][ItemIndex].Rank = i * (MAX_RANK / 2) / MAX_ACCESSORIES; // This makes all accessories available by SSgt +
         
@@ -918,7 +918,7 @@ ItemInfoPtr GetRewardItem(int Difficulty)
     /* Some extra stuff to catch errors and spit out debug logging
     if (GetCVar("drpg_debug"))
     {
-        Log("\CdDEBUG: \C-Reward Item %s\C- (%s) picked", Reward->Name, Reward->Actor);
+        Log("\CdDEBUG: \C-Reward Item %S\C- (%S) picked", Reward->Name, Reward->Actor);
         
         if (Index > MaxRewards)
         {
@@ -989,7 +989,7 @@ NamedScript Console void DumpItemData()
     
     for (int i = 0; i < ItemCategories; i++)
     {
-        Log("\Cd---------- %s ----------", ItemCategoryNames[i]);
+        Log("\Cd---------- %S ----------", ItemCategoryNames[i]);
         
         for (int j = 0; j < ItemMax[i]; j++)
             Output ItemData[i][j];

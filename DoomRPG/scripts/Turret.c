@@ -580,7 +580,7 @@ NamedScript Type_ENTER void TurretLoop()
         }
         
         // Nametag
-        SetActorPropertyString(Player.Turret.TID, APROP_NameTag, StrParam("%N\C-'s Turret", PlayerNumber() + 1));
+        SetActorPropertyString(Player.Turret.TID, APROP_NameTag, StrParam("%tS\C-'s Turret", PlayerNumber() + 1));
         
         // Battery is drained
         if (Player.Turret.Battery <= 0)
@@ -1362,7 +1362,7 @@ NamedScript void TurretPickStimMenu()
         
         // Draw Name
         SetFont("BIGFONT");
-        HudMessage("%s", CompoundNames[Selection]);
+        HudMessage("%S", CompoundNames[Selection]);
         EndHudMessage(HUDMSG_PLAIN, 0, CompoundColors[Selection], 320, 240 + Radius + 32, 0.05);
         
         // Input
@@ -1524,12 +1524,12 @@ NamedScript Type_ENTER void TurretCommandWheel()
         
         // Name
         SetFont("BIGFONT");
-        HudMessage("%s", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].Name);
+        HudMessage("%S", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].Name);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", 320, 240 + CurrentRadius + 32, 0.05);
         
         // Description
         SetFont("SMALLFONT");
-        HudMessage("%s", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].CommandInfo);
+        HudMessage("%S", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].CommandInfo);
         EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", 320.4, 240.1 + CurrentRadius + 48, 0.05);
         
         // Input
@@ -1817,7 +1817,7 @@ NamedScript void TurretAI(int TID)
     
     /* Turret Status Debug
     SetHudSize(640, 480, 1);
-    HudMessage("Turret Status\n\nHas Target: %s\nTarget Forced: %s\nTarget Original TID: %d\nTarget TID: %d\nInterest Time: %d", HasTarget? "Yes" : "No", TargetForced? "Yes" : "No", TargetOriginalTID, TargetTID, LosingInterestTime);
+    HudMessage("Turret Status\n\nHas Target: %S\nTarget Forced: %S\nTarget Original TID: %d\nTarget TID: %d\nInterest Time: %d", HasTarget? "Yes" : "No", TargetForced? "Yes" : "No", TargetOriginalTID, TargetTID, LosingInterestTime);
     EndhudMessage(HUDMSG_FADEOUT, 864, "Green", 32.1, 32.1, 1.0, 1.0);
     */
     
@@ -2204,8 +2204,8 @@ NamedScript bool TurretWantsToSwitchToPlayerTarget()
 void BuildTurretData()
 {
     // Command description for Stim Injector
-    TurretUpgradeData[TU_ASSIST_INJECTOR].CommandInfo = StrParam("Use \Cd%K\C- + \Cd%K\Ck to issue this command", "+speed", "drpg_usestim");
-    TurretUpgradeData[TU_COMMAND_DRAW_FIRE].CommandInfo = StrParam("When issued, use \Cd%K\C- + \Cd%K\Ck to force a target switch", "+speed", "+attack");
+    TurretUpgradeData[TU_ASSIST_INJECTOR].CommandInfo = StrParam("Use \Cd%jS\C- + \Cd%jS\Ck to issue this command", "+speed", "drpg_usestim");
+    TurretUpgradeData[TU_COMMAND_DRAW_FIRE].CommandInfo = StrParam("When issued, use \Cd%jS\C- + \Cd%jS\Ck to force a target switch", "+speed", "+attack");
 }
 
 bool TurretTeleport(int DestTID)
@@ -2590,7 +2590,7 @@ bool TurretStim()
     
     if (Player.Turret.StimTimer > 0)
     {
-        PrintError(StrParam("Your turret is currently generating more compounds and will be ready in \Cc%s", FormatTime(Player.Turret.StimTimer * 35)));
+        PrintError(StrParam("Your turret is currently generating more compounds and will be ready in \Cc%S", FormatTime(Player.Turret.StimTimer * 35)));
         ActivatorSound("menu/error", 127);
         return false;
     }

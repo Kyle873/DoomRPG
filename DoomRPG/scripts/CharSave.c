@@ -322,7 +322,7 @@ NamedScript MenuEntry void SaveCharacter()
     while (EncodeLock) Delay(1);
     
     EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    // Log("Save Data: %s", EncodedSaveString);
+    // Log("Save Data: %S", EncodedSaveString);
     int PartialStringsNeeded = strlen(EncodedSaveString) / CHARSAVE_MAXSIZE;
     if (strlen(EncodedSaveString) % CHARSAVE_MAXSIZE > 0)
         PartialStringsNeeded++;
@@ -341,7 +341,7 @@ NamedScript MenuEntry void SaveCharacter()
     for (int i = 0; Success && i < PartialStringsNeeded; i++)
     {
         strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
-        if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), StrParam("%s", PartialSaveString)))
+        if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), StrParam("%S", PartialSaveString)))
             Success = false;
     }
     
@@ -411,7 +411,7 @@ NamedScript MenuEntry void LoadCharacter()
     }
     
     EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    // Log("Load Data (Encoded): %s", EncodedSaveString);
+    // Log("Load Data (Encoded): %S", EncodedSaveString);
     
     SaveString = malloc(65536);
     
@@ -419,7 +419,7 @@ NamedScript MenuEntry void LoadCharacter()
     while (EncodeLock) Delay(1);
     
     SaveString = realloc(SaveString, strlen(SaveString) + 1);
-    // Log("Load Data (Raw): %s", SaveString);
+    // Log("Load Data (Raw): %S", SaveString);
     free((void *)EncodedSaveString);
     
     LoadCharDataFromString(&Info, SaveString);
@@ -442,7 +442,7 @@ NamedScript MenuEntry void LoadCharacter()
         HudMessage("===== Character Load Failed =====");
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Red", 0.5, 0.3, 3.0, 2.0);
         SetFont("SMALLFONT");
-        HudMessage("%s (Error %d)", ReasonStrings[Reason], Reason + 1);
+        HudMessage("%S (Error %d)", ReasonStrings[Reason], Reason + 1);
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 3.0, 2.0);
         return;
     }
@@ -601,7 +601,7 @@ NamedScript Console void DumpCharacter()
     for (int i = 0; i < GetActivatorCVar("drpg_char_data_len"); i++)
     {
         str Data = GetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i));
-        Log("\CdData %d \C-- \Ca%s", i, Data);
+        Log("\CdData %d \C-- \Ca%S", i, Data);
     }
 }
 

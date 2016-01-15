@@ -173,12 +173,12 @@ void HandleWindow(GUIWindow *Window)
 	SetFont("SMALLFONT");
 	if (Window->Focused)
     {
-		HudMessage("%s", Window->Title);
+		HudMessage("%S", Window->Title);
         EndHudMessage(HUDMSG_PLAIN, 0, ((InTitleBar(Window) || Window->Dragging) ? "Green" : "White"), Window->X + 16.1, Window->Y + 8.0, 0.05);
     }
 	else
     {
-		HudMessage("%s", Window->Title);
+		HudMessage("%S", Window->Title);
         EndHudMessage(HUDMSG_PLAIN, 0, "DarkGray", Window->X + 16.1, Window->Y + 8.0, 0.05);
     }
 	
@@ -299,7 +299,7 @@ void HandleLabel(GUILabel *Label)
 	
 	// Drawing
 	SetFont((Big ? "BIGFONT" : "SMALLFONT"));
-	HudMessage("%s", Text);
+	HudMessage("%S", Text);
     EndHudMessage(HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
 	
 	// Tooltip
@@ -391,12 +391,12 @@ void HandleButton(GUIButton *Button)
 	SetFont((Big ? "BIGFONT" : "SMALLFONT"));
 	if (InRegion(X, Y, Width, Height) && !Button->Window->Dragging && Button->Window->Focused)
     {
-		HudMessage("%s", Text);
+		HudMessage("%S", Text);
         EndHudMessage(HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y, 0.05);
     }
 	else
     {
-		HudMessage("%s", Text);
+		HudMessage("%S", Text);
         EndHudMessage(HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
     }
 	
@@ -513,7 +513,7 @@ void HandleList(GUIList *List)
 		
 		if (InRegion(X, Y + 3 + ((i - Offset) * 10), Width, 9) && !List->Window->Dragging && List->Window->Focused && ContextMenu == NULL)
 		{
-			HudMessage("%s", Entries[i]);
+			HudMessage("%S", Entries[i]);
             EndHudMessage(HUDMSG_PLAIN, 0, HoverColors[i], X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
 			List->Selected = i;
 			
@@ -531,7 +531,7 @@ void HandleList(GUIList *List)
 		}
 		else
         {
-			HudMessage("%s", Entries[i]);
+			HudMessage("%S", Entries[i]);
             EndHudMessage(HUDMSG_PLAIN, 0, Colors[i], X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
         }
 	}
@@ -620,7 +620,7 @@ void DrawTooltip(GUITooltip *Tooltip)
 			
 			// Text
 			SetFont("SMALLFONT");
-			HudMessage("%s", Tooltip->Text);
+			HudMessage("%S", Tooltip->Text);
             EndHudMessage(HUDMSG_PLAIN, 0, Color, X + (NoBack ? 0.1 : 4.1), Y + (NoBack ? 0.1 : 4.1), 0.05);
 		}
 		
@@ -642,12 +642,12 @@ void DrawTooltip(GUITooltip *Tooltip)
 			
 			// Title
 			SetFont("BIGFONT");
-			HudMessage("%s", Tooltip->Title);
+			HudMessage("%S", Tooltip->Title);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 8.1, Y + 16.0, 0.05);
 			
 			// Text
 			SetFont("SMALLFONT");
-			HudMessage("%s", Tooltip->Text);
+			HudMessage("%S", Tooltip->Text);
             EndHudMessage(HUDMSG_PLAIN, 0, Color, X + 8.1, Y + 32.1, 0.05);
 		}
 		
@@ -670,12 +670,12 @@ void DrawTooltip(GUITooltip *Tooltip)
 			
 			// Title
 			SetFont("BIGFONT");
-			HudMessage("%s", Tooltip->Title);
+			HudMessage("%S", Tooltip->Title);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 64.1, Y + 16.0, 0.05);
 			
 			// Text
 			SetFont("SMALLFONT");
-			HudMessage("%s", Tooltip->Text);
+			HudMessage("%S", Tooltip->Text);
             EndHudMessage(HUDMSG_PLAIN, 0, Color, X + 64.1, Y + 32.1, 0.05);
 			
 			// Icon
@@ -716,7 +716,7 @@ void HandleContextMenu(GUIContextMenu *Menu)
 	{
 		if (InRegion(X + 20, Y + 40 + (i * 10), Width, 11))
 		{
-			HudMessage("%s", Menu->Name[i]);
+			HudMessage("%S", Menu->Name[i]);
             EndHudMessage(HUDMSG_PLAIN, 0, MenuCursorColor, X + 18.1, Y + 40.0 + (i * 10), 0.05);
 			
 			// OnClick Event
@@ -725,7 +725,7 @@ void HandleContextMenu(GUIContextMenu *Menu)
 		}
 		else
         {
-			HudMessage("%s", Menu->Name[i]);
+			HudMessage("%S", Menu->Name[i]);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 18.1, Y + 40.0 + (i * 10), 0.05);
         }
 	}

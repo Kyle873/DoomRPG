@@ -3,10 +3,10 @@
 
 #include "Defs.h"
 
-str RPGMap MainMenu[MAX_MENU];
-str RPGMap MainMenuColor[MAX_MENU];
-str RPGMap CursorColors[6];
-str RPGMap MenuCursorColor;
+extern str RPGMap MainMenu[MAX_MENU];
+extern str RPGMap MainMenuColor[MAX_MENU];
+extern str RPGMap CursorColors[6];
+extern str RPGMap MenuCursorColor;
 
 NamedScript void UpdateMenu();
 NamedScript KeyBind void OpenMenu();

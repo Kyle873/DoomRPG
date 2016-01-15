@@ -399,10 +399,10 @@ NamedScript Console void MonsterDump()
     }
     
     Log("\Ca===== MONSTER INFORMATION =====");
-    Log(" Actor: %s", GetActorClass(0));
-    Log(" Replacement Actor: %s", Stats->ReplaceActor);
+    Log(" Actor: %S", GetActorClass(0));
+    Log(" Replacement Actor: %S", Stats->ReplaceActor);
     Log(" Position: %k, %k, %k", Stats->spawnPos.X, Stats->spawnPos.Y, Stats->spawnPos.Z);
-    Log(" Tag: %s", GetActorPropertyString(0, APROP_NameTag));
+    Log(" Tag: %S", GetActorPropertyString(0, APROP_NameTag));
     Log(" Height: %k", GetActorPropertyFixed(0, APROP_Height));
     Log(" Radius: %k", GetActorPropertyFixed(0, APROP_Radius));
     Log(" Speed: %k", GetActorPropertyFixed(0, APROP_Speed));
@@ -438,7 +438,7 @@ NamedScript Console void MonsterDump()
         Log(" \CkLuck: %d", Stats->Luck);
         
         Log("\Cd===== MONSTER AURAS =====");
-        Log(" Time: %s", FormatTime(Stats->Aura.Time));
+        Log(" Time: %S", FormatTime(Stats->Aura.Time));
         for (int i = 0; i < AURA_MAX; i++) // TODO: Make this prettier
             if (Stats->Aura.Type[i].Active)
                 Log(" Active: %d", i);
@@ -2059,7 +2059,7 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
     
     if (!MonsterListLength)
     {
-        Log("\CiWARNING: \CaReinforcement Mission on %s\Ca has no monsters!", MissionDifficulties[Difficulty]);
+        Log("\CiWARNING: \CaReinforcement Mission on %S\Ca has no monsters!", MissionDifficulties[Difficulty]);
         return;
     }
     
@@ -2146,7 +2146,7 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
             Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
             
             if (GetCVar("drpg_debug"))
-                Log("\CdDEBUG: \C-Reinforcements Spawning Index %d (\Ca%s\C-)", MonsterIndex, MonsterList[MonsterIndex]->Name);
+                Log("\CdDEBUG: \C-Reinforcements Spawning Index %d (\Ca%S\C-)", MonsterIndex, MonsterList[MonsterIndex]->Name);
         }
     }
 }

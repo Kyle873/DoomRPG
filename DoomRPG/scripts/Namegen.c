@@ -640,11 +640,11 @@ str GenerateMonsterName()
     
     switch (NameType)
     {
-    case 1: FinalName = StrParam("%s%s %s, the %s", Color, Prefix, Name, Suffix); break; // (Prefix) (Name) the (Suffix)
-    case 2: FinalName = StrParam("%s%s %s", Color, Prefix, Name);                 break; // (Prefix) (Name)
-    case 3: FinalName = StrParam("%s%s the %s", Color, Name, Suffix);             break; // (Name) the (Suffix)
-    case 4: FinalName = StrParam("%s%s", Color, Name);                            break; // (Name)
-    case 5: FinalName = StrParam("%s%s, %s %s", Color, Prefix, Prefix2, Name);    break; // (Prefix) (Prefix) (Name)
+    case 1: FinalName = StrParam("%S%S %S, the %S", Color, Prefix, Name, Suffix); break; // (Prefix) (Name) the (Suffix)
+    case 2: FinalName = StrParam("%S%S %S", Color, Prefix, Name);                 break; // (Prefix) (Name)
+    case 3: FinalName = StrParam("%S%S the %S", Color, Name, Suffix);             break; // (Name) the (Suffix)
+    case 4: FinalName = StrParam("%S%S", Color, Name);                            break; // (Name)
+    case 5: FinalName = StrParam("%S%S, %S %S", Color, Prefix, Prefix2, Name);    break; // (Prefix) (Prefix) (Name)
     }
     
     return FinalName;
@@ -660,7 +660,7 @@ str GenerateZombieName(bool Female)
     str LastName = LastNames[LastNamePick];
     str Color = NameColors[Random(0, NAME_MAX_COLORS - 1)];
     
-    return StrParam("%s%s %s %s", Color, Rank, FirstName, LastName);
+    return StrParam("%S%S %S %S", Color, Rank, FirstName, LastName);
 }
 
 str GenerateMarineName(bool Female)
@@ -672,19 +672,19 @@ str GenerateMarineName(bool Female)
     str FirstName = (Female ? FemaleNames[FirstNamePick] : MaleNames[FirstNamePick]);
     str LastName = LastNames[LastNamePick];
     
-    return StrParam("%s %s %s", Rank, FirstName, LastName);
+    return StrParam("%S %S %S", Rank, FirstName, LastName);
 }
 
 str GenerateMegabossName(int SuffixIndex)
 {
     int Pick = Random(0, NAME_MAX_DEMON_NAMES - 1);
     
-    return StrParam("%s %s", DemonNames[Pick], MegabossSuffixes[SuffixIndex]);
+    return StrParam("%S %S", DemonNames[Pick], MegabossSuffixes[SuffixIndex]);
 }
 
 str GeneratePowersuitName()
 {
     int Pick = Random(0, NAME_MAX_SUIT - 1);
     
-    return StrParam("%s", PowersuitNames[Pick]);
+    return StrParam("%S", PowersuitNames[Pick]);
 }

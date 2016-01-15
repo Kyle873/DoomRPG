@@ -359,7 +359,7 @@ NamedScript MapSpecial void StimInjector()
             // Vial
             X += 112.0;
             SetFont("SMALLFONT");
-            HudMessage("%s: %d/%d", CompoundNames[i], Player.Stim.Vials[i], Player.Stim.VialMax);
+            HudMessage("%S: %d/%d", CompoundNames[i], Player.Stim.Vials[i], Player.Stim.VialMax);
             EndHudMessage(HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
             
             if (i == StimStatsEnd - 1 || i == StimPowerupStart - 1)
@@ -518,17 +518,17 @@ NamedScript MapSpecial void LevelTransport()
             MapType = "UAC Base";
         if (TeleDest->UACArena)
             MapType = "UAC Arena";
-        HudMessage("%s", TeleDest->NiceName);
+        HudMessage("%S", TeleDest->NiceName);
         EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 1, TitleColor, 32.1, 64.1, 0.05, 0.5);
         SetFont("SMALLFONT");
         if (TeleDest->LevelNum > 0)
         {
-            HudMessage("%s, level %d - %s", TeleDest->LumpName, TeleDest->LevelNum, MapType);
+            HudMessage("%S, level %d - %S", TeleDest->LumpName, TeleDest->LevelNum, MapType);
             EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 2, "Orange", 32.1, 80.1, 0.05, 0.5);
         }
         else
         {
-            HudMessage("%s - %s", TeleDest->LumpName, MapType);
+            HudMessage("%S - %S", TeleDest->LumpName, MapType);
             EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 2, "DarkGreen", 32.1, 80.1, 0.05, 0.5);
         }
         
@@ -565,12 +565,12 @@ NamedScript MapSpecial void LevelTransport()
             
             if (TeleDest->Par > 0)
             {
-                HudMessage("Par Time: %s", FormatTime(TeleDest->Par * 35));
+                HudMessage("Par Time: %S", FormatTime(TeleDest->Par * 35));
                 EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 6, ParColor, 32.1, 128.1, 0.05, 0.5);
             }
             if (TeleDest->ShortestTime < 0x7FFFFFFF)
             {
-                HudMessage("Completion Time: %s", FormatTime(TeleDest->ShortestTime * 35));
+                HudMessage("Completion Time: %S", FormatTime(TeleDest->ShortestTime * 35));
                 EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5);
             }
             else
@@ -601,7 +601,7 @@ NamedScript MapSpecial void LevelTransport()
                 AreaText = "\C[Yellow]Detected: Abnormal Energy Signature (All Auras)\C-\nThreat levels have increased within this area.";
                 break;
             case MAPEVENT_ONEMONSTER:
-                AreaText = StrParam("\C[LightBlue]Detected: Anomalous Lifeform Distribution (One-Monster)\n\C[Red]Last seen: %s", TeleDest->SelectedMonster->Name);
+                AreaText = StrParam("\C[LightBlue]Detected: Anomalous Lifeform Distribution (One-Monster)\n\C[Red]Last seen: %S", TeleDest->SelectedMonster->Name);
                 break;
             case MAPEVENT_HELLUNLEASHED:
                 AreaText = "\C[Brick]Detected: Active Battle Front (Hell Unleashed)\n\CgTake preparatory measures before engaging the enemy.";
@@ -670,7 +670,7 @@ NamedScript MapSpecial void LevelTransport()
             SetFont("SMALLFONT");
             HudMessage("Monster level (Approx.): %d - %d", MonsterMinLevel, MonsterMaxLevel);
             EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 9, "White", 32.1, 168.1, 0.05, 0.5);
-            HudMessage("%s", AreaText);
+            HudMessage("%S", AreaText);
             EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 10, "White", 32.1, 184.1, 0.05, 0.5);
         }
         else if (!TeleDest->NeedsRealInfo && TeleDest->UACBase)
@@ -687,7 +687,7 @@ NamedScript MapSpecial void LevelTransport()
             HudMessage("Area Status");
             EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 8, "Green", 32.1, 152.1, 0.05, 0.5);
             SetFont("SMALLFONT");
-            HudMessage("%s", AreaText);
+            HudMessage("%S", AreaText);
             EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 9, "White", 32.1, 168.1, 0.05, 0.5);
         }
         else if (!TeleDest->NeedsRealInfo && TeleDest->UACArena)
@@ -823,7 +823,7 @@ NamedScript MapSpecial void SkillComputer()
 
         // Text
         SetFont("BIGFONT");
-        HudMessage("Skill Level: \Cj%d (%s\Cj)", SkillChoice + 1, SkillLevels[SkillChoice]);
+        HudMessage("Skill Level: \Cj%d (%S\Cj)", SkillChoice + 1, SkillLevels[SkillChoice]);
         EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "Gold", 0.5, 0.5, 0.05, 0.5);
         
         // Input
@@ -1232,8 +1232,8 @@ NamedScript MapSpecial void CreditRoom(int ID)
         Delay(35 * 3);
         for (int i = 0; i < 100; i++)
         {
-            if (Random(1, 3) == 1) VarString = StrParam("%s%s", VarString, "Var");
-            HudMessage("%s", VarString);
+            if (Random(1, 3) == 1) VarString = StrParam("%S%S", VarString, "Var");
+            HudMessage("%S", VarString);
             EndHudMessage(HUDMSG_FADEOUT, 0, ColorNames[Random(1, 21)], RandomFixed(0.0, 1.0), RandomFixed(0.0, 1.0), 3.0, 2.0);
             Delay(1);
         }
@@ -1332,7 +1332,7 @@ NamedScript MapSpecial void ShopSpecial()
     if (ShopSpecialItem == GetBlankItem())
     {
         ActivatorSound("menu/error", 127);
-        PrintError(StrParam("There is currently no Shop Special item.\n\nNext restock will be in \Cj%s\C-.", FormatTime(ShopSpecialTimer)));
+        PrintError(StrParam("There is currently no Shop Special item.\n\nNext restock will be in \Cj%S\C-.", FormatTime(ShopSpecialTimer)));
         return;
     }
     
@@ -1340,7 +1340,7 @@ NamedScript MapSpecial void ShopSpecial()
     if (ShopSpecialBought)
     {
         ActivatorSound("menu/error", 127);
-        PrintError(StrParam("Shop Special is currently out of stock.\n\nNext restock will be in \Cj%s\C-.", FormatTime(ShopSpecialTimer)));
+        PrintError(StrParam("Shop Special is currently out of stock.\n\nNext restock will be in \Cj%S\C-.", FormatTime(ShopSpecialTimer)));
         return;
     }
     
@@ -1410,7 +1410,7 @@ NamedScript MapSpecial void ShopSpecial()
         // Drawing
         SetHudSize(0, 0, false);
         SetFont("BIGFONT");
-        HudMessage("%s\n\Ck%d C (Discount: %d%%)\n\CdTime Left: %s",
+        HudMessage("%S\n\Ck%d C (Discount: %d%%)\n\CdTime Left: %S",
                    Name, Cost, Discount, FormatTime(ShopSpecialTimer));
         EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "White", 1.5, 0.5, 0.05, 1.0);
         
@@ -1464,7 +1464,7 @@ NamedScript MapSpecial void MissionBBS()
         
         // Title
         SetFont("BIGFONT");
-        HudMessage("\CdMission BBS\n\CjDifficulty: (%s\C-)", MissionDifficulties[Difficulty]);
+        HudMessage("\CdMission BBS\n\CjDifficulty: (%S\C-)", MissionDifficulties[Difficulty]);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", 0.1, 24.1, 0.05);
         
         // Mission Labels

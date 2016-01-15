@@ -97,7 +97,7 @@ NamedScript void InitMission()
             {
                 if (!PlayerInGame(j)) continue;
                 
-                ActorToCheck = StrParam("DRPG%s", Players(j).Mission.Monster->Actor);
+                ActorToCheck = StrParam("DRPG%S", Players(j).Mission.Monster->Actor);
                 
                 if (CompatMode == COMPAT_DRLA)
                     ActorToCheck = Players(j).Mission.Monster->Actor;
@@ -368,7 +368,7 @@ void CheckMission()
         ActivatorSound("mission/complete", 127);
         SetFont("BIGFONT");
         SetHudSize(640, 480, false);
-        HudMessage("Mission Complete!\n\n\Cj+%d XP\n\Ck+%d Rank\n\Cf+%d Credits\n\Cd+%d Modules\n\n\CiItem: \Cj%s",
+        HudMessage("Mission Complete!\n\n\Cj+%d XP\n\Ck+%d Rank\n\Cf+%d Credits\n\Cd+%d Modules\n\n\CiItem: \Cj%S",
                    Player.Mission.RewardXP, Player.Mission.RewardRank, Player.Mission.RewardCredits, Player.Mission.RewardModules, Player.Mission.RewardItem->Name);
         EndHudMessage(HUDMSG_FADEOUT, MISSION_ID, "Green", 320.4, 240.0, 3.0, 2.0);
         
@@ -454,7 +454,7 @@ void GetTargetMonster(MissionInfo *Mission)
     
     if (NumPotentialMonsters < 1)
     {
-        Log("\CgERROR: \C-GetTargetMonster for %s mission on difficulty %d has no monsters!", Mission->Type == MT_KILL? "kill" : "assassination", Mission->Difficulty + 1);
+        Log("\CgERROR: \C-GetTargetMonster for %S mission on difficulty %d has no monsters!", Mission->Type == MT_KILL? "kill" : "assassination", Mission->Difficulty + 1);
         Mission->Monster = NULL;
         Mission->Amount = 0;
         return;
@@ -495,11 +495,11 @@ int CalculateAverageDifficulty()
 str GetMissionMonsterActor(str Actor)
 {
     if (CompatMode == COMPAT_DRLA)
-        return StrParam("%sRPG", Actor);
+        return StrParam("%SRPG", Actor);
     else if (CompatMode == COMPAT_EXTRAS)
-        return StrParam("DRPG%sExtras", Actor);
+        return StrParam("DRPG%SExtras", Actor);
 
-    return StrParam("DRPG%s", Actor);
+    return StrParam("DRPG%S", Actor);
 }
 
 int MissionTypeSort(void const *Left, void const *Right)

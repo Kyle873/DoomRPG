@@ -152,7 +152,7 @@ void Popoff(int TID, int Value, int Color, str DigitType, bool FloatAway)
     // Digit Spawning
     for (int i = 0; i < DNUM_DIGITS; i++)
     {
-        str DigitActor = StrParam("%s%dNum%d", DigitType, i + 1, Digits[i]);
+        str DigitActor = StrParam("%S%dNum%d", DigitType, i + 1, Digits[i]);
         
         if (Value >= DigitBase || Value <= -DigitBase)
             switch (Digits[1])
