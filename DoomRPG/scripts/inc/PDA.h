@@ -3,6 +3,14 @@
 
 #include "Defs.h"
 
+typedef struct
+{
+    str Text;
+    fixed X;
+    fixed Y;
+    int ID;
+} MessageInfo;
+
 NamedScript void PDARender();
 NamedScript KeyBind void PDABoot();
 
