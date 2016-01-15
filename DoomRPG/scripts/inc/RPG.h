@@ -4,7 +4,7 @@
 #include "Defs.h"
 
 // Version
-extern str const Version;
+extern const str Version;
 
 // Flags
 extern bool Transported;

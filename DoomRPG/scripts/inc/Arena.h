@@ -3,28 +3,28 @@
 
 #include "Defs.h"
 
-int RPGGlobal ArenaMaxWave;
+extern int RPGGlobal ArenaMaxWave;
 
-bool RPGMap ArenaActive;
-bool RPGMap ArenaTimerActive;
-int RPGMap ArenaState;
-int RPGMap ArenaPlayerNumber;
-int RPGMap ArenaMonstersTID;
-int RPGMap ArenaSpotSpawns;
-int RPGMap ArenaSectorTag;
-int RPGMap ArenaWave;
-int RPGMap ArenaTimer;
-int RPGMap ArenaKeyTimer;
-int RPGMap ArenaKeyTimerType;
-int RPGMap ArenaCount;
-int RPGMap ArenaMod;
-int RPGMap ArenaEnvironment;
-int RPGMap ArenaKey;
+extern bool RPGMap ArenaActive;
+extern bool RPGMap ArenaTimerActive;
+extern int RPGMap ArenaState;
+extern int RPGMap ArenaPlayerNumber;
+extern int RPGMap ArenaMonstersTID;
+extern int RPGMap ArenaSpotSpawns;
+extern int RPGMap ArenaSectorTag;
+extern int RPGMap ArenaWave;
+extern int RPGMap ArenaTimer;
+extern int RPGMap ArenaKeyTimer;
+extern int RPGMap ArenaKeyTimerType;
+extern int RPGMap ArenaCount;
+extern int RPGMap ArenaMod;
+extern int RPGMap ArenaEnvironment;
+extern int RPGMap ArenaKey;
 
-str const ArenaMods[AMOD_MAX];
-str const ArenaEvents[AEVENT_MAX];
-str const ArenaBonus[ABONUS_MAX];
-str const ArenaMonsters[MAX_DEF_MONSTERS];
+extern str const ArenaMods[AMOD_MAX];
+extern str const ArenaEvents[AEVENT_MAX];
+extern str const ArenaBonus[ABONUS_MAX];
+extern str const ArenaMonsters[MAX_DEF_MONSTERS];
 
 NamedScript MapSpecial void ArenaLoop();
 NamedScript MapSpecial void ArenaStop();
