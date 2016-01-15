@@ -596,47 +596,47 @@ void DrawStatsMenu()
         }
 		if (Player.HealthDrop)
         {
-			HudMessage("\CaHealth\C- Drop Rate: \Cf%.2k%%", Player.HealthChance);
+			HudMessage("\CaHealth\C- Drop Rate: \Cf%k%%", Player.HealthChance);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 230.1, 300.0, 0.05);
         }
 		if (Player.EPDrop)
         {
-			HudMessage("\CnEP\C- Drop Rate: \Cf%.2k%%", Player.EPChance);
+			HudMessage("\CnEP\C- Drop Rate: \Cf%k%%", Player.EPChance);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 230.1, 308.0, 0.05);
         }
 		if (Player.ArmorDrop)
         {
-			HudMessage("\CdArmor\C- Drop Rate: \Cf%.2k%%", Player.ArmorChance);
+			HudMessage("\CdArmor\C- Drop Rate: \Cf%k%%", Player.ArmorChance);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 230.1, 316.0, 0.05);
         }
 		if (Player.WeaponDrop)
         {
-			HudMessage("\CgWeapon\C- Drop Rate: \Cf%.2k%%", Player.WeaponChance);
+			HudMessage("\CgWeapon\C- Drop Rate: \Cf%k%%", Player.WeaponChance);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 230.1, 324.0, 0.05);
         }
 		if (Player.PowerupDrop)
         {
-			HudMessage("\CqPowerup\C- Drop Rate: \Cf%.2k%%", Player.PowerupChance);
+			HudMessage("\CqPowerup\C- Drop Rate: \Cf%k%%", Player.PowerupChance);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 230.1, 332.0, 0.05);
         }
 		if (Player.StimDrop)
         {
-			HudMessage("\CrStim\C- Drop Rate: \Cf%.2k%%", Player.StimChance);
+			HudMessage("\CrStim\C- Drop Rate: \Cf%k%%", Player.StimChance);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 230.1, 340.0, 0.05);
         }
 		if (Player.ModuleDrop)
         {
-			HudMessage("\CdModule\C- Drop Rate: \Cf%.2k%%", Player.ModuleChance);
+			HudMessage("\CdModule\C- Drop Rate: \Cf%k%%", Player.ModuleChance);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 230.1, 348.0, 0.05);
         }
 		if (Player.ShieldDrop)
         {
-			HudMessage("\CvShield\C- Drop Rate: \Cf%.2k%%", Player.ShieldChance);
+			HudMessage("\CvShield\C- Drop Rate: \Cf%k%%", Player.ShieldChance);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 230.1, 356.0, 0.05);
         }
 		if (Player.AugDrop)
         {
-			HudMessage("\CkAug\C- Drop Rate: \Cf%.2k%%", Player.AugChance);
+			HudMessage("\CkAug\C- Drop Rate: \Cf%k%%", Player.AugChance);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", 230.1, 364.0, 0.05);
         }
         
