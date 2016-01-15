@@ -746,22 +746,22 @@ void CheckHardStatCaps()
 void CheckStatBounds()
 {
     // Cap Defense/DamageFactor
-    if (Player.DamageFactor < 0.1)
-        Player.DamageFactor = 0.1;
+    if (Player.DamageFactor < 0.1k)
+        Player.DamageFactor = 0.1k;
     
     // Prevent Mass from underflowing
-    if (Player.Mass < 0)
-        Player.Mass = 0;
+    if (Player.Mass < 0k)
+        Player.Mass = 0k;
     
     // Cap the max regen timer amounts to 1 second
-    if (Player.HPTime < 35)
-        Player.HPTime = 35;
-    if (Player.EPTime < 35)
-        Player.EPTime = 35;
+    if (Player.HPTime < 35k)
+        Player.HPTime = 35k;
+    if (Player.EPTime < 35k)
+        Player.EPTime = 35k;
     
     // Cap Status Effect Resistance
-    if (Player.StatusEffectResist > 100.0)
-        Player.StatusEffectResist = 100.0;
+    if (Player.StatusEffectResist > 100.0k)
+        Player.StatusEffectResist = 100.0k;
     
     // Cap Toxicity Regen Bonus
     if (Player.ToxicityRegenBonus > 25)
@@ -780,32 +780,32 @@ void CheckStatBounds()
             Player.Shield.Capacity = 0;
         if (Player.Shield.ChargeRate < 0)
             Player.Shield.ChargeRate = 0;
-        if (Player.Shield.DelayRate < 1.0)
-            Player.Shield.DelayRate = 1.0;
+        if (Player.Shield.DelayRate < 1.0k)
+            Player.Shield.DelayRate = 1.0k;
     };
     
     // Cap Weapon Speed
-    if (Player.WeaponSpeed < 0)
-        Player.WeaponSpeed = 0;
-    if (Player.WeaponSpeed > 100)
-        Player.WeaponSpeed = 100;
+    if (Player.WeaponSpeed < 0k)
+        Player.WeaponSpeed = 0k;
+    if (Player.WeaponSpeed > 100k)
+        Player.WeaponSpeed = 100k;
     
     // Cap Survival Bonus
-    if (Player.SurvivalBonus < 0)
-        Player.SurvivalBonus = 0;
-    if (Player.SurvivalBonus > 75 && (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_ROULETTE))
-        Player.SurvivalBonus = 75;
+    if (Player.SurvivalBonus < 0k)
+        Player.SurvivalBonus = 0k;
+    if (Player.SurvivalBonus > 75k && (!Player.Shield.Accessory || Player.Shield.Accessory->PassiveEffect != SHIELD_PASS_ROULETTE))
+        Player.SurvivalBonus = 75k;
     
     // Cap chances at 100%
-    if (Player.HealthChance > 100)  Player.HealthChance = 100;
-    if (Player.EPChance > 100)      Player.EPChance = 100;
-    if (Player.PowerupChance > 100) Player.PowerupChance = 100;
-    if (Player.ArmorChance > 100)   Player.ArmorChance = 100;
-    if (Player.WeaponChance > 100)  Player.WeaponChance = 100;
-    if (Player.ModuleChance > 100)  Player.ModuleChance = 100;
-    if (Player.AugChance > 100)     Player.AugChance = 100;
-    if (Player.ShieldChance > 100)  Player.ShieldChance = 100;
-    if (Player.StimChance > 100)    Player.StimChance = 100;
+    if (Player.HealthChance > 100k)  Player.HealthChance = 100k;
+    if (Player.EPChance > 100k)      Player.EPChance = 100k;
+    if (Player.PowerupChance > 100k) Player.PowerupChance = 100k;
+    if (Player.ArmorChance > 100k)   Player.ArmorChance = 100k;
+    if (Player.WeaponChance > 100k)  Player.WeaponChance = 100k;
+    if (Player.ModuleChance > 100k)  Player.ModuleChance = 100k;
+    if (Player.AugChance > 100k)     Player.AugChance = 100k;
+    if (Player.ShieldChance > 100k)  Player.ShieldChance = 100k;
+    if (Player.StimChance > 100k)    Player.StimChance = 100k;
 
     // Speed capping CVAR
     if (Player.Speed > GetActivatorCVarFixed("drpg_maxspeed"))
