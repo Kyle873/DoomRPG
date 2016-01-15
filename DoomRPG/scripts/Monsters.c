@@ -401,11 +401,11 @@ NamedScript Console void MonsterDump()
     Log("\Ca===== MONSTER INFORMATION =====");
     Log(" Actor: %S", GetActorClass(0));
     Log(" Replacement Actor: %S", Stats->ReplaceActor);
-    Log(" Position: %k, %k, %k", Stats->spawnPos.X, Stats->spawnPos.Y, Stats->spawnPos.Z);
+    Log(" Position: %.2k, %.2k, %.2k", Stats->spawnPos.X, Stats->spawnPos.Y, Stats->spawnPos.Z);
     Log(" Tag: %S", GetActorPropertyString(0, APROP_NameTag));
-    Log(" Height: %k", GetActorPropertyFixed(0, APROP_Height));
-    Log(" Radius: %k", GetActorPropertyFixed(0, APROP_Radius));
-    Log(" Speed: %k", GetActorPropertyFixed(0, APROP_Speed));
+    Log(" Height: %.2k", GetActorPropertyFixed(0, APROP_Height));
+    Log(" Radius: %.2k", GetActorPropertyFixed(0, APROP_Radius));
+    Log(" Speed: %.2k", GetActorPropertyFixed(0, APROP_Speed));
     Log(" TID: %d", ActivatorTID());
     Log(" ID: %d", GetMonsterID(0));
     

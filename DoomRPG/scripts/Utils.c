@@ -710,7 +710,7 @@ NamedScript Console void CheckArmorStats()
     Log("\C[Orange]-- ARMOR STATS --");
     Log("\C[Green]Class name: \C[White]%S", GetArmorInfoString(ARMORINFO_CLASSNAME));
     Log("\C[Green]Durability: \C[LightBlue]%i%%", GetArmorInfo(ARMORINFO_SAVEAMOUNT));
-    Log("\C[Green]Protection: \C[Yellow]%k%%", GetArmorInfoFixed(ARMORINFO_SAVEPERCENT) * 100.0);
+    Log("\C[Green]Protection: \C[Yellow]%.2k%%", GetArmorInfoFixed(ARMORINFO_SAVEPERCENT) * 100.0);
     Log("\C[Green]Max Absorb: \C[Grey]%i%%", GetArmorInfo(ARMORINFO_MAXABSORB));
     Log("\C[Green]Max Full Absorb: \C[Brick]%i%%", GetArmorInfo(ARMORINFO_MAXFULLABSORB));
 }
@@ -1764,7 +1764,7 @@ void DrawShieldInfo(int ID, fixed X, fixed Y)
         {
             HudMessage(" \CdCharge: %d", CurrentPlayer->Shield.ChargeRate);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 16.1, 0.05);
-            HudMessage(" \CaDelay: %k", CurrentPlayer->Shield.DelayRate);
+            HudMessage(" \CaDelay: %.2k", CurrentPlayer->Shield.DelayRate);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 24.1, 0.05);
         }
         

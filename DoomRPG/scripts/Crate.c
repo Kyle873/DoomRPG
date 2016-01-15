@@ -713,7 +713,7 @@ void GenerateCrate(int ID, int Amount)
                     }
                     
                     if (GetCVar("drpg_debug"))
-                        Log("\CdDEBUG: \C-Set \Cd%d \C-Item \Cd%d\C-: \Cd%S \C-(Chance: \Cf%k%% \C-/ Pick: \Cf%k%%\C-)", i + 1, j + 1, SetItems[i].Items[j].Name, Chance, Pick);
+                        Log("\CdDEBUG: \C-Set \Cd%d \C-Item \Cd%d\C-: \Cd%S \C-(Chance: \Cf%.2k%% \C-/ Pick: \Cf%.2k%%\C-)", i + 1, j + 1, SetItems[i].Items[j].Name, Chance, Pick);
                     
                     if (Pick <= Chance)
                     {

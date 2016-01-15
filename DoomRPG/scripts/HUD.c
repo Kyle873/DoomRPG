@@ -791,9 +791,9 @@ NamedScript Type_ENTER void EventHUD()
         PrintSpritePulse("STAT8S", 0, X + 8.1, Y + 38.0, 0.75, 32.0, 0.25);
         
         SetFont("BIGFONT");
-        HudMessage("+%k", CurrentLevel->LevelAdd);
+        HudMessage("+%.2k", CurrentLevel->LevelAdd);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 24.1, Y, 0.05);
-        HudMessage("+%k%%", CurrentLevel->RareAdd);
+        HudMessage("+%.2k%%", CurrentLevel->RareAdd);
         EndHudMessage(HUDMSG_PLAIN, 0, "Gold", X + 24.1, Y + 18.0, 0.05);
     }
     
