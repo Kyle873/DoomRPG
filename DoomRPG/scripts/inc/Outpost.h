@@ -37,7 +37,7 @@ extern bool RPGMap PowerOut;
 extern bool RPGMap BossDead;
 extern bool RPGMap Invasion;
 
-NamedScript void EnterOutpost();
+NamedScript MapSpecial void EnterOutpost();
 NamedScript MapSpecial void RegenArea(int);
 NamedScript MapSpecial void StimInjector();
 NamedScript MapSpecial void LevelTransport();

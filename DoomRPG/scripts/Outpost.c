@@ -51,7 +51,7 @@ bool RPGMap PowerOut = false;
 bool RPGMap BossDead = false;
 bool RPGMap Invasion = false;
 
-NamedScript void EnterOutpost()
+NamedScript MapSpecial void EnterOutpost()
 {
     ForcefieldTimer = 35 * 60 * GameSkill(); // 1 Minute per skill level
     
