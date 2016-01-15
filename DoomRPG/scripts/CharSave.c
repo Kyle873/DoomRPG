@@ -299,16 +299,16 @@ NamedScript MenuEntry void SaveCharacter()
     while (Depositing)
     {
         SetFont("BIGFONT");
-        HudMessage("\CkDepositing Items: \Cd%d \C-/ \Cd%d\n", DepositItems, DepositTotal);
+        HudMessage("\CkDepositing Items: \Cd%d \C-/ \Cd%d", DepositItems, DepositTotal);
         EndHudMessage(HUDMSG_FADEOUT, DEPOSIT_ID, "White", 0.5, 0.5, 0.05, 0.5);
         Delay(1);
     }
     
     SetFont("BIGFONT");
-    HudMessage("===== Save In Progress =====\n");
+    HudMessage("===== Save In Progress =====");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 70, "Yellow", 0.5, 0.3, 0);
     SetFont("SMALLFONT");
-    HudMessage("Do not quit the game or power off your console.\n");
+    HudMessage("Do not quit the game or power off your console.");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 0);
     
     // Populate the data
@@ -322,7 +322,7 @@ NamedScript MenuEntry void SaveCharacter()
     while (EncodeLock) Delay(1);
     
     EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    // Log("Save Data: %s\n", EncodedSaveString);
+    // Log("Save Data: %s", EncodedSaveString);
     int PartialStringsNeeded = strlen(EncodedSaveString) / CHARSAVE_MAXSIZE;
     if (strlen(EncodedSaveString) % CHARSAVE_MAXSIZE > 0)
         PartialStringsNeeded++;
@@ -330,7 +330,7 @@ NamedScript MenuEntry void SaveCharacter()
     PartialSaveString[CHARSAVE_MAXSIZE] = '\x00';
     
     for (int i = 0; i < CHARSAVE_MAXCVARS; i++)
-        SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), "");
+        SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), "");
 
     bool Success = true;
     
@@ -341,7 +341,7 @@ NamedScript MenuEntry void SaveCharacter()
     for (int i = 0; Success && i < PartialStringsNeeded; i++)
     {
         strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
-        if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), StrParam("%s\n", PartialSaveString)))
+        if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), StrParam("%s", PartialSaveString)))
             Success = false;
     }
     
@@ -354,9 +354,9 @@ NamedScript MenuEntry void SaveCharacter()
         // Saving Successful
         ActivatorSound("charsave/save", 127);
         SetFont("BIGFONT");
-        HudMessage("===== Character Saved =====\n");
+        HudMessage("===== Character Saved =====");
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Green", 0.5, 0.3, 3.0, 2.0);
-        HudMessage("\n");
+        HudMessage("");
         EndHudMessage(HUDMSG_FADEOUT, 71, "Orange", 0.5, 0.35, 3.0, 2.0);
     }
     else
@@ -364,14 +364,14 @@ NamedScript MenuEntry void SaveCharacter()
         // Saving Failed
         ActivatorSound("charsave/fail", 127);
         SetFont("BIGFONT");
-        HudMessage("===== Character Save Failed =====\n");
+        HudMessage("===== Character Save Failed =====");
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Red", 0.5, 0.3, 5.0, 2.0);
         SetFont("SMALLFONT");
-        HudMessage("A CVar could not be written to.\n");
+        HudMessage("A CVar could not be written to.");
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 5.0, 2.0);
-        HudMessage("Perhaps your save is too large?\n");
+        HudMessage("Perhaps your save is too large?");
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 72, "Orange", 0.5, 0.4, 5.0, 2.0);
-        HudMessage("Post your ini if you see this.\n");
+        HudMessage("Post your ini if you see this.");
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 73, "Orange", 0.5, 0.45, 5.0, 2.0);
     }
 }
@@ -391,27 +391,27 @@ NamedScript MenuEntry void LoadCharacter()
     {
         ActivatorSound("charsave/fail", 127);
         SetFont("BIGFONT");
-        HudMessage("===== No Character Data =====\n");
+        HudMessage("===== No Character Data =====");
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Red", 0.5, 0.3, 3.0, 2.0);
         return;
     }
     
     SetFont("BIGFONT");
-    HudMessage("===== Load In Progress =====\n");
+    HudMessage("===== Load In Progress =====");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 70, "Yellow", 0.5, 0.3, 0);
     SetFont("SMALLFONT");
-    HudMessage("Make sure to withdraw your items from the shop!\n");
+    HudMessage("Make sure to withdraw your items from the shop!");
     EndHudMessage(HUDMSG_PLAIN, 71, "Orange", 0.5, 0.35, 0);
     
     for (int i = 0; i < NumCVars; i++)
     {
-        char *tmp = StringToCharP(GetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i)));
+        char *tmp = StringToCharP(GetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i)));
         strcat(EncodedSaveString, tmp);
         free((void *)tmp);
     }
     
     EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    // Log("Load Data (Encoded): %s\n", EncodedSaveString);
+    // Log("Load Data (Encoded): %s", EncodedSaveString);
     
     SaveString = malloc(65536);
     
@@ -419,7 +419,7 @@ NamedScript MenuEntry void LoadCharacter()
     while (EncodeLock) Delay(1);
     
     SaveString = realloc(SaveString, strlen(SaveString) + 1);
-    // Log("Load Data (Raw): %s\n", SaveString);
+    // Log("Load Data (Raw): %s", SaveString);
     free((void *)EncodedSaveString);
     
     LoadCharDataFromString(&Info, SaveString);
@@ -439,10 +439,10 @@ NamedScript MenuEntry void LoadCharacter()
         
         ActivatorSound("charsave/fail", 127);
         SetFont("BIGFONT");
-        HudMessage("===== Character Load Failed =====\n");
+        HudMessage("===== Character Load Failed =====");
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Red", 0.5, 0.3, 3.0, 2.0);
         SetFont("SMALLFONT");
-        HudMessage("%s (Error %d)\n", ReasonStrings[Reason], Reason + 1);
+        HudMessage("%s (Error %d)", ReasonStrings[Reason], Reason + 1);
         EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 3.0, 2.0);
         return;
     }
@@ -577,10 +577,10 @@ NamedScript MenuEntry void LoadCharacter()
     
     ActivatorSound("charsave/accept", 127);
     SetFont("BIGFONT");
-    HudMessage("===== Character Load Complete =====\n");
+    HudMessage("===== Character Load Complete =====");
     EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Green", 0.5, 0.3, 3.0, 2.0);
     SetFont("SMALLFONT");
-    HudMessage("Make sure to withdraw your items from the shop!\n");
+    HudMessage("Make sure to withdraw your items from the shop!");
     EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 71, "White", 0.5, 0.35, 3.0, 2.0);
 }
 
@@ -588,11 +588,11 @@ NamedScript MenuEntry void ClearCharacter()
 {
     SetActivatorCVar("drpg_char_data_len", 0);
     for (int i = 0; i < CHARSAVE_MAXCVARS; i++)
-        SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i), "");
+        SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), "");
     
     ActivatorSound("charsave/accept", 127);
     SetFont("BIGFONT");
-    HudMessage("===== Character Cleared =====\n");
+    HudMessage("===== Character Cleared =====");
     EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 0, "Yellow", 0.5, 0.3, 3.0, 2.0);
 }
 
@@ -600,8 +600,8 @@ NamedScript Console void DumpCharacter()
 {
     for (int i = 0; i < GetActivatorCVar("drpg_char_data_len"); i++)
     {
-        str Data = GetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d\n", i));
-        Log("\CdData %d \C-- \Ca%s\n", i, Data);
+        str Data = GetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i));
+        Log("\CdData %d \C-- \Ca%s", i, Data);
     }
 }
 
@@ -898,12 +898,12 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     Info->Checksum = HexToInteger(String + StringPos, 8);
     //StringPos += 8;
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: \C-Saved CRC is %d (%X)\n", Info->Checksum, Info->Checksum);
+        Log("\CdDEBUG: \C-Saved CRC is %d (%X)", Info->Checksum, Info->Checksum);
     
     unsigned int Checksum = (unsigned int)(crc(String, StringPos));
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: \C-CRC for recalled character is %d (%X)\n", Checksum, Checksum);
+        Log("\CdDEBUG: \C-CRC for recalled character is %d (%X)", Checksum, Checksum);
     
     Info->Version = Version;
     
@@ -1099,7 +1099,7 @@ NamedScript char const *MakeSaveString(CharSaveInfo *Info)
     
     Info->Checksum = (unsigned int)(crc(SaveString, pos));
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: \C-CRC for save character is %d (%X)\n", Info->Checksum, Info->Checksum);
+        Log("\CdDEBUG: \C-CRC for save character is %d (%X)", Info->Checksum, Info->Checksum);
     
     // Checksum
     SaveString[pos + 7] = ToHexChar(Info->Checksum);
@@ -1138,7 +1138,7 @@ NamedScript void EncodeRLE(char const *InString, char *OutString, bool *StringLo
         {
             if (LastCount > 3)
             {
-                str LastSize = StrParam("[%X]\n", LastCount - 1);
+                str LastSize = StrParam("[%X]", LastCount - 1);
                 for (int i = 0; i < StrLen(LastSize); i++)
                     OutString[OutPos++] = (char)LastSize[i];
             }
@@ -1159,7 +1159,7 @@ NamedScript void EncodeRLE(char const *InString, char *OutString, bool *StringLo
     
     if (LastCount > 1)
     {
-        str LastSize = StrParam("[%X]\n", LastCount - 1);
+        str LastSize = StrParam("[%X]", LastCount - 1);
         for (int i = 0; i < StrLen(LastSize); i++)
             OutString[OutPos++] = (char)LastSize[i];
     }

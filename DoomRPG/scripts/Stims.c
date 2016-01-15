@@ -352,7 +352,7 @@ NamedScript KeyBind void ThrowAwayStim()
     ActivatorSound("menu/leave", 127);
 }
 
-NamedScript void TossStim()
+NamedScript DECORATE void TossStim()
 {
     int TID = UniqueTID();
     str StimTossActor;
@@ -402,7 +402,7 @@ NamedScript void TossStim()
     SetActorVelocity(TID, VelX * RandomFixed(2.0, 4.0), VelY * RandomFixed(2.0, 4.0), 0.0, false, false);
 }
 
-NamedScript void AddCompound(int Type, int Amount)
+NamedScript DECORATE void AddCompound(int Type, int Amount)
 {
     Player.Stim.Vials[Type] += Amount;
     
@@ -410,7 +410,7 @@ NamedScript void AddCompound(int Type, int Amount)
         Player.Stim.Vials[Type] = Player.Stim.VialMax;
 }
 
-NamedScript void AddCompoundDirect(int Type, int Amount)
+NamedScript DECORATE void AddCompoundDirect(int Type, int Amount)
 {
     Player.Stim.Current[Type] = Amount;
     UseStim(true);
@@ -488,14 +488,14 @@ void CheckStim()
                     i != STIM_ADRENALINE &&
                     i != STIM_RAGE &&
                     i != STIM_MAGNETIC)
-                    GiveInventory(StrParam("%s\n", StimPowerupActors[i - StimPowerupStart]), 1);
+                    GiveInventory(StrParam("%s", StimPowerupActors[i - StimPowerupStart]), 1);
                 
                 Player.Stim.PowerupTimer[i]--;
             }
             
             // Time Freeze Handling
             if (i == STIM_CHRONO && !IsPlayerMoving() && Player.Stim.PowerupTimer[i] > 0)
-                GiveInventory(StrParam("%s\n", StimPowerupActors[i - StimPowerupStart]), 1);
+                GiveInventory(StrParam("%s", StimPowerupActors[i - StimPowerupStart]), 1);
             
             // Regeneration Handling
             if (i == STIM_ADRENALINE && Player.Stim.PowerupTimer[i] > 0)

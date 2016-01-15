@@ -53,7 +53,7 @@ NamedScript Type_OPEN void MapInit()
         
         if (KnownLevels.Data == NULL)
         {
-            Log("\CgWARNING: \CaCould not allocate level info!\n");
+            Log("\CgWARNING: \CaCould not allocate level info!");
             return;
         }
         
@@ -95,7 +95,7 @@ NamedScript Type_OPEN void MapInit()
         
         if (KnownLevels.Data == NULL)
         {
-            Log("\CgWARNING: \CaCould not allocate level info!\n");
+            Log("\CgWARNING: \CaCould not allocate level info!");
             return;
         }
         
@@ -111,8 +111,8 @@ NamedScript Type_OPEN void MapInit()
             CurrentLevel->LevelNum = 0;
             CurrentLevel->SecretMap = false;
             
-            CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
-            CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
+            CurrentLevel->LumpName = StrParam("%N", PRINTNAME_LEVEL);
+            CurrentLevel->NiceName = StrParam("%N", PRINTNAME_LEVELNAME);
             
             CurrentLevel->Completed = true;
             CurrentLevel->UACBase = true;
@@ -126,8 +126,8 @@ NamedScript Type_OPEN void MapInit()
             CurrentLevel->LevelNum = 0;
             CurrentLevel->SecretMap = false;
             
-            CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
-            CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
+            CurrentLevel->LumpName = StrParam("%N", PRINTNAME_LEVEL);
+            CurrentLevel->NiceName = StrParam("%N", PRINTNAME_LEVELNAME);
 
             CurrentLevel->Completed = true;
             CurrentLevel->UACBase = false;
@@ -166,10 +166,10 @@ NamedScript Type_OPEN void MapInit()
             }
             
             if (GetCVar("drpg_debug"))
-                Log ("\CdDEBUG: \CjLevel number: \Cd%d\n", CurrentLevel->LevelNum);
+                Log ("\CdDEBUG: \CjLevel number: \Cd%d", CurrentLevel->LevelNum);
             
-            CurrentLevel->LumpName = StrParam("%N\n", PRINTNAME_LEVEL);
-            CurrentLevel->NiceName = StrParam("%N\n", PRINTNAME_LEVELNAME);
+            CurrentLevel->LumpName = StrParam("%N", PRINTNAME_LEVEL);
+            CurrentLevel->NiceName = StrParam("%N", PRINTNAME_LEVELNAME);
             
             CurrentLevel->UACBase = false;
             CurrentLevel->UACArena = false;
@@ -384,7 +384,7 @@ NamedScript void ReduceMonsterCount(bool *WaitLock)
     {
         MonstersToRemove = -MonstersToRemove;
         if (GetCVar("drpg_debug"))
-            Log("\CdDEBUG: \CcAdding \Cd%d\Cc more monsters!\n", MonstersToRemove);
+            Log("\CdDEBUG: \CcAdding \Cd%d\Cc more monsters!", MonstersToRemove);
         CurrentLevel->AdditionalMonsters = MonstersToRemove;
         *WaitLock = false;
         return;
@@ -394,7 +394,7 @@ NamedScript void ReduceMonsterCount(bool *WaitLock)
         MonstersToRemove = TotalMonsters - 1;
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: \CcReducing monster count to \Cd%d\Cc from \Cd%d\n", TotalMonsters - MonstersToRemove, TotalMonsters);
+        Log("\CdDEBUG: \CcReducing monster count to \Cd%d\Cc from \Cd%d", TotalMonsters - MonstersToRemove, TotalMonsters);
     
     int Iterations = 0;
     while (MonstersToRemove)
@@ -528,7 +528,7 @@ NamedScript void MapLoop()
             XPBonus = XPTable[Players(i).Level] / 100;
             Player.XP += XPBonus;
             
-            HudMessage("Monsters Killed Bonus!\n%ld XP Bonus\n", XPBonus);
+            HudMessage("Monsters Killed Bonus!\n%ld XP Bonus", XPBonus);
             EndHudMessage(HUDMSG_FADEOUT, 0, "Brick", 1.5, 0.4, 3.0, 3.0);
         }
         
@@ -551,7 +551,7 @@ NamedScript void MapLoop()
             HealThing(SHIELD_HEALTH);
             Players(i).EP = Players(i).EPMax;
             
-            HudMessage("Items Found Bonus!\nFull HP/EP Restore\n");
+            HudMessage("Items Found Bonus!\nFull HP/EP Restore");
             EndHudMessage(HUDMSG_FADEOUT, 0, "LightBlue", 1.5, 0.6, 3.0, 3.0);
         }
         
@@ -574,7 +574,7 @@ NamedScript void MapLoop()
             RankBonus = RankTable[Players(i).RankLevel] / 20;
             Players(i).Rank += RankBonus;
 
-            HudMessage("Secrets Found Bonus!\n%ld Rank Bonus\n", RankBonus);
+            HudMessage("Secrets Found Bonus!\n%ld Rank Bonus", RankBonus);
             EndHudMessage(HUDMSG_FADEOUT, 0, "Yellow", 1.5, 0.8, 3.0, 3.0);
         }
         
@@ -603,7 +603,7 @@ NamedScript void MapLoop()
             HealThing(SHIELD_HEALTH);
             Players(i).EP = Players(i).EPMax;
             
-            HudMessage("\CaMonsters Killed Bonus!\n\CnItems Found Bonus!\n\CkSecrets Found Bonus!\n\n\Cj%ld XP Bonus\n\Ck%ld Rank Bonus\n\CnFull HP/EP Restore\n",
+            HudMessage("\CaMonsters Killed Bonus!\n\CnItems Found Bonus!\n\CkSecrets Found Bonus!\n\n\Cj%ld XP Bonus\n\Ck%ld Rank Bonus\n\CnFull HP/EP Restore",
                        XPBonus, RankBonus);
             EndHudMessage(HUDMSG_FADEOUT, 0, "White", 0.5, 0.2, 5.0, 5.0);
             
@@ -624,7 +624,7 @@ NamedScript void MapLoop()
         {
             AmbientSound("misc/secret", 127);
             SetFont("BIGFONT");
-            HudMessage("Everything falls silent.\n");
+            HudMessage("Everything falls silent.");
             EndHudMessageBold(HUDMSG_FADEOUT, 0, "LightBlue", 0.5, 0.7, 5.0, 5.0);
             SetFont("SMALLFONT");
             MapEventReward();
@@ -681,7 +681,7 @@ void AddAdditionalMonsters()
 LevelInfo *FindLevelInfo(str MapName)
 {
     if (MapName == NULL)
-        MapName = StrParam("%N\n", PRINTNAME_LEVEL);
+        MapName = StrParam("%N", PRINTNAME_LEVEL);
     
     for (int i = 0; i < KnownLevels.Position; i++)
         if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
@@ -693,7 +693,7 @@ LevelInfo *FindLevelInfo(str MapName)
 int FindLevelInfoIndex(str MapName)
 {
     if (MapName == NULL)
-        MapName = StrParam("%N\n", PRINTNAME_LEVEL);
+        MapName = StrParam("%N", PRINTNAME_LEVEL);
     
     for (int i = 0; i < KnownLevels.Position; i++)
         if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
@@ -737,7 +737,7 @@ NumberedScript(MAP_EXIT_SCRIPTNUM) MapSpecial void MapExit(bool Secret)
         
         SetHudSize(640, 480, false);
         SetFont("BIGFONT");
-        HudMessage("\CgA mysterious force prevents you from leaving!\n");
+        HudMessage("\CgA mysterious force prevents you from leaving!");
         EndHudMessageBold(HUDMSG_TYPEON | HUDMSG_LOG, 0, "Red", 320.4, 160.0, 3.0, 0.03, 0.5);
         SetHudSize(0, 0, false);
         SetFont("SMALLFONT");
@@ -762,7 +762,7 @@ NumberedScript(MAP_EXIT_SCRIPTNUM) MapSpecial void MapExit(bool Secret)
         
         SetHudSize(640, 480, false);
         SetFont("BIGFONT");
-        HudMessage("Level \Cg%d\C- Security Lockdown is currently in effect.\nCannot transfer until \Cjenvironmental hazard\C- is \Cjclear\C-.\n", CurrentLevel->HazardLevel);
+        HudMessage("Level \Cg%d\C- Security Lockdown is currently in effect.\nCannot transfer until \Cjenvironmental hazard\C- is \Cjclear\C-.", CurrentLevel->HazardLevel);
         EndHudMessageBold(HUDMSG_TYPEON | HUDMSG_LOG, 0, "Green", 320.4, 160.0, 3.0, 0.03, 0.5);
         SetHudSize(0, 0, false);
         SetFont("SMALLFONT");
@@ -801,7 +801,7 @@ NumberedScript(MAP_EXIT_SCRIPTNUM) MapSpecial void MapExit(bool Secret)
             
             SetFont("SMALLFONT");
             FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
-            HudMessage("Par Time Beaten!\n%ld Rank Bonus\n", RankBonus);
+            HudMessage("Par Time Beaten!\n%ld Rank Bonus", RankBonus);
             EndHudMessage(HUDMSG_FADEOUT, 0, "Gold", 1.5, 0.5, 3.0, 2.0);
             
             Players(i).Rank += RankBonus;
@@ -890,7 +890,7 @@ NamedScript void HellSkillTransport(int player)
             MonsterList[MonsterListLength++] = TempMonster;
     }
     
-    //Log("%d monsters\n", MonsterListLength);
+    //Log("%d monsters", MonsterListLength);
     
     while (GetLevelInfo(LEVELINFO_KILLED_MONSTERS) < GetLevelInfo(LEVELINFO_TOTAL_MONSTERS))
     {
@@ -951,7 +951,7 @@ NamedScript void HellSkillTransport(int player)
         
         if (Success)
         {
-            //Log("Spawned %s\n", MonsterList[MonsterIndex]->Name);
+            //Log("Spawned %s", MonsterList[MonsterIndex]->Name);
             Thing_Hate(TID, Player.TID);
             Thing_ChangeTID(TID, 0); // Get rid of the ID
             Spawn("TeleportFog", X + SpawnX, Y + SpawnY, Z, 0, 0);
@@ -1069,7 +1069,7 @@ void MapEventReward()
             }
             
             ActivatorSound("mission/complete", 127);
-            PrintMessage(StrParam("\Cd%s\n\n\Cf+%d Credits\n\Cd+%d Modules\n", Message, Credits, Modules));
+            PrintMessage(StrParam("\Cd%s\n\n\Cf+%d Credits\n\Cd+%d Modules", Message, Credits, Modules));
             GiveInventory("DRPGCredits", Credits);
             GiveInventory("DRPGModule", Modules);
         }
@@ -1079,7 +1079,7 @@ void MapEventReward()
 NamedScript void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
 {
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: \ChDeciding event for \Cd%s\n", TargetLevel->LumpName);
+        Log("\CdDEBUG: \ChDeciding event for \Cd%s", TargetLevel->LumpName);
 
     str const EventNames[MAPEVENT_MAX] =
     {
@@ -1222,12 +1222,12 @@ NamedScript void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
             TargetLevel->Event = Random(MAPEVENT_NONE + 1, MAPEVENT_MAX - 1);
             
             if (GetCVar("drpg_debug"))
-                Log("\CdDEBUG: Trying \Cj%s\n", EventNames[TargetLevel->Event]);
+                Log("\CdDEBUG: Trying \Cj%s", EventNames[TargetLevel->Event]);
             
             if (!CheckMapEvent(TargetLevel->Event, TargetLevel))
             {
                 if (GetCVar("drpg_debug"))
-                    Log("\CdDEBUG: \Cj%s\Cg not possible\n", EventNames[TargetLevel->Event]);
+                    Log("\CdDEBUG: \Cj%s\Cg not possible", EventNames[TargetLevel->Event]);
                 TargetLevel->Event = MAPEVENT_NONE;
             }
             
@@ -1239,7 +1239,7 @@ NamedScript void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
     }
     
     if (GetCVar("drpg_debug") && TargetLevel->Event != MAPEVENT_NONE)
-        Log("\CdDEBUG: Special Event on \Cc%s\Cd: \Cg%s\n", TargetLevel->NiceName, EventNames[TargetLevel->Event]);
+        Log("\CdDEBUG: Special Event on \Cc%s\Cd: \Cg%s", TargetLevel->NiceName, EventNames[TargetLevel->Event]);
     
     // Initialize some basic info for the chosen event
     
@@ -1248,7 +1248,7 @@ NamedScript void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
         TargetLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
         
         if (GetCVar("drpg_debug"))
-            Log("\CdDEBUG: Chosen Boss: \Cg%s\n", TargetLevel->MegabossActor->Actor);
+            Log("\CdDEBUG: Chosen Boss: \Cg%s", TargetLevel->MegabossActor->Actor);
     }
     else if (TargetLevel->Event == MAPEVENT_TOXICHAZARD)
     {
@@ -1291,7 +1291,7 @@ NamedScript void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
             RequiredLevel = (fixed)(TempMonster->Difficulty + ((TempMonster->ThreatLevel) * 20)) / MonsterLevelDivisor;
             RequiredLevel = Clamp(0, RequiredLevel, 80);
             if (GetCVar("drpg_debug"))
-                Log("\CdDEBUG: \CcPotential monster: \Cg%s \Cc/ Needed level: \Cg%d\n", TempMonster->Name, RequiredLevel);
+                Log("\CdDEBUG: \CcPotential monster: \Cg%s \Cc/ Needed level: \Cg%d", TempMonster->Name, RequiredLevel);
             
             if (AverageLevel >= RequiredLevel && TempMonster->ThreatLevel <= 5)
                 PotentialMonsters[NumPotentialMonsters++] = TempMonster;
@@ -1302,7 +1302,7 @@ NamedScript void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
         TargetLevel->SelectedMonster = PotentialMonsters[Random(0, NumPotentialMonsters - 1)];
         
         if (GetCVar("drpg_debug"))
-            Log("\CdDEBUG: Chosen Monster: \Cg%s\n", TargetLevel->SelectedMonster->Name);
+            Log("\CdDEBUG: Chosen Monster: \Cg%s", TargetLevel->SelectedMonster->Name);
     }
     else if (TargetLevel->Event == MAPEVENT_HARMONIZEDAURAS)
     {
@@ -1323,7 +1323,7 @@ NamedScript Type_OPEN void PassingEvents()
         if (PassingEventTimer <= 0)
         {
             if (GetCVar("drpg_debug"))
-                Log("\CdDEBUG: \CfRe-rolling events for all inactive levels\n");
+                Log("\CdDEBUG: \CfRe-rolling events for all inactive levels");
             
             for (int i = 0; i < KnownLevels.Position; i++)
             {
@@ -1332,19 +1332,19 @@ NamedScript Type_OPEN void PassingEvents()
                 if (!ThisLevel->Completed)
                 {
                     if (GetCVar("drpg_debug"))
-                        Log("\CdDEBUG: \CgIncomplete: %s\n", ThisLevel->LumpName);
+                        Log("\CdDEBUG: \CgIncomplete: %s", ThisLevel->LumpName);
                     continue;
                 }
                 
                 if (CurrentLevel && ThisLevel == CurrentLevel)
                 {
                     if (GetCVar("drpg_debug"))
-                        Log("\CdDEBUG: \CfCurrent: %s\n", ThisLevel->LumpName);
+                        Log("\CdDEBUG: \CfCurrent: %s", ThisLevel->LumpName);
                     continue;
                 }
                 
                 if (GetCVar("drpg_debug"))
-                    Log("\CdDEBUG: \CqInactive: %s\n", ThisLevel->LumpName);
+                    Log("\CdDEBUG: \CqInactive: %s", ThisLevel->LumpName);
                 
                 DecideMapEvent(ThisLevel);
             }
@@ -1386,7 +1386,7 @@ NamedScript void SetupMapEvent()
             SetMusic("AllAuras");
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
-            HudMessage("The air crackles with the darkest of magics!\n");
+            HudMessage("The air crackles with the darkest of magics!");
             EndHudMessageBold(HUDMSG_FADEOUT, 0, "DarkRed", 320.0, 150.0, 1.0, 19.0);
             SetHudSize(0, 0, false);
             break;
@@ -1457,7 +1457,7 @@ NamedScript void SetupMapEvent()
             SetMusic("Skill5");
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
-            HudMessage("It smells of burnt flesh and rotting corpses. It is likely you could be joining them soon.\n");
+            HudMessage("It smells of burnt flesh and rotting corpses. It is likely you could be joining them soon.");
             EndHudMessageBold(HUDMSG_FADEOUT, 0, "Brick", 320.4, 150.0, 1.0, 19.0);
             SetHudSize(0, 0, false);
             break;
@@ -1468,7 +1468,7 @@ NamedScript void SetupMapEvent()
             SetMusic("Skill6");
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
-            HudMessage("A foul misfortune sweeps the land, turning up the darkest creatures. There is no God now.\n");
+            HudMessage("A foul misfortune sweeps the land, turning up the darkest creatures. There is no God now.");
             EndHudMessageBold(HUDMSG_FADEOUT, 0, "Gray", 320.4, 150.0, 1.0, 19.0);
             SetHudSize(0, 0, false);
             break;
@@ -1539,7 +1539,7 @@ NamedScript Console void SetMapEvent(int Level, int ID)
     
     if (MapToChange == NULL)
     {
-        Log("\CgYou attempt black voodoo magic and fail.\n");
+        Log("\CgYou attempt black voodoo magic and fail.");
         
         if (Random(1, 6) == 1) // Roll for critical failure
             DamageThing(1000000);
@@ -1552,7 +1552,7 @@ NamedScript Console void SetMapEvent(int Level, int ID)
     DecideMapEvent(MapToChange, true);
     
     if (CurrentLevel == MapToChange)
-        Log("\CjYou will need to warp back to this level to see changes take effect.\n");
+        Log("\CjYou will need to warp back to this level to see changes take effect.");
 }
 
 // Event - Megaboss -----------------------------------------------------------
@@ -1567,7 +1567,7 @@ NamedScript void MegaBossEvent()
     Position *ChosenPosition;
     
     // Ambient Music
-    SetMusic(StrParam("MBossA%d\n", Random(1, 2)));
+    SetMusic(StrParam("MBossA%d", Random(1, 2)));
     
     // Pick Boss
     CurrentLevel->MegabossActor = &MegaBosses[Random(0, MAX_MEGABOSSES - 1)];
@@ -1603,7 +1603,7 @@ NamedScript void MegaBossEvent()
         Spawned = Spawn(CurrentLevel->MegabossActor->Actor, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
         
         if (GetCVar("drpg_debug"))
-            Log("\CdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", CurrentLevel->MegabossActor->Actor, Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
+            Log("\CdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k", CurrentLevel->MegabossActor->Actor, Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
         
         // Successful spawn
         if (Spawned)
@@ -1611,7 +1611,7 @@ NamedScript void MegaBossEvent()
             SpawnForced("TeleportFog", ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, 0, 0);
             GiveActorInventory(TID, "DRPGWhiteAuraGiver", 1);
             if (GetCVar("drpg_debug"))
-                Log("\CdDEBUG: \Cg%s MegaBoss successfully spawned\n", CurrentLevel->MegabossActor->Actor);
+                Log("\CdDEBUG: \Cg%s MegaBoss successfully spawned", CurrentLevel->MegabossActor->Actor);
         }
         
         Index++;
@@ -1745,7 +1745,7 @@ NamedScript void EnvironmentalHazard()
                     EnvironmentalHazardSetColors();
                     AmbientSound("radiation/lowered", 127);
                     SetFont("BIGFONT");
-                    HudMessage("Radiation level reduced to %d\n", CurrentLevel->HazardLevel);
+                    HudMessage("Radiation level reduced to %d", CurrentLevel->HazardLevel);
                     EndHudMessageBold(HUDMSG_FADEOUT | HUDMSG_LOG, 0, "Yellow", 0.5, 0.25, 2.0, 1.0);
                 }
             }
@@ -1843,7 +1843,7 @@ NamedScript DECORATE void EnvironmentalHazardRefillGenerator()
     
     AmbientSound("radiation/refuel", 127);
     SetFont("BIGFONT");
-    HudMessage("Generator refueled\n");
+    HudMessage("Generator refueled");
     EndHudMessageBold(HUDMSG_FADEOUT, 0, "White", 0.5, 0.25, 2.0, 1.0);
 }
 
@@ -1858,7 +1858,7 @@ NamedScript void EnvironmentalHazardDisarm()
     SetMusic("*");
     
     SetFont("BIGFONT");
-    HudMessage("Radiation cleared\n");
+    HudMessage("Radiation cleared");
     EndHudMessageBold(HUDMSG_FADEOUT | HUDMSG_LOG, 0, "Green", 0.5, 0.25, 2.0, 1.0);
     AmbientSound("radiation/cleared", 127);
     
@@ -1886,7 +1886,7 @@ NamedScript void ThermonuclearBombEvent()
     
     // Setup Keys
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: \C-Generating %d keys for bomb\n", MaxKeys);
+        Log("\CdDEBUG: \C-Generating %d keys for bomb", MaxKeys);
     while (MaxKeys > 0)
     {
         int RandomKey = Random(0, MAX_NUKE_KEYS - 1);
@@ -1915,7 +1915,7 @@ NamedScript void ThermonuclearBombEvent()
     // Warning message
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("\CgWARNING! WARNING!\n\C[White]THERMONUCLEAR BOMB ACTIVATED!\n\CiTIME UNTIL DETONATION: %s\n",
+    HudMessage("\CgWARNING! WARNING!\n\C[White]THERMONUCLEAR BOMB ACTIVATED!\n\CiTIME UNTIL DETONATION: %s",
                FormatTime(CurrentLevel->BombTime));
     EndHudMessageBold(HUDMSG_TYPEON, 0, "Red", 320.4, 160.0, 3.0, 0.03, 0.5);
     AmbientSound("nuke/alert", 127);
@@ -2001,7 +2001,7 @@ NamedScript void ThermonuclearBombEvent()
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
             for (int j = 0; j < MAX_NUKE_KEYS; j++)
-                SetActorInventory(Players(i).TID, StrParam("DRPGNukeKey%d\n", j + 1), 0);
+                SetActorInventory(Players(i).TID, StrParam("DRPGNukeKey%d", j + 1), 0);
         
         Delay(1);
     }
@@ -2028,13 +2028,13 @@ NamedScript void ThermonuclearBombAnnounce(int Time)
             Delay(35 * 1.9);
             AmbientSound("nuke/announce2", 127);
             Delay(35 * 1.4);
-            AmbientSound(StrParam("nuke/minutes/%d\n", Minutes), 127);
+            AmbientSound(StrParam("nuke/minutes/%d", Minutes), 127);
         }
         
         // Seconds
         if (Minutes == 0 && ValidSeconds)
         {
-            AmbientSound(StrParam("nuke/seconds/%d\n", Seconds), 127);
+            AmbientSound(StrParam("nuke/seconds/%d", Seconds), 127);
             Delay(35);
         }
     }
@@ -2047,10 +2047,10 @@ NamedScript DECORATE void ThermonuclearBombActivate()
     SetActivator(GetActorProperty(0, APROP_TargetTID));
     
     for (int i = 0; i < MAX_NUKE_KEYS; i++)
-        if (CheckInventory(StrParam("DRPGNukeKey%d\n", i + 1)))
+        if (CheckInventory(StrParam("DRPGNukeKey%d", i + 1)))
         {
             CurrentLevel->BombKeyActive[i] = false;
-            TakeInventory(StrParam("DRPGNukeKey%d\n", i + 1), 1);
+            TakeInventory(StrParam("DRPGNukeKey%d", i + 1), 1);
         }
     
     for (int i = 0; i < MAX_NUKE_KEYS; i++)
@@ -2157,7 +2157,7 @@ NamedScript void OneMonsterEvent()
     // Level feeling
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling);
+    HudMessage("%s", CurrentLevel->SelectedMonster->Feeling);
     EndHudMessageBold(HUDMSG_FADEOUT, 0, "Brick", 320.4, 150.0, 1.0, 19.0);
     SetHudSize(0, 0, false);
     
@@ -2167,7 +2167,7 @@ NamedScript void OneMonsterEvent()
         Delay(1);
     
     AmbientSound("misc/secret", 127);
-    HudMessage("Everything falls silent.\n");
+    HudMessage("Everything falls silent.");
     EndHudMessageBold(HUDMSG_FADEOUT, 0, "LightBlue", 0.5, 0.7, 5.0, 5.0);
     MapEventReward();
     
@@ -2262,7 +2262,7 @@ NamedScript DECORATE void HellUnleashedStart()
 NamedScript void HellUnleashedSpawnMonsters()
 {
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: \CaHell Unleashed \C-- Spawning next wave of monsters...\n");
+        Log("\CdDEBUG: \CaHell Unleashed \C-- Spawning next wave of monsters...");
     
     Delay(1); // Maximize our instructions
     
@@ -2300,7 +2300,7 @@ NamedScript void HarmonizedDestructionEvent()
         CurrentLevel->AuraType = Random(0, AURA_MAX - 1);
     
     if (GetCVar("drpg_debug"))
-        Log("\CdDEBUG: Aura type %d\n", CurrentLevel->AuraType);
+        Log("\CdDEBUG: Aura type %d", CurrentLevel->AuraType);
     
     for (int i = 0; i < MonsterID; i++)
     {
@@ -2324,12 +2324,12 @@ NamedScript void HarmonizedDestructionEvent()
     SetFont("BIGFONT");
     if (CurrentLevel->AuraType != AURA_MAX)
     {
-        HudMessage("A strange, malicious harmony fills the air.\n");
+        HudMessage("A strange, malicious harmony fills the air.");
         EndHudMessageBold(HUDMSG_FADEOUT, 0, "DarkRed", 320.0, 150.0, 1.0, 19.0);
     }
     else
     {
-        HudMessage("A strange, malicious harmony fills the air.\nAnd frankly, it's terrifying.\n");
+        HudMessage("A strange, malicious harmony fills the air.\nAnd frankly, it's terrifying.");
         EndHudMessageBold(HUDMSG_FADEOUT, 0, "DarkRed", 320.0, 150.0, 1.0, 19.0);
     }
     SetHudSize(0, 0, false);
@@ -2413,7 +2413,7 @@ NamedScript void TeleporterCrackView(int PlayerID)
     if (ViewTime >= ViewTimeMax) return;
     
     SetHudSize(640, 480, true);
-    SetFont(StrParam("P%iVIEW\n", PlayerID + 1));
+    SetFont(StrParam("P%iVIEW", PlayerID + 1));
     
     fixed ViewCycle = Timer() / (120.0 - (10.0 * Intensity));
     fixed ViewDist = 25.0 * Intensity * (ViewTime++ / ViewTimeMax);
@@ -2421,14 +2421,14 @@ NamedScript void TeleporterCrackView(int PlayerID)
     fixed Angle2 = RandomFixed(0.0, 1.0);
     
     // View Intensification
-    HudMessage("A\n");
+    HudMessage("A");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 2, "Untranslated", 320, 240, 0.029);
-    HudMessage("A\n");
+    HudMessage("A");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, "Untranslated",
                320 + (int)(ViewDist * Cos(Angle1)),
                240 + (int)(ViewDist * Sin(Angle1)),
                0.029, 0.6 - (ViewTime / ViewTimeMax) / 2.0);
-    HudMessage("A\n");
+    HudMessage("A");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, "Untranslated",
                320 + (int)(ViewDist * Cos(Angle2)),
                240 + (int)(ViewDist * Sin(Angle2)),
@@ -2503,7 +2503,7 @@ NamedScript void DoomsdayEvent()
     // Warning message
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("The smell of a massacre...\n\n\CiTime until Doomsday: %s\n",
+    HudMessage("The smell of a massacre...\n\n\CiTime until Doomsday: %s",
                FormatTime(CurrentLevel->DoomTime));
     EndHudMessageBold(HUDMSG_TYPEON, 0, "Red", 320.4, 160.0, 3.0, 0.03, 0.5);
     SetHudSize(0, 0, false);
@@ -2530,7 +2530,7 @@ NamedScript void DoomsdayEvent()
             
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
-            HudMessage("Hurry, there is not much time...\n");
+            HudMessage("Hurry, there is not much time...");
             EndHudMessageBold(HUDMSG_TYPEON, 0, "Brick", 320.4, 160.0, 3.0, 0.03, 0.5);
             SetHudSize(0, 0, false);
         }
@@ -2666,7 +2666,7 @@ NamedScript void DarkZoneEvent()
     
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("The Shadows have arrived...\n");
+    HudMessage("The Shadows have arrived...");
     EndHudMessageBold(HUDMSG_TYPEON, 0, "Purple", 320.4, 160.0, 3.0, 0.03, 0.5);
     AmbientSound("darkzone/arrived", 127);
     SetHudSize(0, 0, false);
@@ -2733,7 +2733,7 @@ NamedScript void SinstormEvent()
     // Warning message
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("The Icon of Sin senses your approach.\n");
+    HudMessage("The Icon of Sin senses your approach.");
     EndHudMessageBold(HUDMSG_TYPEON, 0, "Red", 320.4, 160.0, 3.0, 0.03, 0.5);
     AmbientSound ("doomsday/doombell", 127);
     SetHudSize(0, 0, false);
@@ -2918,9 +2918,9 @@ NamedScript void FeedingFrenzyVisualHorror(int PlayerID)
     NoiseAlert(0, 0);
     
     SetHudSize(640, 480, true);
-    SetFont(StrParam("P%iVIEW\n", PlayerID + 1));
+    SetFont(StrParam("P%iVIEW", PlayerID + 1));
     
-    HudMessage("A\n");
+    HudMessage("A");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, "Untranslated",
                320 + Random(-8, 8),
                240 + Random(-8, 8),
@@ -2983,7 +2983,7 @@ NamedScript void WhispersofDarknessEvent()
         Spawned = Spawn("RLCyberneticSpiderMastermindRPG", ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z, TID, ChosenPosition->Angle * 256);
         
         if (GetCVar("drpg_debug"))
-            Log("\CdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k\n", CurrentLevel->MegabossActor->Actor, Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
+            Log("\CdDEBUG: Iterating for Spawn Point... (Class %s, Index %d, Position %k/%k/%k", CurrentLevel->MegabossActor->Actor, Index, ChosenPosition->X, ChosenPosition->Y, ChosenPosition->Z);
         
         // Successful spawn
         if (Spawned)
@@ -3001,7 +3001,7 @@ NamedScript void WhispersofDarknessEvent()
                 Monsters[MonsterIndex].Aura.Type[i].Active = true;
 
             if (GetCVar("drpg_debug"))
-                Log("\CdDEBUG: \CgShadow Overmind successfully spawned\n");
+                Log("\CdDEBUG: \CgShadow Overmind successfully spawned");
         }
         
         Index++;
@@ -3185,8 +3185,8 @@ NamedScript void WhispersofDarknessVisionIntensifier(int PlayerID)
     
     SetHudSize(640, 480, true);
     
-    SetFont(StrParam("P%iVIEW\n", PlayerID + 1));
-    HudMessage("A\n");
+    SetFont(StrParam("P%iVIEW", PlayerID + 1));
+    HudMessage("A");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, "Untranslated",
                320 + Random(-8, 8),
                240 + Random(-8, 8),
@@ -3195,7 +3195,7 @@ NamedScript void WhispersofDarknessVisionIntensifier(int PlayerID)
     if (ShowOvermind)
     {
         SetFont("OVERMIND");
-        HudMessage("A\n");
+        HudMessage("A");
         EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, "Untranslated",
                    320 + Random(-4, 4),
                    240 + Random(-4, 4),

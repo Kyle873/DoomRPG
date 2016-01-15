@@ -106,22 +106,22 @@ NamedScript void ItemRoulette(bool Rare)
         if (!Started)
         {
             SetFont("BIGFONT");
-            HudMessage("%d\n", ChipTotal);
+            HudMessage("%d", ChipTotal);
             EndHudMessage(HUDMSG_PLAIN, 0, (Rare ? "White" : "Gold"), 320, 240, 0.05);
-            HudMessage("Rarity: %d\n", ChipRarity);
+            HudMessage("Rarity: %d", ChipRarity);
             EndHudMessage(HUDMSG_PLAIN, 0, (ChipIndex == 0 ? MenuCursorColor : (Rare ? "White" : "Gold")), 320, 272, 0.05);
-            HudMessage("Amount: %d\n", ChipAmount);
+            HudMessage("Amount: %d", ChipAmount);
             EndHudMessage(HUDMSG_PLAIN, 0, (ChipIndex == 1 ? MenuCursorColor : (Rare ? "White" : "Gold")), 320, 284, 0.05);
-            HudMessage("Duds: %d\n", ChipDuds);
+            HudMessage("Duds: %d", ChipDuds);
             EndHudMessage(HUDMSG_PLAIN, 0, (ChipIndex == 2 ? MenuCursorColor : (Rare ? "White" : "Gold")), 320, 296, 0.05);
-            HudMessage("Speed: %d\n", ChipSpeed);
+            HudMessage("Speed: %d", ChipSpeed);
             EndHudMessage(HUDMSG_PLAIN, 0, (ChipIndex == 3 ? MenuCursorColor : (Rare ? "White" : "Gold")), 320, 308, 0.05);
             PrintSprite((Rare ? "CHPPA0" : "CHPGA0"), 0, 320 + 16, 240 + 32, 0.05);
         };
         
         // Draw Name
         SetFont("BIGFONT");
-        HudMessage("%s\n", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
+        HudMessage("%s", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
         EndHudMessage(HUDMSG_PLAIN, 0, "White", 320, 240 + Radius + 32, 0.05);
         
         // Draw Box
@@ -253,7 +253,7 @@ NamedScript void ItemRoulette(bool Rare)
         {
             // Draw Name
             SetFont("BIGFONT");
-            HudMessage("%s\n", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
+            HudMessage("%s", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
             EndHudMessage(HUDMSG_FADEOUT, 0, (WheelItems[Selection] == GetBlankItem() ? "Red" : "Green"), 320, 240 + Radius + 32, 2.0, 1.0);
             
             // Draw Box

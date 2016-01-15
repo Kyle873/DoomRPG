@@ -41,7 +41,7 @@ NamedScript MapSpecial void PDABoot()
     // Initializing Text
     SetHudSize(800 / 3, 600 / 3, false);
     SetFont("SMALLFONT");
-    HudMessage("%s\n", Messages[0].Text);
+    HudMessage("%s", Messages[0].Text);
     EndHudMessage(HUDMSG_TYPEON, PDAID, "Red", Messages[0].X, Messages[0].Y, 1.0, 0.15, 4.0);
     Delay(StrLen(Messages[0].Text) * 5);
     
@@ -49,7 +49,7 @@ NamedScript MapSpecial void PDABoot()
     SetHudSize(640, 480, false);
     for (int i = 1; i <= 4; i++)
     {
-        HudMessage("%s\n", Messages[i].Text);
+        HudMessage("%s", Messages[i].Text);
         EndHudMessage(HUDMSG_TYPEON, Messages[i].ID, "Red", Messages[i].X, Messages[i].Y, 15.0, 0.05, 0.0);
         Delay(StrLen(Messages[i].Text));
     }

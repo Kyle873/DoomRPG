@@ -11,9 +11,9 @@ int const StimPowerupStart;
 int const StimPowerupEnd;
 
 NamedScript KeyBind OptionalArgs(1) void UseStim(bool);
-NamedScript void TossStim();
-NamedScript void AddCompound(int, int);
-NamedScript void AddCompoundDirect(int, int);
+NamedScript DECORATE void TossStim();
+NamedScript DECORATE void AddCompound(int, int);
+NamedScript DECORATE void AddCompoundDirect(int, int);
 
 void CheckStim();
 void MixStim(int);

@@ -54,7 +54,7 @@ NamedScript DECORATE void InitCrate()
     
     if (CrateID >= CRATE_MAX)
     {
-        Log("\CgERROR:\C- Maximum Crate ID exceeded!\n");
+        Log("\CgERROR:\C- Maximum Crate ID exceeded!");
         Thing_Remove(0);
         return;
     }
@@ -121,7 +121,7 @@ NamedScript DECORATE void UseCrate(int ID)
     {
         if (Crates[ID].Hacking != PlayerNumber())
         {
-            PrintError(StrParam("%N\C- is already hacking an item in this crate\n", Crates[Player.CrateID].Hacking + 1));
+            PrintError(StrParam("%N\C- is already hacking an item in this crate", Crates[Player.CrateID].Hacking + 1));
             ActivatorSound("menu/error", 127);
         }
         
@@ -139,7 +139,7 @@ NamedScript DECORATE void UseCrate(int ID)
     {
         if (Crates[ID].HackingCooldown > 0)
         {
-            PrintError(StrParam("Security Lockdown Triggered\n\nYou must wait %s before reattemtping the hack\n", FormatTime(Crates[ID].HackingCooldown)));
+            PrintError(StrParam("Security Lockdown Triggered\n\nYou must wait %s before reattemtping the hack", FormatTime(Crates[ID].HackingCooldown)));
             ActivatorSound("menu/error", 127);
         }
         else
@@ -287,12 +287,12 @@ NamedScript void CrateHack()
         
         // HACKIFICATIONS
         SetFont("SMALLFONT");
-        HudMessage("HACKING IN PROGRESS...\n");
+        HudMessage("HACKING IN PROGRESS...");
         EndHudMessage(HUDMSG_PLAIN, 0, "Green", 160.0, 100.0, 0.05);
         if (!GetActivatorCVar("drpg_toaster"))
             for (int i = 0; i < 16; i++)
             {
-                HudMessage("%d\n", Random(0, 1));
+                HudMessage("%d", Random(0, 1));
                 EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 10.0 + (8.0 * Random(1, 36)), 150.0 + (8.0 * Random(1, 10)), 0.25, 0.75);
             }
         
@@ -302,10 +302,10 @@ NamedScript void CrateHack()
         // Nodes
         for (int i = 0; i < MAX_NODES; i++)
             if (Crate->Nodes[i].Active)
-                DrawBar(StrParam("HackNod%d\n", Crate->Nodes[i].Type + 1), 10 + Crate->Nodes[i].Start, 120, Crate->Nodes[i].End, true);
+                DrawBar(StrParam("HackNod%d", Crate->Nodes[i].Type + 1), 10 + Crate->Nodes[i].Start, 120, Crate->Nodes[i].End, true);
         
         // Back
-        DrawBar(StrParam("HackBor%d\n", Crate->Tries), 10, 120, 300, true);
+        DrawBar(StrParam("HackBor%d", Crate->Tries), 10, 120, 300, true);
         PrintSprite("HackBack", 0, 10.1, 120.0, 0.05);
         
         // Move Cursor
@@ -343,7 +343,7 @@ NamedScript void CrateHack()
                         case NODE_CRITFAIL:
                             ActivatorSound("hacking/critfail", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Security Lockdown Triggered!\n");
+                            HudMessage("Security Lockdown Triggered!");
                             EndHudMessage(HUDMSG_FADEOUT, 0, "Red", 160.0, 140.0, 2.0, 1.0);
                             Crates[Player.CrateID].HackingCooldown += 35 * 60;
                             Crate->Tries = 3;
@@ -352,7 +352,7 @@ NamedScript void CrateHack()
                         case NODE_EXPLODE:
                             ActivatorSound("hacking/critfail", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Explosive Device Triggered!\n");
+                            HudMessage("Explosive Device Triggered!");
                             EndHudMessage(HUDMSG_FADEOUT, 0, "Orange", 160.0, 140.0, 2.0, 1.0);
                             SetActorState(Crates[Player.CrateID].TID, "Explode");
                             Hacking = false;
@@ -361,7 +361,7 @@ NamedScript void CrateHack()
                         case NODE_UNLOCK:
                             ActivatorSound("hacking/success", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Hack Successful\n");
+                            HudMessage("Hack Successful");
                             EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 160.0, 140.0, 2.0, 1.0);
                             Crates[Player.CrateID].Firewall = false;
                             SetActorState(Crates[Player.CrateID].TID, "Normal");
@@ -371,21 +371,21 @@ NamedScript void CrateHack()
                         case NODE_XP:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("+%ld XP\n", XPBonus);
+                            HudMessage("+%ld XP", XPBonus);
                             EndHudMessage(HUDMSG_FADEOUT, 0, "White", 160.0, 140.0, 2.0, 1.0);
                             Player.XP += XPBonus;
                             break;
                         case NODE_RANK:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("+%ld Rank\n", RankBonus);
+                            HudMessage("+%ld Rank", RankBonus);
                             EndHudMessage(HUDMSG_FADEOUT, 0, "Yellow", 160.0, 140.0, 2.0, 1.0);
                             Player.Rank += RankBonus;
                             break;
                         case NODE_RETRY:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Extra Try\n");
+                            HudMessage("Extra Try");
                             EndHudMessage(HUDMSG_FADEOUT, 0, "Blue", 160.0, 140.0, 2.0, 1.0);
                             if (Crate->Tries < 3)
                                 Crate->Tries++;
@@ -393,7 +393,7 @@ NamedScript void CrateHack()
                         case NODE_ADD:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Extra Item!\n");
+                            HudMessage("Extra Item!");
                             EndHudMessage(HUDMSG_FADEOUT, 0, "Cyan", 160.0, 140.0, 2.0, 1.0);
                             if (Crates[Player.CrateID].Amount < CRATE_MAX_ITEMS - 1)
                                 Crates[Player.CrateID].Amount++;
@@ -401,7 +401,7 @@ NamedScript void CrateHack()
                         case NODE_RARITY:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Rarity Upgrade!\n");
+                            HudMessage("Rarity Upgrade!");
                             EndHudMessage(HUDMSG_FADEOUT, 0, "Purple", 160.0, 140.0, 2.0, 1.0);
                             if (Crates[Player.CrateID].Rarity < MAX_DIFFICULTIES - 1)
                                 Crates[Player.CrateID].Rarity++;
@@ -466,7 +466,7 @@ void GenerateCrate(int ID, int Amount)
         
         if (Backpack == GetBlankItem())
         {
-            Log("\CgWARNING: Couldn't find the backpack item!\n");
+            Log("\CgWARNING: Couldn't find the backpack item!");
         }
         
         int NumPlayers = PlayerCount();
@@ -667,12 +667,12 @@ void GenerateCrate(int ID, int Amount)
         int SetAmount = Amount;
         
         if (GetCVar("drpg_debug"))
-            Log("\CdDEBUG: \C-Checking DRLA sets...\n");
+            Log("\CdDEBUG: \C-Checking DRLA sets...");
         
         for (int i = 0; i < MAX_DRLA_SETS; i++)
         {
             if (GetCVar("drpg_debug"))
-                Log("\CdDEBUG: \C-Set \Cd%d\C-: \Cd%s\n", i + 1, SetItems[i].Name);
+                Log("\CdDEBUG: \C-Set \Cd%d\C-: \Cd%s", i + 1, SetItems[i].Name);
             
             // Skip this set if you already have it
             if (CheckInventory(SetItems[i].Token)) continue;
@@ -681,13 +681,13 @@ void GenerateCrate(int ID, int Amount)
             for (int j = 0; SetItems[i].Items[j].Name != NULL; j++)
             {
                 if (GetCVar("drpg_debug"))
-                    Log("\CdDEBUG: \C-Set \Cd%d \C-Item \Cd%d\C-: \Cd%s\n", i + 1, j + 1, SetItems[i].Items[j].Name);
+                    Log("\CdDEBUG: \C-Set \Cd%d \C-Item \Cd%d\C-: \Cd%s", i + 1, j + 1, SetItems[i].Items[j].Name);
                 
-                if (CheckInventory(SetItems[i].Items[j].Name) || CheckInventory(StrParam("%sToken\n", SetItems[i].Items[j].Name)))
+                if (CheckInventory(SetItems[i].Items[j].Name) || CheckInventory(StrParam("%sToken", SetItems[i].Items[j].Name)))
                 {
                     HaveItem = true;
                     if (GetCVar("drpg_debug"))
-                        Log("\CdDEBUG: \C-Have this item, continue...\n");
+                        Log("\CdDEBUG: \C-Have this item, continue...");
                     break;
                 }
             }
@@ -696,24 +696,24 @@ void GenerateCrate(int ID, int Amount)
             {
                 for (int j = 0; SetItems[i].Items[j].Name != NULL; j++)
                 {
-                    str PickupItemName = StrParam("%sPickup\n", SetItems[i].Items[j].Name);
+                    str PickupItemName = StrParam("%sPickup", SetItems[i].Items[j].Name);
                     ItemInfoPtr ItemPtr = FindItem(PickupItemName);
                     fixed Chance = SetItems[i].Items[j].Chance * (1.0 + (Crates[ID].Rarity * 0.125));
                     fixed Pick = RandomFixed(0.0, 100.0);
                     
                     // Skip this item if you have it and it's not a dual/synthfire set
-                    if (!SetItems[i].Synthfire && CheckInventory(SetItems[i].Items[j].Name) || CheckInventory(StrParam("%sToken\n", SetItems[i].Items[j].Name))) continue;
+                    if (!SetItems[i].Synthfire && CheckInventory(SetItems[i].Items[j].Name) || CheckInventory(StrParam("%sToken", SetItems[i].Items[j].Name))) continue;
                     
                     // Stop checking items if we've filled the crate
                     if (SetAmount >= CRATE_MAX_ITEMS)
                     {
                         if (GetCVar("drpg_debug"))
-                            Log("\CdDEBUG: \C-Crate is full! Stopping set checks\n");
+                            Log("\CdDEBUG: \C-Crate is full! Stopping set checks");
                         return;
                     }
                     
                     if (GetCVar("drpg_debug"))
-                        Log("\CdDEBUG: \C-Set \Cd%d \C-Item \Cd%d\C-: \Cd%s \C-(Chance: \Cf%k%% \C-/ Pick: \Cf%k%%\C-)\n", i + 1, j + 1, SetItems[i].Items[j].Name, Chance, Pick);
+                        Log("\CdDEBUG: \C-Set \Cd%d \C-Item \Cd%d\C-: \Cd%s \C-(Chance: \Cf%k%% \C-/ Pick: \Cf%k%%\C-)", i + 1, j + 1, SetItems[i].Items[j].Name, Chance, Pick);
                     
                     if (Pick <= Chance)
                     {
@@ -724,7 +724,7 @@ void GenerateCrate(int ID, int Amount)
                         Crates[ID].Item[SetAmount] = ItemPtr;
                         
                         if (GetCVar("drpg_debug"))
-                            Log("\CdDEBUG: \CfSet Item Spawned!\n");
+                            Log("\CdDEBUG: \CfSet Item Spawned!");
                         
                         SetAmount++;
                     }
@@ -785,7 +785,7 @@ void DrawCrate()
     
     // Title
     SetFont("BIGFONT");
-    HudMessage("UAC Supply Crate (%s\C-)\n", CrateRarityNames[Crates[Player.CrateID].Rarity]);
+    HudMessage("UAC Supply Crate (%s\C-)", CrateRarityNames[Crates[Player.CrateID].Rarity]);
     EndHudMessage(HUDMSG_PLAIN, 0, "Green", 24.1, 24.0, 0.05);
     
     for (int i = 0; i < Height; i++)
@@ -837,7 +837,7 @@ void DrawCrate()
             if (Player.CrateIndex == Index && Active)
             {
                 SetFont("BIGFONT");
-                HudMessage("%s\n", Name);
+                HudMessage("%s", Name);
                 EndHudMessage(HUDMSG_PLAIN, 0, "White", 24.1, 344.1, 0.05);
             }
             
@@ -904,15 +904,15 @@ NamedScript Console void DumpCrate()
 {
     for (int i = 0; i < CrateID; i++)
     {
-        Log("\Cd  ===== Crate %d =====\n", i);
-        Log("Amount: %d\n", Crates[i].Amount);
-        Log("Rarity: %d\n", Crates[i].Rarity);
+        Log("\Cd  ===== Crate %d =====", i);
+        Log("Amount: %d", Crates[i].Amount);
+        Log("Rarity: %d", Crates[i].Rarity);
         
         for (int j = 0; j < CRATE_MAX_ITEMS; j++)
         {
             if (!Crates[i].Active[j]) continue;
             
-            Log("%d. %s (%s)\n", j, Crates[i].Item[j]->Name, Crates[i].Item[j]->Actor);
+            Log("%d. %s (%s)", j, Crates[i].Item[j]->Name, Crates[i].Item[j]->Actor);
         }
     }
 }

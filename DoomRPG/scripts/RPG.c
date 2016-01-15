@@ -43,6 +43,10 @@ int RPGMap ItemTIDs[MAX_ITEMS];
 // Multiplayer HUD
 // 
 
+AddressSpace MapArraySpace    RPGMap;
+AddressSpace WorldArraySpace  RPGWorld;
+AddressSpace GlobalArraySpace RPGGlobal;
+
 Address(2)  AddressSpace GlobalArraySpace EPArray;
 
 Address(50) AddressSpace GlobalArraySpace ShieldArray;
@@ -59,6 +63,7 @@ int ShieldHealthArray Address(0) ShieldHealth[MAX_PLAYERS];
 
 NamedScript Type_OPEN void GlobalInit()
 {
+    Delay(1);
     if (!GlobalsInitialized)
     {
         // Version Info

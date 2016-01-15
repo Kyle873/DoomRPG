@@ -580,7 +580,7 @@ NamedScript Type_ENTER void TurretLoop()
         }
         
         // Nametag
-        SetActorPropertyString(Player.Turret.TID, APROP_NameTag, StrParam("%N\C-'s Turret\n", PlayerNumber() + 1));
+        SetActorPropertyString(Player.Turret.TID, APROP_NameTag, StrParam("%N\C-'s Turret", PlayerNumber() + 1));
         
         // Battery is drained
         if (Player.Turret.Battery <= 0)
@@ -621,22 +621,22 @@ NamedScript Type_ENTER void TurretLoop()
         
         // Armor/Protection
         if (Player.Turret.Upgrade[TU_ARMOR_PLATING_MELEE] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionMelee%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_MELEE]), 1);
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionMelee%d", Player.Turret.Upgrade[TU_ARMOR_PLATING_MELEE]), 1);
         if (Player.Turret.Upgrade[TU_ARMOR_PLATING_BULLET] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionBullet%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_BULLET]), 1);
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionBullet%d", Player.Turret.Upgrade[TU_ARMOR_PLATING_BULLET]), 1);
         if (Player.Turret.Upgrade[TU_ARMOR_PLATING_FIRE] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionFire%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_FIRE]), 1);
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionFire%d", Player.Turret.Upgrade[TU_ARMOR_PLATING_FIRE]), 1);
         if (Player.Turret.Upgrade[TU_ARMOR_PLATING_PLASMA] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionPlasma%d\n", Player.Turret.Upgrade[TU_ARMOR_PLATING_PLASMA]), 1);
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretProtectionPlasma%d", Player.Turret.Upgrade[TU_ARMOR_PLATING_PLASMA]), 1);
         if (Player.Turret.Upgrade[TU_ARMOR_PLATING_BLAST] > 0)
             GiveActorInventory(Player.Turret.TID, "DRPGTurretProtectionBlast", 1);
         if (Player.Turret.Upgrade[TU_ARMOR_MODULE_REFLECT] > 0)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretReflection%d\n", Player.Turret.Upgrade[TU_ARMOR_MODULE_REFLECT]), 1);
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretReflection%d", Player.Turret.Upgrade[TU_ARMOR_MODULE_REFLECT]), 1);
         if (Player.Turret.Upgrade[TU_ARMOR_MODULE_REPAIR] > 0)
             if (Health < Player.Turret.HealthMax && (Timer() % (35 * (30 - (Player.Turret.Upgrade[TU_ARMOR_MODULE_REPAIR] * 2.5)))) == 0)
                 SetActorProperty(Player.Turret.TID, APROP_Health, Health + 1);
         if (Player.Turret.Upgrade[TU_ARMOR_MODULE_PHASE] > 0 && Health < PrevHealth)
-            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretPhase%d\n", Player.Turret.Upgrade[TU_ARMOR_MODULE_PHASE]), 1);
+            GiveActorInventory(Player.Turret.TID, StrParam("DRPGTurretPhase%d", Player.Turret.Upgrade[TU_ARMOR_MODULE_PHASE]), 1);
         if (GetActorPowerupTics(Player.Turret.TID, "PowerGhost") > 0)
         {
             SetActorProperty(Player.Turret.TID, APROP_RenderStyle, STYLE_Translucent);
@@ -1362,7 +1362,7 @@ NamedScript void TurretPickStimMenu()
         
         // Draw Name
         SetFont("BIGFONT");
-        HudMessage("%s\n", CompoundNames[Selection]);
+        HudMessage("%s", CompoundNames[Selection]);
         EndHudMessage(HUDMSG_PLAIN, 0, CompoundColors[Selection], 320, 240 + Radius + 32, 0.05);
         
         // Input
@@ -1516,7 +1516,7 @@ NamedScript Type_ENTER void TurretCommandWheel()
             if (Player.Turret.Upgrade[CurrentCommands[i]] > 0)
                 DrawTurretInfo((int)X, (int)Y, CurrentCommands[i]);
             
-            PrintSprite(StrParam("T_UPG%d\n", CurrentCommands[i] + 1), 0, (int)X, (int)Y, 0.05);
+            PrintSprite(StrParam("T_UPG%d", CurrentCommands[i] + 1), 0, (int)X, (int)Y, 0.05);
         }
         
         // Box
@@ -1524,12 +1524,12 @@ NamedScript Type_ENTER void TurretCommandWheel()
         
         // Name
         SetFont("BIGFONT");
-        HudMessage("%s\n", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].Name);
+        HudMessage("%s", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].Name);
         EndHudMessage(HUDMSG_PLAIN, 0, "White", 320, 240 + CurrentRadius + 32, 0.05);
         
         // Description
         SetFont("SMALLFONT");
-        HudMessage("%s\n", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].CommandInfo);
+        HudMessage("%s", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].CommandInfo);
         EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", 320.4, 240.1 + CurrentRadius + 48, 0.05);
         
         // Input
@@ -1817,7 +1817,7 @@ NamedScript void TurretAI(int TID)
     
     /* Turret Status Debug
     SetHudSize(640, 480, 1);
-    HudMessage("Turret Status\n\nHas Target: %s\nTarget Forced: %s\nTarget Original TID: %d\nTarget TID: %d\nInterest Time: %d\n", HasTarget? "Yes" : "No", TargetForced? "Yes" : "No", TargetOriginalTID, TargetTID, LosingInterestTime);
+    HudMessage("Turret Status\n\nHas Target: %s\nTarget Forced: %s\nTarget Original TID: %d\nTarget TID: %d\nInterest Time: %d", HasTarget? "Yes" : "No", TargetForced? "Yes" : "No", TargetOriginalTID, TargetTID, LosingInterestTime);
     EndhudMessage(HUDMSG_FADEOUT, 864, "Green", 32.1, 32.1, 1.0, 1.0);
     */
     
@@ -2204,8 +2204,8 @@ NamedScript bool TurretWantsToSwitchToPlayerTarget()
 void BuildTurretData()
 {
     // Command description for Stim Injector
-    TurretUpgradeData[TU_ASSIST_INJECTOR].CommandInfo = StrParam("Use \Cd%K\C- + \Cd%K\Ck to issue this command\n", "+speed", "drpg_usestim");
-    TurretUpgradeData[TU_COMMAND_DRAW_FIRE].CommandInfo = StrParam("When issued, use \Cd%K\C- + \Cd%K\Ck to force a target switch\n", "+speed", "+attack");
+    TurretUpgradeData[TU_ASSIST_INJECTOR].CommandInfo = StrParam("Use \Cd%K\C- + \Cd%K\Ck to issue this command", "+speed", "drpg_usestim");
+    TurretUpgradeData[TU_COMMAND_DRAW_FIRE].CommandInfo = StrParam("When issued, use \Cd%K\C- + \Cd%K\Ck to force a target switch", "+speed", "+attack");
 }
 
 bool TurretTeleport(int DestTID)
