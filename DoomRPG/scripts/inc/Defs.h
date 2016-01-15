@@ -1059,7 +1059,7 @@ typedef MonsterInfo const       *MonsterInfoPtr;
 typedef MegabossInfo const      *MegabossInfoPtr;
 typedef ShieldPart const        *ShieldPartPtr;
 typedef ShieldAccessory const   *ShieldAccsPtr;
-typedef TurretUpgrade const     *TurretUpgradePtr;
+typedef TurretUpgrade RPGMap    *TurretUpgradePtr;
 
 // Globals
 typedef ItemInfo RPGGlobal  *ItemInfoPtr;

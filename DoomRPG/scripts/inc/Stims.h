@@ -3,12 +3,12 @@
 
 #include "Defs.h"
 
-str RPGMap CompoundNames[STIM_MAX];
-int RPGMap CompoundColors[STIM_MAX];
-int RPGMap StimStatsStart;
-int RPGMap StimStatsEnd;
-int RPGMap StimPowerupStart;
-int RPGMap StimPowerupEnd;
+str const CompoundNames[STIM_MAX];
+int const CompoundColors[STIM_MAX];
+int const StimStatsStart;
+int const StimStatsEnd;
+int const StimPowerupStart;
+int const StimPowerupEnd;
 
 NamedScript KeyBind OptionalArgs(1) void UseStim(bool);
 NamedScript void TossStim();
