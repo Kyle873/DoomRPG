@@ -184,7 +184,7 @@ struct GUILabel_S
     int Y;
     int Width;
     int Height;
-    int Color;
+    str Color;
     bool Big;
     bool Visible;
     
@@ -219,8 +219,8 @@ struct GUIButton_S
     int Y;
     int Width;
     int Height;
-    int Color;
-    int HoverColor;
+    str Color;
+    str HoverColor;
     bool Big;
     bool Visible;
     
@@ -255,8 +255,8 @@ struct GUIList_S
     int Offset;
     int Selected;
     str Entries[MAX_LIST];
-    int Colors[MAX_LIST];
-    int HoverColors[MAX_LIST];
+    str Colors[MAX_LIST];
+    str HoverColors[MAX_LIST];
     bool Visible;
     
     struct GUIWindow_S *Window;
@@ -271,7 +271,7 @@ struct GUITooltip_S
     int Type;
     str Title;
     str Text;
-    int Color;
+    str Color;
     int Width;
     int Height;
     str Icon;

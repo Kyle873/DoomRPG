@@ -4,7 +4,7 @@
 #include "Defs.h"
 
 str const CompoundNames[STIM_MAX];
-int const CompoundColors[STIM_MAX];
+str const CompoundColors[STIM_MAX];
 int const StimStatsStart;
 int const StimStatsEnd;
 int const StimPowerupStart;

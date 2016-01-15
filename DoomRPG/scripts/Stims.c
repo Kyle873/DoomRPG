@@ -38,32 +38,32 @@ str const CompoundNames[STIM_MAX] =
     "Magnetic"
 };
 
-int const CompoundColors[STIM_MAX] =
+str const CompoundColors[STIM_MAX] =
 {
     // Stats
-    CR_RED,
-    CR_GREEN,
-    CR_BRICK,
-    CR_LIGHTBLUE,
-    CR_PURPLE,
-    CR_ORANGE,
-    CR_BLUE,
-    CR_GOLD,
+    "Red",
+    "Green",
+    "Brick",
+    "LightBlue",
+    "Purple",
+    "Orange",
+    "Blue",
+    "Gold",
     
     // Boosters
-    CR_DARKGRAY,
-    CR_WHITE,
+    "DarkGray",
+    "White",
     
     // Powerups
-    CR_DARKGREEN,
-    CR_DARKRED,
-    CR_YELLOW,
-    CR_GREEN,
-    CR_PURPLE,
-    CR_ORANGE,
-    CR_BRICK,
-    CR_BLACK,
-    CR_GRAY
+    "DarkGreen",
+    "DarkRed",
+    "Yellow",
+    "Green",
+    "Purple",
+    "Orange",
+    "Brick",
+    "Black",
+    "Gray"
 };
 
 int const StimStatsStart = 0;

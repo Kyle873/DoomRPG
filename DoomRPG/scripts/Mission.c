@@ -369,8 +369,8 @@ void CheckMission()
         SetFont("BIGFONT");
         SetHudSize(640, 480, false);
         HudMessage("Mission Complete!\n\n\Cj+%d XP\n\Ck+%d Rank\n\Cf+%d Credits\n\Cd+%d Modules\n\n\CiItem: \Cj%s",
-                   Player.Mission.RewardXP, Player.Mission.RewardRank, Player.Mission.RewardCredits, Player.Mission.RewardModules, Player.Mission.RewardItem->Name,
-                   HUDMSG_FADEOUT, MISSION_ID, CR_GREEN, 320.4, 240.0, 3.0, 2.0);
+                   Player.Mission.RewardXP, Player.Mission.RewardRank, Player.Mission.RewardCredits, Player.Mission.RewardModules, Player.Mission.RewardItem->Name);
+        EndHudMessage(HUDMSG_FADEOUT, MISSION_ID, "Green", 320.4, 240.0, 3.0, 2.0);
         
         // Reward - XP/Rank
         Player.XP += Player.Mission.RewardXP;

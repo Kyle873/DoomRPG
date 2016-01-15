@@ -299,14 +299,17 @@ NamedScript MenuEntry void SaveCharacter()
     while (Depositing)
     {
         SetFont("BIGFONT");
-        HudMessage("\CkDepositing Items: \Cd%d \C-/ \Cd%d\n", DepositItems, DepositTotal, HUDMSG_FADEOUT, DEPOSIT_ID, CR_WHITE, 0.5, 0.5, 0.05, 0.5);
+        HudMessage("\CkDepositing Items: \Cd%d \C-/ \Cd%d\n", DepositItems, DepositTotal);
+        EndHudMessage(HUDMSG_FADEOUT, DEPOSIT_ID, "White", 0.5, 0.5, 0.05, 0.5);
         Delay(1);
     }
     
     SetFont("BIGFONT");
-    HudMessage("===== Save In Progress =====\n", HUDMSG_PLAIN | HUDMSG_LOG, 70, CR_YELLOW, 0.5, 0.3, 0);
+    HudMessage("===== Save In Progress =====\n");
+    EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 70, "Yellow", 0.5, 0.3, 0);
     SetFont("SMALLFONT");
-    HudMessage("Do not quit the game or power off your console.\n", HUDMSG_PLAIN | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 0);
+    HudMessage("Do not quit the game or power off your console.\n");
+    EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 0);
     
     // Populate the data
     PopulateCharData(&Info);
@@ -351,19 +354,25 @@ NamedScript MenuEntry void SaveCharacter()
         // Saving Successful
         ActivatorSound("charsave/save", 127);
         SetFont("BIGFONT");
-        HudMessage("===== Character Saved =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_GREEN, 0.5, 0.3, 3.0, 2.0);
-        HudMessage("\n", HUDMSG_FADEOUT, 71, CR_ORANGE, 0.5, 0.35, 3.0, 2.0);
+        HudMessage("===== Character Saved =====\n");
+        EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Green", 0.5, 0.3, 3.0, 2.0);
+        HudMessage("\n");
+        EndHudMessage(HUDMSG_FADEOUT, 71, "Orange", 0.5, 0.35, 3.0, 2.0);
     }
     else
     {
         // Saving Failed
         ActivatorSound("charsave/fail", 127);
         SetFont("BIGFONT");
-        HudMessage("===== Character Save Failed =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_RED, 0.5, 0.3, 5.0, 2.0);
+        HudMessage("===== Character Save Failed =====\n");
+        EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Red", 0.5, 0.3, 5.0, 2.0);
         SetFont("SMALLFONT");
-        HudMessage("A CVar could not be written to.\n", HUDMSG_FADEOUT | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 5.0, 2.0);
-        HudMessage("Perhaps your save is too large?\n", HUDMSG_FADEOUT | HUDMSG_LOG, 72, CR_ORANGE, 0.5, 0.4, 5.0, 2.0);
-        HudMessage("Post your ini if you see this.\n", HUDMSG_FADEOUT | HUDMSG_LOG, 73, CR_ORANGE, 0.5, 0.45, 5.0, 2.0);
+        HudMessage("A CVar could not be written to.\n");
+        EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 5.0, 2.0);
+        HudMessage("Perhaps your save is too large?\n");
+        EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 72, "Orange", 0.5, 0.4, 5.0, 2.0);
+        HudMessage("Post your ini if you see this.\n");
+        EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 73, "Orange", 0.5, 0.45, 5.0, 2.0);
     }
 }
 
@@ -382,14 +391,17 @@ NamedScript MenuEntry void LoadCharacter()
     {
         ActivatorSound("charsave/fail", 127);
         SetFont("BIGFONT");
-        HudMessage("===== No Character Data =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_RED, 0.5, 0.3, 3.0, 2.0);
+        HudMessage("===== No Character Data =====\n");
+        EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Red", 0.5, 0.3, 3.0, 2.0);
         return;
     }
     
     SetFont("BIGFONT");
-    HudMessage("===== Load In Progress =====\n", HUDMSG_PLAIN | HUDMSG_LOG, 70, CR_YELLOW, 0.5, 0.3, 0);
+    HudMessage("===== Load In Progress =====\n");
+    EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 70, "Yellow", 0.5, 0.3, 0);
     SetFont("SMALLFONT");
-    HudMessage("Make sure to withdraw your items from the shop!\n", HUDMSG_PLAIN, 71, CR_ORANGE, 0.5, 0.35, 0);
+    HudMessage("Make sure to withdraw your items from the shop!\n");
+    EndHudMessage(HUDMSG_PLAIN, 71, "Orange", 0.5, 0.35, 0);
     
     for (int i = 0; i < NumCVars; i++)
     {
@@ -427,9 +439,11 @@ NamedScript MenuEntry void LoadCharacter()
         
         ActivatorSound("charsave/fail", 127);
         SetFont("BIGFONT");
-        HudMessage("===== Character Load Failed =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_RED, 0.5, 0.3, 3.0, 2.0);
+        HudMessage("===== Character Load Failed =====\n");
+        EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Red", 0.5, 0.3, 3.0, 2.0);
         SetFont("SMALLFONT");
-        HudMessage("%s (Error %d)\n", ReasonStrings[Reason], Reason + 1, HUDMSG_FADEOUT | HUDMSG_LOG, 71, CR_ORANGE, 0.5, 0.35, 3.0, 2.0);
+        HudMessage("%s (Error %d)\n", ReasonStrings[Reason], Reason + 1);
+        EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 3.0, 2.0);
         return;
     }
     
@@ -563,9 +577,11 @@ NamedScript MenuEntry void LoadCharacter()
     
     ActivatorSound("charsave/accept", 127);
     SetFont("BIGFONT");
-    HudMessage("===== Character Load Complete =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 70, CR_GREEN, 0.5, 0.3, 3.0, 2.0);
+    HudMessage("===== Character Load Complete =====\n");
+    EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 70, "Green", 0.5, 0.3, 3.0, 2.0);
     SetFont("SMALLFONT");
-    HudMessage("Make sure to withdraw your items from the shop!\n", HUDMSG_FADEOUT | HUDMSG_LOG, 71, CR_WHITE, 0.5, 0.35, 3.0, 2.0);
+    HudMessage("Make sure to withdraw your items from the shop!\n");
+    EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 71, "White", 0.5, 0.35, 3.0, 2.0);
 }
 
 NamedScript MenuEntry void ClearCharacter()
@@ -576,7 +592,8 @@ NamedScript MenuEntry void ClearCharacter()
     
     ActivatorSound("charsave/accept", 127);
     SetFont("BIGFONT");
-    HudMessage("===== Character Cleared =====\n", HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_YELLOW, 0.5, 0.3, 3.0, 2.0);
+    HudMessage("===== Character Cleared =====\n");
+    EndHudMessage(HUDMSG_FADEOUT | HUDMSG_LOG, 0, "Yellow", 0.5, 0.3, 3.0, 2.0);
 }
 
 NamedScript Console void DumpCharacter()

@@ -172,15 +172,22 @@ void HandleWindow(GUIWindow *Window)
 	// Title
 	SetFont("SMALLFONT");
 	if (Window->Focused)
-		HudMessage("%s", Window->Title, HUDMSG_PLAIN, 0, ((InTitleBar(Window) || Window->Dragging) ? CR_GREEN : CR_WHITE), Window->X + 16.1, Window->Y + 8.0, 0.05);
+    {
+		HudMessage("%s", Window->Title);
+        EndHudMessage(HUDMSG_PLAIN, 0, ((InTitleBar(Window) || Window->Dragging) ? "Green" : "White"), Window->X + 16.1, Window->Y + 8.0, 0.05);
+    }
 	else
-		HudMessage("%s", Window->Title, HUDMSG_PLAIN, 0, CR_DARKGRAY, Window->X + 16.1, Window->Y + 8.0, 0.05);
+    {
+		HudMessage("%s", Window->Title);
+        EndHudMessage(HUDMSG_PLAIN, 0, "DarkGray", Window->X + 16.1, Window->Y + 8.0, 0.05);
+    }
 	
 	// X Button
 	if (Window->CanClose)
 		if (InRegion(Window->X + Window->Width - 14.1, Window->Y + 12.0, 16, 8) && Window->Focused)
 		{
-			HudMessage("X", HUDMSG_PLAIN, 0, MenuCursorColor, Window->X + Window->Width - 14.1, Window->Y + 8.0, 0.05);
+			HudMessage("X");
+            EndHudMessage(HUDMSG_PLAIN, 0, MenuCursorColor, Window->X + Window->Width - 14.1, Window->Y + 8.0, 0.05);
 			
 			if (Player.Mouse.LeftButton)
 				Window->Visible = false;
@@ -188,19 +195,26 @@ void HandleWindow(GUIWindow *Window)
 				GUIDeleteWindow(Window);
 		}
 		else
-			HudMessage("X", HUDMSG_PLAIN, 0, CR_WHITE, Window->X + Window->Width - 14.1, Window->Y + 8.0, 0.05);
+        {
+			HudMessage("X");
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", Window->X + Window->Width - 14.1, Window->Y + 8.0, 0.05);
+        }
 	
 	// Roll Button
 	if (Window->CanRoll)
 		if (InRegion(Window->X + Window->Width - 28.1, Window->Y + 12.0, 14, 8) && Window->Focused)
 		{
-			HudMessage("_", HUDMSG_PLAIN, 0, MenuCursorColor, Window->X + Window->Width - 28.1, Window->Y + 8.0, 0.05);
+			HudMessage("_");
+            EndHudMessage(HUDMSG_PLAIN, 0, MenuCursorColor, Window->X + Window->Width - 28.1, Window->Y + 8.0, 0.05);
 			
 			if (Player.Mouse.LeftButton)
 				Window->RolledUp = !Window->RolledUp;
 		}
 		else
-			HudMessage("_", HUDMSG_PLAIN, 0, CR_WHITE, Window->X + Window->Width - 28.1, Window->Y + 8.0, 0.05);
+        {
+			HudMessage("_");
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", Window->X + Window->Width - 28.1, Window->Y + 8.0, 0.05);
+        }
 	
 	// Window Background & Border
 	if (Window->RolledUp)
@@ -252,7 +266,7 @@ void HandleLabel(GUILabel *Label)
 	fixed Y = Label->Window->Y + Label->Y + 16;
 	int Width = Label->Width;
 	int Height = Label->Height;
-	int Color = Label->Color;
+	str Color = Label->Color;
 	bool Big = Label->Big;
 	
 	// Set the Resolution/HUD Size
@@ -285,7 +299,8 @@ void HandleLabel(GUILabel *Label)
 	
 	// Drawing
 	SetFont((Big ? "BIGFONT" : "SMALLFONT"));
-	HudMessage("%s", Text, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
+	HudMessage("%s", Text);
+    EndHudMessage(HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
 	
 	// Tooltip
 	if (InRegion(X, Y, Width, Height) && Label->Window->Focused && Label->Tooltip != NULL)
@@ -350,16 +365,16 @@ void HandleButton(GUIButton *Button)
 	int Y = Button->Window->Y + Button->Y + 16;
 	int Width = Button->Width;
 	int Height = Button->Height;
-	int Color = Button->Color;
-	int HoverColor = Button->HoverColor;
+	str Color = Button->Color;
+	str HoverColor = Button->HoverColor;
 	bool Big = Button->Big;
 	
 	// Set the Resolution/HUD Size
 	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
 	
 	// Default Color
-	if (Color == 0)
-		Color = CR_WHITE;
+	if (Color == "Brick")
+		Color = "White";
 	
 	// Default Hover Color
 	if (HoverColor == 0)
@@ -375,9 +390,15 @@ void HandleButton(GUIButton *Button)
 	// Drawing
 	SetFont((Big ? "BIGFONT" : "SMALLFONT"));
 	if (InRegion(X, Y, Width, Height) && !Button->Window->Dragging && Button->Window->Focused)
-		HudMessage("%s", Text, HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y, 0.05);
+    {
+		HudMessage("%s", Text);
+        EndHudMessage(HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y, 0.05);
+    }
 	else
-		HudMessage("%s", Text, HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
+    {
+		HudMessage("%s", Text);
+        EndHudMessage(HUDMSG_PLAIN, 0, Color, X + 0.1, Y, 0.05);
+    }
 	
 	// Tooltip
 	if (InRegion(X, Y, Width, Height) && Button->Window->Focused && Button->Tooltip != NULL)
@@ -451,8 +472,8 @@ void HandleList(GUIList *List)
 	int Shown = List->Shown;
 	int Offset = List->Offset;
 	str *Entries;
-	int *Colors;
-	int *HoverColors;
+	str *Colors;
+	str *HoverColors;
 	int MaxEntries;
 	int Longest;
     
@@ -474,7 +495,7 @@ void HandleList(GUIList *List)
 	// Default Color
 	for (int i = 0; i < MaxEntries; i++)
 		if (Colors[i] == 0)
-			Colors[i] = CR_WHITE;
+			Colors[i] = "White";
 	
 	// Default Hover Color
 	for (int i = 0; i < MaxEntries; i++)
@@ -492,7 +513,8 @@ void HandleList(GUIList *List)
 		
 		if (InRegion(X, Y + 3 + ((i - Offset) * 10), Width, 9) && !List->Window->Dragging && List->Window->Focused && ContextMenu == NULL)
 		{
-			HudMessage("%s", Entries[i], HUDMSG_PLAIN, 0, HoverColors[i], X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
+			HudMessage("%s", Entries[i]);
+            EndHudMessage(HUDMSG_PLAIN, 0, HoverColors[i], X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
 			List->Selected = i;
 			
 			// Tooltip
@@ -508,7 +530,10 @@ void HandleList(GUIList *List)
 				List->OnClick(List);
 		}
 		else
-			HudMessage("%s", Entries[i], HUDMSG_PLAIN, 0, Colors[i], X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
+        {
+			HudMessage("%s", Entries[i]);
+            EndHudMessage(HUDMSG_PLAIN, 0, Colors[i], X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
+        }
 	}
 	
 	// Scroll Arrows
@@ -527,7 +552,7 @@ void DrawTooltip(GUITooltip *Tooltip)
 	int Type = Tooltip->Type;
 	str Title = Tooltip->Text;
 	str Text = Tooltip->Text;
-	int Color = Tooltip->Color;
+	str Color = Tooltip->Color;
 	int X = Player.Mouse.X + 8;
 	int Y = Player.Mouse.Y + 8;
 	int ScreenWidth = GetCVar("drpg_menu_width");
@@ -595,7 +620,8 @@ void DrawTooltip(GUITooltip *Tooltip)
 			
 			// Text
 			SetFont("SMALLFONT");
-			HudMessage("%s", Tooltip->Text, HUDMSG_PLAIN, 0, Color, X + (NoBack ? 0.1 : 4.1), Y + (NoBack ? 0.1 : 4.1), 0.05);
+			HudMessage("%s", Tooltip->Text);
+            EndHudMessage(HUDMSG_PLAIN, 0, Color, X + (NoBack ? 0.1 : 4.1), Y + (NoBack ? 0.1 : 4.1), 0.05);
 		}
 		
 		// Basic Tooltip with Title
@@ -616,11 +642,13 @@ void DrawTooltip(GUITooltip *Tooltip)
 			
 			// Title
 			SetFont("BIGFONT");
-			HudMessage("%s", Tooltip->Title, HUDMSG_PLAIN, 0, CR_WHITE, X + 8.1, Y + 16.0, 0.05);
+			HudMessage("%s", Tooltip->Title);
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 8.1, Y + 16.0, 0.05);
 			
 			// Text
 			SetFont("SMALLFONT");
-			HudMessage("%s", Tooltip->Text, HUDMSG_PLAIN, 0, Color, X + 8.1, Y + 32.1, 0.05);
+			HudMessage("%s", Tooltip->Text);
+            EndHudMessage(HUDMSG_PLAIN, 0, Color, X + 8.1, Y + 32.1, 0.05);
 		}
 		
 		// Complex Tooltip
@@ -642,11 +670,13 @@ void DrawTooltip(GUITooltip *Tooltip)
 			
 			// Title
 			SetFont("BIGFONT");
-			HudMessage("%s", Tooltip->Title, HUDMSG_PLAIN, 0, CR_WHITE, X + 64.1, Y + 16.0, 0.05);
+			HudMessage("%s", Tooltip->Title);
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 64.1, Y + 16.0, 0.05);
 			
 			// Text
 			SetFont("SMALLFONT");
-			HudMessage("%s", Tooltip->Text, HUDMSG_PLAIN, 0, Color, X + 64.1, Y + 32.1, 0.05);
+			HudMessage("%s", Tooltip->Text);
+            EndHudMessage(HUDMSG_PLAIN, 0, Color, X + 64.1, Y + 32.1, 0.05);
 			
 			// Icon
 			PrintSprite(Tooltip->Icon, 0, X + IconXOff + 16.1, Y + IconYOff + 16.1, 0.05);
@@ -686,14 +716,18 @@ void HandleContextMenu(GUIContextMenu *Menu)
 	{
 		if (InRegion(X + 20, Y + 40 + (i * 10), Width, 11))
 		{
-			HudMessage("%s", Menu->Name[i], HUDMSG_PLAIN, 0, MenuCursorColor, X + 18.1, Y + 40.0 + (i * 10), 0.05);;
+			HudMessage("%s", Menu->Name[i]);
+            EndHudMessage(HUDMSG_PLAIN, 0, MenuCursorColor, X + 18.1, Y + 40.0 + (i * 10), 0.05);
 			
 			// OnClick Event
 			if (Player.Mouse.LeftButton && Menu->OnClick[i] != NULL)
 				Menu->OnClick[i](Menu->Data);
 		}
 		else
-			HudMessage("%s", Menu->Name[i], HUDMSG_PLAIN, 0, CR_WHITE, X + 18.1, Y + 40.0 + (i * 10), 0.05);
+        {
+			HudMessage("%s", Menu->Name[i]);
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 18.1, Y + 40.0 + (i * 10), 0.05);
+        }
 	}
 	
 	// Draw Background
@@ -827,7 +861,7 @@ GUITooltip *GUICreateTooltip()
 	GUITooltip *Tooltip = calloc(sizeof(GUITooltip), 1);
 	
 	Tooltip->Type = TT_BASIC;
-	Tooltip->Color = CR_WHITE;
+	Tooltip->Color = "White";
 	
 	return Tooltip;
 }

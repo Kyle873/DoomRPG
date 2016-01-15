@@ -106,17 +106,23 @@ NamedScript void ItemRoulette(bool Rare)
         if (!Started)
         {
             SetFont("BIGFONT");
-            HudMessage("%d\n", ChipTotal, HUDMSG_PLAIN, 0, (Rare ? CR_WHITE : CR_GOLD), 320, 240, 0.05);
-            HudMessage("Rarity: %d\n", ChipRarity, HUDMSG_PLAIN, 0, (ChipIndex == 0 ? MenuCursorColor : (Rare ? CR_WHITE : CR_GOLD)), 320, 272, 0.05);
-            HudMessage("Amount: %d\n", ChipAmount, HUDMSG_PLAIN, 0, (ChipIndex == 1 ? MenuCursorColor : (Rare ? CR_WHITE : CR_GOLD)), 320, 284, 0.05);
-            HudMessage("Duds: %d\n", ChipDuds, HUDMSG_PLAIN, 0, (ChipIndex == 2 ? MenuCursorColor : (Rare ? CR_WHITE : CR_GOLD)), 320, 296, 0.05);
-            HudMessage("Speed: %d\n", ChipSpeed, HUDMSG_PLAIN, 0, (ChipIndex == 3 ? MenuCursorColor : (Rare ? CR_WHITE : CR_GOLD)), 320, 308, 0.05);
+            HudMessage("%d\n", ChipTotal);
+            EndHudMessage(HUDMSG_PLAIN, 0, (Rare ? "White" : "Gold"), 320, 240, 0.05);
+            HudMessage("Rarity: %d\n", ChipRarity);
+            EndHudMessage(HUDMSG_PLAIN, 0, (ChipIndex == 0 ? MenuCursorColor : (Rare ? "White" : "Gold")), 320, 272, 0.05);
+            HudMessage("Amount: %d\n", ChipAmount);
+            EndHudMessage(HUDMSG_PLAIN, 0, (ChipIndex == 1 ? MenuCursorColor : (Rare ? "White" : "Gold")), 320, 284, 0.05);
+            HudMessage("Duds: %d\n", ChipDuds);
+            EndHudMessage(HUDMSG_PLAIN, 0, (ChipIndex == 2 ? MenuCursorColor : (Rare ? "White" : "Gold")), 320, 296, 0.05);
+            HudMessage("Speed: %d\n", ChipSpeed);
+            EndHudMessage(HUDMSG_PLAIN, 0, (ChipIndex == 3 ? MenuCursorColor : (Rare ? "White" : "Gold")), 320, 308, 0.05);
             PrintSprite((Rare ? "CHPPA0" : "CHPGA0"), 0, 320 + 16, 240 + 32, 0.05);
         };
         
         // Draw Name
         SetFont("BIGFONT");
-        HudMessage("%s\n", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name), HUDMSG_PLAIN, 0, CR_WHITE, 320, 240 + Radius + 32, 0.05);
+        HudMessage("%s\n", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
+        EndHudMessage(HUDMSG_PLAIN, 0, "White", 320, 240 + Radius + 32, 0.05);
         
         // Draw Box
         if (Started)
@@ -247,7 +253,8 @@ NamedScript void ItemRoulette(bool Rare)
         {
             // Draw Name
             SetFont("BIGFONT");
-            HudMessage("%s\n", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name), HUDMSG_FADEOUT, 0, (WheelItems[Selection] == GetBlankItem() ? CR_RED : CR_GREEN), 320, 240 + Radius + 32, 2.0, 1.0);
+            HudMessage("%s\n", (WheelItems[Selection] == GetBlankItem() ? "\CaNothing" : WheelItems[Selection]->Name));
+            EndHudMessage(HUDMSG_FADEOUT, 0, (WheelItems[Selection] == GetBlankItem() ? "Red" : "Green"), 320, 240 + Radius + 32, 2.0, 1.0);
             
             // Draw Box
             PrintSpriteFade("ItemBoxR", 0, 320, 240 + Radius, 0.25, 0.75);

@@ -287,10 +287,14 @@ NamedScript void CrateHack()
         
         // HACKIFICATIONS
         SetFont("SMALLFONT");
-        HudMessage("HACKING IN PROGRESS...\n", HUDMSG_PLAIN, 0, CR_GREEN, 160.0, 100.0, 0.05);
+        HudMessage("HACKING IN PROGRESS...\n");
+        EndHudMessage(HUDMSG_PLAIN, 0, "Green", 160.0, 100.0, 0.05);
         if (!GetActivatorCVar("drpg_toaster"))
             for (int i = 0; i < 16; i++)
-                HudMessage("%c\n", (Random(1, 2) == 1 ? '0' : '1'), HUDMSG_FADEOUT, 0, CR_GREEN, 10.0 + (8.0 * Random(1, 36)), 150.0 + (8.0 * Random(1, 10)), 0.25, 0.75);
+            {
+                HudMessage("%d\n", Random(0, 1));
+                EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 10.0 + (8.0 * Random(1, 36)), 150.0 + (8.0 * Random(1, 10)), 0.25, 0.75);
+            }
         
         // Cursor
         PrintSprite("HackCurs", 0, 10.1 + X, 120.0, 0.05);
@@ -339,7 +343,8 @@ NamedScript void CrateHack()
                         case NODE_CRITFAIL:
                             ActivatorSound("hacking/critfail", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Security Lockdown Triggered!\n", HUDMSG_FADEOUT, 0, CR_RED, 160.0, 140.0, 2.0, 1.0);
+                            HudMessage("Security Lockdown Triggered!\n");
+                            EndHudMessage(HUDMSG_FADEOUT, 0, "Red", 160.0, 140.0, 2.0, 1.0);
                             Crates[Player.CrateID].HackingCooldown += 35 * 60;
                             Crate->Tries = 3;
                             Hacking = false;
@@ -347,7 +352,8 @@ NamedScript void CrateHack()
                         case NODE_EXPLODE:
                             ActivatorSound("hacking/critfail", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Explosive Device Triggered!\n", HUDMSG_FADEOUT, 0, CR_ORANGE, 160.0, 140.0, 2.0, 1.0);
+                            HudMessage("Explosive Device Triggered!\n");
+                            EndHudMessage(HUDMSG_FADEOUT, 0, "Orange", 160.0, 140.0, 2.0, 1.0);
                             SetActorState(Crates[Player.CrateID].TID, "Explode");
                             Hacking = false;
                             Player.CrateOpen = false;
@@ -355,7 +361,8 @@ NamedScript void CrateHack()
                         case NODE_UNLOCK:
                             ActivatorSound("hacking/success", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Hack Successful\n", HUDMSG_FADEOUT, 0, CR_GREEN, 160.0, 140.0, 2.0, 1.0);
+                            HudMessage("Hack Successful\n");
+                            EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 160.0, 140.0, 2.0, 1.0);
                             Crates[Player.CrateID].Firewall = false;
                             SetActorState(Crates[Player.CrateID].TID, "Normal");
                             SetUserVariable(Crates[Player.CrateID].TID, "user_firewall", (int)Crates[CrateID].Firewall);
@@ -364,33 +371,38 @@ NamedScript void CrateHack()
                         case NODE_XP:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("+%ld XP\n", XPBonus, HUDMSG_FADEOUT, 0, CR_WHITE, 160.0, 140.0, 2.0, 1.0);
+                            HudMessage("+%ld XP\n", XPBonus);
+                            EndHudMessage(HUDMSG_FADEOUT, 0, "White", 160.0, 140.0, 2.0, 1.0);
                             Player.XP += XPBonus;
                             break;
                         case NODE_RANK:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("+%ld Rank\n", RankBonus, HUDMSG_FADEOUT, 0, CR_YELLOW, 160.0, 140.0, 2.0, 1.0);
+                            HudMessage("+%ld Rank\n", RankBonus);
+                            EndHudMessage(HUDMSG_FADEOUT, 0, "Yellow", 160.0, 140.0, 2.0, 1.0);
                             Player.Rank += RankBonus;
                             break;
                         case NODE_RETRY:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Extra Try\n", HUDMSG_FADEOUT, 0, CR_BLUE, 160.0, 140.0, 2.0, 1.0);
+                            HudMessage("Extra Try\n");
+                            EndHudMessage(HUDMSG_FADEOUT, 0, "Blue", 160.0, 140.0, 2.0, 1.0);
                             if (Crate->Tries < 3)
                                 Crate->Tries++;
                             break;
                         case NODE_ADD:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Extra Item!\n", HUDMSG_FADEOUT, 0, CR_CYAN, 160.0, 140.0, 2.0, 1.0);
+                            HudMessage("Extra Item!\n");
+                            EndHudMessage(HUDMSG_FADEOUT, 0, "Cyan", 160.0, 140.0, 2.0, 1.0);
                             if (Crates[Player.CrateID].Amount < CRATE_MAX_ITEMS - 1)
                                 Crates[Player.CrateID].Amount++;
                             break;
                         case NODE_RARITY:
                             ActivatorSound("hacking/select", 127);
                             SetFont("SMALLFONT");
-                            HudMessage("Rarity Upgrade!\n", HUDMSG_FADEOUT, 0, CR_PURPLE, 160.0, 140.0, 2.0, 1.0);
+                            HudMessage("Rarity Upgrade!\n");
+                            EndHudMessage(HUDMSG_FADEOUT, 0, "Purple", 160.0, 140.0, 2.0, 1.0);
                             if (Crates[Player.CrateID].Rarity < MAX_DIFFICULTIES - 1)
                                 Crates[Player.CrateID].Rarity++;
                             break;
@@ -773,7 +785,8 @@ void DrawCrate()
     
     // Title
     SetFont("BIGFONT");
-    HudMessage("UAC Supply Crate (%s\C-)\n", CrateRarityNames[Crates[Player.CrateID].Rarity], HUDMSG_PLAIN, 0, CR_GREEN, 24.1, 24.0, 0.05);
+    HudMessage("UAC Supply Crate (%s\C-)\n", CrateRarityNames[Crates[Player.CrateID].Rarity]);
+    EndHudMessage(HUDMSG_PLAIN, 0, "Green", 24.1, 24.0, 0.05);
     
     for (int i = 0; i < Height; i++)
     {
@@ -824,7 +837,8 @@ void DrawCrate()
             if (Player.CrateIndex == Index && Active)
             {
                 SetFont("BIGFONT");
-                HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 344.1, 0.05);
+                HudMessage("%s\n", Name);
+                EndHudMessage(HUDMSG_PLAIN, 0, "White", 24.1, 344.1, 0.05);
             }
             
             // Increment X

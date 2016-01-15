@@ -1362,7 +1362,8 @@ NamedScript void TurretPickStimMenu()
         
         // Draw Name
         SetFont("BIGFONT");
-        HudMessage("%s\n", CompoundNames[Selection], HUDMSG_PLAIN, 0, CompoundColors[Selection], 320, 240 + Radius + 32, 0.05);
+        HudMessage("%s\n", CompoundNames[Selection]);
+        EndHudMessage(HUDMSG_PLAIN, 0, CompoundColors[Selection], 320, 240 + Radius + 32, 0.05);
         
         // Input
         if (Buttons & BT_USE)
@@ -1523,11 +1524,13 @@ NamedScript Type_ENTER void TurretCommandWheel()
         
         // Name
         SetFont("BIGFONT");
-        HudMessage("%s\n", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].Name, HUDMSG_PLAIN, 0, CR_WHITE, 320, 240 + CurrentRadius + 32, 0.05);
+        HudMessage("%s\n", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].Name);
+        EndHudMessage(HUDMSG_PLAIN, 0, "White", 320, 240 + CurrentRadius + 32, 0.05);
         
         // Description
         SetFont("SMALLFONT");
-        HudMessage("%s\n", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].CommandInfo, HUDMSG_PLAIN, 0, CR_YELLOW, 320.4, 240.1 + CurrentRadius + 48, 0.05);
+        HudMessage("%s\n", TurretUpgradeData[CurrentCommands[Player.Turret.WheelCommand]].CommandInfo);
+        EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", 320.4, 240.1 + CurrentRadius + 48, 0.05);
         
         // Input
         if (!Close)
@@ -1814,7 +1817,8 @@ NamedScript void TurretAI(int TID)
     
     /* Turret Status Debug
     SetHudSize(640, 480, 1);
-    HudMessageBold("Turret Status\n\nHas Target: %s\nTarget Forced: %s\nTarget Original TID: %d\nTarget TID: %d\nInterest Time: %d\n", HasTarget? "Yes" : "No", TargetForced? "Yes" : "No", TargetOriginalTID, TargetTID, LosingInterestTime, HUDMSG_FADEOUT, 864, CR_GREEN, 32.1, 32.1, 1.0, 1.0);
+    HudMessage("Turret Status\n\nHas Target: %s\nTarget Forced: %s\nTarget Original TID: %d\nTarget TID: %d\nInterest Time: %d\n", HasTarget? "Yes" : "No", TargetForced? "Yes" : "No", TargetOriginalTID, TargetTID, LosingInterestTime);
+    EndhudMessage(HUDMSG_FADEOUT, 864, "Green", 32.1, 32.1, 1.0, 1.0);
     */
     
     if (!HasTarget)

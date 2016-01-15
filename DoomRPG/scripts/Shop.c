@@ -193,48 +193,48 @@ void ShopLoop()
     if (Player.LockerMode)
     {
         // Title and Page
-        HudMessage("\ChLocker \C-- %s\C- \Cd(%d/%d)\n",
-                   ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories,
-                   HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 24.0, 0.05);
+        HudMessage("\ChLocker \C-- %s\C- \Cd(%d/%d)\n", ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories);
+        EndHudMessage(HUDMSG_PLAIN, 0, "White", 24.1, 24.0, 0.05);
         
         // EP Cost/Inventory Count
         if (GetCVar("drpg_inv_capacity"))
-            HudMessage("%s%d EP \C-(Inventory: %d/%d)\n",
-                       (CurrentLevel->UACBase ? "\Cc" : "\Cn"), LOCKER_EPRATE, Player.InvItems, CheckInventoryMax(),
-                       HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 38.0, 0.05);
+        {
+            HudMessage("%s%d EP \C-(Inventory: %d/%d)\n", (CurrentLevel->UACBase ? "\Cc" : "\Cn"), LOCKER_EPRATE, Player.InvItems, CheckInventoryMax());
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", 24.1, 38.0, 0.05);
+        }
         else
-            HudMessage("%s%d EP\n",
-                       (CurrentLevel->UACBase ? "\Cc" : "\Cn"), LOCKER_EPRATE,
-                       HUDMSG_PLAIN, 0, CR_GOLD, 24.1, 38.0, 0.05);
+        {
+            HudMessage("%s%d EP\n", (CurrentLevel->UACBase ? "\Cc" : "\Cn"), LOCKER_EPRATE);
+            EndHudMessage(HUDMSG_PLAIN, 0, "Gold", 24.1, 38.0, 0.05);
+        }
     }
     else
     {
         // Title and Page
-        HudMessage("\CfShop \C-- %s\C- \Cd(%d/%d)\n",
-                   ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories,
-                   HUDMSG_PLAIN, 0, CR_WHITE, 24.1, 24.0, 0.05);
+        HudMessage("\CfShop \C-- %s\C- \Cd(%d/%d)\n", ItemCategoryNames[Player.ShopPage], Player.ShopPage + 1, ItemCategories);
+        EndHudMessage(HUDMSG_PLAIN, 0, "White", 24.1, 24.0, 0.05);
         
         // Price
         if (ItemCategoryFlags[Player.ShopPage] & CF_NOBUY && ItemCategoryFlags[Player.ShopPage] & CF_NOSELL) // No Buying or Selling
-            HudMessage("(Discount: %d%%)\n",
-                       Player.ShopDiscount,
-                       HUDMSG_PLAIN, 0, CR_GOLD,
-                       24.1, 38.0, 0.05);
+        {
+            HudMessage("(Discount: %d%%)\n", Player.ShopDiscount);
+            EndHudMessage(HUDMSG_PLAIN, 0, "Gold", 24.1, 38.0, 0.05);
+        }
         else if (ItemCategoryFlags[Player.ShopPage] & CF_NOBUY || Rank == -1) // No Buying
-            HudMessage("\Ci%d C \Ck(Discount: %d%%)\n",
-                       SellPrice, Player.ShopDiscount,
-                       HUDMSG_PLAIN, 0, CR_GOLD,
-                       24.1, 38.0, 0.05);
+        {
+            HudMessage("\Ci%d C \Ck(Discount: %d%%)\n", SellPrice, Player.ShopDiscount);
+            EndHudMessage(HUDMSG_PLAIN, 0, "Gold", 24.1, 38.0, 0.05);
+        }
         else if (ItemCategoryFlags[Player.ShopPage] & CF_NOSELL) // No Selling
-            HudMessage("\Cj%d C \Ck(Discount: %d%%)\n",
-                       Cost, Player.ShopDiscount,
-                       HUDMSG_PLAIN, 0, CR_GOLD,
-                       24.1, 38.0, 0.05);
+        {
+            HudMessage("\Cj%d C \Ck(Discount: %d%%)\n", Cost, Player.ShopDiscount);
+            EndHudMessage(HUDMSG_PLAIN, 0, "Gold", 24.1, 38.0, 0.05);
+        }
         else // Normal
-            HudMessage("\Cj%d C \Ci(%d C) \Ck(Discount: %d%%)\n",
-                       Cost, SellPrice, Player.ShopDiscount,
-                       HUDMSG_PLAIN, 0, CR_GOLD,
-                       24.1, 38.0, 0.05);
+        {
+            HudMessage("\Cj%d C \Ci(%d C) \Ck(Discount: %d%%)\n", Cost, SellPrice, Player.ShopDiscount);
+            EndHudMessage(HUDMSG_PLAIN, 0, "Gold", 24.1, 38.0, 0.05);
+        }
     }
     
     // Item Grid
@@ -246,11 +246,13 @@ void ShopLoop()
         str CardSprite;
         
         SetFont("BIGFONT");
-        HudMessage("+%d%%\n", Player.ShopCard * 5, HUDMSG_PLAIN, 0, (CurrentLevel->UACBase ? CR_YELLOW : CR_GREY), 436.4, 364.0, 0.05);
+        HudMessage("+%d%%\n", Player.ShopCard * 5);
+        EndHudMessage(HUDMSG_PLAIN, 0, (CurrentLevel->UACBase ? "Yellow" : "Gray"), 436.4, 364.0, 0.05);
         if (ItemRanksRemoved)
         {
             SetFont("SMALLFONT");
-            HudMessage("No Rank\nLimits\n", HUDMSG_PLAIN, 0, CR_CYAN, 433.4, 382.0, 0.05);
+            HudMessage("No Rank\nLimits\n");
+            EndHudMessage(HUDMSG_PLAIN, 0, "Cyan", 433.4, 382.0, 0.05);
         }
         
         if (Player.ShopCard == 1)
@@ -752,12 +754,14 @@ void DrawItemGrid()
             if (Held > 0)
             {
                 SetFont("BIGFONT");
-                HudMessage("%d\n", Held, HUDMSG_PLAIN, 0, CR_GREEN, X + 44.2, Y + 44.2, 0.05);
+                HudMessage("%d\n", Held);
+                EndHudMessage(HUDMSG_PLAIN, 0, "Green", X + 44.2, Y + 44.2, 0.05);
             }
             if (Stored > 0)
             {
                 SetFont("BIGFONT");
-                HudMessage("%d\n", Stored, HUDMSG_PLAIN, 0, CR_YELLOW, X + 44.2, Y + 12.2, 0.05);
+                HudMessage("%d\n", Stored);
+                EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", X + 44.2, Y + 12.2, 0.05);
             }
             
             // Auto-Sell/Auto-Store Icon
@@ -770,14 +774,14 @@ void DrawItemGrid()
             if (CompatMode == COMPAT_DRLA && Player.LockerMode && Player.ShopPage == 0 && Player.Locker[Player.ShopPage][Index] > 0)
             {
                 SetFont("SMALLFONT");
-                HudMessage("%d\n", Player.WeaponMods[Index].Power, HUDMSG_PLAIN, 0, CR_RED, X + 4.0, Y + 38.2, 0.05);
-                HudMessage("%d\n", Player.WeaponMods[Index].Bulk, HUDMSG_PLAIN, 0, CR_BLUE, X + 12.0, Y + 38.2, 0.05);
-                HudMessage("%d\n", Player.WeaponMods[Index].Agility, HUDMSG_PLAIN, 0, CR_GREEN, X + 20.0, Y + 38.2, 0.05);
-                HudMessage("%d\n", Player.WeaponMods[Index].Technical, HUDMSG_PLAIN, 0, CR_YELLOW, X + 28.0, Y + 38.2, 0.05);
-                HudMessage("%d\n", Player.WeaponMods[Index].Sniper, HUDMSG_PLAIN, 0, CR_PURPLE, X + 4.0, Y + 46.2, 0.05);
-                HudMessage("%d\n", Player.WeaponMods[Index].Firestorm, HUDMSG_PLAIN, 0, CR_ORANGE, X + 12.0, Y + 46.2, 0.05);
-                HudMessage("%d\n", Player.WeaponMods[Index].Nano, HUDMSG_PLAIN, 0, CR_WHITE, X + 20.0, Y + 46.2, 0.05);
-                HudMessage("%d\n", Player.WeaponMods[Index].Artifacts, HUDMSG_PLAIN, 0, CR_DARKRED, X + 28.0, Y + 46.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Power);     EndHudMessage(HUDMSG_PLAIN, 0, "Red", X + 4.0, Y + 38.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Bulk);      EndHudMessage(HUDMSG_PLAIN, 0, "Blue", X + 12.0, Y + 38.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Agility);   EndHudMessage(HUDMSG_PLAIN, 0, "Green", X + 20.0, Y + 38.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Technical); EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", X + 28.0, Y + 38.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Sniper);    EndHudMessage(HUDMSG_PLAIN, 0, "Purple", X + 4.0, Y + 46.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Firestorm); EndHudMessage(HUDMSG_PLAIN, 0, "Orange", X + 12.0, Y + 46.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Nano);      EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 20.0, Y + 46.2, 0.05);
+                HudMessage("%d\n", Player.WeaponMods[Index].Artifacts); EndHudMessage(HUDMSG_PLAIN, 0, "DarkRed", X + 28.0, Y + 46.2, 0.05);
             }
             
             // Icon
@@ -812,7 +816,8 @@ void DrawItemGrid()
             if (Player.ShopIndex == Index)
             {
                 SetFont("BIGFONT");
-                HudMessage("%s\n", Name, HUDMSG_PLAIN, 0, ((!Player.LockerMode && CanAfford) || Player.LockerMode ? CR_WHITE : CR_RED), 24.1, 344.1, 0.05);
+                HudMessage("%s\n", Name);
+                EndHudMessage(HUDMSG_PLAIN, 0, ((!Player.LockerMode && CanAfford) || Player.LockerMode ? "White" : "Red"), 24.1, 344.1, 0.05);
             }
             
             // Increment X

@@ -298,7 +298,7 @@ NamedScript MapSpecial void ArenaChooseBonus()
             if (i == BonusChoice)
             {
                 HudMessage("-->");
-                EndHudMessage(HUDMSG_PLAIN, 0, ColorNames[MenuCursorColor], X - 24.0, Y, 0.05);
+                EndHudMessage(HUDMSG_PLAIN, 0, MenuCursorColor, X - 24.0, Y, 0.05);
             }
             
             // Bonus String

@@ -146,7 +146,8 @@ NamedScript MapSpecial void RegenArea(int ID)
         if (DoMessage)
         {
             SetFont("BIGFONT");
-            HudMessage("Health restored\n", HUDMSG_FADEOUT, 0, CR_BRICK, 0.5, 0.33, 2.0, 0.5);
+            HudMessage("Health restored\n");
+            EndHudMessage(HUDMSG_FADEOUT, 0, "Brick", 0.5, 0.33, 2.0, 0.5);
             FadeRange(255, 0, 0, 0.5, 255, 0, 0, 0.0, 1.0);
             ActivatorSound("regen/health", 127);
         }
@@ -166,7 +167,8 @@ NamedScript MapSpecial void RegenArea(int ID)
         if (CheckInventory("DRPGCredits") < ArmorFee)
         {
             SetFont("BIGFONT");
-            HudMessage("You need %d credits to repair armor\n", ArmorFee, HUDMSG_FADEOUT, 1, CR_RED, 0.5, 0.33, 2.0, 0.5);
+            HudMessage("You need %d credits to repair armor\n", ArmorFee);
+            EndHudMessage(HUDMSG_FADEOUT, 1, "Red", 0.5, 0.33, 2.0, 0.5);
             ActivatorSound("menu/error", 127);
             return;
         }
@@ -175,7 +177,8 @@ NamedScript MapSpecial void RegenArea(int ID)
         TakeInventory("DRPGCredits", ArmorFee);
         
         SetFont("BIGFONT");
-        HudMessage("Armor repaired\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.33, 2.0, 0.5);
+        HudMessage("Armor repaired\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 0.5, 0.33, 2.0, 0.5);
         FadeRange(0, 255, 0, 0.5, 0, 255, 0, 0.0, 1.0);
         ActivatorSound("regen/armor", 127);
     }
@@ -204,7 +207,8 @@ NamedScript MapSpecial void RegenArea(int ID)
             TakeInventory("DRPGCredits", ShieldCharges);
             
             SetFont("BIGFONT");
-            HudMessage("Shield restored\n", HUDMSG_FADEOUT, 0, CR_CYAN, 0.5, 0.33, 2.0, 0.5);
+            HudMessage("Shield restored\n");
+            EndHudMessage(HUDMSG_FADEOUT, 0, "Cyan", 0.5, 0.33, 2.0, 0.5);
             FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 1.0);
             ActivatorSound("regen/shield", 127);
         }
@@ -228,7 +232,8 @@ NamedScript MapSpecial void RegenArea(int ID)
             TakeInventory("DRPGCredits", EPCharges);
             
             SetFont("BIGFONT");
-            HudMessage("EP restored\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.33, 2.0, 0.5);
+            HudMessage("EP restored\n");
+            EndHudMessage(HUDMSG_FADEOUT, 0, "LightBlue", 0.5, 0.33, 2.0, 0.5);
             FadeRange(0, 255, 255, 0.5, 0, 255, 255, 0.0, 1.0);
             ActivatorSound("regen/ep", 127);
         }
@@ -250,7 +255,8 @@ NamedScript MapSpecial void RegenArea(int ID)
             AddBattery(1); // One more to get rid of the fraction-of-a-percent
         
         SetFont("BIGFONT");
-        HudMessage("Augmentation Battery Recharged\n", HUDMSG_FADEOUT, 0, CR_YELLOW, 0.5, 0.33, 2.0, 0.5);
+        HudMessage("Augmentation Battery Recharged\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Yellow", 0.5, 0.33, 2.0, 0.5);
         FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0.0, 1.0);
         ActivatorSound("regen/battery", 127);
     }
@@ -284,7 +290,7 @@ NamedScript MapSpecial void StimInjector()
     {
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
         int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-        int Color = 0;
+        str Color = "Untranslated";
         int Amount = 0;
         int Cost = 0;
         fixed BaseX = 120.1;
@@ -327,7 +333,8 @@ NamedScript MapSpecial void StimInjector()
         // Draw Amount/Cost
         X = BaseX;
         SetFont("BIGFONT");
-        HudMessage("Injector: %d (\Cf%d Credits\C-)\n", Amount, Cost, HUDMSG_PLAIN, 0, CR_GREEN, X, Y - YOff, 0.05);
+        HudMessage("Injector: %d (\Cf%d Credits\C-)\n", Amount, Cost);
+        EndHudMessage(HUDMSG_PLAIN, 0, "Green", X, Y - YOff, 0.05);
         
         Y += 32.0;
         
@@ -352,7 +359,8 @@ NamedScript MapSpecial void StimInjector()
             // Vial
             X += 112.0;
             SetFont("SMALLFONT");
-            HudMessage("%s: %d/%d\n", CompoundNames[i], Player.Stim.Vials[i], Player.Stim.VialMax, HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
+            HudMessage("%s: %d/%d\n", CompoundNames[i], Player.Stim.Vials[i], Player.Stim.VialMax);
+            EndHudMessage(HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
             
             if (i == StimStatsEnd - 1 || i == StimPowerupStart - 1)
                 Y += 16.0;
@@ -494,13 +502,14 @@ NamedScript MapSpecial void LevelTransport()
         
         // Text
         SetFont("BIGFONT");
-        HudMessage("Level Transporter\n", HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 32.1, 32.1, 0.05, 0.5);
+        HudMessage("Level Transporter\n");
+        EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "White", 32.1, 32.1, 0.05, 0.5);
         
-        int TitleColor = CR_GOLD;
+        str TitleColor = "Gold";
         if (TeleDest->NeedsRealInfo || !(TeleDest->Completed))
-            TitleColor = CR_RED;
+            TitleColor = "Red";
         else if (TeleDest->AllBonus)
-            TitleColor = CR_GREEN;
+            TitleColor = "Green";
         
         str MapType = "Standard Map";
         if (TeleDest->SecretMap)
@@ -509,41 +518,66 @@ NamedScript MapSpecial void LevelTransport()
             MapType = "UAC Base";
         if (TeleDest->UACArena)
             MapType = "UAC Arena";
-        HudMessage("%s\n", TeleDest->NiceName, HUDMSG_FADEOUT, MENU_ID + 1, TitleColor, 32.1, 64.1, 0.05, 0.5);
+        HudMessage("%s\n", TeleDest->NiceName);
+        EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 1, TitleColor, 32.1, 64.1, 0.05, 0.5);
         SetFont("SMALLFONT");
         if (TeleDest->LevelNum > 0)
-            HudMessage("%s, level %d - %s\n", TeleDest->LumpName, TeleDest->LevelNum, MapType, HUDMSG_FADEOUT, MENU_ID + 2, CR_ORANGE, 32.1, 80.1, 0.05, 0.5);
+        {
+            HudMessage("%s, level %d - %s\n", TeleDest->LumpName, TeleDest->LevelNum, MapType);
+            EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 2, "Orange", 32.1, 80.1, 0.05, 0.5);
+        }
         else
-            HudMessage("%s - %s\n", TeleDest->LumpName, MapType, HUDMSG_FADEOUT, MENU_ID + 2, CR_DARKGREEN, 32.1, 80.1, 0.05, 0.5);
+        {
+            HudMessage("%s - %s\n", TeleDest->LumpName, MapType);
+            EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 2, "DarkGreen", 32.1, 80.1, 0.05, 0.5);
+        }
         
         if (!TeleDest->NeedsRealInfo && !TeleDest->UACBase && !TeleDest->UACArena)
         {
-            int KillColor = CR_BRICK;
+            str KillColor = "Brick";
             if (TeleDest->KillBonus && Timer() & 16)
-                KillColor = CR_GREEN;
-            int ItemColor = CR_LIGHTBLUE;
+                KillColor = "Green";
+            str ItemColor = "LightBlue";
             if (TeleDest->ItemsBonus && Timer() & 16)
-                ItemColor = CR_GREEN;
-            int SecretColor = CR_YELLOW;
+                ItemColor = "Green";
+            str SecretColor = "Yellow";
             if (TeleDest->SecretsBonus && Timer() & 16)
-                SecretColor = CR_GREEN;
-            int ParColor = CR_GOLD;
+                SecretColor = "Green";
+            str ParColor = "Gold";
             if (TeleDest->ParBonus && TeleDest->Par > 0 && Timer() & 16)
-                ParColor = CR_GREEN;
+                ParColor = "Green";
             
             if (TeleDest->MaxTotalMonsters > 0)
-                HudMessage("Kills: %d / %d (%d%%)\n", TeleDest->MaxMonstersKilled, TeleDest->MaxTotalMonsters, TeleDest->MaxMonsterPercentage, HUDMSG_FADEOUT, MENU_ID + 3, KillColor, 32.1, 96.1, 0.05, 0.5);
+            {
+                HudMessage("Kills: %d / %d (%d%%)\n", TeleDest->MaxMonstersKilled, TeleDest->MaxTotalMonsters, TeleDest->MaxMonsterPercentage);
+                EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 3, KillColor, 32.1, 96.1, 0.05, 0.5);
+            }
             if (TeleDest->MaxTotalItems > 0)
-                HudMessage("Items: %d / %d (%d%%)\n", TeleDest->MaxItemsFound, TeleDest->MaxTotalItems, TeleDest->MaxItemPercentage, HUDMSG_FADEOUT, MENU_ID + 4, ItemColor, 32.1, 104.1, 0.05, 0.5);
+            {
+                HudMessage("Items: %d / %d (%d%%)\n", TeleDest->MaxItemsFound, TeleDest->MaxTotalItems, TeleDest->MaxItemPercentage);
+                EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 4, ItemColor, 32.1, 104.1, 0.05, 0.5);
+            }
             if (TeleDest->MaxTotalSecrets > 0)
-                HudMessage("Secrets: %d / %d (%d%%)\n", TeleDest->MaxSecretsFound, TeleDest->MaxTotalSecrets, TeleDest->MaxSecretPercentage, HUDMSG_FADEOUT, MENU_ID + 5, SecretColor, 32.1, 112.1, 0.05, 0.5);
+            {
+                HudMessage("Secrets: %d / %d (%d%%)\n", TeleDest->MaxSecretsFound, TeleDest->MaxTotalSecrets, TeleDest->MaxSecretPercentage);
+                EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 5, SecretColor, 32.1, 112.1, 0.05, 0.5);
+            }
             
             if (TeleDest->Par > 0)
-                HudMessage("Par Time: %s\n", FormatTime(TeleDest->Par * 35), HUDMSG_FADEOUT, MENU_ID + 6, ParColor, 32.1, 128.1, 0.05, 0.5);
+            {
+                HudMessage("Par Time: %s\n", FormatTime(TeleDest->Par * 35));
+                EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 6, ParColor, 32.1, 128.1, 0.05, 0.5);
+            }
             if (TeleDest->ShortestTime < 0x7FFFFFFF)
-                HudMessage("Completion Time: %s\n", FormatTime(TeleDest->ShortestTime * 35), HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5);
+            {
+                HudMessage("Completion Time: %s\n", FormatTime(TeleDest->ShortestTime * 35));
+                EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5);
+            }
             else
-                HudMessage("Completion Time: \C[Red]N/A\n", HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5);
+            {
+                HudMessage("Completion Time: \C[Red]N/A\n");
+                EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 7, ParColor, 32.1, 136.1, 0.05, 0.5);
+            }
             
             str AreaText = "No anomalies detected";
             switch (TeleDest->Event)
@@ -631,10 +665,13 @@ NamedScript MapSpecial void LevelTransport()
             }
             
             SetFont("BIGFONT");
-            HudMessage("Area Status\n", HUDMSG_FADEOUT, MENU_ID + 8, CR_GREEN, 32.1, 152.1, 0.05, 0.5);
+            HudMessage("Area Status\n");
+            EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 8, "Green", 32.1, 152.1, 0.05, 0.5);
             SetFont("SMALLFONT");
-            HudMessage("Monster level (Approx.): %d - %d\n", MonsterMinLevel, MonsterMaxLevel, HUDMSG_FADEOUT, MENU_ID + 9, CR_WHITE, 32.1, 168.1, 0.05, 0.5);
-            HudMessage("%s\n", AreaText, HUDMSG_FADEOUT, MENU_ID + 10, CR_WHITE, 32.1, 184.1, 0.05, 0.5);
+            HudMessage("Monster level (Approx.): %d - %d\n", MonsterMinLevel, MonsterMaxLevel);
+            EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 9, "White", 32.1, 168.1, 0.05, 0.5);
+            HudMessage("%s\n", AreaText);
+            EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 10, "White", 32.1, 184.1, 0.05, 0.5);
         }
         else if (!TeleDest->NeedsRealInfo && TeleDest->UACBase)
         {
@@ -644,15 +681,19 @@ NamedScript MapSpecial void LevelTransport()
                 AreaText = "\C[Red]Detected: Electrical Grid Malfunction";
             else if (Invasion || MarinesHostile)
                 AreaText = "\C[Brick]Detected: Security Breach";
-            HudMessage("This is a secure UAC military base.\n", HUDMSG_FADEOUT, MENU_ID + 3, CR_DARKGREEN, 32.1, 96.1, 0.05, 0.5);
+            HudMessage("This is a secure UAC military base.\n");
+            EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 3, "DarkGreen", 32.1, 96.1, 0.05, 0.5);
             SetFont("BIGFONT");
-            HudMessage("Area Status\n", HUDMSG_FADEOUT, MENU_ID + 8, CR_GREEN, 32.1, 152.1, 0.05, 0.5);
+            HudMessage("Area Status\n");
+            EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 8, "Green", 32.1, 152.1, 0.05, 0.5);
             SetFont("SMALLFONT");
-            HudMessage("%s\n", AreaText, HUDMSG_FADEOUT, MENU_ID + 9, CR_WHITE, 32.1, 168.1, 0.05, 0.5);
+            HudMessage("%s\n", AreaText);
+            EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 9, "White", 32.1, 168.1, 0.05, 0.5);
         }
         else if (!TeleDest->NeedsRealInfo && TeleDest->UACArena)
         {
-            HudMessage("This is a known UAC battle arena site.\n", HUDMSG_FADEOUT, MENU_ID + 3, CR_LIGHTBLUE, 32.1, 96.1, 0.05, 0.5);
+            HudMessage("This is a known UAC battle arena site.\n");
+            EndHudMessage(HUDMSG_FADEOUT, MENU_ID + 3, "LightBlue", 32.1, 96.1, 0.05, 0.5);
         }
         
         // Input
@@ -782,8 +823,8 @@ NamedScript MapSpecial void SkillComputer()
 
         // Text
         SetFont("BIGFONT");
-        HudMessage("Skill Level: \Cj%d (%s\Cj)\n", SkillChoice + 1, SkillLevels[SkillChoice],
-                   HUDMSG_FADEOUT, MENU_ID, CR_GOLD, 0.5, 0.5, 0.05, 0.5);
+        HudMessage("Skill Level: \Cj%d (%s\Cj)\n", SkillChoice + 1, SkillLevels[SkillChoice]);
+        EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "Gold", 0.5, 0.5, 0.05, 0.5);
         
         // Input
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -832,14 +873,16 @@ NamedScript MapSpecial void ToggleArena()
     if (ArenaActive)
     {
         ActivatorSound("arena/activate", 127);
-        HudMessage("Arena Active\n", HUDMSG_FADEOUT, MENU_ID, CR_GREEN, 0.5, 0.5, 2.0, 1.0);
+        HudMessage("Arena Active\n");
+        EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "Green", 0.5, 0.5, 2.0, 1.0);
         ArenaPlayerNumber = PlayerNumber();
         SetOutpostMusic(OUTPOST_MUSIC_COMBAT);
     }
     else
     {
         ActivatorSound("arena/deactivate", 127);
-        HudMessage("Arena Inactive\n", HUDMSG_FADEOUT, MENU_ID, CR_RED, 0.5, 0.5, 2.0, 1.0);
+        HudMessage("Arena Inactive\n");
+        EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "Red", 0.5, 0.5, 2.0, 1.0);
         ArenaPlayerNumber = -1;
         ResetOutpostMusic(false);
     }
@@ -886,8 +929,8 @@ NamedScript MapSpecial void SelectArenaWave()
         
         // Text
         SetFont("BIGFONT");
-        HudMessage("Wave: \Cd%d\C-/\Cd%d\n", WaveChoice, ArenaMaxWave,
-                   HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 0.5, 0.5, 0.05, 1.0);
+        HudMessage("Wave: \Cd%d\C-/\Cd%d\n", WaveChoice, ArenaMaxWave);
+        EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "White", 0.5, 0.5, 0.05, 1.0);
         
         // Input
         int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
@@ -1158,10 +1201,12 @@ NamedScript MapSpecial void CreditRoom(int ID)
     if (ID == 3) // Kyle873 - That's me!
     {
         SetFont("BIGFONT");
-        HudMessage("Kyle873\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+        HudMessage("Kyle873\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 0.5, 0.5, 3.0, 2.0);
         Delay(35);
         SetFont("SMALLFONT");
-        HudMessage("What do you mean I can't nerf XP Gain to 1 per monster?!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+        HudMessage("What do you mean I can't nerf XP Gain to 1 per monster?!\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "White", 0.5, 0.55, 3.0, 2.0);
 
         int RealCredits = CheckInventory("DRPGCredits");
         
@@ -1175,10 +1220,12 @@ NamedScript MapSpecial void CreditRoom(int ID)
     if (ID == 4) // Lord Misfit
     {
         SetFont("BIGFONT");
-        HudMessage("Lord Misfit\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+        HudMessage("Lord Misfit\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 0.5, 0.5, 3.0, 2.0);
         Delay(35);
         SetFont("SMALLFONT");
-        HudMessage("I swear it's a real bug this time!\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+        HudMessage("I swear it's a real bug this time!\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "White", 0.5, 0.55, 3.0, 2.0);
         
         str VarString = "SetVar";
         
@@ -1186,7 +1233,8 @@ NamedScript MapSpecial void CreditRoom(int ID)
         for (int i = 0; i < 100; i++)
         {
             if (Random(1, 3) == 1) VarString = StrParam("%s%s\n", VarString, "Var");
-            HudMessage("%s\n", VarString, HUDMSG_FADEOUT, 0, Random(1, 21), RandomFixed(0.0, 1.0), RandomFixed(0.0, 1.0), 3.0, 2.0);
+            HudMessage("%s\n", VarString);
+            EndHudMessage(HUDMSG_FADEOUT, 0, ColorNames[Random(1, 21)], RandomFixed(0.0, 1.0), RandomFixed(0.0, 1.0), 3.0, 2.0);
             Delay(1);
         }
     }
@@ -1194,7 +1242,8 @@ NamedScript MapSpecial void CreditRoom(int ID)
     if (ID == 5) // Ryan Cordell
     {
         SetFont("BIGFONT");
-        HudMessage("Ryan Cordell\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 7.0, 2.0);
+        HudMessage("Ryan Cordell\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 0.5, 0.5, 7.0, 2.0);
         Delay(35);
         
         for (int i = 0; i < 10; i++)
@@ -1205,15 +1254,18 @@ NamedScript MapSpecial void CreditRoom(int ID)
         
         Delay(35 * 2);
         SetFont("SMALLFONT");
-        HudMessage("Did I do that?\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+        HudMessage("Did I do that?\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "White", 0.5, 0.55, 3.0, 2.0);
     }
     
     if (ID == 6) // marrub
     {
         SetFont("BIGFONT");
-        HudMessage("marrub\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+        HudMessage("marrub\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 0.5, 0.5, 3.0, 2.0);
         Delay(35);
-        HudMessage("I HOPE YOU LIKE SHOTGUNS!\n", HUDMSG_FADEOUT, 0, CR_BRICK, 0.5, 0.55, 3.0, 2.0);
+        HudMessage("I HOPE YOU LIKE SHOTGUNS!\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Brick", 0.5, 0.55, 3.0, 2.0);
         Delay(35 * 2);
         
         for (int i = 0; i < 50; i++)
@@ -1226,9 +1278,11 @@ NamedScript MapSpecial void CreditRoom(int ID)
     if (ID == 7) // Kate
     {
         SetFont("BIGFONT");
-        HudMessage("Kate\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+        HudMessage("Kate\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 0.5, 0.5, 3.0, 2.0);
         Delay(35);
-        HudMessage("\CgR\CiA\CkI\CdN\ChB\CtO\CaW\CjS\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+        HudMessage("\CgR\CiA\CkI\CdN\ChB\CtO\CaW\CjS\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "White", 0.5, 0.55, 3.0, 2.0);
         Delay(35);
         
         FadeTo(255, 0, 0, 0.5, 0.5);
@@ -1253,9 +1307,11 @@ NamedScript MapSpecial void CreditRoom(int ID)
     if (ID == 8) // Yholl
     {
         SetFont("BIGFONT");
-        HudMessage("Yholl\n", HUDMSG_FADEOUT, 0, CR_GREEN, 0.5, 0.5, 3.0, 2.0);
+        HudMessage("Yholl\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "Green", 0.5, 0.5, 3.0, 2.0);
         Delay(35);
-        HudMessage("\CaYour suffering pleases me\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.55, 3.0, 2.0);
+        HudMessage("\CaYour suffering pleases me\n");
+        EndHudMessage(HUDMSG_FADEOUT, 0, "White", 0.5, 0.55, 3.0, 2.0);
         Delay(35);
         
         for (int i = 0; i < 50; i++)
@@ -1355,8 +1411,8 @@ NamedScript MapSpecial void ShopSpecial()
         SetHudSize(0, 0, false);
         SetFont("BIGFONT");
         HudMessage("%s\n\Ck%d C (Discount: %d%%)\n\CdTime Left: %s\n",
-                   Name, Cost, Discount, FormatTime(ShopSpecialTimer),
-                   HUDMSG_FADEOUT, MENU_ID, CR_WHITE, 1.5, 0.5, 0.05, 1.0);
+                   Name, Cost, Discount, FormatTime(ShopSpecialTimer));
+        EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "White", 1.5, 0.5, 0.05, 1.0);
         
         Delay(1);
     }
@@ -1408,7 +1464,8 @@ NamedScript MapSpecial void MissionBBS()
         
         // Title
         SetFont("BIGFONT");
-        HudMessage("\CdMission BBS\n\CjDifficulty: (%s\C-)\n", MissionDifficulties[Difficulty], HUDMSG_PLAIN, 0, CR_WHITE, 0.1, 24.1, 0.05);
+        HudMessage("\CdMission BBS\n\CjDifficulty: (%s\C-)\n", MissionDifficulties[Difficulty]);
+        EndHudMessage(HUDMSG_PLAIN, 0, "White", 0.1, 24.1, 0.05);
         
         // Mission Labels
         for (int i = MAX_MISSIONS - 1; i >= 0; i--)
@@ -1505,7 +1562,8 @@ NamedScript MapSpecial void MissionBBS()
             ActivatorSound("mission/fail", 127);
             SetFont("BIGFONT");
             SetHudSize(640, 480, false);
-            HudMessage("Mission Aborted!\n", HUDMSG_FADEOUT, MISSION_ID, CR_RED, 320.4, 400.0, 3.0, 2.0);
+            HudMessage("Mission Aborted!\n");
+            EndHudMessage(HUDMSG_FADEOUT, MISSION_ID, "Red", 320.4, 400.0, 3.0, 2.0);
             ClearMission();
         }
         
@@ -1527,7 +1585,8 @@ NamedScript MapSpecial void MinigameHandler()
         if (CheckInventory("DRPGChipPlatinum") > 0)
         {
             SetFont("BIGFONT");
-            HudMessage("Rare Item Roulette\n", HUDMSG_FADEOUT, 0, CR_GOLD, 0.5, 0.75, 0.75, 0.25);
+            HudMessage("Rare Item Roulette\n");
+            EndHudMessage(HUDMSG_FADEOUT, 0, "Gold", 0.5, 0.75, 0.75, 0.25);
             Delay(35);
             ItemRoulette(true);
         }
@@ -1543,7 +1602,8 @@ NamedScript MapSpecial void MinigameHandler()
         if (CheckInventory("DRPGChipGold") > 0)
         {
             SetFont("BIGFONT");
-            HudMessage("Item Roulette\n", HUDMSG_FADEOUT, 0, CR_GOLD, 0.5, 0.75, 0.75, 0.25);
+            HudMessage("Item Roulette\n");
+            EndHudMessage(HUDMSG_FADEOUT, 0, "Gold", 0.5, 0.75, 0.75, 0.25);
             Delay(35);
             ItemRoulette(false);
         }

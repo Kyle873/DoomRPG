@@ -528,8 +528,8 @@ NamedScript void MapLoop()
             XPBonus = XPTable[Players(i).Level] / 100;
             Player.XP += XPBonus;
             
-            HudMessage("Monsters Killed Bonus!\n%ld XP Bonus\n", XPBonus,
-                       HUDMSG_FADEOUT, 0, CR_BRICK, 1.5, 0.4, 3.0, 3.0);
+            HudMessage("Monsters Killed Bonus!\n%ld XP Bonus\n", XPBonus);
+            EndHudMessage(HUDMSG_FADEOUT, 0, "Brick", 1.5, 0.4, 3.0, 3.0);
         }
         
         SetActivator(0, AAPTR_NULL);
@@ -551,8 +551,8 @@ NamedScript void MapLoop()
             HealThing(SHIELD_HEALTH);
             Players(i).EP = Players(i).EPMax;
             
-            HudMessage("Items Found Bonus!\nFull HP/EP Restore\n",
-                       HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 1.5, 0.6, 3.0, 3.0);
+            HudMessage("Items Found Bonus!\nFull HP/EP Restore\n");
+            EndHudMessage(HUDMSG_FADEOUT, 0, "LightBlue", 1.5, 0.6, 3.0, 3.0);
         }
         
         SetActivator(0, AAPTR_NULL);
@@ -574,8 +574,8 @@ NamedScript void MapLoop()
             RankBonus = RankTable[Players(i).RankLevel] / 20;
             Players(i).Rank += RankBonus;
 
-            HudMessage("Secrets Found Bonus!\n%ld Rank Bonus\n", RankBonus,
-                       HUDMSG_FADEOUT, 0, CR_YELLOW, 1.5, 0.8, 3.0, 3.0);
+            HudMessage("Secrets Found Bonus!\n%ld Rank Bonus\n", RankBonus);
+            EndHudMessage(HUDMSG_FADEOUT, 0, "Yellow", 1.5, 0.8, 3.0, 3.0);
         }
         
         SetActivator(0, AAPTR_NULL);
@@ -604,8 +604,8 @@ NamedScript void MapLoop()
             Players(i).EP = Players(i).EPMax;
             
             HudMessage("\CaMonsters Killed Bonus!\n\CnItems Found Bonus!\n\CkSecrets Found Bonus!\n\n\Cj%ld XP Bonus\n\Ck%ld Rank Bonus\n\CnFull HP/EP Restore\n",
-                       XPBonus, RankBonus,
-                       HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.2, 5.0, 5.0);
+                       XPBonus, RankBonus);
+            EndHudMessage(HUDMSG_FADEOUT, 0, "White", 0.5, 0.2, 5.0, 5.0);
             
             // Payout Bonus Increase
             Players(i).PayBonus++;
@@ -624,7 +624,8 @@ NamedScript void MapLoop()
         {
             AmbientSound("misc/secret", 127);
             SetFont("BIGFONT");
-            HudMessage("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0); // TODO: BOLD
+            HudMessage("Everything falls silent.\n");
+            EndHudMessageBold(HUDMSG_FADEOUT, 0, "LightBlue", 0.5, 0.7, 5.0, 5.0);
             SetFont("SMALLFONT");
             MapEventReward();
         }
@@ -736,8 +737,8 @@ NumberedScript(MAP_EXIT_SCRIPTNUM) MapSpecial void MapExit(bool Secret)
         
         SetHudSize(640, 480, false);
         SetFont("BIGFONT");
-        HudMessage("\CgA mysterious force prevents you from leaving!\n",
-                   HUDMSG_TYPEON | HUDMSG_LOG, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5); // TODO: BOLD
+        HudMessage("\CgA mysterious force prevents you from leaving!\n");
+        EndHudMessageBold(HUDMSG_TYPEON | HUDMSG_LOG, 0, "Red", 320.4, 160.0, 3.0, 0.03, 0.5);
         SetHudSize(0, 0, false);
         SetFont("SMALLFONT");
         
@@ -761,8 +762,8 @@ NumberedScript(MAP_EXIT_SCRIPTNUM) MapSpecial void MapExit(bool Secret)
         
         SetHudSize(640, 480, false);
         SetFont("BIGFONT");
-        HudMessage("Level \Cg%d\C- Security Lockdown is currently in effect.\nCannot transfer until \Cjenvironmental hazard\C- is \Cjclear\C-.\n", CurrentLevel->HazardLevel,
-                   HUDMSG_TYPEON | HUDMSG_LOG, 0, CR_GREEN, 320.4, 160.0, 3.0, 0.03, 0.5); // TODO: BOLD
+        HudMessage("Level \Cg%d\C- Security Lockdown is currently in effect.\nCannot transfer until \Cjenvironmental hazard\C- is \Cjclear\C-.\n", CurrentLevel->HazardLevel);
+        EndHudMessageBold(HUDMSG_TYPEON | HUDMSG_LOG, 0, "Green", 320.4, 160.0, 3.0, 0.03, 0.5);
         SetHudSize(0, 0, false);
         SetFont("SMALLFONT");
         
@@ -800,7 +801,8 @@ NumberedScript(MAP_EXIT_SCRIPTNUM) MapSpecial void MapExit(bool Secret)
             
             SetFont("SMALLFONT");
             FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0.0, 1.0);
-            HudMessage("Par Time Beaten!\n%ld Rank Bonus\n", RankBonus, HUDMSG_FADEOUT, 0, CR_GOLD, 1.5, 0.5, 3.0, 2.0);
+            HudMessage("Par Time Beaten!\n%ld Rank Bonus\n", RankBonus);
+            EndHudMessage(HUDMSG_FADEOUT, 0, "Gold", 1.5, 0.5, 3.0, 2.0);
             
             Players(i).Rank += RankBonus;
         }
@@ -1384,7 +1386,8 @@ NamedScript void SetupMapEvent()
             SetMusic("AllAuras");
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
-            HudMessage("The air crackles with the darkest of magics!\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0);
+            HudMessage("The air crackles with the darkest of magics!\n");
+            EndHudMessageBold(HUDMSG_FADEOUT, 0, "DarkRed", 320.0, 150.0, 1.0, 19.0);
             SetHudSize(0, 0, false);
             break;
         
@@ -1454,7 +1457,8 @@ NamedScript void SetupMapEvent()
             SetMusic("Skill5");
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
-            HudMessage("It smells of burnt flesh and rotting corpses. It is likely you could be joining them soon.\n", HUDMSG_FADEOUT, 0, CR_BRICK, 320.4, 150.0, 1.0, 19.0); // TODO: BOLD
+            HudMessage("It smells of burnt flesh and rotting corpses. It is likely you could be joining them soon.\n");
+            EndHudMessageBold(HUDMSG_FADEOUT, 0, "Brick", 320.4, 150.0, 1.0, 19.0);
             SetHudSize(0, 0, false);
             break;
         
@@ -1464,7 +1468,8 @@ NamedScript void SetupMapEvent()
             SetMusic("Skill6");
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
-            HudMessage("A foul misfortune sweeps the land, turning up the darkest creatures. There is no God now.\n", HUDMSG_FADEOUT, 0, CR_GREY, 320.4, 150.0, 1.0, 19.0); // TODO: BOLD
+            HudMessage("A foul misfortune sweeps the land, turning up the darkest creatures. There is no God now.\n");
+            EndHudMessageBold(HUDMSG_FADEOUT, 0, "Gray", 320.4, 150.0, 1.0, 19.0);
             SetHudSize(0, 0, false);
             break;
         
@@ -1740,7 +1745,8 @@ NamedScript void EnvironmentalHazard()
                     EnvironmentalHazardSetColors();
                     AmbientSound("radiation/lowered", 127);
                     SetFont("BIGFONT");
-                    HudMessage("Radiation level reduced to %d\n", CurrentLevel->HazardLevel, HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_YELLOW, 0.5, 0.25, 2.0, 1.0); // TODO: BOLD
+                    HudMessage("Radiation level reduced to %d\n", CurrentLevel->HazardLevel);
+                    EndHudMessageBold(HUDMSG_FADEOUT | HUDMSG_LOG, 0, "Yellow", 0.5, 0.25, 2.0, 1.0);
                 }
             }
         }
@@ -1837,7 +1843,8 @@ NamedScript DECORATE void EnvironmentalHazardRefillGenerator()
     
     AmbientSound("radiation/refuel", 127);
     SetFont("BIGFONT");
-    HudMessage("Generator refueled\n", HUDMSG_FADEOUT, 0, CR_WHITE, 0.5, 0.25, 2.0, 1.0); // TODO: BOLD
+    HudMessage("Generator refueled\n");
+    EndHudMessageBold(HUDMSG_FADEOUT, 0, "White", 0.5, 0.25, 2.0, 1.0);
 }
 
 NamedScript void EnvironmentalHazardDisarm()
@@ -1851,7 +1858,8 @@ NamedScript void EnvironmentalHazardDisarm()
     SetMusic("*");
     
     SetFont("BIGFONT");
-    HudMessage("Radiation cleared\n", HUDMSG_FADEOUT | HUDMSG_LOG, 0, CR_GREEN, 0.5, 0.25, 2.0, 1.0); // TODO: BOLD
+    HudMessage("Radiation cleared\n");
+    EndHudMessageBold(HUDMSG_FADEOUT | HUDMSG_LOG, 0, "Green", 0.5, 0.25, 2.0, 1.0);
     AmbientSound("radiation/cleared", 127);
     
     MapEventReward();
@@ -1908,7 +1916,8 @@ NamedScript void ThermonuclearBombEvent()
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     HudMessage("\CgWARNING! WARNING!\n\C[White]THERMONUCLEAR BOMB ACTIVATED!\n\CiTIME UNTIL DETONATION: %s\n",
-               FormatTime(CurrentLevel->BombTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5); // TODO: BOLD
+               FormatTime(CurrentLevel->BombTime));
+    EndHudMessageBold(HUDMSG_TYPEON, 0, "Red", 320.4, 160.0, 3.0, 0.03, 0.5);
     AmbientSound("nuke/alert", 127);
     SetHudSize(0, 0, false);
     
@@ -2148,7 +2157,8 @@ NamedScript void OneMonsterEvent()
     // Level feeling
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling, HUDMSG_FADEOUT, 0, CR_BRICK, 320.4, 150.0, 1.0, 19.0);
+    HudMessage("%s\n", CurrentLevel->SelectedMonster->Feeling);
+    EndHudMessageBold(HUDMSG_FADEOUT, 0, "Brick", 320.4, 150.0, 1.0, 19.0);
     SetHudSize(0, 0, false);
     
     Delay(35); // Allow the replacements to actually spawn.
@@ -2157,7 +2167,8 @@ NamedScript void OneMonsterEvent()
         Delay(1);
     
     AmbientSound("misc/secret", 127);
-    HudMessage("Everything falls silent.\n", HUDMSG_FADEOUT, 0, CR_LIGHTBLUE, 0.5, 0.7, 5.0, 5.0); // TODO: BOLD
+    HudMessage("Everything falls silent.\n");
+    EndHudMessageBold(HUDMSG_FADEOUT, 0, "LightBlue", 0.5, 0.7, 5.0, 5.0);
     MapEventReward();
     
     CurrentLevel->EventCompleted = true;
@@ -2312,9 +2323,15 @@ NamedScript void HarmonizedDestructionEvent()
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     if (CurrentLevel->AuraType != AURA_MAX)
-        HudMessage("A strange, malicious harmony fills the air.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0);
+    {
+        HudMessage("A strange, malicious harmony fills the air.\n");
+        EndHudMessageBold(HUDMSG_FADEOUT, 0, "DarkRed", 320.0, 150.0, 1.0, 19.0);
+    }
     else
-        HudMessage("A strange, malicious harmony fills the air.\nAnd frankly, it's terrifying.\n", HUDMSG_FADEOUT, 0, CR_DARKRED, 320.0, 150.0, 1.0, 19.0);
+    {
+        HudMessage("A strange, malicious harmony fills the air.\nAnd frankly, it's terrifying.\n");
+        EndHudMessageBold(HUDMSG_FADEOUT, 0, "DarkRed", 320.0, 150.0, 1.0, 19.0);
+    }
     SetHudSize(0, 0, false);
 }
 
@@ -2404,12 +2421,15 @@ NamedScript void TeleporterCrackView(int PlayerID)
     fixed Angle2 = RandomFixed(0.0, 1.0);
     
     // View Intensification
-    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 2, CR_UNTRANSLATED, 320, 240, 0.029);
-    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
+    HudMessage("A\n");
+    EndHudMessage(HUDMSG_PLAIN | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 2, "Untranslated", 320, 240, 0.029);
+    HudMessage("A\n");
+    EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, "Untranslated",
                320 + (int)(ViewDist * Cos(Angle1)),
                240 + (int)(ViewDist * Sin(Angle1)),
                0.029, 0.6 - (ViewTime / ViewTimeMax) / 2.0);
-    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, CR_UNTRANSLATED,
+    HudMessage("A\n");
+    EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, "Untranslated",
                320 + (int)(ViewDist * Cos(Angle2)),
                240 + (int)(ViewDist * Sin(Angle2)),
                0.029, 0.6 - (ViewTime / ViewTimeMax) / 2.0);
@@ -2484,7 +2504,8 @@ NamedScript void DoomsdayEvent()
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
     HudMessage("The smell of a massacre...\n\n\CiTime until Doomsday: %s\n",
-               FormatTime(CurrentLevel->DoomTime), HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5); // TODO: BOLD
+               FormatTime(CurrentLevel->DoomTime));
+    EndHudMessageBold(HUDMSG_TYPEON, 0, "Red", 320.4, 160.0, 3.0, 0.03, 0.5);
     SetHudSize(0, 0, false);
     
     Delay(35 * 4);
@@ -2509,7 +2530,8 @@ NamedScript void DoomsdayEvent()
             
             SetHudSize(640, 480, false);
             SetFont("BIGFONT");
-            HudMessage("Hurry, there is not much time...\n", HUDMSG_TYPEON, 0, CR_BRICK, 320.4, 160.0, 3.0, 0.03, 0.5); // TODO: BOLD
+            HudMessage("Hurry, there is not much time...\n");
+            EndHudMessageBold(HUDMSG_TYPEON, 0, "Brick", 320.4, 160.0, 3.0, 0.03, 0.5);
             SetHudSize(0, 0, false);
         }
         
@@ -2644,7 +2666,8 @@ NamedScript void DarkZoneEvent()
     
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("The Shadows have arrived...\n", HUDMSG_TYPEON, 0, CR_PURPLE, 320.4, 160.0, 3.0, 0.03, 0.5); // TODO: BOLD
+    HudMessage("The Shadows have arrived...\n");
+    EndHudMessageBold(HUDMSG_TYPEON, 0, "Purple", 320.4, 160.0, 3.0, 0.03, 0.5);
     AmbientSound("darkzone/arrived", 127);
     SetHudSize(0, 0, false);
     
@@ -2710,7 +2733,8 @@ NamedScript void SinstormEvent()
     // Warning message
     SetHudSize(640, 480, false);
     SetFont("BIGFONT");
-    HudMessage("The Icon of Sin senses your approach.\n", HUDMSG_TYPEON, 0, CR_RED, 320.4, 160.0, 3.0, 0.03, 0.5); // TODO: BOLD
+    HudMessage("The Icon of Sin senses your approach.\n");
+    EndHudMessageBold(HUDMSG_TYPEON, 0, "Red", 320.4, 160.0, 3.0, 0.03, 0.5);
     AmbientSound ("doomsday/doombell", 127);
     SetHudSize(0, 0, false);
     
@@ -2896,7 +2920,8 @@ NamedScript void FeedingFrenzyVisualHorror(int PlayerID)
     SetHudSize(640, 480, true);
     SetFont(StrParam("P%iVIEW\n", PlayerID + 1));
     
-    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
+    HudMessage("A\n");
+    EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, "Untranslated",
                320 + Random(-8, 8),
                240 + Random(-8, 8),
                0.029, 0.25);
@@ -3161,7 +3186,8 @@ NamedScript void WhispersofDarknessVisionIntensifier(int PlayerID)
     SetHudSize(640, 480, true);
     
     SetFont(StrParam("P%iVIEW\n", PlayerID + 1));
-    HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, CR_UNTRANSLATED,
+    HudMessage("A\n");
+    EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID + 1, "Untranslated",
                320 + Random(-8, 8),
                240 + Random(-8, 8),
                0.029, (((fixed)MindblastTime / (fixed)MindblastTimeMax) * 0.66));
@@ -3169,7 +3195,8 @@ NamedScript void WhispersofDarknessVisionIntensifier(int PlayerID)
     if (ShowOvermind)
     {
         SetFont("OVERMIND");
-        HudMessage("A\n", HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, CR_UNTRANSLATED,
+        HudMessage("A\n");
+        EndHudMessage(HUDMSG_PLAIN | HUDMSG_ALPHA | HUDMSG_LAYER_UNDERHUD | HUDMSG_NOTWITHFULLMAP, CONFUSION_ID, "Untranslated",
                    320 + Random(-4, 4),
                    240 + Random(-4, 4),
                    0.029, (((fixed)MindblastTime / (fixed)MindblastTimeMax) * 0.66));
