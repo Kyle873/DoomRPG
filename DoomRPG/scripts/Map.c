@@ -45,7 +45,7 @@ NamedScript Type_OPEN void MapInit()
         PreviousLevelSecret = false;
         PreviousLevelNum = StartMapNum - 1;
         PreviousPrimaryLevelNum = StartMapNum - 1;
-        ArrayCreate(&KnownLevels, "LVLS\x00", 32, sizeof(LevelInfo));
+        ArrayCreate(&KnownLevels, "Levels", 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
         PreviousLevel = NULL;
         PassingEventTimer = GetCVar("drpg_mapevent_eventtime") * 35 * 60;

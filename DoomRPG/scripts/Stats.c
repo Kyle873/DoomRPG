@@ -584,8 +584,8 @@ void CheckStatBonus()
 void CheckRegen()
 {
     // Determine the max timer amounts
-    Player.HPTime = (350 - (Player.Regeneration * 1.575) - (Player.AgilityTimer * 0.5)) * 2;
-    Player.EPTime = (350 - (Player.Regeneration * 1.575) - (Player.AgilityTimer * 0.5)) * 2;
+    Player.HPTime = (int)(350k - ((fixed)Player.Regeneration * 1.575k) - ((fixed)Player.AgilityTimer * 0.5k) * 2k);
+    Player.EPTime = (int)(350k - ((fixed)Player.Regeneration * 1.575k) - ((fixed)Player.AgilityTimer * 0.5k) * 2k);
     
     // Cap Times
     if (Player.HPTime < 35)

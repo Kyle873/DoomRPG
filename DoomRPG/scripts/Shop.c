@@ -57,8 +57,8 @@ NamedScript KeyBind void OpenShop(bool OpenLocker)
 
 NamedScript void UpdateShopAutoList()
 {
-    ArrayCreate(&Player.AutoSellList,  "AUSL\x00", 64, sizeof(ItemInfoPtr));
-    ArrayCreate(&Player.AutoStoreList, "AUST\x00", 64, sizeof(ItemInfoPtr));
+    ArrayCreate(&Player.AutoSellList,  "Auto-Sell", 64, sizeof(ItemInfoPtr));
+    ArrayCreate(&Player.AutoStoreList, "Auto-Store", 64, sizeof(ItemInfoPtr));
     
     for (int i = 0; i < ItemCategories; i++)
         for (int j = 0; j < ItemMax[i]; j++)
@@ -96,8 +96,9 @@ void ShopItemTryAutoDeposit(ItemInfoPtr Item)
 
 NamedScript void ShopItemAutoHandler()
 {
-    int Items[ITEM_CATEGORIES][ITEM_MAX];
-    int PrevItems[ITEM_CATEGORIES][ITEM_MAX];
+    // TODO: Yell at DavidPH
+    RPGMap static int Items[ITEM_CATEGORIES][ITEM_MAX];
+    RPGMap static int PrevItems[ITEM_CATEGORIES][ITEM_MAX];
     
     UpdateShopAutoList();
     

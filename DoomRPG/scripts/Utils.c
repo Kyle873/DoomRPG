@@ -2583,7 +2583,7 @@ void ArrayCreate(DynamicArray *Array, str Name, int InitSize, int ItemSize)
     Array->ItemSize = ItemSize;
     Array->Data = malloc(Array->ItemSize * Array->Size);
     
-    if (!Array->Data)
+    if (Array->Data == NULL)
     {
         Log("\CgERROR: \C-Could not allocate space for array \Cj%S", Array->Name);
         return;
@@ -2608,7 +2608,7 @@ void ArrayResize(DynamicArray *Array)
     Array->Size *= 2;
     void *tmp = realloc(Array->Data, Array->ItemSize * Array->Size);
     
-    if (!tmp)
+    if (tmp == NULL)
     {
         free(Array->Data);
         Log("\CgERROR: \C-Cannot resize dynamic array \Cj%S", Array->Name);

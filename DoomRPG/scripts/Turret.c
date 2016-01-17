@@ -1009,7 +1009,7 @@ NamedScript void TurretSensors()
         // Create the sensor items array
         if (Player.Turret.SensorItemData.Array.Position > 0)
             ArrayDestroy(&Player.Turret.SensorItemData.Array);
-        ArrayCreate(&Player.Turret.SensorItemData.Array, "SITM\x00", 64, sizeof(TurretSensorItem));
+        ArrayCreate(&Player.Turret.SensorItemData.Array, "Turret Sensor Items", 64, sizeof(TurretSensorItem));
         
         // Determine the total amount of items
         for (int i = 0; ItemTIDs[i] != -1; i++)
@@ -1069,7 +1069,7 @@ NamedScript void TurretSensors()
         // Create the sensor crates array
         if (Player.Turret.SensorCrateData.Array.Position > 0)
             ArrayDestroy(&Player.Turret.SensorCrateData.Array);
-        ArrayCreate(&Player.Turret.SensorCrateData.Array, "SCRT\x00", 64, sizeof(int));
+        ArrayCreate(&Player.Turret.SensorCrateData.Array, "Turret Sensor Crates", 64, sizeof(int));
         
         Total = CrateID;
         

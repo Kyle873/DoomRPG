@@ -514,9 +514,9 @@ void DrawStatsMenu()
         EndHudMessage(HUDMSG_PLAIN, 0, "LightBlue",          230.1,  102.0,  0.05);
         HudMessage("%d Aura Range", (int)Player.Aura.Range);
         EndHudMessage(HUDMSG_PLAIN, 0, "LightBlue",          230.1,  110.0,  0.05);
-        HudMessage("HP Timer: %.2k Sec", (fixed)Player.HPTime / (35.0 * 2.0));
+        HudMessage("HP Timer: %.2k Sec", (fixed)(Player.HPTime / (35.0K * 2.0K)));
         EndHudMessage(HUDMSG_PLAIN, 0, "Brick",              30.1,   136.0,  0.05);
-        HudMessage("EP Timer: %.2k Sec", (fixed)Player.EPTime / (35.0 * 2.0));
+        HudMessage("EP Timer: %.2k Sec", (fixed)(Player.EPTime / (35.0K * 2.0K)));
         EndHudMessage(HUDMSG_PLAIN, 0, "LightBlue",          30.1,   144.0,  0.05);
         HudMessage("Regen Bonus: %d Sec", (int)(5.0 + ((fixed)Player.Regeneration / 13.33)));
         EndHudMessage(HUDMSG_PLAIN, 0, "Purple",             30.1,   152.0,  0.05);
