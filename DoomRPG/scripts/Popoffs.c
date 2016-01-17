@@ -6,6 +6,7 @@
 #include "Utils.h"
 
 // Handles Damage Numbers
+// TODO: GDCC is running this obscenely slowly, need to optimize the FUCK out of it
 NamedScript void DamageNumbers()
 {
     Start:
