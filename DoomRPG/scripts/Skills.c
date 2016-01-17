@@ -2659,7 +2659,7 @@ int ScaleEPCost(int Cost)
     int ScaleCost = Cost;
     
     // Multiplier CVAR
-    ScaleCost *= (GetCVarFixed("drpg_skill_costscale") * 100);
+    ScaleCost *= (int)(GetCVarFixed("drpg_skill_costscale") * 100.0);
     ScaleCost /= 100;
     
     // Aura Multiplier
