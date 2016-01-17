@@ -712,7 +712,7 @@ void DrawStatsMenu()
             SetFont("BIGFONT");
             if (*Stats[i] < Player.StatCap)
             {
-                HudMessage("%S: %ld/%ld (%d)", StatNames[i], *StatXP[i], StatTable[*Stats[i]], *Stats[i]);
+                HudMessage("%S: %ld/%lld (%d)", StatNames[i], *StatXP[i], StatTable[*Stats[i]], *Stats[i]);
                 EndHudMessage(HUDMSG_PLAIN, 0, StatColors[i], 40.1, 32.0 + (i * 44.0), 0.05);
             }
             else
