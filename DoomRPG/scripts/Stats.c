@@ -754,10 +754,10 @@ void CheckStatBounds()
         Player.Mass = 0k;
     
     // Cap the max regen timer amounts to 1 second
-    if (Player.HPTime < 35k)
-        Player.HPTime = 35k;
-    if (Player.EPTime < 35k)
-        Player.EPTime = 35k;
+    if (Player.HPTime < 35)
+        Player.HPTime = 35;
+    if (Player.EPTime < 35)
+        Player.EPTime = 35;
     
     // Cap Status Effect Resistance
     if (Player.StatusEffectResist > 100.0k)
