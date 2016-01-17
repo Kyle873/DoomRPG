@@ -6,9 +6,17 @@
 #include "Utils.h"
 
 // Handles Damage Numbers
-// TODO: GDCC is running this obscenely slowly, need to optimize the FUCK out of it
 NamedScript void DamageNumbers()
 {
+    int Health;
+    bool IsPlayer;
+    bool ShieldActive;
+    int Shield;
+    int Color;
+    int OldTID;
+    
+    IsPlayer = PlayerNumber() > -1;
+    
     Start:
     
     // Initial delay so we don't show max health being calculated or other nonsense
@@ -16,11 +24,12 @@ NamedScript void DamageNumbers()
     
     while (GetCVar("drpg_damagenumbers"))
     {
-        int Health = GetActorProperty(0, APROP_Health);
-        bool ShieldActive = CheckInventory("DRPGShield");
-        int Shield = Player.Shield.Charge;
-        int Color;
-        int OldTID;
+        Health = GetActorProperty(0, APROP_Health);
+        if (IsPlayer)
+        {
+            ShieldActive = CheckInventory("DRPGShield");
+            Shield = Player.Shield.Charge;
+        }
         
         // Lag handling
         Delay(1 + GetDamageNumbersDelay());
@@ -28,42 +37,45 @@ NamedScript void DamageNumbers()
         // Check Health
         Health = Health - GetActorProperty(0, APROP_Health);
         
-        // Nullify Health if a Shield is active
-        if (PlayerNumber() > -1 && CheckInventory("DRPGShield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH - GetActorProperty(0, APROP_SpawnHealth))
-            Health = 0;
-        
-        // Shield breaking hits will cause a major health drop, don't show this
-        if (PlayerNumber() > -1 && Health >= (SHIELD_HEALTH / 1000) - GetActorProperty(0, APROP_SpawnHealth))
-            Health = 0;
-        
-        // Shield checks
-        if (CheckInventory("DRPGShield"))
-            Shield = Shield - Player.Shield.Charge;
+        if (IsPlayer)
+        {
+            // Nullify Health if a Shield is active
+            if (PlayerNumber() > -1 && CheckInventory("DRPGShield") || GetActorProperty(0, APROP_Health) >= SHIELD_HEALTH - GetActorProperty(0, APROP_SpawnHealth))
+                Health = 0;
+            
+            // Shield breaking hits will cause a major health drop, don't show this
+            if (PlayerNumber() > -1 && Health >= (SHIELD_HEALTH / 1000) - GetActorProperty(0, APROP_SpawnHealth))
+                Health = 0;
+            
+            // Shield checks
+            if (CheckInventory("DRPGShield"))
+                Shield = Shield - Player.Shield.Charge;
+        }
         
         if (Health != 0 || Shield != 0)
         {
             if (Health >= GetActorProperty(0, APROP_SpawnHealth)) // Critical
                 Color = DNUM_CRITICAL;
-            else if (Health < 0 && !CheckInventory("DRPGShield")) // Healed
+            else if (Health < 0 && IsPlayer && !CheckInventory("DRPGShield")) // Healed
                 Color = DNUM_HEAL;
             else if (Health == 1) // Scratch
                 Color = DNUM_SCRATCH;
-            else if (ShieldActive && Shield > 0) // Shield Loss
+            else if (IsPlayer && ShieldActive && Shield > 0) // Shield Loss
                 Color = DNUM_SHIELDLOSS;
-            else if (ShieldActive && Shield < 0) // Shield Gain
+            else if (IsPlayer && ShieldActive && Shield < 0) // Shield Gain
                 Color = DNUM_SHIELDGAIN;
             else // Normal
                 Color = DNUM_NORMAL;
             
             // Damage Popoff
-            if (CheckInventory("DRPGShield"))
+            if (IsPlayer && CheckInventory("DRPGShield"))
                 Popoff(0, Shield, Color, "DRPGDigit", true);
             else
                 Popoff(0, Health, Color, "DRPGDigit", true);
         }
             
         // Terminate if the Actor is dead
-        if (ClassifyActor(0) & ACTOR_DEAD) return;
+        if (GetActorProperty(0, APROP_Health) <= 0) return;
     }
     
     Delay(35);
