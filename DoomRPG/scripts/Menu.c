@@ -2732,7 +2732,7 @@ void DrawToxicityBar(fixed X, fixed Y, bool HideInfo)
     int TotalTics;
     for (int i = 0; i < 3; i++)
         TotalTics += BeatTics[i];
-    if ((Player.ToxicTimer % (35 * (3 - (Player.Toxicity * 0.0275)))) < TotalTics)
+    if ((Player.ToxicTimer % (35 * (3 - (int)((fixed)Player.Toxicity * 0.0275k)))) < TotalTics)
     {
         if (Player.ToxicOffset >= -8 && Player.ToxicStage == 0)
             Player.ToxicOffset -= 1 + (Player.Toxicity >= 75);
