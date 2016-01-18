@@ -972,6 +972,23 @@ typedef enum
     LOG_ERROR
 } ELogLevels;
 
+typedef enum
+{
+    KEYNUM_ATTACK,
+    KEYNUM_ALTATTACK,
+    KEYNUM_USE,
+    KEYNUM_MODIFIER,
+    
+    KEYNUM_SKILLS,
+    KEYNUM_TURRET,
+    KEYNUM_MENU,
+    
+    KEYNUM_FORWARD,
+    KEYNUM_BACK,
+    KEYNUM_RIGHT,
+    KEYNUM_LEFT
+} EKeyNumbers;
+
 // --------------------------------------------------
 // Address Spaces
 //

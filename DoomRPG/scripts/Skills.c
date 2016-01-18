@@ -665,12 +665,8 @@ NamedScript Type_ENTER void SkillWheel()
     
     Start:
     
-    // Check Input
-    Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-    OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
-    
     // Open the wheel
-    if (Buttons & BT_USER1 && !((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0 || Player.Turret.WheelOpen))
+    if (CheckInput(KEYNUM_SKILLS, KEY_PRESSED) && !((Player.InMenu && Player.Menu != 3) || Player.InShop || Player.OutpostMenu > 0 || Player.Turret.WheelOpen))
     {
         ActivatorSound("menu/click", 127);
         Player.SkillWheelOpen = true;
@@ -694,7 +690,7 @@ NamedScript Type_ENTER void SkillWheel()
             OldLocation += 1.0;
         
         // Check for release
-        if (!(Buttons & BT_USER1) && !(Buttons & BT_SPEED))
+        if (!CheckInput(KEYNUM_SKILLS, KEY_PRESSED) && !CheckInput(KEYNUM_MODIFIER, KEY_PRESSED))
         {
             if (Player.WheelSelection != -1)
             {
@@ -737,7 +733,7 @@ NamedScript Type_ENTER void SkillWheel()
         // Input
         if (!Close)
         {
-            if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT))
+            if (CheckInput(KEYNUM_LEFT, KEY_DOWN))
             {
                 ActivatorSound("menu/click", 127);
                 Player.WheelSelection--;
@@ -745,7 +741,7 @@ NamedScript Type_ENTER void SkillWheel()
                 LerpPos = 0;
                 if (Player.WheelSelection < 0) Player.WheelSelection = MAX_SKILLKEYS - 1;
             }
-            if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT))
+            if (CheckInput(KEYNUM_RIGHT, KEY_DOWN))
             {
                 ActivatorSound("menu/click", 127);
                 Player.WheelSelection++;
@@ -753,26 +749,26 @@ NamedScript Type_ENTER void SkillWheel()
                 LerpPos = 0;
                 if (Player.WheelSelection > MAX_SKILLKEYS - 1) Player.WheelSelection = 0;
             }
-            if (Buttons & BT_SPEED && Player.SkillCategory[Player.WheelSelection] != -1 && Player.SkillIndex[Player.WheelSelection] != -1)
+            if (CheckInput(KEYNUM_MODIFIER, KEY_PRESSED) && Player.SkillCategory[Player.WheelSelection] != -1 && Player.SkillIndex[Player.WheelSelection] != -1)
             {
                 SkillLevel = &Player.SkillLevel[Player.SkillCategory[Player.WheelSelection]][Player.SkillIndex[Player.WheelSelection]];
                 
                 // Decrease selected skill level
-                if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD) && SkillLevel->CurrentLevel > 1)
+                if (CheckInput(KEYNUM_BACK, KEY_DOWN) && SkillLevel->CurrentLevel > 1)
                 {
                     SkillLevel->CurrentLevel--;
                     AmbientSound("menu/move", 127);
                 }
                 
                 // Increase selected skill level
-                if (Buttons & BT_BACK && !(OldButtons & BT_BACK) && SkillLevel->CurrentLevel < SkillLevel->Level)
+                if (CheckInput(KEYNUM_FORWARD, KEY_DOWN) && SkillLevel->CurrentLevel < SkillLevel->Level)
                 {
                     SkillLevel->CurrentLevel++;
                     AmbientSound("menu/move", 127);
                 }
                 
                 // Clear Skill
-                if (Buttons & BT_USE)
+                if (CheckInput(KEYNUM_USE, KEY_DOWN))
                 {
                     Player.SkillCategory[Player.WheelSelection] = -1;
                     Player.SkillIndex[Player.WheelSelection] = -1;
