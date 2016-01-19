@@ -1511,7 +1511,7 @@ NamedScript Type_UNLOADING void ResetMapEvent()
 
 bool SpawnEventActor(str Actor, int TID)
 {
-    fixed Angle = 1.0 - GetActorAngle(Players(0).TID);
+    fixed Angle = GetActorAngle(Players(0).TID) + 0.5;
     fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
     fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
     fixed Z = GetActorZ(Players(0).TID);
@@ -1764,7 +1764,7 @@ NamedScript void EnvironmentalHazardSetColors()
 {
     if (CurrentLevel->EventCompleted)
     {
-        for (int i = 0; i <= SHRT_MAX; i++)
+        for (int i = 0; i < 65536; i++)
         {
             Sector_SetColor(i, 255, 255, 255);
             Sector_SetFade(i, 0, 0, 0);
@@ -1781,7 +1781,7 @@ NamedScript void EnvironmentalHazardSetColors()
     int ColorG = 255 - ((124 * CurrentLevel->HazardLevel) / 5);
     int ColorB = 255 - ((208 * CurrentLevel->HazardLevel) / 5);
     
-    for (int i = 0; i <= SHRT_MAX; i++)
+    for (int i = 0; i < 65536; i++)
     {
         Sector_SetColor(i, ColorR, ColorG, ColorB);
         Sector_SetFade(i, FadeR, FadeG, FadeB);
@@ -1801,7 +1801,7 @@ NamedScript void EnvironmentalHazardDamage()
         else if (CurrentLevel->HazardLevel < 5)
             Damage = 10;
         
-        for (int i = 0; i <= SHRT_MAX; i++)
+        for (int i = 0; i < 65536; i++)
             SectorDamage(i, Damage, "Radiation", "PowerIronFeet", DAMAGE_PLAYERS | DAMAGE_IN_AIR | DAMAGE_SUBCLASSES_PROTECT);
         
         // Damage Turrets
@@ -2074,6 +2074,54 @@ NamedScript DECORATE void ThermonuclearBombExplode()
 
 // Event - Low Power ----------------------------------------------------------
 
+NamedScriptSync void LowPowerAdjustTheLights1a()
+{
+    for (int i = 0; i < 65536; i++)
+    {
+        Light_Stop(i);
+    }
+}
+
+NamedScriptSync void LowPowerAdjustTheLights1b()
+{
+    for (int i = 0; i < 65536; i++)
+    {
+        Light_Flicker(i, 48, 96);
+    }
+}
+
+NamedScriptSync void LowPowerAdjustTheLights1c()
+{
+    for (int i = 0; i < 65536; i++)
+    {
+        Sector_SetColor(i, 64, 96, 255, 0);
+    }
+}
+
+NamedScriptSync void LowPowerAdjustTheLights2a()
+{
+    for (int i = 0; i < 65536; i++)
+    {
+        Light_Stop(i);
+    }
+}
+
+NamedScriptSync void LowPowerAdjustTheLights2b()
+{
+    for (int i = 0; i < 65536; i++)
+    {
+        Light_Glow(i, 160, 96, 35 * 3);
+    }
+}
+
+NamedScriptSync void LowPowerAdjustTheLights2c()
+{
+    for (int i = 0; i < 65536; i++)
+    {
+        Sector_SetColor(i, 255, 128, 32, 0);
+    }
+}
+
 NamedScript void LowPowerEvent()
 {
     int GeneratorTID = UniqueTID();
@@ -2084,13 +2132,9 @@ NamedScript void LowPowerEvent()
     CurrentLevel->EventCompleted = true; // This event disappears when you leave
     DynamicLootGenerator("DRPGLowPowerJunkSpawner", Random(50, 100));
     
-    // Darken all the sectors
-    for (int i = 0; i <= SHRT_MAX; i++)
-    {
-        Light_Stop(i);
-        Light_Flicker(i, 48, 96);
-        Sector_SetColor(i, 64, 96, 255, 0);
-    }
+    LowPowerAdjustTheLights1a();
+    LowPowerAdjustTheLights1b();
+    LowPowerAdjustTheLights1c();
     
     // Spawn the Generator
     while (!GeneratorSpawned)
@@ -2107,12 +2151,9 @@ NamedScript void LowPowerEvent()
     AmbientSound("misc/poweron", 127);
     SetActorState(GeneratorTID, "PoweredUp");
     SetUserVariable(GeneratorTID, "user_powered", 1);
-    for (int i = 0; i <= SHRT_MAX; i++)
-    {
-        Light_Stop(i);
-        Light_Glow(i, 160, 96, 35 * 3);
-        Sector_SetColor(i, 255, 128, 32, 0);
-    }
+    LowPowerAdjustTheLights2a();
+    LowPowerAdjustTheLights2b();
+    LowPowerAdjustTheLights2c();
     MapEventReward();
     
     // Remove generator power cells from the players
@@ -2480,7 +2521,7 @@ NamedScript void DoomsdayEvent()
 {
     ChangeSky("FIRESK00", "-");
     
-    for (int i = 0; i <= SHRT_MAX; i++)
+    for (int i = 0; i < 65536; i++)
         Sector_SetColor(i, 255, 128, 64, 0);
     
     for (int i = 0; i < MonsterID; i++)
@@ -2636,7 +2677,7 @@ NamedScript void DarkZoneEvent()
     SetMusic("DarkZone");
     ChangeSky("BlackSky", "-");
     
-    for (int i = 0; i <= SHRT_MAX; i++)
+    for (int i = 0; i < 65536; i++)
         Light_Fade(i, 16, ShadowTime);
 
     for (int i = 0; i < MAX_PLAYERS; i++)
@@ -2655,7 +2696,7 @@ NamedScript void DarkZoneEvent()
         Color = 16 + (ShadowTime * 239 / ShadowTimeMax);
         if (Color != LastColor)
         {
-            for (int i = 0; i <= SHRT_MAX; i++)
+            for (int i = 0; i < 65536; i++)
                 Sector_SetColor(i, 128 + (Color / 2), Color, 170 + (Color / 3), 0);
             
             LastColor = Color;
@@ -2712,7 +2753,7 @@ NamedScript void SinstormEvent()
 {
     ChangeSky("FIRESK00", "-");
     
-    for (int i = 0; i <= SHRT_MAX; i++)
+    for (int i = 0; i < 65536; i++)
         Sector_SetColor(i, 255, 128, 64, 0);
     
     for (int i = 0; i < MonsterID; i++)
@@ -2792,7 +2833,7 @@ NamedScript void FeedingFrenzyEvent()
     
     SetMusic("");
     
-    for (int i = 0; i <= SHRT_MAX; i++)
+    for (int i = 0; i < 65536; i++)
     {
         Light_Stop(i);
         Light_Glow(i, 64, 96, 35 * 30);
@@ -2946,7 +2987,7 @@ NamedScript void WhispersofDarknessEvent()
     SetMusic("Overmind", 0);
     
     // Sector Lighting
-    for (int i = 0; i <= SHRT_MAX; i++)
+    for (int i = 0; i < 65536; i++)
     {
         Sector_SetColor(i, 255, 0, 0, 255);
         Light_Glow(i, 160, 192, 30);
@@ -3217,7 +3258,7 @@ NamedScript void RainbowEvent()
     fixed Angle = 0;
     int Red, Green, Blue;
     
-    for (int i = 0; i <= SHRT_MAX; i++)
+    for (int i = 0; i < 65536; i++)
         Light_ChangeToValue(i, 176);
     
     Delay(1);
@@ -3229,7 +3270,7 @@ NamedScript void RainbowEvent()
     Green = 128 + (Sin(Angle + 0.33) * 128.0);
     Blue = 128 + (Sin(Angle + 0.67) * 128.0);
     
-    for (int i = 0; i <= SHRT_MAX; Sector_SetColor(i++, Red, Green, Blue, 128));
+    for (int i = 0; i < 65536; Sector_SetColor(i++, Red, Green, Blue, 128));
     
     Delay(1);
     goto Start;

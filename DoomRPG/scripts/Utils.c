@@ -2733,3 +2733,8 @@ void ArrayDump(DynamicArray *Array)
     }
 }
 */
+
+NamedScript void Silly()
+{
+    SetMusic("Credits2");
+}

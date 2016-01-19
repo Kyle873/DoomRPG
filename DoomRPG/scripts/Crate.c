@@ -84,7 +84,7 @@ NamedScript DECORATE void InitCrate()
         Firewall = 100;
     
     // Setup Crate
-    Crates[CrateID].Firewall = (RandomFixed(0.0, 100.0) <= Firewall);
+    Crates[CrateID].Firewall = (Random(0, 100) <= Firewall);
     Crates[CrateID].TID = TID;
     Crates[CrateID].Amount = Amount;
     Crates[CrateID].Rarity = Rarity;
