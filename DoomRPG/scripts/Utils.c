@@ -2325,7 +2325,7 @@ NamedScript Console void Cheat(int StatBoost)
     SetInventory("DRPGStimDetox", 1000);
     
     // Items - Misc
-    SetInventory("DRPGContinue", 1000);
+    SetInventory("DRPGLife", 1000);
     SetInventory("DRPGChipGold", 1000);
     SetInventory("DRPGChipPlatinum", 1000);
     GiveAugs(100, 100, 100);

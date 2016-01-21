@@ -430,7 +430,7 @@ NamedScript void PlayerDamage()
         if (Player.ActualHealth > 2)
             Player.LastLegs = false;
         
-        if (CanSurvive || CheckInventory("DRPGContinue"))
+        if (CanSurvive || CheckInventory("DRPGLife"))
             SetPlayerProperty(0, 1, PROP_BUDDHA);
         else
             SetPlayerProperty(0, 0, PROP_BUDDHA);
@@ -526,18 +526,18 @@ NamedScript void PlayerDamage()
         
         if (Player.ActualHealth <= 1) // Near-Death stuff
         {
-            // Continue check
-            if (CheckInventory("DRPGContinue"))
+            // Extra Life check
+            if (CheckInventory("DRPGLife"))
             {
                 Player.ActualHealth = Player.HealthMax;
                 ActivatorSound("health/resurrect", 127);
-                TakeInventory("DRPGContinue", 1);
+                TakeInventory("DRPGLife", 1);
                 
                 SetHudSize(320, 200, false);
-                PrintSpriteFade("CONTA0", 0, 172.0, 160.0, 0.5, 1.5);
                 SetFont("BIGFONT");
-                HudMessage("Used a Continue!");
+                HudMessage("Used an Extra Life!");
                 EndHudMessage(HUDMSG_FADEOUT, 0, "Gold", 160.0, 140.0, 0.5, 1.5);
+                PrintSpriteFade("P1UPA0", 0, 172.0, 210.0, 0.5, 1.5);
             }
             
             // Survival Bonus

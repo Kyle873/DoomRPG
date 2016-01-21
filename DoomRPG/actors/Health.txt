@@ -8,7 +8,10 @@
     Med-Pack            - +75% HP
     Surgery Kit         - 100% HP
     Soulspheres         - +100-300 HP
-    Continue            - Resurrection on 0 health
+    
+    1-Up                - Increases Lives by 1
+    3-Up                - Increases Lives by 3
+    5-Up                - Increases Lives by 5
 
 */
 
@@ -267,24 +270,80 @@ ACTOR DRPGSoulsphere3 : DRPGSoulsphere 20035
     }
 }
 
-// Continues
-ACTOR DRPGContinue : Inventory 20036
+// 1-Ups
+ACTOR DRPGLife : Inventory 20036
+{
+    -INVBAR
+    
+    Inventory.DefMaxAmount
+    Inventory.InterHubAmount 1000
+    Inventory.PickupMessage "You got a Life!"
+    Inventory.PickupSound "health/1up"
+}
+
+ACTOR DRPG1Up : CustomInventory 20036
 {
     -INVBAR
     +FLOATBOB
     +INVENTORY.FANCYPICKUPSOUND
     
-    Inventory.DefMaxAmount
-    Inventory.InterHubAmount 1000
-    Inventory.PickupMessage "You got a Continue!"
-    Inventory.PickupSound "health/continue"
+    Inventory.PickupMessage "You got a \cd1-Up!"
+    Inventory.PickupSound "health/1up"
+    
+    Scale 0.5
     
     States
     {
     Spawn:
         TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
-        CONT ABCDEFG 2 Bright
+        P1UP ABCD 4 Bright
+        TNT1 A 0 A_Jump(232, 2)
+        TNT1 A 0 A_PlaySound("hums/extralife", CHAN_6, 4.0, false, 0.5)
+        TNT1 A 0
         Goto Spawn+1
+    Pickup:
+        TNT1 A 0 A_GiveInventory("DRPGLife", 1)
+        Stop
+    }
+}
+
+ACTOR DRPG3Up : DRPG1Up
+{
+    Inventory.PickupMessage "You got a \ch3-Up!"
+    Inventory.PickupSound "health/3up"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
+        P3UP ABCD 4 Bright
+        TNT1 A 0 A_Jump(232, 2)
+        TNT1 A 0 A_PlaySound("hums/extralife", CHAN_6, 4.0, false, 0.5)
+        TNT1 A 0
+        Goto Spawn+1
+    Pickup:
+        TNT1 A 0 A_GiveInventory("DRPGLife", 3)
+        Stop
+    }
+}
+
+ACTOR DRPG5Up : DRPG1Up
+{
+    Inventory.PickupMessage "You got a \cg5-Up!"
+    Inventory.PickupSound "health/5up"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
+        P5UP ABCD 4 Bright
+        TNT1 A 0 A_Jump(232, 2)
+        TNT1 A 0 A_PlaySound("hums/extralife", CHAN_6, 4.0, false, 0.5)
+        TNT1 A 0
+        Goto Spawn+1
+    Pickup:
+        TNT1 A 0 A_GiveInventory("DRPGLife", 5)
+        Stop
     }
 }
 

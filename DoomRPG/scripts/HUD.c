@@ -689,18 +689,18 @@ NamedScript Type_ENTER void PowerupHUD()
         HaveIronFeet = true;
     }
     
-    // Continues
-    int Continues = CheckInventory("DRPGContinue");
-    if (Continues > 0 || GetActivatorCVar("drpg_hud_preview"))
+    // 1-Ups
+    int Lives = CheckInventory("DRPGLife");
+    if (Lives > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         if (HaveIronFeet)
             X -= 40.0;
         else if (GridCount > 0)
             X = BaseX - 40.0;
         SetFont("SMALLFONT");
-        HudMessage("%d", Continues);
+        HudMessage("%d", Lives);
         EndHudMessage(HUDMSG_PLAIN, 0, "Gold", X, Y + 16.0  , 0.05);
-        PrintSpritePulse("CONTA0", 0, X + 17.0, Y + 63.0, 0.75, 32.0, 0.25);
+        PrintSpritePulse("P1UPA0", 0, X + 14.0, Y + 88.0, 0.75, 32.0, 0.25);
     }
     
     Delay(1);

@@ -118,7 +118,9 @@ NamedScript void BuildItemData()
         ITEMDATA_DEF("DRPGSurgeryKit",      "Surgery Kit",           1000, 2, "MEDSA0", 16, 24);
         
         ITEMDATA_DEF("DRPGSoulsphere",      "Soulsphere",            2000, 2, "SOULA0", 14, 39);
-        ITEMDATA_DEF("DRPGContinue",        "Continue",             50000, 4, "CONTA0", 14, 48);
+        ITEMDATA_DEF("DRPG1Up",             "1-Up",                  50000, 4, "P1UPA0", 13, 74);
+        ITEMDATA_DEF("DRPG3Up",             "3-Up",                 150000, 4, "P3UPA0", 13, 74);
+        ITEMDATA_DEF("DRPG5Up",             "5-Up",                 250000, 4, "P5UPA0", 13, 74);
     ITEMDATA_CATEGORY_END;
 
     // Armor
