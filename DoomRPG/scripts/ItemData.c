@@ -79,6 +79,7 @@ NamedScript void BuildItemData()
     ITEMDATA_LIST;
     
     // Actor, Name, Price, Minimum Rank, Sprite Name, X Offset, Y Offset
+    
     // Weapons
     ITEMDATA_CATEGORY(0, "\CgWeapons", CF_NONE);
         ITEMDATA_DEF("DRPGChainsaw",        "Chainsaw",          300, 0, "CSAWA0", 31, 23);
@@ -265,7 +266,7 @@ NamedScript void BuildItemData()
         ITEMDATA_DEF("DRPGStimMedium",          "Medium Stim",                        2500, 2, "STIMB0", 16, 29);
         ITEMDATA_DEF("DRPGStimLarge",           "Large Stim",                         5000, 4, "STIMB0", 16, 29);
         ITEMDATA_DEF("DRPGStimXL",              "Extra-Large Stim",                  10000, 8, "STIMB0", 16, 29);
-        ITEMDATA_DEF("DRPGStimDetox",           "\CdDetox\C- Stim",                   2500, 1, "STIMC0", 16, 29);
+        ITEMDATA_DEF("DRPGStimDetox",           "\CdDetox\C- Hypospray",              2500, 1, "STIMC0",  6, 31);
         
         ITEMDATA_DEF("DRPGVialStrength",        "\CgStrength\C- Vial",                 500, 4, "STVLA0",  4, 16);
         ITEMDATA_DEF("DRPGVialDefense",         "\CdDefense\C- Vial",                  500, 4, "STVLB0",  4, 16);
