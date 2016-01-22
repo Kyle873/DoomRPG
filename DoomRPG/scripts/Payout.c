@@ -12,11 +12,11 @@ NamedScript Console void CalculatePayout()
             .Name = "Level / Rank",
             .Sound = "payout/level",
             .Color = "White",
-            .Total = Player.Payout.Total.Level,
+            .Total = &Player.Payout.Total.Level,
             .Values =
             {
                 { "XP", Player.Payout.XP },
-                { "Level", Player.Payout.Levels },
+                { "Levels", Player.Payout.Levels },
                 { "\CkRank", Player.Payout.Rank },
                 { "\CkRank Levels", Player.Payout.RankLevels }
             }
@@ -25,13 +25,12 @@ NamedScript Console void CalculatePayout()
             .Name = "Damage",
             .Sound = "payout/damage",
             .Color = "Red",
-            .Total = Player.Payout.Total.Damage,
+            .Total = &Player.Payout.Total.Damage,
             .Values =
             {
-                { "Damage Dealt", Player.Payout.DamageDealt },
-                { "Damage Taken", Player.Payout.DamageTaken },
                 { "Kills", Player.Payout.Kills },
                 { "Deaths", Player.Payout.Deaths },
+                { "Damage Taken", Player.Payout.DamageTaken },
                 { "\CaStatus Effect Hits", Player.Payout.StatusEffectHit },
                 { "\CaStatus Effects Evaded", Player.Payout.StatusEffectsEvaded }
             }
@@ -40,57 +39,61 @@ NamedScript Console void CalculatePayout()
             .Name = "Credits",
             .Sound = "payout/credits",
             .Color = "Gold",
-            .Total = Player.Payout.Total.Credits,
+            .Total = &Player.Payout.Total.Credits,
             .Values =
             {
-                { "Credits Found", Player.Payout.CreditsFound },
-                { "Credits Spent", Player.Payout.CreditsSpent }
+                { "Credits \CdFound\C-", Player.Payout.CreditsFound },
+                { "Credits \CaSpent\C-", Player.Payout.CreditsSpent }
             }
         },
         {
             .Name = "Skills",
             .Sound = "payout/skills",
             .Color = "LightBlue",
-            .Total = Player.Payout.Total.Skills,
+            .Total = &Player.Payout.Total.Skills,
             .Values =
             {
                 { "Skills Used", Player.Payout.SkillsUsed },
-                { "Skill Burnout", Player.Payout.SkillBurnout },
-                { "Auras Used", Player.Payout.AurasUsed }
+                { "Skill \ChBurnout\C-", Player.Payout.SkillBurnout },
+                { "\CqPowerups\C- Used", Player.Payout.PowerupsUsed },
+                { "Auras Used", Player.Payout.AurasUsed },
+                { "\CaHealth\C- Restored", Player.Payout.SkillHealed },
+                { "\CdArmor\C- Repaired", Player.Payout.SkillRepaired },
+                { "Summoned \CgMonsters\C-", Player.Payout.SkillSummons }
             }
         },
         {
             .Name = "Augs",
             .Sound = "payout/augs",
             .Color = "Yellow",
-            .Total = Player.Payout.Total.Augs,
+            .Total = &Player.Payout.Total.Augs,
             .Values =
             {
-                { "Augs Active", Player.Payout.AugsActive },
-                { "Battery Drained", Player.Payout.AugBatteryUsed }
+                { "Battery \CsDrained\C-", Player.Payout.AugBatteryUsed },
+                { "Augs \CnDisrupted\C-", Player.Payout.AugsDisrupted }
             }
         },
         {
             .Name = "Shields",
             .Sound = "payout/shields",
             .Color = "Cyan",
-            .Total = Player.Payout.Total.Shields,
+            .Total = &Player.Payout.Total.Shields,
             .Values =
             {
-                { "Shield Damage", Player.Payout.ShieldDamage },
-                { "Shield Breaks", Player.Payout.ShieldBreaks }
+                { "Shield \CgDamage\C-", Player.Payout.ShieldDamage },
+                { "Shield \CrBreaks\C-", Player.Payout.ShieldBreaks }
             }
         },
         {
             .Name = "Stims",
             .Sound = "payout/stims",
             .Color = "Gray",
-            .Total = Player.Payout.Total.Stims,
+            .Total = &Player.Payout.Total.Stims,
             .Values =
             {
-                { "Stims Made", Player.Payout.StimsMade },
-                { "Stims Used", Player.Payout.StimsUsed },
-                { "Stims \CdToxicity\C-", Player.Payout.StimToxicity },
+                { "Stims \CjMade\C-", Player.Payout.StimsMade },
+                { "Stims \CdUsed\C-", Player.Payout.StimsUsed },
+                { "Stims \CqToxicity\C-", Player.Payout.StimToxicity },
                 { "Stims \CrImmunity\C-", Player.Payout.StimImmunity }
             }
         },
@@ -98,11 +101,11 @@ NamedScript Console void CalculatePayout()
             .Name = "Turret",
             .Sound = "payout/turret",
             .Color = "Green",
-            .Total = Player.Payout.Total.Turret,
+            .Total = &Player.Payout.Total.Turret,
             .Values =
             {
-                { "Turret Damage Taken", Player.Payout.TurretDamageTaken },
-                { "Turret Maintenance Cost", Player.Payout.TurretMaintenanceCost },
+                { "Turret \CgDamage\C- Taken", Player.Payout.TurretDamageTaken },
+                { "Turret \CfMaintenance Cost\C-", Player.Payout.TurretMaintenanceCost },
                 { "Turret \CkCharge\C- Time", Player.Payout.TurretChargeTime },
                 { "Turret \CaRepair\C- Time", Player.Payout.TurretRepairTime },
                 { "Turret \CnRefit\C- Time", Player.Payout.TurretRefitTime }
@@ -112,17 +115,17 @@ NamedScript Console void CalculatePayout()
             .Name = "Missions",
             .Sound = "payout/missions",
             .Color = "Orange",
-            .Total = Player.Payout.Total.Missions,
+            .Total = &Player.Payout.Total.Missions,
             .Values =
             {
-                { "Missions Completed", Player.Payout.MissionsCompleted }
+                { "Missions \CdCompleted\C-", Player.Payout.MissionsCompleted }
             }
         },
         {
             .Name = "Maps",
             .Sound = "payout/maps",
             .Color = "Brown",
-            .Total = Player.Payout.Total.Maps,
+            .Total = &Player.Payout.Total.Maps,
             .Values =
             {
                 { "\CdMaps Completed", Player.Payout.MapsCompleted },
@@ -130,7 +133,7 @@ NamedScript Console void CalculatePayout()
                 { "\CnItems Collected", Player.Payout.ItemsCollected },
                 { "\CkSecrets Found", Player.Payout.SecretsFound },
             }
-        },
+        }
     };
     
     // Startup
@@ -148,11 +151,17 @@ NamedScript Console void CalculatePayout()
     // Finished
     ActivatorSound("payout/end", 127);
     SetFont("BIGFONT");
-    HudMessage("+%d PP", PayoutCalculatePPTotal());
-    EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, "Gold", PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 5.0, 0.5, 0.5);
-    
-    // Clear out Everything
-    Delay(35 * 3);
+    if (PayoutCalculatePPTotal() > 0)
+    {
+        HudMessage("+%d PP", PayoutCalculatePPTotal());
+        EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, "Gold", PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 5.0, 0.5, 0.5);
+    }
+    else
+    {
+        HudMessage("%d PP", PayoutCalculatePPTotal());
+        EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, "Red", PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 5.0, 0.5, 0.5);
+    }
+    PayoutAddPP();
 }
 
 NamedScriptSync void PayoutDrawData(PayoutData *Data, int Offset)
@@ -177,23 +186,23 @@ NamedScriptSync void PayoutDrawData(PayoutData *Data, int Offset)
         TotalOffset++;
         
         ActivatorSound("payout/next", 127);
-        HudMessage("%S: %d", Data->Values[i].Name, Data->Values[i].Value);
+        HudMessage("%S: \Cf%d", Data->Values[i].Name, Data->Values[i].Value);
         EndHudMessage(HUDMSG_FADEOUT, PAYOUT_ID + i + 1, Data->Color, PAYOUT_TEXT_X + 2 + 0.1, PAYOUT_TEXT_Y + (i * 8), 3.0, 2.0);
         Delay(35 / 8);
     }
     
-    Delay(35 / 2);
+    Delay(35 / 2 + (TotalOffset * 2));
     
     ActivatorSound("payout/total", 127);
     SetFont("BIGFONT");
-    HudMessage("Total: %d", Data->Total);
+    HudMessage("Total: \Cf%d", *Data->Total);
     EndHudMessage(HUDMSG_FADEOUT, PAYOUT_ID + PAYOUT_VALUES_MAX, Data->Color, PAYOUT_TEXT_X + 0.1, PAYOUT_TEXT_Y + 4 + (8 * (TotalOffset + 1)), 3.0, 2.0);
     
     Delay(35);
     
     ActivatorSound("payout/totaladd", 127);
     SetFont("SMALLFONT");
-    HudMessage("%S: %d", Data->Name, Data->Total);
+    HudMessage("%S: \Cf%d", Data->Name, *Data->Total);
     EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + Offset + 1, Data->Color, PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + (8 * Offset), 50.0 - (5.0 * Offset), 0.5, 0.5);
     
     Delay(35 * 2);
@@ -201,13 +210,89 @@ NamedScriptSync void PayoutDrawData(PayoutData *Data, int Offset)
 
 void PayoutCalculateTotals()
 {
-    Player.Payout.Total.Level += (Player.Payout.XP / 100) +
-                                 Player.Payout.Levels +
-                                 (Player.Payout.Rank / 100) +
-                                 Player.Payout.RankLevels;
+    // Level / Rank
+    Player.Payout.Total.Level += Player.Payout.XP / 100;
+    Player.Payout.Total.Level += Player.Payout.Levels * 100;
+    Player.Payout.Total.Level += Player.Payout.Rank / 100;
+    Player.Payout.Total.Level += Player.Payout.RankLevels * 1000;
+    
+    // Damage
+    Player.Payout.Total.Damage += Player.Payout.Kills * 10;
+    Player.Payout.Total.Damage -= Player.Payout.Deaths * 1000;
+    Player.Payout.Total.Damage -= Player.Payout.DamageTaken;
+    Player.Payout.Total.Damage += Player.Payout.StatusEffectHit * 1000;
+    Player.Payout.Total.Damage += Player.Payout.StatusEffectsEvaded * 1000;
+    
+    // Credits
+    Player.Payout.Total.Credits += Player.Payout.CreditsFound;
+    Player.Payout.Total.Credits += Player.Payout.CreditsSpent;
+    
+    // Skills
+    Player.Payout.Total.Skills += Player.Payout.SkillsUsed * 10;
+    Player.Payout.Total.Skills -= Player.Payout.SkillBurnout / 10;
+    Player.Payout.Total.Skills += Player.Payout.PowerupsUsed * 100;
+    Player.Payout.Total.Skills += Player.Payout.AurasUsed * 100;
+    Player.Payout.Total.Skills += Player.Payout.SkillHealed;
+    Player.Payout.Total.Skills += Player.Payout.SkillRepaired;
+    Player.Payout.Total.Skills += Player.Payout.SkillSummons * 10;
+    
+    // Augs
+    Player.Payout.Total.Augs += Player.Payout.AugBatteryUsed;
+    Player.Payout.Total.Augs += Player.Payout.AugsDisrupted * 100;
+    
+    // Shields
+    Player.Payout.Total.Shields += Player.Payout.ShieldDamage;
+    Player.Payout.Total.Shields += Player.Payout.ShieldBreaks * 10;
+
+    // Stims
+    Player.Payout.Total.Stims += Player.Payout.StimsMade * 10;
+    Player.Payout.Total.Stims += Player.Payout.StimsUsed * 100;
+    Player.Payout.Total.Stims -= Player.Payout.StimToxicity;
+    Player.Payout.Total.Stims += Player.Payout.StimImmunity;
+    
+    // Turret
+    Player.Payout.Total.Turret -= Player.Payout.TurretDamageTaken;
+    Player.Payout.Total.Turret += Player.Payout.TurretMaintenanceCost;
+    Player.Payout.Total.Turret += Player.Payout.TurretChargeTime;
+    Player.Payout.Total.Turret += Player.Payout.TurretRepairTime;
+    Player.Payout.Total.Turret += Player.Payout.TurretRefitTime;
+    
+    // Missions
+    Player.Payout.Total.Missions += Player.Payout.MissionsCompleted * 1000;
+    
+    // Maps
+    Player.Payout.Total.Maps += Player.Payout.MapsCompleted * 1000;
+    Player.Payout.Total.Maps += Player.Payout.ParTimesBeaten * 1000;
+    Player.Payout.Total.Maps += Player.Payout.ItemsCollected * 10;
+    Player.Payout.Total.Maps += Player.Payout.SecretsFound * 100;
+}
+
+void PayoutAddPP()
+{
+    Player.PP += Player.Payout.Total.Level;
+    Player.PP += Player.Payout.Total.Damage;
+    Player.PP += Player.Payout.Total.Credits;
+    Player.PP += Player.Payout.Total.Skills;
+    Player.PP += Player.Payout.Total.Augs;
+    Player.PP += Player.Payout.Total.Shields;
+    Player.PP += Player.Payout.Total.Stims;
+    Player.PP += Player.Payout.Total.Turret;
+    Player.PP += Player.Payout.Total.Missions;
+    Player.PP += Player.Payout.Total.Maps;
+    
+    Player.Payout = (Payout){ 0 };
 }
 
 int PayoutCalculatePPTotal()
 {
-    return 0;
+    return (Player.Payout.Total.Level +
+            Player.Payout.Total.Damage +
+            Player.Payout.Total.Credits +
+            Player.Payout.Total.Skills +
+            Player.Payout.Total.Augs +
+            Player.Payout.Total.Stims +
+            Player.Payout.Total.Shields +
+            Player.Payout.Total.Turret +
+            Player.Payout.Total.Missions +
+            Player.Payout.Total.Maps);
 }

@@ -1808,7 +1808,7 @@ NamedScript void MonsterDeath()
         fixed Z = GetActorCeilingZ(Players(Killer).TID) - GetActorPropertyFixed(Players(Killer).TID, APROP_Height);
         fixed Radius = GetActorPropertyFixed(Players(Killer).TID, APROP_Radius);
         
-        ThingSound(Players(Killer).TID, "credits/payout", 127);
+        ThingSound(Players(Killer).TID, "menu/buy", 127);
         Log("\CdLUDICROUS CREDITS!");
         
         for (int i = 0; i < 100; i++)

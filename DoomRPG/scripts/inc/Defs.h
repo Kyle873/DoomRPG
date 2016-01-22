@@ -1084,6 +1084,7 @@ typedef struct LevelInfo_S          LevelInfo;
 // PDA
 typedef struct PDAMessage_S         PDAMessage;
 
+typedef struct Payout_S             Payout;
 typedef struct PayoutData_S         PayoutData;
 
 // RPG

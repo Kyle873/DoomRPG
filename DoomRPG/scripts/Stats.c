@@ -113,6 +113,10 @@ NamedScript void AddXP(int PlayerNum, long long int XP, long long int Rank)
     Players(PlayerNum).XPGained += XP;
     Players(PlayerNum).RankGained += Rank;
     
+    Players(PlayerNum).Payout.Kills++;
+    Players(PlayerNum).Payout.XP += XP;
+    Players(PlayerNum).Payout.Rank += Rank;
+    
     if (Players(PlayerNum).Aura.Type[AURA_WHITE].Active)
     {
         if (Players(PlayerNum).Aura.Time > 0)
@@ -231,6 +235,7 @@ void CheckLevel()
         
         // Level Up
         Player.Level++;
+        Player.Payout.Levels++;
         GiveInventory("DRPGModule", Modules);
         
         if (GetCVar("drpg_levelup_heal"))
@@ -269,6 +274,7 @@ void CheckRank()
     if (Player.RankLevel > 0 && Player.Rank < RankTable[Player.RankLevel - 1])
     {
         Player.RankLevel--;
+        Player.Payout.RankLevels--;
         FadeRange(255, 0, 64, 0.25, 255, 0, 64, 0, 2.0);
         
         PrintMessage(StrParam("\CaYou have been demoted to rank %d: %S", Player.RankLevel, LongRanks[Player.RankLevel]), RANKUP_ID, 32);
@@ -280,6 +286,7 @@ void CheckRank()
         int NewItems;
         
         Player.RankLevel++;
+        Player.Payout.RankLevels++;
 
         ActivatorSound("misc/rankup", 96);
         FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0, 2.0);

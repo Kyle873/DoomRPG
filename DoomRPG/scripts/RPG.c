@@ -1437,6 +1437,8 @@ NamedScript Type_DEATH void Dead()
         }
     }
     
+    Player.Payout.Deaths++;
+    
     // Remove TID
     Thing_ChangeTID(Player.TID, 0);
 }

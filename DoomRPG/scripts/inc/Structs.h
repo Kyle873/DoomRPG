@@ -694,12 +694,87 @@ struct PDAMessage_S
 };
 
 // Payout
+struct Payout_S
+{
+    // Totals
+    struct
+    {
+        int Level;
+        int Damage;
+        int Credits;
+        int Skills;
+        int Augs;
+        int Stims;
+        int Shields;
+        int Turret;
+        int Missions;
+        int Maps;
+    } Total;
+    
+    // Level & Rank
+    int XP;
+    int Levels;
+    int Rank;
+    int RankLevels;
+    
+    // Damage
+    int Kills;
+    int Deaths;
+    int DamageTaken;
+    int StatusEffectHit;
+    int StatusEffectsEvaded;
+    
+    // Credits
+    int CreditsFound;
+    int CreditsSpent;
+    
+    // Skills
+    int SkillsUsed;
+    int SkillBurnout;
+    int PowerupsUsed;
+    int AurasUsed;
+    int SkillHealed;
+    int SkillRepaired;
+    int SkillSummons;
+    
+    // Augs
+    int AugBatteryUsed;
+    int AugsDisrupted;
+    
+    // Shields
+    int ShieldDamage;
+    int ShieldBreaks;
+    
+    // Stims
+    int StimsMade;
+    int StimsUsed;
+    int StimToxicity;
+    int StimImmunity;
+    
+    // Turret
+    int TurretDamageTaken;
+    int TurretMaintenanceCost;
+    int TurretChargeTime;
+    int TurretRepairTime;
+    int TurretRefitTime;
+    
+    // Missions
+    // TODO: Each mission sub-type?
+    int MissionsCompleted;
+    
+    // Map
+    int MapsCompleted;
+    int ParTimesBeaten;
+    int ItemsCollected;
+    int SecretsFound;
+};
+
 struct PayoutData_S
 {
     str Name;
     str Sound;
     str Color;
-    int Total;
+    int *Total;
     
     struct
     {
@@ -814,6 +889,7 @@ struct PlayerData_S
     long int RankNext;
     
     // Payout
+    bool PayReady;
     int PP;
     int PayTimer;
     
@@ -1102,80 +1178,7 @@ struct PlayerData_S
         fixed HeightOffset;
     } Turret;
     
-    struct
-    {
-        // Totals
-        struct
-        {
-            int Level;
-            int Damage;
-            int Credits;
-            int Skills;
-            int Augs;
-            int Stims;
-            int Shields;
-            int Turret;
-            int Missions;
-            int Maps;
-        } Total;
-        
-        // Level & Rank
-        int XP;
-        int Levels;
-        int Rank;
-        int RankLevels;
-        
-        // Damage
-        int DamageDealt;
-        int DamageTaken;
-        int Kills;
-        int Deaths;
-        
-        // Credits
-        int CreditsFound;
-        int CreditsSpent;
-        
-        // Status Effects
-        int StatusEffectHit;
-        int StatusEffectsEvaded;
-        
-        // Skills
-        int SkillsUsed;
-        int SkillBurnout;
-        int AurasUsed;
-        
-        // Augs
-        int AugsActive;
-        int AugBatteryUsed;
-        
-        // Shields
-        int ShieldDamage;
-        int ShieldBreaks;
-        
-        // Stims
-        int StimsMade;
-        int StimsUsed;
-        int StimToxicity;
-        int StimImmunity;
-        
-        // Turret
-        int TurretDamageTaken;
-        int TurretMaintenanceCost;
-        int TurretChargeTime;
-        int TurretRepairTime;
-        int TurretRefitTime;
-        
-        // Missions
-        // TODO: Each mission sub-type?
-        int MissionsCompleted;
-        
-        // Map
-        int MapsCompleted;
-        int ParTimesBeaten;
-        int ItemsCollected;
-        int SecretsFound;
-    } Payout;
-    
+    struct Payout_S Payout;
     struct MissionInfo_S Mission;
 };
 

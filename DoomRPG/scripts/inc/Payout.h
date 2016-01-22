@@ -8,6 +8,7 @@ NamedScript Console void CalculatePayout();
 NamedScriptSync void PayoutDrawData(PayoutData *, int);
 
 void PayoutCalculateTotals();
+void PayoutAddPP();
 int PayoutCalculatePPTotal();
 
 #endif

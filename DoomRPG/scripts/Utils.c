@@ -2383,15 +2383,6 @@ NamedScript Console void GiveCredits(int Amount)
     ActivatorSound("credits/payout", 127);
 }
 
-// Instant payout
-NamedScript Console void Payout(int Time)
-{
-    if (Time > 0)
-        Player.PayTimer = Time;
-    else
-        Player.PayTimer = 0;
-}
-
 // Shuffle the Shop Special
 NamedScript Console void ShopSpecialShuffle()
 {
