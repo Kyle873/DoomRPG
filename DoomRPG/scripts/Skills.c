@@ -145,12 +145,13 @@ Skill RPGGlobal SkillData[MAX_CATEGORIES][MAX_SKILLS] =
         {
             .Name = "Supply Drop",
             .Cost = 200,
-            .MaxLevel = 10,
+            .MaxLevel = 3,
             .Use = DropSupply,
             .Description =
             {
-                "Drop a Large Backpack full of Ammo at your location"
-                // Crate Drop Description is generated dynamically
+                "Drop a Small Backpack with some Ammo at your location",
+                "Drop a Medium Backpack full of Ammo at your location",
+                "Drop a Large Backpack loaded with Ammo at your location"
             }
         }
     },
@@ -1251,31 +1252,29 @@ NamedScript Console bool DropSupply(SkillLevelInfo *SkillLevel, void *Data)
     fixed Z = GetActorZ(0) + 48.0;
     bool Spawned = false;
     
-    if (SkillLevel->CurrentLevel > 1 && Player.SkillSupplyCooldown > 0)
+    if (Player.SkillSupplyCooldown > 0)
     {
         PrintError(StrParam("You must wait %S before calling in new supplies", FormatTime(Player.SkillSupplyCooldown)));
         ActivatorSound("menu/error", 127);
         return false;
     }
     
-    if (SkillLevel->CurrentLevel > 1)
-        Spawned = Spawn("DRPGCrate", X, Y, Z, 0, Angle);
-    else
+    
+    switch (SkillLevel->CurrentLevel)
+    {
+    case 1:
+        Spawned = Spawn("DRPGSmallBackpack", X, Y, Z, 0, Angle);
+        break;
+    case 2:
+        Spawned = Spawn("DRPGBackpack", X, Y, Z, 0, Angle);
+        break;
+    case 3:
         Spawned = Spawn("DRPGBigBackpack", X, Y, Z, 0, Angle);
+        break;
+    }
     
     if (Spawned)
     {
-        // Set Crate's rarity level based on skill level
-        if (SkillLevel->CurrentLevel > 1)
-        {
-            // Cooldown timer
-            Player.SkillSupplyCooldown = 35 * 60 * 5;
-            
-            Delay(1);
-            Crates[CrateID - 1].SupplyDrop = true;
-            Crates[CrateID - 1].Rarity = SkillLevel->CurrentLevel - 2;
-        }
-        
         ActivatorSound("skills/drop", 127);
         Spawn("TeleportFog", X, Y, Z, 0, Angle);
         return true;
@@ -2571,10 +2570,6 @@ NamedScript void CleanDropTIDArray()
 
 void BuildSkillData()
 {
-    // Generate the description for the Supply Drop
-    for (int i = 1; i < Skills[1][7].MaxLevel; i++)
-        Skills[1][7].Description[i] = StrParam("%S\nDrop a UAC Supply Crate at your location\n\CjRarity Level: %S", Skills[1][7].Description[0], CrateRarityNames[i - 1]);
-    
     // DoomRL Compatibility
     if (CompatMode == COMPAT_DRLA)
     {
