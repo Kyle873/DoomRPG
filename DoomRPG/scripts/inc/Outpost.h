@@ -39,7 +39,6 @@ extern bool RPGMap Invasion;
 
 NamedScript MapSpecial void EnterOutpost();
 NamedScript MapSpecial void RegenArea(int);
-NamedScript MapSpecial void StimInjector();
 NamedScript MapSpecial void LevelTransport();
 NamedScript MapSpecial void SkillComputer();
 NamedScript MapSpecial void ToggleArena();

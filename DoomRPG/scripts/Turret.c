@@ -315,25 +315,25 @@ TurretUpgrade RPGMap TurretUpgradeData[MAX_UPGRADES] =
         ""
     },
     {
-        "Assist Module - Stim Injector", 10, 5,
+        "Assist Module - Stim Injector", 10, 10,
         "Turret can inject you with a random cocktail of combat-enhancing drugs",
         "Upgrades increase compound generation speed and decrease wait time between injections",
         "" // Generated in BuildTurretData()
     },
     {
-        "Assist Module - Stim Injector - Type", 3, 10,
+        "Assist Module - Stim Injector - Type", 3, 50,
         "Determines the type of drugs you will be injected with",
         "Upgrade allows boosters and powerups to be injected",
         "Issuing this command will swap between broad injection and Focused injection",
     },
     {
-        "Assist Module - Stim Injector - Amount", 10, 5,
+        "Assist Module - Stim Injector - Amount", 10, 10,
         "Determines the amount of drugs you will be injected with",
         "",
         ""
     },
     {
-        "Assist Module - Stim Injector - Potency", 10, 5,
+        "Assist Module - Stim Injector - Potency", 10, 10,
         "Determines the potency of the drugs you will be injected with",
         "",
         ""
@@ -2617,9 +2617,9 @@ bool TurretStim()
     
     // Reset stim cooldown timer
     if (Player.Turret.StimFocused)
-        Player.Turret.StimTimer = 60 * 5 - (Player.Turret.Upgrade[TU_ASSIST_INJECTOR] * 24);
+        Player.Turret.StimTimer = 60 * 10 - (Player.Turret.Upgrade[TU_ASSIST_INJECTOR] * 30);
     else
-        Player.Turret.StimTimer = 60 - (Player.Turret.Upgrade[TU_ASSIST_INJECTOR] * 3);
+        Player.Turret.StimTimer = 60 * 5 - (Player.Turret.Upgrade[TU_ASSIST_INJECTOR] * 24);
     
     return true;
 }
