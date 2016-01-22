@@ -861,10 +861,10 @@ void CheckBurnout()
     {
         // Dynamic Intensity
         fixed Intensity = -((fixed)Player.EP / (fixed)Player.EPMax);
-        if (Intensity > 0.5) Intensity = 0.5;
+        if (Intensity > 0.25) Intensity = 0.25;
         
         // Screen Effect
-        FadeRange(0, 128, 255, Intensity + (Sin(Timer() / 64.0) * 0.25), 0, 128, 255, 0, 0.25);
+        FadeRange(0, 128, 255, Intensity + (Sin(Timer() / 256.0) * 0.1), 0, 128, 255, 0, 0.25);
         
         // Penalties
         Player.TotalDamage /= 2;
