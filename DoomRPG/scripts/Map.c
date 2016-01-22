@@ -1011,10 +1011,14 @@ bool CheckMapEvent(int Event, LevelInfo *TargetLevel)
             return true;
         
         case MAPEVENT_SKILL_HELL:
+            if (AveragePlayerLevel() < 10)
+                return false;
             if (CurrentSkill >= 4)
                 return false;
             return true;
         case MAPEVENT_SKILL_ARMAGEDDON:
+            if (AveragePlayerLevel() < 10)
+                return false;
             if (CurrentSkill >= 5)
                 return false;
             if (CompatMode != COMPAT_DRLA || AveragePlayerLevel() < 10)
