@@ -1935,7 +1935,7 @@ NamedScript void MonsterDeath()
             DropMonsterItem(Killer, 0, "DRPGAugDropper", 128);
             DropMonsterItem(Killer, 0, "DRPGShieldDropper", 128);
             DropMonsterItem(Killer, 0, "DRPGUACCard", 128 / (Players(Killer).ShopCard + 1));
-            DropMonsterItem(Killer, 0, "DRPGImmunityCrystal", 8);
+            DropMonsterItem(Killer, 0, "DRPGImmunityCrystalDropper", 8);
         }
         
         // Megaboss Drops

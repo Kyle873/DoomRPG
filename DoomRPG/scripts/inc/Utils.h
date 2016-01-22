@@ -28,7 +28,6 @@ NamedScript DECORATE int GetAveragePlayerLevel();
 NamedScript DECORATE int GetModuleSpawnFactor();
 NamedScript DECORATE int StatusEffectSeverity(int);
 NamedScript DECORATE int StatusEffectTimer(int);
-NamedScript DECORATE int ImmunityCrystalCheck();
 NamedScript DECORATE void RainbowTranslationPulse(int);
 NamedScript DECORATE int CheckActorSky();
 

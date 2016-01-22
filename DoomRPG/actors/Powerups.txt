@@ -471,59 +471,40 @@ ACTOR DRPGMegasphere : CustomInventory Replaces MegaSphere
     }
 }   
 
-// Immunity Crystal
-actor DRPGImmunityCrystal : CustomInventory
+// Immunity Crystals
+actor DRPGImmunityCrystalMelee : CustomInventory
 {
-    var int user_type;
-	
+    Health 100
+    Height 32
+    Radius 16
+    Mass 0x7FFFFFFF
+
     Inventory.Amount 1
     Inventory.MaxAmount 1
-	Inventory.PickupMessage "Got an Immunity Crystal!"
+	Inventory.PickupMessage "Got a Melee Immunity Crystal!"
 	Inventory.PickupSound "powerups/crystal"
-	Inventory.Icon "CRYS"
+	Inventory.Icon "CRYSA"
     
     +INVBAR
     +BRIGHT
     +THRUACTORS
     +DONTGIB
+    +SHOOTABLE
+    +NOBLOOD
     -SPECIAL
     
-    RenderStyle Add
-    
-    Tag "Immunity Crystal"
+    Tag "Melee Immunity Crystal"
     
     States
     {
     Spawn:
-        TNT1 A 0 NoDelay A_SetUserVar("user_type", CallACS("ImmunityCrystalCheck"))
-		TNT1 A 0 A_JumpIf(Abs(VelZ) <= 0.01, "FloorHit")
-        CRYS ABCD 1
-        Goto Spawn+1
+		TNT1 A 0 NoDelay A_JumpIf(Abs(VelZ) <= 0.01, "FloorHit")
+        CRYS A 1
+        Loop
     FloorHit:
 		TNT1 A 0 A_ChangeFlag("SPECIAL", true)
 		TNT1 A 0 A_ChangeFlag("THRUACTORS", false)
     Spawn2:
-        TNT1 A 0 A_JumpIf(user_type == IC_RANDOM, "RandomPick")
-        TNT1 A 0 A_JumpIf(user_type == IC_BULLET, "BulletMode")
-        TNT1 A 0 A_JumpIf(user_type == IC_MELEE, "MeleeMode")
-        TNT1 A 0 A_JumpIf(user_type == IC_FIRE, "FireMode")
-        TNT1 A 0 A_JumpIf(user_type == IC_PLASMA, "PlasmaMode")
-        Stop
-    RandomPick:
-        TNT1 A 0 A_Jump(256, "BulletMode", "MeleeMode", "FireMode", "PlasmaMode")
-        Stop
-    BulletMode:
-        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamBullet",
-            Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
-            Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
-            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
-        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamBullet",
-            Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
-            Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
-            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
-        CRYS A 1 A_RadiusGive("DRPGPowerImmunityBullet", 512.0, RGF_PLAYERS)
-        Loop
-    MeleeMode:
         TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamMelee",
             Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
             Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
@@ -532,32 +513,332 @@ actor DRPGImmunityCrystal : CustomInventory
             Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
             Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
             0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
-        CRYS B 1 A_RadiusGive("DRPGPowerImmunityMelee", 512.0, RGF_PLAYERS)
-        Loop
-    FireMode:
-        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamFire",
-            Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
-            Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
-            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
-        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamFire",
-            Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
-            Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
-            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
-        CRYS C 1 A_RadiusGive("DRPGPowerImmunityFire", 512.0, RGF_PLAYERS)
-        Loop
-    PlasmaMode:
-        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamPlasma",
-            Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
-            Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
-            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
-        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamPlasma",
-            Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
-            Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
-            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
-        CRYS D 1 A_RadiusGive("DRPGPowerImmunityPlasma", 512.0, RGF_PLAYERS)
+        TNT1 A 0 A_RadiusGive("DRPGPowerImmunityMelee", 512.0, RGF_PLAYERS)
+        CRYS A 1 A_SpawnItemEx("DRPGImmunityCrystalPulseMelee", Random(-8, 8), Random(-8, 8), Random(-16, 8), 0, 0, 0, 0, SXF_NOCHECKPOSITION)
         Loop
     Use:
-        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystal", 0, 0, 40, 16, 0, 0, 0, SXF_SETMASTER)
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalMelee", 0, 0, 40, 16, 0, 0, 0, SXF_SETMASTER)
+        Stop
+    Death:
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx("DRPGImmunityCrystalDebris", 0, 0, Height / 2, Random(-8, 8), Random(-8, 8), 8, 0, SXF_NOCHECKPOSITION)
+        Stop
+    }
+}
+
+actor DRPGImmunityCrystalBullet : CustomInventory
+{
+    Health 100
+    Height 32
+    Radius 16
+    Mass 0x7FFFFFFF
+
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.PickupMessage "Got a Bullet Immunity Crystal!"
+	Inventory.PickupSound "powerups/crystal"
+	Inventory.Icon "CRYSB"
+    
+    +INVBAR
+    +BRIGHT
+    +THRUACTORS
+    +DONTGIB
+    +SHOOTABLE
+    +NOBLOOD
+    -SPECIAL
+    
+    Tag "Bullet Immunity Crystal"
+    
+    States
+    {
+    Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(Abs(VelZ) <= 0.01, "FloorHit")
+        CRYS B 1
+        Loop
+    FloorHit:
+		TNT1 A 0 A_ChangeFlag("SPECIAL", true)
+		TNT1 A 0 A_ChangeFlag("THRUACTORS", false)
+    Spawn2:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamBullet",
+            Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamBullet",
+            Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_RadiusGive("DRPGPowerImmunityBullet", 512.0, RGF_PLAYERS)
+        CRYS B 1 A_SpawnItemEx("DRPGImmunityCrystalPulseBullet", Random(-8, 8), Random(-8, 8), Random(-16, 8), 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        Loop
+    Use:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBullet", 0, 0, 40, 16, 0, 0, 0, SXF_SETMASTER)
+        Stop
+    Death:
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx("DRPGImmunityCrystalDebris", 0, 0, Height / 2, Random(-8, 8), Random(-8, 8), 8, 0, SXF_NOCHECKPOSITION)
+        Stop
+    }
+}
+
+actor DRPGImmunityCrystalFire : CustomInventory
+{
+    Health 100
+    Height 32
+    Radius 16
+    Mass 0x7FFFFFFF
+
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.PickupMessage "Got a Fire Immunity Crystal!"
+	Inventory.PickupSound "powerups/crystal"
+	Inventory.Icon "CRYSC"
+    
+    +INVBAR
+    +BRIGHT
+    +THRUACTORS
+    +DONTGIB
+    +SHOOTABLE
+    +NOBLOOD
+    -SPECIAL
+    
+    Tag "Fire Immunity Crystal"
+    
+    States
+    {
+    Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(Abs(VelZ) <= 0.01, "FloorHit")
+        CRYS C 1 A_SpawnItemEx("DRPGImmunityCrystalPulseFire", Random(-8, 8), Random(-8, 8), Random(-16, 8), 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        Loop
+    FloorHit:
+		TNT1 A 0 A_ChangeFlag("SPECIAL", true)
+		TNT1 A 0 A_ChangeFlag("THRUACTORS", false)
+    Spawn2:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamFire",
+            Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamFire",
+            Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_RadiusGive("DRPGPowerImmunityFire", 512.0, RGF_PLAYERS)
+        CRYS C 1 A_SpawnItemEx("DRPGImmunityCrystalPulseFire", Random(-8, 8), Random(-8, 8), Random(-16, 8), 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        Loop
+    Use:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalFire", 0, 0, 40, 16, 0, 0, 0, SXF_SETMASTER)
+        Stop
+    Death:
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx("DRPGImmunityCrystalDebris", 0, 0, Height / 2, Random(-8, 8), Random(-8, 8), 8, 0, SXF_NOCHECKPOSITION)
+        Stop
+    }
+}
+
+actor DRPGImmunityCrystalPlasma : CustomInventory
+{
+    Health 100
+    Height 32
+    Radius 16
+    Mass 0x7FFFFFFF
+
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.PickupMessage "Got a Plasma Immunity Crystal!"
+	Inventory.PickupSound "powerups/crystal"
+	Inventory.Icon "CRYSD"
+    
+    +INVBAR
+    +BRIGHT
+    +THRUACTORS
+    +DONTGIB
+    +SHOOTABLE
+    +NOBLOOD
+    -SPECIAL
+    
+    Tag "Plasma Immunity Crystal"
+    
+    States
+    {
+    Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(Abs(VelZ) <= 0.01, "FloorHit")
+        CRYS D 1
+        Loop
+    FloorHit:
+		TNT1 A 0 A_ChangeFlag("SPECIAL", true)
+		TNT1 A 0 A_ChangeFlag("THRUACTORS", false)
+    Spawn2:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamPlasma",
+            Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamPlasma",
+            Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_RadiusGive("DRPGPowerImmunityPlasma", 512.0, RGF_PLAYERS)
+        CRYS D 1 A_SpawnItemEx("DRPGImmunityCrystalPulsePlasma", Random(-8, 8), Random(-8, 8), Random(-16, 8), 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        Loop
+    Use:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalPlasma", 0, 0, 40, 16, 0, 0, 0, SXF_SETMASTER)
+        Stop
+    Death:
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx("DRPGImmunityCrystalDebris", 0, 0, Height / 2, Random(-8, 8), Random(-8, 8), 8, 0, SXF_NOCHECKPOSITION)
+        Stop
+    }
+}
+
+actor DRPGImmunityCrystalLightning : CustomInventory
+{
+    Health 100
+    Height 32
+    Radius 16
+    Mass 0x7FFFFFFF
+
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.PickupMessage "Got a Lightning Immunity Crystal!"
+	Inventory.PickupSound "powerups/crystal"
+	Inventory.Icon "CRYSE"
+    
+    +INVBAR
+    +BRIGHT
+    +THRUACTORS
+    +DONTGIB
+    +SHOOTABLE
+    +NOBLOOD
+    -SPECIAL
+    
+    Tag "Lightning Immunity Crystal"
+    
+    States
+    {
+    Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(Abs(VelZ) <= 0.01, "FloorHit")
+        CRYS E 1
+        Loop
+    FloorHit:
+		TNT1 A 0 A_ChangeFlag("SPECIAL", true)
+		TNT1 A 0 A_ChangeFlag("THRUACTORS", false)
+    Spawn2:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamLightning",
+            Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamRLightning",
+            Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_RadiusGive("DRPGPowerImmunityLightning", 512.0, RGF_PLAYERS)
+        CRYS E 1 A_SpawnItemEx("DRPGImmunityCrystalPulseLightning", Random(-8, 8), Random(-8, 8), Random(-16, 8), 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        Loop
+    Use:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalLightning", 0, 0, 40, 16, 0, 0, 0, SXF_SETMASTER)
+        Stop
+    Death:
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx("DRPGImmunityCrystalDebris", 0, 0, Height / 2, Random(-8, 8), Random(-8, 8), 8, 0, SXF_NOCHECKPOSITION)
+        Stop
+    }
+}
+
+actor DRPGImmunityCrystalToxic : CustomInventory
+{
+    Health 100
+    Height 32
+    Radius 16
+    Mass 0x7FFFFFFF
+
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.PickupMessage "Got a Toxic Immunity Crystal!"
+	Inventory.PickupSound "powerups/crystal"
+	Inventory.Icon "CRYSF"
+    
+    +INVBAR
+    +BRIGHT
+    +THRUACTORS
+    +DONTGIB
+    +SHOOTABLE
+    +NOBLOOD
+    -SPECIAL
+    
+    Tag "Toxic Immunity Crystal"
+    
+    States
+    {
+    Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(Abs(VelZ) <= 0.01, "FloorHit")
+        CRYS F 1
+        Loop
+    FloorHit:
+		TNT1 A 0 A_ChangeFlag("SPECIAL", true)
+		TNT1 A 0 A_ChangeFlag("THRUACTORS", false)
+    Spawn2:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamToxic",
+            Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamToxic",
+            Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_RadiusGive("DRPGPowerImmunityToxic", 512.0, RGF_PLAYERS)
+        CRYS F 1 A_SpawnItemEx("DRPGImmunityCrystalPulseToxic", Random(-8, 8), Random(-8, 8), Random(-16, 8), 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        Loop
+    Use:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalToxic", 0, 0, 40, 16, 0, 0, 0, SXF_SETMASTER)
+        Stop
+    Death:
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx("DRPGImmunityCrystalDebris", 0, 0, Height / 2, Random(-8, 8), Random(-8, 8), 8, 0, SXF_NOCHECKPOSITION)
+        Stop
+    }
+}
+
+actor DRPGImmunityCrystalRadiation : CustomInventory
+{
+    Health 100
+    Height 32
+    Radius 16
+    Mass 0x7FFFFFFF
+
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.PickupMessage "Got a Radiation Immunity Crystal!"
+	Inventory.PickupSound "powerups/crystal"
+	Inventory.Icon "CRYSG"
+    
+    +INVBAR
+    +BRIGHT
+    +THRUACTORS
+    +DONTGIB
+    +SHOOTABLE
+    +NOBLOOD
+    -SPECIAL
+    
+    Tag "Radiation Immunity Crystal"
+    
+    States
+    {
+    Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(Abs(VelZ) <= 0.01, "FloorHit")
+        CRYS G 1
+        Loop
+    FloorHit:
+		TNT1 A 0 A_ChangeFlag("SPECIAL", true)
+		TNT1 A 0 A_ChangeFlag("THRUACTORS", false)
+    Spawn2:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamRadiation",
+            Cos((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalBeamRadiation",
+            Cos((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            Sin((CallACS("GetTimer") / 256.0 + 17.5) * 360.0) * 512,
+            0, 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        TNT1 A 0 A_RadiusGive("DRPGPowerImmunityRadiation", 512.0, RGF_PLAYERS)
+        CRYS G 1 A_SpawnItemEx("DRPGImmunityCrystalPulseRadiation", Random(-8, 8), Random(-8, 8), Random(-16, 8), 0, 0, 0, 0, SXF_NOCHECKPOSITION)
+        Loop
+    Use:
+        TNT1 A 0 A_SpawnItemEx("DRPGImmunityCrystalRadiation", 0, 0, 40, 16, 0, 0, 0, SXF_SETMASTER)
+        Stop
+    Death:
+        TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_SpawnItemEx("DRPGImmunityCrystalDebris", 0, 0, Height / 2, Random(-8, 8), Random(-8, 8), 8, 0, SXF_NOCHECKPOSITION)
         Stop
     }
 }
@@ -583,6 +864,7 @@ actor DRPGPowerImmunityFire : PowerProtection
     +INVENTORY.AUTOACTIVATE
     
     DamageFactor "Fire", 0
+    DamageFactor "Explosion", 0
 	Powerup.Duration 35
 }
 
@@ -594,3 +876,29 @@ actor DRPGPowerImmunityPlasma : PowerProtection
 	Powerup.Duration 35
 }
 
+actor DRPGPowerImmunityLightning : PowerProtection
+{
+    +INVENTORY.AUTOACTIVATE
+    
+    DamageFactor "Electricity", 0
+    DamageFactor "Electric", 0
+    DamageFactor "Lightning", 0
+	Powerup.Duration 35
+}
+
+actor DRPGPowerImmunityToxic : PowerProtection
+{
+    +INVENTORY.AUTOACTIVATE
+    
+    DamageFactor "Toxicity", 0
+    DamageFactor "Slime", 0
+	Powerup.Duration 35
+}
+
+actor DRPGPowerImmunityRadiation : PowerProtection
+{
+    +INVENTORY.AUTOACTIVATE
+    
+    DamageFactor "Radiation", 0
+	Powerup.Duration 35
+}

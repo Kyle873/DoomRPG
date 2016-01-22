@@ -113,10 +113,13 @@ NamedScript DECORATE void SoulEffect(int Type)
 // Used by DECORATE and the Immunity Crystals plus Anti-Demon Field
 NamedScript DECORATE void DestroyImmunity()
 {
-    TakeInventory("DRPGPowerImmunityBullet", 1);
     TakeInventory("DRPGPowerImmunityMelee", 1);
+    TakeInventory("DRPGPowerImmunityBullet", 1);
     TakeInventory("DRPGPowerImmunityFire", 1);
     TakeInventory("DRPGPowerImmunityPlasma", 1);
+    TakeInventory("DRPGPowerImmunityLightning", 1);
+    TakeInventory("DRPGPowerImmunityToxic", 1);
+    TakeInventory("DRPGPowerImmunityRadiation", 1);
     TakeInventory("PowerProtection", 1);
 }
 
@@ -357,24 +360,6 @@ NamedScript DECORATE int StatusEffectTimer(int Effect)
         return 0;
     
     return (int)Player.StatusTimer[Effect];
-}
-
-NamedScript DECORATE int ImmunityCrystalCheck()
-{
-    SetActivator(GetActorProperty(0, APROP_MasterTID));
-    
-    int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-    
-    if (Buttons & BT_FORWARD)
-        return IC_BULLET;
-    else if (Buttons & BT_BACK)
-        return IC_MELEE;
-    else if (Buttons & BT_MOVELEFT)
-        return IC_FIRE;
-    else if (Buttons & BT_MOVERIGHT)
-        return IC_PLASMA;
-    
-    return IC_RANDOM;
 }
 
 // Super pulsating rainbow translation effect
