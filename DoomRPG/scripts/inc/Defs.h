@@ -528,6 +528,17 @@ typedef enum
 } EShopSpecialType;
 
 // --------------------------------------------------
+// Payout
+// 
+
+#define PAYOUT_VALUES_MAX       10
+#define PAYOUT_DATA_MAX         10
+#define PAYOUT_TOTAL_X          200
+#define PAYOUT_TOTAL_Y          40
+#define PAYOUT_TEXT_X           20
+#define PAYOUT_TEXT_Y           100
+
+// --------------------------------------------------
 // Popoffs
 // 
 
@@ -686,6 +697,7 @@ typedef enum
 #define COMBO_STOP              (35 * 2)
 #define LEVELUP_ID              (MAKE_ID('L', 'V', 'U', 'P'))
 #define RANKUP_ID               (MAKE_ID('R', 'K', 'U', 'P'))
+#define PAYOUT_ID               (MAKE_ID('P', 'P', 'A', 'Y'))
 #define CONFUSION_ID            (MAKE_ID('C', 'O', 'N', 'F'))
 #define CONFUSION_NONSENSE_ID   (MAKE_ID('C', 'O', 'N', '2'))
 
@@ -1010,72 +1022,92 @@ AddressSpace extern GlobalArraySpace    ShieldHealthArray;
 #include "Structs.h"
 
 // Generic
-typedef struct DynamicArray_S   DynamicArray;
-typedef struct InterpData_S     InterpData;
-typedef struct Position_S       Position;
-typedef struct DroppedItem_S    DroppedItem;
+typedef struct DynamicArray_S       DynamicArray;
+typedef struct InterpData_S         InterpData;
+typedef struct Position_S           Position;
+typedef struct DroppedItem_S        DroppedItem;
+
 // Augmentations
-typedef struct AugInfo_S        AugInfo;
+typedef struct AugInfo_S            AugInfo;
+
 // Charsave
-typedef struct CharSaveInfo_S   CharSaveInfo;
+typedef struct CharSaveInfo_S       CharSaveInfo;
+
 // GUI
-typedef struct MouseInfo_S      MouseInfo;
-typedef struct GUIWindow_S      GUIWindow;
-typedef struct GUILabel_S       GUILabel;
-typedef struct GUIIcon_S        GUIIcon;
-typedef struct GUIButton_S      GUIButton;
-typedef struct GUIBar_S         GUIBar;
-typedef struct GUIList_S        GUIList;
-typedef struct GUITooltip_S     GUITooltip;
-typedef struct GUIContextMenu_S GUIContextMenu;
+typedef struct MouseInfo_S          MouseInfo;
+typedef struct GUIWindow_S          GUIWindow;
+typedef struct GUILabel_S           GUILabel;
+typedef struct GUIIcon_S            GUIIcon;
+typedef struct GUIButton_S          GUIButton;
+typedef struct GUIBar_S             GUIBar;
+typedef struct GUIList_S            GUIList;
+typedef struct GUITooltip_S         GUITooltip;
+typedef struct GUIContextMenu_S     GUIContextMenu;
+
 // Health Bars
-typedef struct HUDBarInfo_S     HUDBarInfo;
+typedef struct HUDBarInfo_S         HUDBarInfo;
+
 // Items
-typedef struct ItemInfo_S       ItemInfo;
+typedef struct ItemInfo_S           ItemInfo;
+
 // Crates
-typedef struct HackNode_S       HackNode;
-typedef struct CrateInfo_S      CrateInfo;
+typedef struct HackNode_S           HackNode;
+typedef struct CrateInfo_S          CrateInfo;
+
 // Skills
-typedef struct SkillLevelInfo_S SkillLevelInfo;
-typedef struct Skill_S          Skill;
-typedef struct AuraInfo_S       AuraInfo;
+typedef struct SkillLevelInfo_S     SkillLevelInfo;
+typedef struct Skill_S              Skill;
+typedef struct AuraInfo_S           AuraInfo;
+
 // Shield
 typedef struct ShieldPart_S         ShieldPart;
 typedef struct ShieldAccessory_S    ShieldAccessory;
+
 // Monsters
-typedef struct MonsterStats_S   MonsterStats;
-typedef struct MonsterInfo_S    MonsterInfo;
-typedef struct MegabossInfo_S   MegabossInfo;
+typedef struct MonsterStats_S       MonsterStats;
+typedef struct MonsterInfo_S        MonsterInfo;
+typedef struct MegabossInfo_S       MegabossInfo;
+
 // Missions
-typedef struct MissionInfo_S    MissionInfo;
+typedef struct MissionInfo_S        MissionInfo;
+
 // Minigames
-typedef struct MinigameData_S   MinigameData;
+typedef struct MinigameData_S       MinigameData;
+
 // Turret
 typedef struct TurretUpgrade_S      TurretUpgrade;
 typedef struct TurretSensorItem_S   TurretSensorItem;
-// Map
-typedef struct LevelInfo_S      LevelInfo;
-// PDA
-typedef struct PDAMessage_S     PDAMessage;
-// RPG
-typedef struct PlayerData_S     PlayerData;
 
-// Pointer types
+// Map
+typedef struct LevelInfo_S          LevelInfo;
+
+// PDA
+typedef struct PDAMessage_S         PDAMessage;
+
+typedef struct PayoutData_S         PayoutData;
+
+// RPG
+typedef struct PlayerData_S         PlayerData;
+
+// --------------------------------------------------
+// Pointer Types
+//
+
 // Constants
-typedef MonsterInfo const       *MonsterInfoPtr;
-typedef MegabossInfo const      *MegabossInfoPtr;
-typedef ShieldPart const        *ShieldPartPtr;
-typedef ShieldAccessory const   *ShieldAccsPtr;
-typedef TurretUpgrade RPGMap    *TurretUpgradePtr;
+typedef MonsterInfo const           *MonsterInfoPtr;
+typedef MegabossInfo const          *MegabossInfoPtr;
+typedef ShieldPart const            *ShieldPartPtr;
+typedef ShieldAccessory const       *ShieldAccsPtr;
+typedef TurretUpgrade RPGMap        *TurretUpgradePtr;
 
 // Globals
-typedef ItemInfo RPGGlobal  *ItemInfoPtr;
+typedef ItemInfo RPGGlobal          *ItemInfoPtr;
 
 // Hub-Locals
 
 // Map-Locals
-typedef AugInfo RPGMap      *AugInfoPtr;
-typedef MonsterStats RPGMap *MonsterStatsPtr;
-typedef Skill RPGGlobal     *SkillPtr;
+typedef AugInfo RPGMap              *AugInfoPtr;
+typedef MonsterStats RPGMap         *MonsterStatsPtr;
+typedef Skill RPGGlobal             *SkillPtr;
 
 #endif // DOOMRPG_DEFS_H

@@ -606,9 +606,6 @@ NamedScript void MapLoop()
             HudMessage("\CaMonsters Killed Bonus!\n\CnItems Found Bonus!\n\CkSecrets Found Bonus!\n\n\Cj%ld XP Bonus\n\Ck%ld Rank Bonus\n\CnFull HP/EP Restore",
                        XPBonus, RankBonus);
             EndHudMessage(HUDMSG_FADEOUT, 0, "White", 0.5, 0.2, 5.0, 5.0);
-            
-            // Payout Bonus Increase
-            Players(i).PayBonus++;
         }
         
         SetActivator(0, AAPTR_NULL);

@@ -212,12 +212,8 @@ void DrawMainMenu()
     EndHudMessage(HUDMSG_PLAIN, 0, "Yellow",         40.1, 124.0, 0.05);
     HudMessage("Rank: %ld / %ld", Player.Rank, Player.RankNext);
     EndHudMessage(HUDMSG_PLAIN, 0, "Yellow",         40.1, 136.0, 0.05);
-    if (Player.RankLevel > 0)
-    {
-        HudMessage("Payout: %d C (%S) [%d%%]",
-                   CalculatePay(), FormatTime(Player.PayTimer), Player.PayBonus);
-        EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", 40.1, 142.1, 0.05);
-    }
+    HudMessage("PP: %d (%S)", Player.PP, FormatTime(Player.PayTimer));
+    EndHudMessage(HUDMSG_PLAIN, 0, "Gold",           40.1, 148.0, 0.05);
     
     if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED && Player.Mission.Active)
         DrawMissionInfo(&Player.Mission, 16, 188, true);
@@ -869,12 +865,8 @@ void DrawStatsMenu()
         EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", 208.1, 80.0, 0.05);
         HudMessage("Rank: %ld / %ld", PlayerPtr->Rank, PlayerPtr->RankNext);
         EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", 208.1, 92.0, 0.05);
-        if (PlayerPtr->RankLevel > 0)
-        {
-            HudMessage("Payout: %d C (%S) [%d%%]",
-                       CalculatePay(PlayerNum), FormatTime(Player.PayTimer), Player.PayBonus);
-            EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", 208.1, 104.0, 0.05);
-        }
+        HudMessage("PP: %ld", PlayerPtr->PP);
+        EndHudMessage(HUDMSG_PLAIN, 0, "Gold", 208.1, 104.0, 0.05);
        
         // Stats
         HudMessage("%d", PlayerPtr->Strength);

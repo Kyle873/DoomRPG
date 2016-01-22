@@ -386,9 +386,6 @@ void CheckMission()
         SpawnForced(Player.Mission.RewardItem->Actor, GetActorX(0), GetActorY(0), GetActorZ(0), 0, 0);
         SetActorVelocity(Player.TID, 0.01, 0.01, 0, true, false);
         
-        // Increase Payout Bonus
-        Player.PayBonus++;
-        
         // Clear the Mission
         ClearMission();
         

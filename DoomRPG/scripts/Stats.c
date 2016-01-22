@@ -9,6 +9,7 @@
 #include "Outpost.h"
 #include "Skills.h"
 #include "Augs.h"
+#include "Payout.h"
 
 // Globals
 long long int XPCurve;
@@ -298,32 +299,18 @@ void CheckRank()
             PrintMessage(StrParam("\CcYou have unlocked \Cf%d\Cc new items in the shop", NewItems), RANKUP_ID + 1, 96);
     }
     
-    // Payment
+    // Payout
     if (!CheckInventory("PowerTimeFreezer"))
         Player.PayTimer--;
     if (Player.PayTimer <= 0)
     {
-        if (Player.RankLevel > 0)
-        {
-            int Pay = CalculatePay();
-            
-            GiveInventory("DRPGCredits", Pay);
-            
-            FadeRange(0, 255, 0, 0.1, 0, 255, 0, 0, 2.0);
-            ActivatorSound("credits/payout", 127);
-            if (InMultiplayer && Arbitrator && PlayerCount() > 1)
-                Log("\CfYour group has been paid by the UAC");
-            else if (!InMultiplayer)
-                Log("\CfYou have been paid %d Credits by the UAC", Pay);
-        }
-        
+        // CalculatePayout();
+    
         Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
-        Player.PayKills = 0;
-        Player.PayBonus++;
         
-        // Cap Pay Bonus
-        if (Player.PayBonus > 1000)
-            Player.PayBonus = 1000;
+        // Reset Payout stats
+        // TODO: Move to function
+        Player.Payout.Kills = 0;
     }
 }
 

@@ -142,7 +142,7 @@ NamedScript Type_ENTER void Init()
         GiveInventory("DRPGModule", GetActivatorCVar("drpg_start_modules"));
         GiveInventory("DRPGTurretPart", GetActivatorCVar("drpg_start_turretparts"));
         
-        // Level/Rank
+        // Level/Rank/PP
         if (GetCVar("drpg_start_level") > 0)
         {
             Player.Level = GetActivatorCVar("drpg_start_level");
@@ -153,6 +153,8 @@ NamedScript Type_ENTER void Init()
             Player.RankLevel = GetActivatorCVar("drpg_start_rank");
             Player.Rank = RankTable[Player.RankLevel - 1];
         }
+        if (GetCVar("drpg_start_pp") > 0)
+            Player.PP = GetCVar("drpg_start_pp");
         
         // Stats
         Player.Strength = GetActivatorCVar("drpg_start_strength");
@@ -211,6 +213,9 @@ NamedScript Type_ENTER void Init()
                 Player.NewShieldParts[i][j] = true;
         for (int i = 0; i < MAX_ACCESSORIES; i++)
             Player.NewShieldAccessoryParts[i] = true;
+        
+        // Setup first payout
+        Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");        
         
         // Done first run
         Player.FirstRun = true;
@@ -653,7 +658,7 @@ NamedScript void GiveTip()
         { "\CjLevel",                           "Your level determines your basic strength and progress through the game. Your level is increased by killing monsters, completing missions and achieving combos.", },
         { "\CkRank",                            "Your rank determines your standing within the UAC. Rank will determine how much money you are paid by the UAC as well as the discount you will receive when purchasing items from the shop.", },
         { "\CtCombo",                           "The combo system allows you to kill enemies in rapid succession in order to gain bonus XP and Rank. When an enemy is killed, you will gain +1 to your combo counter and your combo timer will reset. When your timer reaches its cooldown point, indicated by the split between the red and green in the bar, it will add the indicated XP and Rank to your totals and calculate a bonus (the green number). If you keep incrementing your combo during the cooldown period, you can keep stacking XP and Rank into the bonus. When the combo timer ends, your combo will be completely reset and your bonus will be added to your totals.", },
-        { "\CkPay Bonus",                       "Your pay bonus is shown to the right of your payout information. A higher pay bonus will yield better payouts. Your pay bonus can be increased by completing missions and achieving 100% level completion.", },
+        // TODO: PP Hint
         
         // Currencies
         { "\CfCredits",                         "Credits are the universal currency used by the UAC and are used for purchasing goods in the shop.", },
@@ -2042,9 +2047,6 @@ NamedScript void DefaultLoadout()
         else
             GiveInventory("DRPGUACCard", GetActivatorCVar("drpg_start_bonus_shopcard"));
     }
-    
-    // Payout Bonus
-    Player.PayBonus = GetActivatorCVar("drpg_start_bonus_payout");
     
     if (CompatMode == COMPAT_DRLA)
         Loadout_GiveDRLAEquipment();

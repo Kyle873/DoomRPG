@@ -29,6 +29,7 @@
     Level / Rank Level
         - Only Level and Rank Level are stored, the XP to give is determined from these
         - Both Level and Rank Level are stored in 1 byte each
+        - TODO: PP (Payout Points)
     Stats
         - Each is stored in 1 byte since they will never go above 200 by normal means
           [KS] They can be negative but we can't handle that so just ignore it in that case
@@ -59,8 +60,6 @@
           - Stored in 2 byte
         - Toxicity
           - Stored in 1 byte
-        - Pay Bonus
-          - Stored in 2 bytes
         - Arena Wave
           - Stored in 2 bytes
     Locker
@@ -534,7 +533,6 @@ NamedScript MenuEntry void LoadCharacter()
         SetInventory("DRPGDiamondUACCard", 1);
     Player.Augs.Battery = Info.Battery;
     Player.Toxicity = Info.Toxicity;
-    Player.PayBonus = Info.PayBonus;
     ArenaMaxWave = Info.ArenaWave;
     
     Delay(1);
@@ -733,7 +731,6 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     Info->ShopCard = Player.ShopCard;
     Info->Battery = Player.Augs.Battery;
     Info->Toxicity = Player.Toxicity;
-    Info->PayBonus = Player.PayBonus;
     Info->ArenaWave = ArenaMaxWave;
     
     // Locker
@@ -857,8 +854,6 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     StringPos += 4;
     Info->Toxicity = HexToInteger(String + StringPos, 2);
     StringPos += 2;
-    Info->PayBonus = HexToInteger(String + StringPos, 4);
-    StringPos += 4;
     Info->ArenaWave = HexToInteger(String + StringPos, 4);
     StringPos += 4;
     
@@ -1047,13 +1042,6 @@ NamedScript char const *MakeSaveString(CharSaveInfo *Info)
     SaveString[pos + 1] = ToHexChar(Info->Toxicity);
     SaveString[pos + 0] = ToHexChar(Info->Toxicity >> 4);
     pos += 2;
-    
-    // Pay Bonus
-    SaveString[pos + 3] = ToHexChar(Info->PayBonus);
-    SaveString[pos + 2] = ToHexChar(Info->PayBonus >> 4);
-    SaveString[pos + 1] = ToHexChar(Info->PayBonus >> 8);
-    SaveString[pos + 0] = ToHexChar(Info->PayBonus >> 12);
-    pos += 4;
     
     // Arena Wave
     SaveString[pos + 3] = ToHexChar(Info->ArenaWave);

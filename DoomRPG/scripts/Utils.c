@@ -713,13 +713,6 @@ bool StatsCapped()
             Player.Luck >= Player.StatCap);
 }
 
-// Calculates pay for the Rank Payout
-OptionalArgs(1) int CalculatePay(int PlayerNum)
-{
-    if (PlayerNum == 0) PlayerNum = PlayerNumber();
-    return (int)(((((fixed)Players(PlayerNum).RankLevel + 1.0) * 10.0) + ((fixed)Players(PlayerNum).PayKills * ((fixed)Players(PlayerNum).RankLevel + 1.0))) * (1.0 + (fixed)Players(PlayerNum).PayBonus / 100.0));
-}
-
 int AveragePlayerLevel()
 {
     int NumPlayers;
@@ -2274,7 +2267,6 @@ NamedScript Console void Cheat(int StatBoost)
     // Max Level/Rank
     Player.XP = XPTable[MAX_LEVEL - 1];
     Player.Rank = RankTable[MAX_RANK - 1];
-    Player.PayBonus = 1000;
     
     // Stats
     Player.Strength = StatBoost;

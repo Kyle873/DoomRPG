@@ -144,6 +144,7 @@ fixed Distance(int, int);
 fixed Distance3D(fixed, fixed, fixed, fixed, fixed, fixed);
 fixed Distance2D(int, int, int, int);
 fixed Lerp(fixed, fixed, fixed);
+int LerpInt(int, int, int);
 void Interpolate(InterpData *);
 fixed Map(fixed, fixed, fixed, fixed, fixed);
 fixed Curve(fixed, fixed, fixed, fixed, fixed);
