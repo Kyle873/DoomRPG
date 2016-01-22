@@ -1622,28 +1622,39 @@ NamedScript void DrawStatUp(int Stat)
     
     int Time = 35 * 5;
     int DisplayTime = Time;
+    fixed TextX = 0.1 + ((Stat % 4) * 0.25);
+    fixed TextY = 0.75 + (Stat >= 4 ? 0.05 : 0);
     fixed Radius = 0.25;
     
     // Text and whooshy icon
-    while (DisplayTime > 0)
+    if (!GetActivatorCVar("drpg_toaster"))
     {
-        fixed Angle = (0.1 * Stat) + (fixed)Timer() / 64.0;
-        fixed XOff = Cos(Angle) * Radius;
-        fixed YOff = Sin(Angle) * Radius;
-        fixed Alpha = (fixed)DisplayTime / (fixed)Time;
-        fixed TextX = 0.1 + ((Stat % 4) * 0.25);
-        fixed TextY = 0.75 + (Stat >= 4 ? 0.05 : 0);
-        
+        while (DisplayTime-- > 0)
+        {
+            fixed Angle = (0.1 * Stat) + (fixed)Timer() / 64.0;
+            fixed XOff = Cos(Angle) * Radius;
+            fixed YOff = Sin(Angle) * Radius;
+            fixed Alpha = (fixed)DisplayTime / (fixed)Time;
+            
+            SetHudSize(0, 0, false);
+            SetFont("BIGFONT");
+
+            HudMessage("%S +", StatNames[Stat]);
+            EndHudMessage(HUDMSG_ALPHA, 0, "White", TextX, TextY, 0.05, Alpha);
+            PrintSpriteAlpha(StrParam("STAT%d", Stat + 1), 0, 0.525 + XOff, 0.5 + YOff, 0.05, Alpha);
+            
+            Radius -= 0.0025;
+            
+            Delay(1);
+        }
+    }
+    else
+    {
         SetHudSize(0, 0, false);
-        
         SetFont("BIGFONT");
-        HudMessage("%S +", StatNames[Stat]);
-        EndHudMessage(HUDMSG_ALPHA, 0, "White", TextX, TextY, 0.05, Alpha);
-        PrintSpriteAlpha(StrParam("STAT%d", Stat + 1), 0, 0.525 + XOff, 0.5 + YOff, 0.05, Alpha);
         
-        DisplayTime--;
-        Radius -= 0.0025;
-        Delay(1);
+        HudMessage("%S +", StatNames[Stat]);
+        EndHudMessage(HUDMSG_FADEOUT, 0, "White", TextX, TextY, 3.0, 2.0);
     }
 }
 
