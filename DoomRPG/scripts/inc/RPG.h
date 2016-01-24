@@ -46,6 +46,7 @@ NamedScript Type_ENTER void Init();
 NamedScript void Loop();
 NamedScript void WeaponSpeed();
 NamedScript void PlayerDamage();
+NamedScript void MoneyChecker();
 NamedScript void StatRandomizer();
 NamedScript void AutosaveHandler();
 NamedScript Type_OPEN void ShopSpecialHandler();

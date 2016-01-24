@@ -981,6 +981,11 @@ NamedScript KeyBind void UseSkill(int Key)
             // Blue Aura Refund
             if (Player.SkillRefundMult > 0)
                 Player.EP += EPCost * Player.SkillRefundMult;
+            
+            // Payout
+            Player.Payout.SkillsUsed++;
+            if (Player.Overdrive)
+                Player.Payout.SkillsOverdrive++;
         }
     }
     else // Not enough EP
@@ -1179,6 +1184,9 @@ NamedScript Console bool Powerup(SkillLevelInfo *SkillLevel, void *Data)
         break;
     }
     
+    // Payout
+    Player.Payout.PowerupsUsed++;
+    
     return true;
 }
 
@@ -1350,6 +1358,9 @@ NamedScript Console bool UseAura(SkillLevelInfo *SkillLevel, void *Data)
     
     // Aura Cost Multiplier
     Player.SkillCostMult += 10;
+    
+    // Payout
+    Player.Payout.AurasUsed++;
     
     ActivatorSound("skills/buff", 127);
     return true;
@@ -2047,6 +2058,9 @@ NamedScript Console bool Summon(SkillLevelInfo *SkillLevel, void *Data)
         Stats->Flags |= MF_NOXP;
         Stats->Flags |= MF_NODROPS;
         Stats->NeedReinit = true;
+        
+        // Payout
+        Player.Payout.SkillSummons++;
         
         return true;
     }

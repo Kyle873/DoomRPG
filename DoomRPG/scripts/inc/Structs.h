@@ -723,6 +723,7 @@ struct Payout_S
     int DamageTaken;
     int StatusEffectHit;
     int StatusEffectsEvaded;
+    int LivesUsed;
     
     // Credits
     int CreditsFound;
@@ -730,6 +731,7 @@ struct Payout_S
     
     // Skills
     int SkillsUsed;
+    int SkillsOverdrive;
     int SkillBurnout;
     int PowerupsUsed;
     int AurasUsed;
@@ -765,7 +767,7 @@ struct Payout_S
     // Map
     int MapsCompleted;
     int ParTimesBeaten;
-    int ItemsCollected;
+    int ItemsFound;
     int SecretsFound;
 };
 

@@ -93,12 +93,16 @@ NamedScript DECORATE void TryStatusEffect(int Type, int Time, int Intensity)
     
     // Status Effect Resist check
     if (RandomFixed(0.0, 100.0) <= Player.StatusEffectResist)
+    {
         ActivatorSound("health/statuseffect2", 127);
+        Player.Payout.StatusEffectsEvaded++;
+    }
     else // Apply status effect
     {
         ActivatorSound("health/statuseffect", 127);
         Player.StatusTypeHUD = Type;
         StatusEffect(Type, Time, Intensity);
+        Player.Payout.StatusEffectHit++;
     }
 }
 
@@ -873,6 +877,9 @@ void CheckBurnout()
         // Energy Perk
         if (Player.Perks[STAT_ENERGY])
             Player.EPTime /= 2;
+            
+        // Payout
+        Player.Payout.SkillBurnout++;
     }
 }
 

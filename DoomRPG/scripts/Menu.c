@@ -1032,7 +1032,7 @@ void DrawAugsMenu()
     // Aug Battery Power
     PrintSprite("AUGBATT", 0, 200.0, 110.0, 0.05);
     SetFont("BIGFONT");
-    HudMessage("%d%%", Player.Augs.Battery);
+    HudMessage("%d%%", (int)Player.Augs.Battery);
     EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", 208.1, 99.0, 0.05);
     
     // Draw Aug slots

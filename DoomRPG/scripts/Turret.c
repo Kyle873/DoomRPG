@@ -812,9 +812,14 @@ NamedScript Type_ENTER void TurretLoop()
         
         Delay(1);
         
+        // Payout
+        if (PrevHealth < Health)
+            Player.Payout.TurretDamageTaken += Abs(PrevHealth - Health);
+        
         // Post-health check
         PrevHealth = Health;
         Player.Turret.Health = Health;
+        
     }
     
     Delay(1);
@@ -872,6 +877,9 @@ NamedScript Type_ENTER void TurretLoopMaintenance()
             {
                 Player.Turret.Battery++;
                 
+                // Payout
+                Player.Payout.TurretChargeTime++;
+                
                 // Done
                 if (Player.Turret.Battery >= Player.Turret.BatteryMax)
                     ActivatorSound("turret/chargedone", 127);
@@ -900,6 +908,9 @@ NamedScript Type_ENTER void TurretLoopMaintenance()
                 if (Player.Turret.PaidForRepair)
                     Player.Turret.Health++;
                 
+                // Payout
+                Player.Payout.TurretRepairTime++;
+                
                 // Done
                 if (Player.Turret.Health >= Player.Turret.HealthMax)
                 {
@@ -914,6 +925,9 @@ NamedScript Type_ENTER void TurretLoopMaintenance()
             if (Player.Turret.RefitTimer > 0)
             {
                 Player.Turret.RefitTimer--;
+                
+                // Payout
+                Player.Payout.TurretRefitTime++;
                 
                 // Done
                 if (Player.Turret.RefitTimer <= 0)

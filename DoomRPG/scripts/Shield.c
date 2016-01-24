@@ -1302,6 +1302,9 @@ NamedScript void ShieldDamage(int Amount)
     PlaySound(0, "shield/hit", 5, 1.0, false, 1.0);
     if (Player.Shield.Accessory && Player.Shield.Accessory->Damage)
         Player.Shield.Accessory->Damage(Amount);
+    
+    // Payout
+    Player.Payout.ShieldDamage += Amount;
 }
 
 NamedScript void ShieldBroken()
@@ -1310,6 +1313,9 @@ NamedScript void ShieldBroken()
     
     if (Player.Shield.Accessory && Player.Shield.Accessory->Break)
         Player.Shield.Accessory->Break();
+    
+    // Payout
+    Player.Payout.ShieldBreaks++;
 }
 
 NamedScript void ShieldTimerReset()

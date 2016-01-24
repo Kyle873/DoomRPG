@@ -32,7 +32,8 @@ NamedScript Console void CalculatePayout()
                 { "Deaths", Player.Payout.Deaths },
                 { "Damage Taken", Player.Payout.DamageTaken },
                 { "\CaStatus Effect Hits", Player.Payout.StatusEffectHit },
-                { "\CaStatus Effects Evaded", Player.Payout.StatusEffectsEvaded }
+                { "\CaStatus Effects Evaded", Player.Payout.StatusEffectsEvaded },
+                { "\CiLives\C- Used", Player.Payout.LivesUsed }
             }
         },
         {
@@ -54,11 +55,10 @@ NamedScript Console void CalculatePayout()
             .Values =
             {
                 { "Skills Used", Player.Payout.SkillsUsed },
+                { "Skills \CiOverdrived\C-", Player.Payout.SkillsOverdrive },
                 { "Skill \ChBurnout\C-", Player.Payout.SkillBurnout },
                 { "\CqPowerups\C- Used", Player.Payout.PowerupsUsed },
-                { "Auras Used", Player.Payout.AurasUsed },
-                { "\CaHealth\C- Restored", Player.Payout.SkillHealed },
-                { "\CdArmor\C- Repaired", Player.Payout.SkillRepaired },
+                { "\CaAuras\C- Used", Player.Payout.AurasUsed },
                 { "Summoned \CgMonsters\C-", Player.Payout.SkillSummons }
             }
         },
@@ -130,7 +130,7 @@ NamedScript Console void CalculatePayout()
             {
                 { "\CdMaps Completed", Player.Payout.MapsCompleted },
                 { "\CfPar Times Beaten", Player.Payout.ParTimesBeaten },
-                { "\CnItems Collected", Player.Payout.ItemsCollected },
+                { "\CnItems Collected", Player.Payout.ItemsFound },
                 { "\CkSecrets Found", Player.Payout.SecretsFound },
             }
         }
@@ -219,43 +219,43 @@ void PayoutCalculateTotals()
     // Damage
     Player.Payout.Total.Damage += Player.Payout.Kills * 10;
     Player.Payout.Total.Damage -= Player.Payout.Deaths * 1000;
-    Player.Payout.Total.Damage -= Player.Payout.DamageTaken;
-    Player.Payout.Total.Damage += Player.Payout.StatusEffectHit * 1000;
-    Player.Payout.Total.Damage += Player.Payout.StatusEffectsEvaded * 1000;
+    Player.Payout.Total.Damage += Player.Payout.DamageTaken / 10;
+    Player.Payout.Total.Damage += Player.Payout.StatusEffectHit * 100;
+    Player.Payout.Total.Damage += Player.Payout.StatusEffectsEvaded * 250;
+    Player.Payout.Total.Damage += Player.Payout.LivesUsed * 100;
     
     // Credits
-    Player.Payout.Total.Credits += Player.Payout.CreditsFound;
-    Player.Payout.Total.Credits += Player.Payout.CreditsSpent;
+    Player.Payout.Total.Credits += Player.Payout.CreditsFound / 100;
+    Player.Payout.Total.Credits += Player.Payout.CreditsSpent / 1000;
     
     // Skills
     Player.Payout.Total.Skills += Player.Payout.SkillsUsed * 10;
-    Player.Payout.Total.Skills -= Player.Payout.SkillBurnout / 10;
+    Player.Payout.Total.Skills += Player.Payout.SkillsOverdrive * 10;
+    Player.Payout.Total.Skills += Player.Payout.SkillBurnout / 35;
     Player.Payout.Total.Skills += Player.Payout.PowerupsUsed * 100;
     Player.Payout.Total.Skills += Player.Payout.AurasUsed * 100;
-    Player.Payout.Total.Skills += Player.Payout.SkillHealed;
-    Player.Payout.Total.Skills += Player.Payout.SkillRepaired;
-    Player.Payout.Total.Skills += Player.Payout.SkillSummons * 10;
+    Player.Payout.Total.Skills += Player.Payout.SkillSummons * 100;
     
     // Augs
-    Player.Payout.Total.Augs += Player.Payout.AugBatteryUsed;
+    Player.Payout.Total.Augs += Player.Payout.AugBatteryUsed / 10;
     Player.Payout.Total.Augs += Player.Payout.AugsDisrupted * 100;
     
     // Shields
-    Player.Payout.Total.Shields += Player.Payout.ShieldDamage;
+    Player.Payout.Total.Shields += Player.Payout.ShieldDamage / 10;
     Player.Payout.Total.Shields += Player.Payout.ShieldBreaks * 10;
 
     // Stims
     Player.Payout.Total.Stims += Player.Payout.StimsMade * 10;
     Player.Payout.Total.Stims += Player.Payout.StimsUsed * 100;
-    Player.Payout.Total.Stims -= Player.Payout.StimToxicity;
+    Player.Payout.Total.Stims += Player.Payout.StimToxicity;
     Player.Payout.Total.Stims += Player.Payout.StimImmunity;
     
     // Turret
-    Player.Payout.Total.Turret -= Player.Payout.TurretDamageTaken;
-    Player.Payout.Total.Turret += Player.Payout.TurretMaintenanceCost;
-    Player.Payout.Total.Turret += Player.Payout.TurretChargeTime;
-    Player.Payout.Total.Turret += Player.Payout.TurretRepairTime;
-    Player.Payout.Total.Turret += Player.Payout.TurretRefitTime;
+    Player.Payout.Total.Turret += Player.Payout.TurretDamageTaken;
+    Player.Payout.Total.Turret += Player.Payout.TurretMaintenanceCost / 35;
+    Player.Payout.Total.Turret += Player.Payout.TurretChargeTime / 35;
+    Player.Payout.Total.Turret += Player.Payout.TurretRepairTime / 35;
+    Player.Payout.Total.Turret += Player.Payout.TurretRefitTime / 35;
     
     // Missions
     Player.Payout.Total.Missions += Player.Payout.MissionsCompleted * 1000;
@@ -263,7 +263,7 @@ void PayoutCalculateTotals()
     // Maps
     Player.Payout.Total.Maps += Player.Payout.MapsCompleted * 1000;
     Player.Payout.Total.Maps += Player.Payout.ParTimesBeaten * 1000;
-    Player.Payout.Total.Maps += Player.Payout.ItemsCollected * 10;
+    Player.Payout.Total.Maps += Player.Payout.ItemsFound;
     Player.Payout.Total.Maps += Player.Payout.SecretsFound * 100;
 }
 

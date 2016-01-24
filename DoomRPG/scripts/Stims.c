@@ -186,9 +186,11 @@ NamedScript KeyBind void UseStim(bool Force)
     
     // Add Toxicity
     Player.Toxicity += Player.Stim.Toxicity;
+    Player.Payout.StimToxicity += Player.Stim.Toxicity;
     
     // Add Immunity
     Player.StimImmunity += Player.Stim.Toxicity * 5;
+    Player.Payout.StimImmunity += Player.Stim.Toxicity * 5;
     if (Player.StimImmunity > 100)
         Player.StimImmunity = 100;
     
@@ -218,6 +220,9 @@ NamedScript KeyBind void UseStim(bool Force)
     FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
     if (!Turret)
         TossStim();
+    
+    // Payout
+    Player.Payout.StimsUsed++;
 }
 
 NamedScript KeyBind void ThrowAwayStim()
@@ -592,4 +597,7 @@ void SetStim(int Type)
     if (Type == 1) TakeInventory("DRPGStimMedium", 1);
     if (Type == 2) TakeInventory("DRPGStimLarge", 1);
     if (Type == 3) TakeInventory("DRPGStimXL", 1);
+    
+    // Payout
+    Player.Payout.StimsMade++;
 }

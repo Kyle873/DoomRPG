@@ -468,6 +468,7 @@ NamedScript void MapLoop()
                 continue;
             
             Players(i).Mission.Current += ItemsFound - ItemsLastFound;
+            Players(i).Payout.ItemsFound++;
         }
     }
     
@@ -489,6 +490,7 @@ NamedScript void MapLoop()
                 continue;
 
             Players(i).Mission.Current += SecretsFound - CurrentLevel->UniqueSecrets;
+            Players(i).Payout.SecretsFound++;
         }
         
         CurrentLevel->UniqueSecrets = SecretsFound;
@@ -802,6 +804,7 @@ NumberedScript(MAP_EXIT_SCRIPTNUM) MapSpecial void MapExit(bool Secret)
             EndHudMessage(HUDMSG_FADEOUT, 0, "Gold", 1.5, 0.5, 3.0, 2.0);
             
             Players(i).Rank += RankBonus;
+            Players(i).Payout.ParTimesBeaten++;
         }
         
         AmbientSound("misc/parbonus", 127);
@@ -816,6 +819,14 @@ NumberedScript(MAP_EXIT_SCRIPTNUM) MapSpecial void MapExit(bool Secret)
         CurrentLevel->EventCompleted = true; // These don't actually end until you leave the map normally
     
     CurrentLevel->Completed = true; // We finished the map
+    
+    // Payout
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i)) continue;
+        
+        Players(i).Payout.MapsCompleted++;
+    }
     
     UsedSecretExit = Secret;
     PreviousLevel = CurrentLevel;

@@ -270,6 +270,7 @@ NamedScript Type_ENTER void Init()
     // Execute Game Loops
     Loop();
     PlayerDamage();
+    MoneyChecker();
     ShieldTimer();
     WeaponSpeed();
     StatRandomizer();
@@ -488,6 +489,7 @@ NamedScript void PlayerDamage()
             StatusDamage(DamageTaken, RandomFixed(0.0, 100.0), Critical);
         ResetRegen();
         DamageHUD(DamageTaken, Critical);
+        Player.Payout.DamageTaken += DamageTaken;
     }
     
     // Reset attacker's ID and critical damage state
@@ -537,6 +539,7 @@ NamedScript void PlayerDamage()
                 Player.ActualHealth = Player.HealthMax;
                 ActivatorSound("health/resurrect", 127);
                 TakeInventory("DRPGLife", 1);
+                Player.Payout.LivesUsed++;
                 
                 SetHudSize(320, 200, false);
                 SetFont("BIGFONT");
@@ -580,6 +583,28 @@ NamedScript void PlayerDamage()
         
         Player.ActualHealth += DamageTaken;
     }
+    
+    goto Start;
+}
+
+NamedScript void MoneyChecker()
+{
+    int BeforeCredits;
+    int AfterCredits;
+    
+    Start:
+    
+    BeforeCredits = CheckInventory("DRPGCredits");
+    
+    Delay(1);
+    
+    AfterCredits = CheckInventory("DRPGCredits");
+    
+    // Payout
+    if (AfterCredits > BeforeCredits)
+        Player.Payout.CreditsFound += AfterCredits - BeforeCredits;
+    if (AfterCredits < BeforeCredits)
+        Player.Payout.CreditsSpent -= AfterCredits - BeforeCredits;
     
     goto Start;
 }
@@ -1496,6 +1521,7 @@ NamedScript Type_RESPAWN void Respawn()
     // Run Scripts
     Loop();
     PlayerDamage();
+    MoneyChecker();
     DamageNumbers();
     InfoPopoffs();
     HealthBars();
