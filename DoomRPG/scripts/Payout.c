@@ -173,6 +173,12 @@ NamedScript Console void CalculatePayout()
         EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, "Red", PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 5.0, 0.5, 0.5);
     }
     
+    // Log
+    if (InMultiplayer)
+        Log("\Cf%tS has received %d PP", PlayerNumber() + 1, PayoutCalculatePPTotal());
+    else
+        Log("\CfYou have received %d PP", PayoutCalculatePPTotal());
+    
     PayoutAddPP();
     Player.PayingOut = false;
 }
