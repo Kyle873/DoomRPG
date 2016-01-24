@@ -117,7 +117,6 @@ NamedScript void AddXP(int PlayerNum, long long int XP, long long int Rank)
     Players(PlayerNum).XPGained += XP;
     Players(PlayerNum).RankGained += Rank;
     
-    Players(PlayerNum).Payout.Kills++;
     Players(PlayerNum).Payout.XP += XP;
     Players(PlayerNum).Payout.Rank += Rank;
     
