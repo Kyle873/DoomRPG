@@ -160,7 +160,7 @@ NamedScript MapSpecial void RegenArea(int ID)
             return;
         
         int ArmorPercent = CheckInventory("Armor") * 100 / GetArmorInfo(ARMORINFO_SAVEAMOUNT);
-        int ArmorFee = (ArmorPercent / 5) * 5;
+        int ArmorFee = (100 - ArmorPercent) / 5 * 5;
         if (ArmorFee < 5)
             ArmorFee = 5;
         
