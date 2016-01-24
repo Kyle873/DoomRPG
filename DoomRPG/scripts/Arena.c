@@ -346,8 +346,12 @@ void ArenaGetBonus(int Bonus)
         }
         break;
     case ABONUS_MONEYDROP: // Money Drop
-        for (int i = 0; i < SpawnAmount; i++)
-            DropArenaItem("DRPGMoneyDropper");
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!PlayerInGame(i)) continue;
+            
+            GiveActorInventory(Players(i).TID, "DRPGCredits", SpawnAmount);
+        }
         break;
     case ABONUS_CHIPDROP: // Chip Drop
         DropArenaItem("DRPGChipDropper");
