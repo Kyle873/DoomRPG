@@ -14,6 +14,7 @@
 #include "Stats.h"
 #include "Stims.h"
 #include "Turret.h"
+#include "Payout.h"
 #include "Utils.h"
 
 str RPGMap MainMenu[MAX_MENU] =
@@ -43,7 +44,13 @@ str RPGMap CursorColors[6] =
     "Blue", "LightBlue", "Cyan", "White", "Cyan", "LightBlue"
 };
 
+str RPGMap PayReadyColors[4] =
+{
+    "Brown", "Yellow", "Gold", "Yellow",
+};
+
 str RPGMap MenuCursorColor;
+str RPGMap PayReadyColor;
 
 /* --------------------------------------------------
 
@@ -212,7 +219,10 @@ void DrawMainMenu()
     EndHudMessage(HUDMSG_PLAIN, 0, "Yellow",         40.1, 124.0, 0.05);
     HudMessage("Rank: %ld / %ld", Player.Rank, Player.RankNext);
     EndHudMessage(HUDMSG_PLAIN, 0, "Yellow",         40.1, 136.0, 0.05);
-    HudMessage("PP: %d (%S)", Player.PP, FormatTime(Player.PayTimer));
+    if (Player.PayReady && !Player.PayingOut)
+        HudMessage("PP: %d (%S) [\C[%S]Ready\C-]", Player.PP, FormatTime(Player.PayTimer), PayReadyColor);
+    else
+        HudMessage("PP: %d (%S)", Player.PP, FormatTime(Player.PayTimer));
     EndHudMessage(HUDMSG_PLAIN, 0, "Gold",           40.1, 148.0, 0.05);
     
     if (GetPlayerInput(PlayerNumber(), INPUT_BUTTONS) & BT_SPEED && Player.Mission.Active)
@@ -1972,6 +1982,8 @@ void MenuInput()
                 ClearToxicityMeter();
             }
         }
+        if (Buttons == BT_JUMP && !Player.PayingOut && CurrentLevel->UACBase)
+            CalculatePayout();
     }
     
     // Stats menu

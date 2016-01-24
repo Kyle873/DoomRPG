@@ -331,8 +331,9 @@ NamedScript void Loop()
     CheckHUD();
     CheckKeys();
     
-    // Handle the menu cursor color
+    // Handle the pulsating menu colors
     MenuCursorColor = CursorColors[(Timer() / 3) % 6];
+    PayReadyColor = PayReadyColors[(Timer() / 3) % 4];
     
     // Calculate Shop Discount
     Player.ShopDiscount = (int)((Player.RankLevel * 2.1) + (CurrentLevel->UACBase ? (Player.ShopCard * 5) : 0));

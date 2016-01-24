@@ -9,6 +9,7 @@ NamedScriptSync void PayoutDrawData(PayoutData *, int);
 
 void PayoutCalculateTotals();
 void PayoutAddPP();
+void PayoutReady();
 int PayoutCalculatePPTotal();
 
 #endif

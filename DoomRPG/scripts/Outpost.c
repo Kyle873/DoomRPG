@@ -507,7 +507,7 @@ NamedScript MapSpecial void LevelTransport()
             ActivatorSound("menu/move", 127);
             LevelChoice += 10;
         }
-        if (Buttons == BT_USE && OldButtons != BT_USE)
+        if (Buttons == BT_USE && OldButtons != BT_USE && !Player.PayingOut)
         {
             if (CurrentLevel == TeleDest)
             {

@@ -18,7 +18,8 @@ NamedScript Console void CalculatePayout()
                 { "XP", Player.Payout.XP },
                 { "Levels", Player.Payout.Levels },
                 { "\CkRank", Player.Payout.Rank },
-                { "\CkRank Levels", Player.Payout.RankLevels }
+                { "\CkRank Levels", Player.Payout.RankLevels },
+                { "", NULL }
             }
         },
         {
@@ -33,7 +34,8 @@ NamedScript Console void CalculatePayout()
                 { "Damage Taken", Player.Payout.DamageTaken },
                 { "\CaStatus Effect Hits", Player.Payout.StatusEffectHit },
                 { "\CaStatus Effects Evaded", Player.Payout.StatusEffectsEvaded },
-                { "\CiLives\C- Used", Player.Payout.LivesUsed }
+                { "\CiLives\C- Used", Player.Payout.LivesUsed },
+                { "", NULL }
             }
         },
         {
@@ -44,7 +46,8 @@ NamedScript Console void CalculatePayout()
             .Values =
             {
                 { "Credits \CdFound\C-", Player.Payout.CreditsFound },
-                { "Credits \CaSpent\C-", Player.Payout.CreditsSpent }
+                { "Credits \CaSpent\C-", Player.Payout.CreditsSpent },
+                { "", NULL }
             }
         },
         {
@@ -59,7 +62,8 @@ NamedScript Console void CalculatePayout()
                 { "Skill \ChBurnout\C-", Player.Payout.SkillBurnout },
                 { "\CqPowerups\C- Used", Player.Payout.PowerupsUsed },
                 { "\CaAuras\C- Used", Player.Payout.AurasUsed },
-                { "Summoned \CgMonsters\C-", Player.Payout.SkillSummons }
+                { "Summoned \CgMonsters\C-", Player.Payout.SkillSummons },
+                { "", NULL }
             }
         },
         {
@@ -70,7 +74,8 @@ NamedScript Console void CalculatePayout()
             .Values =
             {
                 { "Battery \CsDrained\C-", Player.Payout.AugBatteryUsed },
-                { "Augs \CnDisrupted\C-", Player.Payout.AugsDisrupted }
+                { "Augs \CnDisrupted\C-", Player.Payout.AugsDisrupted },
+                { "", NULL }
             }
         },
         {
@@ -81,7 +86,8 @@ NamedScript Console void CalculatePayout()
             .Values =
             {
                 { "Shield \CgDamage\C-", Player.Payout.ShieldDamage },
-                { "Shield \CrBreaks\C-", Player.Payout.ShieldBreaks }
+                { "Shield \CrBreaks\C-", Player.Payout.ShieldBreaks },
+                { "", NULL }
             }
         },
         {
@@ -94,7 +100,8 @@ NamedScript Console void CalculatePayout()
                 { "Stims \CjMade\C-", Player.Payout.StimsMade },
                 { "Stims \CdUsed\C-", Player.Payout.StimsUsed },
                 { "Stims \CqToxicity\C-", Player.Payout.StimToxicity },
-                { "Stims \CrImmunity\C-", Player.Payout.StimImmunity }
+                { "Stims \CrImmunity\C-", Player.Payout.StimImmunity },
+                { "", NULL }
             }
         },
         {
@@ -108,7 +115,8 @@ NamedScript Console void CalculatePayout()
                 { "Turret \CfMaintenance Cost\C-", Player.Payout.TurretMaintenanceCost },
                 { "Turret \CkCharge\C- Time", Player.Payout.TurretChargeTime },
                 { "Turret \CaRepair\C- Time", Player.Payout.TurretRepairTime },
-                { "Turret \CnRefit\C- Time", Player.Payout.TurretRefitTime }
+                { "Turret \CnRefit\C- Time", Player.Payout.TurretRefitTime },
+                { "", NULL }
             }
         },
         {
@@ -118,7 +126,8 @@ NamedScript Console void CalculatePayout()
             .Total = &Player.Payout.Total.Missions,
             .Values =
             {
-                { "Missions \CdCompleted\C-", Player.Payout.MissionsCompleted }
+                { "Missions \CdCompleted\C-", Player.Payout.MissionsCompleted },
+                { "", NULL }
             }
         },
         {
@@ -132,6 +141,7 @@ NamedScript Console void CalculatePayout()
                 { "\CfPar Times Beaten", Player.Payout.ParTimesBeaten },
                 { "\CnItems Collected", Player.Payout.ItemsFound },
                 { "\CkSecrets Found", Player.Payout.SecretsFound },
+                { "", NULL }
             }
         }
     };
@@ -139,6 +149,7 @@ NamedScript Console void CalculatePayout()
     // Startup
     SetHudSize(320, 240, true);
     ActivatorSound("payout/start", 127);
+    Player.PayingOut = true;
     Delay(35);
     
     // Calculate Totals
@@ -161,7 +172,9 @@ NamedScript Console void CalculatePayout()
         HudMessage("%d PP", PayoutCalculatePPTotal());
         EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, "Red", PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 5.0, 0.5, 0.5);
     }
+    
     PayoutAddPP();
+    Player.PayingOut = false;
 }
 
 NamedScriptSync void PayoutDrawData(PayoutData *Data, int Offset)
@@ -237,7 +250,7 @@ void PayoutCalculateTotals()
     Player.Payout.Total.Skills += Player.Payout.SkillSummons * 100;
     
     // Augs
-    Player.Payout.Total.Augs += Player.Payout.AugBatteryUsed / 10;
+    Player.Payout.Total.Augs += Player.Payout.AugBatteryUsed / 100;
     Player.Payout.Total.Augs += Player.Payout.AugsDisrupted * 100;
     
     // Shields
@@ -281,6 +294,17 @@ void PayoutAddPP()
     Player.PP += Player.Payout.Total.Maps;
     
     Player.Payout = (Payout){ 0 };
+    Player.PayReady = false;
+}
+
+void PayoutReady()
+{
+    SetHudSize(640, 480, true);
+    PrintSpriteFade("PAYPDAI1", 0, 640 / 2, 480 - 64, 5.0, 5.0);
+    
+    ActivatorSound("payout/ready", 127);
+    Player.InMenu = false;
+    Player.PayReady = true;
 }
 
 int PayoutCalculatePPTotal()
@@ -295,4 +319,9 @@ int PayoutCalculatePPTotal()
             Player.Payout.Total.Turret +
             Player.Payout.Total.Missions +
             Player.Payout.Total.Maps);
+}
+
+NamedScript Console void PayReady()
+{
+    PayoutReady();
 }

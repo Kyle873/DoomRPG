@@ -6,7 +6,9 @@
 extern str RPGMap MainMenu[MAX_MENU];
 extern str RPGMap MainMenuColor[MAX_MENU];
 extern str RPGMap CursorColors[6];
+extern str RPGMap PayReadyColors[4];
 extern str RPGMap MenuCursorColor;
+extern str RPGMap PayReadyColor;
 
 NamedScript void UpdateMenu();
 NamedScript KeyBind void OpenMenu();

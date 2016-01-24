@@ -892,6 +892,7 @@ struct PlayerData_S
     
     // Payout
     bool PayReady;
+    bool PayingOut;
     int PP;
     int PayTimer;
     

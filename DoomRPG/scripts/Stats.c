@@ -316,6 +316,7 @@ void CheckRank()
     if (Player.PayTimer <= 0)
     {
         // CalculatePayout();
+        PayoutReady();
     
         Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
         
