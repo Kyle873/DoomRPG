@@ -1862,16 +1862,18 @@ NamedScript void MonsterDeath()
     }
     
     // Add a kill to the payout kills
-    if (!(Stats->Flags & MF_NOPAYKILL) && Killer > -1)
+    if (Killer > -1 && !(Stats->Flags & MF_NOPAYKILL))
     {
-        if (Player.Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_EPICMEGACASH && Players(Killer).Shield.Active)
-            Players(Killer).Payout.Kills += 3;
-        else if (Stats->Flags & MF_BOSS)
-            Players(Killer).Payout.Kills += 4;
+        int PPKills = 1;
+        if (Stats->Flags & MF_BOSS)
+            PPKills = 4;
         else if (Stats->Flags & MF_MEGABOSS)
-            Players(Killer).Payout.Kills += 8;
-        else
-            Players(Killer).Payout.Kills++;
+            PPKills = 8;
+        
+        if (Players(Killer).Shield.Accessory && Players(Killer).Shield.Accessory->PassiveEffect == SHIELD_PASS_EPICMEGACASH && Players(Killer).Shield.Active)
+            PPKills *= 3;
+        
+        Players(Killer).Payout.Kills += PPKills;
     }
     
     // Mission Handling
