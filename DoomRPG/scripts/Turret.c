@@ -1578,14 +1578,14 @@ NamedScript Type_ENTER void TurretCommandWheel()
     goto Start;
 }
 
-NamedScript void TurretSetOffset(int AngleOffset, int DistanceOffset, int HeightOffset)
+NamedScript DECORATE void TurretSetOffset(int AngleOffset, int DistanceOffset, int HeightOffset)
 {
     Player.Turret.AngleOffset += (fixed)AngleOffset / 100.0;
     Player.Turret.DistanceOffset += (fixed)DistanceOffset;
     Player.Turret.HeightOffset += (fixed)HeightOffset;
 }
 
-NamedScript void TurretUseAmmo(int Type)
+NamedScript DECORATE void TurretUseAmmo(int Type)
 {
     SetActivator(GetActorProperty(0, APROP_MasterTID)); // Transfer from Turret to Player
     
@@ -1601,7 +1601,7 @@ NamedScript void TurretUseAmmo(int Type)
         Player.Turret.RailAmmo--;
 }
 
-NamedScript int TurretGetProjectileDamage(int Type)
+NamedScript DECORATE int TurretGetProjectileDamage(int Type)
 {
     SetActivator(GetActorProperty(0, APROP_TargetTID)); // Transfer from missile to Turret
     SetActivator(GetActorProperty(0, APROP_MasterTID)); // Transfer from Turret to Player
@@ -1614,7 +1614,7 @@ NamedScript int TurretGetProjectileDamage(int Type)
     return 0;
 }
 
-NamedScript int TurretGetProjectileProperty(int Type)
+NamedScript DECORATE int TurretGetProjectileProperty(int Type)
 {
     SetActivator(GetActorProperty(0, APROP_TargetTID)); // Transfer from missile to Turret
     SetActivator(GetActorProperty(0, APROP_MasterTID)); // Transfer from Turret to Player
@@ -1625,7 +1625,7 @@ NamedScript int TurretGetProjectileProperty(int Type)
     return 0;
 }
 
-NamedScript void TurretPostSelfDestruct()
+NamedScript DECORATE void TurretPostSelfDestruct()
 {
     for (int i = 0; i < MAX_PLAYERS; i++)
     {

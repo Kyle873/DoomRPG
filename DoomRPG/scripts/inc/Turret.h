@@ -6,11 +6,11 @@
 extern TurretUpgrade RPGMap TurretUpgradeData[MAX_UPGRADES];
 
 NamedScript Type_ENTER void TurretCommandWheel();
-NamedScript void TurretSetOffset(int, int, int);
-NamedScript void TurretUseAmmo(int);
-NamedScript int TurretGetProjectileDamage(int);
-NamedScript int TurretGetProjectileProperty(int);
-NamedScript void TurretPostSelfDestruct();
+NamedScript DECORATE void TurretSetOffset(int, int, int);
+NamedScript DECORATE void TurretUseAmmo(int);
+NamedScript DECORATE int TurretGetProjectileDamage(int);
+NamedScript DECORATE int TurretGetProjectileProperty(int);
+NamedScript DECORATE void TurretPostSelfDestruct();
 
 NamedScript Type_ENTER void TurretLoop();
 NamedScript Type_ENTER void TurretLoopMaintenance();
