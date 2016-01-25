@@ -1241,7 +1241,7 @@ NamedScript void MonsterEPDrainHandler()
             
             // [KS] Okay, so at natural max, a player has 2000 EP. We want that to drain in 20 seconds rather than just instantly.
             // This should also make specialized Energy auras more tolerable in general.
-            int DrainAmount = Stats->Energy / 10;
+            int DrainAmount = Stats->Energy / 10 * GetCVarFixed("drpg_aurasteal_amount");
             if (DrainAmount < 1)
                 DrainAmount = 1;
             
@@ -1266,7 +1266,7 @@ NamedScript void MonsterEPDrainHandler()
         }
     }
     
-    Delay(35);
+    Delay(GetCVar("drpg_aurasteal_rate"));
     
     goto Start;
 }
@@ -1492,8 +1492,8 @@ NamedScript void MonsterMoneyDrainHandler()
             int OrigTID = ActivatorTID();
             int NewTID = UniqueTID(0, 0);
             Thing_ChangeTID(0, NewTID);
-            TakeActorInventory(Players(i).TID, "DRPGCredits", Stats->Luck);
-            GiveInventory("DRPGCredits", Stats->Luck);
+            TakeActorInventory(Players(i).TID, "DRPGCredits", (int)(Stats->Luck * GetCVarFixed("drpg_aurasteal_amount")));
+            GiveInventory("DRPGCredits", (int)(Stats->Luck * GetCVarFixed("drpg_aurasteal_amount")));
             SetActivator(Players(i).TID);
             FadeRange(255, 255, 0, 0.5, 255, 255, 0, 0.0, 0.5);
             ActivatorSound("drain/money", 32);
@@ -1505,7 +1505,7 @@ NamedScript void MonsterMoneyDrainHandler()
         }
     }
     
-    Delay(35);
+    Delay(GetCVar("drpg_aurasteal_rate"));
     
     goto Start;
 }
@@ -1555,10 +1555,10 @@ NamedScript void MonsterAmmoDrainHandler()
             if ((Players(i).Aura.Type[AURA_PINK].Active && Players(i).Aura.Type[AURA_PINK].Level >= 3) || Players(i).SoulActive[SOUL_PINK]) continue;
             
             // [KS] We'll give the player 30 seconds of ammo if they were full at stat max.
-            int ClipSteal = (int)((fixed)Stats->Capacity / 7.5);
-            int ShellSteal = (int)((fixed)Stats->Capacity / 30);
-            int RocketSteal = (int)((fixed)Stats->Capacity / 60);
-            int CellSteal = (int)((fixed)Stats->Capacity / 20);
+            int ClipSteal = (int)((fixed)Stats->Capacity / 7.5 * GetCVarFixed("drpg_aurasteal_amount"));
+            int ShellSteal = (int)((fixed)Stats->Capacity / 30 * GetCVarFixed("drpg_aurasteal_amount"));
+            int RocketSteal = (int)((fixed)Stats->Capacity / 60 * GetCVarFixed("drpg_aurasteal_amount"));
+            int CellSteal = (int)((fixed)Stats->Capacity / 20 * GetCVarFixed("drpg_aurasteal_amount"));
             
             if (ClipSteal < 2) ClipSteal = 2;
             if (ShellSteal < 1) ShellSteal = 1;
@@ -1597,7 +1597,7 @@ NamedScript void MonsterAmmoDrainHandler()
         }
     }
     
-    Delay(35);
+    Delay(GetCVar("drpg_aurasteal_rate"));
     
     goto Start;
 }
