@@ -464,11 +464,12 @@ NamedScript void MapLoop()
     {
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
+            Players(i).Payout.ItemsFound++;
+
             if (!PlayerInGame(i) || Players(i).Mission.Type != MT_ITEMS)
                 continue;
             
             Players(i).Mission.Current += ItemsFound - ItemsLastFound;
-            Players(i).Payout.ItemsFound++;
         }
     }
     
@@ -485,12 +486,13 @@ NamedScript void MapLoop()
             
             RankBonus = RankTable[Players(i).RankLevel] / 100;
             Players(i).Rank += RankBonus;
+
+            Players(i).Payout.SecretsFound++;
             
             if (Players(i).Mission.Type != MT_SECRETS)
                 continue;
 
             Players(i).Mission.Current += SecretsFound - CurrentLevel->UniqueSecrets;
-            Players(i).Payout.SecretsFound++;
         }
         
         CurrentLevel->UniqueSecrets = SecretsFound;
