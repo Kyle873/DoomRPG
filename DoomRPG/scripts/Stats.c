@@ -318,10 +318,6 @@ void CheckRank()
         PayoutReady();
     
         Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");
-        
-        // Reset Payout stats
-        // TODO: Move to function
-        Player.Payout.Kills = 0;
     }
 }
 
