@@ -310,7 +310,7 @@ void CheckRank()
     }
     
     // Payout
-    if (!CheckInventory("PowerTimeFreezer"))
+    if (!CheckInventory("PowerTimeFreezer") && !Player.PayingOut)
         Player.PayTimer--;
     if (Player.PayTimer <= 0)
     {
