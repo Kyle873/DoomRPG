@@ -12,17 +12,17 @@
 #include "Payout.h"
 
 // Globals
-long long int XPCurve;
+long int XPCurve;
 
 // Stat Caps
 int const SoftStatCap = 100;
 int const HardStatCap = 1000;
 
 // XP & Rank Tables
-long long int XPTable[MAX_LEVEL];
-long long int RealStatTable[MAX_LEVEL * 3 + 1];
-long long int *StatTable;
-long long int RankTable[MAX_RANK];
+long int XPTable[MAX_LEVEL];
+long int RealStatTable[MAX_LEVEL * 3 + 1];
+long int *StatTable;
+long int RankTable[MAX_RANK];
 
 // Rank strings
 str const Ranks[MAX_RANK + 1] =
@@ -133,7 +133,7 @@ NamedScript Console void PrintXPTable()
 {
     for (int i = 0; i < MAX_LEVEL; i++)
     {
-        Log("Level %d: %lld", i + 1, XPTable[i]);
+        Log("Level %d: %ld", i + 1, XPTable[i]);
         Delay(1);
     }
 }
@@ -142,7 +142,7 @@ void InitXPTable()
 {
     XPTable[0] = 200l + XPCurve;
     for (int i = 1; i < MAX_LEVEL; i++)
-        XPTable[i] = ((XPTable[i - 1] / 2000l) + 1l) * (200l + XPCurve) + XPTable[i - 1];
+        XPTable[i] = (long int)((((long long int)XPTable[i - 1] / 2000ll) + 1ll) * (200ll + (long long int)XPCurve) + (long long int)XPTable[i - 1]);
 }
 
 void InitStatXPTable()
@@ -151,20 +151,20 @@ void InitStatXPTable()
 
     StatTable[0] = 200 + XPCurve;
     for (int i = 1; i < MAX_LEVEL * 2; i++)
-        StatTable[i] = ((StatTable[i - 1] / 2000l) + 1l) * (200l + XPCurve) + StatTable[i - 1];
+        StatTable[i] = (long int)((((long long int)StatTable[i - 1] / 2000ll) + 1l) * (200ll + (long long int)XPCurve) + (long long int)StatTable[i - 1]);
 }
 
 void InitNegativeStatXPTable()
 {
     for (int i = 1; i <= MAX_LEVEL + 1; i++)
-        StatTable[-i] = ((StatTable[i - 1] / 2000l) + 1l) * (200l + XPCurve) + StatTable[i - 1] * -1l;
+        StatTable[-i] = (long int)((((long long int)StatTable[i - 1] / 2000ll) + 1ll) * (200ll + (long long int)XPCurve) + (long long int)StatTable[i - 1] * -1ll);
 }
 
 void InitRankTable()
 {
     RankTable[0] = 7500 + (XPCurve * 50);
     for (int i = 1; i < MAX_RANK; i++)
-        RankTable[i] = ((RankTable[i - 1] / 20000l) + 1l) * (7500l + (XPCurve * 50l)) + RankTable[i - 1];
+        RankTable[i] = (long int)((((long long int)RankTable[i - 1] / 20000ll) + 1ll) * (7500ll + ((long long int)XPCurve * 50ll)) + (long long int)RankTable[i - 1]);
 }
 
 void CheckCombo()

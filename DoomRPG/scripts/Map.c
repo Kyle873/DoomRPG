@@ -287,10 +287,7 @@ NamedScript Type_OPEN void MapInit()
     Delay(2);
     
     // Reduce monster population based on difficulty settings
-    static bool WaitLock = true;
-    ReduceMonsterCount(&WaitLock);
-    while (WaitLock)
-        Delay(1);
+    ReduceMonsterCount();
     
     // Populate the positions array
     for (int i = 1; i < MonsterID; i++)
@@ -356,15 +353,12 @@ NamedScript Type_OPEN void MapInit()
         MapLoop();
 }
 
-NamedScript void ReduceMonsterCount(bool *WaitLock)
+NamedScriptSync void ReduceMonsterCount()
 {
     int TotalMonsters = GetLevelInfo(LEVELINFO_TOTAL_MONSTERS);
     
     if (TotalMonsters == 0)
-    {
-        *WaitLock = false;
         return;
-    }
     
     int DesiredMonsterCount = TotalMonsters;
     
@@ -373,10 +367,7 @@ NamedScript void ReduceMonsterCount(bool *WaitLock)
         DesiredMonsterCount = GetCVar("drpg_monster_limit");
     
     if (TotalMonsters == DesiredMonsterCount)
-    {
-        *WaitLock = false;
         return;
-    }
     
     int MonstersToRemove = TotalMonsters - DesiredMonsterCount;
     
@@ -386,7 +377,6 @@ NamedScript void ReduceMonsterCount(bool *WaitLock)
         if (GetCVar("drpg_debug"))
             Log("\CdDEBUG: \CcAdding \Cd%d\Cc more monsters!", MonstersToRemove);
         CurrentLevel->AdditionalMonsters = MonstersToRemove;
-        *WaitLock = false;
         return;
     }
     
@@ -418,8 +408,6 @@ NamedScript void ReduceMonsterCount(bool *WaitLock)
         if ((Iterations % 4096) == 0)
             Delay(1);
     }
-    
-    *WaitLock = false;
 }
 
 NamedScript void SetupMapMissions()
@@ -484,7 +472,7 @@ NamedScript void MapLoop()
             
             FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
             
-            RankBonus = RankTable[Players(i).RankLevel] / 100;
+            RankBonus = (long int)(RankTable[Players(i).RankLevel]) / 100l;
             Players(i).Rank += RankBonus;
 
             Players(i).Payout.SecretsFound++;
@@ -529,7 +517,7 @@ NamedScript void MapLoop()
             
             FadeRange(255, 0, 0, 0.25, 255, 0, 0, 0, 1.0);
             
-            XPBonus = XPTable[Players(i).Level] / 100;
+            XPBonus = XPTable[Players(i).Level] / 100l;
             Player.XP += XPBonus;
             
             HudMessage("Monsters Killed Bonus!\n%ld XP Bonus", XPBonus);
@@ -575,7 +563,7 @@ NamedScript void MapLoop()
             
             FadeRange(255, 255, 0, 0.25, 255, 255, 0, 0, 1.0);
             
-            RankBonus = RankTable[Players(i).RankLevel] / 20;
+            RankBonus = RankTable[Players(i).RankLevel] / 20l;
             Players(i).Rank += RankBonus;
 
             HudMessage("Secrets Found Bonus!\n%ld Rank Bonus", RankBonus);
@@ -598,8 +586,8 @@ NamedScript void MapLoop()
             
             FadeRange(255, 255, 255, 0.25, 255, 255, 255, 0, 1.0);
             
-            XPBonus = XPTable[Players(i).Level] / 100;
-            RankBonus = RankTable[Players(i).RankLevel] / 20;
+            XPBonus = XPTable[Players(i).Level] / 100l;
+            RankBonus = RankTable[Players(i).RankLevel] / 20l;
             
             Players(i).XP += XPBonus;
             Players(i).Rank += RankBonus;

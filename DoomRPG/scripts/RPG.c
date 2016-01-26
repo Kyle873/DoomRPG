@@ -1300,7 +1300,7 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
         
         Iterations++;
         
-        if (Iterations == 8000) // Trick to restart ourselves if we ran out of iterations
+        if (Iterations == 2000) // Trick to restart ourselves if we ran out of iterations
         {
             if (GetCVar("drpg_debug"))
                 Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%S\C- and is restarting to place more", Items, Actor);

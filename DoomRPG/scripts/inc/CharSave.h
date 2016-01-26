@@ -12,8 +12,8 @@ NamedScript void PopulateCharData(CharSaveInfo *);
 NamedScript void LoadCharDataFromString(CharSaveInfo *, char const *);
 NamedScript char const *MakeSaveString(CharSaveInfo *);
 
-NamedScript void EncodeRLE(char const *, char *, bool *);
-NamedScript void DecodeRLE(char const *, char *, bool *);
+NamedScript void EncodeRLE(char const *, char *);
+NamedScript void DecodeRLE(char const *, char *);
 
 char ToHexChar(int);
 int FromHexChar(char);

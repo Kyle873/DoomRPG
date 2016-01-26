@@ -19,7 +19,7 @@ extern int CurrentSkill;
 NamedScript Type_OPEN void MapInit();
 NamedScript void MapLoop();
 NamedScript void CalculateBonusMaps();
-NamedScript void ReduceMonsterCount(bool *);
+NamedScriptSync void ReduceMonsterCount();
 NamedScript OptionalArgs(1) void DecideMapEvent(LevelInfo *, bool);
 NamedScript void SetupMapEvent();
 NamedScript void SetupMapMissions();

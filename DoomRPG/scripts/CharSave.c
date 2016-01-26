@@ -271,7 +271,6 @@ NamedScript MenuEntry void SaveCharacter()
     CharSaveInfo Info;
     char const *SaveString;
     char *EncodedSaveString;
-    bool EncodeLock;
     
     // You need to be in the Outpost to do this
     if (!CurrentLevel->UACBase && !GetCVar("drpg_debug"))
@@ -315,10 +314,8 @@ NamedScript MenuEntry void SaveCharacter()
     
     SaveString = MakeSaveString(&Info);
     EncodedSaveString = malloc(strlen(SaveString) + 1);
-    EncodeLock = false;
     
-    EncodeRLE(SaveString, EncodedSaveString, &EncodeLock);
-    while (EncodeLock) Delay(1);
+    EncodeRLE(SaveString, EncodedSaveString);
     
     EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
     // Log("Save Data: %S", EncodedSaveString);
@@ -380,7 +377,6 @@ NamedScript MenuEntry void LoadCharacter()
     char *EncodedSaveString;
     char *SaveString;
     CharSaveInfo Info;
-    bool EncodeLock = false;
     
     EncodedSaveString = malloc(65536);
     EncodedSaveString[0] = '\x00';
@@ -414,8 +410,7 @@ NamedScript MenuEntry void LoadCharacter()
     
     SaveString = malloc(65536);
     
-    DecodeRLE(EncodedSaveString, SaveString, &EncodeLock);
-    while (EncodeLock) Delay(1);
+    DecodeRLE(EncodedSaveString, SaveString);
     
     SaveString = realloc(SaveString, strlen(SaveString) + 1);
     // Log("Load Data (Raw): %S", SaveString);
@@ -1106,10 +1101,8 @@ NamedScript char const *MakeSaveString(CharSaveInfo *Info)
     return SaveString;
 }
 
-NamedScript void EncodeRLE(char const *InString, char *OutString, bool *StringLock)
+NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
 {
-    *StringLock = true;
-    
     int OutPos = 0;
     int InLength = strlen(InString);
     
@@ -1153,13 +1146,10 @@ NamedScript void EncodeRLE(char const *InString, char *OutString, bool *StringLo
     }
     
     OutString[OutPos] = '\x00';
-    *StringLock = false;
 }
 
-NamedScript void DecodeRLE(char const *InString, char *OutString, bool *StringLock)
+NamedScriptSync void DecodeRLE(char const *InString, char *OutString)
 {
-    *StringLock = true;
-    
     int OutPos = 0;
     int InLength = strlen(InString);
     
@@ -1202,7 +1192,6 @@ NamedScript void DecodeRLE(char const *InString, char *OutString, bool *StringLo
     
     free(CountString);
     OutString[OutPos] = '\x00';
-    *StringLock = false;
 }
 
 int HexToInteger(char const *SourceStr, int Length)

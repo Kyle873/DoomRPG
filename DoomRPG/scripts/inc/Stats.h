@@ -3,21 +3,21 @@
 
 #include "Defs.h"
 
-extern long long int XPCurve;
+extern long int XPCurve;
 
 extern int const SoftStatCap;
 extern int const HardStatCap;
 
-extern long long int XPTable[MAX_LEVEL];
-extern long long int *StatTable;
-extern long long int RankTable[MAX_RANK];
+extern long int XPTable[MAX_LEVEL];
+extern long int *StatTable;
+extern long int RankTable[MAX_RANK];
 
 extern str Ranks[MAX_RANK + 1];
 extern str LongRanks[MAX_RANK + 1];
 
 NamedScript DECORATE void StatusEffect(int, int, int);
 NamedScript DECORATE void TryStatusEffect(int, int, int);
-NamedScript void AddXP(int, long long int, long long int);
+NamedScript void AddXP(int, long int, long int);
 
 void InitXPTable();
 void InitStatXPTable();
