@@ -127,6 +127,7 @@ NamedScript Console void CalculatePayout()
             .Values =
             {
                 { "Missions \CdCompleted\C-", Player.Payout.MissionsCompleted },
+                { "Events \CkCleared\C-", Player.Payout.EventsCompleted },
                 { "", NULL }
             }
         },
@@ -278,6 +279,7 @@ void PayoutCalculateTotals()
     
     // Missions
     Player.Payout.Total.Missions += Player.Payout.MissionsCompleted * 1000;
+    Player.Payout.Total.Missions += Player.Payout.EventsCompleted * 1000;
     
     // Maps
     Player.Payout.Total.Maps += Player.Payout.MapsCompleted * 1000;

@@ -763,6 +763,7 @@ struct Payout_S
     // Missions
     // TODO: Each mission sub-type?
     int MissionsCompleted;
+    int EventsCompleted;
     
     // Map
     int MapsCompleted;

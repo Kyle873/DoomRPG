@@ -1060,9 +1060,7 @@ void MapEventReward()
         
         if (Player.Level > 0)
         {
-            int Credits = 1000 * Player.Level;
-            int Modules = 250 * Player.Level;
-            str Message = "";
+            str Message = "Event Cleared";
             
             switch (CurrentLevel->Event)
             {
@@ -1083,9 +1081,8 @@ void MapEventReward()
             }
             
             ActivatorSound("mission/complete", 127);
-            PrintMessage(StrParam("\Cd%S\n\n\Cf+%d Credits\n\Cd+%d Modules", Message, Credits, Modules));
-            GiveInventory("DRPGCredits", Credits);
-            GiveInventory("DRPGModule", Modules);
+            PrintMessage(Message);
+            Player.Payout.EventsCompleted++;
         }
     }
 }
