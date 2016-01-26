@@ -42,7 +42,7 @@ ACS_INCLUDES = os.path.join ("DoomRPG", "scripts", "inc")
 # Compile options.
 OPTIONS = ['--bc-target=ZDoom']
 
-COMPILEROPTIONS = ['-i', ACS_INCLUDES, '--lib-path={}'.format (LIB_PATH)]
+COMPILEROPTIONS = ['-c', '-i', ACS_INCLUDES, '--lib-path={}'.format (LIB_PATH)]
 ASSEMBLEROPTIONS = []
 LINKEROPTIONS = []
 
@@ -179,12 +179,12 @@ if __name__ == "__main__":
                 pass
     
     sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "C libraries" + TERMCAP_RESET + "...")
-    failure = run_command_status ([STD_COMPILER] + COMPILEROPTIONS + OPTIONS + ["-c", "-o", os.path.join (OBJECTDIR, "libc.obj"), "libc"])
+    failure = run_command_status ([STD_COMPILER] + COMPILEROPTIONS + OPTIONS + ["-o", os.path.join (OBJECTDIR, "libc.obj"), "libc"])
     
     if not failure:
         objects.append (os.path.join ("IR", "libc.obj"))
         sys.stdout.write ("Compiling " + TERMCAP_BOLD + TERMCAP_BLUE + "GDCC libraries" + TERMCAP_RESET + "...")
-        failure = run_command_status ([STD_COMPILER] + COMPILEROPTIONS + OPTIONS + ["-c", "-o", os.path.join (OBJECTDIR, "libGDCC.obj"), "libGDCC"])
+        failure = run_command_status ([STD_COMPILER] + COMPILEROPTIONS + OPTIONS + ["-o", os.path.join (OBJECTDIR, "libGDCC.obj"), "libGDCC"])
     
     if not failure:
         objects.append (os.path.join ("IR", "libGDCC.obj"))
