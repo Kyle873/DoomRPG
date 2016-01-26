@@ -664,7 +664,7 @@ void DoRegen()
         fixed EP = Abs(Player.EP);
         fixed MaxEP = Player.EPMax;
         
-        fixed Multiplier = (1.0 - ((fixed)EP / (fixed)MaxEP)) * 1.77;
+        Multiplier = (1.0 - ((fixed)EP / (fixed)MaxEP)) * 1.77;
         EPAmount += Multiplier * Multiplier;
     }
     

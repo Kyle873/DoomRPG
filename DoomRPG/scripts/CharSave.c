@@ -269,8 +269,6 @@ NamedScript MenuEntry void SaveCharacter()
     char const *SaveString;
     char *EncodedSaveString;
     CharSaveInfo Info;
-    char const *SaveString;
-    char *EncodedSaveString;
     
     // You need to be in the Outpost to do this
     if (!CurrentLevel->UACBase && !GetCVar("drpg_debug"))

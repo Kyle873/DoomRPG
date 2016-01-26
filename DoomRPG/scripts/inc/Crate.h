@@ -7,8 +7,8 @@ extern str const CrateRarityNames[MAX_DIFFICULTIES];
 extern int RPGMap CrateID;
 extern CrateInfo RPGMap Crates[CRATE_MAX];
 
-NamedScript void InitCrate();
-NamedScript void UseCrate(int);
+NamedScript DECORATE void InitCrate();
+NamedScript DECORATE void UseCrate(int);
 NamedScript void CrateHack();
 
 void GenerateCrate(int, int);

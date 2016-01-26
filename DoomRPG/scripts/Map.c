@@ -691,7 +691,7 @@ int FindLevelInfoIndex(str MapName)
     return 0; // Default to the Outpost because we don't actually know where we are
 }
 
-NamedScript DECORATE void AddUnknownMap(str Name, str DisplayName, int LevelNumber, int Secret)
+NamedScript MapSpecial void AddUnknownMap(str Name, str DisplayName, int LevelNumber, int Secret)
 {
     while (KnownLevels.Data == NULL)
         Delay(1);

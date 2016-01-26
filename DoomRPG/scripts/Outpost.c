@@ -17,7 +17,7 @@
 #include "Utils.h"
 
 // Globals
-static int OutpostNotoriety;
+int OutpostNotoriety;
 
 // Spawn Spots and TIDs
 int RPGMap ShopSpecialTID = 1001;
@@ -1534,7 +1534,7 @@ NamedScript void SpawnBoss()
     }
 }
 
-NamedScript void SpawnShopSpecialItem()
+void SpawnShopSpecialItem()
 {
     if (CurrentLevel->UACBase)
     {

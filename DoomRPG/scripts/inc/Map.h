@@ -38,25 +38,25 @@ NamedScript void MegaBossEvent();
 NamedScript void EnvironmentalHazard();
 NamedScript void EnvironmentalHazardSetColors();
 NamedScript void EnvironmentalHazardDamage();
-NamedScript void EnvironmentalHazardRefillGenerator();
+NamedScript DECORATE void EnvironmentalHazardRefillGenerator();
 NamedScript void EnvironmentalHazardDisarm();
 
 // Thermonuclear Bomb
 NamedScript void ThermonuclearBombEvent();
 NamedScript void ThermonuclearBombAnnounce(int);
-NamedScript void ThermonuclearBombActivate();
-NamedScript void ThermonuclearBombExplode();
+NamedScript DECORATE void ThermonuclearBombActivate();
+NamedScript DECORATE void ThermonuclearBombExplode();
 
 // Low Power
 NamedScript void LowPowerEvent();
-NamedScript void PowerGeneratorActivate();
+NamedScript DECORATE void PowerGeneratorActivate();
 
 // One Monster
 NamedScript void OneMonsterEvent();
 
 // Hell Unleashed
 NamedScript void HellUnleashedEvent();
-NamedScript void HellUnleashedStart();
+NamedScript DECORATE void HellUnleashedStart();
 NamedScript void HellUnleashedSpawnMonsters();
 
 // Harmonized Destruction
@@ -98,8 +98,8 @@ NamedScript void RainbowEvent();
 NamedScript void SinstormEvent();
 NamedScript void SinstormSpawner(int);
 
-NumberedScript(MAP_EXIT_SCRIPTNUM) void MapExit(bool);
-NamedScript void AddUnknownMap(str, str, int, int);
+NumberedScript(MAP_EXIT_SCRIPTNUM) MapSpecial void MapExit(bool);
+NamedScript MapSpecial void AddUnknownMap(str, str, int, int);
 
 int LevelSort(void const *, void const *);
 void AddAdditionalMonsters();

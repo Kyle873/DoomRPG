@@ -3,9 +3,9 @@
 
 #include "Defs.h"
 
-NamedScript KeyBind void SaveCharacter();
-NamedScript KeyBind void LoadCharacter();
-NamedScript void DumpCharacter();
+NamedScript MenuEntry void SaveCharacter();
+NamedScript MenuEntry void LoadCharacter();
+NamedScript Console void DumpCharacter();
 NamedScript void DepositInventory();
 
 NamedScript void PopulateCharData(CharSaveInfo *);
