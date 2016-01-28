@@ -2464,47 +2464,47 @@ void CreateTranslations()
 {
     // Damage Numbers - Critical
     CreateTranslationStart(DNUM_CRITICAL);
-    CreateTranslationPalette(81, 111, 176, 176);
+    CreateTranslationDesat(0, 255, 0, 0, 0, 1.5, 0, 0);
     CreateTranslationEnd();
     
     // Damage Numbers - Healed
     CreateTranslationStart(DNUM_HEAL);
-    CreateTranslationPalette(81, 111, 112, 112);
+    CreateTranslationDesat(0, 255, 0, 0, 0, 0, 1.5, 0);
     CreateTranslationEnd();
 
     // Damage Numbers - Scratch
     CreateTranslationStart(DNUM_SCRATCH);
-    CreateTranslationPalette(81, 111, 100, 100);
+    CreateTranslationDesat(0, 255, 0, 0, 0, 0.75, 0.75, 0.75);
     CreateTranslationEnd();
     
     // Credit Gain
     CreateTranslationStart(DNUM_CREDGAIN);
-    CreateTranslationPalette(81, 111, 249, 249);
+    CreateTranslationDesat(0, 255, 0, 0, 0, 1.5, 1.5, 0);
     CreateTranslationEnd();
 
     // Credit Loss
     CreateTranslationStart(DNUM_CREDLOSS);
-    CreateTranslationPalette(81, 111, 248, 248);
+    CreateTranslationDesat(0, 255, 0, 0, 0, 1.5, 0.75, 0);
     CreateTranslationEnd();
     
     // EP Gain
     CreateTranslationStart(DNUM_EPGAIN);
-    CreateTranslationPalette(81, 111, 196, 196);
+    CreateTranslationDesat(0, 255, 0, 0, 0, 0, 1.5, 1.5);
     CreateTranslationEnd();
     
     // EP Loss
     CreateTranslationStart(DNUM_EPLOSS);
-    CreateTranslationPalette(81, 111, 200, 200);
+    CreateTranslationDesat(0, 255, 0, 0, 0, 0, 0, 1.5);
     CreateTranslationEnd();
     
     // Shield Gain
     CreateTranslationStart(DNUM_SHIELDGAIN);
-    CreateTranslationPalette(81, 111, 250, 250);
+    CreateTranslationDesat(0, 255, 0, 0, 0, 1.5, 0, 1.5);
     CreateTranslationEnd();
     
     // Shield Loss
     CreateTranslationStart(DNUM_SHIELDLOSS);
-    CreateTranslationPalette(81, 111, 251, 251);
+    CreateTranslationDesat(0, 255, 0, 0, 0, 0.75, 0, 0.75);
     CreateTranslationEnd();
 }
 
