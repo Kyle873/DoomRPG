@@ -137,7 +137,7 @@ NamedScript DECORATE void ModulePopoffs()
 // Spawn a popoff number
 void Popoff(int TID, int Value, int Color, str DigitType, bool FloatAway)
 {
-    int Digits[DNUM_DIGITS];
+    RPGMap static int Digits[DNUM_DIGITS];
     int DigitTID = UniqueTID();
     int DigitBase = 1;
     fixed X = GetActorX(TID);
