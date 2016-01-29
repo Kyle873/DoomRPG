@@ -106,7 +106,7 @@ NamedScript DECORATE void TryStatusEffect(int Type, int Time, int Intensity)
     }
 }
 
-NamedScript void AddXP(int PlayerNum, long long int XP, long long int Rank)
+NamedScript void AddXP(int PlayerNum, long int XP, long int Rank)
 {
     // Scale XP/Rank Gains using the XP Scaling Option
     XP = (int)(XP * GetCVarFixed("drpg_scalexp"));
