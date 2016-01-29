@@ -120,7 +120,7 @@ NamedScript void ShopItemAutoHandler()
             {
                 ItemInfoPtr Item = ((ItemInfoPtr *)Player.AutoSellList.Data)[i];
                 
-                if (CheckInventory(Item->Actor) > 0)
+                if (CheckInventory(Item->Actor) > 0 && !(Player.Mission.Active && Player.Mission.Type == MT_COLLECT && !StrCmp(Player.Mission.Item->Actor, Item->Actor)))
                 {
                     if (CanSellItems)
                         SellItem(Item->Actor, true, true);
