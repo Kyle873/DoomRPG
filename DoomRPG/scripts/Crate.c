@@ -327,8 +327,8 @@ NamedScript void CrateHack()
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
             bool HitNothing = true;
-            int XPBonus = XPTable[Player.Level] / 100;
-            int RankBonus = RankTable[Player.RankLevel] / 100;
+            long int XPBonus = XPTable[Player.Level] / 100l;
+            long int RankBonus = RankTable[Player.RankLevel] / 100l;
             
             // Check Nodes
             for (int i = 0; i < MAX_NODES; i++)
