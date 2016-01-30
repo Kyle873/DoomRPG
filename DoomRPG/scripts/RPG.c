@@ -105,10 +105,6 @@ NamedScript Type_OPEN void GlobalInit()
     
     // Initialize the Item handling script
     ItemHandler();
-    
-    // Initialize the Dynamic Loot Generator
-    if (GetCVar("drpg_loot_system") && !CurrentLevel->UACBase)
-        DynamicLootGenerator("DRPGLuckDropper");
 }
 
 // Init Script

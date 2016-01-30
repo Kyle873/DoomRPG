@@ -328,6 +328,11 @@ NamedScript Type_OPEN void MapInit()
             SetActivator(0, AAPTR_NULL);
         }
     
+    // Initialize the Dynamic Loot Generator
+    // [KS] Call it here so that events can modify the loot it spawns
+    if (GetCVar("drpg_loot_system") && !CurrentLevel->UACBase)
+        DynamicLootGenerator("DRPGLuckDropper");
+    
     AddAdditionalMonsters();
     
     // Setup missions which require generation
