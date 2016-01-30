@@ -1006,7 +1006,7 @@ NamedScript Type_ENTER void StatHUD()
     };
     
     int PrevStats[STAT_MAX];
-    bool Change = false;
+    bool Change[STAT_MAX] = { false };
     fixed X = GetActivatorCVar("drpg_stats_x");
     fixed Y = GetActivatorCVar("drpg_stats_y");
     
@@ -1016,12 +1016,12 @@ NamedScript Type_ENTER void StatHUD()
     for (int i = 0; i < STAT_MAX; i++)
         if (*Stats[i] != PrevStats[i])
         {
-            Change = true;
+            Change[i] = true;
             break;
         }
     
-    if (Change || GetActivatorCVar("drpg_stats_alwaysshow") || GetActivatorCVar("drpg_hud_preview"))
-        for (int i = 0; i < STAT_MAX; i++)
+    for (int i = 0; i < STAT_MAX; i++)
+        if (Change[i] || GetActivatorCVar("drpg_stats_alwaysshow") || GetActivatorCVar("drpg_hud_preview"))
         {
             SetFont("BIGFONT");
             HudMessage("%d", *Stats[i]);

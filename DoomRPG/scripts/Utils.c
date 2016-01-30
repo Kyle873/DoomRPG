@@ -1620,7 +1620,7 @@ NamedScript void DrawStatUp(int Stat)
     fixed Radius = 0.25;
     
     // Text and whooshy icon
-    if (!GetActivatorCVar("drpg_toaster"))
+    if (!GetActivatorCVar("drpg_toaster") && GetActivatorCVar("drpg_fancy_statup"))
     {
         while (DisplayTime-- > 0)
         {
