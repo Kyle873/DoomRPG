@@ -1015,10 +1015,7 @@ NamedScript Type_ENTER void StatHUD()
     // Determine if there was a change in your stats
     for (int i = 0; i < STAT_MAX; i++)
         if (*Stats[i] != PrevStats[i])
-        {
             Change[i] = true;
-            break;
-        }
     
     for (int i = 0; i < STAT_MAX; i++)
         if (Change[i] || GetActivatorCVar("drpg_stats_alwaysshow") || GetActivatorCVar("drpg_hud_preview"))
