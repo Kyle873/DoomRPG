@@ -1837,10 +1837,18 @@ NamedScript DECORATE void EnvironmentalHazardRefillGenerator()
         return;
     
     if (!CheckInventory("DRPGNeutralizerFuel"))
+    {
+        PrintError("You don't have any fuel tanks");
         return;
+    }
     
-    if (CurrentLevel->GeneratorFuel >= FuelAmount)
+    if (CurrentLevel->GeneratorFuel > 0)
+    {
+        DropInventory(0, "DRPGNeutralizerFuel");
+        ActivatorSound("radiation/tankup", 127);
+        PrintMessage("You set down the spare tank");
         return;
+    }
     
     TakeInventory("DRPGNeutralizerFuel", 1);
     CurrentLevel->GeneratorFuel = FuelAmount;
