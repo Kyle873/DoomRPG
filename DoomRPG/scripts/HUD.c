@@ -988,11 +988,6 @@ NamedScript Type_ENTER void StatHUD()
         "Gold"         // Luck
     };
     
-    Start:
-    
-    // If we're on the title map, terminate
-    if (InTitle) return;
-    
     int *Stats[STAT_MAX] =
     {
         &Player.Strength,
@@ -1005,8 +1000,28 @@ NamedScript Type_ENTER void StatHUD()
         &Player.Luck
     };
     
-    int PrevStats[STAT_MAX];
-    bool Change[STAT_MAX] = { false };
+    int PrevStats[STAT_MAX] =
+    {
+        Player.Strength,
+        Player.Defense,
+        Player.Vitality,
+        Player.Energy,
+        Player.Regeneration,
+        Player.Agility,
+        Player.Capacity,
+        Player.Luck
+    };
+    
+    bool Change[STAT_MAX];
+
+    Start:
+    
+    for (int i = 0; i < STAT_MAX; i++)
+        Change[i] = false;
+    
+    // If we're on the title map, terminate
+    if (InTitle) return;
+    
     fixed X = GetActivatorCVar("drpg_stats_x");
     fixed Y = GetActivatorCVar("drpg_stats_y");
     
