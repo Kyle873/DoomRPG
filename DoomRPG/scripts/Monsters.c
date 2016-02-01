@@ -494,6 +494,7 @@ OptionalArgs(1) NamedScript void MonsterInitStats(int StatFlags)
     int LevelNum = CurrentLevel->LevelNum;
     int NumPlayers;
     int StatEffect[8];
+    int MonsterStatPool;
     
     // Cap Level Number to 100
     if (LevelNum > 100)
@@ -533,6 +534,8 @@ OptionalArgs(1) NamedScript void MonsterInitStats(int StatFlags)
     if (GetActorClass(0) == "DRPGSuperPowerSuit")
         MonsterLevel = 1000;
     
+    MonsterStatPool = 40 + GameSkill() * MonsterLevel;
+    
     // Calculate the monster's cut and special stats
     if (GetCVar("drpg_monster_specialize"))
     {
@@ -552,7 +555,7 @@ OptionalArgs(1) NamedScript void MonsterInitStats(int StatFlags)
         StatEffect[6] = 1;
         StatEffect[7] = 1;
         
-        // And shuffle 'em up!
+        // Shuffle 'em up!
         for (int i = 0; i < STAT_MAX; i++)
         {
             int SwapWith = Random(0, STAT_MAX - 1);
@@ -561,40 +564,107 @@ OptionalArgs(1) NamedScript void MonsterInitStats(int StatFlags)
             StatEffect[i] = StatEffect[SwapWith];
             StatEffect[SwapWith] = Temp;
         }
-    }
-    
-    // Calculate Monster Stats
-    MonsterStrength = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-    MonsterDefense = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-    MonsterVitality = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-    MonsterEnergy = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-    MonsterRegeneration = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-    MonsterAgility = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-    MonsterCapacity = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-    MonsterLuck = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-    
-    if (GetCVar("drpg_monster_specialize"))
-    {
-        // Cut Stats
-        if (StatEffect[0] == 1) MonsterStrength /= 2;
-        if (StatEffect[1] == 1) MonsterDefense /= 2;
-        if (StatEffect[2] == 1) MonsterVitality /= 2;
-        if (StatEffect[3] == 1) MonsterEnergy /= 2;
-        if (StatEffect[4] == 1) MonsterRegeneration /= 2;
-        if (StatEffect[5] == 1) MonsterAgility /= 2;
-        if (StatEffect[6] == 1) MonsterCapacity /= 2;
-        if (StatEffect[7] == 1) MonsterLuck /= 2;
         
-        // Specialized Stats
-        if (StatEffect[0] == 2) MonsterStrength *= Random(2, 4);
-        if (StatEffect[1] == 2) MonsterDefense *= Random(2, 4);
-        if (StatEffect[2] == 2) MonsterVitality *= Random(2, 4);
-        if (StatEffect[3] == 2) MonsterEnergy *= Random(2, 4);
-        if (StatEffect[4] == 2) MonsterRegeneration *= Random(2, 4);
-        if (StatEffect[5] == 2) MonsterAgility *= Random(2, 4);
-        if (StatEffect[6] == 2) MonsterCapacity *= Random(2, 4);
-        if (StatEffect[7] == 2) MonsterLuck *= Random(2, 4);
+        // Next, create a weighted list of stats.
+        // Specialized stats are preferred over normal stats, and cut stats are avoided.
+        int StatSelector[14];
+        int j = 0;
+        
+        for (int i = 0; i < STAT_MAX; i++)
+        {
+            if (StatEffect[i] == 2)
+            {
+                StatSelector[j++] = i;
+                StatSelector[j++] = i;
+                StatSelector[j++] = i;
+            }
+            else if (StatEffect[i] == 0)
+            {
+                StatSelector[j++] = i;
+                StatSelector[j++] = i;
+            }
+            else
+                StatSelector[j++] = i;
+        }
+        
+        // Finally, distribute the points with our weighted list.
+        while (MonsterStatPool > 0)
+        {
+            switch (StatSelector[Random (0, 13)])
+            {
+                case 0:
+                    MonsterStrength++;
+                    break;
+                case 1:
+                    MonsterDefense++;
+                    break;
+                case 2:
+                    MonsterVitality++;
+                    break;
+                case 3:
+                    MonsterEnergy++;
+                    break;
+                case 4:
+                    MonsterRegeneration++;
+                    break;
+                case 5:
+                    MonsterAgility++;
+                    break;
+                case 6:
+                    MonsterCapacity++;
+                    break;
+                case 7:
+                    MonsterLuck++;
+                    break;
+            }
+            MonsterStatPool--;
+        }
     }
+    else
+    {
+        // Distribute entirely at random
+        while (MonsterStatPool > 0)
+        {
+            switch (Random (0, STAT_MAX - 1))
+            {
+                case 0:
+                    MonsterStrength++;
+                    break;
+                case 1:
+                    MonsterDefense++;
+                    break;
+                case 2:
+                    MonsterVitality++;
+                    break;
+                case 3:
+                    MonsterEnergy++;
+                    break;
+                case 4:
+                    MonsterRegeneration++;
+                    break;
+                case 5:
+                    MonsterAgility++;
+                    break;
+                case 6:
+                    MonsterCapacity++;
+                    break;
+                case 7:
+                    MonsterLuck++;
+                    break;
+            }
+            MonsterStatPool--;
+        }
+    }
+    
+    // Pity Points
+    if (MonsterStrength < 1)     MonsterStrength = 1;
+    if (MonsterDefense < 1)      MonsterDefense = 1;
+    if (MonsterVitality < 1)     MonsterVitality = 1;
+    if (MonsterEnergy < 1)       MonsterEnergy = 1;
+    if (MonsterRegeneration < 1) MonsterRegeneration = 1;
+    if (MonsterAgility < 1)      MonsterAgility = 1;
+    if (MonsterCapacity < 1)     MonsterCapacity = 1;
+    if (MonsterLuck < 1)         MonsterLuck = 1;
     
     // Map Event - RAINBOWS!
     if (CurrentLevel->Event == MAPEVENT_BONUS_RAINBOWS)
@@ -668,39 +738,42 @@ OptionalArgs(1) NamedScript void MonsterInitStats(int StatFlags)
     // Apply the aura effects
     if (Stats->Aura.Type[AURA_WHITE].Active) // White Aura - XP
     {
+        int OldMonsterLevel = MonsterLevel;
         MonsterLevel *= 2;
         
-        // Recalculate the stats, since the level changed
-        MonsterStrength = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterDefense = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterVitality = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterEnergy = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterRegeneration = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterAgility = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterCapacity = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
-        MonsterLuck = Random(MonsterLevel, MonsterLevel + Random(GameSkill(), GameSkill() * 2));
+        MonsterStatPool = GameSkill() * (MonsterLevel - OldMonsterLevel);
         
-        if (GetCVar("drpg_monster_specialize"))
+        // Distribute those new stats now.
+        while (MonsterStatPool > 0)
         {
-            // Cut Stats
-            if (StatEffect[0] == 1) MonsterStrength /= 2;
-            if (StatEffect[1] == 1) MonsterDefense /= 2;
-            if (StatEffect[2] == 1) MonsterVitality /= 2;
-            if (StatEffect[3] == 1) MonsterEnergy /= 2;
-            if (StatEffect[4] == 1) MonsterRegeneration /= 2;
-            if (StatEffect[5] == 1) MonsterAgility /= 2;
-            if (StatEffect[6] == 1) MonsterCapacity /= 2;
-            if (StatEffect[7] == 1) MonsterLuck /= 2;
-            
-            // Specialized Stats
-            if (StatEffect[0] == 2) MonsterStrength *= Random(2, 4);
-            if (StatEffect[1] == 2) MonsterDefense *= Random(2, 4);
-            if (StatEffect[2] == 2) MonsterVitality *= Random(2, 4);
-            if (StatEffect[3] == 2) MonsterEnergy *= Random(2, 4);
-            if (StatEffect[4] == 2) MonsterRegeneration *= Random(2, 4);
-            if (StatEffect[5] == 2) MonsterAgility *= Random(2, 4);
-            if (StatEffect[6] == 2) MonsterCapacity *= Random(2, 4);
-            if (StatEffect[7] == 2) MonsterLuck *= Random(2, 4);
+            switch (Random (0, STAT_MAX - 1))
+            {
+                case 0:
+                    MonsterStrength++;
+                    break;
+                case 1:
+                    MonsterDefense++;
+                    break;
+                case 2:
+                    MonsterVitality++;
+                    break;
+                case 3:
+                    MonsterEnergy++;
+                    break;
+                case 4:
+                    MonsterRegeneration++;
+                    break;
+                case 5:
+                    MonsterAgility++;
+                    break;
+                case 6:
+                    MonsterCapacity++;
+                    break;
+                case 7:
+                    MonsterLuck++;
+                    break;
+            }
+            MonsterStatPool--;
         }
         
         GiveInventory("DRPGWhiteAuraGiver", 1);
@@ -2194,14 +2267,40 @@ void MonsterLevelup(MonsterStatsPtr Stats)
     
     // Apply the stats to the monster
     Stats->Level++;
-    Stats->Strength += Random(1, GameSkill());
-    Stats->Defense += Random(1, GameSkill());
-    Stats->Vitality += Random(1, GameSkill());
-    Stats->Energy += Random(1, GameSkill());
-    Stats->Regeneration += Random(1, GameSkill());
-    Stats->Agility += Random(1, GameSkill());
-    Stats->Capacity += Random(1, GameSkill());
-    Stats->Luck += Random(1, GameSkill());
+    
+    int Pool = GameSkill();
+    
+    while (Pool > 0)
+    {
+        switch (Random (0, STAT_MAX - 1))
+        {
+            case 0:
+                Stats->Strength++;
+                break;
+            case 1:
+                Stats->Defense++;
+                break;
+            case 2:
+                Stats->Vitality++;
+                break;
+            case 3:
+                Stats->Energy++;
+                break;
+            case 4:
+                Stats->Regeneration++;
+                break;
+            case 5:
+                Stats->Agility++;
+                break;
+            case 6:
+                Stats->Capacity++;
+                break;
+            case 7:
+                Stats->Luck++;
+                break;
+        }
+        Pool--;
+    }
     
     // Cap the stats
     CapMonsterStats(Stats);
