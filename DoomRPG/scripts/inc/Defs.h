@@ -269,7 +269,7 @@ typedef enum
 #define MAX_OPTIONS     16
 
 #define WINDOW_X        0
-#define WINDOW_Y        36
+#define WINDOW_Y        0
 
 #define SCANLINE_ID     MAKE_ID('S', 'C', 'A', 'N')
 
