@@ -72,7 +72,7 @@ NamedScript void CheckCursor()
 			Player.GUI.Mouse.RightButton = false;
 		
 		// Draw Cursor
-		PrintSprite("Cursor", 0, Player.GUI.Mouse.X, Player.GUI.Mouse.Y, 0.05);
+		PrintSprite("Cursor", 0, (fixed)Player.GUI.Mouse.X + 0.1, (fixed)Player.GUI.Mouse.Y + 0.1, 0.05);
 		
         Delay(1);
 	}
