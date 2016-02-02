@@ -122,7 +122,7 @@ struct CharSaveInfo_S
 
 // GUI
 
-struct MouseInfo_S
+struct GUIMouseInfo_S
 {
     int X;
     int Y;
@@ -136,17 +136,20 @@ struct MouseInfo_S
     bool RightButtonDown;
 };
 
-// Pre-define control structs for the GUIWindow
+// Pre-define control structs for the GUI
 extern struct GUIWindow_S;
+extern struct GUITabStrip_S;
 extern struct GUILabel_S;
 extern struct GUIIcon_S;
 extern struct GUIButton_S;
 extern struct GUIBar_S;
 extern struct GUIList_S;
+extern struct GUIGrid_S;
 extern struct GUITooltip_S;
 extern struct GUIContextMenu_S;
 
 // GUI Event Function Pointers
+typedef void (*TabStripEventFunc)(struct GUITabStrip_S *);
 typedef void (*LabelEventFunc)(struct GUILabel_S *);
 typedef void (*IconEventFunc)(struct GUIIcon_S *);
 typedef void (*ButtonEventFunc)(struct GUIButton_S *);
@@ -156,24 +159,18 @@ typedef void (*ContextMenuEventFunc)(int);
 
 struct GUIWindow_S
 {
-    str Title;
-    int X;
-    int Y;
-    int Width;
-    int Height;
-    bool Dragging;
-    bool Focused;
-    bool Visible;
-    bool RolledUp;
-    bool CanClose;
-    bool CanRoll;
-    
-    // Controls
     struct GUILabel_S  *Labels[MAX_CONTROLS];
     struct GUIIcon_S   *Icons[MAX_CONTROLS];
     struct GUIButton_S *Buttons[MAX_CONTROLS];
     struct GUIBar_S    *Bars[MAX_CONTROLS];
     struct GUIList_S   *Lists[MAX_CONTROLS];
+    struct GUIGrid_S   *Grids[MAX_CONTROLS];
+};
+
+struct GUITabStrip_S
+{
+    str Icon[MAX_TABS];
+    str Title[MAX_TABS];
 };
 
 struct GUILabel_S
@@ -188,7 +185,6 @@ struct GUILabel_S
     bool Big;
     bool Visible;
     
-    struct GUIWindow_S *Window;
     struct GUITooltip_S *Tooltip;
     struct GUIContextMenu_S *ContextMenu;
 };
@@ -205,7 +201,6 @@ struct GUIIcon_S
     bool CalculateSize;
     bool Visible;
     
-    struct GUIWindow_S *Window;
     struct GUITooltip_S *Tooltip;
     struct GUIContextMenu_S *ContextMenu;
     
@@ -224,7 +219,6 @@ struct GUIButton_S
     bool Big;
     bool Visible;
     
-    struct GUIWindow_S *Window;
     struct GUITooltip_S *Tooltip;
     struct GUIContextMenu_S *ContextMenu;
     
@@ -242,7 +236,6 @@ struct GUIBar_S
     str Texture;
     bool Visible;
     
-    struct GUIWindow_S *Window;
     struct GUITooltip_S *Tooltip;
     struct GUIContextMenu_S *ContextMenu;
 };
@@ -259,11 +252,15 @@ struct GUIList_S
     str HoverColors[MAX_LIST];
     bool Visible;
     
-    struct GUIWindow_S *Window;
     struct GUITooltip_S *Tooltip;
     struct GUIContextMenu_S *ContextMenu;
     
     ListEventFunc OnClick;
+};
+
+struct GUIGrid_S
+{
+    str BackTexture;
 };
 
 struct GUITooltip_S
@@ -289,6 +286,18 @@ struct GUIContextMenu_S
     ContextMenuEventFunc OnClick[MAX_OPTIONS];
     
     int Data;
+};
+
+// Base GUI Data
+struct GUIData_S
+{
+    bool Created;
+    bool Open;
+    int CurrentWindow;
+    
+    struct GUIMouseInfo_S Mouse;
+    struct GUITabStrip_S *TabStrip;
+    struct GUIWindow_S *Window[WINDOW_MAX];
 };
 
 // Items
@@ -993,9 +1002,7 @@ struct PlayerData_S
     } WeaponMods[ITEM_MAX];
     
     // GUI
-    bool GUIOpen;
-    struct MouseInfo_S Mouse;
-    struct GUIWindow_S *Window[MAX_WINDOWS];
+    struct GUIData_S GUI;
     
     // Auto-Sell/Auto-Store
     int ItemAutoMode[ITEM_CATEGORIES][ITEM_MAX];

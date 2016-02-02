@@ -1,7 +1,5 @@
 #include "Defs.h"
 
-#include <stdlib.h>
-
 #include "GUI.h"
 #include "Menu.h"
 #include "RPG.h"
@@ -10,36 +8,21 @@
 static GUITooltip *Tooltip;
 static GUIContextMenu *ContextMenu;
 
-static fixed TestX = 0.0;
-static fixed TestY = 0.0;
-
 NamedScript Console void ToggleGUI()
 {
-	Player.GUIOpen = !Player.GUIOpen;
+	Player.GUI.Open = !Player.GUI.Open;
 	
-	if (Player.GUIOpen)
+	if (Player.GUI.Open)
 		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
 	else
 		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-}
-
-void CreateTestWindow()
-{
-    GUIWindow *TestWindow = GUICreateWindow();
-    TestWindow->X = 100;
-    TestWindow->Y = 100;
-    TestWindow->Width = 200;
-    TestWindow->Height = 200;
-    TestWindow->CanClose = false;
-    TestWindow->Title = "Doorpeg GUI Test";
-    Player.Window[WINDOW_MAIN] = TestWindow;
 }
 
 NamedScript void CheckCursor()
 {
 	Start:
 	
-	while (Player.GUIOpen)
+	while (Player.GUI.Open)
 	{
 		int Width = GetCVar("drpg_menu_width");
 		int Height = GetCVar("drpg_menu_height");
@@ -48,47 +31,47 @@ NamedScript void CheckCursor()
 		SetHudSize(Width, Height, true);
 		
 		// Get X/Y input
-		Player.Mouse.XAdd = GetPlayerInput(PlayerNumber(), INPUT_YAW);
-		Player.Mouse.YAdd = GetPlayerInput(PlayerNumber(), INPUT_PITCH);
+		Player.GUI.Mouse.XAdd = GetPlayerInput(PlayerNumber(), INPUT_YAW);
+		Player.GUI.Mouse.YAdd = GetPlayerInput(PlayerNumber(), INPUT_PITCH);
 		
 		// Get Buttons
-		Player.Mouse.Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-		Player.Mouse.OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+		Player.GUI.Mouse.Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+		Player.GUI.Mouse.OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 		
 		// Add X/Y input to current position
-		Player.Mouse.X -= Player.Mouse.XAdd / 32;
-		Player.Mouse.Y -= Player.Mouse.YAdd / 24;
+		Player.GUI.Mouse.X -= Player.GUI.Mouse.XAdd / 32;
+		Player.GUI.Mouse.Y -= Player.GUI.Mouse.YAdd / 24;
 		
 		// Check resolution boundaries
-		if (Player.Mouse.X < 0)
-			Player.Mouse.X = 0;
-		if (Player.Mouse.Y < 0)
-			Player.Mouse.Y = 0;
-		if (Player.Mouse.X > Width)
-			Player.Mouse.X = Width;
-		if (Player.Mouse.Y > Height)
-			Player.Mouse.Y = Height;
+		if (Player.GUI.Mouse.X < 0)
+			Player.GUI.Mouse.X = 0;
+		if (Player.GUI.Mouse.Y < 0)
+			Player.GUI.Mouse.Y = 0;
+		if (Player.GUI.Mouse.X > Width)
+			Player.GUI.Mouse.X = Width;
+		if (Player.GUI.Mouse.Y > Height)
+			Player.GUI.Mouse.Y = Height;
 		
 		// Draw Cursor
-		PrintSprite("Cursor", 0, Player.Mouse.X, Player.Mouse.Y, 0.05);
+		PrintSprite("Cursor", 0, Player.GUI.Mouse.X, Player.GUI.Mouse.Y, 0.05);
 		
 		// Mouse Input
-		if (Player.Mouse.Buttons & BT_ATTACK)
-			Player.Mouse.LeftButtonDown = true;
+		if (Player.GUI.Mouse.Buttons & BT_ATTACK)
+			Player.GUI.Mouse.LeftButtonDown = true;
 		else
-			Player.Mouse.LeftButtonDown = false;
-		if (Player.Mouse.Buttons & BT_ATTACK && !(Player.Mouse.OldButtons & BT_ATTACK))
-			Player.Mouse.LeftButton = true;
+			Player.GUI.Mouse.LeftButtonDown = false;
+		if (Player.GUI.Mouse.Buttons & BT_ATTACK && !(Player.GUI.Mouse.OldButtons & BT_ATTACK))
+			Player.GUI.Mouse.LeftButton = true;
 		else
-			Player.Mouse.LeftButton = false;
-		if (Player.Mouse.Buttons & BT_ALTATTACK)
-			Player.Mouse.RightButtonDown = true;
+			Player.GUI.Mouse.LeftButton = false;
+		if (Player.GUI.Mouse.Buttons & BT_ALTATTACK)
+			Player.GUI.Mouse.RightButtonDown = true;
 		else
-			Player.Mouse.RightButtonDown = false;
-		if (Player.Mouse.Buttons & BT_ALTATTACK && !(Player.Mouse.OldButtons & BT_ALTATTACK))
-			Player.Mouse.RightButton = true;
+			Player.GUI.Mouse.RightButtonDown = false;
+		if (Player.GUI.Mouse.Buttons & BT_ALTATTACK && !(Player.GUI.Mouse.OldButtons & BT_ALTATTACK))
+			Player.GUI.Mouse.RightButton = true;
 		else
-			Player.Mouse.RightButton = false;
+			Player.GUI.Mouse.RightButton = false;
 		
 		Delay(1);
 	}
@@ -101,17 +84,24 @@ NamedScript void CheckGUI()
 {
 	int Width = GetCVar("drpg_menu_width");
 	int Height = GetCVar("drpg_menu_height");
+    int Current = Player.GUI.CurrentWindow;
 	
 	// Center Mouse
-	Player.Mouse.X = Width / 2;
-	Player.Mouse.Y = Height / 2;
+	Player.GUI.Mouse.X = Width / 2;
+	Player.GUI.Mouse.Y = Height / 2;
 	
-    // Create Test Window
-    CreateTestWindow();
+    // Create Window
+    if (Player.GUI.Created)
+    {
+        CreateTabs();
+        CreateMainWindow();
+        
+        Player.GUI.Created = true;
+    }
     
 	while (true)
 	{
-		if (Player.GUIOpen)
+		if (Player.GUI.Open)
 		{
 			// Draw Context Menu
 			if (ContextMenu != NULL)
@@ -124,135 +114,56 @@ NamedScript void CheckGUI()
 				Tooltip = NULL;
 			}
 			
-			// Window Handling
-			for (int i = 0; Player.Window[i] != NULL; i++)
-			{
-				if (Player.Window[i]->Visible)
-				{
-					if (!Player.Window[i]->RolledUp)
-					{
-						// Handle Labels
-						for (int j = 0; Player.Window[i]->Labels[j] != NULL; j++)
-							HandleLabel(Player.Window[i]->Labels[j]);
-						
-						// Handle Icons
-						for (int j = 0; Player.Window[i]->Icons[j] != NULL; j++)
-							HandleIcon(Player.Window[i]->Icons[j]);
-						
-						// Handle Buttons
-						for (int j = 0; Player.Window[i]->Buttons[j] != NULL; j++)
-							HandleButton(Player.Window[i]->Buttons[j]);
-						
-						// Handle Bars
-						for (int j = 0; Player.Window[i]->Bars[j] != NULL; j++)
-							HandleBar(Player.Window[i]->Bars[j]);
-						
-						// Handle Lists
-						for (int j = 0; Player.Window[i]->Lists[j] != NULL; j++)
-							HandleList(Player.Window[i]->Lists[j]);
-					}
-					
-					// Handle Drawing and Input for the Window
-					HandleWindow(Player.Window[i]);
-				}
-			}
+            // Handle Tab Strip
+            HandleTabStrip(Player.GUI.TabStrip);
+            
+            // Handle Labels
+            for (int i = 0; Player.GUI.Window[Current]->Labels[i] != NULL; i++)
+                HandleLabel(Player.GUI.Window[Current]->Labels[i]);
+            
+            // Handle Icons
+            for (int i = 0; Player.GUI.Window[Current]->Icons[i] != NULL; i++)
+                HandleIcon(Player.GUI.Window[Current]->Icons[i]);
+            
+            // Handle Buttons
+            for (int i = 0; Player.GUI.Window[Current]->Buttons[i] != NULL; i++)
+                HandleButton(Player.GUI.Window[Current]->Buttons[i]);
+            
+            // Handle Bars
+            for (int i = 0; Player.GUI.Window[Current]->Bars[i] != NULL; i++)
+                HandleBar(Player.GUI.Window[Current]->Bars[i]);
+            
+            // Handle Lists
+            for (int i = 0; Player.GUI.Window[Current]->Lists[i] != NULL; i++)
+                HandleList(Player.GUI.Window[Current]->Lists[i]);
+            
+            // Handle Grids
+            for (int i = 0; Player.GUI.Window[Current]->Grids[i] != NULL; i++)
+                HandleGrid(Player.GUI.Window[Current]->Grids[i]);
+            
+            // Handle Drawing and Input for the Window
+            HandleWindow(Player.GUI.Window[Current]);
 		}
 		
 		Delay(1);
 	}
 }
 
+void HandleTabStrip(GUITabStrip *TabStrip)
+{
+}
+
 void HandleWindow(GUIWindow *Window)
 {
-	// Set the Resolution/HUD Size
 	int Width = GetCVar("drpg_menu_width");
 	int Height = GetCVar("drpg_menu_height");
-	SetHudSize(Width, Height, true);
 	
-	// Title
-	SetFont("SMALLFONT");
-	if (Window->Focused)
-    {
-		HudMessage("%S", Window->Title);
-        EndHudMessage(HUDMSG_PLAIN, 0, ((InTitleBar(Window) || Window->Dragging) ? "Green" : "White"), Window->X + 16.1, Window->Y + 8.0, 0.05);
-    }
-	else
-    {
-		HudMessage("%S", Window->Title);
-        EndHudMessage(HUDMSG_PLAIN, 0, "DarkGray", Window->X + 16.1, Window->Y + 8.0, 0.05);
-    }
-	
-	// X Button
-	if (Window->CanClose)
-		if (InRegion(Window->X + Window->Width - 14.1, Window->Y + 12.0, 16, 8) && Window->Focused)
-		{
-			HudMessage("X");
-            EndHudMessage(HUDMSG_PLAIN, 0, MenuCursorColor, Window->X + Window->Width - 14.1, Window->Y + 8.0, 0.05);
-			
-			if (Player.Mouse.LeftButton)
-				Window->Visible = false;
-			if (Player.Mouse.RightButton) // For Testing!
-				GUIDeleteWindow(Window);
-		}
-		else
-        {
-			HudMessage("X");
-            EndHudMessage(HUDMSG_PLAIN, 0, "White", Window->X + Window->Width - 14.1, Window->Y + 8.0, 0.05);
-        }
-	
-	// Roll Button
-	if (Window->CanRoll)
-		if (InRegion(Window->X + Window->Width - 28.1, Window->Y + 12.0, 14, 8) && Window->Focused)
-		{
-			HudMessage("_");
-            EndHudMessage(HUDMSG_PLAIN, 0, MenuCursorColor, Window->X + Window->Width - 28.1, Window->Y + 8.0, 0.05);
-			
-			if (Player.Mouse.LeftButton)
-				Window->RolledUp = !Window->RolledUp;
-		}
-		else
-        {
-			HudMessage("_");
-            EndHudMessage(HUDMSG_PLAIN, 0, "White", Window->X + Window->Width - 28.1, Window->Y + 8.0, 0.05);
-        }
-	
-	// Window Background & Border
-	if (Window->RolledUp)
-		SetHudClipRect(Window->X, Window->Y, Window->Width, 15);
-	else
-		SetHudClipRect(Window->X, Window->Y, Window->Width, Window->Height);
-	PrintSprite("GUIBack", 0, Window->X, Window->Y, 0.05);
-	PrintSprite("BarHorz", 0, Window->X, Window->Y + 14.0, 0.05);
-	DrawBorder(Window->X, Window->Y, Window->Width, (Window->RolledUp ? 15 : Window->Height));
+    SetHudSize(Width, Height, true);
+    SetHudClipRect(WINDOW_X, WINDOW_Y, Width - WINDOW_X, Height - WINDOW_Y);
+	PrintSprite("GUIBack", 0, WINDOW_X, WINDOW_Y, 0.05);
+	DrawBorder(WINDOW_X, WINDOW_Y, Width - WINDOW_X, Height - WINDOW_Y);
 	SetHudClipRect(0, 0, 0, 0);
 	SetFont("");
-	
-	// Drag Checking
-	if (InTitleBar(Window) && Player.Mouse.LeftButtonDown && Window->Focused)
-		Window->Dragging = true;
-	if (Window->Dragging && !Player.Mouse.LeftButtonDown)
-		Window->Dragging = false;
-	
-	// Dragging
-	if (Window->Dragging)
-	{
-		Window->X -= Player.Mouse.XAdd / 32;
-		Window->Y -= Player.Mouse.YAdd / 24;
-		
-		// Bounding
-		if (Window->X < 0)
-			Window->X = 0;
-		if (Window->X > Width - Window->Width)
-			Window->X = Width - Window->Width;
-		if (Window->Y < 0)
-			Window->Y = 0;
-		if (Window->Y > (Window->RolledUp ? Height - 15 : Height - Window->Height))
-			Window->Y = (Window->RolledUp ? Height - 15 : Height - Window->Height);
-	}
-	
-	// Put into focus
-	if (InRegion(Window->X, Window->Y, Window->Width, (Window->RolledUp ? 15 : Window->Height)) && Player.Mouse.LeftButton)
-		FocusWindow(Window);
 }
 
 void HandleLabel(GUILabel *Label)
@@ -262,8 +173,8 @@ void HandleLabel(GUILabel *Label)
 	
 	str Text = Label->Text;
 	int Alignment = Label->Alignment;
-	fixed X = Label->Window->X + Label->X + 2;
-	fixed Y = Label->Window->Y + Label->Y + 16;
+	fixed X = WINDOW_X + Label->X + 2;
+	fixed Y = WINDOW_Y + Label->Y + 16;
 	int Width = Label->Width;
 	int Height = Label->Height;
 	str Color = Label->Color;
@@ -303,11 +214,11 @@ void HandleLabel(GUILabel *Label)
     EndHudMessage(HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
 	
 	// Tooltip
-	if (InRegion(X, Y, Width, Height) && Label->Window->Focused && Label->Tooltip != NULL)
+	if (InRegion(X, Y, Width, Height) && Label->Tooltip != NULL)
 		Tooltip = Label->Tooltip;
-		
+    
 	// Context Menu
-	if (InRegion(X, Y, Width, Height) && Player.Mouse.RightButton && Label->Window->Focused && Label->ContextMenu != NULL)
+	if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Label->ContextMenu != NULL)
 		ContextMenu = Label->ContextMenu;
 }
 
@@ -317,8 +228,8 @@ void HandleIcon(GUIIcon *Icon)
 	if (!Icon->Visible) return;
 
 	str Texture = Icon->Texture;
-	int X = Icon->Window->X + Icon->X + 2;
-	int Y = Icon->Window->Y + Icon->Y + 16;
+	int X = WINDOW_X + Icon->X + 2;
+	int Y = WINDOW_Y + Icon->Y + 16;
 	int XOff = Icon->XOff;
 	int YOff = Icon->YOff;
 	int Width = Icon->Width;
@@ -339,19 +250,19 @@ void HandleIcon(GUIIcon *Icon)
 	PrintSprite(Texture, 0, X + XOff + 0.1, Y + YOff + 0.1, 0.05);
 	
 	// Debugging - Draw a border to show the Icon's width/height
-    if (GetCVar("drpg_debug"))
+    if (GetCVar("drpg_debug_gui"))
         DrawBorder(X, Y, Width, Height);
 	
 	// Tooltip
-	if (InRegion(X + 4, Y + 8, Width, Height) && Icon->Window->Focused && Icon->Tooltip != NULL)
+	if (InRegion(X + 4, Y + 8, Width, Height) && Icon->Tooltip != NULL)
 		Tooltip = Icon->Tooltip;
 	
 	// Context Menu
-	if (InRegion(X + 4, Y + 8, Width, Height) && Player.Mouse.RightButton && Icon->Window->Focused && Icon->ContextMenu != NULL)
+	if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.RightButton && Icon->ContextMenu != NULL)
 		ContextMenu = Icon->ContextMenu;
 	
-	// OnClick event
-	if (InRegion(X + 4, Y + 8, Width, Height) && Player.Mouse.LeftButton && Icon->OnClick && Icon->Window->Focused && ContextMenu == NULL)
+	// OnClick Event
+	if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Icon->OnClick && ContextMenu == NULL)
 		Icon->OnClick(Icon);
 }
 
@@ -361,8 +272,8 @@ void HandleButton(GUIButton *Button)
 	if (!Button->Visible) return;
 
 	str Text = Button->Text;
-	int X = Button->Window->X + Button->X + 2;
-	int Y = Button->Window->Y + Button->Y + 16;
+	int X = WINDOW_X + Button->X + 2;
+	int Y = WINDOW_Y + Button->Y + 16;
 	int Width = Button->Width;
 	int Height = Button->Height;
 	str Color = Button->Color;
@@ -389,7 +300,7 @@ void HandleButton(GUIButton *Button)
 	
 	// Drawing
 	SetFont((Big ? "BIGFONT" : "SMALLFONT"));
-	if (InRegion(X, Y, Width, Height) && !Button->Window->Dragging && Button->Window->Focused)
+	if (InRegion(X, Y, Width, Height))
     {
 		HudMessage("%S", Text);
         EndHudMessage(HUDMSG_PLAIN, 0, HoverColor, X + 0.1, Y, 0.05);
@@ -401,15 +312,15 @@ void HandleButton(GUIButton *Button)
     }
 	
 	// Tooltip
-	if (InRegion(X, Y, Width, Height) && Button->Window->Focused && Button->Tooltip != NULL)
+	if (InRegion(X, Y, Width, Height) && Button->Tooltip != NULL)
 		Tooltip = Button->Tooltip;
 	
 	// Context Menu
-	if (InRegion(X, Y, Width, Height) && Player.Mouse.RightButton && Button->Window->Focused && Button->ContextMenu != NULL)
+	if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Button->ContextMenu != NULL)
 		ContextMenu = Button->ContextMenu;
 	
 	// OnClick event
-	if (InRegion(X, Y, Width, Height) && Player.Mouse.LeftButton && Button->OnClick && Button->Window->Focused && ContextMenu == NULL)
+	if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.LeftButton && Button->OnClick && ContextMenu == NULL)
 		Button->OnClick(Button);
 }
 
@@ -418,8 +329,8 @@ void HandleBar(GUIBar *Bar)
 	// Don't handle the control if it's invisible
 	if (!Bar->Visible) return;
 
-	int X = Bar->Window->X + Bar->X + 2;
-	int Y = Bar->Window->Y + Bar->Y + 16;
+	int X = WINDOW_X + Bar->X + 2;
+	int Y = WINDOW_Y + Bar->Y + 16;
 	int Width = Bar->Width;
 	int Height = Bar->Height;
 	int Value = Bar->Value;
@@ -451,11 +362,11 @@ void HandleBar(GUIBar *Bar)
 		PrintSprite(Texture, 0, ++X, Y, 0.05);
 	
 	// Tooltip
-	if (InRegion(X, Y, Width, Height) && Bar->Window->Focused && Bar->Tooltip != NULL)
+	if (InRegion(X, Y, Width, Height) && Bar->Tooltip != NULL)
 		Tooltip = Bar->Tooltip;
 	
 	// Context Menu
-	if (InRegion(X, Y, Width, Height) && Player.Mouse.RightButton && Bar->Window->Focused && Bar->ContextMenu != NULL)
+	if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Bar->ContextMenu != NULL)
 		ContextMenu = Bar->ContextMenu;
 }
 
@@ -467,8 +378,8 @@ void HandleList(GUIList *List)
 	// Reset the selected entry
 	List->Selected = -1;
 	
-	int X = List->Window->X + List->X + 2;
-	int Y = List->Window->Y + List->Y + 16;
+	int X = WINDOW_X + List->X + 2;
+	int Y = WINDOW_Y + List->Y + 16;
 	int Shown = List->Shown;
 	int Offset = List->Offset;
 	str *Entries;
@@ -511,22 +422,22 @@ void HandleList(GUIList *List)
 		// Checking for the longest width in the entries
 		if (Width > Longest) Longest = Width;
 		
-		if (InRegion(X, Y + 3 + ((i - Offset) * 10), Width, 9) && !List->Window->Dragging && List->Window->Focused && ContextMenu == NULL)
+		if (InRegion(X, Y + 3 + ((i - Offset) * 10), Width, 9) && ContextMenu == NULL)
 		{
 			HudMessage("%S", Entries[i]);
             EndHudMessage(HUDMSG_PLAIN, 0, HoverColors[i], X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
 			List->Selected = i;
 			
 			// Tooltip
-			if (List->Window->Focused && List->Tooltip != NULL)
+			if (List->Tooltip != NULL)
 				Tooltip = List->Tooltip;
 			
 			// Context Menu
-			if (Player.Mouse.RightButton && List->Window->Focused && List->ContextMenu != NULL)
+			if (Player.GUI.Mouse.RightButton && List->ContextMenu != NULL)
 				ContextMenu = List->ContextMenu;
 			
 			// OnClick event
-			if (Player.Mouse.LeftButton && List->OnClick)
+			if (Player.GUI.Mouse.LeftButton && List->OnClick)
 				List->OnClick(List);
 		}
 		else
@@ -541,10 +452,15 @@ void HandleList(GUIList *List)
 		PrintSprite("ListUp", 0, X + Longest + 16.0, Y + 8.0, 0.05);
 	if (List->Offset < MaxEntries - Shown)
 		PrintSprite("ListDn", 0, X + Longest + 16.0, Y + (Shown * 10.0) - 20.0, 0.05);
-	if (InRegion(X + Longest + 16.0, Y + 4.0, 24, 24) && Player.Mouse.LeftButton && List->Window->Focused && List->Offset > 0)
+	if (InRegion(X + Longest + 16.0, Y + 4.0, 24, 24) && Player.GUI.Mouse.LeftButton && List->Offset > 0)
 		List->Offset--;
-	if (InRegion(X + Longest + 16.0, Y + (Shown * 10.0) - 24.0, 24, 24) && Player.Mouse.LeftButton && List->Window->Focused && List->Offset < MaxEntries - Shown)
+	if (InRegion(X + Longest + 16.0, Y + (Shown * 10.0) - 24.0, 24, 24) && Player.GUI.Mouse.LeftButton && List->Offset < MaxEntries - Shown)
 		List->Offset++;
+}
+
+void HandleGrid(GUIGrid *Grid)
+{
+    // TODO
 }
 
 void DrawTooltip(GUITooltip *Tooltip)
@@ -553,8 +469,8 @@ void DrawTooltip(GUITooltip *Tooltip)
 	str Title = Tooltip->Text;
 	str Text = Tooltip->Text;
 	str Color = Tooltip->Color;
-	int X = Player.Mouse.X + 8;
-	int Y = Player.Mouse.Y + 8;
+	int X = Player.GUI.Mouse.X + 8;
+	int Y = Player.GUI.Mouse.Y + 8;
 	int ScreenWidth = GetCVar("drpg_menu_width");
 	int ScreenHeight = GetCVar("drpg_menu_height");
 	int Width = Tooltip->Width;
@@ -720,7 +636,7 @@ void HandleContextMenu(GUIContextMenu *Menu)
             EndHudMessage(HUDMSG_PLAIN, 0, MenuCursorColor, X + 18.1, Y + 40.0 + (i * 10), 0.05);
 			
 			// OnClick Event
-			if (Player.Mouse.LeftButton && Menu->OnClick[i] != NULL)
+			if (Player.GUI.Mouse.LeftButton && Menu->OnClick[i] != NULL)
 				Menu->OnClick[i](Menu->Data);
 		}
 		else
@@ -736,19 +652,13 @@ void HandleContextMenu(GUIContextMenu *Menu)
 	SetHudClipRect(0, 0, 0, 0);
 	
 	// Close Menu
-	if (Player.Mouse.LeftButton || Player.Mouse.RightButton)
+	if (Player.GUI.Mouse.LeftButton || Player.GUI.Mouse.RightButton)
 		ContextMenu = NULL;
 }
 
 GUIWindow *GUICreateWindow()
 {
 	GUIWindow *Window = calloc(sizeof(GUIWindow), 1);
-	
-	FocusWindow(Window);
-	
-	Window->Visible = true;
-	Window->CanClose = true;
-	Window->CanRoll = true;
 	
 	return Window;
 }
@@ -760,9 +670,10 @@ void GUIDeleteWindow(GUIWindow *Window)
 	{
 		if (Window->Labels[i] != NULL) 	free(Window->Labels[i]);
 		if (Window->Icons[i] != NULL) 	free(Window->Icons[i]);
-		if (Window->Buttons[i] != NULL) 	free(Window->Buttons[i]);
+		if (Window->Buttons[i] != NULL) free(Window->Buttons[i]);
 		if (Window->Bars[i] != NULL) 	free(Window->Bars[i]);
 		if (Window->Lists[i] != NULL) 	free(Window->Lists[i]);
+		if (Window->Grids[i] != NULL) 	free(Window->Grids[i]);
 	}
 	
 	// Free Window
@@ -773,7 +684,6 @@ GUILabel *GUICreateLabel(GUIWindow *Window)
 {
 	GUILabel *Label = calloc(sizeof(GUILabel), 1);
 	
-	Label->Window = Window;
 	Label->Alignment = LA_LEFT;
 	Label->Visible = true;
 	
@@ -791,7 +701,6 @@ GUIIcon *GUICreateIcon(GUIWindow *Window)
 {
 	GUIIcon *Icon = calloc(sizeof(GUIIcon), 1);
 	
-	Icon->Window = Window;
 	Icon->CalculateSize = true;
 	Icon->Visible = true;
 	
@@ -809,7 +718,6 @@ GUIButton *GUICreateButton(GUIWindow *Window)
 {
 	GUIButton *Button = calloc(sizeof(GUIButton), 1);
 	
-	Button->Window = Window;
 	Button->Visible = true;
 	
 	for (int i = 0; i < MAX_CONTROLS; i++)
@@ -826,7 +734,6 @@ GUIBar *GUICreateBar(GUIWindow *Window)
 {
 	GUIBar *Bar = calloc(sizeof(GUIBar), 1);
 	
-	Bar->Window = Window;
 	Bar->Visible = true;
 	
 	for (int i = 0; i < MAX_CONTROLS; i++)
@@ -843,7 +750,6 @@ GUIList *GUICreateList(GUIWindow *Window)
 {
 	GUIList *List = calloc(sizeof(GUIList), 1);
 	
-	List->Window = Window;
 	List->Visible = true;
 	
 	for (int i = 0; i < MAX_CONTROLS; i++)
@@ -854,6 +760,14 @@ GUIList *GUICreateList(GUIWindow *Window)
 		}
 	
 	return List;
+}
+
+// TODO
+GUIGrid *GUICreateGrid()
+{
+    GUIGrid *Grid = calloc(sizeof(GUIGrid), 1);
+    
+    return Grid;
 }
 
 GUITooltip *GUICreateTooltip()
@@ -873,43 +787,10 @@ GUIContextMenu *GUICreateContextMenu()
 	return ContextMenu;
 }
 
-void FocusWindow(GUIWindow *Window)
-{
-	// Intersect Checking
-	for (int i = 0; Player.Window[i] != NULL; i++)
-	{
-		// Continue if it's the same window
-		if (Player.Window[i] == Window) continue;
-		
-		/* TODO: This check still needs some work
-		// It needs to also account for a window not being completely inside another, as it is, a window will be completely unselectable if it's inside another one
-		if (Window->X >= Player.Window[i]->X &&
-			Window->X <= Player.Window[i]->Width &&
-			Window->Y >= Player.Window[i]->Y &&
-			Window->Y <= Player.Window[i]->Height)
-			return; */
-	}
-	
-	// Unfocus all Windows
-	for (int i = 0; Player.Window[i] != NULL; i++)
-		Player.Window[i]->Focused = false;
-	
-	Window->Focused = true;
-}
-
-bool InTitleBar(GUIWindow *Window)
-{
-	if (Player.Mouse.X > Window->X + 4 && Player.Mouse.X < Window->X + Window->Width - 32 &&
-		Player.Mouse.Y > Window->Y + 8 && Player.Mouse.Y < Window->Y + 24)
-		return true;
-	else
-		return false;
-}
-
 bool InRegion(int X, int Y, int Width, int Height)
 {
-	if (Player.Mouse.X > X && Player.Mouse.X < X + Width &&
-		Player.Mouse.Y > Y && Player.Mouse.Y < Y + Height)
+	if (Player.GUI.Mouse.X > X && Player.GUI.Mouse.X < X + Width &&
+		Player.GUI.Mouse.Y > Y && Player.GUI.Mouse.Y < Y + Height)
 		return true;
 	else
 		return false;
@@ -924,4 +805,20 @@ void DrawBorder(int X, int Y, int Width, int Height)
 	PrintSprite("BarVert", 0, X + Width - 1, Y, 0.05);
 	SetHudClipRect(0, 0, 0, 0);
 	SetFont("");
+}
+
+// --------------------------------------------------
+// GUI Creation
+//
+
+void CreateTabs()
+{
+    
+}
+
+void CreateMainWindow()
+{
+    GUIWindow *Window = GUICreateWindow();
+    
+    Player.GUI.Window[WINDOW_MAIN] = Window;
 }

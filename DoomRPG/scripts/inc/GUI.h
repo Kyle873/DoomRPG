@@ -9,12 +9,14 @@ NamedScript void CheckCursor();
 NamedScript void CheckGUI();
 
 // Window/Control Handling
+void HandleTabStrip(GUITabStrip *);
 void HandleWindow(GUIWindow *);
 void HandleLabel(GUILabel *);
 void HandleIcon(GUIIcon *);
 void HandleButton(GUIButton *);
 void HandleBar(GUIBar *);
 void HandleList(GUIList *);
+void HandleGrid(GUIGrid *);
 void DrawTooltip(GUITooltip *);
 void HandleContextMenu(GUIContextMenu *);
 
@@ -26,13 +28,16 @@ GUIIcon *GUICreateIcon(GUIWindow *);
 GUIButton *GUICreateButton(GUIWindow *);
 GUIBar *GUICreateBar(GUIWindow *);
 GUIList *GUICreateList(GUIWindow *);
+GUIGrid *GUICreateGrid(GUIWindow *);
 GUITooltip *GUICreateTooltip();
 GUIContextMenu *GUICreateContextMenu();
 
 // Utility
-void FocusWindow(GUIWindow *);
-bool InTitleBar(GUIWindow *);
 bool InRegion(int, int, int, int);
 void DrawBorder(int, int, int, int);
+
+// Creation
+void CreateTabs();
+void CreateMainWindow();
 
 #endif

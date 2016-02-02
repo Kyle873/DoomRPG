@@ -11,6 +11,7 @@
 #include <ACS_ZDoom.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdfix.h>
 #include <limits.h>
 
@@ -247,15 +248,20 @@ typedef enum
 // GUI
 //
 
-#define MAX_WINDOWS     16
+#define MAX_TABS        16
 #define MAX_CONTROLS    64
 #define MAX_LIST        256
 #define MAX_OPTIONS     16
 
-#define WINDOW_MAIN     0
-#define WINDOW_STATS    1
-#define WINDOW_AUGS     2
-#define WINDOW_SKILLS   3
+#define WINDOW_X        0
+#define WINDOW_Y        32
+
+// Windows
+typedef enum
+{
+    WINDOW_MAIN,
+    WINDOW_MAX
+} EWindowTypes;
 
 // Label Alignments
 typedef enum
@@ -1034,13 +1040,16 @@ typedef struct AugInfo_S            AugInfo;
 typedef struct CharSaveInfo_S       CharSaveInfo;
 
 // GUI
-typedef struct MouseInfo_S          MouseInfo;
+typedef struct GUIData_S            GUIData;
+typedef struct GUIMouseInfo_S       GUIMouseInfo;
 typedef struct GUIWindow_S          GUIWindow;
+typedef struct GUITabStrip_S        GUITabStrip;
 typedef struct GUILabel_S           GUILabel;
 typedef struct GUIIcon_S            GUIIcon;
 typedef struct GUIButton_S          GUIButton;
 typedef struct GUIBar_S             GUIBar;
 typedef struct GUIList_S            GUIList;
+typedef struct GUIGrid_S            GUIGrid;
 typedef struct GUITooltip_S         GUITooltip;
 typedef struct GUIContextMenu_S     GUIContextMenu;
 
