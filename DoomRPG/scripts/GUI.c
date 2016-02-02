@@ -148,7 +148,36 @@ NamedScript void CheckGUI()
 
 void HandleTabStrip(GUITabStrip *TabStrip)
 {
+	int Width = GetCVar("drpg_menu_width");
+	int Height = GetCVar("drpg_menu_height");
     
+    SetHudSize(Width, Height, true);
+    SetHudClipRect(0, 0, Width, 32);
+	PrintSprite("GUIBack", 0, WINDOW_X, WINDOW_Y, 0.05);
+	DrawBorder(0, 0, Width, 32);
+	SetHudClipRect(0, 0, 0, 0);
+	SetFont("");
+    
+    for (int i = 0; StrLen(TabStrip->Icon[i]) != 0; i++)
+    {
+        int X = i * 36;
+        int Y = 0;
+        
+        Log("TabStrip index %d icon: %S", i, TabStrip->Icon[i]);
+        Log("TabStrip index %d title: %S", i, TabStrip->Title[i]);
+        
+        if (InRegion(X, Y, 32, 32))
+        {
+            PrintSpritePulse(TabStrip->Icon[i], 0, X, Y, 0.75, 32.0, 0.25, true);
+            
+            // Tooltip
+            SetFont("BIGFONT");
+            HudMessage("%S", TabStrip->Title[i]);
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", Player.GUI.Mouse.X + 8, Player.GUI.Mouse.Y + 8, 0.05);
+        }
+        else
+            PrintSprite(TabStrip->Icon[i], 0, X, Y, 0.05);
+    }
 }
 
 void HandleWindow(GUIWindow *Window)
@@ -654,6 +683,13 @@ void HandleContextMenu(GUIContextMenu *Menu)
 		Player.GUI.ContextMenu = NULL;
 }
 
+GUITabStrip *GUICreateTabStrip()
+{
+	GUITabStrip *TabStrip = calloc(sizeof(GUITabStrip), 1);
+	
+	return TabStrip;
+}
+
 GUIWindow *GUICreateWindow()
 {
 	GUIWindow *Window = calloc(sizeof(GUIWindow), 1);
@@ -811,12 +847,19 @@ void DrawBorder(int X, int Y, int Width, int Height)
 
 void CreateTabs()
 {
+    GUITabStrip *TabStrip = GUICreateTabStrip();
     
+    TabStrip->Icon[0] = "SprNone";
+    TabStrip->Title[0] = "Overview";
+    
+    Player.GUI.TabStrip = TabStrip;
 }
 
 void CreateMainWindow()
 {
     GUIWindow *Window = GUICreateWindow();
+    
+    // TODO
     
     Player.GUI.Window[WINDOW_MAIN] = Window;
 }

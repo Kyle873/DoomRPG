@@ -21,6 +21,7 @@ void DrawTooltip(GUITooltip *);
 void HandleContextMenu(GUIContextMenu *);
 
 // Window/Control Creation
+GUITabStrip *GUICreateTabStrip();
 GUIWindow *GUICreateWindow();
 void GUIDeleteWindow(GUIWindow *);
 GUILabel *GUICreateLabel(GUIWindow *);

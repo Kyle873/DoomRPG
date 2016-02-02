@@ -137,8 +137,8 @@ struct GUIMouseInfo_S
 };
 
 // Pre-define control structs for the GUI
-extern struct GUIWindow_S;
 extern struct GUITabStrip_S;
+extern struct GUIWindow_S;
 extern struct GUILabel_S;
 extern struct GUIIcon_S;
 extern struct GUIButton_S;
@@ -157,6 +157,13 @@ typedef void (*BarEventFunc)(struct GUIBar_S *);
 typedef void (*ListEventFunc)(struct GUIList_S *);
 typedef void (*ContextMenuEventFunc)(int);
 
+struct GUITabStrip_S
+{
+    str Icon[MAX_TABS];
+    str Title[MAX_TABS];
+    struct GUIToolTip_S *Tooltip[MAX_TABS];
+};
+
 struct GUIWindow_S
 {
     struct GUILabel_S  *Labels[MAX_CONTROLS];
@@ -165,12 +172,6 @@ struct GUIWindow_S
     struct GUIBar_S    *Bars[MAX_CONTROLS];
     struct GUIList_S   *Lists[MAX_CONTROLS];
     struct GUIGrid_S   *Grids[MAX_CONTROLS];
-};
-
-struct GUITabStrip_S
-{
-    str Icon[MAX_TABS];
-    str Title[MAX_TABS];
 };
 
 struct GUILabel_S

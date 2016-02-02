@@ -1042,8 +1042,8 @@ typedef struct CharSaveInfo_S       CharSaveInfo;
 // GUI
 typedef struct GUIData_S            GUIData;
 typedef struct GUIMouseInfo_S       GUIMouseInfo;
-typedef struct GUIWindow_S          GUIWindow;
 typedef struct GUITabStrip_S        GUITabStrip;
+typedef struct GUIWindow_S          GUIWindow;
 typedef struct GUILabel_S           GUILabel;
 typedef struct GUIIcon_S            GUIIcon;
 typedef struct GUIButton_S          GUIButton;
