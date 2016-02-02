@@ -88,7 +88,7 @@ NamedScript void CheckGUI()
 	Player.GUI.Mouse.Y = Height / 2;
 	
     // Create GUI
-    if (Player.GUI.Created)
+    if (!Player.GUI.Created)
     {
         CreateTabs();
         CreateMainWindow();
@@ -153,7 +153,7 @@ void HandleTabStrip(GUITabStrip *TabStrip)
     
     SetHudSize(Width, Height, true);
     SetHudClipRect(0, 0, Width, 32);
-	PrintSprite("GUIBack", 0, WINDOW_X, WINDOW_Y, 0.05);
+	PrintSprite("GUIBack", 0, 0, 0, 0.05);
 	DrawBorder(0, 0, Width, 32);
 	SetHudClipRect(0, 0, 0, 0);
 	SetFont("");
