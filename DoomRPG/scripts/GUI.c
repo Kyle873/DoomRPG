@@ -1,6 +1,7 @@
 #include "Defs.h"
 
 #include "GUI.h"
+#include "Map.h"
 #include "Menu.h"
 #include "RPG.h"
 #include "Utils.h"
@@ -10,9 +11,15 @@ NamedScript Console void ToggleGUI()
 	Player.GUI.Open = !Player.GUI.Open;
 	
 	if (Player.GUI.Open)
+    {
+        ActivatorSound("gui/open", 127);
 		SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+    }
 	else
+    {
+        ActivatorSound("gui/close", 127);
 		SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+    }
 }
 
 NamedScript void CheckCursor()
@@ -21,11 +28,8 @@ NamedScript void CheckCursor()
 	
 	while (Player.GUI.Open)
 	{
-		int Width = GetCVar("drpg_menu_width");
-		int Height = GetCVar("drpg_menu_height");
-		
 		// Set the Resolution/HUD Size
-		SetHudSize(Width, Height, true);
+		SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
 		
 		// Get X/Y input
 		Player.GUI.Mouse.XAdd = GetPlayerInput(PlayerNumber(), INPUT_YAW);
@@ -36,21 +40,18 @@ NamedScript void CheckCursor()
 		Player.GUI.Mouse.OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
 		
 		// Add X/Y input to current position
-		Player.GUI.Mouse.X -= Player.GUI.Mouse.XAdd / 32;
-		Player.GUI.Mouse.Y -= Player.GUI.Mouse.YAdd / 24;
+		Player.GUI.Mouse.X -= Player.GUI.Mouse.XAdd / GetCVar("drpg_menu_sensitivity_x");
+		Player.GUI.Mouse.Y -= Player.GUI.Mouse.YAdd / GetCVar("drpg_menu_sensitivity_y");
 		
 		// Check resolution boundaries
 		if (Player.GUI.Mouse.X < 0)
 			Player.GUI.Mouse.X = 0;
 		if (Player.GUI.Mouse.Y < 0)
 			Player.GUI.Mouse.Y = 0;
-		if (Player.GUI.Mouse.X > Width)
-			Player.GUI.Mouse.X = Width;
-		if (Player.GUI.Mouse.Y > Height)
-			Player.GUI.Mouse.Y = Height;
-		
-		// Draw Cursor
-		PrintSprite("Cursor", 0, Player.GUI.Mouse.X, Player.GUI.Mouse.Y, 0.05);
+		if (Player.GUI.Mouse.X > GUI_WIDTH)
+			Player.GUI.Mouse.X = GUI_WIDTH;
+		if (Player.GUI.Mouse.Y > GUI_HEIGHT)
+			Player.GUI.Mouse.Y = GUI_HEIGHT;
 		
 		// Mouse Input
 		if (Player.GUI.Mouse.Buttons & BT_ATTACK)
@@ -70,7 +71,10 @@ NamedScript void CheckCursor()
 		else
 			Player.GUI.Mouse.RightButton = false;
 		
-		Delay(1);
+		// Draw Cursor
+		PrintSprite("Cursor", 0, Player.GUI.Mouse.X, Player.GUI.Mouse.Y, 0.05);
+		
+        Delay(1);
 	}
 	
 	Delay(1);
@@ -79,13 +83,11 @@ NamedScript void CheckCursor()
 
 NamedScript void CheckGUI()
 {
-	int Width = GetCVar("drpg_menu_width");
-	int Height = GetCVar("drpg_menu_height");
     int Current = Player.GUI.CurrentWindow;
 	
 	// Center Mouse
-	Player.GUI.Mouse.X = Width / 2;
-	Player.GUI.Mouse.Y = Height / 2;
+	Player.GUI.Mouse.X = GUI_WIDTH / 2;
+	Player.GUI.Mouse.Y = GUI_HEIGHT / 2;
 	
     // Create GUI
     if (!Player.GUI.Created)
@@ -98,6 +100,11 @@ NamedScript void CheckGUI()
     
 	while (true)
 	{
+        // Tab Enabling/Disabling
+        Player.GUI.TabStrip->Enabled[WINDOW_MISSION] = CurrentLevel->UACBase;
+        Player.GUI.TabStrip->Enabled[WINDOW_TRANSPORT] = CurrentLevel->UACBase;
+        Player.GUI.TabStrip->Enabled[WINDOW_TEAM] = InMultiplayer;
+        
 		if (Player.GUI.Open)
 		{
 			// Draw Context Menu
@@ -148,46 +155,39 @@ NamedScript void CheckGUI()
 
 void HandleTabStrip(GUITabStrip *TabStrip)
 {
-	int Width = GetCVar("drpg_menu_width");
-	int Height = GetCVar("drpg_menu_height");
-    
     for (int i = 0; StrLen(TabStrip->Icon[i]) != 0; i++)
     {
         int X = 18 + i * 38;
         int Y = 18;
         
-        if (InRegion(X - 16, Y - 10, 38, 38))
+        if (InRegion(X - 12, Y - 10, 34, 38) && TabStrip->Enabled[i])
         {
             // Tooltip
             SetFont("BIGFONT");
             HudMessage("%S", TabStrip->Title[i]);
             EndHudMessage(HUDMSG_PLAIN, 0, "White", Player.GUI.Mouse.X + 8 + 0.1, Player.GUI.Mouse.Y + 8, 0.05);
             
-            PrintSpritePulse(TabStrip->Icon[i], 0, X, Y, 0.75, 32.0, 0.25, true);
+            PrintSpritePulse(TabStrip->Icon[i], 0, X, Y, 0.75, 32.0, 0.25, false);
         }
+        else if (!TabStrip->Enabled[i])
+            PrintSpritePulse(TabStrip->Icon[i], 0, X, Y, 0.25, 256.0, 0.25, true);
         else
             PrintSprite(TabStrip->Icon[i], 0, X, Y, 0.05);
     }
     
-    SetHudSize(Width, Height, true);
-    SetHudClipRect(0, 0, Width, 36);
-	PrintSprite("GUIBack", 0, 0, 0, 0.05);
-	DrawBorder(0, 0, Width, 36);
-	SetHudClipRect(0, 0, 0, 0);
-	SetFont("");
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
+	PrintSpritePulse("TabBack", 0, 0.1, 0.1, 0.85, 512.0, 0.15);
+	DrawBorder(0, 0, GUI_WIDTH, 36, "BarHorz", "BarVertT");
 }
 
 void HandleWindow(GUIWindow *Window)
 {
-	int Width = GetCVar("drpg_menu_width");
-	int Height = GetCVar("drpg_menu_height");
-	
-    SetHudSize(Width, Height, true);
-    SetHudClipRect(WINDOW_X, WINDOW_Y, Width - WINDOW_X, Height - WINDOW_Y);
-	PrintSprite("GUIBack", 0, WINDOW_X, WINDOW_Y, 0.05);
-	DrawBorder(WINDOW_X, WINDOW_Y, Width - WINDOW_X, Height - WINDOW_Y);
-	SetHudClipRect(0, 0, 0, 0);
-	SetFont("");
+    if (!Random(0, 100) && !Player.GUI.ScanLine)
+        DrawScanLine();
+    
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
+	PrintSpritePulse("GUIBack", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.85, 512.0, 0.15);
+	DrawBorder(WINDOW_X, WINDOW_Y, GUI_WIDTH - WINDOW_X, GUI_HEIGHT - WINDOW_Y, "BarHorz", "BarVert");
 }
 
 void HandleLabel(GUILabel *Label)
@@ -205,7 +205,7 @@ void HandleLabel(GUILabel *Label)
 	bool Big = Label->Big;
 	
 	// Set the Resolution/HUD Size
-	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+	SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
 	
 	// Auto-calculate width and height based on string length and size
 	if (Width == 0 && Height == 0)
@@ -261,7 +261,7 @@ void HandleIcon(GUIIcon *Icon)
 	bool CalculateSize = Icon->CalculateSize;
 	
 	// Set the Resolution/HUD Size
-	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
 	
 	// Automatically detect X/Y Offset if none are specified
 	if (XOff == 0 && YOff == 0 && CalculateSize)
@@ -275,7 +275,7 @@ void HandleIcon(GUIIcon *Icon)
 	
 	// Debugging - Draw a border to show the Icon's width/height
     if (GetCVar("drpg_debug_gui"))
-        DrawBorder(X, Y, Width, Height);
+        DrawBorder(X, Y, Width, Height, "BarHorz", "BarVert");
 	
 	// Tooltip
 	if (InRegion(X + 4, Y + 8, Width, Height) && Icon->Tooltip != NULL)
@@ -305,7 +305,7 @@ void HandleButton(GUIButton *Button)
 	bool Big = Button->Big;
 	
 	// Set the Resolution/HUD Size
-	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
 	
 	// Default Color
 	if (Color == "Brick")
@@ -362,7 +362,7 @@ void HandleBar(GUIBar *Bar)
 	str Texture = Bar->Texture;
 	
 	// Set the Resolution/HUD Size
-	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
 	
 	// Default Max Value
 	if (ValueMax == 0)
@@ -417,7 +417,7 @@ void HandleList(GUIList *List)
     HoverColors = List->HoverColors;
 	
 	// Set the Resolution/HUD Size
-	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
 		
 	// Calculate max amount of entries
 	for (int i = 0; StrLen(Entries[i]) != 0; i++)
@@ -495,8 +495,8 @@ void DrawTooltip(GUITooltip *Tooltip)
 	str Color = Tooltip->Color;
 	int X = Player.GUI.Mouse.X + 8;
 	int Y = Player.GUI.Mouse.Y + 8;
-	int ScreenWidth = GetCVar("drpg_menu_width");
-	int ScreenHeight = GetCVar("drpg_menu_height");
+	int ScreenWidth = GUI_WIDTH;
+	int ScreenHeight = GUI_HEIGHT;
 	int Width = Tooltip->Width;
 	int Height = Tooltip->Height;
 	str Icon = Tooltip->Icon;
@@ -505,7 +505,7 @@ void DrawTooltip(GUITooltip *Tooltip)
 	bool NoBack = Tooltip->NoBack;
 	
 	// Set the Resolution/HUD Size
-	SetHudSize(GetCVar("drpg_menu_width"), GetCVar("drpg_menu_height"), true);
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
 	
 	// Auto-calculate width and height based on string length and size
 	if (Width == 0)
@@ -556,7 +556,7 @@ void DrawTooltip(GUITooltip *Tooltip)
 			
 			// Border
 			if (!NoBack)
-				DrawBorder(X, Y, Width, Height);
+				DrawBorder(X, Y, Width, Height, "BarHorz", "BarVert");
 			
 			// Text
 			SetFont("SMALLFONT");
@@ -578,7 +578,7 @@ void DrawTooltip(GUITooltip *Tooltip)
 			
 			// Border
 			if (!NoBack)
-				DrawBorder(X, Y, Width, Height);
+				DrawBorder(X, Y, Width, Height, "BarHorz", "BarVert");
 			
 			// Title
 			SetFont("BIGFONT");
@@ -606,7 +606,7 @@ void DrawTooltip(GUITooltip *Tooltip)
 			
 			// Border
 			if (!NoBack)
-				DrawBorder(X, Y, Width, Height);
+				DrawBorder(X, Y, Width, Height, "BarHorz", "BarVert");
 			
 			// Title
 			SetFont("BIGFONT");
@@ -649,7 +649,7 @@ void HandleContextMenu(GUIContextMenu *Menu)
 		Height += 12;
 	
 	// Draw Border
-	DrawBorder(X + 16, Y + 32, Width, Height);
+	DrawBorder(X + 16, Y + 32, Width, Height, "BarHorz", "BarVert");
 	
 	// Draw/Handle Options
 	for (int i = 0; StrLen(Menu->Name[i]) != 0; i++)
@@ -827,15 +827,39 @@ bool InRegion(int X, int Y, int Width, int Height)
 		return false;
 }
 
-void DrawBorder(int X, int Y, int Width, int Height)
+void DrawBorder(int X, int Y, int Width, int Height, str HorzTexture, str VertTexture)
 {
-	SetHudClipRect(X, Y, Width, Height);
-	PrintSprite("BarHorz", 0, X, Y, 0.05);
-	PrintSprite("BarHorz", 0, X, Y + Height - 1, 0.05);
-	PrintSprite("BarVert", 0, X, Y, 0.05);
-	PrintSprite("BarVert", 0, X + Width - 1, Y, 0.05);
-	SetHudClipRect(0, 0, 0, 0);
-	SetFont("");
+	PrintSprite(HorzTexture, 0, X + 0.1, Y, 0.05);
+	PrintSprite(HorzTexture, 0, X + 0.1, Y + Height - 1, 0.05);
+	PrintSprite(VertTexture, 0, X, Y + 0.1, 0.05);
+	PrintSprite(VertTexture, 0, X + Width - 1, Y + 0.1, 0.05);
+}
+
+NamedScript void DrawScanLine()
+{
+    int Y = WINDOW_Y;
+    int ID = SCANLINE_ID;
+    
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
+    
+    Player.GUI.ScanLine = true;
+    
+    while (Y++ < GUI_HEIGHT + 32)
+    {
+        if (!Player.GUI.Open)
+            break;
+        
+        SetHudClipRect(0, Y, GUI_WIDTH, 1);
+        PrintSpriteFade("ScanLine", ID++, 0.1, Y, 0.05, 0.25);
+        SetHudClipRect(0, 0, 0, 0);
+        
+        Delay(1);
+    }
+    
+    for (int i = SCANLINE_ID; i < SCANLINE_ID + GUI_HEIGHT; i++)
+        ClearMessage(i);
+    
+    Player.GUI.ScanLine = false;
 }
 
 // --------------------------------------------------
@@ -848,24 +872,40 @@ void CreateTabs()
     
     TabStrip->Icon[WINDOW_MAIN] = "TMain";
     TabStrip->Title[WINDOW_MAIN] = "Overview";
-    TabStrip->Icon[WINDOW_STATS] = "SprNone";
+    TabStrip->Enabled[WINDOW_MAIN] = true;
+    TabStrip->Icon[WINDOW_STATS] = "TStats";
     TabStrip->Title[WINDOW_STATS] = "\CgStats";
-    TabStrip->Icon[WINDOW_AUGS] = "SprNone";
+    TabStrip->Enabled[WINDOW_STATS] = true;
+    TabStrip->Icon[WINDOW_AUGS] = "TAugs";
     TabStrip->Title[WINDOW_AUGS] = "\CkAugmentations";
-    TabStrip->Icon[WINDOW_SKILLS] = "SprNone";
+    TabStrip->Enabled[WINDOW_AUGS] = true;
+    TabStrip->Icon[WINDOW_SKILLS] = "TSkills";
     TabStrip->Title[WINDOW_SKILLS] = "\CnSkills";
-    TabStrip->Icon[WINDOW_SHIELD] = "SprNone";
+    TabStrip->Enabled[WINDOW_SKILLS] = true;
+    TabStrip->Icon[WINDOW_SHIELD] = "TShield";
     TabStrip->Title[WINDOW_SHIELD] = "\CvShield";
-    TabStrip->Icon[WINDOW_STIMS] = "SprNone";
+    TabStrip->Enabled[WINDOW_SHIELD] = true;
+    TabStrip->Icon[WINDOW_STIMS] = "TStims";
     TabStrip->Title[WINDOW_STIMS] = "\CcStims";
-    TabStrip->Icon[WINDOW_TURRET] = "SprNone";
+    TabStrip->Enabled[WINDOW_STIMS] = true;
+    TabStrip->Icon[WINDOW_TURRET] = "TTurret";
     TabStrip->Title[WINDOW_TURRET] = "\CdTurret";
-    TabStrip->Icon[WINDOW_SHOP] = "SprNone";
+    TabStrip->Enabled[WINDOW_TURRET] = true;
+    TabStrip->Icon[WINDOW_SHOP] = "TShop";
     TabStrip->Title[WINDOW_SHOP] = "\CfShop";
-    TabStrip->Icon[WINDOW_PAYOUT] = "SprNone";
+    TabStrip->Enabled[WINDOW_SHOP] = true;
+    TabStrip->Icon[WINDOW_PAYOUT] = "TPayout";
     TabStrip->Title[WINDOW_PAYOUT] = "\CfPayout";
-    TabStrip->Icon[WINDOW_MISSION] = "SprNone";
+    TabStrip->Enabled[WINDOW_PAYOUT] = true;
+    TabStrip->Icon[WINDOW_MISSION] = "TMission";
     TabStrip->Title[WINDOW_MISSION] = "\CaMissions";
+    TabStrip->Enabled[WINDOW_MISSION] = true;
+    TabStrip->Icon[WINDOW_TRANSPORT] = "TTrans";
+    TabStrip->Title[WINDOW_TRANSPORT] = "\ChTransport";
+    TabStrip->Enabled[WINDOW_TRANSPORT] = true;
+    TabStrip->Icon[WINDOW_TEAM] = "TTeam";
+    TabStrip->Title[WINDOW_TEAM] = "\CqTeam";
+    TabStrip->Enabled[WINDOW_TEAM] = true;
     
     Player.GUI.TabStrip = TabStrip;
 }

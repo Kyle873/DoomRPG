@@ -35,7 +35,10 @@ GUIContextMenu *GUICreateContextMenu();
 
 // Utility
 bool InRegion(int, int, int, int);
-void DrawBorder(int, int, int, int);
+void DrawBorder(int, int, int, int, str, str);
+
+// Effects
+NamedScript void DrawScanLine();
 
 // Creation
 void CreateTabs();

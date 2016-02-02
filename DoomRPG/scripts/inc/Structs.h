@@ -149,18 +149,19 @@ extern struct GUITooltip_S;
 extern struct GUIContextMenu_S;
 
 // GUI Event Function Pointers
-typedef void (*TabStripEventFunc)(struct GUITabStrip_S *);
 typedef void (*LabelEventFunc)(struct GUILabel_S *);
 typedef void (*IconEventFunc)(struct GUIIcon_S *);
 typedef void (*ButtonEventFunc)(struct GUIButton_S *);
 typedef void (*BarEventFunc)(struct GUIBar_S *);
 typedef void (*ListEventFunc)(struct GUIList_S *);
+typedef void (*GridEventFunc)(struct GUIGrid_S *);
 typedef void (*ContextMenuEventFunc)(int);
 
 struct GUITabStrip_S
 {
     str Icon[MAX_TABS];
     str Title[MAX_TABS];
+    bool Enabled[MAX_TABS];
     struct GUIToolTip_S *Tooltip[MAX_TABS];
 };
 
@@ -188,6 +189,8 @@ struct GUILabel_S
     
     struct GUITooltip_S *Tooltip;
     struct GUIContextMenu_S *ContextMenu;
+    
+    LabelEventFunc OnClick;
 };
 
 struct GUIIcon_S
@@ -239,6 +242,8 @@ struct GUIBar_S
     
     struct GUITooltip_S *Tooltip;
     struct GUIContextMenu_S *ContextMenu;
+    
+    BarEventFunc OnClick;
 };
 
 struct GUIList_S
@@ -262,6 +267,8 @@ struct GUIList_S
 struct GUIGrid_S
 {
     str BackTexture;
+    
+    GridEventFunc OnClick;
 };
 
 struct GUITooltip_S
@@ -295,6 +302,7 @@ struct GUIData_S
     bool Created;
     bool Open;
     int CurrentWindow;
+    bool ScanLine;
     
     struct GUIMouseInfo_S Mouse;
     struct GUITabStrip_S *TabStrip;

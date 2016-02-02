@@ -248,13 +248,18 @@ typedef enum
 // GUI
 //
 
-#define MAX_TABS        12
+#define GUI_WIDTH       800
+#define GUI_HEIGHT      600
+
+#define MAX_TABS        21
 #define MAX_CONTROLS    64
 #define MAX_LIST        256
 #define MAX_OPTIONS     16
 
 #define WINDOW_X        0
 #define WINDOW_Y        36
+
+#define SCANLINE_ID     MAKE_ID('S', 'C', 'A', 'N')
 
 // Windows
 typedef enum
@@ -269,6 +274,8 @@ typedef enum
     WINDOW_SHOP,
     WINDOW_PAYOUT,
     WINDOW_MISSION,
+    WINDOW_TRANSPORT,
+    WINDOW_TEAM,
     WINDOW_MAX
 } EWindowTypes;
 
