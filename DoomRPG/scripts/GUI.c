@@ -101,8 +101,8 @@ NamedScript void CheckGUI()
 	while (true)
 	{
         // Tab Enabling/Disabling
-        Player.GUI.TabStrip->Enabled[WINDOW_MISSION] = CurrentLevel->UACBase;
-        Player.GUI.TabStrip->Enabled[WINDOW_TRANSPORT] = CurrentLevel->UACBase;
+        Player.GUI.TabStrip->Enabled[WINDOW_MISSION] = CurrentLevel && CurrentLevel->UACBase;
+        Player.GUI.TabStrip->Enabled[WINDOW_TRANSPORT] = CurrentLevel && CurrentLevel->UACBase;
         Player.GUI.TabStrip->Enabled[WINDOW_TEAM] = InMultiplayer;
         
 		if (Player.GUI.Open)
@@ -182,8 +182,15 @@ void HandleTabStrip(GUITabStrip *TabStrip)
 
 void HandleWindow(GUIWindow *Window)
 {
-    if (!Random(0, 100) && !Player.GUI.ScanLine)
+    static int ScanDelay = 0;
+    if (!Player.GUI.ScanLine && ScanDelay < 1)
+    {
         DrawScanLine();
+        ScanDelay = 350;
+    }
+    else
+        ScanDelay--;
+        
     
     SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
 	PrintSpritePulse("GUIBack", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.85, 512.0, 0.15);
@@ -837,27 +844,27 @@ void DrawBorder(int X, int Y, int Width, int Height, str HorzTexture, str VertTe
 
 NamedScript void DrawScanLine()
 {
-    int Y = WINDOW_Y;
-    int ID = SCANLINE_ID;
+    int Y = WINDOW_Y - 140;
     
     SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
     
     Player.GUI.ScanLine = true;
     
-    while (Y++ < GUI_HEIGHT + 32)
+    while (Y < GUI_HEIGHT)
     {
         if (!Player.GUI.Open)
             break;
         
-        SetHudClipRect(0, Y, GUI_WIDTH, 1);
-        PrintSpriteFade("ScanLine", ID++, 0.1, Y, 0.05, 0.25);
+        SetHudClipRect(0, WINDOW_Y, GUI_WIDTH, GUI_HEIGHT - WINDOW_Y);
+        PrintSprite("ScanLine", SCANLINE_ID, 0.1, (fixed)Y + 0.1, 0.03);
         SetHudClipRect(0, 0, 0, 0);
         
         Delay(1);
+        
+        Y += 4;
     }
     
-    for (int i = SCANLINE_ID; i < SCANLINE_ID + GUI_HEIGHT; i++)
-        ClearMessage(i);
+    ClearMessage(SCANLINE_ID);
     
     Player.GUI.ScanLine = false;
 }
