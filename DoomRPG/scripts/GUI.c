@@ -3,6 +3,7 @@
 #include "GUI.h"
 #include "Map.h"
 #include "Menu.h"
+#include "Stats.h"
 #include "RPG.h"
 #include "Utils.h"
 
@@ -93,7 +94,8 @@ NamedScript void CheckGUI()
     if (!Player.GUI.Created)
     {
         CreateTabs();
-        CreateMainWindow();
+        
+        UpdateMainWindow();
         
         Player.GUI.Created = true;
     }
@@ -189,6 +191,7 @@ void HandleWindow(GUIWindow *Window)
     PrintSprite("BorTR", 0, WINDOW_X + GUI_WIDTH + 0.2, WINDOW_Y + 0.1, 0.03);
     PrintSprite("BorBL", 0, WINDOW_X + 0.1, GUI_HEIGHT + 0.2, 0.03);
     PrintSprite("BorBR", 0, WINDOW_X + GUI_WIDTH + 0.2, GUI_HEIGHT + 0.2, 0.03);
+    
     // Border sides
     SetHudClipRect(WINDOW_X, WINDOW_Y, 8, GUI_HEIGHT - WINDOW_Y - 8);
     PrintSprite("BorL", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03);
@@ -221,8 +224,8 @@ void HandleLabel(GUILabel *Label)
 	
 	str Text = Label->Text;
 	int Alignment = Label->Alignment;
-	fixed X = WINDOW_X + Label->X + 2;
-	fixed Y = WINDOW_Y + Label->Y + 16;
+	fixed X = WINDOW_X + Label->X;
+	fixed Y = WINDOW_Y + Label->Y;
 	int Width = Label->Width;
 	int Height = Label->Height;
 	str Color = Label->Color;
@@ -274,10 +277,10 @@ void HandleIcon(GUIIcon *Icon)
 {
 	// Don't handle the control if it's invisible
 	if (!Icon->Visible) return;
-
+    
 	str Texture = Icon->Texture;
-	int X = WINDOW_X + Icon->X + 2;
-	int Y = WINDOW_Y + Icon->Y + 16;
+	int X = WINDOW_X + Icon->X;
+	int Y = WINDOW_Y + Icon->Y;
 	int XOff = Icon->XOff;
 	int YOff = Icon->YOff;
 	int Width = Icon->Width;
@@ -320,8 +323,8 @@ void HandleButton(GUIButton *Button)
 	if (!Button->Visible) return;
 
 	str Text = Button->Text;
-	int X = WINDOW_X + Button->X + 2;
-	int Y = WINDOW_Y + Button->Y + 16;
+	int X = WINDOW_X + Button->X;
+	int Y = WINDOW_Y + Button->Y;
 	int Width = Button->Width;
 	int Height = Button->Height;
 	str Color = Button->Color;
@@ -377,8 +380,8 @@ void HandleBar(GUIBar *Bar)
 	// Don't handle the control if it's invisible
 	if (!Bar->Visible) return;
 
-	int X = WINDOW_X + Bar->X + 2;
-	int Y = WINDOW_Y + Bar->Y + 16;
+	int X = WINDOW_X + Bar->X;
+	int Y = WINDOW_Y + Bar->Y;
 	int Width = Bar->Width;
 	int Height = Bar->Height;
 	int Value = Bar->Value;
@@ -426,8 +429,8 @@ void HandleList(GUIList *List)
 	// Reset the selected entry
 	List->Selected = -1;
 	
-	int X = WINDOW_X + List->X + 2;
-	int Y = WINDOW_Y + List->Y + 16;
+	int X = WINDOW_X + List->X;
+	int Y = WINDOW_Y + List->Y;
 	int Shown = List->Shown;
 	int Offset = List->Offset;
 	str *Entries;
@@ -940,11 +943,114 @@ void CreateTabs()
     Player.GUI.TabStrip = TabStrip;
 }
 
-void CreateMainWindow()
+NamedScript void UpdateMainWindow()
 {
     GUIWindow *Window = GUICreateWindow();
     
-    // TODO
+    // --------------------------------------------------
+    // Player Sprite
+    //
+    
+    str PlayerSprite = "PLAYA1";
+    GUIIcon *PlayerSpriteIcon = GUICreateIcon(Window);
+    
+    if (CompatMode == COMPAT_DRLA)
+    {
+        if (PlayerClass(PlayerNumber()) == 0) // Marine
+            PlayerSprite = "PMARA1";
+        if (PlayerClass(PlayerNumber()) == 1) // Scout
+            PlayerSprite = "PSCOA1";
+        if (PlayerClass(PlayerNumber()) == 2) // Technician
+            PlayerSprite = "PTECA1";
+        if (PlayerClass(PlayerNumber()) == 3) // Renegade
+            PlayerSprite = "PRENA1";
+        if (PlayerClass(PlayerNumber()) == 4) // Demolitionist
+            PlayerSprite = "PDMOA1";
+    }
+    
+    PlayerSpriteIcon->Texture = PlayerSprite;
+    PlayerSpriteIcon->X = 32;
+    PlayerSpriteIcon->Y = 64;
+    
+    // --------------------------------------------------
+    // Player Info
+    //
+    
+    GUILabel *NameLabel = GUICreateLabel(Window);
+    GUILabel *LevelLabel = GUICreateLabel(Window);
+    GUILabel *XPLabel = GUICreateLabel(Window);
+    GUILabel *TitleLabel = GUICreateLabel(Window);
+    GUILabel *RankLabel = GUICreateLabel(Window);
+    GUILabel *PPLabel = GUICreateLabel(Window);
+    
+    NameLabel->X = 64;
+    NameLabel->Y = 16;
+    NameLabel->Color = "White";
+    NameLabel->Big = true;
+    
+    LevelLabel->X = 64;
+    LevelLabel->Y = 28;
+    LevelLabel->Color = "White";
+    LevelLabel->Big = true;
+    
+    XPLabel->X = 64;
+    XPLabel->Y = 40;
+    XPLabel->Color = "White";
+    XPLabel->Big = true;
+    
+    TitleLabel->X = 64;
+    TitleLabel->Y = 52;
+    TitleLabel->Color = "Yellow";
+    TitleLabel->Big = true;
+    
+    RankLabel->X = 64;
+    RankLabel->Y = 64;
+    RankLabel->Color = "Yellow";
+    RankLabel->Big = true;
+    
+    PPLabel->X = 64;
+    PPLabel->Y = 76;
+    PPLabel->Color = "Gold";
+    PPLabel->Big = true;
+    
+    // --------------------------------------------------
+    // Totals
+    //
+    
+    // --------------------------------------------------
+    // Map Stats
+    //
+    
+    // --------------------------------------------------
+    // Shield
+    //
+    
+    // --------------------------------------------------
+    // Current Stim / Toxicity
+    //
+    
+    // --------------------------------------------------
+    // Finalization
+    //
     
     Player.GUI.Window[WINDOW_MAIN] = Window;
+    
+    // --------------------------------------------------
+    // Update Loop
+    //
+    
+    while (true)
+    {
+        NameLabel->Text = StrParam("%tS", PlayerNumber() + 1);
+        LevelLabel->Text = StrParam("Level: %d", Player.Level);
+        XPLabel->Text = StrParam("XP: %ld / %ld", Player.XP, Player.XPNext);
+        TitleLabel->Text = StrParam("Title: %S (%d/%d)", Ranks[Player.RankLevel], Player.RankLevel, MAX_RANK);
+        RankLabel->Text = StrParam("Rank: %ld / %ld", Player.Rank, Player.RankNext);
+        if (Player.PayReady && !Player.PayingOut)
+            PPLabel->Text = StrParam("PP: %d (%S) [\C[%S]Ready\C-]", Player.PP, FormatTime(Player.PayTimer), PayReadyColor);
+        else
+            PPLabel->Text = StrParam("PP: %d (%S)", Player.PP, FormatTime(Player.PayTimer));
+        
+        Delay(1);
+    }
 }

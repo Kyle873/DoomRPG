@@ -42,6 +42,6 @@ NamedScript void DrawScanLine();
 
 // Creation
 void CreateTabs();
-void CreateMainWindow();
+NamedScript void UpdateMainWindow();
 
 #endif
