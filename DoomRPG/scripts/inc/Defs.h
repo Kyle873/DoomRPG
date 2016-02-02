@@ -265,8 +265,6 @@ typedef enum
 #define WINDOW_X        0
 #define WINDOW_Y        36
 
-#define SCANLINE_ID     MAKE_ID('S', 'C', 'A', 'N')
-
 // Windows
 typedef enum
 {
