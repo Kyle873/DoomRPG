@@ -183,8 +183,6 @@ void HandleTabStrip(GUITabStrip *TabStrip)
 void HandleWindow(GUIWindow *Window)
 {
     SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
-	PrintSpriteAlpha("GUIBack", SCANLINE_ID + 1, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03, 0.75);
-
     static int ScanDelay = 0;
     if (!Player.GUI.ScanLine && ScanDelay < 1)
     {
@@ -193,6 +191,8 @@ void HandleWindow(GUIWindow *Window)
     }
     else
         ScanDelay--;
+    
+	PrintSpriteAlpha("GUIBack", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03, 0.75);
 
 	DrawBorder(WINDOW_X, WINDOW_Y, GUI_WIDTH - WINDOW_X, GUI_HEIGHT - WINDOW_Y, "BarHorz", "BarVert");
 }
@@ -856,15 +856,13 @@ NamedScript void DrawScanLine()
             break;
         
         SetHudClipRect(0, WINDOW_Y, GUI_WIDTH, GUI_HEIGHT - WINDOW_Y);
-        PrintSpriteAdd("ScanLine", SCANLINE_ID, 0.1, (fixed)Y + 0.1, 0.03);
+        PrintSpriteAdd("ScanLine", 0, 0.1, (fixed)Y + 0.1, 0.03);
         SetHudClipRect(0, 0, 0, 0);
         
         Delay(1);
         
         Y += 4;
     }
-    
-    ClearMessage(SCANLINE_ID);
     
     Player.GUI.ScanLine = false;
 }
@@ -916,6 +914,11 @@ void CreateTabs()
     TabStrip->Icon[WINDOW_TIPS] = "TTips";
     TabStrip->Title[WINDOW_TIPS] = "\CuTips";
     TabStrip->Enabled[WINDOW_TIPS] = true;
+    
+    // [KS] Sentinel, tell us when to stop drawing
+    TabStrip->Icon[WINDOW_MAX] = "";
+    TabStrip->Title[WINDOW_MAX] = "";
+    TabStrip->Enabled[WINDOW_MAX] = false;
     
     Player.GUI.TabStrip = TabStrip;
 }
