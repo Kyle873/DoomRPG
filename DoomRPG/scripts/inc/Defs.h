@@ -248,18 +248,27 @@ typedef enum
 // GUI
 //
 
-#define MAX_TABS        16
+#define MAX_TABS        12
 #define MAX_CONTROLS    64
 #define MAX_LIST        256
 #define MAX_OPTIONS     16
 
 #define WINDOW_X        0
-#define WINDOW_Y        32
+#define WINDOW_Y        36
 
 // Windows
 typedef enum
 {
     WINDOW_MAIN,
+    WINDOW_STATS,
+    WINDOW_AUGS,
+    WINDOW_SKILLS,
+    WINDOW_SHIELD,
+    WINDOW_STIMS,
+    WINDOW_TURRET,
+    WINDOW_SHOP,
+    WINDOW_PAYOUT,
+    WINDOW_MISSION,
     WINDOW_MAX
 } EWindowTypes;
 

@@ -111,9 +111,6 @@ NamedScript void CheckGUI()
 				Player.GUI.Tooltip = NULL;
 			}
 			
-            // Handle Tab Strip
-            HandleTabStrip(Player.GUI.TabStrip);
-            
             // Handle Labels
             for (int i = 0; Player.GUI.Window[Current]->Labels[i] != NULL; i++)
                 HandleLabel(Player.GUI.Window[Current]->Labels[i]);
@@ -138,6 +135,9 @@ NamedScript void CheckGUI()
             for (int i = 0; Player.GUI.Window[Current]->Grids[i] != NULL; i++)
                 HandleGrid(Player.GUI.Window[Current]->Grids[i]);
             
+            // Handle Tab Strip
+            HandleTabStrip(Player.GUI.TabStrip);
+            
             // Handle Drawing and Input for the Window
             HandleWindow(Player.GUI.Window[Current]);
 		}
@@ -151,33 +151,30 @@ void HandleTabStrip(GUITabStrip *TabStrip)
 	int Width = GetCVar("drpg_menu_width");
 	int Height = GetCVar("drpg_menu_height");
     
-    SetHudSize(Width, Height, true);
-    SetHudClipRect(0, 0, Width, 32);
-	PrintSprite("GUIBack", 0, 0, 0, 0.05);
-	DrawBorder(0, 0, Width, 32);
-	SetHudClipRect(0, 0, 0, 0);
-	SetFont("");
-    
     for (int i = 0; StrLen(TabStrip->Icon[i]) != 0; i++)
     {
-        int X = i * 36;
-        int Y = 0;
+        int X = 18 + i * 38;
+        int Y = 18;
         
-        Log("TabStrip index %d icon: %S", i, TabStrip->Icon[i]);
-        Log("TabStrip index %d title: %S", i, TabStrip->Title[i]);
-        
-        if (InRegion(X, Y, 32, 32))
+        if (InRegion(X - 16, Y - 10, 38, 38))
         {
-            PrintSpritePulse(TabStrip->Icon[i], 0, X, Y, 0.75, 32.0, 0.25, true);
-            
             // Tooltip
             SetFont("BIGFONT");
             HudMessage("%S", TabStrip->Title[i]);
-            EndHudMessage(HUDMSG_PLAIN, 0, "White", Player.GUI.Mouse.X + 8, Player.GUI.Mouse.Y + 8, 0.05);
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", Player.GUI.Mouse.X + 8 + 0.1, Player.GUI.Mouse.Y + 8, 0.05);
+            
+            PrintSpritePulse(TabStrip->Icon[i], 0, X, Y, 0.75, 32.0, 0.25, true);
         }
         else
             PrintSprite(TabStrip->Icon[i], 0, X, Y, 0.05);
     }
+    
+    SetHudSize(Width, Height, true);
+    SetHudClipRect(0, 0, Width, 36);
+	PrintSprite("GUIBack", 0, 0, 0, 0.05);
+	DrawBorder(0, 0, Width, 36);
+	SetHudClipRect(0, 0, 0, 0);
+	SetFont("");
 }
 
 void HandleWindow(GUIWindow *Window)
@@ -849,8 +846,26 @@ void CreateTabs()
 {
     GUITabStrip *TabStrip = GUICreateTabStrip();
     
-    TabStrip->Icon[0] = "SprNone";
-    TabStrip->Title[0] = "Overview";
+    TabStrip->Icon[WINDOW_MAIN] = "TMain";
+    TabStrip->Title[WINDOW_MAIN] = "Overview";
+    TabStrip->Icon[WINDOW_STATS] = "SprNone";
+    TabStrip->Title[WINDOW_STATS] = "\CgStats";
+    TabStrip->Icon[WINDOW_AUGS] = "SprNone";
+    TabStrip->Title[WINDOW_AUGS] = "\CkAugmentations";
+    TabStrip->Icon[WINDOW_SKILLS] = "SprNone";
+    TabStrip->Title[WINDOW_SKILLS] = "\CnSkills";
+    TabStrip->Icon[WINDOW_SHIELD] = "SprNone";
+    TabStrip->Title[WINDOW_SHIELD] = "\CvShield";
+    TabStrip->Icon[WINDOW_STIMS] = "SprNone";
+    TabStrip->Title[WINDOW_STIMS] = "\CcStims";
+    TabStrip->Icon[WINDOW_TURRET] = "SprNone";
+    TabStrip->Title[WINDOW_TURRET] = "\CdTurret";
+    TabStrip->Icon[WINDOW_SHOP] = "SprNone";
+    TabStrip->Title[WINDOW_SHOP] = "\CfShop";
+    TabStrip->Icon[WINDOW_PAYOUT] = "SprNone";
+    TabStrip->Title[WINDOW_PAYOUT] = "\CfPayout";
+    TabStrip->Icon[WINDOW_MISSION] = "SprNone";
+    TabStrip->Title[WINDOW_MISSION] = "\CaMissions";
     
     Player.GUI.TabStrip = TabStrip;
 }
