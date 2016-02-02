@@ -186,6 +186,24 @@ void HandleWindow(GUIWindow *Window)
 {
     SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
     
+    // Border corners
+    PrintSprite("BorTL", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03);
+    PrintSprite("BorTR", 0, WINDOW_X + GUI_WIDTH + 0.2, WINDOW_Y + 0.1, 0.03);
+    PrintSprite("BorBL", 0, WINDOW_X + 0.1, GUI_HEIGHT + 0.2, 0.03);
+    PrintSprite("BorBR", 0, WINDOW_X + GUI_WIDTH + 0.2, GUI_HEIGHT + 0.2, 0.03);
+    
+    // Border sides
+    SetHudClipRect(WINDOW_X, WINDOW_Y, 8, GUI_HEIGHT - WINDOW_Y - 8);
+    PrintSprite("BorL", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03);
+    SetHudClipRect(WINDOW_X + GUI_WIDTH - 8, WINDOW_Y, 8, GUI_HEIGHT - WINDOW_Y - 8);
+    PrintSprite("BorR", 0, WINDOW_X + GUI_WIDTH + 0.2, WINDOW_Y + 0.1, 0.03);
+    SetHudClipRect(WINDOW_X + 8, WINDOW_Y, GUI_WIDTH - 8, 8);
+    PrintSprite("BorT", 0, WINDOW_X + 8 + 0.1, WINDOW_Y + 0.1, 0.03);
+    SetHudClipRect(WINDOW_X + 8, GUI_HEIGHT - 8, GUI_WIDTH - 8, 8);
+    PrintSprite("BorB", 0, WINDOW_X + 8 + 0.1, GUI_HEIGHT + 0.2, 0.03);
+    
+    SetHudClipRect(0, 0, 0, 0);
+    
     static int ScanDelay = 0;
     if (!Player.GUI.ScanLine && ScanDelay < 1)
     {
@@ -195,9 +213,8 @@ void HandleWindow(GUIWindow *Window)
     else
         ScanDelay--;
     
+    PrintSpriteAddAlpha("GStatic1", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03, 0.5);
 	PrintSpriteAlpha("GUIBack", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03, 0.75);
-
-	DrawBorder(WINDOW_X, WINDOW_Y, GUI_WIDTH - WINDOW_X, GUI_HEIGHT - WINDOW_Y, "BarHorz", "BarVert");
 }
 
 void HandleLabel(GUILabel *Label)
@@ -1037,7 +1054,3 @@ NamedScript void UpdateMainWindow()
         Delay(1);
     }
 }
-
-// --------------------------------------------------
-// GUI Update
-//
