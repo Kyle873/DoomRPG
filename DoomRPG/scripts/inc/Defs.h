@@ -276,6 +276,7 @@ typedef enum
     WINDOW_MISSION,
     WINDOW_TRANSPORT,
     WINDOW_TEAM,
+    WINDOW_TIPS,
     WINDOW_MAX
 } EWindowTypes;
 

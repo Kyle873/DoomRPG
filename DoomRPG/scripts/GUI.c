@@ -906,6 +906,9 @@ void CreateTabs()
     TabStrip->Icon[WINDOW_TEAM] = "TTeam";
     TabStrip->Title[WINDOW_TEAM] = "\CqTeam";
     TabStrip->Enabled[WINDOW_TEAM] = true;
+    TabStrip->Icon[WINDOW_TIPS] = "TTips";
+    TabStrip->Title[WINDOW_TIPS] = "\CuTips";
+    TabStrip->Enabled[WINDOW_TIPS] = true;
     
     Player.GUI.TabStrip = TabStrip;
 }
