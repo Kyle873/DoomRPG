@@ -298,6 +298,8 @@ struct GUIData_S
     struct GUIMouseInfo_S Mouse;
     struct GUITabStrip_S *TabStrip;
     struct GUIWindow_S *Window[WINDOW_MAX];
+    struct GUITooltip_S *Tooltip;
+    struct GUIContextMenu_S *ContextMenu;
 };
 
 // Items

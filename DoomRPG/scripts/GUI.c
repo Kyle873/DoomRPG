@@ -5,9 +5,6 @@
 #include "RPG.h"
 #include "Utils.h"
 
-static GUITooltip *Tooltip;
-static GUIContextMenu *ContextMenu;
-
 NamedScript Console void ToggleGUI()
 {
 	Player.GUI.Open = !Player.GUI.Open;
@@ -90,7 +87,7 @@ NamedScript void CheckGUI()
 	Player.GUI.Mouse.X = Width / 2;
 	Player.GUI.Mouse.Y = Height / 2;
 	
-    // Create Window
+    // Create GUI
     if (Player.GUI.Created)
     {
         CreateTabs();
@@ -104,14 +101,14 @@ NamedScript void CheckGUI()
 		if (Player.GUI.Open)
 		{
 			// Draw Context Menu
-			if (ContextMenu != NULL)
-				HandleContextMenu(ContextMenu);
+			if (Player.GUI.ContextMenu != NULL)
+				HandleContextMenu(Player.GUI.ContextMenu);
 			
 			// Draw Tooltip
-			if (Tooltip != NULL && ContextMenu == NULL)
+			if (Player.GUI.Tooltip != NULL && Player.GUI.ContextMenu == NULL)
 			{
-				DrawTooltip(Tooltip);
-				Tooltip = NULL;
+				DrawTooltip(Player.GUI.Tooltip);
+				Player.GUI.Tooltip = NULL;
 			}
 			
             // Handle Tab Strip
@@ -151,6 +148,7 @@ NamedScript void CheckGUI()
 
 void HandleTabStrip(GUITabStrip *TabStrip)
 {
+    
 }
 
 void HandleWindow(GUIWindow *Window)
@@ -215,11 +213,11 @@ void HandleLabel(GUILabel *Label)
 	
 	// Tooltip
 	if (InRegion(X, Y, Width, Height) && Label->Tooltip != NULL)
-		Tooltip = Label->Tooltip;
+		Player.GUI.Tooltip = Label->Tooltip;
     
 	// Context Menu
 	if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Label->ContextMenu != NULL)
-		ContextMenu = Label->ContextMenu;
+		Player.GUI.ContextMenu = Label->ContextMenu;
 }
 
 void HandleIcon(GUIIcon *Icon)
@@ -255,14 +253,14 @@ void HandleIcon(GUIIcon *Icon)
 	
 	// Tooltip
 	if (InRegion(X + 4, Y + 8, Width, Height) && Icon->Tooltip != NULL)
-		Tooltip = Icon->Tooltip;
+		Player.GUI.Tooltip = Icon->Tooltip;
 	
 	// Context Menu
 	if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.RightButton && Icon->ContextMenu != NULL)
-		ContextMenu = Icon->ContextMenu;
+		Player.GUI.ContextMenu = Icon->ContextMenu;
 	
 	// OnClick Event
-	if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Icon->OnClick && ContextMenu == NULL)
+	if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Icon->OnClick && Player.GUI.ContextMenu == NULL)
 		Icon->OnClick(Icon);
 }
 
@@ -313,14 +311,14 @@ void HandleButton(GUIButton *Button)
 	
 	// Tooltip
 	if (InRegion(X, Y, Width, Height) && Button->Tooltip != NULL)
-		Tooltip = Button->Tooltip;
+		Player.GUI.Tooltip = Button->Tooltip;
 	
 	// Context Menu
 	if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Button->ContextMenu != NULL)
-		ContextMenu = Button->ContextMenu;
+		Player.GUI.ContextMenu = Button->ContextMenu;
 	
 	// OnClick event
-	if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.LeftButton && Button->OnClick && ContextMenu == NULL)
+	if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.LeftButton && Button->OnClick && Player.GUI.ContextMenu == NULL)
 		Button->OnClick(Button);
 }
 
@@ -363,11 +361,11 @@ void HandleBar(GUIBar *Bar)
 	
 	// Tooltip
 	if (InRegion(X, Y, Width, Height) && Bar->Tooltip != NULL)
-		Tooltip = Bar->Tooltip;
+		Player.GUI.Tooltip = Bar->Tooltip;
 	
 	// Context Menu
 	if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Bar->ContextMenu != NULL)
-		ContextMenu = Bar->ContextMenu;
+		Player.GUI.ContextMenu = Bar->ContextMenu;
 }
 
 void HandleList(GUIList *List)
@@ -422,7 +420,7 @@ void HandleList(GUIList *List)
 		// Checking for the longest width in the entries
 		if (Width > Longest) Longest = Width;
 		
-		if (InRegion(X, Y + 3 + ((i - Offset) * 10), Width, 9) && ContextMenu == NULL)
+		if (InRegion(X, Y + 3 + ((i - Offset) * 10), Width, 9) && Player.GUI.ContextMenu == NULL)
 		{
 			HudMessage("%S", Entries[i]);
             EndHudMessage(HUDMSG_PLAIN, 0, HoverColors[i], X + 0.1, Y + ((i - Offset) * 10.0), 0.05);
@@ -430,11 +428,11 @@ void HandleList(GUIList *List)
 			
 			// Tooltip
 			if (List->Tooltip != NULL)
-				Tooltip = List->Tooltip;
+				Player.GUI.Tooltip = List->Tooltip;
 			
 			// Context Menu
 			if (Player.GUI.Mouse.RightButton && List->ContextMenu != NULL)
-				ContextMenu = List->ContextMenu;
+				Player.GUI.ContextMenu = List->ContextMenu;
 			
 			// OnClick event
 			if (Player.GUI.Mouse.LeftButton && List->OnClick)
@@ -653,7 +651,7 @@ void HandleContextMenu(GUIContextMenu *Menu)
 	
 	// Close Menu
 	if (Player.GUI.Mouse.LeftButton || Player.GUI.Mouse.RightButton)
-		ContextMenu = NULL;
+		Player.GUI.ContextMenu = NULL;
 }
 
 GUIWindow *GUICreateWindow()
