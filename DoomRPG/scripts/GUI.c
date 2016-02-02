@@ -160,12 +160,12 @@ void HandleTabStrip(GUITabStrip *TabStrip)
         int X = 18 + i * 38;
         int Y = 18;
         
-        if (InRegion(X - 12, Y - 10, 34, 38) && TabStrip->Enabled[i])
+        if (InRegion(X - 17, Y - 19, 34, 38) && TabStrip->Enabled[i])
         {
             // Tooltip
             SetFont("BIGFONT");
             HudMessage("%S", TabStrip->Title[i]);
-            EndHudMessage(HUDMSG_PLAIN, 0, "White", Player.GUI.Mouse.X + 8 + 0.1, Player.GUI.Mouse.Y + 8, 0.05);
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", Player.GUI.Mouse.X + 16 + 0.1, Player.GUI.Mouse.Y + 16, 0.05);
             
             PrintSpritePulse(TabStrip->Icon[i], 0, X, Y, 0.75, 32.0, 0.25, false);
         }
@@ -182,6 +182,9 @@ void HandleTabStrip(GUITabStrip *TabStrip)
 
 void HandleWindow(GUIWindow *Window)
 {
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
+	PrintSpriteAlpha("GUIBack", SCANLINE_ID + 1, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03, 0.75);
+
     static int ScanDelay = 0;
     if (!Player.GUI.ScanLine && ScanDelay < 1)
     {
@@ -190,10 +193,7 @@ void HandleWindow(GUIWindow *Window)
     }
     else
         ScanDelay--;
-        
-    
-    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
-	PrintSpritePulse("GUIBack", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.85, 512.0, 0.15);
+
 	DrawBorder(WINDOW_X, WINDOW_Y, GUI_WIDTH - WINDOW_X, GUI_HEIGHT - WINDOW_Y, "BarHorz", "BarVert");
 }
 
@@ -856,7 +856,7 @@ NamedScript void DrawScanLine()
             break;
         
         SetHudClipRect(0, WINDOW_Y, GUI_WIDTH, GUI_HEIGHT - WINDOW_Y);
-        PrintSprite("ScanLine", SCANLINE_ID, 0.1, (fixed)Y + 0.1, 0.03);
+        PrintSpriteAdd("ScanLine", SCANLINE_ID, 0.1, (fixed)Y + 0.1, 0.03);
         SetHudClipRect(0, 0, 0, 0);
         
         Delay(1);

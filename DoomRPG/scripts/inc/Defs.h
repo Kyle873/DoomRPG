@@ -41,6 +41,12 @@
         HudMessage("A"), \
         EndHudMessage(HUDMSG_PLAIN, id, "Untranslated", x, y, delay) \
     )
+#define PrintSpriteAdd(spr, id, x, y, delay) \
+    ( \
+        SetFont(spr), \
+        HudMessage("A"), \
+        EndHudMessage(HUDMSG_PLAIN | HUDMSG_ADDBLEND, id, "Untranslated", x, y, delay) \
+    )
 #define ClearMessage(id) \
     ( \
         HudMessage(""), \
