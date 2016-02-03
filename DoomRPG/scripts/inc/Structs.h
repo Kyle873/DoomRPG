@@ -122,31 +122,21 @@ struct CharSaveInfo_S
 
 // GUI
 
-struct GUIMouseInfo_S
-{
-    int X;
-    int Y;
-    int XAdd;
-    int YAdd;
-    int Buttons;
-    int OldButtons;
-    bool LeftButton;
-    bool RightButton;
-    bool LeftButtonDown;
-    bool RightButtonDown;
-};
-
 // Pre-define control structs for the GUI
+extern struct GUIData_S;
+
+extern struct GUIMouseInfo_S;
+extern struct GUITooltip_S;
+extern struct GUIContextMenu_S;
+
 extern struct GUITabStrip_S;
-extern struct GUIWindow_S;
+extern struct GUIPanel_S;
 extern struct GUILabel_S;
 extern struct GUIIcon_S;
 extern struct GUIButton_S;
 extern struct GUIBar_S;
 extern struct GUIList_S;
 extern struct GUIGrid_S;
-extern struct GUITooltip_S;
-extern struct GUIContextMenu_S;
 
 // GUI Event Function Pointers
 typedef void (*LabelEventFunc)(struct GUILabel_S *);
@@ -155,24 +145,32 @@ typedef void (*ButtonEventFunc)(struct GUIButton_S *);
 typedef void (*BarEventFunc)(struct GUIBar_S *);
 typedef void (*ListEventFunc)(struct GUIList_S *);
 typedef void (*GridEventFunc)(struct GUIGrid_S *);
-typedef void (*ContextMenuEventFunc)(int);
+typedef void (*ContextMenuEventFunc)();
 
-struct GUITabStrip_S
+struct GUITooltip_S
 {
-    str Icon[MAX_TABS];
-    str Title[MAX_TABS];
-    bool Enabled[MAX_TABS];
-    struct GUIToolTip_S *Tooltip[MAX_TABS];
+    int Type;
+    str Title;
+    str Text;
+    str Color;
+    int Width;
+    int Height;
+    str Icon;
+    int IconXOff;
+    int IconYOff;
+    bool NoBack;
 };
 
-struct GUIWindow_S
+struct GUIContextMenu_S
 {
-    struct GUILabel_S  *Labels[MAX_CONTROLS];
-    struct GUIIcon_S   *Icons[MAX_CONTROLS];
-    struct GUIButton_S *Buttons[MAX_CONTROLS];
-    struct GUIBar_S    *Bars[MAX_CONTROLS];
-    struct GUIList_S   *Lists[MAX_CONTROLS];
-    struct GUIGrid_S   *Grids[MAX_CONTROLS];
+    int X;
+    int Y;
+    
+    struct
+    {
+        str Name;
+        ContextMenuEventFunc OnClick;
+    } Options[MAX_OPTIONS];
 };
 
 struct GUILabel_S
@@ -271,29 +269,45 @@ struct GUIGrid_S
     GridEventFunc OnClick;
 };
 
-struct GUITooltip_S
+struct GUIPanel_S
 {
-    int Type;
-    str Title;
-    str Text;
-    str Color;
-    int Width;
-    int Height;
-    str Icon;
-    int IconXOff;
-    int IconYOff;
-    bool NoBack;
+    struct GUILabel_S  *Labels[MAX_CONTROLS];
+    struct GUIIcon_S   *Icons[MAX_CONTROLS];
+    struct GUIButton_S *Buttons[MAX_CONTROLS];
+    struct GUIBar_S    *Bars[MAX_CONTROLS];
+    struct GUIList_S   *Lists[MAX_CONTROLS];
+    struct GUIGrid_S   *Grids[MAX_CONTROLS];
 };
 
-struct GUIContextMenu_S
+struct GUITabStrip_S
+{
+    struct
+    {
+        str Icon;
+        str Title;
+        bool Enabled;
+        struct GUITooltip_S *Tooltip;
+        struct GUIPanel_S *Panel;
+    } Tabs[MAX_TABS];
+    
+    int ActiveTab;
+};
+
+struct GUIMouseInfo_S
 {
     int X;
     int Y;
+    int XAdd;
+    int YAdd;
+    int Buttons;
+    int OldButtons;
+    bool LeftButton;
+    bool RightButton;
+    bool LeftButtonDown;
+    bool RightButtonDown;
     
-    str Name[MAX_OPTIONS];
-    ContextMenuEventFunc OnClick[MAX_OPTIONS];
-    
-    int Data;
+    struct GUITooltip_S *ActiveTooltip;
+    struct GUIContextMenu_S *ActiveContextMenu;
 };
 
 // Base GUI Data
@@ -301,14 +315,14 @@ struct GUIData_S
 {
     bool Created;
     bool Open;
-    int CurrentWindow;
-    bool ScanLine;
+    struct
+    {
+        int Position;
+        int Delay;
+    } GlowLine;
     
     struct GUIMouseInfo_S Mouse;
-    struct GUITabStrip_S *TabStrip;
-    struct GUIWindow_S *Window[WINDOW_MAX];
-    struct GUITooltip_S *Tooltip;
-    struct GUIContextMenu_S *ContextMenu;
+    struct GUITabStrip_S TabStrip;
 };
 
 // Items

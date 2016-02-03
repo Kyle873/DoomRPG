@@ -5,12 +5,22 @@
 
 NamedScript Console void ToggleGUI();
 
-NamedScript void CheckCursor();
-NamedScript void CheckGUI();
+NamedScript void CreateGUIMenu();
+void CreateTabs();
+
+NamedScript void UpdateGUIMenu();
+NamedScript void UpdateGUICursor();
+void UpdateTabs();
+
+// Drawing
+NamedScript void DrawBackgroundWindow();
+NamedScript void DrawGlowLine();
+
+// Utility
+bool InRegion(int, int, int, int);
 
 // Window/Control Handling
 void HandleTabStrip(GUITabStrip *);
-void HandleWindow(GUIWindow *);
 void HandleLabel(GUILabel *);
 void HandleIcon(GUIIcon *);
 void HandleButton(GUIButton *);
@@ -22,26 +32,20 @@ void HandleContextMenu(GUIContextMenu *);
 
 // Window/Control Creation
 GUITabStrip *GUICreateTabStrip();
-GUIWindow *GUICreateWindow();
-void GUIDeleteWindow(GUIWindow *);
-GUILabel *GUICreateLabel(GUIWindow *);
-GUIIcon *GUICreateIcon(GUIWindow *);
-GUIButton *GUICreateButton(GUIWindow *);
-GUIBar *GUICreateBar(GUIWindow *);
-GUIList *GUICreateList(GUIWindow *);
-GUIGrid *GUICreateGrid(GUIWindow *);
+GUILabel *GUICreateLabel();
+GUIIcon *GUICreateIcon();
+GUIButton *GUICreateButton();
+GUIBar *GUICreateBar();
+GUIList *GUICreateList();
+GUIGrid *GUICreateGrid();
 GUITooltip *GUICreateTooltip();
 GUIContextMenu *GUICreateContextMenu();
 
 // Utility
-bool InRegion(int, int, int, int);
-void DrawBorder(int, int, int, int, str, str);
-
-// Effects
-NamedScript void DrawScanLine();
+void DrawBorder(str, int, int, int, int, int);
 
 // Creation
 void CreateTabs();
-NamedScript void UpdateMainWindow();
+//NamedScript void UpdateMainWindow();
 
 #endif

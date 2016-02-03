@@ -211,7 +211,10 @@ NamedScript Type_ENTER void Init()
             Player.NewShieldAccessoryParts[i] = true;
         
         // Setup first payout
-        Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");        
+        Player.PayTimer = 35 * 60 * GetCVar("drpg_pay_interval");     
+        
+        // Build this player's GUI menu
+        CreateGUIMenu();
         
         // Done first run
         Player.FirstRun = true;
@@ -275,11 +278,6 @@ NamedScript Type_ENTER void Init()
     HealthBars();
     AutosaveHandler();
     ShopItemAutoHandler();
-    
-    // GUI
-	CheckGUI();
-	CheckCursor();
-    // UpdateMenu();
 }
 
 // Loop Script
@@ -1523,11 +1521,6 @@ NamedScript Type_RESPAWN void Respawn()
     InfoPopoffs();
     HealthBars();
     ShieldTimer();
-    
-    // GUI
-	CheckGUI();
-	CheckCursor();
-    // UpdateMenu();
     
     // NU-YU Accessory
     if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_HYPERION)

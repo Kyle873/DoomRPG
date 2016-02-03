@@ -274,21 +274,21 @@ typedef enum
 // Windows
 typedef enum
 {
-    WINDOW_MAIN,
-    WINDOW_STATS,
-    WINDOW_AUGS,
-    WINDOW_SKILLS,
-    WINDOW_SHIELD,
-    WINDOW_STIMS,
-    WINDOW_TURRET,
-    WINDOW_SHOP,
-    WINDOW_PAYOUT,
-    WINDOW_MISSION,
-    WINDOW_TRANSPORT,
-    WINDOW_TEAM,
-    WINDOW_TIPS,
-    WINDOW_MAX
-} EWindowTypes;
+    PANEL_MAIN,
+    PANEL_STATS,
+    PANEL_AUGS,
+    PANEL_SKILLS,
+    PANEL_SHIELD,
+    PANEL_STIMS,
+    PANEL_TURRET,
+    PANEL_SHOP,
+    PANEL_PAYOUT,
+    PANEL_MISSION,
+    PANEL_TRANSPORT,
+    PANEL_TEAM,
+    PANEL_TIPS,
+    PANEL_MAX
+} EPanelTypes;
 
 // Label Alignments
 typedef enum
@@ -1067,18 +1067,31 @@ typedef struct AugInfo_S            AugInfo;
 typedef struct CharSaveInfo_S       CharSaveInfo;
 
 // GUI
+// [KS] This is how it's basically gonna look:
+// GUIData
+// +--GUIMouseInfo
+// |  +--GUIContextMenu
+// |  +--GUITooltip
+// +--GUITabStrip
+//    +--GUIPanel
+//       +--GUILabel
+//       +--GUIIcon
+//       +--GUIButton
+//       +--GUIBar
+//       +--GUIList
+//       +--GUIGrid
 typedef struct GUIData_S            GUIData;
 typedef struct GUIMouseInfo_S       GUIMouseInfo;
+typedef struct GUIContextMenu_S     GUIContextMenu;
+typedef struct GUITooltip_S         GUITooltip;
 typedef struct GUITabStrip_S        GUITabStrip;
-typedef struct GUIWindow_S          GUIWindow;
+typedef struct GUIPanel_S           GUIPanel;
 typedef struct GUILabel_S           GUILabel;
 typedef struct GUIIcon_S            GUIIcon;
 typedef struct GUIButton_S          GUIButton;
 typedef struct GUIBar_S             GUIBar;
 typedef struct GUIList_S            GUIList;
 typedef struct GUIGrid_S            GUIGrid;
-typedef struct GUITooltip_S         GUITooltip;
-typedef struct GUIContextMenu_S     GUIContextMenu;
 
 // Health Bars
 typedef struct HUDBarInfo_S         HUDBarInfo;
