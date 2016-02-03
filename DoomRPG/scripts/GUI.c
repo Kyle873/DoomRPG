@@ -394,6 +394,9 @@ bool InRegion(int X, int Y, int Width, int Height)
 
 void UpdateTabs()
 {
+    for (int i = 0; i < PANEL_MAX; i++)
+        Player.GUI.TabStrip.Tabs[i].Enabled = true;
+    
     if (!InMultiplayer)
         Player.GUI.TabStrip.Tabs[PANEL_TEAM].Enabled = false;
     
@@ -410,7 +413,7 @@ void UpdateTabs()
     
     int CurrentID = GUI_PANEL_ID;
     
-    for (int i = 0; StrLen(Player.GUI.TabStrip.Tabs[i].Icon) != 0; i++)
+    for (int i = 0; i < PANEL_MAX; i++)
     {
         int X = 22 + i * 38;
         int Y = 22;

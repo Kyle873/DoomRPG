@@ -53,6 +53,8 @@ NamedScript Type_ENTER void StatusEffectHUD()
     
     Start: NOP; // [KS] C doesn't allow declarations after labels, so we need this.
     
+    if (Player.GUI.Open) { Delay(1); goto Start;}
+    
     fixed X = GetActivatorCVar("drpg_stateffect_x");
     fixed Y = GetActivatorCVar("drpg_stateffect_y");
     
@@ -151,6 +153,8 @@ NamedScript Type_ENTER void CreditHUD()
     // If we're on the title map, terminate
     if (InTitle) return;
     
+    if (Player.GUI.Open) { Delay(1); goto Start;}
+    
     Credits.Value = CheckInventory("DRPGCredits");
     Modules.Value = CheckInventory("DRPGModule");
     CreditColor = (Timer() / (35 * 60)) % 6;
@@ -233,6 +237,8 @@ NamedScript Type_ENTER void ComboHUD()
     // If we're on the title map, terminate
     if (InTitle) return;
     
+    if (Player.GUI.Open) { Delay(1); goto Start;}
+    
     fixed X = GetActivatorCVar("drpg_combo_x");
     fixed Y = GetActivatorCVar("drpg_combo_y");
     
@@ -301,6 +307,8 @@ NamedScript Type_ENTER void SkillHUD()
 {
     Start: NOP;
     
+    if (Player.GUI.Open) { Delay(1); goto Start;}
+    
     fixed X = GetActivatorCVar("drpg_skill_x");
     fixed Y = GetActivatorCVar("drpg_skill_y");
     
@@ -341,6 +349,8 @@ NamedScript Type_ENTER void SkillHUD()
 NamedScript void StimHUD()
 {
     Start: NOP;
+    
+    if (Player.GUI.Open) { Delay(1); goto Start;}
     
     fixed X = GetActivatorCVar("drpg_stim_x");
     fixed Y = GetActivatorCVar("drpg_stim_y");
@@ -405,6 +415,8 @@ NamedScript Type_ENTER void MissionHUD()
 {
     Start: NOP;
     
+    if (Player.GUI.Open) { Delay(1); goto Start;}
+    
     int OldAmount = Player.Mission.Current;
     fixed X = GetActivatorCVar("drpg_mission_x");
     fixed Y = GetActivatorCVar("drpg_mission_y");
@@ -465,6 +477,8 @@ NamedScript Type_ENTER void MissionHUD()
 NamedScript Type_ENTER void AuraTimerHUD()
 {
     Start: NOP;
+    
+    if (Player.GUI.Open) { Delay(1); goto Start;}
     
     fixed Offset = 0;
     
@@ -528,6 +542,8 @@ NamedScript Type_ENTER void AuraTimerHUD()
 NamedScript Type_ENTER void PowerupHUD()
 {
     Start: NOP;
+    
+    if (Player.GUI.Open) { Delay(1); goto Start;}
     
     fixed BaseX = GetActivatorCVar("drpg_powerup_x");
     fixed BaseY = GetActivatorCVar("drpg_powerup_y");
@@ -724,6 +740,8 @@ NamedScript Type_ENTER void EventHUD()
     
     Start: NOP;
     
+    if (Player.GUI.Open) { Delay(1); goto Start;}
+    
     fixed X = GetActivatorCVar("drpg_event_x");
     fixed Y = GetActivatorCVar("drpg_event_y");
     
@@ -814,6 +832,8 @@ NamedScript Type_ENTER void CoopViewHUD()
 {
     Start:
     
+    if (Player.GUI.Open) { Delay(1); goto Start;}
+    
     while (Player.PlayerView != PlayerNumber())
     {
         fixed X = GetActivatorCVar("drpg_coopview_x");
@@ -836,6 +856,8 @@ NamedScript Type_ENTER void CoopViewHUD()
 NamedScript void MultiplayerHUD()
 {
     Start:
+    
+    if (Player.GUI.Open) { Delay(1); goto Start;}
     
     while ((InMultiplayer && GetActivatorCVar("drpg_multiplayer_hud")) || GetActivatorCVar("drpg_hud_preview"))
     {
@@ -901,6 +923,8 @@ NamedScript Type_ENTER void TurretHUD()
     Health.TimerMaxCap = 2;
     
     Start:
+    
+    if (Player.GUI.Open) { Delay(1); goto Start;}
     
     while (Player.Turret.Active || Player.Turret.Maintenance || GetActivatorCVar("drpg_hud_preview"))
     {
@@ -1016,6 +1040,8 @@ NamedScript Type_ENTER void StatHUD()
 
     Start:
     
+    if (Player.GUI.Open) { Delay(1); goto Start;}
+    
     for (int i = 0; i < STAT_MAX; i++)
         Change[i] = false;
     
@@ -1051,6 +1077,8 @@ NamedScript Type_ENTER void StatHUD()
 
 NamedScript void DamageHUD(int Amount, bool Critical)
 {
+    if (Player.GUI.Open) { return; }
+    
     // Return if the CVAR is disabled
     if (!GetActivatorCVar("drpg_damagenumbers_hud")) return;
     
@@ -1130,6 +1158,8 @@ NamedScript Type_ENTER void DRLAHUD()
     
     // If we're on the title map, terminate
     if (InTitle) return;
+    
+    if (Player.GUI.Open) { Delay(1); goto Start;}
     
     fixed Offset;
     
