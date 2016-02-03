@@ -164,8 +164,8 @@ void HandleTabStrip(GUITabStrip *TabStrip)
     
     for (int i = 0; StrLen(TabStrip->Icon[i]) != 0; i++)
     {
-        int X = 18 + i * 38;
-        int Y = 18;
+        int X = 22 + i * 38;
+        int Y = 22;
         
         if (InRegion(X - 17, Y - 19, 34, 38) && TabStrip->Enabled[i])
         {
