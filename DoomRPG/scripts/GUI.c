@@ -32,82 +32,121 @@ NamedScript void CreateGUIMenu()
 void CreateTabs()
 {
     Player.GUI.TabStrip.Tabs[PANEL_MAIN].Icon = "TMain";
+    Player.GUI.TabStrip.Tabs[PANEL_MAIN].HighlightedIcon = "HMain";
     Player.GUI.TabStrip.Tabs[PANEL_MAIN].Title = "Overview";
     Player.GUI.TabStrip.Tabs[PANEL_MAIN].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_MAIN].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_MAIN].Tooltip->Text = "Overview";
+    Player.GUI.TabStrip.Tabs[PANEL_MAIN].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_MAIN].Tooltip->Title = "Overview";
+    Player.GUI.TabStrip.Tabs[PANEL_MAIN].Tooltip->Text = "A quick look at your numbers.";
     
     Player.GUI.TabStrip.Tabs[PANEL_STATS].Icon = "TStats";
+    Player.GUI.TabStrip.Tabs[PANEL_STATS].HighlightedIcon = "HStats";
     Player.GUI.TabStrip.Tabs[PANEL_STATS].Title = "\CgStats";
     Player.GUI.TabStrip.Tabs[PANEL_STATS].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_STATS].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_STATS].Tooltip->Text = "\CgStats";
+    Player.GUI.TabStrip.Tabs[PANEL_STATS].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_STATS].Tooltip->Title = "\CgStats";
+    Player.GUI.TabStrip.Tabs[PANEL_STATS].Tooltip->Text = "A check on your survivability.";
     
     Player.GUI.TabStrip.Tabs[PANEL_AUGS].Icon = "TAugs";
-    Player.GUI.TabStrip.Tabs[PANEL_AUGS].Title = "\CkAugmentations";
+    Player.GUI.TabStrip.Tabs[PANEL_AUGS].HighlightedIcon = "HAugs";
+    Player.GUI.TabStrip.Tabs[PANEL_AUGS].Title = "\CkAugments";
     Player.GUI.TabStrip.Tabs[PANEL_AUGS].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_AUGS].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_AUGS].Tooltip->Text = "\CkAugmentations";
+    Player.GUI.TabStrip.Tabs[PANEL_AUGS].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_AUGS].Tooltip->Title = "\CkAugments";
+    Player.GUI.TabStrip.Tabs[PANEL_AUGS].Tooltip->Text = "Upgrades, for your eyes and more.";
     
     Player.GUI.TabStrip.Tabs[PANEL_SKILLS].Icon = "TSkills";
+    Player.GUI.TabStrip.Tabs[PANEL_SKILLS].HighlightedIcon = "HSkills";
     Player.GUI.TabStrip.Tabs[PANEL_SKILLS].Title = "\CnSkills";
     Player.GUI.TabStrip.Tabs[PANEL_SKILLS].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_SKILLS].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_SKILLS].Tooltip->Text = "\CnSkills";
+    Player.GUI.TabStrip.Tabs[PANEL_SKILLS].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_SKILLS].Tooltip->Title = "\CnSkills";
+    Player.GUI.TabStrip.Tabs[PANEL_SKILLS].Tooltip->Text = "Flamethrowers, summons, and auras.";
     
     Player.GUI.TabStrip.Tabs[PANEL_SHIELD].Icon = "TShield";
+    Player.GUI.TabStrip.Tabs[PANEL_SHIELD].HighlightedIcon = "HShield";
     Player.GUI.TabStrip.Tabs[PANEL_SHIELD].Title = "\CvShield";
     Player.GUI.TabStrip.Tabs[PANEL_SHIELD].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_SHIELD].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_SHIELD].Tooltip->Text = "\CvShield";
+    Player.GUI.TabStrip.Tabs[PANEL_SHIELD].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_SHIELD].Tooltip->Title = "\CvShield";
+    Player.GUI.TabStrip.Tabs[PANEL_SHIELD].Tooltip->Text = "An alternative to getting shot.";
     
     Player.GUI.TabStrip.Tabs[PANEL_STIMS].Icon = "TStims";
+    Player.GUI.TabStrip.Tabs[PANEL_STIMS].HighlightedIcon = "HStims";
     Player.GUI.TabStrip.Tabs[PANEL_STIMS].Title = "\CcStims";
     Player.GUI.TabStrip.Tabs[PANEL_STIMS].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_STIMS].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_STIMS].Tooltip->Text = "\CcStims";
+    Player.GUI.TabStrip.Tabs[PANEL_STIMS].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_STIMS].Tooltip->Title = "\CcStims";
+    Player.GUI.TabStrip.Tabs[PANEL_STIMS].Tooltip->Text = "Intravenous murder-boosters.";
     
     Player.GUI.TabStrip.Tabs[PANEL_TURRET].Icon = "TTurret";
+    Player.GUI.TabStrip.Tabs[PANEL_TURRET].HighlightedIcon = "HTurret";
     Player.GUI.TabStrip.Tabs[PANEL_TURRET].Title = "\CdTurret";
     Player.GUI.TabStrip.Tabs[PANEL_TURRET].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_TURRET].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_TURRET].Tooltip->Text = "\CdTurret";
+    Player.GUI.TabStrip.Tabs[PANEL_TURRET].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_TURRET].Tooltip->Title = "\CdTurret";
+    Player.GUI.TabStrip.Tabs[PANEL_TURRET].Tooltip->Text = "Your best beepy little buddy.";
     
     Player.GUI.TabStrip.Tabs[PANEL_SHOP].Icon = "TShop";
+    Player.GUI.TabStrip.Tabs[PANEL_SHOP].HighlightedIcon = "HShop";
     Player.GUI.TabStrip.Tabs[PANEL_SHOP].Title = "\CfShop";
     Player.GUI.TabStrip.Tabs[PANEL_SHOP].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_SHOP].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_SHOP].Tooltip->Text = "\CfShop";
+    Player.GUI.TabStrip.Tabs[PANEL_SHOP].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_SHOP].Tooltip->Title = "\CfShop";
+    Player.GUI.TabStrip.Tabs[PANEL_SHOP].Tooltip->Text = "Purchase your necessities here.";
     
     Player.GUI.TabStrip.Tabs[PANEL_PAYOUT].Icon = "TPayout";
+    Player.GUI.TabStrip.Tabs[PANEL_PAYOUT].HighlightedIcon = "HPayout";
     Player.GUI.TabStrip.Tabs[PANEL_PAYOUT].Title = "\CfPayout";
     Player.GUI.TabStrip.Tabs[PANEL_PAYOUT].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_PAYOUT].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_PAYOUT].Tooltip->Text = "\CfPayout";
+    Player.GUI.TabStrip.Tabs[PANEL_PAYOUT].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_PAYOUT].Tooltip->Title = "\CfPayout";
+    Player.GUI.TabStrip.Tabs[PANEL_PAYOUT].Tooltip->Text = "Rewards for good performance.";
     
     Player.GUI.TabStrip.Tabs[PANEL_MISSION].Icon = "TMission";
+    Player.GUI.TabStrip.Tabs[PANEL_MISSION].HighlightedIcon = "HMission";
     Player.GUI.TabStrip.Tabs[PANEL_MISSION].Title = "\CaMissions";
     Player.GUI.TabStrip.Tabs[PANEL_MISSION].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_MISSION].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_MISSION].Tooltip->Text = "\CaMissions";
+    Player.GUI.TabStrip.Tabs[PANEL_MISSION].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_MISSION].Tooltip->Title = "\CaMissions";
+    Player.GUI.TabStrip.Tabs[PANEL_MISSION].Tooltip->Text = "Optional challenges, better pay.";
     
     Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].Icon = "TTrans";
+    Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].HighlightedIcon = "HTrans";
     Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].Title = "\ChTransport";
     Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].Tooltip->Text = "\ChTransport";
+    Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].Tooltip->Title = "\ChTransport";
+    Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].Tooltip->Text = "An overview of the world.";
     
     Player.GUI.TabStrip.Tabs[PANEL_TEAM].Icon = "TTeam";
+    Player.GUI.TabStrip.Tabs[PANEL_TEAM].HighlightedIcon = "HTeam";
     Player.GUI.TabStrip.Tabs[PANEL_TEAM].Title = "\CqTeam";
     Player.GUI.TabStrip.Tabs[PANEL_TEAM].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_TEAM].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_TEAM].Tooltip->Text = "\CqTeam";
+    Player.GUI.TabStrip.Tabs[PANEL_TEAM].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_TEAM].Tooltip->Title = "\CqTeam";
+    Player.GUI.TabStrip.Tabs[PANEL_TEAM].Tooltip->Text = "An opinion on your teammates.";
     
     Player.GUI.TabStrip.Tabs[PANEL_TIPS].Icon = "TTips";
+    Player.GUI.TabStrip.Tabs[PANEL_TIPS].HighlightedIcon = "HTips";
     Player.GUI.TabStrip.Tabs[PANEL_TIPS].Title = "\CuTips";
     Player.GUI.TabStrip.Tabs[PANEL_TIPS].Enabled = true;
     Player.GUI.TabStrip.Tabs[PANEL_TIPS].Tooltip = GUICreateTooltip();
-    Player.GUI.TabStrip.Tabs[PANEL_TIPS].Tooltip->Text = "\CuTips";
+    Player.GUI.TabStrip.Tabs[PANEL_TIPS].Tooltip->Type = TT_TITLE;
+    Player.GUI.TabStrip.Tabs[PANEL_TIPS].Tooltip->Title = "\CuTips";
+    Player.GUI.TabStrip.Tabs[PANEL_TIPS].Tooltip->Text = "For when you just don't know.";
     
     Player.GUI.TabStrip.Tabs[PANEL_MAX].Icon = "";
     Player.GUI.TabStrip.Tabs[PANEL_MAX].Title = "";
@@ -131,8 +170,9 @@ NamedScript void UpdateGUIMenu()
     while (Player.GUI.Open)
     {
         Player.GUI.Mouse.ActiveTooltip = NULL;
-        UpdateGUICursor();
+        
         UpdateTabs();
+        UpdateGUICursor();
         DrawBackgroundWindow();
         
         Delay(1);
@@ -146,7 +186,7 @@ NamedScript void DrawBackgroundWindow()
 {
     SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
     
-    DrawBorder("Bor", 8, WINDOW_X, WINDOW_Y, GUI_WIDTH, GUI_HEIGHT);
+    DrawBorder("Bor", GUI_BACK_ID - 10, 8, WINDOW_X, WINDOW_Y, GUI_WIDTH, GUI_HEIGHT);
     
     SetHudClipRect(0, 0, 0, 0);
     
@@ -155,8 +195,8 @@ NamedScript void DrawBackgroundWindow()
     else
         Player.GUI.GlowLine.Delay--;
     
-    PrintSpriteAddAlpha("GStatic1", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03, 0.5);
-    PrintSpriteAlpha("GUIBack", 0, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03, 0.75);
+    PrintSpriteAddAlpha("GStatic1", GUI_BACK_ID - 1, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03, 0.5);
+    PrintSpriteAlpha("GUIBack", GUI_BACK_ID, WINDOW_X + 0.1, WINDOW_Y + 0.1, 0.03, 0.75);
 }
 
 NamedScript void DrawGlowLine()
@@ -164,7 +204,7 @@ NamedScript void DrawGlowLine()
     SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
     
     SetHudClipRect(WINDOW_X, WINDOW_Y, GUI_WIDTH, GUI_HEIGHT);
-    PrintSpriteAdd("ScanLine", 0, 0.1, (fixed)Player.GUI.GlowLine.Position + 0.1, 0.03);
+    PrintSpriteAdd("ScanLine", GUI_BACK_ID - 2, 0.1, (fixed)Player.GUI.GlowLine.Position + 0.1, 0.03);
     SetHudClipRect(0, 0, 0, 0);
     
     Player.GUI.GlowLine.Position += 4;
@@ -222,7 +262,7 @@ NamedScript void UpdateGUICursor()
         Player.GUI.Mouse.RightButton = false;
     
     // Draw Cursor
-    PrintSprite("Cursor", 0, (fixed)Player.GUI.Mouse.X + 0.1, (fixed)Player.GUI.Mouse.Y + 0.1, 0.05);
+    PrintSprite("Cursor", GUI_CURSOR_ID, (fixed)Player.GUI.Mouse.X + 0.1, (fixed)Player.GUI.Mouse.Y + 0.1, 0.03);
     
     if (Player.GUI.Mouse.ActiveTooltip != NULL)
         DrawTooltip(Player.GUI.Mouse.ActiveTooltip);
@@ -272,7 +312,7 @@ void DrawTooltip(GUITooltip *Tooltip)
             Longest = StrLen(Text);
         if (!Longest)
             Longest = 1;
-        Width = Longest * 7;
+        Width = Longest * 10;
     }
     if (Height == 0)
     {
@@ -302,7 +342,7 @@ void DrawTooltip(GUITooltip *Tooltip)
             // Text
             SetFont("SMALLFONT");
             HudMessage("%S", Tooltip->Text);
-            EndHudMessage(HUDMSG_PLAIN, 0, Color, X + (NoBack ? 0.1 : 4.1), Y + (NoBack ? 0.1 : 4.1), 0.05);
+            EndHudMessage(HUDMSG_PLAIN, GUI_CURSOR_ID + 5, Color, X + (NoBack ? 0.1 : 4.1), Y + (NoBack ? 0.1 : 4.1), 0.03);
         }
         
         // Basic Tooltip with Title
@@ -324,19 +364,20 @@ void DrawTooltip(GUITooltip *Tooltip)
             // Title
             SetFont("BIGFONT");
             HudMessage("%S", Tooltip->Title);
-            EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 8.1, Y + 16.0, 0.05);
+            EndHudMessage(HUDMSG_PLAIN, GUI_CURSOR_ID + 5, "White", X + 8.1, Y + 16.0, 0.03);
             
             // Text
             SetFont("SMALLFONT");
             HudMessage("%S", Tooltip->Text);
-            EndHudMessage(HUDMSG_PLAIN, 0, Color, X + 8.1, Y + 32.1, 0.05);
+            EndHudMessage(HUDMSG_PLAIN, GUI_CURSOR_ID + 6, Color, X + 8.1, Y + 32.1, 0.03);
         }
         
         // Draw Background
         if (!NoBack)
         {
+            DrawBorder("Bor", GUI_CURSOR_ID + 7, 8, X, Y, Width, Height);
             SetHudClipRect(X, Y, Width, Height);
-            PrintSprite("GUIBack", 0, X + (Width / 2), Y + (Height / 2), 0.05);
+            PrintSprite("GUIBack", GUI_CURSOR_ID + 15, X + (Width / 2), Y + (Height / 2), 0.03);
             SetHudClipRect(0, 0, 0, 0);
         }
     }
@@ -353,7 +394,21 @@ bool InRegion(int X, int Y, int Width, int Height)
 
 void UpdateTabs()
 {
+    if (!InMultiplayer)
+        Player.GUI.TabStrip.Tabs[PANEL_TEAM].Enabled = false;
+    
+    if (!CurrentLevel || !(CurrentLevel->UACBase))
+    {
+        Player.GUI.TabStrip.Tabs[PANEL_MISSION].Enabled = false;
+        Player.GUI.TabStrip.Tabs[PANEL_TRANSPORT].Enabled = false;
+    }
+    
+    if (!CurrentLevel || !CurrentLevel->UACBase && !GetCVar("drpg_shoptype"))
+        Player.GUI.TabStrip.Tabs[PANEL_SHOP].Enabled = false;
+    
     SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
+    
+    int CurrentID = GUI_PANEL_ID;
     
     for (int i = 0; StrLen(Player.GUI.TabStrip.Tabs[i].Icon) != 0; i++)
     {
@@ -366,16 +421,24 @@ void UpdateTabs()
             ActivatorSound("gui/open", 127);
         }
         
-        if (InRegion(X - 17, Y - 19, 34, 38) && Player.GUI.TabStrip.Tabs[i].Enabled)
+        if (Player.GUI.TabStrip.ActiveTab != i && InRegion(X - 17, Y - 19, 34, 38) && Player.GUI.TabStrip.Tabs[i].Enabled)
         {
             Player.GUI.Mouse.ActiveTooltip = Player.GUI.TabStrip.Tabs[i].Tooltip;
             
-            PrintSpritePulse(Player.GUI.TabStrip.Tabs[i].Icon, 0, X, Y, 0.75, 32.0, 0.25, false);
+            PrintSpritePulse(Player.GUI.TabStrip.Tabs[i].Icon, CurrentID++, X, Y, 0.75, 32.0, 0.25, false);
+        }
+        else if (Player.GUI.TabStrip.ActiveTab == i)
+        {
+            PrintSprite(Player.GUI.TabStrip.Tabs[i].HighlightedIcon, CurrentID++, X, Y, 0.03);
+
+            SetFont("BIGFONT");
+            HudMessage("%S", Player.GUI.TabStrip.Tabs[i].Title);
+            EndHudMessage(HUDMSG_PLAIN, CurrentID++, "White", X - 17 + 0.1, Y + 21 + 0.1, 0.03);
         }
         else if (!Player.GUI.TabStrip.Tabs[i].Enabled)
-            PrintSpritePulse(Player.GUI.TabStrip.Tabs[i].Icon, 0, X, Y, 0.25, 256.0, 0.25, true);
+            PrintSpritePulse(Player.GUI.TabStrip.Tabs[i].Icon, CurrentID++, X, Y, 0.25, 256.0, 0.25, true);
         else
-            PrintSprite(Player.GUI.TabStrip.Tabs[i].Icon, 0, X, Y, 0.05);
+            PrintSprite(Player.GUI.TabStrip.Tabs[i].Icon, CurrentID++, X, Y, 0.03);
     }
 }
 
@@ -796,24 +859,25 @@ GUIContextMenu *GUICreateContextMenu()
     return ContextMenu;
 }
 
-void DrawBorder(str Prefix, int BorderSize, int X, int Y, int Width, int Height)
+void DrawBorder(str Prefix, int StartID, int BorderSize, int X, int Y, int Width, int Height)
 {
     // Border corners
     
-    PrintSprite(StrParam("%STL", Prefix), 0, X + 0.1, Y + 0.1, 0.03);
-    PrintSprite(StrParam("%STR", Prefix), 0, X + Width + 0.2, Y + 0.1, 0.03);
-    PrintSprite(StrParam("%SBL", Prefix), 0, X + 0.1, Height + 0.2, 0.03);
-    PrintSprite(StrParam("%SBR", Prefix), 0, X + Width + 0.2, Height + 0.2, 0.03);
+    PrintSprite(StrParam("%STL", Prefix), StartID++, X + 0.1, Y + 0.1, 0.03);
+    PrintSprite(StrParam("%STR", Prefix), StartID++, X + Width + 0.2, Y + 0.1, 0.03);
+    PrintSprite(StrParam("%SBL", Prefix), StartID++, X + 0.1, Y + Height + 0.2, 0.03);
+    PrintSprite(StrParam("%SBR", Prefix), StartID++, X + Width + 0.2, Y + Height + 0.2, 0.03);
     
     // Border sides
-    SetHudClipRect(X, Y, BorderSize, Height - Y - BorderSize);
-    PrintSprite(StrParam("%SL", Prefix), 0, X + 0.1, Y + 0.1, 0.03);
-    SetHudClipRect(X + Width - BorderSize, Y, BorderSize, Height - Y - BorderSize);
-    PrintSprite(StrParam("%SR", Prefix), 0, X + Width + 0.2, Y + 0.1, 0.03);
-    SetHudClipRect(X + BorderSize, Y, Width - BorderSize, BorderSize);
-    PrintSprite(StrParam("%ST", Prefix), 0, X + BorderSize + 0.1, Y + 0.1, 0.03);
-    SetHudClipRect(X + BorderSize, Height - BorderSize, Width - BorderSize, BorderSize);
-    PrintSprite(StrParam("%SB", Prefix), 0, X + BorderSize + 0.1, Height + 0.2, 0.03);
+    SetHudClipRect(X, Y + BorderSize, BorderSize, Height - (BorderSize * 2));
+    PrintSprite(StrParam("%SL", Prefix), StartID++, X + 0.1, Y + 0.1, 0.03);
+    SetHudClipRect(X + Width - BorderSize, Y + BorderSize, BorderSize, Height - (BorderSize * 2));
+    PrintSprite(StrParam("%SR", Prefix), StartID++, X + Width + 0.2, Y + 0.1, 0.03);
+    SetHudClipRect(X + BorderSize, Y, Width - (BorderSize * 2), BorderSize);
+    PrintSprite(StrParam("%ST", Prefix), StartID++, X + BorderSize + 0.1, Y + 0.1, 0.03);
+    SetHudClipRect(X + BorderSize, Y + Height - BorderSize, Width - (BorderSize * 2), BorderSize);
+    PrintSprite(StrParam("%SB", Prefix), StartID, X + BorderSize + 0.1, Y + Height + 0.2, 0.03);
+    SetHudClipRect(0, 0, 0, 0);
 }
 
 // --------------------------------------------------

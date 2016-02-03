@@ -281,9 +281,16 @@ struct GUIPanel_S
 
 struct GUITabStrip_S
 {
+    int X;
+    int Y;
+    int TabHeight;
+    int TabWidth;
+    int TabSpacing;
+    
     struct
     {
         str Icon;
+        str HighlightedIcon;
         str Title;
         bool Enabled;
         struct GUITooltip_S *Tooltip;

@@ -42,7 +42,7 @@ GUITooltip *GUICreateTooltip();
 GUIContextMenu *GUICreateContextMenu();
 
 // Utility
-void DrawBorder(str, int, int, int, int, int);
+void DrawBorder(str, int, int, int, int, int, int);
 
 // Creation
 void CreateTabs();
