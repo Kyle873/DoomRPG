@@ -7,6 +7,9 @@
 #include "RPG.h"
 #include "Utils.h"
 
+static fixed GUITestX = 0.0;
+static fixed GUITestY = 0.0;
+
 NamedScript Console void ToggleGUI()
 {
 	Player.GUI.Open = !Player.GUI.Open;
@@ -157,6 +160,8 @@ NamedScript void CheckGUI()
 
 void HandleTabStrip(GUITabStrip *TabStrip)
 {
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
+    
     for (int i = 0; StrLen(TabStrip->Icon[i]) != 0; i++)
     {
         int X = 18 + i * 38;
@@ -176,10 +181,6 @@ void HandleTabStrip(GUITabStrip *TabStrip)
         else
             PrintSprite(TabStrip->Icon[i], 0, X, Y, 0.05);
     }
-    
-    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
-	PrintSpritePulse("TabBack", 0, 0.1, 0.1, 0.85, 512.0, 0.15);
-	DrawBorder(0, 0, GUI_WIDTH, 36, "BarHorz", "BarVertT");
 }
 
 void HandleWindow(GUIWindow *Window)
@@ -225,7 +226,7 @@ void HandleLabel(GUILabel *Label)
 	str Text = Label->Text;
 	int Alignment = Label->Alignment;
 	fixed X = WINDOW_X + Label->X;
-	fixed Y = WINDOW_Y + Label->Y;
+	fixed Y = WINDOW_Y + Label->Y + 32;
 	int Width = Label->Width;
 	int Height = Label->Height;
 	str Color = Label->Color;
@@ -280,7 +281,7 @@ void HandleIcon(GUIIcon *Icon)
     
 	str Texture = Icon->Texture;
 	int X = WINDOW_X + Icon->X;
-	int Y = WINDOW_Y + Icon->Y;
+	int Y = WINDOW_Y + Icon->Y + 32;
 	int XOff = Icon->XOff;
 	int YOff = Icon->YOff;
 	int Width = Icon->Width;
@@ -324,7 +325,7 @@ void HandleButton(GUIButton *Button)
 
 	str Text = Button->Text;
 	int X = WINDOW_X + Button->X;
-	int Y = WINDOW_Y + Button->Y;
+	int Y = WINDOW_Y + Button->Y + 32;
 	int Width = Button->Width;
 	int Height = Button->Height;
 	str Color = Button->Color;
@@ -381,7 +382,7 @@ void HandleBar(GUIBar *Bar)
 	if (!Bar->Visible) return;
 
 	int X = WINDOW_X + Bar->X;
-	int Y = WINDOW_Y + Bar->Y;
+	int Y = WINDOW_Y + Bar->Y + 32;
 	int Width = Bar->Width;
 	int Height = Bar->Height;
 	int Value = Bar->Value;
@@ -430,7 +431,7 @@ void HandleList(GUIList *List)
 	List->Selected = -1;
 	
 	int X = WINDOW_X + List->X;
-	int Y = WINDOW_Y + List->Y;
+	int Y = WINDOW_Y + List->Y + 32;
 	int Shown = List->Shown;
 	int Offset = List->Offset;
 	str *Entries;
@@ -946,12 +947,14 @@ void CreateTabs()
 NamedScript void UpdateMainWindow()
 {
     GUIWindow *Window = GUICreateWindow();
+    Player.GUI.Window[WINDOW_MAIN] = Window;
     
     // --------------------------------------------------
     // Player Sprite
     //
     
     str PlayerSprite = "PLAYA1";
+    
     GUIIcon *PlayerSpriteIcon = GUICreateIcon(Window);
     
     if (CompatMode == COMPAT_DRLA)
@@ -1017,9 +1020,166 @@ NamedScript void UpdateMainWindow()
     // Totals
     //
     
+    // TODO: Put DRLA stuff below the inventory/ammo totals
+    
+    GUIIcon *ModuleIcon = GUICreateIcon(Window);
+    GUIIcon *TurretPartsIcon = GUICreateIcon(Window);
+    GUIIcon *AugChargeIcon = GUICreateIcon(Window);
+    GUIIcon *AugSlotsIcon = GUICreateIcon(Window);
+    GUIIcon *AugCanistersIcon = GUICreateIcon(Window);
+    GUIIcon *AugUpgradesIcon = GUICreateIcon(Window);
+    GUIIcon *StimsIcon = GUICreateIcon(Window);
+    GUIIcon *ChipsGoldIcon = GUICreateIcon(Window);
+    GUIIcon *ChipsPlatIcon = GUICreateIcon(Window);
+    GUIIcon *InventoryIcon = GUICreateIcon(Window);
+    
+    GUILabel *ModuleLabel = GUICreateLabel(Window);
+    GUILabel *TurretPartsLabel = GUICreateLabel(Window);
+    GUILabel *AugChargeLabel = GUICreateLabel(Window);
+    GUILabel *AugSlotsLabel = GUICreateLabel(Window);
+    GUILabel *AugUpgradesLabel = GUICreateLabel(Window);
+    GUILabel *StimsLabel = GUICreateLabel(Window);
+    GUILabel *ChipsGoldLabel = GUICreateLabel(Window);
+    GUILabel *ChipsPlatLabel = GUICreateLabel(Window);
+    GUILabel *InventoryLabel = GUICreateLabel(Window);
+    
+    ModuleIcon->Texture = "UMODA0";
+    ModuleIcon->X = 40;
+    ModuleIcon->Y = 128;
+    
+    TurretPartsIcon->Texture = "TPRTA0";
+    TurretPartsIcon->X = 40;
+    TurretPartsIcon->Y = 160;
+    
+    AugChargeIcon->Texture = "AUGBATT";
+    AugChargeIcon->X = 40;
+    AugChargeIcon->Y = 180;
+    
+    AugSlotsIcon->Texture = "AUGUB0";
+    AugSlotsIcon->X = 40;
+    AugSlotsIcon->Y = 210;
+    
+    AugCanistersIcon->Texture = "AUGCA0";
+    AugCanistersIcon->X = 32;
+    AugCanistersIcon->Y = 236;
+    
+    AugUpgradesIcon->Texture = "AUGUA0";
+    AugUpgradesIcon->X = 48;
+    AugUpgradesIcon->Y = 230;
+    
+    StimsIcon->Texture = "STIMB0";
+    StimsIcon->X = 40;
+    StimsIcon->Y = 280;
+    
+    ChipsGoldIcon->Texture = "CHIPGOLD";
+    ChipsGoldIcon->X = 24;
+    ChipsGoldIcon->Y = 300;
+    
+    ChipsPlatIcon->Texture = "CHIPPLAT";
+    ChipsPlatIcon->X = 24;
+    ChipsPlatIcon->Y = 336;
+    
+    InventoryIcon->Texture = "GPAKA0";
+    InventoryIcon->X = 40;
+    InventoryIcon->Y = 428;
+    
+    ModuleLabel->X = 84;
+    ModuleLabel->Y = 116;
+    ModuleLabel->Color = "Green";
+    ModuleLabel->Big = true;
+    
+    TurretPartsLabel->X = 84;
+    TurretPartsLabel->Y = 148;
+    TurretPartsLabel->Color = "White";
+    TurretPartsLabel->Big = true;
+    
+    AugChargeLabel->X = 84;
+    AugChargeLabel->Y = 180;
+    AugChargeLabel->Color = "Yellow";
+    AugChargeLabel->Big = true;
+    
+    AugSlotsLabel->X = 84;
+    AugSlotsLabel->Y = 200;
+    AugSlotsLabel->Color = "Green";
+    AugSlotsLabel->Big = true;
+    
+    AugUpgradesLabel->X = 84;
+    AugUpgradesLabel->Y = 224;
+    AugUpgradesLabel->Color = "Green";
+    AugUpgradesLabel->Big = true;
+    
+    StimsLabel->X = 84;
+    StimsLabel->Y = 264;
+    StimsLabel->Color = "White";
+    StimsLabel->Big = true;
+    
+    ChipsGoldLabel->X = 84;
+    ChipsGoldLabel->Y = 314;
+    ChipsGoldLabel->Color = "Gold";
+    ChipsGoldLabel->Big = true;
+    
+    ChipsPlatLabel->X = 84;
+    ChipsPlatLabel->Y = 350;
+    ChipsPlatLabel->Color = "White";
+    ChipsPlatLabel->Big = true;
+    
+    InventoryLabel->X = 84;
+    InventoryLabel->Y = 412;
+    InventoryLabel->Color = "White";
+    InventoryLabel->Big = true;
+    
     // --------------------------------------------------
     // Map Stats
     //
+    
+    str MapType = "Standard Map";
+    
+    GUIIcon *MapIcon = GUICreateIcon(Window);
+    
+    GUILabel *MapNameLabel = GUICreateLabel(Window);
+    GUILabel *MapInfoLabel = GUICreateLabel(Window);
+    GUILabel *MapTimeLabel = GUICreateLabel(Window);;
+    GUILabel *MapKillsLabel = GUICreateLabel(Window);
+    GUILabel *MapItemsLabel = GUICreateLabel(Window);
+    GUILabel *MapSecretsLabel = GUICreateLabel(Window);
+    
+    if (CurrentLevel->SecretMap)
+        MapType = "Secret Map";
+    if (CurrentLevel->UACBase)
+        MapType = "UAC Base";
+    if (CurrentLevel->UACArena)
+        MapType = "UAC Arena";
+    
+    MapIcon->Texture = "PMAPA0";
+    MapIcon->X = 300;
+    MapIcon->Y = 128;
+    
+    MapNameLabel->X = 328;
+    MapNameLabel->Y = 110;
+    MapNameLabel->Color = "White";
+    MapNameLabel->Big = true;
+    
+    MapInfoLabel->X = 328;
+    MapInfoLabel->Y = 122;
+    MapInfoLabel->Color = "Green";
+    MapInfoLabel->Big = true;
+    
+    MapTimeLabel->X = 328;
+    MapTimeLabel->Y = 134;
+    MapTimeLabel->Color = "Orange";
+    MapTimeLabel->Big = true;
+    
+    MapKillsLabel->X = 328;
+    MapKillsLabel->Y = 146;
+    MapKillsLabel->Big = true;
+    
+    MapItemsLabel->X = 328;
+    MapItemsLabel->Y = 158;
+    MapItemsLabel->Big = true;
+    
+    MapSecretsLabel->X = 328;
+    MapSecretsLabel->Y = 170;
+    MapSecretsLabel->Big = true;
     
     // --------------------------------------------------
     // Shield
@@ -1028,12 +1188,6 @@ NamedScript void UpdateMainWindow()
     // --------------------------------------------------
     // Current Stim / Toxicity
     //
-    
-    // --------------------------------------------------
-    // Finalization
-    //
-    
-    Player.GUI.Window[WINDOW_MAIN] = Window;
     
     // --------------------------------------------------
     // Update Loop
@@ -1051,6 +1205,72 @@ NamedScript void UpdateMainWindow()
         else
             PPLabel->Text = StrParam("PP: %d (%S)", Player.PP, FormatTime(Player.PayTimer));
         
+        ModuleLabel->Text = StrParam("%d", CheckInventory("DRPGModule"));
+        TurretPartsLabel->Text = StrParam("%d", CheckInventory("DRPGTurretPart"));
+        AugChargeLabel->Text = StrParam("%d%% / %d%%", (int)Player.Augs.Battery, (int)Player.Augs.BatteryMax);
+        AugSlotsLabel->Text = StrParam("%d / %d", Player.Augs.SlotsUsed, Player.Augs.Slots);
+        AugUpgradesLabel->Text = StrParam("%d / %d", CheckInventory("DRPGAugCanister"), CheckInventory("DRPGAugUpgradeCanister"));
+        StimsLabel->Text = StrParam("S: %d\nM: %d\nL: %d\nXL: %d", CheckInventory("DRPGStimSmall"), CheckInventory("DRPGStimMedium"), CheckInventory("DRPGStimLarge"), CheckInventory("DRPGStimXL"));
+        ChipsGoldLabel->Text = StrParam("%d", CheckInventory("DRPGChipGold"));
+        ChipsPlatLabel->Text = StrParam("%d", CheckInventory("DRPGChipPlatinum"));
+        InventoryLabel->Text = StrParam("Inventory: %d / %d\n\CaBullets: %d / %d\n\CiShells: %d / %d\n\CcRockets: %d / %d\n\CdCells: %d / %d",
+                                        Player.InvItems, CheckInventoryMax(),
+                                        CheckInventory("Clip"), GetAmmoCapacity("Clip"),
+                                        CheckInventory("Shell"), GetAmmoCapacity("Shell"),
+                                        CheckInventory("RocketAmmo"), GetAmmoCapacity("RocketAmmo"),
+                                        CheckInventory("Cell"), GetAmmoCapacity("Cell"));
+        
+        MapNameLabel->Text = StrParam("%S", CurrentLevel->NiceName);
+        MapInfoLabel->Text = StrParam("%S, level %d - %S", CurrentLevel->LumpName, CurrentLevel->LevelNum, MapType);
+        if (CurrentLevel->Par > 0)
+            MapTimeLabel->Text = StrParam("Time: %S (Par: %S)", FormatTime(Timer()), FormatTime(CurrentLevel->Par * 35));
+        else
+            MapTimeLabel->Text = StrParam("Time: %S", FormatTime(Timer()));
+        MapKillsLabel->Text = StrParam("Monsters: %d / %d", GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+        MapItemsLabel->Text = StrParam("Items: %d / %d", GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+        MapSecretsLabel->Text = StrParam("Secrets: %d / %d", GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
+        
+        if (CurrentLevel && CurrentLevel->KillBonus)
+            MapKillsLabel->Color = MenuCursorColor;
+        else
+            MapKillsLabel->Color = "Brick";
+        if (CurrentLevel && CurrentLevel->ItemsBonus)
+            MapItemsLabel->Color = MenuCursorColor;
+        else
+            MapItemsLabel->Color = "LightBlue";
+        if (CurrentLevel && CurrentLevel->SecretsBonus)
+            MapSecretsLabel->Color = MenuCursorColor;
+        else
+            MapSecretsLabel->Color = "Gold";
+        
+        if (CurrentLevel && !CurrentLevel->UACBase)
+        {
+            MapIcon->Visible = true;
+            MapNameLabel->Visible = true;
+            MapInfoLabel->Visible = true;
+            MapTimeLabel->Visible = true;
+            MapKillsLabel->Visible = true;
+            MapItemsLabel->Visible = true;
+            MapSecretsLabel->Visible = true;
+        }
+        else
+        {
+            MapIcon->Visible = false;
+            MapNameLabel->Visible = false;
+            MapInfoLabel->Visible = false;
+            MapTimeLabel->Visible = false;
+            MapKillsLabel->Visible = false;
+            MapItemsLabel->Visible = false;
+            MapSecretsLabel->Visible = false;
+        }
+        
         Delay(1);
     }
+}
+
+// Temporary, for testing coordinates
+NamedScript Console void GUITest(int X, int Y, int X2, int Y2)
+{
+    GUITestX = X + (X2 / 100);
+    GUITestY = Y + (Y2 / 100);
 }
