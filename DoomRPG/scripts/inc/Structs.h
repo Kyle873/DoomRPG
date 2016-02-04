@@ -154,9 +154,6 @@ struct GUITooltip_S
     str Color;
     int Width;
     int Height;
-    str Icon;
-    int IconXOff;
-    int IconYOff;
     bool NoBack;
 };
 
@@ -313,6 +310,7 @@ struct GUIData_S
 {
     bool Created;
     bool Open;
+    
     struct
     {
         int Position;

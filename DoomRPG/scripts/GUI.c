@@ -286,9 +286,6 @@ void DrawTooltip(GUITooltip *Tooltip)
     int ScreenHeight = GUI_HEIGHT;
     int Width = Tooltip->Width;
     int Height = Tooltip->Height;
-    str Icon = Tooltip->Icon;
-    int IconXOff = Tooltip->IconXOff;
-    int IconYOff = Tooltip->IconYOff;
     bool NoBack = Tooltip->NoBack;
     
     // Set the Resolution/HUD Size
@@ -341,10 +338,6 @@ void DrawTooltip(GUITooltip *Tooltip)
             if (Y > ScreenHeight - Height)
                 Y = ScreenHeight - Height;
             
-            // Border
-            //if (!NoBack)
-            //    DrawBorder(X, Y, Width, Height, "BarHorz", "BarVert");
-            
             // Text
             SetFont("SMALLFONT");
             HudMessage("%S", Tooltip->Text);
@@ -362,10 +355,6 @@ void DrawTooltip(GUITooltip *Tooltip)
                 X = ScreenWidth - Width;
             if (Y > ScreenHeight - Height)
                 Y = ScreenHeight - Height;
-            
-            // Border
-            //if (!NoBack)
-            //    DrawBorder(X, Y, Width, Height, "BarHorz", "BarVert");
             
             // Title
             SetFont("BIGFONT");
@@ -480,7 +469,6 @@ GUIContextMenu *GUICreateContextMenu()
 void DrawBorder(str Prefix, int StartID, int BorderSize, int X, int Y, int Width, int Height)
 {
     // Border corners
-    
     PrintSprite(StrParam("%STL", Prefix), StartID++, X + 0.1, Y + 0.1, 0.03);
     PrintSprite(StrParam("%STR", Prefix), StartID++, X + Width + 0.2, Y + 0.1, 0.03);
     PrintSprite(StrParam("%SBL", Prefix), StartID++, X + 0.1, Y + Height + 0.2, 0.03);
@@ -714,7 +702,7 @@ void UpdateLabel(GUILabel *Label)
     str Text = Label->Text;
     int Alignment = Label->Alignment;
     fixed X = WINDOW_X + Label->Control.X;
-    fixed Y = WINDOW_Y + Label->Control.Y + 32;
+    fixed Y = WINDOW_Y + Label->Control.Y + 48;
     int Width = Label->Control.Width;
     int Height = Label->Control.Height;
     str Color = Label->Color;
@@ -766,7 +754,7 @@ void UpdateIcon(GUIIcon *Icon)
 {
     str Texture = Icon->Texture;
     int X = WINDOW_X + Icon->Control.X;
-    int Y = WINDOW_Y + Icon->Control.Y + 32;
+    int Y = WINDOW_Y + Icon->Control.Y + 48;
     int XOff = Icon->XOff;
     int YOff = Icon->YOff;
     int Width = Icon->Control.Width;
@@ -787,8 +775,8 @@ void UpdateIcon(GUIIcon *Icon)
     PrintSprite(Texture, 0, X + XOff + 0.1, Y + YOff + 0.1, 0.05);
     
     // Debugging - Draw a border to show the Icon's width/height
-    //if (GetCVar("drpg_debug_gui"))
-    //    DrawBorder(X, Y, Width, Height, "BarHorz", "BarVert");
+    if (GetCVar("drpg_debug_gui"))
+        DrawBorder("Bor", 0, 8, X, Y, Width, Height);
     
     // Tooltip
     if (InRegion(X + 4, Y + 8, Width, Height) && Icon->Control.Tooltip != NULL)
@@ -807,7 +795,7 @@ void UpdateButton(GUIButton *Button)
 {
     str Text = Button->Text;
     int X = WINDOW_X + Button->Control.X;
-    int Y = WINDOW_Y + Button->Control.Y + 32;
+    int Y = WINDOW_Y + Button->Control.Y + 48;
     int Width = Button->Control.Width;
     int Height = Button->Control.Height;
     str Color = Button->Color;
@@ -861,7 +849,7 @@ void UpdateButton(GUIButton *Button)
 void UpdateBar(GUIBar *Bar)
 {
     int X = WINDOW_X + Bar->Control.X;
-    int Y = WINDOW_Y + Bar->Control.Y + 32;
+    int Y = WINDOW_Y + Bar->Control.Y + 48;
     int Width = Bar->Control.Width;
     int Height = Bar->Control.Height;
     int Value = Bar->Value;
@@ -907,7 +895,7 @@ void UpdateList(GUIList *List)
     List->Selected = -1;
     
     int X = WINDOW_X + List->Control.X;
-    int Y = WINDOW_Y + List->Control.Y + 32;
+    int Y = WINDOW_Y + List->Control.Y + 48;
     int Shown = List->Shown;
     int Offset = List->Offset;
     str *Entries;
@@ -1075,8 +1063,8 @@ NamedScript void CreateOverviewPanel()
     }
     
     PlayerSpriteIcon->Texture = PlayerSprite;
-    PlayerSpriteIcon->Control.X = 32;
-    PlayerSpriteIcon->Control.Y = 64;
+    PlayerSpriteIcon->Control.X = 16;
+    PlayerSpriteIcon->Control.Y = 40;
     
     // --------------------------------------------------
     // Player Info

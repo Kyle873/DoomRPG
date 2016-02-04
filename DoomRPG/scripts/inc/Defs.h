@@ -271,9 +271,9 @@ typedef enum
 #define WINDOW_X        0
 #define WINDOW_Y        0
 
-#define GUI_CURSOR_ID 700
-#define GUI_PANEL_ID 800
-#define GUI_BACK_ID 900
+#define GUI_CURSOR_ID   700
+#define GUI_PANEL_ID    800
+#define GUI_BACK_ID     900
 
 // Control Types
 typedef enum
@@ -323,7 +323,6 @@ typedef enum
 {
     TT_BASIC,
     TT_TITLE,
-    TT_COMPLEX
 } ETooltipType;
 
 // --------------------------------------------------
