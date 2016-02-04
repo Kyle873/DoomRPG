@@ -32,12 +32,12 @@ NamedScript GUIGrid   *GUIAddGrid(GUIPanel *, str);
 NamedScript void GUIUpdatePanelControls(GUIPanel *Panel);
 
 // Control Functions
-void UpdateLabel(GUILabel *);
-void UpdateIcon(GUIIcon *);
-void UpdateButton(GUIButton *);
-void UpdateBar(GUIBar *);
-void UpdateList(GUIList *);
-void UpdateGrid(GUIGrid *);
+NamedScript void UpdateLabel(GUILabel *);
+NamedScript void UpdateIcon(GUIIcon *);
+NamedScript void UpdateButton(GUIButton *);
+NamedScript void UpdateBar(GUIBar *);
+NamedScript void UpdateList(GUIList *);
+NamedScript void UpdateGrid(GUIGrid *);
 
 // Utility
 bool InRegion(int, int, int, int);
@@ -47,6 +47,6 @@ GUIContextMenu *GUICreateContextMenu();
 
 // Panel functions
 NamedScript void CreateOverviewPanel();
-void UpdateOverviewPanel(GUIPanel *);
+NamedScript void UpdateOverviewPanel(GUIPanel *);
 
 #endif

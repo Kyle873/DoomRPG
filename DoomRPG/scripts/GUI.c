@@ -697,7 +697,7 @@ NamedScript void GUIUpdatePanelControls(GUIPanel *Panel)
 
 // [KS] I didn't touch these, Kyle, sorry. I want to separate drawing from update handling, but not today. Maybe tomorrow.
 
-void UpdateLabel(GUILabel *Label)
+NamedScript void UpdateLabel(GUILabel *Label)
 {
     str Text = Label->Text;
     int Alignment = Label->Alignment;
@@ -750,7 +750,7 @@ void UpdateLabel(GUILabel *Label)
         Player.GUI.Mouse.ActiveContextMenu = Label->Control.ContextMenu;
 }
 
-void UpdateIcon(GUIIcon *Icon)
+NamedScript void UpdateIcon(GUIIcon *Icon)
 {
     str Texture = Icon->Texture;
     int X = WINDOW_X + Icon->Control.X;
@@ -791,7 +791,7 @@ void UpdateIcon(GUIIcon *Icon)
         Icon->Control.Click((GUIControl *)Icon);
 }
 
-void UpdateButton(GUIButton *Button)
+NamedScript void UpdateButton(GUIButton *Button)
 {
     str Text = Button->Text;
     int X = WINDOW_X + Button->Control.X;
@@ -846,7 +846,7 @@ void UpdateButton(GUIButton *Button)
         Button->Control.Click((GUIControl *)Button);
 }
 
-void UpdateBar(GUIBar *Bar)
+NamedScript void UpdateBar(GUIBar *Bar)
 {
     int X = WINDOW_X + Bar->Control.X;
     int Y = WINDOW_Y + Bar->Control.Y + 48;
@@ -889,7 +889,7 @@ void UpdateBar(GUIBar *Bar)
         Player.GUI.Mouse.ActiveContextMenu = Bar->Control.ContextMenu;
 }
 
-void UpdateList(GUIList *List)
+NamedScript void UpdateList(GUIList *List)
 {
     // Reset the selected entry
     List->Selected = -1;
@@ -974,13 +974,13 @@ void UpdateList(GUIList *List)
         List->Offset++;
 }
 
-void UpdateGrid(GUIGrid *Grid)
+NamedScript void UpdateGrid(GUIGrid *Grid)
 {
     // TODO
 }
 
 /* Kyle halp
-void HandleContextMenu(GUIContextMenu *Menu)
+NamedScript void HandleContextMenu(GUIContextMenu *Menu)
 {
     int X = Menu->X;
     int Y = Menu->Y;
@@ -1272,7 +1272,7 @@ NamedScript void CreateOverviewPanel()
     //
 }
 
-void UpdateOverviewPanel(GUIPanel *OverviewPanel)
+NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
 {
     GUILabel *NameLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Name");
     GUILabel *LevelLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Level");

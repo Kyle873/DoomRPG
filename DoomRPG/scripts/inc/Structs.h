@@ -139,12 +139,12 @@ extern struct GUIBar_S;
 extern struct GUIList_S;
 extern struct GUIGrid_S;
 
-typedef void (*PanelUpdateFunc)(struct GUIPanel_S *);
-typedef void (*ContextMenuSelectFunc)();
+typedef void (*PanelUpdateFunc) (struct GUIPanel_S *) NamedScript;
+typedef void (*ContextMenuSelectFunc) ();
 
 // GUI Event Function Pointers
-typedef void (*ControlUpdateFunc)(struct GUIControl_S *);
-typedef void (*ControlClickFunc)(struct GUIControl_S *);
+typedef void (*ControlUpdateFunc) (struct GUIControl_S *) NamedScript;
+typedef void (*ControlClickFunc) (struct GUIControl_S *) NamedScript;
 
 struct GUITooltip_S
 {
