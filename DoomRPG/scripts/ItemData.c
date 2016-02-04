@@ -110,19 +110,11 @@ NamedScript void BuildItemData()
     
     // Health
     ITEMDATA_CATEGORY(2, "\CaHealth", CF_NONE);
-        ITEMDATA_DEF("DRPGStimpack",        "Stimpack",                50, 0, "STIMA0",  7, 15);
-        ITEMDATA_DEF("DRPGMedikit",         "Medikit",                100, 0, "MEDIA0", 13, 19);
-        ITEMDATA_DEF("DRPGLargeMedikit",    "Large Medikit",          250, 1, "MEDLA0", 12, 16);
-        ITEMDATA_DEF("DRPGXLMedikit",       "Extra-Large Medikit",    500, 1, "MEDXA0", 21, 30);
-        ITEMDATA_DEF("DRPGMedPack",         "Med Pack",               750, 1, "MEDPA0", 10, 24);
-        ITEMDATA_DEF("DRPGSurgeryKit",      "Surgery Kit",           1000, 2, "MEDSA0", 16, 24);
-        
+        ITEMDATA_DEF("DRPGMedkitRefill",    "Medkit",                5000, 2, "MEDKIT", 0, 0);
         ITEMDATA_DEF("DRPGSoulsphere",      "Soulsphere",            2000, 2, "SOULA0", 14, 39);
         ITEMDATA_DEF("DRPG1Up",             "1-Up",                  50000, 4, "P1UPA0", 13, 74);
-        ITEMDATA_DEF("DRPG3Up",             "3-Up",                 150000, 4, "P3UPA0", 13, 74);
-        ITEMDATA_DEF("DRPG5Up",             "5-Up",                 250000, 4, "P5UPA0", 13, 74);
     ITEMDATA_CATEGORY_END;
-
+    
     // Armor
     ITEMDATA_CATEGORY(3, "\CdArmor", CF_NONE);
         ITEMDATA_DEF("DRPGArmorBonus",              "Armor Bonus",                  1, 0, "BON2A0",  7, 13);
