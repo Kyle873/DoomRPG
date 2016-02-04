@@ -110,7 +110,7 @@ NamedScript void BuildItemData()
     
     // Health
     ITEMDATA_CATEGORY(2, "\CaHealth", CF_NOSELL);
-        ITEMDATA_DEF("DRPGMedkitRefill",    "Medkit",                5000, 2, "MEDKIT", 0, 0);
+        ITEMDATA_DEF("DRPGMedkitRefill",    "Medkit",                5000, 2, "MEDKA0", 14, 19);
         ITEMDATA_DEF("DRPGSoulsphere",      "Soulsphere",            2000, 2, "SOULA0", 14, 39);
         ITEMDATA_DEF("DRPG1Up",             "1-Up",                  50000, 4, "P1UPA0", 13, 74);
     ITEMDATA_CATEGORY_END;
