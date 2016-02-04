@@ -275,7 +275,20 @@ typedef enum
 #define GUI_PANEL_ID 800
 #define GUI_BACK_ID 900
 
-// Windows
+// Control Types
+typedef enum
+{
+    CTL_ANY, // [KS] For searching
+    CTL_LABEL,
+    CTL_ICON,
+    CTL_BUTTON,
+    CTL_BAR,
+    CTL_LIST,
+    CTL_GRID,
+    CTL_MAX
+} EControlTypes;
+
+// Panels
 typedef enum
 {
     PANEL_MAIN,
@@ -1090,6 +1103,7 @@ typedef struct GUIContextMenu_S     GUIContextMenu;
 typedef struct GUITooltip_S         GUITooltip;
 typedef struct GUITabStrip_S        GUITabStrip;
 typedef struct GUIPanel_S           GUIPanel;
+typedef struct GUIControl_S         GUIControl;
 typedef struct GUILabel_S           GUILabel;
 typedef struct GUIIcon_S            GUIIcon;
 typedef struct GUIButton_S          GUIButton;

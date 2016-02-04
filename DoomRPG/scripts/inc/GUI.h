@@ -6,46 +6,47 @@
 NamedScript Console void ToggleGUI();
 
 NamedScript void CreateGUIMenu();
-void CreateTabs();
+NamedScript void CreateTabs();
+NamedScript void CreatePanels();
 
 NamedScript void UpdateGUIMenu();
 NamedScript void UpdateGUICursor();
-void UpdateTabs();
+NamedScript void UpdateTabs();
 
 // Drawing
 NamedScript void DrawBackgroundWindow();
 NamedScript void DrawGlowLine();
+void DrawBorder(str, int, int, int, int, int, int);
+void DrawTooltip(GUITooltip *);
+
+// Panel Functions
+NamedScript GUIPanel *GUICreatePanel();
+NamedScript OptionalArgs(1) GUIControl *GUIControlByName(GUIPanel *, str, EControlTypes);
+NamedScript bool GUIAddExistingControl(GUIPanel *, GUIControl *);
+NamedScript GUILabel  *GUIAddLabel(GUIPanel *, str);
+NamedScript GUIIcon   *GUIAddIcon(GUIPanel *, str);
+NamedScript GUIButton *GUIAddButton(GUIPanel *, str);
+NamedScript GUIBar    *GUIAddBar(GUIPanel *, str);
+NamedScript GUIList   *GUIAddList(GUIPanel *, str);
+NamedScript GUIGrid   *GUIAddGrid(GUIPanel *, str);
+NamedScript void GUIUpdatePanelControls(GUIPanel *Panel);
+
+// Control Functions
+void UpdateLabel(GUILabel *);
+void UpdateIcon(GUIIcon *);
+void UpdateButton(GUIButton *);
+void UpdateBar(GUIBar *);
+void UpdateList(GUIList *);
+void UpdateGrid(GUIGrid *);
 
 // Utility
 bool InRegion(int, int, int, int);
 
-// Window/Control Handling
-void HandleTabStrip(GUITabStrip *);
-void HandleLabel(GUILabel *);
-void HandleIcon(GUIIcon *);
-void HandleButton(GUIButton *);
-void HandleBar(GUIBar *);
-void HandleList(GUIList *);
-void HandleGrid(GUIGrid *);
-void DrawTooltip(GUITooltip *);
-void HandleContextMenu(GUIContextMenu *);
-
-// Window/Control Creation
-GUITabStrip *GUICreateTabStrip();
-GUILabel *GUICreateLabel();
-GUIIcon *GUICreateIcon();
-GUIButton *GUICreateButton();
-GUIBar *GUICreateBar();
-GUIList *GUICreateList();
-GUIGrid *GUICreateGrid();
 GUITooltip *GUICreateTooltip();
 GUIContextMenu *GUICreateContextMenu();
 
-// Utility
-void DrawBorder(str, int, int, int, int, int, int);
-
-// Creation
-void CreateTabs();
-//NamedScript void UpdateMainWindow();
+// Panel functions
+NamedScript void CreateOverviewPanel();
+void UpdateOverviewPanel(GUIPanel *);
 
 #endif

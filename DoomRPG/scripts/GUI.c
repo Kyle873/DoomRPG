@@ -25,11 +25,12 @@ NamedScript void CreateGUIMenu()
     // Do first-time creation here
     
     CreateTabs();
+    CreatePanels();
     
     Player.GUI.Created = true;
 }
 
-void CreateTabs()
+NamedScript void CreateTabs()
 {
     Player.GUI.TabStrip.Tabs[PANEL_MAIN].Icon = "TMain";
     Player.GUI.TabStrip.Tabs[PANEL_MAIN].HighlightedIcon = "HMain";
@@ -151,6 +152,11 @@ void CreateTabs()
     Player.GUI.TabStrip.Tabs[PANEL_MAX].Icon = "";
     Player.GUI.TabStrip.Tabs[PANEL_MAX].Title = "";
     Player.GUI.TabStrip.Tabs[PANEL_MAX].Enabled = false;
+}
+
+NamedScript void CreatePanels()
+{
+    CreateOverviewPanel();
 }
 
 NamedScript void UpdateGUIMenu()
@@ -392,7 +398,7 @@ bool InRegion(int X, int Y, int Width, int Height)
         return false;
 }
 
-void UpdateTabs()
+NamedScript void UpdateTabs()
 {
     for (int i = 0; i < PANEL_MAX; i++)
         Player.GUI.TabStrip.Tabs[i].Enabled = true;
@@ -443,19 +449,274 @@ void UpdateTabs()
         else
             PrintSprite(Player.GUI.TabStrip.Tabs[i].Icon, CurrentID++, X, Y, 0.03);
     }
+    
+    // Update and draw the panel attached to the currently active tab
+    if (Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel)
+    {
+        if (Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel->Update)
+            Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel->Update(Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel);
+        
+        //DrawPanel(Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel);
+    }
 }
 
-void HandleLabel(GUILabel *Label)
+GUITooltip *GUICreateTooltip()
 {
-    // Don't handle the control if it's invisible
-    if (!Label->Visible) return;
+    GUITooltip *Tooltip = calloc(sizeof(GUITooltip), 1);
     
+    Tooltip->Type = TT_BASIC;
+    Tooltip->Color = "White";
+    
+    return Tooltip;
+}
+
+GUIContextMenu *GUICreateContextMenu()
+{
+    GUIContextMenu *ContextMenu = calloc(sizeof(GUIContextMenu), 1);
+    
+    return ContextMenu;
+}
+
+void DrawBorder(str Prefix, int StartID, int BorderSize, int X, int Y, int Width, int Height)
+{
+    // Border corners
+    
+    PrintSprite(StrParam("%STL", Prefix), StartID++, X + 0.1, Y + 0.1, 0.03);
+    PrintSprite(StrParam("%STR", Prefix), StartID++, X + Width + 0.2, Y + 0.1, 0.03);
+    PrintSprite(StrParam("%SBL", Prefix), StartID++, X + 0.1, Y + Height + 0.2, 0.03);
+    PrintSprite(StrParam("%SBR", Prefix), StartID++, X + Width + 0.2, Y + Height + 0.2, 0.03);
+    
+    // Border sides
+    SetHudClipRect(X, Y + BorderSize, BorderSize, Height - (BorderSize * 2));
+    PrintSprite(StrParam("%SL", Prefix), StartID++, X + 0.1, Y + 0.1, 0.03);
+    SetHudClipRect(X + Width - BorderSize, Y + BorderSize, BorderSize, Height - (BorderSize * 2));
+    PrintSprite(StrParam("%SR", Prefix), StartID++, X + Width + 0.2, Y + 0.1, 0.03);
+    SetHudClipRect(X + BorderSize, Y, Width - (BorderSize * 2), BorderSize);
+    PrintSprite(StrParam("%ST", Prefix), StartID++, X + BorderSize + 0.1, Y + 0.1, 0.03);
+    SetHudClipRect(X + BorderSize, Y + Height - BorderSize, Width - (BorderSize * 2), BorderSize);
+    PrintSprite(StrParam("%SB", Prefix), StartID, X + BorderSize + 0.1, Y + Height + 0.2, 0.03);
+    SetHudClipRect(0, 0, 0, 0);
+}
+
+// --------------------------------------------------
+// Panel Functions
+//
+
+NamedScript GUIPanel *GUICreatePanel()
+{
+    GUIPanel *Panel = calloc(sizeof(GUIPanel), 1);
+    
+    if (Panel == NULL) return NULL; // OOM
+    
+    return Panel;
+}
+
+NamedScript OptionalArgs(1) GUIControl *GUIControlByName(GUIPanel *Panel, str Name, EControlTypes Kind)
+{
+    for (int i = 0; i < Panel->NumControls; i++)
+    {
+        if (!StrCmp(Name, Panel->Controls[i]->Name) && (!Kind || Kind == Panel->Controls[i]->Kind))
+            return Panel->Controls[i];
+    }
+    
+    return NULL;
+}
+
+NamedScript bool GUIAddExistingControl(GUIPanel *Panel, GUIControl *Control)
+{
+    GUIControl **NewCtlArray = realloc(Panel->Controls, sizeof(GUIControl *) * (Panel->NumControls + 1));
+    if (!NewCtlArray)
+        return false;
+    
+    Panel->Controls = NewCtlArray;
+    Panel->Controls[Panel->NumControls++] = Control;
+    
+    return true;
+}
+
+NamedScript GUILabel *GUIAddLabel(GUIPanel *Panel, str Name)
+{
+    GUILabel *Label = calloc(sizeof(GUILabel), 1);
+    
+    if (!GUIAddExistingControl(Panel, (GUIControl *)Label))
+    {
+        free(Label);
+        return NULL;
+    }
+    
+    Label->Control.Name = Name;
+    Label->Control.Kind = CTL_LABEL;
+    Label->Control.Owner = Panel;
+    
+    // Defaults
+    Label->Control.X = 0;
+    Label->Control.Y = 0;
+    Label->Control.Width = 32;
+    Label->Control.Height = 32;
+    Label->Control.Visible = true;
+    
+    Label->Control.Update = (ControlUpdateFunc)UpdateLabel;
+    
+    Label->Alignment = LA_LEFT;
+
+    return Label;
+}
+
+NamedScript GUIIcon *GUIAddIcon(GUIPanel *Panel, str Name)
+{
+    GUIIcon *Icon = calloc(sizeof(GUIIcon), 1);
+    
+    if (!GUIAddExistingControl(Panel, (GUIControl *)Icon))
+    {
+        free(Icon);
+        return NULL;
+    }
+    
+    Icon->Control.Name = Name;
+    Icon->Control.Kind = CTL_ICON;
+    Icon->Control.Owner = Panel;
+    
+    // Defaults
+    Icon->Control.X = 0;
+    Icon->Control.Y = 0;
+    Icon->Control.Width = 32;
+    Icon->Control.Height = 32;
+    Icon->Control.Visible = true;
+    
+    Icon->Control.Update = (ControlUpdateFunc)UpdateIcon;
+    
+    Icon->CalculateSize = true;
+    
+    return Icon;
+}
+
+NamedScript GUIButton *GUIAddButton(GUIPanel *Panel, str Name)
+{
+    GUIButton *Button = calloc(sizeof(GUIButton), 1);
+    
+    if (!GUIAddExistingControl(Panel, (GUIControl *)Button))
+    {
+        free(Button);
+        return NULL;
+    }
+    
+    Button->Control.Name = Name;
+    Button->Control.Kind = CTL_BUTTON;
+    Button->Control.Owner = Panel;
+    
+    // Defaults
+    Button->Control.X = 0;
+    Button->Control.Y = 0;
+    Button->Control.Width = 32;
+    Button->Control.Height = 32;
+    Button->Control.Visible = true;
+    
+    Button->Control.Update = (ControlUpdateFunc)UpdateButton;
+    
+    return Button;
+}
+
+NamedScript GUIBar *GUIAddBar(GUIPanel *Panel, str Name)
+{
+    GUIBar *Bar = calloc(sizeof(GUIBar), 1);
+    
+    if (!GUIAddExistingControl(Panel, (GUIControl *)Bar))
+    {
+        free(Bar);
+        return NULL;
+    }
+    
+    Bar->Control.Name = Name;
+    Bar->Control.Kind = CTL_BAR;
+    Bar->Control.Owner = Panel;
+    
+    // Defaults
+    Bar->Control.X = 0;
+    Bar->Control.Y = 0;
+    Bar->Control.Width = 32;
+    Bar->Control.Height = 32;
+    Bar->Control.Visible = true;
+    
+    Bar->Control.Update = (ControlUpdateFunc)UpdateBar;
+    
+    return Bar;
+}
+
+NamedScript GUIList *GUIAddList(GUIPanel *Panel, str Name)
+{
+    GUIList *List = calloc(sizeof(GUIList), 1);
+    
+    if (!GUIAddExistingControl(Panel, (GUIControl *)List))
+    {
+        free(List);
+        return NULL;
+    }
+    
+    List->Control.Name = Name;
+    List->Control.Kind = CTL_LIST;
+    List->Control.Owner = Panel;
+    
+    // Defaults
+    List->Control.X = 0;
+    List->Control.Y = 0;
+    List->Control.Width = 32;
+    List->Control.Height = 32;
+    List->Control.Visible = true;
+    
+    List->Control.Update = (ControlUpdateFunc)UpdateList;
+    
+    return List;
+}
+
+NamedScript GUIGrid *GUIAddGrid(GUIPanel *Panel, str Name)
+{
+    GUIGrid *Grid = calloc(sizeof(GUIGrid), 1);
+    
+    if (!GUIAddExistingControl(Panel, (GUIControl *)Grid))
+    {
+        free(Grid);
+        return NULL;
+    }
+    
+    Grid->Control.Name = Name;
+    Grid->Control.Kind = CTL_GRID;
+    Grid->Control.Owner = Panel;
+    
+    // Defaults
+    Grid->Control.X = 0;
+    Grid->Control.Y = 0;
+    Grid->Control.Width = 32;
+    Grid->Control.Height = 32;
+    Grid->Control.Visible = true;
+    
+    Grid->Control.Update = (ControlUpdateFunc)UpdateGrid;
+    
+    return Grid;
+}
+
+NamedScript void GUIUpdatePanelControls(GUIPanel *Panel)
+{
+    for (int i = 0; i < Panel->NumControls; i++)
+    {
+        if (Panel->Controls[i]->Update && Panel->Controls[i]->Visible)
+            Panel->Controls[i]->Update(Panel->Controls[i]);
+    }
+}
+
+// --------------------------------------------------
+// Control Functions
+//
+
+// [KS] I didn't touch these, Kyle, sorry. I want to separate drawing from update handling, but not today. Maybe tomorrow.
+
+void UpdateLabel(GUILabel *Label)
+{
     str Text = Label->Text;
     int Alignment = Label->Alignment;
-    fixed X = WINDOW_X + Label->X;
-    fixed Y = WINDOW_Y + Label->Y + 32;
-    int Width = Label->Width;
-    int Height = Label->Height;
+    fixed X = WINDOW_X + Label->Control.X;
+    fixed Y = WINDOW_Y + Label->Control.Y + 32;
+    int Width = Label->Control.Width;
+    int Height = Label->Control.Height;
     str Color = Label->Color;
     bool Big = Label->Big;
     
@@ -493,26 +754,23 @@ void HandleLabel(GUILabel *Label)
     EndHudMessage(HUDMSG_PLAIN, 0, Color, X, Y, 0.05);
     
     // Tooltip
-    if (InRegion(X, Y, Width, Height) && Label->Tooltip != NULL)
-        Player.GUI.Mouse.ActiveTooltip = Label->Tooltip;
+    if (InRegion(X, Y, Width, Height) && Label->Control.Tooltip != NULL)
+        Player.GUI.Mouse.ActiveTooltip = Label->Control.Tooltip;
     
     // Context Menu
-    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Label->ContextMenu != NULL)
-        Player.GUI.Mouse.ActiveContextMenu = Label->ContextMenu;
+    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Label->Control.ContextMenu != NULL)
+        Player.GUI.Mouse.ActiveContextMenu = Label->Control.ContextMenu;
 }
 
-void HandleIcon(GUIIcon *Icon)
+void UpdateIcon(GUIIcon *Icon)
 {
-    // Don't handle the control if it's invisible
-    if (!Icon->Visible) return;
-    
     str Texture = Icon->Texture;
-    int X = WINDOW_X + Icon->X;
-    int Y = WINDOW_Y + Icon->Y + 32;
+    int X = WINDOW_X + Icon->Control.X;
+    int Y = WINDOW_Y + Icon->Control.Y + 32;
     int XOff = Icon->XOff;
     int YOff = Icon->YOff;
-    int Width = Icon->Width;
-    int Height = Icon->Height;
+    int Width = Icon->Control.Width;
+    int Height = Icon->Control.Height;
     bool CalculateSize = Icon->CalculateSize;
     
     // Set the Resolution/HUD Size
@@ -533,28 +791,25 @@ void HandleIcon(GUIIcon *Icon)
     //    DrawBorder(X, Y, Width, Height, "BarHorz", "BarVert");
     
     // Tooltip
-    if (InRegion(X + 4, Y + 8, Width, Height) && Icon->Tooltip != NULL)
-        Player.GUI.Mouse.ActiveTooltip = Icon->Tooltip;
+    if (InRegion(X + 4, Y + 8, Width, Height) && Icon->Control.Tooltip != NULL)
+        Player.GUI.Mouse.ActiveTooltip = Icon->Control.Tooltip;
     
     // Context Menu
-    if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.RightButton && Icon->ContextMenu != NULL)
-        Player.GUI.Mouse.ActiveContextMenu = Icon->ContextMenu;
+    if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.RightButton && Icon->Control.ContextMenu != NULL)
+        Player.GUI.Mouse.ActiveContextMenu = Icon->Control.ContextMenu;
     
     // OnClick Event
-    if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Icon->OnClick && Player.GUI.Mouse.ActiveContextMenu == NULL)
-        Icon->OnClick(Icon);
+    if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Icon->Control.Click && Player.GUI.Mouse.ActiveContextMenu == NULL)
+        Icon->Control.Click((GUIControl *)Icon);
 }
 
-void HandleButton(GUIButton *Button)
+void UpdateButton(GUIButton *Button)
 {
-    // Don't handle the control if it's invisible
-    if (!Button->Visible) return;
-
     str Text = Button->Text;
-    int X = WINDOW_X + Button->X;
-    int Y = WINDOW_Y + Button->Y + 32;
-    int Width = Button->Width;
-    int Height = Button->Height;
+    int X = WINDOW_X + Button->Control.X;
+    int Y = WINDOW_Y + Button->Control.Y + 32;
+    int Width = Button->Control.Width;
+    int Height = Button->Control.Height;
     str Color = Button->Color;
     str HoverColor = Button->HoverColor;
     bool Big = Button->Big;
@@ -591,27 +846,24 @@ void HandleButton(GUIButton *Button)
     }
     
     // Tooltip
-    if (InRegion(X, Y, Width, Height) && Button->Tooltip != NULL)
-        Player.GUI.Mouse.ActiveTooltip = Button->Tooltip;
+    if (InRegion(X, Y, Width, Height) && Button->Control.Tooltip != NULL)
+        Player.GUI.Mouse.ActiveTooltip = Button->Control.Tooltip;
     
     // Context Menu
-    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Button->ContextMenu != NULL)
-        Player.GUI.Mouse.ActiveContextMenu = Button->ContextMenu;
+    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Button->Control.ContextMenu != NULL)
+        Player.GUI.Mouse.ActiveContextMenu = Button->Control.ContextMenu;
     
     // OnClick event
-    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.LeftButton && Button->OnClick && Player.GUI.Mouse.ActiveContextMenu == NULL)
-        Button->OnClick(Button);
+    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.LeftButton && Button->Control.Click && Player.GUI.Mouse.ActiveContextMenu == NULL)
+        Button->Control.Click((GUIControl *)Button);
 }
 
-void HandleBar(GUIBar *Bar)
+void UpdateBar(GUIBar *Bar)
 {
-    // Don't handle the control if it's invisible
-    if (!Bar->Visible) return;
-
-    int X = WINDOW_X + Bar->X;
-    int Y = WINDOW_Y + Bar->Y + 32;
-    int Width = Bar->Width;
-    int Height = Bar->Height;
+    int X = WINDOW_X + Bar->Control.X;
+    int Y = WINDOW_Y + Bar->Control.Y + 32;
+    int Width = Bar->Control.Width;
+    int Height = Bar->Control.Height;
     int Value = Bar->Value;
     int ValueMax = Bar->ValueMax;
     str Texture = Bar->Texture;
@@ -641,24 +893,21 @@ void HandleBar(GUIBar *Bar)
         PrintSprite(Texture, 0, ++X, Y, 0.05);
     
     // Tooltip
-    if (InRegion(X, Y, Width, Height) && Bar->Tooltip != NULL)
-        Player.GUI.Mouse.ActiveTooltip = Bar->Tooltip;
+    if (InRegion(X, Y, Width, Height) && Bar->Control.Tooltip != NULL)
+        Player.GUI.Mouse.ActiveTooltip = Bar->Control.Tooltip;
     
     // Context Menu
-    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Bar->ContextMenu != NULL)
-        Player.GUI.Mouse.ActiveContextMenu = Bar->ContextMenu;
+    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Bar->Control.ContextMenu != NULL)
+        Player.GUI.Mouse.ActiveContextMenu = Bar->Control.ContextMenu;
 }
 
-void HandleList(GUIList *List)
+void UpdateList(GUIList *List)
 {
-    // Don't handle the control if it's invisible
-    if (!List->Visible) return;
-    
     // Reset the selected entry
     List->Selected = -1;
     
-    int X = WINDOW_X + List->X;
-    int Y = WINDOW_Y + List->Y + 32;
+    int X = WINDOW_X + List->Control.X;
+    int Y = WINDOW_Y + List->Control.Y + 32;
     int Shown = List->Shown;
     int Offset = List->Offset;
     str *Entries;
@@ -708,16 +957,16 @@ void HandleList(GUIList *List)
             List->Selected = i;
             
             // Tooltip
-            if (List->Tooltip != NULL)
-                Player.GUI.Mouse.ActiveTooltip = List->Tooltip;
+            if (List->Control.Tooltip != NULL)
+                Player.GUI.Mouse.ActiveTooltip = List->Control.Tooltip;
             
             // Context Menu
-            if (Player.GUI.Mouse.RightButton && List->ContextMenu != NULL)
-                Player.GUI.Mouse.ActiveContextMenu = List->ContextMenu;
+            if (Player.GUI.Mouse.RightButton && List->Control.ContextMenu != NULL)
+                Player.GUI.Mouse.ActiveContextMenu = List->Control.ContextMenu;
             
             // OnClick event
-            if (Player.GUI.Mouse.LeftButton && List->OnClick)
-                List->OnClick(List);
+            if (Player.GUI.Mouse.LeftButton && List->Control.Click)
+                List->Control.Click((GUIControl *)List);
         }
         else
         {
@@ -737,11 +986,12 @@ void HandleList(GUIList *List)
         List->Offset++;
 }
 
-void HandleGrid(GUIGrid *Grid)
+void UpdateGrid(GUIGrid *Grid)
 {
     // TODO
 }
 
+/* Kyle halp
 void HandleContextMenu(GUIContextMenu *Menu)
 {
     int X = Menu->X;
@@ -789,108 +1039,18 @@ void HandleContextMenu(GUIContextMenu *Menu)
     if (Player.GUI.Mouse.LeftButton || Player.GUI.Mouse.RightButton)
         Player.GUI.Mouse.ActiveContextMenu = NULL;
 }
-
-GUILabel *GUICreateLabel()
-{
-    GUILabel *Label = calloc(sizeof(GUILabel), 1);
-    
-    Label->Alignment = LA_LEFT;
-    Label->Visible = true;
-    
-    return Label;
-}
-
-GUIIcon *GUICreateIcon()
-{
-    GUIIcon *Icon = calloc(sizeof(GUIIcon), 1);
-    
-    Icon->CalculateSize = true;
-    Icon->Visible = true;
-    
-    return Icon;
-}
-
-GUIButton *GUICreateButton()
-{
-    GUIButton *Button = calloc(sizeof(GUIButton), 1);
-    
-    Button->Visible = true;
-    
-    return Button;
-}
-
-GUIBar *GUICreateBar()
-{
-    GUIBar *Bar = calloc(sizeof(GUIBar), 1);
-    
-    Bar->Visible = true;
-    
-    return Bar;
-}
-
-GUIList *GUICreateList()
-{
-    GUIList *List = calloc(sizeof(GUIList), 1);
-    
-    List->Visible = true;
-    
-    return List;
-}
-
-// TODO
-GUIGrid *GUICreateGrid()
-{
-    GUIGrid *Grid = calloc(sizeof(GUIGrid), 1);
-    
-    return Grid;
-}
-
-GUITooltip *GUICreateTooltip()
-{
-    GUITooltip *Tooltip = calloc(sizeof(GUITooltip), 1);
-    
-    Tooltip->Type = TT_BASIC;
-    Tooltip->Color = "White";
-    
-    return Tooltip;
-}
-
-GUIContextMenu *GUICreateContextMenu()
-{
-    GUIContextMenu *ContextMenu = calloc(sizeof(GUIContextMenu), 1);
-    
-    return ContextMenu;
-}
-
-void DrawBorder(str Prefix, int StartID, int BorderSize, int X, int Y, int Width, int Height)
-{
-    // Border corners
-    
-    PrintSprite(StrParam("%STL", Prefix), StartID++, X + 0.1, Y + 0.1, 0.03);
-    PrintSprite(StrParam("%STR", Prefix), StartID++, X + Width + 0.2, Y + 0.1, 0.03);
-    PrintSprite(StrParam("%SBL", Prefix), StartID++, X + 0.1, Y + Height + 0.2, 0.03);
-    PrintSprite(StrParam("%SBR", Prefix), StartID++, X + Width + 0.2, Y + Height + 0.2, 0.03);
-    
-    // Border sides
-    SetHudClipRect(X, Y + BorderSize, BorderSize, Height - (BorderSize * 2));
-    PrintSprite(StrParam("%SL", Prefix), StartID++, X + 0.1, Y + 0.1, 0.03);
-    SetHudClipRect(X + Width - BorderSize, Y + BorderSize, BorderSize, Height - (BorderSize * 2));
-    PrintSprite(StrParam("%SR", Prefix), StartID++, X + Width + 0.2, Y + 0.1, 0.03);
-    SetHudClipRect(X + BorderSize, Y, Width - (BorderSize * 2), BorderSize);
-    PrintSprite(StrParam("%ST", Prefix), StartID++, X + BorderSize + 0.1, Y + 0.1, 0.03);
-    SetHudClipRect(X + BorderSize, Y + Height - BorderSize, Width - (BorderSize * 2), BorderSize);
-    PrintSprite(StrParam("%SB", Prefix), StartID, X + BorderSize + 0.1, Y + Height + 0.2, 0.03);
-    SetHudClipRect(0, 0, 0, 0);
-}
+*/
 
 // --------------------------------------------------
-// GUI Creation
+// GUI Panels
 //
-/*
-NamedScript void UpdateMainWindow()
+
+NamedScript void CreateOverviewPanel()
 {
-    GUIWindow *Window = GUICreateWindow();
-    Player.GUI.Window[WINDOW_MAIN] = Window;
+    GUIPanel *OverviewPanel = GUICreatePanel();
+    Player.GUI.TabStrip.Tabs[PANEL_MAIN].Panel = OverviewPanel;
+    
+    OverviewPanel->Update = (PanelUpdateFunc)UpdateOverviewPanel;
     
     // --------------------------------------------------
     // Player Sprite
@@ -898,7 +1058,7 @@ NamedScript void UpdateMainWindow()
     
     str PlayerSprite = "PLAYA1";
     
-    GUIIcon *PlayerSpriteIcon = GUICreateIcon(Window);
+    GUIIcon *PlayerSpriteIcon = GUIAddIcon(OverviewPanel, "Player Sprite");
     
     if (CompatMode == COMPAT_DRLA)
     {
@@ -915,47 +1075,47 @@ NamedScript void UpdateMainWindow()
     }
     
     PlayerSpriteIcon->Texture = PlayerSprite;
-    PlayerSpriteIcon->X = 32;
-    PlayerSpriteIcon->Y = 64;
+    PlayerSpriteIcon->Control.X = 32;
+    PlayerSpriteIcon->Control.Y = 64;
     
     // --------------------------------------------------
     // Player Info
     //
     
-    GUILabel *NameLabel = GUICreateLabel(Window);
-    GUILabel *LevelLabel = GUICreateLabel(Window);
-    GUILabel *XPLabel = GUICreateLabel(Window);
-    GUILabel *TitleLabel = GUICreateLabel(Window);
-    GUILabel *RankLabel = GUICreateLabel(Window);
-    GUILabel *PPLabel = GUICreateLabel(Window);
+    GUILabel *NameLabel = GUIAddLabel(OverviewPanel, "Player Name");
+    GUILabel *LevelLabel = GUIAddLabel(OverviewPanel, "Player Level");
+    GUILabel *XPLabel = GUIAddLabel(OverviewPanel, "Player XP");
+    GUILabel *TitleLabel = GUIAddLabel(OverviewPanel, "Player Rank Title");
+    GUILabel *RankLabel = GUIAddLabel(OverviewPanel, "Player Rank");
+    GUILabel *PPLabel = GUIAddLabel(OverviewPanel, "Player Payout Status");
     
-    NameLabel->X = 64;
-    NameLabel->Y = 16;
+    NameLabel->Control.X = 64;
+    NameLabel->Control.Y = 16;
     NameLabel->Color = "White";
     NameLabel->Big = true;
     
-    LevelLabel->X = 64;
-    LevelLabel->Y = 28;
+    LevelLabel->Control.X = 64;
+    LevelLabel->Control.Y = 28;
     LevelLabel->Color = "White";
     LevelLabel->Big = true;
     
-    XPLabel->X = 64;
-    XPLabel->Y = 40;
+    XPLabel->Control.X = 64;
+    XPLabel->Control.Y = 40;
     XPLabel->Color = "White";
     XPLabel->Big = true;
     
-    TitleLabel->X = 64;
-    TitleLabel->Y = 52;
+    TitleLabel->Control.X = 64;
+    TitleLabel->Control.Y = 52;
     TitleLabel->Color = "Yellow";
     TitleLabel->Big = true;
     
-    RankLabel->X = 64;
-    RankLabel->Y = 64;
+    RankLabel->Control.X = 64;
+    RankLabel->Control.Y = 64;
     RankLabel->Color = "Yellow";
     RankLabel->Big = true;
     
-    PPLabel->X = 64;
-    PPLabel->Y = 76;
+    PPLabel->Control.X = 64;
+    PPLabel->Control.Y = 76;
     PPLabel->Color = "Gold";
     PPLabel->Big = true;
     
@@ -965,109 +1125,109 @@ NamedScript void UpdateMainWindow()
     
     // TODO: Put DRLA stuff below the inventory/ammo totals
     
-    GUIIcon *ModuleIcon = GUICreateIcon(Window);
-    GUIIcon *TurretPartsIcon = GUICreateIcon(Window);
-    GUIIcon *AugChargeIcon = GUICreateIcon(Window);
-    GUIIcon *AugSlotsIcon = GUICreateIcon(Window);
-    GUIIcon *AugCanistersIcon = GUICreateIcon(Window);
-    GUIIcon *AugUpgradesIcon = GUICreateIcon(Window);
-    GUIIcon *StimsIcon = GUICreateIcon(Window);
-    GUIIcon *ChipsGoldIcon = GUICreateIcon(Window);
-    GUIIcon *ChipsPlatIcon = GUICreateIcon(Window);
-    GUIIcon *InventoryIcon = GUICreateIcon(Window);
+    GUIIcon *ModuleIcon = GUIAddIcon(OverviewPanel, "Module Icon");
+    GUIIcon *TurretPartsIcon = GUIAddIcon(OverviewPanel, "Turret Parts Icon");
+    GUIIcon *AugChargeIcon = GUIAddIcon(OverviewPanel, "Aug Charge icon");
+    GUIIcon *AugSlotsIcon = GUIAddIcon(OverviewPanel, "Aug Slots Icon");
+    GUIIcon *AugCanistersIcon = GUIAddIcon(OverviewPanel, "Aug Canisters Icon");
+    GUIIcon *AugUpgradesIcon = GUIAddIcon(OverviewPanel, "Aug Upgrades Icon");
+    GUIIcon *StimsIcon = GUIAddIcon(OverviewPanel, "Stims Icon");
+    GUIIcon *ChipsGoldIcon = GUIAddIcon(OverviewPanel, "Gold Chips Icon");
+    GUIIcon *ChipsPlatIcon = GUIAddIcon(OverviewPanel, "Platinum Chips Icon");
+    GUIIcon *InventoryIcon = GUIAddIcon(OverviewPanel, "Inventory Icon");
     
-    GUILabel *ModuleLabel = GUICreateLabel(Window);
-    GUILabel *TurretPartsLabel = GUICreateLabel(Window);
-    GUILabel *AugChargeLabel = GUICreateLabel(Window);
-    GUILabel *AugSlotsLabel = GUICreateLabel(Window);
-    GUILabel *AugUpgradesLabel = GUICreateLabel(Window);
-    GUILabel *StimsLabel = GUICreateLabel(Window);
-    GUILabel *ChipsGoldLabel = GUICreateLabel(Window);
-    GUILabel *ChipsPlatLabel = GUICreateLabel(Window);
-    GUILabel *InventoryLabel = GUICreateLabel(Window);
+    GUILabel *ModuleLabel = GUIAddLabel(OverviewPanel, "Module Count");
+    GUILabel *TurretPartsLabel = GUIAddLabel(OverviewPanel, "Turret Part Count");
+    GUILabel *AugChargeLabel = GUIAddLabel(OverviewPanel, "Aug Charge");
+    GUILabel *AugSlotsLabel = GUIAddLabel(OverviewPanel, "Aug Slots");
+    GUILabel *AugUpgradesLabel = GUIAddLabel(OverviewPanel, "Aug Upgrades");
+    GUILabel *StimsLabel = GUIAddLabel(OverviewPanel, "Stim Counts");
+    GUILabel *ChipsGoldLabel = GUIAddLabel(OverviewPanel, "Gold Chip Count");
+    GUILabel *ChipsPlatLabel = GUIAddLabel(OverviewPanel, "Platinum Chip Count");
+    GUILabel *InventoryLabel = GUIAddLabel(OverviewPanel, "Inventory Count");
     
     ModuleIcon->Texture = "UMODA0";
-    ModuleIcon->X = 40;
-    ModuleIcon->Y = 128;
+    ModuleIcon->Control.X = 40;
+    ModuleIcon->Control.Y = 128;
     
     TurretPartsIcon->Texture = "TPRTA0";
-    TurretPartsIcon->X = 40;
-    TurretPartsIcon->Y = 160;
+    TurretPartsIcon->Control.X = 40;
+    TurretPartsIcon->Control.Y = 160;
     
     AugChargeIcon->Texture = "AUGBATT";
-    AugChargeIcon->X = 40;
-    AugChargeIcon->Y = 180;
+    AugChargeIcon->Control.X = 40;
+    AugChargeIcon->Control.Y = 180;
     
     AugSlotsIcon->Texture = "AUGUB0";
-    AugSlotsIcon->X = 40;
-    AugSlotsIcon->Y = 210;
+    AugSlotsIcon->Control.X = 40;
+    AugSlotsIcon->Control.Y = 210;
     
     AugCanistersIcon->Texture = "AUGCA0";
-    AugCanistersIcon->X = 32;
-    AugCanistersIcon->Y = 236;
+    AugCanistersIcon->Control.X = 32;
+    AugCanistersIcon->Control.Y = 236;
     
     AugUpgradesIcon->Texture = "AUGUA0";
-    AugUpgradesIcon->X = 48;
-    AugUpgradesIcon->Y = 230;
+    AugUpgradesIcon->Control.X = 48;
+    AugUpgradesIcon->Control.Y = 230;
     
     StimsIcon->Texture = "STIMB0";
-    StimsIcon->X = 40;
-    StimsIcon->Y = 280;
+    StimsIcon->Control.X = 40;
+    StimsIcon->Control.Y = 280;
     
     ChipsGoldIcon->Texture = "CHIPGOLD";
-    ChipsGoldIcon->X = 24;
-    ChipsGoldIcon->Y = 300;
+    ChipsGoldIcon->Control.X = 24;
+    ChipsGoldIcon->Control.Y = 300;
     
     ChipsPlatIcon->Texture = "CHIPPLAT";
-    ChipsPlatIcon->X = 24;
-    ChipsPlatIcon->Y = 336;
+    ChipsPlatIcon->Control.X = 24;
+    ChipsPlatIcon->Control.Y = 336;
     
     InventoryIcon->Texture = "GPAKA0";
-    InventoryIcon->X = 40;
-    InventoryIcon->Y = 428;
+    InventoryIcon->Control.X = 40;
+    InventoryIcon->Control.Y = 428;
     
-    ModuleLabel->X = 84;
-    ModuleLabel->Y = 116;
+    ModuleLabel->Control.X = 84;
+    ModuleLabel->Control.Y = 116;
     ModuleLabel->Color = "Green";
     ModuleLabel->Big = true;
     
-    TurretPartsLabel->X = 84;
-    TurretPartsLabel->Y = 148;
+    TurretPartsLabel->Control.X = 84;
+    TurretPartsLabel->Control.Y = 148;
     TurretPartsLabel->Color = "White";
     TurretPartsLabel->Big = true;
     
-    AugChargeLabel->X = 84;
-    AugChargeLabel->Y = 180;
+    AugChargeLabel->Control.X = 84;
+    AugChargeLabel->Control.Y = 180;
     AugChargeLabel->Color = "Yellow";
     AugChargeLabel->Big = true;
     
-    AugSlotsLabel->X = 84;
-    AugSlotsLabel->Y = 200;
+    AugSlotsLabel->Control.X = 84;
+    AugSlotsLabel->Control.Y = 200;
     AugSlotsLabel->Color = "Green";
     AugSlotsLabel->Big = true;
     
-    AugUpgradesLabel->X = 84;
-    AugUpgradesLabel->Y = 224;
+    AugUpgradesLabel->Control.X = 84;
+    AugUpgradesLabel->Control.Y = 224;
     AugUpgradesLabel->Color = "Green";
     AugUpgradesLabel->Big = true;
     
-    StimsLabel->X = 84;
-    StimsLabel->Y = 264;
+    StimsLabel->Control.X = 84;
+    StimsLabel->Control.Y = 264;
     StimsLabel->Color = "White";
     StimsLabel->Big = true;
     
-    ChipsGoldLabel->X = 84;
-    ChipsGoldLabel->Y = 314;
+    ChipsGoldLabel->Control.X = 84;
+    ChipsGoldLabel->Control.Y = 314;
     ChipsGoldLabel->Color = "Gold";
     ChipsGoldLabel->Big = true;
     
-    ChipsPlatLabel->X = 84;
-    ChipsPlatLabel->Y = 350;
+    ChipsPlatLabel->Control.X = 84;
+    ChipsPlatLabel->Control.Y = 350;
     ChipsPlatLabel->Color = "White";
     ChipsPlatLabel->Big = true;
     
-    InventoryLabel->X = 84;
-    InventoryLabel->Y = 412;
+    InventoryLabel->Control.X = 84;
+    InventoryLabel->Control.Y = 412;
     InventoryLabel->Color = "White";
     InventoryLabel->Big = true;
     
@@ -1075,53 +1235,44 @@ NamedScript void UpdateMainWindow()
     // Map Stats
     //
     
-    str MapType = "Standard Map";
+    GUIIcon *MapIcon = GUIAddIcon(OverviewPanel, "Map Icon");
     
-    GUIIcon *MapIcon = GUICreateIcon(Window);
-    
-    GUILabel *MapNameLabel = GUICreateLabel(Window);
-    GUILabel *MapInfoLabel = GUICreateLabel(Window);
-    GUILabel *MapTimeLabel = GUICreateLabel(Window);;
-    GUILabel *MapKillsLabel = GUICreateLabel(Window);
-    GUILabel *MapItemsLabel = GUICreateLabel(Window);
-    GUILabel *MapSecretsLabel = GUICreateLabel(Window);
-    
-    if (CurrentLevel->SecretMap)
-        MapType = "Secret Map";
-    if (CurrentLevel->UACBase)
-        MapType = "UAC Base";
-    if (CurrentLevel->UACArena)
-        MapType = "UAC Arena";
+    GUILabel *MapNameLabel = GUIAddLabel(OverviewPanel, "Map Name");
+    GUILabel *MapInfoLabel = GUIAddLabel(OverviewPanel, "Map Info");
+    GUILabel *MapTimeLabel = GUIAddLabel(OverviewPanel, "Map Time");
+    GUILabel *MapKillsLabel = GUIAddLabel(OverviewPanel, "Map Kills");
+    GUILabel *MapItemsLabel = GUIAddLabel(OverviewPanel, "Map Items");
+    GUILabel *MapSecretsLabel = GUIAddLabel(OverviewPanel, "Map Secrets");
     
     MapIcon->Texture = "PMAPA0";
-    MapIcon->X = 300;
-    MapIcon->Y = 128;
+    MapIcon->Control.X = 300;
+    MapIcon->Control.Y = 128;
     
-    MapNameLabel->X = 328;
-    MapNameLabel->Y = 110;
+    MapNameLabel->Control.X = 328;
+    MapNameLabel->Control.Y = 110;
     MapNameLabel->Color = "White";
     MapNameLabel->Big = true;
     
-    MapInfoLabel->X = 328;
-    MapInfoLabel->Y = 122;
+    MapInfoLabel->Control.X = 328;
+    MapInfoLabel->Control.Y = 122;
     MapInfoLabel->Color = "Green";
     MapInfoLabel->Big = true;
     
-    MapTimeLabel->X = 328;
-    MapTimeLabel->Y = 134;
+    MapTimeLabel->Control.X = 328;
+    MapTimeLabel->Control.Y = 134;
     MapTimeLabel->Color = "Orange";
     MapTimeLabel->Big = true;
     
-    MapKillsLabel->X = 328;
-    MapKillsLabel->Y = 146;
+    MapKillsLabel->Control.X = 328;
+    MapKillsLabel->Control.Y = 146;
     MapKillsLabel->Big = true;
     
-    MapItemsLabel->X = 328;
-    MapItemsLabel->Y = 158;
+    MapItemsLabel->Control.X = 328;
+    MapItemsLabel->Control.Y = 158;
     MapItemsLabel->Big = true;
     
-    MapSecretsLabel->X = 328;
-    MapSecretsLabel->Y = 170;
+    MapSecretsLabel->Control.X = 328;
+    MapSecretsLabel->Control.Y = 170;
     MapSecretsLabel->Big = true;
     
     // --------------------------------------------------
@@ -1131,86 +1282,115 @@ NamedScript void UpdateMainWindow()
     // --------------------------------------------------
     // Current Stim / Toxicity
     //
-    
-    // --------------------------------------------------
-    // Update Loop
-    //
-    
-    while (true)
-    {
-        NameLabel->Text = StrParam("%tS", PlayerNumber() + 1);
-        LevelLabel->Text = StrParam("Level: %d", Player.Level);
-        XPLabel->Text = StrParam("XP: %ld / %ld", Player.XP, Player.XPNext);
-        TitleLabel->Text = StrParam("Title: %S (%d/%d)", Ranks[Player.RankLevel], Player.RankLevel, MAX_RANK);
-        RankLabel->Text = StrParam("Rank: %ld / %ld", Player.Rank, Player.RankNext);
-        if (Player.PayReady && !Player.PayingOut)
-            PPLabel->Text = StrParam("PP: %d (%S) [\C[%S]Ready\C-]", Player.PP, FormatTime(Player.PayTimer), PayReadyColor);
-        else
-            PPLabel->Text = StrParam("PP: %d (%S)", Player.PP, FormatTime(Player.PayTimer));
-        
-        ModuleLabel->Text = StrParam("%d", CheckInventory("DRPGModule"));
-        TurretPartsLabel->Text = StrParam("%d", CheckInventory("DRPGTurretPart"));
-        AugChargeLabel->Text = StrParam("%d%% / %d%%", (int)Player.Augs.Battery, (int)Player.Augs.BatteryMax);
-        AugSlotsLabel->Text = StrParam("%d / %d", Player.Augs.SlotsUsed, Player.Augs.Slots);
-        AugUpgradesLabel->Text = StrParam("%d / %d", CheckInventory("DRPGAugCanister"), CheckInventory("DRPGAugUpgradeCanister"));
-        StimsLabel->Text = StrParam("S: %d\nM: %d\nL: %d\nXL: %d", CheckInventory("DRPGStimSmall"), CheckInventory("DRPGStimMedium"), CheckInventory("DRPGStimLarge"), CheckInventory("DRPGStimXL"));
-        ChipsGoldLabel->Text = StrParam("%d", CheckInventory("DRPGChipGold"));
-        ChipsPlatLabel->Text = StrParam("%d", CheckInventory("DRPGChipPlatinum"));
-        InventoryLabel->Text = StrParam("Inventory: %d / %d\n\CaBullets: %d / %d\n\CiShells: %d / %d\n\CcRockets: %d / %d\n\CdCells: %d / %d",
-                                        Player.InvItems, CheckInventoryMax(),
-                                        CheckInventory("Clip"), GetAmmoCapacity("Clip"),
-                                        CheckInventory("Shell"), GetAmmoCapacity("Shell"),
-                                        CheckInventory("RocketAmmo"), GetAmmoCapacity("RocketAmmo"),
-                                        CheckInventory("Cell"), GetAmmoCapacity("Cell"));
-        
-        MapNameLabel->Text = StrParam("%S", CurrentLevel->NiceName);
-        MapInfoLabel->Text = StrParam("%S, level %d - %S", CurrentLevel->LumpName, CurrentLevel->LevelNum, MapType);
-        if (CurrentLevel->Par > 0)
-            MapTimeLabel->Text = StrParam("Time: %S (Par: %S)", FormatTime(Timer()), FormatTime(CurrentLevel->Par * 35));
-        else
-            MapTimeLabel->Text = StrParam("Time: %S", FormatTime(Timer()));
-        MapKillsLabel->Text = StrParam("Monsters: %d / %d", GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
-        MapItemsLabel->Text = StrParam("Items: %d / %d", GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
-        MapSecretsLabel->Text = StrParam("Secrets: %d / %d", GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
-        
-        if (CurrentLevel && CurrentLevel->KillBonus)
-            MapKillsLabel->Color = MenuCursorColor;
-        else
-            MapKillsLabel->Color = "Brick";
-        if (CurrentLevel && CurrentLevel->ItemsBonus)
-            MapItemsLabel->Color = MenuCursorColor;
-        else
-            MapItemsLabel->Color = "LightBlue";
-        if (CurrentLevel && CurrentLevel->SecretsBonus)
-            MapSecretsLabel->Color = MenuCursorColor;
-        else
-            MapSecretsLabel->Color = "Gold";
-        
-        if (CurrentLevel && !CurrentLevel->UACBase)
-        {
-            MapIcon->Visible = true;
-            MapNameLabel->Visible = true;
-            MapInfoLabel->Visible = true;
-            MapTimeLabel->Visible = true;
-            MapKillsLabel->Visible = true;
-            MapItemsLabel->Visible = true;
-            MapSecretsLabel->Visible = true;
-        }
-        else
-        {
-            MapIcon->Visible = false;
-            MapNameLabel->Visible = false;
-            MapInfoLabel->Visible = false;
-            MapTimeLabel->Visible = false;
-            MapKillsLabel->Visible = false;
-            MapItemsLabel->Visible = false;
-            MapSecretsLabel->Visible = false;
-        }
-        
-        Delay(1);
-    }
 }
-*/
+
+void UpdateOverviewPanel(GUIPanel *OverviewPanel)
+{
+    GUILabel *NameLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Name");
+    GUILabel *LevelLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Level");
+    GUILabel *XPLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player XP");
+    GUILabel *TitleLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Rank Title");
+    GUILabel *RankLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Rank");
+    GUILabel *PPLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Payout Status");
+    
+    GUILabel *ModuleLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Module Count");
+    GUILabel *TurretPartsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Turret Part Count");
+    GUILabel *AugChargeLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Aug Charge");
+    GUILabel *AugSlotsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Aug Slots");
+    GUILabel *AugUpgradesLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Aug Upgrades");
+    GUILabel *StimsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Stim Counts");
+    GUILabel *ChipsGoldLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Gold Chip Count");
+    GUILabel *ChipsPlatLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Platinum Chip Count");
+    GUILabel *InventoryLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Inventory Count");
+    
+    GUIIcon  *MapIcon = (GUIIcon *)GUIControlByName(OverviewPanel, "Map Icon");
+    GUILabel *MapNameLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Name");
+    GUILabel *MapInfoLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Info");
+    GUILabel *MapTimeLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Time");
+    GUILabel *MapKillsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Kills");
+    GUILabel *MapItemsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Items");
+    GUILabel *MapSecretsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Secrets");
+    
+    NameLabel->Text = StrParam("%tS", PlayerNumber() + 1);
+    LevelLabel->Text = StrParam("Level: %d", Player.Level);
+    XPLabel->Text = StrParam("XP: %ld / %ld", Player.XP, Player.XPNext);
+    TitleLabel->Text = StrParam("Title: %S (%d/%d)", Ranks[Player.RankLevel], Player.RankLevel, MAX_RANK);
+    RankLabel->Text = StrParam("Rank: %ld / %ld", Player.Rank, Player.RankNext);
+    if (Player.PayReady && !Player.PayingOut)
+        PPLabel->Text = StrParam("PP: %d (%S) [\C[%S]Ready\C-]", Player.PP, FormatTime(Player.PayTimer), PayReadyColor);
+    else
+        PPLabel->Text = StrParam("PP: %d (%S)", Player.PP, FormatTime(Player.PayTimer));
+    
+    ModuleLabel->Text = StrParam("%d", CheckInventory("DRPGModule"));
+    TurretPartsLabel->Text = StrParam("%d", CheckInventory("DRPGTurretPart"));
+    AugChargeLabel->Text = StrParam("%d%% / %d%%", (int)Player.Augs.Battery, (int)Player.Augs.BatteryMax);
+    AugSlotsLabel->Text = StrParam("%d / %d", Player.Augs.SlotsUsed, Player.Augs.Slots);
+    AugUpgradesLabel->Text = StrParam("%d / %d", CheckInventory("DRPGAugCanister"), CheckInventory("DRPGAugUpgradeCanister"));
+    StimsLabel->Text = StrParam("S: %d\nM: %d\nL: %d\nXL: %d", CheckInventory("DRPGStimSmall"), CheckInventory("DRPGStimMedium"), CheckInventory("DRPGStimLarge"), CheckInventory("DRPGStimXL"));
+    ChipsGoldLabel->Text = StrParam("%d", CheckInventory("DRPGChipGold"));
+    ChipsPlatLabel->Text = StrParam("%d", CheckInventory("DRPGChipPlatinum"));
+    InventoryLabel->Text = StrParam("Inventory: %d / %d\n\CaBullets: %d / %d\n\CiShells: %d / %d\n\CcRockets: %d / %d\n\CdCells: %d / %d",
+                                    Player.InvItems, CheckInventoryMax(),
+                                    CheckInventory("Clip"), GetAmmoCapacity("Clip"),
+                                    CheckInventory("Shell"), GetAmmoCapacity("Shell"),
+                                    CheckInventory("RocketAmmo"), GetAmmoCapacity("RocketAmmo"),
+                                    CheckInventory("Cell"), GetAmmoCapacity("Cell"));
+    
+    str MapType = "Standard Map";
+    
+    if (CurrentLevel->SecretMap)
+        MapType = "Secret Map";
+    if (CurrentLevel->UACBase)
+        MapType = "UAC Base";
+    if (CurrentLevel->UACArena)
+        MapType = "UAC Arena";
+    
+    MapNameLabel->Text = StrParam("%S", CurrentLevel->NiceName);
+    MapInfoLabel->Text = StrParam("%S, level %d - %S", CurrentLevel->LumpName, CurrentLevel->LevelNum, MapType);
+    if (CurrentLevel->Par > 0)
+        MapTimeLabel->Text = StrParam("Time: %S (Par: %S)", FormatTime(Timer()), FormatTime(CurrentLevel->Par * 35));
+    else
+        MapTimeLabel->Text = StrParam("Time: %S", FormatTime(Timer()));
+    MapKillsLabel->Text = StrParam("Monsters: %d / %d", GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+    MapItemsLabel->Text = StrParam("Items: %d / %d", GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+    MapSecretsLabel->Text = StrParam("Secrets: %d / %d", GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
+    
+    if (CurrentLevel && CurrentLevel->KillBonus)
+        MapKillsLabel->Color = MenuCursorColor;
+    else
+        MapKillsLabel->Color = "Brick";
+    if (CurrentLevel && CurrentLevel->ItemsBonus)
+        MapItemsLabel->Color = MenuCursorColor;
+    else
+        MapItemsLabel->Color = "LightBlue";
+    if (CurrentLevel && CurrentLevel->SecretsBonus)
+        MapSecretsLabel->Color = MenuCursorColor;
+    else
+        MapSecretsLabel->Color = "Gold";
+    
+    if (CurrentLevel && !CurrentLevel->UACBase)
+    {
+        MapIcon->Control.Visible = true;
+        MapNameLabel->Control.Visible = true;
+        MapInfoLabel->Control.Visible = true;
+        MapTimeLabel->Control.Visible = true;
+        MapKillsLabel->Control.Visible = true;
+        MapItemsLabel->Control.Visible = true;
+        MapSecretsLabel->Control.Visible = true;
+    }
+    else
+    {
+        MapIcon->Control.Visible = false;
+        MapNameLabel->Control.Visible = false;
+        MapInfoLabel->Control.Visible = false;
+        MapTimeLabel->Control.Visible = false;
+        MapKillsLabel->Control.Visible = false;
+        MapItemsLabel->Control.Visible = false;
+        MapSecretsLabel->Control.Visible = false;
+    }
+    
+    GUIUpdatePanelControls(OverviewPanel);
+}
 
 // Temporary, for testing coordinates
 NamedScript Console void GUITest(int X, int Y, int X2, int Y2)
