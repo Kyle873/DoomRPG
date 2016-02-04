@@ -95,6 +95,7 @@ struct CharSaveInfo_S
     // Misc
     int Credits;
     int Modules;
+    int Medkit;
     int GoldChips;
     int PlatinumChips;
     int ShopCard;

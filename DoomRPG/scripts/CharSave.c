@@ -29,7 +29,7 @@
     Level / Rank Level
         - Only Level and Rank Level are stored, the XP to give is determined from these
         - Both Level and Rank Level are stored in 1 byte each
-        - TODO: PP (Payout Points)
+        - PP is stored in 4 bytes
     Stats
         - Each is stored in 1 byte since they will never go above 200 by normal means
           [KS] They can be negative but we can't handle that so just ignore it in that case
@@ -51,6 +51,8 @@
           - Stored in 4 bytes
         - Modules
           - Stored in 4 bytes
+        - Medkit
+          - Stored in 2 bytes
         - Chips
           - Gold Chip stored in 2 bytes
           - Platinum Chip stored in 2 bytes
@@ -450,6 +452,7 @@ NamedScript MenuEntry void LoadCharacter()
         Player.RankLevel = Info.RankLevel;
         Player.Rank = RankTable[Player.RankLevel - 1];
     }
+    Player.PP = Info.PP;
     
     // Stats
     Player.Strength     = Info.Stats[0];
@@ -519,6 +522,7 @@ NamedScript MenuEntry void LoadCharacter()
     // Misc
     SetInventory("DRPGCredits", Info.Credits);
     SetInventory("DRPGModule", Info.Modules);
+    Player.Medkit = Info.Medkit;
     SetInventory("DRPGChipGold", Info.GoldChips);
     SetInventory("DRPGChipPlatinum", Info.PlatinumChips);
     SetInventory("DRPGUACCard", Info.ShopCard);
@@ -674,6 +678,7 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     // Level / Rank Level
     Info->Level = Player.Level;
     Info->RankLevel = Player.RankLevel;
+    Info->PP = Player.PP;
     
     // Stats
     Info->Stats[0] = (Player.Stim.Active ? Player.Stim.PrevStats[STAT_STRENGTH] : Player.Strength);
@@ -719,6 +724,7 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     // Misc
     Info->Credits = CheckInventory("DRPGCredits");
     Info->Modules = CheckInventory("DRPGModule");
+    Info->Medkit = Player.Medkit;
     Info->GoldChips = CheckInventory("DRPGChipGold");
     Info->PlatinumChips = CheckInventory("DrpgChipPlatinum");
     Info->ShopCard = Player.ShopCard;
@@ -787,6 +793,8 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     StringPos += 2;
     Info->RankLevel = HexToInteger(String + StringPos, 2);
     StringPos += 2;
+    Info->PP = HexToInteger(String + StringPos, 8);
+    StringPos += 8;
     
     // Stats
     for (int i = 0; i < STAT_MAX; i++)
@@ -837,6 +845,8 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     StringPos += 8;
     Info->Modules = HexToInteger(String + StringPos, 8);
     StringPos += 8;
+    Info->Medkit = HexToInteger(String + StringPos, 4);
+    StringPos += 4;
     Info->GoldChips = HexToInteger(String + StringPos, 4);
     StringPos += 4;
     Info->PlatinumChips = HexToInteger(String + StringPos, 4);
@@ -926,6 +936,17 @@ NamedScript char const *MakeSaveString(CharSaveInfo *Info)
     SaveString[pos + 0] = ToHexChar(Info->Level >> 4);
     pos += 4;
     
+    // PP
+    SaveString[pos + 7] = ToHexChar(Info->PP);
+    SaveString[pos + 6] = ToHexChar(Info->PP >> 4);
+    SaveString[pos + 5] = ToHexChar(Info->PP >> 8);
+    SaveString[pos + 4] = ToHexChar(Info->PP >> 12);
+    SaveString[pos + 3] = ToHexChar(Info->PP >> 16);
+    SaveString[pos + 2] = ToHexChar(Info->PP >> 20);
+    SaveString[pos + 1] = ToHexChar(Info->PP >> 24);
+    SaveString[pos + 0] = ToHexChar(Info->PP >> 28);
+    pos += 8;
+    
     // Stats
     for (int i = 0; i < STAT_MAX; i++)
     {
@@ -1005,6 +1026,13 @@ NamedScript char const *MakeSaveString(CharSaveInfo *Info)
     SaveString[pos + 1] = ToHexChar(Info->Modules >> 24);
     SaveString[pos + 0] = ToHexChar(Info->Modules >> 28);
     pos += 8;
+    
+    // Medkit
+    SaveString[pos + 3] = ToHexChar(Info->Medkit);
+    SaveString[pos + 2] = ToHexChar(Info->Medkit >> 4);
+    SaveString[pos + 1] = ToHexChar(Info->Medkit >> 8);
+    SaveString[pos + 0] = ToHexChar(Info->Medkit >> 12);
+    pos += 4;
     
     // Gold Chips
     SaveString[pos + 3] = ToHexChar(Info->GoldChips);
