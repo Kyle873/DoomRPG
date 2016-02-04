@@ -132,6 +132,17 @@ NamedScript Type_ENTER void Init()
     
     if (!Player.FirstRun)
     {
+        // [KS] Portable always-use items, because having too many mandatory use-keys is bad, yo.
+        if (GetActivatorCVar("drpg_give_quickinventory"))
+        {
+            GiveInventory("DRPGPortableStimInjectorItem", 1); // Use Stim
+            GiveInventory("DRPGPortableStimDisposalItem", 1); // Toss Stim
+            GiveInventory("DRPGPortableShieldItem", 1); // Toggle Shield
+            GiveInventory("DRPGPortableMedkitItem", 1); // Quick Heal
+            GiveInventory("DRPGPortableFocusItem", 1); // Focus
+            GiveInventory("DRPGPortableAugItem", 1); // Reactivate Augs
+        }
+        
         // Funds
         GiveInventory("DRPGCredits", GetActivatorCVar("drpg_start_credits"));
         Player.PrevCredits = CheckInventory("DRPGCredits");
