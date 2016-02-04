@@ -2015,6 +2015,9 @@ NamedScript void DefaultLoadout()
     if (CompatMode != COMPAT_DRLA && GetActivatorCVar("drpg_start_armor") >= 0)
         GiveInventory(Loadout_ArmorInfo[GetActivatorCVar("drpg_start_armor")], 1);
     
+    // Medkit
+    Player.Medkit = GetActivatorCVar("drpg_start_medkit");
+    
     Loadout_GiveAugs();
     Loadout_GiveShieldParts();
     Loadout_GiveShieldAccessories();
