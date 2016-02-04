@@ -308,7 +308,7 @@ void PayoutAddPP()
 void PayoutReady()
 {
     SetHudSize(640, 480, true);
-    PrintSpriteFade("PAYPDAI1", 0, 640 / 2, 480 - 64, 5.0, 5.0);
+    PrintSpriteFade("PAYPDA", 0, 640 / 2, 480 - 64, 5.0, 5.0);
     
     ActivatorSound("payout/ready", 127);
     Player.InMenu = false;
