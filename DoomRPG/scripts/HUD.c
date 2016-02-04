@@ -113,7 +113,7 @@ NamedScript Type_ENTER void StatusEffectHUD()
     goto Start;
 }
 
-NamedScript Type_ENTER void CreditHUD()
+NamedScript Type_ENTER void OverviewHUD()
 {
     str const CreditSprites[6] =
     {
@@ -127,17 +127,24 @@ NamedScript Type_ENTER void CreditHUD()
     
     // Interpolators
     InterpData Credits;
+    InterpData Modules;
+    InterpData Medkit;
+    
     Credits.Value = CheckInventory("DRPGCredits");
     Credits.OldValue = Credits.Value;
     Credits.StartValue = Credits.Value;
     Credits.DisplayValue = Credits.Value;
     Credits.TimerMaxCap = 2;
-    InterpData Modules;
     Modules.Value = CheckInventory("DRPGModule");
     Modules.OldValue = Modules.Value;
     Modules.StartValue = Modules.Value;
     Modules.DisplayValue = Modules.Value;
     Modules.TimerMaxCap = 2;
+    Medkit.Value = Player.Medkit;
+    Medkit.OldValue = Medkit.Value;
+    Medkit.StartValue = Medkit.Value;
+    Medkit.DisplayValue = Medkit.Value;
+    Medkit.TimerMaxCap = 2;
     
     // Collection
     int CreditsCollected = 0;
@@ -157,7 +164,9 @@ NamedScript Type_ENTER void CreditHUD()
     
     Credits.Value = CheckInventory("DRPGCredits");
     Modules.Value = CheckInventory("DRPGModule");
+    Medkit.Value = Player.Medkit;
     CreditColor = (Timer() / (35 * 60)) % 6;
+    
     fixed X = GetActivatorCVar("drpg_credits_x");
     fixed Y = GetActivatorCVar("drpg_credits_y");
     
@@ -166,6 +175,7 @@ NamedScript Type_ENTER void CreditHUD()
     // Interpolation
     Interpolate(&Credits);
     Interpolate(&Modules);
+    Interpolate(&Medkit);
     
     // Update the collection values
     if (Credits.Value != Credits.OldValue)
@@ -179,6 +189,7 @@ NamedScript Type_ENTER void CreditHUD()
         ModulesCollectionTimer = 35 * 6;
     }
     
+    // Credits
     PrintSprite(CreditSprites[CreditColor], 0, X, Y + 12.0, 0.05);
     SetFont("BIGFONT");
     HudMessage("%ld", Credits.DisplayValue);
@@ -188,18 +199,23 @@ NamedScript Type_ENTER void CreditHUD()
         HudMessage("%c%d", (CreditsCollected > 0 ? '+' : '@'), CreditsCollected);
         EndHudMessage(HUDMSG_FADEOUT, PAY_ID, (CreditsCollected > 0 ? "White" : "Red"), X + 16.1, Y + 12.0, 0.05, 2.0, 1.0);
     }
-    if (GetActivatorCVar("drpg_module_show") || GetActivatorCVar("drpg_hud_preview"))
+    
+    // Modules
+    PrintSprite("UMODA0", 0, X - 4.0, Y + 56.0, 0.05);
+    SetFont("BIGFONT");
+    HudMessage("%ld", Modules.DisplayValue);
+    EndHudMessage(HUDMSG_PLAIN, 0, "Green", X + 16.1, Y + 24.0, 0.05);
+    if (ModulesCollected != 0)
     {
-        PrintSprite("UMODA0", 0, X - 4.0, Y + 56.0, 0.05);
-        SetFont("BIGFONT");
-        HudMessage("%ld", Modules.DisplayValue);
-        EndHudMessage(HUDMSG_PLAIN, 0, "Green", X + 16.1, Y + 24.0, 0.05);
-        if (ModulesCollected != 0)
-        {
-            HudMessage("%c%d", (ModulesCollected > 0 ? '+' : '@'), ModulesCollected);
-            EndHudMessage(HUDMSG_FADEOUT, PAY_ID + 1, (ModulesCollected > 0 ? "DarkGreen" : "DarkRed"), X + 16.1, Y + 36.0, 0.05, 2.0, 1.0);
-        }
+        HudMessage("%c%d", (ModulesCollected > 0 ? '+' : '@'), ModulesCollected);
+        EndHudMessage(HUDMSG_FADEOUT, PAY_ID + 1, (ModulesCollected > 0 ? "DarkGreen" : "DarkRed"), X + 16.1, Y + 36.0, 0.05, 2.0, 1.0);
     }
+    
+    // Medkit
+    PrintSprite("MEDIA0", 0, X, Y + 80.0, 0.05);
+    SetFont("BIGFONT");
+    HudMessage("%ld", Medkit.DisplayValue);
+    EndHudMessage(HUDMSG_PLAIN, 0, (Medkit.DisplayValue > 0 ? "Brick" : "Red"), X + 16.1, Y + 56.0, 0.05);
     
     // Collection timer handling
     if (CreditsCollectionTimer > 0)
@@ -213,6 +229,7 @@ NamedScript Type_ENTER void CreditHUD()
     
     Credits.OldValue = CheckInventory("DRPGCredits");
     Modules.OldValue = CheckInventory("DRPGModule");
+    Medkit.OldValue = Player.Medkit;
     Delay(1);
     
     goto Start;

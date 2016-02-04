@@ -18,6 +18,9 @@ extern str LongRanks[MAX_RANK + 1];
 NamedScript DECORATE void StatusEffect(int, int, int);
 NamedScript DECORATE void TryStatusEffect(int, int, int);
 NamedScript void AddXP(int, long int, long int);
+NamedScript DECORATE void AddMedkit(int);
+NamedScript KeyBind void UseMedkit();
+NamedScript DECORATE bool CheckMedkitMax();
 
 void InitXPTable();
 void InitStatXPTable();

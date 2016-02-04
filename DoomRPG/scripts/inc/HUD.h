@@ -4,7 +4,7 @@
 #include "Defs.h"
 
 NamedScript Type_ENTER void StatusEffectHUD();
-NamedScript Type_ENTER void CreditHUD();
+NamedScript Type_ENTER void OverviewHUD();
 NamedScript Type_ENTER void ComboHUD();
 NamedScript Type_ENTER void SkillHUD();
 NamedScript Type_ENTER void StimHUD();

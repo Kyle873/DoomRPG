@@ -365,6 +365,11 @@ NamedScript void Loop()
     // Regeneration
     DoRegen();
     
+    // Always Quick Heal if CVAR is set
+    if (GetActivatorCVar("drpg_auto_heal"))
+        if (Player.ActualHealth < Player.HealthMax / GetActivatorCVar("drpg_auto_heal_percent"))
+            UseMedkit();
+    
     // Set mass stupid high when Invulnerable or transporting to prevent knockback
     if (CheckInventory("PowerInvulnerable") || Transported)
         Player.Mass *= 128;
@@ -560,10 +565,6 @@ NamedScript void PlayerDamage()
                 PrintSpriteFade("AGISAVE", 0, 160.0, 140.0, 0.5, 0.5);
             }
         }
-        
-        // Always Quick Heal if CVAR is set
-        if (GetActivatorCVar("drpg_auto_heal"))
-            QuickHeal(false);
     }
     else if (DamageTaken < 0)
     {
@@ -1305,38 +1306,6 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
     
     if (GetCVar("drpg_debug"))
         Log("\CdDebug: \C-Dynamic Loot Generation created \Cd%d\C- items of type \Cd%S", Items, Actor);
-}
-
-// Quick Heal
-NamedScript KeyBind void QuickHeal(int Quick)
-{
-    // If the player's dead, terminate
-    if (GetActorProperty(0, APROP_Health) <= 0) return;
-    
-    int Health = Player.ActualHealth;
-    int Percent = GetActivatorCVar("drpg_auto_heal_percent");
-    
-    if ((Health < Player.HealthMax / Percent) || Quick)
-    {
-        if (GetActivatorCVar("drpg_auto_heal_order") == 1) // Smallest to Largest
-        {
-                 if (CheckInventory("DRPGStimPack"))            UseInventory("DRPGStimPack");
-            else if (CheckInventory("DRPGMedikit"))             UseInventory("DRPGMedikit");
-            else if (CheckInventory("DRPGLargeMedikit"))        UseInventory("DRPGLargeMedikit");
-            else if (CheckInventory("DRPGXLMedikit"))           UseInventory("DRPGXLMedikit");
-            else if (CheckInventory("DRPGMedPack"))             UseInventory("DRPGMedPack");
-            else if (CheckInventory("DRPGSurgeryKit"))          UseInventory("DRPGSurgeryKit");
-        }
-        else if (GetActivatorCVar("drpg_auto_heal_order") == 2) // Largest to Smallest
-        {
-                 if (CheckInventory("DRPGSurgeryKit"))          UseInventory("DRPGSurgeryKit");
-            else if (CheckInventory("DRPGMedPack"))             UseInventory("DRPGMedPack");
-            else if (CheckInventory("DRPGXLMedikit"))           UseInventory("DRPGXLMedikit");
-            else if (CheckInventory("DRPGLargeMedikit"))        UseInventory("DRPGLargeMedikit");
-            else if (CheckInventory("DRPGMedikit"))             UseInventory("DRPGMedikit");
-            else if (CheckInventory("DRPGStimPack"))            UseInventory("DRPGStimPack");
-        }
-    }
 }
 
 // Activate Focus Mode

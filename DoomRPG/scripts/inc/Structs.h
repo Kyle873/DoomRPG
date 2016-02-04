@@ -904,6 +904,7 @@ struct PlayerData_S
     int WeaponSpeed;            // Weapon Speed Increase bsed on Agility
     fixed SurvivalBonus;        // Chance that you will survive a fatal hit
     int InvItems;               // How many inventory items you are currently carrying
+    int MedkitMax;              // THe total amount of healing your Medkit can hold
     int StatCap;                // Current Stat Cap
     
     // Energy Points (EP)
@@ -1021,6 +1022,9 @@ struct PlayerData_S
         int Nano;
         int Artifacts;
     } WeaponMods[ITEM_MAX];
+    
+    // Medkit
+    int Medkit;
     
     // GUI
     struct GUIData_S GUI;

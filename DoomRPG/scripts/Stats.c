@@ -129,13 +129,34 @@ NamedScript void AddXP(int PlayerNum, long int XP, long int Rank)
     }
 }
 
-NamedScript Console void PrintXPTable()
+NamedScript DECORATE void AddMedkit(int Amount)
 {
-    for (int i = 0; i < MAX_LEVEL; i++)
-    {
-        Log("Level %d: %ld", i + 1, XPTable[i]);
-        Delay(1);
-    }
+    Player.Medkit += Amount;
+    
+    if (Player.Medkit > Player.MedkitMax)
+        Player.Medkit = Player.MedkitMax;
+}
+
+NamedScript DECORATE bool CheckMedkitMax()
+{
+    return (Player.Medkit >= Player.MedkitMax);
+}
+
+NamedScript KeyBind void UseMedkit()
+{
+    if (Player.Medkit <= 0 || Player.ActualHealth >= Player.HealthMax) return;
+    
+    int HealAmount = Player.HealthMax - Player.ActualHealth;
+    
+    if (Player.Medkit < HealAmount)
+        HealAmount = Player.Medkit;
+    else if (HealAmount + Player.ActualHealth > Player.HealthMax)
+        HealAmount = Player.HealthMax - Player.ActualHealth;
+    
+    Player.ActualHealth += HealAmount;
+    Player.Medkit -= HealAmount;
+    
+    ActivatorSound("items/health", 127);
 }
 
 void InitXPTable()
@@ -384,6 +405,7 @@ void CheckStats()
         SetAmmoCapacity("RLSkullLimit", DRLA_SKULL_MAX);
         SetAmmoCapacity("RLPhaseDeviceLimit", DRLA_DEVICE_MAX);
     }
+    Player.MedkitMax = Player.Capacity * 10;
     
     // Determine current stat cap
     Player.StatCap = SoftStatCap + Player.Level;

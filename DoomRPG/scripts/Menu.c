@@ -382,12 +382,12 @@ void DrawStatsMenu()
             Cost = (int)((1 * (fixed)MODULE_STAT_MULT) * GetCVarFixed("drpg_module_statfactor"));
 
         // Upgrade Modules
-        PrintSprite("UMODA0", 0, 16.1, 296.1, 0.05);
+        PrintSprite("UMODA0", 0, 16.1, 304.1, 0.05);
         SetFont("BIGFONT");
         HudMessage("%d", CheckInventory("DRPGModule"));
-        EndHudMessage(HUDMSG_PLAIN, 0, "Green", 40.1, 280.1, 0.05);
+        EndHudMessage(HUDMSG_PLAIN, 0, "Green", 40.1, 288.1, 0.05);
         HudMessage("-%d", Cost);
-        EndHudMessage(HUDMSG_PLAIN, 0, "Red", 40.1, 294.1, 0.05);
+        EndHudMessage(HUDMSG_PLAIN, 0, "Red", 40.1, 302.1, 0.05);
         
         SetFont("BIGFONT");
         if (Player.MenuIndex == 0)
@@ -548,21 +548,23 @@ void DrawStatsMenu()
         EndHudMessage(HUDMSG_PLAIN, 0, "Yellow",             30.1,   218.0,  0.05);
         HudMessage("Stim Vial Max: %d", Player.Stim.VialMax);
         EndHudMessage(HUDMSG_PLAIN, 0, "Cyan",               30.1,   226.0,  0.05);
+        HudMessage("Medkit: %d/%d", Player.Medkit, Player.MedkitMax);
+        EndHudMessage(HUDMSG_PLAIN, 0, "Brick",              30.1,   234.0,  0.05);
         if (GetCVar("drpg_inv_capacity"))
         {
             HudMessage("Inventory: %d/%d", Player.InvItems, CheckInventoryMax());
-            EndHudMessage(HUDMSG_PLAIN, 0, "White",              30.1,   234.0,  0.05);
+            EndHudMessage(HUDMSG_PLAIN, 0, "White",          30.1,   242.0,  0.05);
         }
         if (CompatMode == COMPAT_DRLA)
         {
             HudMessage("Weapons: %d/%d", CheckInventory("RLWeaponLimit"), DRLA_WEAPON_MAX);
-            EndHudMessage(HUDMSG_PLAIN, 0, "Brick",              30.1,   242.0,  0.05);
+            EndHudMessage(HUDMSG_PLAIN, 0, "Brick",              30.1,   250.0,  0.05);
             HudMessage("Armors: %d/%d", CheckInventory("RLArmorInInventory"), DRLA_ARMOR_MAX);
-            EndHudMessage(HUDMSG_PLAIN, 0, "Green",              30.1,   250.0,  0.05);
+            EndHudMessage(HUDMSG_PLAIN, 0, "Green",              30.1,   258.0,  0.05);
             HudMessage("Skulls: %d/%d", CheckInventory("RLSkullLimit"), DRLA_SKULL_MAX);
-            EndHudMessage(HUDMSG_PLAIN, 0, "Orange",             30.1,   258.0,  0.05);
+            EndHudMessage(HUDMSG_PLAIN, 0, "Orange",             30.1,   266.0,  0.05);
             HudMessage("Phase Devices: %d/%d", CheckInventory("RLPhaseDeviceLimit"), DRLA_DEVICE_MAX);
-            EndHudMessage(HUDMSG_PLAIN, 0, "Gray",               30.1,   266.0,  0.05);
+            EndHudMessage(HUDMSG_PLAIN, 0, "Gray",               30.1,   274.0,  0.05);
         };
         
         // Luck
