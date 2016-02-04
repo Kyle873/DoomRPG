@@ -212,7 +212,7 @@ NamedScript Type_ENTER void OverviewHUD()
     }
     
     // Medkit
-    PrintSprite("MEDIA0", 0, X, Y + 80.0, 0.05);
+    PrintSprite("Medkit", 0, X - 14, Y + 60.0, 0.05);
     SetFont("BIGFONT");
     HudMessage("%ld", Medkit.DisplayValue);
     EndHudMessage(HUDMSG_PLAIN, 0, (Medkit.DisplayValue > 0 ? "Brick" : "Red"), X + 16.1, Y + 56.0, 0.05);
