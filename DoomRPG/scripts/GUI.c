@@ -1135,44 +1135,44 @@ NamedScript void CreateOverviewPanel()
     GUILabel *InventoryLabel = GUIAddLabel(OverviewPanel, "Inventory Count");
     
     ModuleIcon->Texture = "UMODA0";
-    ModuleIcon->Control.X = 40;
-    ModuleIcon->Control.Y = 128;
+    ModuleIcon->Control.X = 24;
+    ModuleIcon->Control.Y = 96;
     
     TurretPartsIcon->Texture = "TPRTA0";
-    TurretPartsIcon->Control.X = 40;
-    TurretPartsIcon->Control.Y = 160;
+    TurretPartsIcon->Control.X = 24;
+    TurretPartsIcon->Control.Y = 128;
     
     AugChargeIcon->Texture = "AUGBATT";
-    AugChargeIcon->Control.X = 40;
-    AugChargeIcon->Control.Y = 180;
+    AugChargeIcon->Control.X = 24;
+    AugChargeIcon->Control.Y = 148;
     
     AugSlotsIcon->Texture = "AUGUB0";
-    AugSlotsIcon->Control.X = 40;
-    AugSlotsIcon->Control.Y = 210;
+    AugSlotsIcon->Control.X = 24;
+    AugSlotsIcon->Control.Y = 178;
     
     AugCanistersIcon->Texture = "AUGCA0";
-    AugCanistersIcon->Control.X = 32;
-    AugCanistersIcon->Control.Y = 236;
+    AugCanistersIcon->Control.X = 16;
+    AugCanistersIcon->Control.Y = 204;
     
     AugUpgradesIcon->Texture = "AUGUA0";
-    AugUpgradesIcon->Control.X = 48;
-    AugUpgradesIcon->Control.Y = 230;
+    AugUpgradesIcon->Control.X = 32;
+    AugUpgradesIcon->Control.Y = 198;
     
     StimsIcon->Texture = "STIMB0";
-    StimsIcon->Control.X = 40;
-    StimsIcon->Control.Y = 280;
+    StimsIcon->Control.X = 24;
+    StimsIcon->Control.Y = 248;
     
     ChipsGoldIcon->Texture = "CHIPGOLD";
-    ChipsGoldIcon->Control.X = 24;
-    ChipsGoldIcon->Control.Y = 300;
+    ChipsGoldIcon->Control.X = 8;
+    ChipsGoldIcon->Control.Y = 268;
     
     ChipsPlatIcon->Texture = "CHIPPLAT";
-    ChipsPlatIcon->Control.X = 24;
-    ChipsPlatIcon->Control.Y = 336;
+    ChipsPlatIcon->Control.X = 8;
+    ChipsPlatIcon->Control.Y = 304;
     
     InventoryIcon->Texture = "GPAKA0";
-    InventoryIcon->Control.X = 40;
-    InventoryIcon->Control.Y = 428;
+    InventoryIcon->Control.X = 24;
+    InventoryIcon->Control.Y = 396;
     
     ModuleLabel->Control.X = 84;
     ModuleLabel->Control.Y = 116;
@@ -1233,8 +1233,8 @@ NamedScript void CreateOverviewPanel()
     GUILabel *MapSecretsLabel = GUIAddLabel(OverviewPanel, "Map Secrets");
     
     MapIcon->Texture = "PMAPA0";
-    MapIcon->Control.X = 300;
-    MapIcon->Control.Y = 128;
+    MapIcon->Control.X = 284;
+    MapIcon->Control.Y = 96;
     
     MapNameLabel->Control.X = 328;
     MapNameLabel->Control.Y = 110;
