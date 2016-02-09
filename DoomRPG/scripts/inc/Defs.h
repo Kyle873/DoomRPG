@@ -151,7 +151,8 @@ typedef __str str;
 // Arena
 //
 
-#define ARENA_HOLDTIME (35)
+#define ARENA_HOLDTIME      35
+#define MAX_ARENA_MUSIC     5
 
 typedef enum
 {
@@ -527,13 +528,8 @@ typedef enum
 // Outpost
 // 
 
-#define MAX_OUTPOST_ID          201
-#define MAX_OUTPOST_MUSIC       2
-#define MAX_COMBAT_MUSIC        5
-#define MAX_BOSS_MUSIC          5
-#define MAX_CREDITS_MUSIC       3
+#define MAX_OUTPOST_ID          2000
 
-// TODO: 0-based
 typedef enum
 {
     OMENU_LEVELTRANSPORT = 1,
@@ -552,12 +548,14 @@ typedef enum
 {
     OUTPOST_MUSIC_NORMAL,
     OUTPOST_MUSIC_COMBAT,
+    OUTPOST_MUSIC_LOWPOWER,
+    OUTPOST_MUSIC_LOWPOWER_COMBAT,
     OUTPOST_MUSIC_BOSS,
+    OUTPOST_MUSIC_MEGABOSS,
     OUTPOST_MUSIC_CREDITS,
     OUTPOST_MUSIC_MAX
 } EOutpostMusicType;
 
-// TODO: 0-based
 typedef enum
 {
     OREGEN_HEALTH = 1,

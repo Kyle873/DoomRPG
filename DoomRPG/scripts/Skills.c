@@ -2336,7 +2336,7 @@ NamedScript Console bool Transport(SkillLevelInfo *SkillLevel, void *Data)
     // Don't allow Transport while the arena is active, if the Marines are hostile, or you're in an Outpost-related menu
     if (ArenaActive || MarinesHostile || Player.OutpostMenu > 0)
     {
-        PrintError("There was a malwith the transportation system");
+        PrintError("There was a malfunction with the transportation system");
         ActivatorSound("menu/error", 127);
         return false;
     }

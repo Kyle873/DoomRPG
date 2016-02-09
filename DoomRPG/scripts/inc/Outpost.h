@@ -22,6 +22,7 @@ extern int RPGMap EntrySectorID;
 extern int RPGMap HallTeleportSpotID;
 extern int RPGMap CameraTID;
 extern int RPGMap RiftSpotTID;
+extern int RPGMap CreditsBlockerID;
 
 // Timers
 extern int RPGMap ForcefieldTimer;
@@ -57,7 +58,6 @@ NamedScript void PlaceBoss();
 NamedScript void SpawnBoss();
 
 void SpawnShopSpecialItem();
-void ResetOutpostMusic(bool);
-OptionalArgs(3) void SetOutpostMusic(int, bool, int, int);
+void SetOutpostMusic(int);
 
 #endif

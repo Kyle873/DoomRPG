@@ -170,7 +170,7 @@ NamedScript MapSpecial void ArenaLoop()
             
             // Change up the music
             if (ArenaWave > 1 && (ArenaWave % 10) == 0)
-                SetOutpostMusic(OUTPOST_MUSIC_COMBAT);
+                ArenaSetMusic();
             
             // Update the global Max Wave
             if (ArenaWave >= ArenaMaxWave)
@@ -213,7 +213,7 @@ NamedScript MapSpecial void ArenaStop()
     ArenaMod = -1;
     ArenaSetEnvironment(AEVENT_NONE);
     
-    ResetOutpostMusic(false);
+    SetOutpostMusic((PowerOut ? OUTPOST_MUSIC_LOWPOWER : OUTPOST_MUSIC_NORMAL));
     
     Ceiling_RaiseByValue(ArenaSectorTag - 1, 64, 128);
     Thing_Remove(ArenaMonstersTID);
@@ -650,4 +650,9 @@ void ArenaSetEnvironment(int ID)
     }
     
     ArenaEnvironment = ID;
+}
+
+void ArenaSetMusic()
+{
+    SetMusic(StrParam("Arena%d"), Random(1, MAX_ARENA_MUSIC));
 }

@@ -36,6 +36,7 @@ int RPGMap EntrySectorID = 200;
 int RPGMap HallTeleportSpotID = 1601;
 int RPGMap CameraTID = 1700;
 int RPGMap RiftSpotTID = 1800;
+int RPGMap CreditsBlockerID = 1900;
 
 // Timers
 int RPGMap ForcefieldTimer = 0;
@@ -59,10 +60,6 @@ NamedScript MapSpecial void EnterOutpost()
     
     // Assign the current level to the level choice
     LevelChoice = FindLevelInfoIndex(TransporterLevel->LumpName);
-    
-    // Use alternate music if you have a high Notoriety
-    if (OutpostNotoriety >= 3)
-        SetOutpostMusic(OUTPOST_MUSIC_NORMAL, false, 2);
     
     // Assign the current skill level to the skill choice
     SkillChoice = GameSkill() - 1;
@@ -663,7 +660,7 @@ NamedScript MapSpecial void ToggleArena()
         HudMessage("Arena Active");
         EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "Green", 0.5, 0.5, 2.0, 1.0);
         ArenaPlayerNumber = PlayerNumber();
-        SetOutpostMusic(OUTPOST_MUSIC_COMBAT);
+        ArenaSetMusic();
     }
     else
     {
@@ -671,7 +668,7 @@ NamedScript MapSpecial void ToggleArena()
         HudMessage("Arena Inactive");
         EndHudMessage(HUDMSG_FADEOUT, MENU_ID, "Red", 0.5, 0.5, 2.0, 1.0);
         ArenaPlayerNumber = -1;
-        ResetOutpostMusic(false);
+        SetOutpostMusic((PowerOut ? OUTPOST_MUSIC_LOWPOWER : OUTPOST_MUSIC_NORMAL));
     }
 }
 
@@ -801,8 +798,8 @@ NamedScript MapSpecial void PissOffMarines(bool Steal)
     
     Delay(35 * 2);
     
-    // Pick combat music from Arena selection
-    SetOutpostMusic(OUTPOST_MUSIC_COMBAT);
+    // Combat music
+    SetOutpostMusic((PowerOut ? OUTPOST_MUSIC_LOWPOWER_COMBAT : OUTPOST_MUSIC_COMBAT));
     
     // Remove Friendly flag from turrets
     if (!InTitle)
@@ -843,6 +840,9 @@ NamedScript MapSpecial void PissOffMarines(bool Steal)
         Sector_SetColor(i, 255, 0, 0, 0);
         Light_Glow(i, 160, 192, 30);
     }
+    
+    // Drop the Credits room blocker
+    Ceiling_LowerToFloor(CreditsBlockerID, 256);
     
     // Start the Alarm loop
     AlarmLoop();
@@ -981,9 +981,9 @@ NamedScript MapSpecial void ModuleConverter()
 NamedScript MapSpecial void CreditRoom(int ID)
 {
     if (ID == 1) // Enter
-        SetOutpostMusic(OUTPOST_MUSIC_CREDITS, true);
+        SetOutpostMusic(OUTPOST_MUSIC_CREDITS);
     if (ID == 2) // Exit
-        ResetOutpostMusic(true);
+        SetOutpostMusic((PowerOut ? OUTPOST_MUSIC_LOWPOWER : OUTPOST_MUSIC_NORMAL));
     
     if (ID == 3) // Kyle873 - That's me!
     {
@@ -1446,11 +1446,9 @@ NamedScript MapSpecial void PowerOutage()
     // Enable Emergency Power
     if (!MarinesHostile)
     {
-        if (OutpostNotoriety >= 3)
-            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, false, 2, 39);
-        else
-            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, false, 1, 4);
+        SetOutpostMusic(OUTPOST_MUSIC_LOWPOWER);
         ActivatorSound("misc/poweron", 127);
+        
         for (int i = 0; i < MAX_OUTPOST_ID; i++)
         {
             Sector_SetColor(i, 255, 0, 0, 0);
@@ -1525,9 +1523,7 @@ NamedScript void SpawnBoss()
         SetMusic("");
         Delay(35 * 30);
         if (OutpostNotoriety >= 4)
-            SetOutpostMusic(OUTPOST_MUSIC_BOSS, false, 2);
-        else
-            SetOutpostMusic(OUTPOST_MUSIC_BOSS, false, 1);
+            SetOutpostMusic(OUTPOST_MUSIC_BOSS);
         
         SpawnSpotForced("DRPGHugeTeleportFog", NotorietySpotTID + 1, 0, 0);
         SpawnSpotFacingForced((OutpostNotoriety >= 4 ? "DRPGSuperPowerSuit" : "DRPGHeavyPowerSuit"), NotorietySpotTID + 1, MarineBossTID);
@@ -1549,55 +1545,34 @@ void SpawnShopSpecialItem()
     }
 }
 
-void ResetOutpostMusic(bool Local)
-{
-    if (PowerOut)
-    {
-        if (OutpostNotoriety >= 3)
-            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, Local, 2, 4);
-        else
-            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, Local, 1, 4);
-    }
-    else
-    {
-        if (OutpostNotoriety >= 3)
-            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, Local, 2);
-        else
-            SetOutpostMusic(OUTPOST_MUSIC_NORMAL, Local, 1);
-    }
-}
-
-OptionalArgs(3) void SetOutpostMusic(int Type, bool Local, int Index, int Pattern)
+void SetOutpostMusic(int Type)
 {
     str Music;
     
-    // Normal
-    if (Type == OUTPOST_MUSIC_NORMAL)
-        Music = StrParam("Outpost%d", (Index > 0 ? Index : Random(1, MAX_OUTPOST_MUSIC)));
-    
-    // Combat
-    if (Type == OUTPOST_MUSIC_COMBAT)
+    switch (Type)
     {
-        Index = (Index > 0 ? Index : Random(0, MAX_COMBAT_MUSIC));
-        Music = StrParam("Arena%d", Index);
-        
-        if (Index == 0)
-        {
-            Music = "Outpost1";
-            Pattern = 3;
-        }
+    case OUTPOST_MUSIC_NORMAL:
+        Music = "Outpost";
+        break;
+    case OUTPOST_MUSIC_COMBAT:
+        Music = "Outpost2";
+        break;
+    case OUTPOST_MUSIC_LOWPOWER:
+        Music = "Outpost3";
+        break;
+    case OUTPOST_MUSIC_LOWPOWER_COMBAT:
+        Music = "Outpost4";
+        break;
+    case OUTPOST_MUSIC_BOSS:
+        Music = "OPBoss";
+        break;
+    case OUTPOST_MUSIC_MEGABOSS:
+        Music = "OPBoss2";
+        break;
+    case OUTPOST_MUSIC_CREDITS:
+        Music = "OutpostC";
+        break;
     }
     
-    // Boss
-    if (Type == OUTPOST_MUSIC_BOSS)
-        Music = StrParam("Boss%d", (Index > 0 ? Index : Random(1, MAX_BOSS_MUSIC)));
-
-    // Credits
-    if (Type == OUTPOST_MUSIC_CREDITS)
-        Music = StrParam("Credits%d", (Index > 0 ? Index : Random(1, MAX_CREDITS_MUSIC)));
-    
-    if (Local)
-        LocalSetMusic(Music, Pattern);
-    else
-        SetMusic(Music, Pattern);
+    SetMusic(Music);
 }

@@ -37,5 +37,7 @@ void ArenaDrawHUD();
 void ArenaCheckMod();
 void ArenaSpawnMobs();
 void ArenaSetEnvironment(int);
+void ArenaSetMusic();
+
 
 #endif
