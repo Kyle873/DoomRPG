@@ -58,7 +58,7 @@ NamedScript Console void CalculatePayout()
             .Values =
             {
                 { "Skills Used", Player.Payout.SkillsUsed },
-                { "Skills \CiOverdrived\C-", Player.Payout.SkillsOverdrive },
+                { "Skills \CiOverdriven\C-", Player.Payout.SkillsOverdrive },
                 { "Skill \ChBurnout\C-", Player.Payout.SkillBurnout },
                 { "\CqPowerups\C- Used", Player.Payout.PowerupsUsed },
                 { "\CaAuras\C- Used", Player.Payout.AurasUsed },
