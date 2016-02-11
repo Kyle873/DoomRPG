@@ -675,9 +675,10 @@ OptionalArgs(1) NamedScript void MonsterInitStats(int StatFlags)
     {
         // Check to see if any players have a Kill Auras mission
         int AuraMissionAdd = 0;
-        for (int i = 0; i < MAX_PLAYERS; i++)
-            if (Players(i).Mission.Type == MT_KILLAURAS)
-                AuraMissionAdd += Players(i).Mission.Amount;
+        if (CurrentLevel && !CurrentLevel->UACBase && !CurrentLevel->UACArena)
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (Players(i).Mission.Type == MT_KILLAURAS)
+                    AuraMissionAdd += Players(i).Mission.Amount;
         
         // Hell skill and above always has an additional +5% chance
         if (GameSkill() >= 5)
