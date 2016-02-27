@@ -1989,7 +1989,7 @@ NamedScript void Loadout_GiveDRLAEquipment()
 NamedScript void DefaultLoadout()
 {
     // Weapons
-    if (CompatMode != COMPAT_DRLA)
+    if (CompatMode != COMPAT_DRLA && CompatMode != COMPAT_LEGENDOOM)
     {
         for (int i = 0; i < 8; i++)
         {
@@ -2161,6 +2161,17 @@ void CheckCompatibility()
             Thing_Remove(TID);
             return;
         }
+    }
+    
+    // LegenDoom
+    Success = SpawnForced("LDLegendaryZombie", 0, 0, 0, TID, 0);
+    if (Success)
+    {
+        if (GetCVar("drpg_debug"))
+            Log("\CdDEBUG: \CdLegenDoom\C- detected");
+        CompatMode = COMPAT_LEGENDOOM;
+        Thing_Remove(TID);
+        return;
     }
 }
 

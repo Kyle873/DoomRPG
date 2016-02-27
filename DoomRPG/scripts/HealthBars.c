@@ -136,6 +136,7 @@ NamedScript void HealthBars()
         // Initialize HUD information struct
         auto HUDBarInfo Info =
         {
+            0,                          // TID
             false, false,               // Is Player? / Is Friendly?
             "", "", "",                 // Actor/Name
             0, 0, 0, NULL,              // Level/Rank/Auras
@@ -155,6 +156,8 @@ NamedScript void HealthBars()
         if (ClassifyActor(0) & ACTOR_PLAYER)
         {
             int ID = FindPlayerID(ActivatorTID());
+            
+            Info.TID = Players(ID).TID;
             
             Info.IsPlayer = true;
             
@@ -196,6 +199,8 @@ NamedScript void HealthBars()
                 goto Start;
             if (MonStats->Flags & MF_NOSTATS || GetCVar("drpg_monster_levels") == 0)
                 DrawStats = false;
+            
+            Info.TID = MonStats->TID;
             
             Info.IsPlayer = false;
             
@@ -245,6 +250,15 @@ NamedScript void HealthBars()
             {
                 DrawBarEmblems(&Info);
                 DrawBarStats(&Info);
+            }
+            
+            // LegenDoom Legendary Skull
+            if (CompatMode == COMPAT_LEGENDOOM && CheckActorInventory(Info.TID, "LDLegendaryMonsterToken"))
+            {
+                HealthBarX -= 192.0;
+                HealthBarY -= 65.0 + (int)(Sin(Timer() / 64.0) * 4);
+                
+                DrawBarSprite(&Info, "SCULC0");
             }
         }
         

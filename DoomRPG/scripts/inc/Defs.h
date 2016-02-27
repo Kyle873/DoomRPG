@@ -627,7 +627,8 @@ typedef enum
 {
     COMPAT_NONE,
     COMPAT_EXTRAS,
-    COMPAT_DRLA
+    COMPAT_DRLA,
+    COMPAT_LEGENDOOM
 } ECompatibilityMode;
 
 typedef enum

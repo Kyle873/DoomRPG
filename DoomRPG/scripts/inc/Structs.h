@@ -533,6 +533,8 @@ struct MegabossInfo_S
 
 struct HUDBarInfo_S
 {
+    int TID;
+    
     // Is this referencing a player or enemy?
     bool IsPlayer;
     // Is the actor friendly?

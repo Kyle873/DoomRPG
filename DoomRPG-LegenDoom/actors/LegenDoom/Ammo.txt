@@ -1,0 +1,65 @@
+actor LDClipPickupRPG : LDClipPickup Replaces DRPGClip {}
+actor LDClipBoxPickupRPG : LDClipBoxPickup Replaces DRPGClipBox {}
+actor LDShellPickupRPG : LDShellPickup replaces DRPGShell {}
+actor LDShellBoxPickupRPG : LDShellBoxPickup replaces DRPGShellBox {}
+actor LDRocketPickupRPG : LDRocketPickup replaces DRPGRocketAmmo {}
+actor LDRocketBoxPickupRPG : LDRocketBoxPickup replaces DRPGRocketBox {}
+actor LDCellPickupRPG : LDCellPickup replaces DRPGCell {}
+actor LDCellPackPickupRPG : LDCellPackPickup replaces DRPGCellPack {}
+
+ACTOR LDBackpackPickupRPG : LDBackpackPickup replaces LDBackpackPickup
+{
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
+        goto Super::Spawn
+    Pickup:
+        TNT1 A 0 A_GiveInventory("Clip", CallACS("GetAmmoMax", AMMO_CLIP) * 0.25)
+        TNT1 A 0 A_GiveInventory("Shell", CallACS("GetAmmoMax", AMMO_SHELL) * 0.25)
+        TNT1 A 0 A_GiveInventory("RocketAmmo", CallACS("GetAmmoMax", AMMO_ROCKET) * 0.25)
+        TNT1 A 0 A_GiveInventory("Cell", CallACS("GetAmmoMax", AMMO_CELL) * 0.25)
+        goto Super::Pickup
+    }
+}
+
+actor DRPGSmallBackpackLD : LDBackpackPickup Replaces DRPGSmallBackpack
+{
+    Inventory.PickupMessage "Picked up a Satchel with some ammo!"
+    Inventory.PickupSound "items/pack"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
+        ASCH A -1
+        Stop
+    Pickup:
+        TNT1 A 0 A_GiveInventory("Clip", CallACS("GetAmmoMax", AMMO_CLIP) * 0.1)
+        TNT1 A 0 A_GiveInventory("Shell", CallACS("GetAmmoMax", AMMO_SHELL) * 0.1)
+        TNT1 A 0 A_GiveInventory("RocketAmmo", CallACS("GetAmmoMax", AMMO_ROCKET) * 0.1)
+        TNT1 A 0 A_GiveInventory("Cell", CallACS("GetAmmoMax", AMMO_CELL) * 0.1)
+        goto Super::Pickup
+    }
+}
+
+actor DRPGBigBackpackLD : LDBackpackPickup Replaces DRPGBigBackpack
+{
+    Inventory.PickupMessage "Picked up a Big Golden Backpack loaded with ammo!"
+    Inventory.PickupSound "items/pack"
+    
+    States
+    {
+    Spawn:
+        TNT1 A 0 NoDelay ACS_NamedExecuteAlways("ItemInit", 0)
+        GPAK A 6 Bright
+        GPAK A 1 Bright A_SpawnItemEx("DRPGBlingParticle", Random(-Radius, Radius), Random(-Radius, Radius), Random(-Height + 16, Height + 8))
+        Goto Spawn+1
+    Pickup:
+        TNT1 A 0 A_GiveInventory("Clip", CallACS("GetAmmoMax", AMMO_CLIP) * 0.5)
+        TNT1 A 0 A_GiveInventory("Shell", CallACS("GetAmmoMax", AMMO_SHELL) * 0.5)
+        TNT1 A 0 A_GiveInventory("RocketAmmo", CallACS("GetAmmoMax", AMMO_ROCKET) * 0.5)
+        TNT1 A 0 A_GiveInventory("Cell", CallACS("GetAmmoMax", AMMO_CELL) * 0.5)
+        goto Super::Spawn
+    }
+}

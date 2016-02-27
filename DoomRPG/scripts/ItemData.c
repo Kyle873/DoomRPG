@@ -845,6 +845,23 @@ NamedScript void BuildItemData()
         ITEMDATA_CATEGORY_END;
     }
     
+    // Compatibility Handling - LegenDoom
+    if (CompatMode == COMPAT_LEGENDOOM)
+    {
+        // Weapons
+        ITEMDATA_CATEGORY(0, "\CgWeapons", CF_NONE);
+            ITEMDATA_DEF("LDFistsPickupLegendary",          "Fists",             2500, 0, "SFISZ0", 22, 17);
+            ITEMDATA_DEF("LDChainsawPickupLegendary",       "Chainsaw",          5000, 1, "SSAWZ0", 31, 24);
+            ITEMDATA_DEF("LDPistolPickupLegendary",         "Pistol",            2500, 0, "PISTA0", 11, 15);
+            ITEMDATA_DEF("LDShotgunPickupLegendary",        "Shotgun",           5000, 1, "SHOTA0", 31, 17);
+            ITEMDATA_DEF("LDSuperShotgunPickupLegendary",   "Super Shotgun",    10000, 2, "SGN2A0", 27, 15);
+            ITEMDATA_DEF("LDChaingunPickupLegendary",       "Chaingun",         15000, 1, "MGUNA0", 25, 18);
+            ITEMDATA_DEF("LDRocketLauncherPickupLegendary", "Rocket Launcher",  25000, 3, "LAUNA0", 31, 18);
+            ITEMDATA_DEF("LDPlasmaRiflePickupLegendary",    "Plasma Rifle",     50000, 4, "PLASA0", 27, 19);
+            ITEMDATA_DEF("LDBFG9000PickupLegendary",        "BFG9000",         100000, 5, "BFUGA0", 31, 38);
+        ITEMDATA_CATEGORY_END;
+    }
+    
     // Misc Hidden Stuff
     ITEMDATA_CATEGORY(ItemCategories, "Misc", CF_NOBUY | CF_NOSELL | CF_NOSTORE);
         ITEMDATA_DEF("None",                    "\CaUnknown Item\C-",           0, -1, "SprNone", 0, 0);
