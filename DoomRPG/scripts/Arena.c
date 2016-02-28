@@ -654,5 +654,5 @@ void ArenaSetEnvironment(int ID)
 
 void ArenaSetMusic()
 {
-    SetMusic(StrParam("Arena%d"), Random(1, MAX_ARENA_MUSIC));
+    SetMusic(StrParam("Arena%d", Random(1, MAX_ARENA_MUSIC)));
 }
