@@ -96,7 +96,7 @@ void ShopItemTryAutoDeposit(ItemInfoPtr Item)
 
 NamedScript void ShopItemAutoHandler()
 {
-    // TODO: Yell at DavidPH
+    // These are actually too big for the script auto handler to allocate properly, so they need to be static-scope here.
     RPGMap static int Items[ITEM_CATEGORIES][ITEM_MAX];
     RPGMap static int PrevItems[ITEM_CATEGORIES][ITEM_MAX];
     

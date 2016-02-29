@@ -1129,6 +1129,7 @@ NamedScript char const *MakeSaveString(CharSaveInfo *Info)
 
 NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
 {
+    char *LastSize = NULL;
     int OutPos = 0;
     int InLength = strlen(InString);
     
@@ -1145,9 +1146,14 @@ NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
         {
             if (LastCount > 3)
             {
-                str LastSize = StrParam("[%X]", LastCount - 1);
-                for (int i = 0; i < StrLen(LastSize); i++)
+                LastSize = malloc(48);
+                memset(LastSize, 0, 48);
+                // TODO: Yell at DavidPH. Loudly.
+                // snprintf(LastSize, 48, s"[%X]", LastCount - 1);
+                for (int i = 0; i < strlen(LastSize); i++)
                     OutString[OutPos++] = (char)LastSize[i];
+                free(LastSize);
+                LastSize = NULL;
             }
             else
             {
@@ -1166,9 +1172,14 @@ NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
     
     if (LastCount > 1)
     {
-        str LastSize = StrParam("[%X]", LastCount - 1);
-        for (int i = 0; i < StrLen(LastSize); i++)
+        LastSize = malloc(48);
+        memset(LastSize, 0, 48);
+        // TODO: Yell at DavidPH. Loudly.
+        // snprintf(LastSize, 48, s"[%X]", LastCount - 1);
+        for (int i = 0; i < strlen(LastSize); i++)
             OutString[OutPos++] = (char)LastSize[i];
+        free(LastSize);
+        LastSize = NULL;
     }
     
     OutString[OutPos] = '\x00';
