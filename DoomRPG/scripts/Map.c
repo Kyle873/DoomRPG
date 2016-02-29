@@ -3273,7 +3273,7 @@ NamedScript void WhispersofDarknessVisionIntensifier(int PlayerID)
 
 NamedScript void RainbowEvent()
 {
-    SetMusic(!Random(0, 3)? "RAINBOW2" : "RAINBOWS");
+    bool AzureCliffs = !Random(0, 3);
     CurrentLevel->EventCompleted = true; // Disappears when we leave
     
     fixed Angle = 0;
@@ -3283,6 +3283,16 @@ NamedScript void RainbowEvent()
         Light_ChangeToValue(i, 176);
     
     Delay(1);
+    
+    if (AzureCliffs)
+    {
+        if (GetActorPowerupTics(0, "PowerInvulnerable") > 0)
+            SetMusic("RAINBO2I");
+        else
+            SetMusic("RAINBOW2");
+    }
+    else
+        SetMusic("RAINBOWS");
     
     Start:
     Angle -= 1.0 / 350;
