@@ -3273,7 +3273,7 @@ NamedScript void WhispersofDarknessVisionIntensifier(int PlayerID)
 
 NamedScript void RainbowEvent()
 {
-    SetMusic("RAINBOWS");
+    SetMusic(!Random(0, 7)? "RAINBOW2" : "RAINBOWS");
     CurrentLevel->EventCompleted = true; // Disappears when we leave
     
     fixed Angle = 0;
