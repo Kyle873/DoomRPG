@@ -3284,17 +3284,24 @@ NamedScript void RainbowEvent()
     
     Delay(1);
     
-    if (AzureCliffs)
-    {
-        if (GetActorPowerupTics(0, "PowerInvulnerable") > 0)
-            SetMusic("RAINBO2I");
-        else
-            SetMusic("RAINBOW2");
-    }
-    else
-        SetMusic("RAINBOWS");
-    
     Start:
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (!PlayerInGame(i))
+            continue;
+        SetActivator(Players(i).TID);
+        
+        if (AzureCliffs)
+        {
+            if (GetActorPowerupTics(0, "PowerInvulnerable") > 0)
+                LocalSetMusic("RAINBO2I");
+            else
+                LocalSetMusic("RAINBOW2");
+        }
+        else
+            LocalSetMusic("RAINBOWS");
+    }
+    
     Angle -= 1.0 / 350;
     if (Angle < 0.0) Angle = 1.0 + Angle;
     Red = 128 + (Sin(Angle) * 128.0);
