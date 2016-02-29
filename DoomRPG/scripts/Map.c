@@ -1885,6 +1885,7 @@ NamedScript void ThermonuclearBombEvent()
     int MaxKeys = GameSkill() + 3;
     bool BombSpawned = false;
     bool BombDisarmed = false;
+    bool JC = (!Random(0, 9));
     
     // Calculate bomb time
     CurrentLevel->BombTime = (GetLevelInfo(LEVELINFO_PAR_TIME) ? GetLevelInfo(LEVELINFO_PAR_TIME) * 2 : GetCVar("drpg_default_par_seconds") * 2) * 35;
@@ -1920,9 +1921,16 @@ NamedScript void ThermonuclearBombEvent()
         Delay(1);
     }
     
-    SetMusic("");
-    
-    Delay(35);
+    if (JC)
+    {
+        SetMusic("Bomb2");
+        Delay(35 * 3);
+    }
+    else
+    {
+        SetMusic("");
+        Delay(35);
+    }
     
     // Warning message
     SetHudSize(640, 480, false);
@@ -1935,7 +1943,8 @@ NamedScript void ThermonuclearBombEvent()
     
     Delay(35 * 4);
     
-    SetMusic("Bomb");
+    if (!JC)
+        SetMusic("Bomb");
     
     // Set bomb's active state
     SetActorState(BombTID, "SpawnActive");
