@@ -548,7 +548,7 @@ int SellItem(str Item, bool SellAll, bool AutoSold)
         if (AutoSold)
             ActivatorSound("shop/autosell", 127);
         else
-            ActivatorSound("credits/payout", 127);
+            ActivatorSound("menu/sell", 127);
         TakeInventory(Item, Amount);
         
         // DoomRL Compatibility
