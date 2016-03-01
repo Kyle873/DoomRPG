@@ -1148,8 +1148,7 @@ NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
             {
                 LastSize = malloc(48);
                 memset(LastSize, 0, 48);
-                // TODO: Yell at DavidPH. Loudly.
-                // snprintf(LastSize, 48, s"[%X]", LastCount - 1);
+                snprintf(LastSize, 48, c"[%X]", LastCount - 1);
                 for (int i = 0; i < strlen(LastSize); i++)
                     OutString[OutPos++] = (char)LastSize[i];
                 free(LastSize);
@@ -1174,8 +1173,7 @@ NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
     {
         LastSize = malloc(48);
         memset(LastSize, 0, 48);
-        // TODO: Yell at DavidPH. Loudly.
-        // snprintf(LastSize, 48, s"[%X]", LastCount - 1);
+        snprintf(LastSize, 48, c"[%X]", LastCount - 1);
         for (int i = 0; i < strlen(LastSize); i++)
             OutString[OutPos++] = (char)LastSize[i];
         free(LastSize);
