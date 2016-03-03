@@ -169,11 +169,12 @@ NamedScript Console void CalculatePayout()
     
     // Log
     if (InMultiplayer)
-        Log("\Cf%tS has received %d PP", PlayerNumber() + 1, PayoutCalculatePPTotal());
+        Log("\Cf%tS has received %+d PP", PlayerNumber() + 1, Total);
     else
-        Log("\CfYou have received %d PP", PayoutCalculatePPTotal());
+        Log("\CfYou have received %+d PP", Total);
     
     PayoutAddPP();
+    
     Player.PayingOut = false;
 }
 
