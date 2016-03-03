@@ -161,18 +161,11 @@ NamedScript Console void CalculatePayout()
         PayoutDrawData(&Data[i], i);
     
     // Finished
+    int Total = PayoutCalculatePPTotal();
     ActivatorSound("payout/end", 127);
     SetFont("BIGFONT");
-    if (PayoutCalculatePPTotal() > 0)
-    {
-        HudMessage("+%d PP", PayoutCalculatePPTotal());
-        EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, "Gold", PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 5.0, 0.5, 0.5);
-    }
-    else
-    {
-        HudMessage("%d PP", PayoutCalculatePPTotal());
-        EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, "Red", PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 5.0, 0.5, 0.5);
-    }
+    HudMessage("%+d PP", Total);
+    EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, (Total >= 0 ? "Gold" : "Red"), PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 5.0, 0.5, 0.5);
     
     // Log
     if (InMultiplayer)
