@@ -196,7 +196,7 @@ NamedScript Type_ENTER void OverviewHUD()
     EndHudMessage(HUDMSG_PLAIN, 0, "Gold", X + 16.1, Y, 0.05);
     if (CreditsCollected != 0)
     {
-        HudMessage("%c%d", (CreditsCollected > 0 ? '+' : '\0'), CreditsCollected);
+        HudMessage("%+d", CreditsCollected);
         EndHudMessage(HUDMSG_FADEOUT, PAY_ID, (CreditsCollected > 0 ? "White" : "Red"), X + 16.1, Y + 12.0, 0.05, 2.0, 1.0);
     }
     
@@ -207,7 +207,7 @@ NamedScript Type_ENTER void OverviewHUD()
     EndHudMessage(HUDMSG_PLAIN, 0, "Green", X + 16.1, Y + 24.0, 0.05);
     if (ModulesCollected != 0)
     {
-        HudMessage("%c%d", (ModulesCollected > 0 ? '+' : '\0'), ModulesCollected);
+        HudMessage("%+d", ModulesCollected);
         EndHudMessage(HUDMSG_FADEOUT, PAY_ID + 1, (ModulesCollected > 0 ? "DarkGreen" : "DarkRed"), X + 16.1, Y + 36.0, 0.05, 2.0, 1.0);
     }
     
