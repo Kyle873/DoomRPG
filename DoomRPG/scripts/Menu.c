@@ -486,12 +486,12 @@ void DrawStatsMenu()
         EndHudMessage(HUDMSG_PLAIN, 0, "Red",                30.1,   52.0,   0.05);
         if (Player.Strength > 0)
         {
-            HudMessage("+%d%% Total Damage", Player.TotalDamage * (Player.DamageMult > 1 ? Player.DamageMult : 1));
+            HudMessage("+%d%% Total Damage", (int)(Player.TotalDamage * (Player.DamageMult > 1 ? Player.DamageMult : 1)));
             EndHudMessage(HUDMSG_PLAIN, 0, "Red",                30.1,   60.0,   0.05);
         }
         else
         {
-            HudMessage("%d%% Total Damage", Player.TotalDamage * (Player.DamageMult > 1 ? Player.DamageMult : 1));
+            HudMessage("%d%% Total Damage", (int)(Player.TotalDamage * (Player.DamageMult > 1 ? Player.DamageMult : 1)));
             EndHudMessage(HUDMSG_PLAIN, 0, "Red",                30.1,   60.0,   0.05);
         }
         if (Player.Defense > 0)
