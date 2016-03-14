@@ -482,16 +482,16 @@ void DrawStatsMenu()
             HudMessage("%d%% Bonus Damage", Player.BonusDamage);
             EndHudMessage(HUDMSG_PLAIN, 0, "Red",                30.1,   44.0,   0.05);
         }
-        HudMessage("%.2kX Multiplier", Player.DamageMult);
+        HudMessage("%.2kX Multiplier", (Player.DamageMult > 1k ? Player.DamageMult : 1k));
         EndHudMessage(HUDMSG_PLAIN, 0, "Red",                30.1,   52.0,   0.05);
         if (Player.Strength > 0)
         {
-            HudMessage("+%d%% Total Damage", (int)(Player.TotalDamage * (Player.DamageMult > 1 ? Player.DamageMult : 1)));
+            HudMessage("+%d%% Total Damage", (int)(Player.TotalDamage * (Player.DamageMult > 1k ? Player.DamageMult : 1k)));
             EndHudMessage(HUDMSG_PLAIN, 0, "Red",                30.1,   60.0,   0.05);
         }
         else
         {
-            HudMessage("%d%% Total Damage", (int)(Player.TotalDamage * (Player.DamageMult > 1 ? Player.DamageMult : 1)));
+            HudMessage("%d%% Total Damage", (int)(Player.TotalDamage * (Player.DamageMult > 1k ? Player.DamageMult : 1k)));
             EndHudMessage(HUDMSG_PLAIN, 0, "Red",                30.1,   60.0,   0.05);
         }
         if (Player.Defense > 0)
