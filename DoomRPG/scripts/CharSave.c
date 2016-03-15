@@ -272,10 +272,6 @@ NamedScript MenuEntry void SaveCharacter()
     char *EncodedSaveString;
     CharSaveInfo Info;
     
-    PrintError("\CgERROR: \CjSaving is disabled due to problems with ZDoom");
-    ActivatorSound("menu/error", 127);
-    return;
-
     // You need to be in the Outpost to do this
     if (!CurrentLevel->UACBase && !GetCVar("drpg_debug"))
     {
@@ -341,7 +337,7 @@ NamedScript MenuEntry void SaveCharacter()
     for (int i = 0; Success && i < PartialStringsNeeded; i++)
     {
         strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
-        if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), StrParam("%S", PartialSaveString)))
+        if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), StrParam("%s", PartialSaveString)))
             Success = false;
     }
     
@@ -382,10 +378,6 @@ NamedScript MenuEntry void LoadCharacter()
     char *SaveString;
     CharSaveInfo Info;
     
-    PrintError("\CgERROR: \CjLoading is disabled due to problems with ZDoom");
-    ActivatorSound("menu/error", 127);
-    return;
-
     EncodedSaveString = malloc(65536);
     EncodedSaveString[0] = '\x00';
     
@@ -1253,8 +1245,9 @@ int HexToInteger(char const *SourceStr, int Length)
 
 char *StringToCharP(str Source)
 {
-    int Length = StrLen(Source);
-    
+    int Length;
+    Length = StrLen(Source);
+
     char *Destination = malloc(Length + 1);
     Destination[Length] = '\x00';
     
