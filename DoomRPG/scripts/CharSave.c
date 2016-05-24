@@ -308,17 +308,17 @@ NamedScript MenuEntry void SaveCharacter()
     SetFont("SMALLFONT");
     HudMessage("Do not quit the game or power off your console.");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 0);
-    
+
     // Populate the data
     PopulateCharData(&Info);
-    
     SaveString = MakeSaveString(&Info);
     EncodedSaveString = malloc(strlen(SaveString) + 1);
     
     EncodeRLE(SaveString, EncodedSaveString);
     
     EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    // Log("Save Data: %S", EncodedSaveString);
+    if (GetCVar("drpg_debug"))
+        Log("Encoded Save Data: %s", EncodedSaveString);
     int PartialStringsNeeded = strlen(EncodedSaveString) / CHARSAVE_MAXSIZE;
     if (strlen(EncodedSaveString) % CHARSAVE_MAXSIZE > 0)
         PartialStringsNeeded++;
@@ -336,7 +336,16 @@ NamedScript MenuEntry void SaveCharacter()
         Success = false;
     for (int i = 0; Success && i < PartialStringsNeeded; i++)
     {
-        strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
+        //strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
+        for(int j=0; j < CHARSAVE_MAXSIZE; j++)
+        {
+          if ((CHARSAVE_MAXSIZE * i) + j < strlen(EncodedSaveString))
+            PartialSaveString[j] = EncodedSaveString[(CHARSAVE_MAXSIZE * i) + j];
+          else
+            PartialSaveString[j] = '';
+        }
+        if (GetCVar("drpg_debug"))
+          Log("Writing Save Data: %s", PartialSaveString);
         if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), StrParam("%s", PartialSaveString)))
             Success = false;
     }
@@ -406,7 +415,8 @@ NamedScript MenuEntry void LoadCharacter()
     }
     
     EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    // Log("Load Data (Encoded): %S", EncodedSaveString);
+    if (GetCVar("drpg_debug"))
+        Log("Load Data (Encoded): %S", EncodedSaveString);
     
     SaveString = malloc(65536);
     
@@ -630,7 +640,6 @@ NamedScript void DepositInventory()
                     DepositItems++;
                     if ((Count++ % TimeDivide) == 0) Delay(1);
                 }
-    
     // Stop the depositing process
     DepositItems = DepositTotal;
     Delay(1);
@@ -720,13 +729,13 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     
     for (int i = 0; i < TU_MAX; i++)
         Info->TurretUpgrades[i] = Player.Turret.Upgrade[i];
-    
-    // Misc
+
+      // Misc
     Info->Credits = CheckInventory("DRPGCredits");
     Info->Modules = CheckInventory("DRPGModule");
     Info->Medkit = Player.Medkit;
     Info->GoldChips = CheckInventory("DRPGChipGold");
-    Info->PlatinumChips = CheckInventory("DrpgChipPlatinum");
+    Info->PlatinumChips = CheckInventory("DRPGChipPlatinum");
     Info->ShopCard = Player.ShopCard;
     Info->Battery = Player.Augs.Battery;
     Info->Toxicity = Player.Toxicity;
@@ -736,19 +745,29 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            Info->Locker[i][j] = Player.Locker[i][j];
-            
+            if (Player.Locker[i][j]) 
+              Info->Locker[i][j] = Player.Locker[i][j];
+
             if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
             {
-                Info->WeaponMods[j][0] = Player.WeaponMods[j].Total;
-                Info->WeaponMods[j][1] = Player.WeaponMods[j].Power;
-                Info->WeaponMods[j][2] = Player.WeaponMods[j].Bulk;
-                Info->WeaponMods[j][3] = Player.WeaponMods[j].Agility;
-                Info->WeaponMods[j][4] = Player.WeaponMods[j].Technical;
-                Info->WeaponMods[j][5] = Player.WeaponMods[j].Sniper;
-                Info->WeaponMods[j][6] = Player.WeaponMods[j].Firestorm;
-                Info->WeaponMods[j][7] = Player.WeaponMods[j].Nano;
-                Info->WeaponMods[j][8] = Player.WeaponMods[j].Artifacts;
+                if (Player.WeaponMods[j].Total)
+                  Info->WeaponMods[j][0] = Player.WeaponMods[j].Total;
+                if (Player.WeaponMods[j].Power)
+                  Info->WeaponMods[j][1] = Player.WeaponMods[j].Power;
+                if (Player.WeaponMods[j].Bulk)
+                  Info->WeaponMods[j][2] = Player.WeaponMods[j].Bulk;
+                if (Player.WeaponMods[j].Agility)
+                  Info->WeaponMods[j][3] = Player.WeaponMods[j].Agility;
+                if (Player.WeaponMods[j].Technical)
+                  Info->WeaponMods[j][4] = Player.WeaponMods[j].Technical;
+                if (Player.WeaponMods[j].Sniper)
+                  Info->WeaponMods[j][5] = Player.WeaponMods[j].Sniper;
+                if (Player.WeaponMods[j].Firestorm)
+                  Info->WeaponMods[j][6] = Player.WeaponMods[j].Firestorm;
+                if (Player.WeaponMods[j].Nano)
+                  Info->WeaponMods[j][7] = Player.WeaponMods[j].Nano;
+                if (Player.WeaponMods[j].Artifacts)
+                  Info->WeaponMods[j][8] = Player.WeaponMods[j].Artifacts;
             }
         }
     
@@ -756,7 +775,7 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
             Info->ItemAutoMode[i][j] = Player.ItemAutoMode[i][j];
-    
+   
     // ----- COMPATIBILITY EXTENSIONS -----
     
     // DRLA Tokens
