@@ -77,6 +77,15 @@ NamedScript KeyBind void OpenMenu()
     // If you're dead, terminate
     if (GetActorProperty(0, APROP_Health) <= 0) return;
     
+    //If in the Mission BBS menu
+    if (Player.OutpostMenu == OMENU_BBS) 
+    {
+      ActivatorSound("menu/leave", 127);
+      SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
+      Player.OutpostMenu = 0;
+      return;
+    }
+    
     // If you're in an Outpost menu, return
     if (Player.OutpostMenu > 0) return;
     
@@ -118,6 +127,8 @@ NamedScript KeyBind void OpenMenu()
     }
     else
     {
+      if (GetCVar("drpg_debug"))
+            Log("\CdDEBUG: \CfOpening Menu");
         ActivatorSound("menu/enter", 127);
         Player.InMenu = true;
         Player.Menu = MENUPAGE_MAIN;
@@ -2682,8 +2693,8 @@ void MenuHelp()
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y, 0.05);
             break;
         case OMENU_BBS:
-            HudMessage("\Cd%jS/%jS/%jS/%jS\C- to navigate\n\Cd%jS\C- to Accept Mission\n\Cd%jS\C- to Abort Mission\n\Cd%jS\C- to Exit",
-                       "+forward", "+back", "+moveleft", "+moveright", "+use", "+attack", "+speed");
+            HudMessage("\Cd%jS/%jS/%jS/%jS\C- to navigate\n\Cd%jS\C- to Accept Mission\n\Cd%jS\C- to Abort Mission\n\Cd%jS + %jS/%jS\C- to Switch Pages\n\Cd%jS\C- to Exit",
+                       "+forward", "+back", "+moveleft", "+moveright", "+use", "+attack", "+speed", "+moveleft", "+moveright", "drpg_menu");
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y, 0.05);
             break;
         }

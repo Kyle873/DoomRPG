@@ -339,11 +339,17 @@ NamedScript MenuEntry void SaveCharacter()
         //strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
         for(int j=0; j < CHARSAVE_MAXSIZE; j++)
         {
-          if ((CHARSAVE_MAXSIZE * i) + j < strlen(EncodedSaveString))
-            PartialSaveString[j] = EncodedSaveString[(CHARSAVE_MAXSIZE * i) + j];
-          else
-            PartialSaveString[j] = '';
+            if ((CHARSAVE_MAXSIZE * i) + j < strlen(EncodedSaveString))
+                PartialSaveString[j] = EncodedSaveString[(CHARSAVE_MAXSIZE * i) + j];
+            else
+            {
+                if ((CHARSAVE_MAXSIZE * i) + j == strlen(EncodedSaveString))
+                    PartialSaveString[j] = '\x00';
+                else
+                    PartialSaveString[j] = '';
+            }
         }
+        Delay(1);
         if (GetCVar("drpg_debug"))
           Log("Writing Save Data: %s", PartialSaveString);
         if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), StrParam("%s", PartialSaveString)))
@@ -415,8 +421,7 @@ NamedScript MenuEntry void LoadCharacter()
     }
     
     EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    if (GetCVar("drpg_debug"))
-        Log("Load Data (Encoded): %S", EncodedSaveString);
+    LogMessage(StrParam("Load Data (Encoded): %s", EncodedSaveString), LOG_DEBUG);
     
     SaveString = malloc(65536);
     

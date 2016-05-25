@@ -1276,18 +1276,22 @@ NamedScript MapSpecial void MissionBBS()
         // Input
         if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD))
         {
-            ActivatorSound("menu/move", 127);
+            /*ActivatorSound("menu/move", 127);
             Index -= MAX_MISSIONS / 3;
             if (Index < 0)
             {
                 Index = 0;
                 if (Difficulty > 0)
                     Difficulty--;
-            }
-        }
+            }*/
+            ActivatorSound("menu/move", 127);
+            Index -= MAX_MISSIONS / 3;
+            if (Index < 0)
+                Index = 0;
+        };
         if (Buttons & BT_BACK && !(OldButtons & BT_BACK))
         {
-            ActivatorSound("menu/move", 127);
+            /*ActivatorSound("menu/move", 127);
             Index += MAX_MISSIONS / 3;
             if (Index > MAX_MISSIONS - 1)
             {
@@ -1301,22 +1305,38 @@ NamedScript MapSpecial void MissionBBS()
                 }
                 else
                     Index = MAX_MISSIONS - 1;
-            }
-        }
+            }*/
+            ActivatorSound("menu/move", 127);
+            Index += MAX_MISSIONS / 3;
+            if (Index > MAX_MISSIONS - 1)
+                Index = MAX_MISSIONS - 1;
+        };
         if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT))
         {
-            ActivatorSound("menu/move", 127);
+            /*ActivatorSound("menu/move", 127);
             Index--;
             if (Index < 0)
             {
                 Index = 0;
                 if (Difficulty > 0)
                     Difficulty--;
-            };
+            };*/
+            ActivatorSound("menu/move", 127);
+            if (Buttons & BT_SPEED)
+            {
+                if (Difficulty > 0)
+                    Difficulty--;
+            }
+            else
+            {
+                Index--;
+                if (Index < 0)
+                    Index = 0;
+            }
         };
         if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT))
         {
-            ActivatorSound("menu/move", 127);
+            /*ActivatorSound("menu/move", 127);
             Index++;
             if (Index > MAX_MISSIONS - 1)
             {
@@ -1330,8 +1350,22 @@ NamedScript MapSpecial void MissionBBS()
                 }
                 else
                     Index = MAX_MISSIONS - 1;
+            }*/
+            ActivatorSound("menu/move", 127);
+            if (Buttons & BT_SPEED)
+            {
+                if (Difficulty >= MAX_DIFFICULTIES - 1)
+                    Difficulty = MAX_DIFFICULTIES - 1;
+                else
+                    Difficulty++;
             }
-        }
+            else
+            {
+                Index++;
+                if (Index > MAX_MISSIONS - 1)
+                    Index = MAX_MISSIONS - 1;
+            }
+        };
         if (Buttons == BT_USE && OldButtons != BT_USE && !Player.Mission.Active)
         {
             ActivatorSound("mission/get", 127);
@@ -1339,11 +1373,11 @@ NamedScript MapSpecial void MissionBBS()
             Player.Mission = *Mission;
             CreateMissionAt(Difficulty, Index);
         };
-        if (Buttons == BT_SPEED)
+        /*if (Buttons == BT_SPEED)      //Old shift to exit BBS handling
         {
             SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.OutpostMenu = 0;
-        }
+        }*/
         if (Buttons == BT_ATTACK && OldButtons != BT_ATTACK && Player.Mission.Active)
         {
             ActivatorSound("mission/fail", 127);
@@ -1352,7 +1386,7 @@ NamedScript MapSpecial void MissionBBS()
             HudMessage("Mission Aborted!");
             EndHudMessage(HUDMSG_FADEOUT, MISSION_ID, "Red", 320.4, 400.0, 3.0, 2.0);
             ClearMission();
-        }
+        };
         
         Delay(1);
     }
