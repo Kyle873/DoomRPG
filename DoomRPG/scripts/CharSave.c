@@ -84,6 +84,7 @@
 */
 
 bool Depositing = false;
+bool LoadedData = false;
 int DepositItems = 0;
 int DepositTotal = 0;
 
@@ -433,9 +434,13 @@ NamedScript MenuEntry void LoadCharacter()
     
     LoadCharDataFromString(&Info, SaveString);
     
+    while(!LoadedData)
+        Delay(1);
+    
     free((void *)SaveString);
     
     // Version / Compatibility Flag
+    LogMessage(StrParam("Version:%d",Info.Version),LOG_DEBUG);
     if (Info.Version < 0)
     {
         str const ReasonStrings[3] =
@@ -553,19 +558,29 @@ NamedScript MenuEntry void LoadCharacter()
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            Player.Locker[i][j] += Info.Locker[i][j];
+            if (Info.Locker[i][j])
+                Player.Locker[i][j] += Info.Locker[i][j];
             
             if (Info.CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
             {
-                Player.WeaponMods[j].Total = Info.WeaponMods[j][0];
-                Player.WeaponMods[j].Power = Info.WeaponMods[j][1];
-                Player.WeaponMods[j].Bulk = Info.WeaponMods[j][2];
-                Player.WeaponMods[j].Agility = Info.WeaponMods[j][3];
-                Player.WeaponMods[j].Technical = Info.WeaponMods[j][4];
-                Player.WeaponMods[j].Sniper = Info.WeaponMods[j][5];
-                Player.WeaponMods[j].Firestorm = Info.WeaponMods[j][6];
-                Player.WeaponMods[j].Nano = Info.WeaponMods[j][7];
-                Player.WeaponMods[j].Artifacts = Info.WeaponMods[j][8];
+                if (Info.WeaponMods[j][0])
+                    Player.WeaponMods[j].Total = Info.WeaponMods[j][0];
+                if (Info.WeaponMods[j][1])
+                    Player.WeaponMods[j].Power = Info.WeaponMods[j][1];
+                if (Info.WeaponMods[j][2])
+                    Player.WeaponMods[j].Bulk = Info.WeaponMods[j][2];
+                if (Info.WeaponMods[j][3])
+                    Player.WeaponMods[j].Agility = Info.WeaponMods[j][3];
+                if (Info.WeaponMods[j][4])
+                    Player.WeaponMods[j].Technical = Info.WeaponMods[j][4];
+                if (Info.WeaponMods[j][5])
+                    Player.WeaponMods[j].Sniper = Info.WeaponMods[j][5];
+                if (Info.WeaponMods[j][6])
+                    Player.WeaponMods[j].Firestorm = Info.WeaponMods[j][6];
+                if (Info.WeaponMods[j][7])
+                    Player.WeaponMods[j].Nano = Info.WeaponMods[j][7];
+                if (Info.WeaponMods[j][8])
+                    Player.WeaponMods[j].Artifacts = Info.WeaponMods[j][8];
             }
         }
     
@@ -791,6 +806,7 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
 
 NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
 {
+    LoadedData = false;
     int StringPos = 0;
     int Version = 0;
     Info->Version = -3;
@@ -801,6 +817,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     if (Version != CHARSAVE_VERSION)
     {
         Info->Version = -2;
+        LoadedData = true;
         return;
     }
     
@@ -809,6 +826,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     if (Info->CompatMode != CompatMode)
     {
         Info->Version = -1;
+        LoadedData = true;
         return;
     }
     
@@ -886,18 +904,25 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     
     // Locker
     for (int i = 0; i < ITEM_CATEGORIES; i++)
+    {
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            Info->Locker[i][j] = HexToInteger(String + StringPos, 4);
+            int val = HexToInteger(String + StringPos, 4);
+            if (val)
+                Info->Locker[i][j] = val;
             StringPos += 4;
             
             if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
                 for (int k = 0; k < DRLA_MODPACK_SIZE; k++)
                 {
-                    Info->WeaponMods[j][k] = HexToInteger(String + StringPos, 1);
+                    int val2 = HexToInteger(String + StringPos, 1);
+                    if (val2)
+                        Info->WeaponMods[j][k] = val2;
                     StringPos += 1;
                 }
         }
+        Delay(1);
+    }
     
     // Auto-State
     for (int i = 0; i < ITEM_CATEGORIES; i++)
@@ -926,14 +951,16 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     
     if (GetCVar("drpg_debug"))
         Log("\CdDEBUG: \C-CRC for recalled character is %d (%X)", Checksum, Checksum);
-    
+    LogMessage(StrParam("Version:%d",Version),LOG_DEBUG);
     Info->Version = Version;
     
     if (Checksum != Info->Checksum)
     {
         Info->Version = -3;
+        LoadedData = true;
         return;
     }
+    LoadedData = true;
 }
 
 NamedScript char const *MakeSaveString(CharSaveInfo *Info)
