@@ -318,13 +318,15 @@ NamedScript MenuEntry void SaveCharacter()
     EncodeRLE(SaveString, EncodedSaveString);
     
     EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    if (GetCVar("drpg_debug"))
-        Log("Encoded Save Data: %s", EncodedSaveString);
-    int PartialStringsNeeded = strlen(EncodedSaveString) / CHARSAVE_MAXSIZE;
-    if (strlen(EncodedSaveString) % CHARSAVE_MAXSIZE > 0)
+    //LogMessage(StrParam("Save Data: %s", SaveString),LOG_DEBUG);
+    LogMessage(StrParam("Encoded Save Data: %s", EncodedSaveString),LOG_DEBUG);
+    
+    int EncStrSize = strlen(EncodedSaveString);
+    int PartialStringsNeeded = EncStrSize / CHARSAVE_MAXSIZE;
+    if (EncStrSize % CHARSAVE_MAXSIZE > 0)
         PartialStringsNeeded++;
     char *PartialSaveString = malloc(CHARSAVE_MAXSIZE + 1);
-    PartialSaveString[CHARSAVE_MAXSIZE] = '\x00';
+    PartialSaveString[CHARSAVE_MAXSIZE] = 0;
     
     for (int i = 0; i < CHARSAVE_MAXCVARS; i++)
         SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), "");
@@ -337,22 +339,11 @@ NamedScript MenuEntry void SaveCharacter()
         Success = false;
     for (int i = 0; Success && i < PartialStringsNeeded; i++)
     {
-        //strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
-        for(int j=0; j < CHARSAVE_MAXSIZE; j++)
-        {
-            if ((CHARSAVE_MAXSIZE * i) + j < strlen(EncodedSaveString))
-                PartialSaveString[j] = EncodedSaveString[(CHARSAVE_MAXSIZE * i) + j];
-            else
-            {
-                if ((CHARSAVE_MAXSIZE * i) + j == strlen(EncodedSaveString))
-                    PartialSaveString[j] = '\x00';
-                else
-                    PartialSaveString[j] = '';
-            }
-        }
+        strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE - 1);
+
         Delay(1);
-        if (GetCVar("drpg_debug"))
-          Log("Writing Save Data: %s", PartialSaveString);
+        //if (GetCVar("drpg_debug"))
+        //  Log("Writing Save Data: %s", PartialSaveString);
         if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), StrParam("%s", PartialSaveString)))
             Success = false;
     }
@@ -429,7 +420,8 @@ NamedScript MenuEntry void LoadCharacter()
     DecodeRLE(EncodedSaveString, SaveString);
     
     SaveString = realloc(SaveString, strlen(SaveString) + 1);
-    // Log("Load Data (Raw): %S", SaveString);
+    //if (GetCVar("drpg_debug"))
+    //    Log("Load Data (Raw): %s", SaveString);
     free((void *)EncodedSaveString);
     
     LoadCharDataFromString(&Info, SaveString);
@@ -485,22 +477,14 @@ NamedScript MenuEntry void LoadCharacter()
     Player.Luck         = Info.Stats[7];
     
     // Stat XP
-    if (Info.Stats[0] > 0)
-        Player.StrengthXP = StatTable[Info.Stats[0] - 1];
-    if (Info.Stats[1] > 0)
-        Player.DefenseXP = StatTable[Info.Stats[1] - 1];
-    if (Info.Stats[2] > 0)
-        Player.VitalityXP = StatTable[Info.Stats[2] - 1];
-    if (Info.Stats[3] > 0)
-        Player.EnergyXP = StatTable[Info.Stats[3] - 1];
-    if (Info.Stats[4] > 0)
-        Player.RegenerationXP = StatTable[Info.Stats[4] - 1];
-    if (Info.Stats[5] > 0)
-        Player.AgilityXP = StatTable[Info.Stats[5] - 1];
-    if (Info.Stats[6] > 0)
-        Player.CapacityXP = StatTable[Info.Stats[6] - 1];
-    if (Info.Stats[7] > 0)
-        Player.LuckXP = StatTable[Info.Stats[7] - 1];
+    Player.StrengthXP = StatTable[Info.Stats[0] - 1];
+    Player.DefenseXP = StatTable[Info.Stats[1] - 1];
+    Player.VitalityXP = StatTable[Info.Stats[2] - 1];
+    Player.EnergyXP = StatTable[Info.Stats[3] - 1];
+    Player.RegenerationXP = StatTable[Info.Stats[4] - 1];
+    Player.AgilityXP = StatTable[Info.Stats[5] - 1];
+    Player.CapacityXP = StatTable[Info.Stats[6] - 1];
+    Player.LuckXP = StatTable[Info.Stats[7] - 1];
     
     Player.EP = Player.Energy * 10;
     Player.HealthMax = Player.Vitality * 10;
@@ -563,24 +547,15 @@ NamedScript MenuEntry void LoadCharacter()
             
             if (Info.CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
             {
-                if (Info.WeaponMods[j][0])
-                    Player.WeaponMods[j].Total = Info.WeaponMods[j][0];
-                if (Info.WeaponMods[j][1])
-                    Player.WeaponMods[j].Power = Info.WeaponMods[j][1];
-                if (Info.WeaponMods[j][2])
-                    Player.WeaponMods[j].Bulk = Info.WeaponMods[j][2];
-                if (Info.WeaponMods[j][3])
-                    Player.WeaponMods[j].Agility = Info.WeaponMods[j][3];
-                if (Info.WeaponMods[j][4])
-                    Player.WeaponMods[j].Technical = Info.WeaponMods[j][4];
-                if (Info.WeaponMods[j][5])
-                    Player.WeaponMods[j].Sniper = Info.WeaponMods[j][5];
-                if (Info.WeaponMods[j][6])
-                    Player.WeaponMods[j].Firestorm = Info.WeaponMods[j][6];
-                if (Info.WeaponMods[j][7])
-                    Player.WeaponMods[j].Nano = Info.WeaponMods[j][7];
-                if (Info.WeaponMods[j][8])
-                    Player.WeaponMods[j].Artifacts = Info.WeaponMods[j][8];
+                Player.WeaponMods[j].Total = Info.WeaponMods[j][0];
+                Player.WeaponMods[j].Power = Info.WeaponMods[j][1];
+                Player.WeaponMods[j].Bulk = Info.WeaponMods[j][2];
+                Player.WeaponMods[j].Agility = Info.WeaponMods[j][3];
+                Player.WeaponMods[j].Technical = Info.WeaponMods[j][4];
+                Player.WeaponMods[j].Sniper = Info.WeaponMods[j][5];
+                Player.WeaponMods[j].Firestorm = Info.WeaponMods[j][6];
+                Player.WeaponMods[j].Nano = Info.WeaponMods[j][7];
+                Player.WeaponMods[j].Artifacts = Info.WeaponMods[j][8];
             }
         }
     
@@ -588,6 +563,8 @@ NamedScript MenuEntry void LoadCharacter()
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
             Player.ItemAutoMode[i][j] = Info.ItemAutoMode[i][j];
+        
+    //UpdateShopAutoList();
     
     // ----- COMPATIBILITY EXTENSIONS -----
     
@@ -770,24 +747,15 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
 
             if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
             {
-                if (Player.WeaponMods[j].Total)
-                  Info->WeaponMods[j][0] = Player.WeaponMods[j].Total;
-                if (Player.WeaponMods[j].Power)
-                  Info->WeaponMods[j][1] = Player.WeaponMods[j].Power;
-                if (Player.WeaponMods[j].Bulk)
-                  Info->WeaponMods[j][2] = Player.WeaponMods[j].Bulk;
-                if (Player.WeaponMods[j].Agility)
-                  Info->WeaponMods[j][3] = Player.WeaponMods[j].Agility;
-                if (Player.WeaponMods[j].Technical)
-                  Info->WeaponMods[j][4] = Player.WeaponMods[j].Technical;
-                if (Player.WeaponMods[j].Sniper)
-                  Info->WeaponMods[j][5] = Player.WeaponMods[j].Sniper;
-                if (Player.WeaponMods[j].Firestorm)
-                  Info->WeaponMods[j][6] = Player.WeaponMods[j].Firestorm;
-                if (Player.WeaponMods[j].Nano)
-                  Info->WeaponMods[j][7] = Player.WeaponMods[j].Nano;
-                if (Player.WeaponMods[j].Artifacts)
-                  Info->WeaponMods[j][8] = Player.WeaponMods[j].Artifacts;
+              Info->WeaponMods[j][0] = Player.WeaponMods[j].Total;
+              Info->WeaponMods[j][1] = Player.WeaponMods[j].Power;
+              Info->WeaponMods[j][2] = Player.WeaponMods[j].Bulk;
+              Info->WeaponMods[j][3] = Player.WeaponMods[j].Agility;
+              Info->WeaponMods[j][4] = Player.WeaponMods[j].Technical;
+              Info->WeaponMods[j][5] = Player.WeaponMods[j].Sniper;
+              Info->WeaponMods[j][6] = Player.WeaponMods[j].Firestorm;
+              Info->WeaponMods[j][7] = Player.WeaponMods[j].Nano;
+              Info->WeaponMods[j][8] = Player.WeaponMods[j].Artifacts;
             }
         }
     
@@ -965,7 +933,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
 
 NamedScript char const *MakeSaveString(CharSaveInfo *Info)
 {
-    char *SaveString = malloc(65536);
+    char *SaveString = malloc(25000);
     unsigned int pos = 0;
     
     // Version
@@ -1173,7 +1141,7 @@ NamedScript char const *MakeSaveString(CharSaveInfo *Info)
     pos += 8;
     
     SaveString[pos] = '\x00';
-    
+    //length 23498. 105 strings @ 224 chars/str
     SaveString = realloc(SaveString, strlen(SaveString) + 1);
     return SaveString;
 }
@@ -1382,6 +1350,26 @@ NamedScript unsigned long crc(char const *buf, int len)
     unsigned long i = update_crc(0xFFFFFFFFL, buf, len) ^ 0xFFFFFFFFL;
     crc_table_computed = false;
     return i;
+}
+
+NamedScript Console void TestLocker(int item)
+{
+    int ItemCount = Player.Locker[0][item];
+    int ModsCount = Player.WeaponMods[item].Total;
+    int PowerMods = Player.WeaponMods[item].Power;
+    int BulkMods = Player.WeaponMods[item].Bulk;
+    int AgilityMods = Player.WeaponMods[item].Agility;
+    int TechnicalMods = Player.WeaponMods[item].Technical;
+    int SniperMods = Player.WeaponMods[item].Sniper;
+    int FirestormMods = Player.WeaponMods[item].Firestorm;
+    int NanoMods = Player.WeaponMods[item].Nano;
+    int Artifacts = Player.WeaponMods[item].Artifacts;
+    Log("Item # %i\nName: %S\nTotal Mods: %i\n\
+    Power Mods:   %i  Bulk Mods:      %i\n\
+    Agility Mods: %i  Tech Mods:      %i\n\
+    Sniper Mods:  %i  Firestorm Mods: %i\n\
+    Nano mods:    %i  Artifacts:      %i",
+    ItemCount,ItemData[0][item].Name,ModsCount,PowerMods,BulkMods,AgilityMods,TechnicalMods,SniperMods,FirestormMods,NanoMods,Artifacts);
 }
 
 // ----------------------------------------------------------------------------

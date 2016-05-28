@@ -591,17 +591,17 @@ void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
                 }
                 
                 // Store the weapons modpack data
-                /*
-                Player.WeaponMods[Index][0] = CheckInventory(StrParam("%SModLimit", ItemPtr->Actor));
-                Player.WeaponMods[Index][1] = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][2] = CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][3] = CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][4] = CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][5] = CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][6] = CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][7] = CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][8] = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
-                */
+                
+                Player.WeaponMods[Index].Total = CheckInventory(StrParam("%SModLimit", ItemPtr->Actor));
+                Player.WeaponMods[Index].Power = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
+                Player.WeaponMods[Index].Bulk = CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor));
+                Player.WeaponMods[Index].Agility = CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor));
+                Player.WeaponMods[Index].Technical = CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor));
+                Player.WeaponMods[Index].Sniper = CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
+                Player.WeaponMods[Index].Firestorm = CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
+                Player.WeaponMods[Index].Nano = CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
+                Player.WeaponMods[Index].Artifacts = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
+                
                 
                 // Check DRLA set bonuses
                 CheckDRLASetWeapons();

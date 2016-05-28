@@ -2623,7 +2623,7 @@ OptionalArgs(1) void LogMessage(str Message, int Level)
 
 void ArrayCreate(DynamicArray *Array, str Name, int InitSize, int ItemSize)
 {
-    if (Array->Data != NULL)
+    if (Array && Array->Data != NULL)
         ArrayDestroy(Array);
     
     Array->Name = Name;
@@ -2688,8 +2688,8 @@ void ArrayDestroy(DynamicArray *Array)
     Array->ItemSize = 0;
     Array->Data = NULL;
 }
-/*
-void ArrayDump(DynamicArray *Array)
+
+/*void ArrayDump(DynamicArray *Array)
 {
     Log("\CiDynamicArray \Cj%S\C- @ %p", Array->Name, Array->Data);
     Log("\Cd* Array size: \Cj%d", Array->Size);
@@ -2706,12 +2706,12 @@ void ArrayDump(DynamicArray *Array)
             DataString = StrParam("%S%X ", DataString, (char)((char *)Array->Data)[Array->ItemSize * i + b]);
         
         if (i >= Array->Position)
-            DataString = StrParam("%S\Cj(\CgUnused\Cj)", DataString);
+            DataString = StrParam("%s\Cj(\CgUnused\Cj)", DataString);
         
-        Log("%S", DataString);
+        Log("%s", DataString);
     }
-}
-*/
+}*/
+
 
 NamedScript void Silly()
 {
