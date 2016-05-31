@@ -84,9 +84,10 @@
 */
 
 bool Depositing = false;
-bool LoadedData = false;
+//bool LoadedData = false;
 int DepositItems = 0;
 int DepositTotal = 0;
+CharSaveInfo Info;
 
 str DRLATokens[DRLA_MAX_TOKENS] =
 {
@@ -271,7 +272,7 @@ NamedScript MenuEntry void SaveCharacter()
 {
     char const *SaveString;
     char *EncodedSaveString;
-    CharSaveInfo Info;
+    //CharSaveInfo Info;
     
     // You need to be in the Outpost to do this
     if (!CurrentLevel->UACBase && !GetCVar("drpg_debug"))
@@ -313,11 +314,11 @@ NamedScript MenuEntry void SaveCharacter()
     // Populate the data
     PopulateCharData(&Info);
     SaveString = MakeSaveString(&Info);
-    EncodedSaveString = malloc(strlen(SaveString) + 1);
+    EncodedSaveString = calloc(strlen(SaveString) + 1, sizeof(char));
     
     EncodeRLE(SaveString, EncodedSaveString);
     
-    EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
+    //EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
     //LogMessage(StrParam("Save Data: %s", SaveString),LOG_DEBUG);
     LogMessage(StrParam("Encoded Save Data: %s", EncodedSaveString),LOG_DEBUG);
     
@@ -325,7 +326,7 @@ NamedScript MenuEntry void SaveCharacter()
     int PartialStringsNeeded = EncStrSize / CHARSAVE_MAXSIZE;
     if (EncStrSize % CHARSAVE_MAXSIZE > 0)
         PartialStringsNeeded++;
-    char *PartialSaveString = malloc(CHARSAVE_MAXSIZE + 1);
+    char *PartialSaveString = calloc(CHARSAVE_MAXSIZE + 1, sizeof(char));
     PartialSaveString[CHARSAVE_MAXSIZE] = 0;
     
     for (int i = 0; i < CHARSAVE_MAXCVARS; i++)
@@ -383,9 +384,9 @@ NamedScript MenuEntry void LoadCharacter()
 {
     char *EncodedSaveString;
     char *SaveString;
-    CharSaveInfo Info;
+    //CharSaveInfo Info;
     
-    EncodedSaveString = malloc(65536);
+    EncodedSaveString = calloc(4000, sizeof(char));
     EncodedSaveString[0] = '\x00';
     
     int NumCVars = GetActivatorCVar("drpg_char_data_len");
@@ -412,23 +413,23 @@ NamedScript MenuEntry void LoadCharacter()
         free((void *)tmp);
     }
     
-    EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
+    //EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
     LogMessage(StrParam("Load Data (Encoded): %s", EncodedSaveString), LOG_DEBUG);
     
-    SaveString = malloc(65536);
+    SaveString = calloc(25000, sizeof(char));
     
     DecodeRLE(EncodedSaveString, SaveString);
     
-    SaveString = realloc(SaveString, strlen(SaveString) + 1);
+    //SaveString = realloc(SaveString, strlen(SaveString) + 1);
     //if (GetCVar("drpg_debug"))
     //    Log("Load Data (Raw): %s", SaveString);
     free((void *)EncodedSaveString);
     
     LoadCharDataFromString(&Info, SaveString);
     
-    while(!LoadedData)
+    /*while(!LoadedData)
         Delay(1);
-    
+    */
     free((void *)SaveString);
     
     // Version / Compatibility Flag
@@ -774,7 +775,7 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
 
 NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
 {
-    LoadedData = false;
+    //LoadedData = false;
     int StringPos = 0;
     int Version = 0;
     Info->Version = -3;
@@ -785,7 +786,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     if (Version != CHARSAVE_VERSION)
     {
         Info->Version = -2;
-        LoadedData = true;
+        //LoadedData = true;
         return;
     }
     
@@ -794,7 +795,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     if (Info->CompatMode != CompatMode)
     {
         Info->Version = -1;
-        LoadedData = true;
+        //LoadedData = true;
         return;
     }
     
@@ -875,28 +876,39 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     {
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            int val = HexToInteger(String + StringPos, 4);
-            if (val)
-                Info->Locker[i][j] = val;
+            if (i < ItemCategories && j < ItemMax[i])
+            {
+                int val = HexToInteger(String + StringPos, 4);
+                if (val)
+                    Info->Locker[i][j] = val;
+            }   
             StringPos += 4;
             
             if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
                 for (int k = 0; k < DRLA_MODPACK_SIZE; k++)
                 {
-                    int val2 = HexToInteger(String + StringPos, 1);
-                    if (val2)
-                        Info->WeaponMods[j][k] = val2;
+                    if (j < ItemMax[i])
+                    {
+                        int val2 = HexToInteger(String + StringPos, 1);
+                        if (val2)
+                            Info->WeaponMods[j][k] = val2;
+                    }
                     StringPos += 1;
                 }
         }
-        Delay(1);
+        //Delay(1);
     }
     
     // Auto-State
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            Info->ItemAutoMode[i][j] = HexToInteger(String + StringPos, 1);
+            if (i < ItemCategories && j < ItemMax[i])
+            {
+                int val = HexToInteger(String + StringPos, 1);
+                if (val)
+                    Info->ItemAutoMode[i][j] = val;
+            }
             StringPos += 1;
         }
     
@@ -925,15 +937,15 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     if (Checksum != Info->Checksum)
     {
         Info->Version = -3;
-        LoadedData = true;
+        //LoadedData = true;
         return;
     }
-    LoadedData = true;
+    //LoadedData = true;
 }
 
 NamedScript char const *MakeSaveString(CharSaveInfo *Info)
 {
-    char *SaveString = malloc(25000);
+    char *SaveString = calloc(25000, sizeof(char));
     unsigned int pos = 0;
     
     // Version
@@ -1142,7 +1154,7 @@ NamedScript char const *MakeSaveString(CharSaveInfo *Info)
     
     SaveString[pos] = '\x00';
     //length 23498. 105 strings @ 224 chars/str
-    SaveString = realloc(SaveString, strlen(SaveString) + 1);
+    //SaveString = realloc(SaveString, strlen(SaveString) + 1);
     return SaveString;
 }
 
@@ -1165,8 +1177,8 @@ NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
         {
             if (LastCount > 3)
             {
-                LastSize = malloc(48);
-                memset(LastSize, 0, 48);
+                LastSize = calloc(48, sizeof(char));
+                //memset(LastSize, 0, 48);
                 snprintf(LastSize, 48, c"[%X]", LastCount - 1);
                 for (int i = 0; i < strlen(LastSize); i++)
                     OutString[OutPos++] = (char)LastSize[i];
@@ -1190,8 +1202,8 @@ NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
     
     if (LastCount > 1)
     {
-        LastSize = malloc(48);
-        memset(LastSize, 0, 48);
+        LastSize = calloc(48, sizeof(char));
+        //memset(LastSize, 0, 48);
         snprintf(LastSize, 48, c"[%X]", LastCount - 1);
         for (int i = 0; i < strlen(LastSize); i++)
             OutString[OutPos++] = (char)LastSize[i];
@@ -1208,7 +1220,7 @@ NamedScriptSync void DecodeRLE(char const *InString, char *OutString)
     int InLength = strlen(InString);
     
     char LastSeen = '\x00';
-    char *CountString = malloc(8);
+    char *CountString = calloc(8, sizeof(char));
     int CountStringLength = 0;
     int RepeatCount = 0;
     bool InBrackets = false;
@@ -1267,7 +1279,7 @@ char *StringToCharP(str Source)
     int Length;
     Length = StrLen(Source);
 
-    char *Destination = malloc(Length + 1);
+    char *Destination = calloc(Length + 1, sizeof(char));
     Destination[Length] = '\x00';
     
     for (int i = 0; i < Length; i++)

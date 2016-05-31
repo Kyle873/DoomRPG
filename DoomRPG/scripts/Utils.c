@@ -75,6 +75,7 @@ str const AuraIcons[AURA_MAX + 1] =
     "AuraBlac"
 };
 
+
 // --------------------------------------------------
 // DECORATE
 // 
@@ -2623,18 +2624,31 @@ OptionalArgs(1) void LogMessage(str Message, int Level)
 
 void ArrayCreate(DynamicArray *Array, str Name, int InitSize, int ItemSize)
 {
+    bool Recreate = false;
     if (Array && Array->Data != NULL)
-        ArrayDestroy(Array);
+        Recreate = true;
     
     Array->Name = Name;
+    Array->Position = 0;
     
     if (GetCVar("drpg_debug"))
         Log("\CdDynamicArray: Allocating \Cj%S", Array->Name);
     
-    Array->Position = 0;
-    Array->Size = InitSize;
-    Array->ItemSize = ItemSize;
-    Array->Data = malloc(Array->ItemSize * Array->Size);
+    if (Recreate)
+    {
+        LogMessage("Reallocating Array",LOG_DEBUG);
+        LogMessage(StrParam("Previously: @ %p Size: %i", Array->Data, sizeof(Array->Data)),LOG_DEBUG);
+        LogMessage(StrParam("To size: %i",Array->Size * Array->ItemSize),LOG_DEBUG);
+        if(Array->Size != InitSize || Array->ItemSize != ItemSize)
+            Array->Data = realloc(Array->Data, Array->Size * Array->ItemSize);
+        LogMessage("Erasing Leftover data",LOG_DEBUG);
+        memset(Array->Data, NULL, Array->Size * Array->ItemSize);
+    }
+    else
+        LogMessage("Creating Array",LOG_DEBUG);
+        Array->Size = InitSize;
+        Array->ItemSize = ItemSize;
+        Array->Data = calloc(Array->Size, Array->ItemSize);
     
     if (Array->Data == NULL)
     {
@@ -2645,7 +2659,7 @@ void ArrayCreate(DynamicArray *Array, str Name, int InitSize, int ItemSize)
     if (GetCVar("drpg_debug"))
         Log("\CdDynamicArray: \Cj%S\Cd @ %p", Array->Name, Array->Data);
     
-    memset(Array->Data, 0xAAAAAAAA, Array->Size * Array->ItemSize);
+    //memset(Array->Data, 0xAAAAAAAA, Array->Size * Array->ItemSize);
 }
 
 void ArrayResize(DynamicArray *Array)
@@ -2659,6 +2673,8 @@ void ArrayResize(DynamicArray *Array)
     int OldSize = Array->Size;
     
     Array->Size *= 2;
+    if (GetCVar("drpg_debug"))
+        Log("\CdAttempting to resize DynamicArray: \Cj%S\Cd @ %p", Array->Name, Array->Data);
     void *tmp = realloc(Array->Data, Array->ItemSize * Array->Size);
     
     if (tmp == NULL)
@@ -2673,7 +2689,7 @@ void ArrayResize(DynamicArray *Array)
     
     Array->Data = tmp;
     
-    memset((char *)Array->Data + (Array->ItemSize * OldSize), 0xAAAAAAAA, (Array->Size * Array->ItemSize) - (Array->ItemSize * OldSize));
+    memset((char *)Array->Data + (Array->ItemSize * OldSize), 0x00000000, (Array->Size * Array->ItemSize) - (Array->ItemSize * OldSize));
 }
 
 void ArrayDestroy(DynamicArray *Array)

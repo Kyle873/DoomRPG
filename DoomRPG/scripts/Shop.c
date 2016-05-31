@@ -57,24 +57,36 @@ NamedScript KeyBind void OpenShop(bool OpenLocker)
 
 NamedScript void UpdateShopAutoList()
 {
-    ArrayCreate(&Player.AutoSellList,  "Auto-Sell", 64, sizeof(ItemInfoPtr));
-    ArrayCreate(&Player.AutoStoreList, "Auto-Store", 64, sizeof(ItemInfoPtr));
+    ArrayCreate(&Player.AutoSellList,  "Auto-Sell", 128, sizeof(ItemInfoPtr));
+    ArrayCreate(&Player.AutoStoreList, "Auto-Store", 128, sizeof(ItemInfoPtr));
     
     for (int i = 0; i < ItemCategories; i++)
+    {
         for (int j = 0; j < ItemMax[i]; j++)
         {
-            ItemInfoPtr Item = &ItemData[i][j];
-            
             if (Player.AutoSellList.Position == Player.AutoSellList.Size)
                 ArrayResize(&Player.AutoSellList);
             if (Player.AutoStoreList.Position == Player.AutoStoreList.Size)
                 ArrayResize(&Player.AutoStoreList);
             
             if (Player.ItemAutoMode[i][j] == AT_SELL)
+            {
+                ItemInfoPtr Item = &ItemData[i][j];
+                LogMessage(StrParam("Sell List Position: %i Sell List Size: %i", Player.AutoSellList.Position, Player.AutoSellList.Size), LOG_DEBUG);
+                LogMessage(StrParam("Adding %S to auto-sell @ %p", ItemData[i][j].Name, Item), LOG_DEBUG);
                 ((ItemInfoPtr *)Player.AutoSellList.Data)[Player.AutoSellList.Position++] = Item;
+            }
             else if (Player.ItemAutoMode[i][j] == AT_STORE)
+            {
+                ItemInfoPtr Item = &ItemData[i][j];
+                LogMessage(StrParam("Store List Position: %i Store List Size: %i", Player.AutoStoreList.Position, Player.AutoStoreList.Size), LOG_DEBUG);
+                LogMessage(StrParam("Adding %S to auto-store @ %p", ItemData[i][j].Name, Item), LOG_DEBUG);
                 ((ItemInfoPtr *)Player.AutoStoreList.Data)[Player.AutoStoreList.Position++] = Item;
+            }
+            //LogMessage(StrParam("Completed Item #%i, %S", j, ItemData[i][j].Name), LOG_DEBUG);
         }
+    }
+    LogMessage("Completed AutoUpdateShopList", LOG_DEBUG);
 }
 
 void ShopItemTryAutoDeposit(ItemInfoPtr Item)
