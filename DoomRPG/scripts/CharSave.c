@@ -878,9 +878,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
         {
             if (i < ItemCategories && j < ItemMax[i])
             {
-                int val = HexToInteger(String + StringPos, 4);
-                if (val)
-                    Info->Locker[i][j] = val;
+                Info->Locker[i][j] = HexToInteger(String + StringPos, 4);
             }   
             StringPos += 4;
             
@@ -889,9 +887,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
                 {
                     if (j < ItemMax[i])
                     {
-                        int val2 = HexToInteger(String + StringPos, 1);
-                        if (val2)
-                            Info->WeaponMods[j][k] = val2;
+                        Info->WeaponMods[j][k] = HexToInteger(String + StringPos, 1);
                     }
                     StringPos += 1;
                 }
@@ -905,9 +901,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
         {
             if (i < ItemCategories && j < ItemMax[i])
             {
-                int val = HexToInteger(String + StringPos, 1);
-                if (val)
-                    Info->ItemAutoMode[i][j] = val;
+                Info->ItemAutoMode[i][j] = HexToInteger(String + StringPos, 1);
             }
             StringPos += 1;
         }
