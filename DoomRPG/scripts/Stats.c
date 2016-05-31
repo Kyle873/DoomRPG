@@ -1077,7 +1077,7 @@ void CheckStatusEffects()
             
             // Build a jibberish string
             int Length = Random(5, 30);
-            char *Nonsense;
+            char *Nonsense = malloc(Length);
             
             // Fill the char array with garbage
             for (int i = 0; i < Length - 1; i++) 
