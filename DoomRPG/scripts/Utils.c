@@ -219,22 +219,34 @@ NamedScript DECORATE int CheckCapacity()
         // Batteries
         "DRPGBatterySmall",
         "DRPGBatteryLarge",
-        
-        // DoomRL - Powerups
-        "InvulnerabilityCharge2",
-        "RadSuit2",
-        "InvisibilityCharge2",
-        "RadSuit2",
-        "Infrared2",
-        "Berserk2",
-        
-        // End of List
         NULL
     };
+    
     
     for (int i = 0; ItemList[i] != NULL; i++)
         if (CheckInventory(ItemList[i]) > 0)
             Items += CheckInventory(ItemList[i]);
+        
+    if (CompatMode == COMPAT_DRLA)
+    {        
+        str const ItemListRL[] =
+            {
+                // DoomRL - Powerups
+                "InvulnerabilityCharge2",
+                "RadSuit2",
+                "InvisibilityCharge2",
+                "RadSuit2",
+                "Infrared2",
+                "Berserk2",
+                
+                // End of List
+                NULL
+            };
+    
+        for (int i = 0; ItemListRL[i] != NULL; i++)
+            if (CheckInventory(ItemListRL[i]) > 0)
+                Items += CheckInventory(ItemListRL[i]);
+    };
     
     Player.InvItems = Items;
     
@@ -1925,16 +1937,25 @@ void RemoveDRLAItem(int Category, int Index)
     
     if (Category == 0) // Weapons
     {
+        unsigned char CompatMods = ItemData[Category][Index].CompatMods;
         // Wipe the modpacks off the weapon
         SetInventory(StrParam("%SModLimit", ItemActor), 0);
-        SetInventory(StrParam("%SPowerMod", ItemActor), 0);
-        SetInventory(StrParam("%SBulkMod", ItemActor), 0);
-        SetInventory(StrParam("%SAgilityMod", ItemActor), 0);
-        SetInventory(StrParam("%STechnicalMod", ItemActor), 0);
-        SetInventory(StrParam("%SSniperMod", ItemActor), 0);
-        SetInventory(StrParam("%SFirestormMod", ItemActor), 0);
-        SetInventory(StrParam("%SNanoMod", ItemActor), 0);
-        SetInventory(StrParam("%SDemonArtifacts", ItemActor), 0);
+        if (CompatMods & RL_POWER_MOD)
+            SetInventory(StrParam("%SPowerMod", ItemActor), 0);
+        if (CompatMods & RL_BULK_MOD)
+            SetInventory(StrParam("%SBulkMod", ItemActor), 0);
+        if (CompatMods & RL_AGILITY_MOD)
+            SetInventory(StrParam("%SAgilityMod", ItemActor), 0);
+        if (CompatMods & RL_TECH_MOD)
+            SetInventory(StrParam("%STechnicalMod", ItemActor), 0);
+        if (CompatMods & RL_SNIPER_MOD)
+            SetInventory(StrParam("%SSniperMod", ItemActor), 0);
+        if (CompatMods & RL_FIREST_MOD)
+            SetInventory(StrParam("%SFirestormMod", ItemActor), 0);
+        if (CompatMods & RL_NANO_MOD)
+            SetInventory(StrParam("%SNanoMod", ItemActor), 0);
+        if (CompatMods & RL_DEMON_MOD)
+            SetInventory(StrParam("%SDemonArtifacts", ItemActor), 0);
         
         TakeInventory("RLWeaponLimit", 1);
         CheckDRLASetWeapons();

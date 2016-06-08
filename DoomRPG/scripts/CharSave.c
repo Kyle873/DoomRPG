@@ -570,9 +570,10 @@ NamedScript MenuEntry void LoadCharacter()
     // ----- COMPATIBILITY EXTENSIONS -----
     
     // DRLA Tokens
-    for (int i = 0; i < DRLA_MAX_TOKENS; i++)
-        if (Info.DRLATokens[i])
-            SetInventory(DRLATokens[i], 1);
+    if (CompatMode == COMPAT_DRLA)
+        for (int i = 0; i < DRLA_MAX_TOKENS; i++)
+            if (Info.DRLATokens[i])
+                SetInventory(DRLATokens[i], 1);
     
     // Set Health and EP to their proper max values
     Player.ActualHealth = Player.HealthMax;
@@ -768,9 +769,10 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     // ----- COMPATIBILITY EXTENSIONS -----
     
     // DRLA Tokens
-    for (int i = 0; i < DRLA_MAX_TOKENS; i++)
-        if (CheckInventory(DRLATokens[i]))
-            Info->DRLATokens[i] = true;
+    if (CompatMode == COMPAT_DRLA)
+        for (int i = 0; i < DRLA_MAX_TOKENS; i++)
+            if (CheckInventory(DRLATokens[i]))
+                Info->DRLATokens[i] = true;
 }
 
 NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)

@@ -627,6 +627,69 @@ NamedScript void BuildItemData()
             ITEMDATA_DEF("RLDemolitionAmmoMinigun",                 "Demolition Ammo Minigun \Cv[Assembled]\C-",            200000, -1, "ZGGGX0", 30, 20);
         ITEMDATA_CATEGORY_END;
         
+        int TID = UniqueTID();
+        bool Success = false;
+        for (int i=0; i < ItemMax[0]; i++)
+        {
+            str Name = StrParam("%S", ItemData[0][i].Actor);
+            str Mod = StrParam("%SPowerMod", Name);
+            Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
+            if (Success)
+            {
+                ItemData[0][i].CompatMods |= RL_POWER_MOD;
+                Thing_Remove(TID);
+            }
+            str Mod = StrParam("%SBulkMod", Name);
+            Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
+            if (Success)
+            {
+                ItemData[0][i].CompatMods |= RL_BULK_MOD;
+                Thing_Remove(TID);
+            }
+            str Mod = StrParam("%SAgilityMod", Name);
+            Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
+            if (Success)
+            {
+                ItemData[0][i].CompatMods |= RL_AGILITY_MOD;
+                Thing_Remove(TID);
+            }
+            str Mod = StrParam("%STechnicalMod", Name);
+            Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
+            if (Success)
+            {
+                ItemData[0][i].CompatMods |= RL_TECH_MOD;
+                Thing_Remove(TID);
+            }
+            str Mod = StrParam("%SSniperMod", Name);
+            Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
+            if (Success)
+            {
+                ItemData[0][i].CompatMods |= RL_SNIPER_MOD;
+                Thing_Remove(TID);
+            }
+            str Mod = StrParam("%SFirestormMod", Name);
+            Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
+            if (Success)
+            {
+                ItemData[0][i].CompatMods |= RL_FIREST_MOD;
+                Thing_Remove(TID);
+            }
+            str Mod = StrParam("%SNanoMod", Name);
+            Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
+            if (Success)
+            {
+                ItemData[0][i].CompatMods |= RL_NANO_MOD;
+                Thing_Remove(TID);
+            }
+            str Mod = StrParam("%SDemonArtifacts", Name);
+            Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
+            if (Success)
+            {
+                ItemData[0][i].CompatMods |= RL_DEMON_MOD;
+                Thing_Remove(TID);
+            }
+        }
+        
         // Ammo
         ItemData[1][0].Actor = "DRPGClip2";
         ItemData[1][1].Actor = "DRPGClipBox2";

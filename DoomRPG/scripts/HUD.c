@@ -1290,14 +1290,30 @@ NamedScript Type_ENTER void DRLAHUD()
                 str Color = "";
                 int TotalMax = 0;
                 int Total[2] = { CheckInventory(StrParam("%SModLimit", ItemPtr->Actor)), 0 };
-                int Power[2] = { CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor)), 0 };
-                int Bulk[2] = { CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor)), 0 };
-                int Agility[2] = { CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor)), 0 };
-                int Tech[2] = { CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor)), 0 };
-                int Sniper[2] = { CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor)), 0 };
-                int Firestorm[2] = { CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor)), 0 };
-                int Nano[2] = { CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor)), 0 };
-                int DemonArtifacts[2] = { CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor)), 0 };
+                int Power[2] = {0, 0};
+                if (ItemPtr->CompatMods & RL_POWER_MOD)
+                    Power[0] = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
+                int Bulk[2] = {0, 0};
+                if (ItemPtr->CompatMods & RL_BULK_MOD)
+                    Bulk[0] = CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor));
+                int Agility[2] = {0, 0};
+                if (ItemPtr->CompatMods & RL_AGILITY_MOD)
+                    Agility[0] = CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor));
+                int Tech[2] = {0, 0};
+                if (ItemPtr->CompatMods & RL_TECH_MOD)
+                    Tech[0] = CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor));
+                int Sniper[2] = {0, 0};
+                if (ItemPtr->CompatMods & RL_SNIPER_MOD)
+                    CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
+                int Firestorm[2] = {0, 0};
+                if (ItemPtr->CompatMods & RL_FIREST_MOD)
+                    CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
+                int Nano[2] = {0, 0};
+                if (ItemPtr->CompatMods & RL_NANO_MOD)
+                    CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
+                int DemonArtifacts[2] = {0, 0};
+                if (ItemPtr->CompatMods & RL_DEMON_MOD)
+                    CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
                 
                 // Determine total modpacks and the color char to use
                 if (CheckInventory("RLStandardWeaponToken"))

@@ -572,8 +572,9 @@ void CheckStats()
     }
     
     // DRLA Checking
-    if (CheckInventory("RLTacticalBootsToken"))
-        Player.SurvivalBonus += 20.0;
+    if (CompatMode == COMPAT_DRLA)
+        if (CheckInventory("RLTacticalBootsToken"))
+            Player.SurvivalBonus += 20.0;
 }
 
 void CheckStatBonus()
