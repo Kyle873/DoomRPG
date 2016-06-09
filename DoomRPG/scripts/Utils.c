@@ -2639,6 +2639,79 @@ OptionalArgs(1) void LogMessage(str Message, int Level)
     Log("%S", Message);
 }
 
+void ClearInfo(CharSaveInfo *Info)
+{
+    int i, j;
+    
+    // Version / Compatibility Flag
+    Info->Version = 0;
+    Info->CompatMode = 0;
+    
+    // Level / Rank Level
+    Info->Level = 0;
+    Info->RankLevel = 0;
+    Info->PP = 0;
+    
+    // Stats
+    for (i=0; i < STAT_MAX; i++)
+        Info->Stats[i] = 0;
+    
+    // Skills
+    for (i=0; i < MAX_CATEGORIES; i++)
+        for (j=0; j < MAX_SKILLS; j++)
+            Info->Skills[i][j] = 0;
+    
+    // Skill Wheel
+    for (i=0; i < MAX_SKILLKEYS; i++)
+        for (j=0; j < 2; j++)
+            Info->SkillWheel[i][j] = 0;
+    
+    // Augmentations
+    for (i=0; i < AUG_MAX; i++)
+        Info->Augs[i] = 0;
+    
+    // Stims
+    for (i=0; i < STIM_MAX; i++)
+        Info->Stims[i] = 0;
+    
+    // Turret Upgrades
+    for (i=0; i < TU_MAX; i++)
+        Info->TurretUpgrades[i] = 0;
+    
+    // Misc
+    Info->Credits = 0;
+    Info->Modules = 0;
+    Info->Medkit = 0;
+    Info->GoldChips = 0;
+    Info->PlatinumChips = 0;
+    Info->ShopCard = 0;
+    Info->Battery = 0;
+    Info->Toxicity = 0;
+    Info->ArenaWave = 0;
+    
+    // Locker
+    for (i=0; i < ITEM_CATEGORIES; i++)
+        for (j=0; j < ITEM_MAX; j++)
+            Info->Locker[i][j] = 0;
+            // Auto-Sell
+            Info->ItemAutoMode[i][j] = 0;
+    for (i=0; i < ITEM_MAX; i++)
+        for (j=0; j < DRLA_MODPACK_SIZE; j++)
+            Info->WeaponMods[i][j] = 0;
+    
+    
+    // ----- COMPATIBILITY EXTENSIONS -----
+    
+    // DRLA Tokens
+    for (i=0; i < DRLA_MAX_TOKENS; i++)
+        Info->DRLATokens[i] = false;
+    
+    // ------------------------------------
+    
+    // Checksum
+    Info->Checksum = 0;
+}
+
 // --------------------------------------------------
 // Dynamic Arrays
 // 

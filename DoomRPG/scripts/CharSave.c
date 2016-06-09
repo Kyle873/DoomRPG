@@ -311,6 +311,8 @@ NamedScript MenuEntry void SaveCharacter()
     HudMessage("Do not quit the game or power off your console.");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 0);
 
+    ClearInfo(&Info);
+    
     // Populate the data
     PopulateCharData(&Info);
     SaveString = MakeSaveString(&Info);
@@ -425,6 +427,7 @@ NamedScript MenuEntry void LoadCharacter()
     //    Log("Load Data (Raw): %s", SaveString);
     free((void *)EncodedSaveString);
     
+    ClearInfo(&Info);
     LoadCharDataFromString(&Info, SaveString);
     
     /*while(!LoadedData)
@@ -565,8 +568,6 @@ NamedScript MenuEntry void LoadCharacter()
         for (int j = 0; j < ITEM_MAX; j++)
             Player.ItemAutoMode[i][j] = Info.ItemAutoMode[i][j];
         
-    //UpdateShopAutoList();
-    
     // ----- COMPATIBILITY EXTENSIONS -----
     
     // DRLA Tokens
@@ -579,6 +580,8 @@ NamedScript MenuEntry void LoadCharacter()
     Player.ActualHealth = Player.HealthMax;
     Player.EP = Player.EPMax;
     
+    UpdateShopAutoList();
+
     ActivatorSound("charsave/accept", 127);
     SetFont("BIGFONT");
     HudMessage("===== Character Load Complete =====");
