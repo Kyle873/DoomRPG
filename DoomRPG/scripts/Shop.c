@@ -745,12 +745,12 @@ void DrawItemGrid()
         {
             int Index = j + (i * Width);
             
-            // Stop if we're at the end of the list
-            if (Index > ItemMax[Player.ShopPage] - 1) break;
-            
             // Calculate offset
             if (Player.ShopIndex >= Height * Width)
                 Index += (Player.ShopIndex / (Height * Width)) * (Height * Width);
+
+            // Stop if we're at the end of the list
+            if (Index > ItemMax[Player.ShopPage] - 1) break;
             
             ItemInfoPtr Item = &ItemData[Player.ShopPage][Index];
             str Icon = Item->Sprite.Name;
