@@ -1304,16 +1304,16 @@ NamedScript Type_ENTER void DRLAHUD()
                     Tech[0] = CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor));
                 int Sniper[2] = {0, 0};
                 if (ItemPtr->CompatMods & RL_SNIPER_MOD)
-                    CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
+                    Sniper[0] = CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
                 int Firestorm[2] = {0, 0};
                 if (ItemPtr->CompatMods & RL_FIREST_MOD)
-                    CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
+                    Firestorm[0] = CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
                 int Nano[2] = {0, 0};
                 if (ItemPtr->CompatMods & RL_NANO_MOD)
-                    CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
+                    Nano[0] = CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
                 int DemonArtifacts[2] = {0, 0};
                 if (ItemPtr->CompatMods & RL_DEMON_MOD)
-                    CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
+                    DemonArtifacts[0] = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
                 
                 // Determine total modpacks and the color char to use
                 if (CheckInventory("RLStandardWeaponToken"))
