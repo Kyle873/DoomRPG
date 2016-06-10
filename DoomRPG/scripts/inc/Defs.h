@@ -354,6 +354,18 @@ typedef enum
     CF_NODROP   = 0x8,
 } ECategoryFlags;
 
+typedef enum 
+{
+    RL_POWER_MOD = 0x01,
+    RL_BULK_MOD = 0x02,
+    RL_AGILITY_MOD = 0x04,
+    RL_TECH_MOD = 0x08,
+    RL_SNIPER_MOD = 0x10,
+    RL_FIREST_MOD = 0x20,
+    RL_NANO_MOD = 0x40,
+    RL_DEMON_MOD = 0x80,
+} ERLWepModFlags;
+
 // --------------------------------------------------
 // Map
 //

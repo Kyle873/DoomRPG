@@ -27,4 +27,6 @@ NamedScript unsigned long update_crc(unsigned long, char const *, int);
 NamedScript unsigned long do_crc_piece(char const *, unsigned long, int, int);
 NamedScript unsigned long crc(char const *, int);
 
+NamedScript Console void TestLocker(int);
+
 #endif

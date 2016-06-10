@@ -173,6 +173,7 @@ NamedScript Console void GiveCompounds(int);
 void CreateTranslations();
 OptionalArgs(1) bool CheckInput(int, int /* = KEY_PRESSED */);
 OptionalArgs(1) void LogMessage(str, int /* = LOG_NORMAL */);
+void ClearInfo(CharSaveInfo *);
 
 // Dynamic Arrays
 void ArrayCreate(DynamicArray *, str, int, int);

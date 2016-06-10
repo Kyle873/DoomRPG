@@ -57,24 +57,36 @@ NamedScript KeyBind void OpenShop(bool OpenLocker)
 
 NamedScript void UpdateShopAutoList()
 {
-    ArrayCreate(&Player.AutoSellList,  "Auto-Sell", 64, sizeof(ItemInfoPtr));
-    ArrayCreate(&Player.AutoStoreList, "Auto-Store", 64, sizeof(ItemInfoPtr));
+    ArrayCreate(&Player.AutoSellList,  "Auto-Sell", 128, sizeof(ItemInfoPtr));
+    ArrayCreate(&Player.AutoStoreList, "Auto-Store", 128, sizeof(ItemInfoPtr));
     
     for (int i = 0; i < ItemCategories; i++)
+    {
         for (int j = 0; j < ItemMax[i]; j++)
         {
-            ItemInfoPtr Item = &ItemData[i][j];
-            
             if (Player.AutoSellList.Position == Player.AutoSellList.Size)
                 ArrayResize(&Player.AutoSellList);
             if (Player.AutoStoreList.Position == Player.AutoStoreList.Size)
                 ArrayResize(&Player.AutoStoreList);
             
             if (Player.ItemAutoMode[i][j] == AT_SELL)
+            {
+                ItemInfoPtr Item = &ItemData[i][j];
+                LogMessage(StrParam("Sell List Position: %i Sell List Size: %i", Player.AutoSellList.Position, Player.AutoSellList.Size), LOG_DEBUG);
+                LogMessage(StrParam("Adding %S to auto-sell @ %p", ItemData[i][j].Name, Item), LOG_DEBUG);
                 ((ItemInfoPtr *)Player.AutoSellList.Data)[Player.AutoSellList.Position++] = Item;
+            }
             else if (Player.ItemAutoMode[i][j] == AT_STORE)
+            {
+                ItemInfoPtr Item = &ItemData[i][j];
+                LogMessage(StrParam("Store List Position: %i Store List Size: %i", Player.AutoStoreList.Position, Player.AutoStoreList.Size), LOG_DEBUG);
+                LogMessage(StrParam("Adding %S to auto-store @ %p", ItemData[i][j].Name, Item), LOG_DEBUG);
                 ((ItemInfoPtr *)Player.AutoStoreList.Data)[Player.AutoStoreList.Position++] = Item;
+            }
+            //LogMessage(StrParam("Completed Item #%i, %S", j, ItemData[i][j].Name), LOG_DEBUG);
         }
+    }
+    LogMessage("Completed AutoUpdateShopList", LOG_DEBUG);
 }
 
 void ShopItemTryAutoDeposit(ItemInfoPtr Item)
@@ -591,17 +603,25 @@ void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
                 }
                 
                 // Store the weapons modpack data
-                /*
-                Player.WeaponMods[Index][0] = CheckInventory(StrParam("%SModLimit", ItemPtr->Actor));
-                Player.WeaponMods[Index][1] = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][2] = CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][3] = CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][4] = CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][5] = CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][6] = CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][7] = CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
-                Player.WeaponMods[Index][8] = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
-                */
+                
+                Player.WeaponMods[Index].Total = CheckInventory(StrParam("%SModLimit", ItemPtr->Actor));
+                if (ItemPtr->CompatMods & RL_POWER_MOD)
+                    Player.WeaponMods[Index].Power = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
+                if (ItemPtr->CompatMods & RL_BULK_MOD)
+                    Player.WeaponMods[Index].Bulk = CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor));
+                if (ItemPtr->CompatMods & RL_AGILITY_MOD)
+                    Player.WeaponMods[Index].Agility = CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor));
+                if (ItemPtr->CompatMods & RL_TECH_MOD)
+                    Player.WeaponMods[Index].Technical = CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor));
+                if (ItemPtr->CompatMods & RL_SNIPER_MOD)
+                    Player.WeaponMods[Index].Sniper = CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
+                if (ItemPtr->CompatMods & RL_FIREST_MOD)
+                    Player.WeaponMods[Index].Firestorm = CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
+                if (ItemPtr->CompatMods & RL_NANO_MOD)
+                    Player.WeaponMods[Index].Nano = CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
+                if (ItemPtr->CompatMods & RL_DEMON_MOD)
+                    Player.WeaponMods[Index].Artifacts = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
+                
                 
                 // Check DRLA set bonuses
                 CheckDRLASetWeapons();
@@ -657,14 +677,22 @@ void WithdrawItem(int Page, int Index)
                 SpawnForced(StrParam("%SPickupModded", ItemPtr->Actor), GetActorX(0), GetActorY(0), GetActorZ(0), WeaponTID, 0);
                 
                 GiveActorInventory(WeaponTID, StrParam("%SModLimit", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Total);
-                GiveActorInventory(WeaponTID, StrParam("%SPowerMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Power);
-                GiveActorInventory(WeaponTID, StrParam("%SBulkMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Bulk);
-                GiveActorInventory(WeaponTID, StrParam("%SAgilityMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Agility);
-                GiveActorInventory(WeaponTID, StrParam("%STechnicalMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Technical);
-                GiveActorInventory(WeaponTID, StrParam("%SSniperMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Sniper);
-                GiveActorInventory(WeaponTID, StrParam("%SFirestormMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Firestorm);
-                GiveActorInventory(WeaponTID, StrParam("%SNanoMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Nano);
-                GiveActorInventory(WeaponTID, StrParam("%SDemonArtifacts", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Artifacts);
+                if (ItemPtr->CompatMods & RL_POWER_MOD)
+                    GiveActorInventory(WeaponTID, StrParam("%SPowerMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Power);
+                if (ItemPtr->CompatMods & RL_BULK_MOD)
+                    GiveActorInventory(WeaponTID, StrParam("%SBulkMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Bulk);
+                if (ItemPtr->CompatMods & RL_AGILITY_MOD)
+                    GiveActorInventory(WeaponTID, StrParam("%SAgilityMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Agility);
+                if (ItemPtr->CompatMods & RL_TECH_MOD)
+                    GiveActorInventory(WeaponTID, StrParam("%STechnicalMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Technical);
+                if (ItemPtr->CompatMods & RL_SNIPER_MOD)
+                    GiveActorInventory(WeaponTID, StrParam("%SSniperMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Sniper);
+                if (ItemPtr->CompatMods & RL_FIREST_MOD)
+                    GiveActorInventory(WeaponTID, StrParam("%SFirestormMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Firestorm);
+                if (ItemPtr->CompatMods & RL_NANO_MOD)
+                    GiveActorInventory(WeaponTID, StrParam("%SNanoMod", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Nano);
+                if (ItemPtr->CompatMods & RL_DEMON_MOD)
+                    GiveActorInventory(WeaponTID, StrParam("%SDemonArtifacts", ItemPtr->Actor), Player.WeaponMods[Player.ShopIndex].Artifacts);
             }
             else
             {
@@ -720,6 +748,9 @@ void DrawItemGrid()
             // Calculate offset
             if (Player.ShopIndex >= Height * Width)
                 Index += (Player.ShopIndex / (Height * Width)) * (Height * Width);
+
+            // Stop if we're at the end of the list
+            if (Index > ItemMax[Player.ShopPage] - 1) break;
             
             ItemInfoPtr Item = &ItemData[Player.ShopPage][Index];
             str Icon = Item->Sprite.Name;
@@ -734,8 +765,6 @@ void DrawItemGrid()
             bool CanBuy = !(Rank == -1);
             bool CanAfford = (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100);
             
-            // Stop if we're at the end of the list
-            if (Index > ItemMax[Player.ShopPage] - 1) break;
             
             // Placeholder Icon
             if (StrLen(Icon) == 0)
@@ -827,7 +856,7 @@ void DrawItemGrid()
         
         // Increment Y
         BaseY += 48.0;
-    }
+    }    
 }
 
 void CheckShopCard()

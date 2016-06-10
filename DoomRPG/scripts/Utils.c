@@ -75,6 +75,7 @@ str const AuraIcons[AURA_MAX + 1] =
     "AuraBlac"
 };
 
+
 // --------------------------------------------------
 // DECORATE
 // 
@@ -218,22 +219,34 @@ NamedScript DECORATE int CheckCapacity()
         // Batteries
         "DRPGBatterySmall",
         "DRPGBatteryLarge",
-        
-        // DoomRL - Powerups
-        "InvulnerabilityCharge2",
-        "RadSuit2",
-        "InvisibilityCharge2",
-        "RadSuit2",
-        "Infrared2",
-        "Berserk2",
-        
-        // End of List
         NULL
     };
+    
     
     for (int i = 0; ItemList[i] != NULL; i++)
         if (CheckInventory(ItemList[i]) > 0)
             Items += CheckInventory(ItemList[i]);
+        
+    if (CompatMode == COMPAT_DRLA)
+    {        
+        str const ItemListRL[] =
+            {
+                // DoomRL - Powerups
+                "InvulnerabilityCharge2",
+                "RadSuit2",
+                "InvisibilityCharge2",
+                "RadSuit2",
+                "Infrared2",
+                "Berserk2",
+                
+                // End of List
+                NULL
+            };
+    
+        for (int i = 0; ItemListRL[i] != NULL; i++)
+            if (CheckInventory(ItemListRL[i]) > 0)
+                Items += CheckInventory(ItemListRL[i]);
+    };
     
     Player.InvItems = Items;
     
@@ -1924,16 +1937,25 @@ void RemoveDRLAItem(int Category, int Index)
     
     if (Category == 0) // Weapons
     {
+        unsigned char CompatMods = ItemData[Category][Index].CompatMods;
         // Wipe the modpacks off the weapon
         SetInventory(StrParam("%SModLimit", ItemActor), 0);
-        SetInventory(StrParam("%SPowerMod", ItemActor), 0);
-        SetInventory(StrParam("%SBulkMod", ItemActor), 0);
-        SetInventory(StrParam("%SAgilityMod", ItemActor), 0);
-        SetInventory(StrParam("%STechnicalMod", ItemActor), 0);
-        SetInventory(StrParam("%SSniperMod", ItemActor), 0);
-        SetInventory(StrParam("%SFirestormMod", ItemActor), 0);
-        SetInventory(StrParam("%SNanoMod", ItemActor), 0);
-        SetInventory(StrParam("%SDemonArtifacts", ItemActor), 0);
+        if (CompatMods & RL_POWER_MOD)
+            SetInventory(StrParam("%SPowerMod", ItemActor), 0);
+        if (CompatMods & RL_BULK_MOD)
+            SetInventory(StrParam("%SBulkMod", ItemActor), 0);
+        if (CompatMods & RL_AGILITY_MOD)
+            SetInventory(StrParam("%SAgilityMod", ItemActor), 0);
+        if (CompatMods & RL_TECH_MOD)
+            SetInventory(StrParam("%STechnicalMod", ItemActor), 0);
+        if (CompatMods & RL_SNIPER_MOD)
+            SetInventory(StrParam("%SSniperMod", ItemActor), 0);
+        if (CompatMods & RL_FIREST_MOD)
+            SetInventory(StrParam("%SFirestormMod", ItemActor), 0);
+        if (CompatMods & RL_NANO_MOD)
+            SetInventory(StrParam("%SNanoMod", ItemActor), 0);
+        if (CompatMods & RL_DEMON_MOD)
+            SetInventory(StrParam("%SDemonArtifacts", ItemActor), 0);
         
         TakeInventory("RLWeaponLimit", 1);
         CheckDRLASetWeapons();
@@ -2617,24 +2639,110 @@ OptionalArgs(1) void LogMessage(str Message, int Level)
     Log("%S", Message);
 }
 
+void ClearInfo(CharSaveInfo *Info)
+{
+    int i, j;
+    
+    // Version / Compatibility Flag
+    Info->Version = 0;
+    Info->CompatMode = 0;
+    
+    // Level / Rank Level
+    Info->Level = 0;
+    Info->RankLevel = 0;
+    Info->PP = 0;
+    
+    // Stats
+    for (i=0; i < STAT_MAX; i++)
+        Info->Stats[i] = 0;
+    
+    // Skills
+    for (i=0; i < MAX_CATEGORIES; i++)
+        for (j=0; j < MAX_SKILLS; j++)
+            Info->Skills[i][j] = 0;
+    
+    // Skill Wheel
+    for (i=0; i < MAX_SKILLKEYS; i++)
+        for (j=0; j < 2; j++)
+            Info->SkillWheel[i][j] = 0;
+    
+    // Augmentations
+    for (i=0; i < AUG_MAX; i++)
+        Info->Augs[i] = 0;
+    
+    // Stims
+    for (i=0; i < STIM_MAX; i++)
+        Info->Stims[i] = 0;
+    
+    // Turret Upgrades
+    for (i=0; i < TU_MAX; i++)
+        Info->TurretUpgrades[i] = 0;
+    
+    // Misc
+    Info->Credits = 0;
+    Info->Modules = 0;
+    Info->Medkit = 0;
+    Info->GoldChips = 0;
+    Info->PlatinumChips = 0;
+    Info->ShopCard = 0;
+    Info->Battery = 0;
+    Info->Toxicity = 0;
+    Info->ArenaWave = 0;
+    
+    // Locker
+    for (i=0; i < ITEM_CATEGORIES; i++)
+        for (j=0; j < ITEM_MAX; j++)
+            Info->Locker[i][j] = 0;
+            // Auto-Sell
+            Info->ItemAutoMode[i][j] = 0;
+    for (i=0; i < ITEM_MAX; i++)
+        for (j=0; j < DRLA_MODPACK_SIZE; j++)
+            Info->WeaponMods[i][j] = 0;
+    
+    
+    // ----- COMPATIBILITY EXTENSIONS -----
+    
+    // DRLA Tokens
+    for (i=0; i < DRLA_MAX_TOKENS; i++)
+        Info->DRLATokens[i] = false;
+    
+    // ------------------------------------
+    
+    // Checksum
+    Info->Checksum = 0;
+}
+
 // --------------------------------------------------
 // Dynamic Arrays
 // 
 
 void ArrayCreate(DynamicArray *Array, str Name, int InitSize, int ItemSize)
 {
-    if (Array->Data != NULL)
-        ArrayDestroy(Array);
+    bool Recreate = false;
+    if (Array && Array->Data != NULL)
+        Recreate = true;
     
     Array->Name = Name;
+    Array->Position = 0;
     
     if (GetCVar("drpg_debug"))
         Log("\CdDynamicArray: Allocating \Cj%S", Array->Name);
     
-    Array->Position = 0;
-    Array->Size = InitSize;
-    Array->ItemSize = ItemSize;
-    Array->Data = malloc(Array->ItemSize * Array->Size);
+    if (Recreate)
+    {
+        LogMessage("Reallocating Array",LOG_DEBUG);
+        LogMessage(StrParam("Previously: @ %p Size: %i", Array->Data, sizeof(Array->Data)),LOG_DEBUG);
+        LogMessage(StrParam("To size: %i",Array->Size * Array->ItemSize),LOG_DEBUG);
+        if(Array->Size != InitSize || Array->ItemSize != ItemSize)
+            Array->Data = realloc(Array->Data, Array->Size * Array->ItemSize);
+        LogMessage("Erasing Leftover data",LOG_DEBUG);
+        memset(Array->Data, NULL, Array->Size * Array->ItemSize);
+    }
+    else
+        LogMessage("Creating Array",LOG_DEBUG);
+        Array->Size = InitSize;
+        Array->ItemSize = ItemSize;
+        Array->Data = calloc(Array->Size, Array->ItemSize);
     
     if (Array->Data == NULL)
     {
@@ -2645,7 +2753,7 @@ void ArrayCreate(DynamicArray *Array, str Name, int InitSize, int ItemSize)
     if (GetCVar("drpg_debug"))
         Log("\CdDynamicArray: \Cj%S\Cd @ %p", Array->Name, Array->Data);
     
-    memset(Array->Data, 0xAAAAAAAA, Array->Size * Array->ItemSize);
+    //memset(Array->Data, 0xAAAAAAAA, Array->Size * Array->ItemSize);
 }
 
 void ArrayResize(DynamicArray *Array)
@@ -2659,6 +2767,8 @@ void ArrayResize(DynamicArray *Array)
     int OldSize = Array->Size;
     
     Array->Size *= 2;
+    if (GetCVar("drpg_debug"))
+        Log("\CdAttempting to resize DynamicArray: \Cj%S\Cd @ %p", Array->Name, Array->Data);
     void *tmp = realloc(Array->Data, Array->ItemSize * Array->Size);
     
     if (tmp == NULL)
@@ -2673,7 +2783,7 @@ void ArrayResize(DynamicArray *Array)
     
     Array->Data = tmp;
     
-    memset((char *)Array->Data + (Array->ItemSize * OldSize), 0xAAAAAAAA, (Array->Size * Array->ItemSize) - (Array->ItemSize * OldSize));
+    memset((char *)Array->Data + (Array->ItemSize * OldSize), 0x00000000, (Array->Size * Array->ItemSize) - (Array->ItemSize * OldSize));
 }
 
 void ArrayDestroy(DynamicArray *Array)
@@ -2688,8 +2798,8 @@ void ArrayDestroy(DynamicArray *Array)
     Array->ItemSize = 0;
     Array->Data = NULL;
 }
-/*
-void ArrayDump(DynamicArray *Array)
+
+/*void ArrayDump(DynamicArray *Array)
 {
     Log("\CiDynamicArray \Cj%S\C- @ %p", Array->Name, Array->Data);
     Log("\Cd* Array size: \Cj%d", Array->Size);
@@ -2706,12 +2816,12 @@ void ArrayDump(DynamicArray *Array)
             DataString = StrParam("%S%X ", DataString, (char)((char *)Array->Data)[Array->ItemSize * i + b]);
         
         if (i >= Array->Position)
-            DataString = StrParam("%S\Cj(\CgUnused\Cj)", DataString);
+            DataString = StrParam("%s\Cj(\CgUnused\Cj)", DataString);
         
-        Log("%S", DataString);
+        Log("%s", DataString);
     }
-}
-*/
+}*/
+
 
 NamedScript void Silly()
 {

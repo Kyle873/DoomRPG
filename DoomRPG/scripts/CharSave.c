@@ -84,8 +84,10 @@
 */
 
 bool Depositing = false;
+//bool LoadedData = false;
 int DepositItems = 0;
 int DepositTotal = 0;
+CharSaveInfo Info;
 
 str DRLATokens[DRLA_MAX_TOKENS] =
 {
@@ -270,7 +272,7 @@ NamedScript MenuEntry void SaveCharacter()
 {
     char const *SaveString;
     char *EncodedSaveString;
-    CharSaveInfo Info;
+    //CharSaveInfo Info;
     
     // You need to be in the Outpost to do this
     if (!CurrentLevel->UACBase && !GetCVar("drpg_debug"))
@@ -308,22 +310,26 @@ NamedScript MenuEntry void SaveCharacter()
     SetFont("SMALLFONT");
     HudMessage("Do not quit the game or power off your console.");
     EndHudMessage(HUDMSG_PLAIN | HUDMSG_LOG, 71, "Orange", 0.5, 0.35, 0);
+
+    ClearInfo(&Info);
     
     // Populate the data
     PopulateCharData(&Info);
-    
     SaveString = MakeSaveString(&Info);
-    EncodedSaveString = malloc(strlen(SaveString) + 1);
+    EncodedSaveString = calloc(strlen(SaveString) + 1, sizeof(char));
     
     EncodeRLE(SaveString, EncodedSaveString);
     
-    EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    // Log("Save Data: %S", EncodedSaveString);
-    int PartialStringsNeeded = strlen(EncodedSaveString) / CHARSAVE_MAXSIZE;
-    if (strlen(EncodedSaveString) % CHARSAVE_MAXSIZE > 0)
+    //EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
+    //LogMessage(StrParam("Save Data: %s", SaveString),LOG_DEBUG);
+    LogMessage(StrParam("Encoded Save Data: %s", EncodedSaveString),LOG_DEBUG);
+    
+    int EncStrSize = strlen(EncodedSaveString);
+    int PartialStringsNeeded = EncStrSize / CHARSAVE_MAXSIZE;
+    if (EncStrSize % CHARSAVE_MAXSIZE > 0)
         PartialStringsNeeded++;
-    char *PartialSaveString = malloc(CHARSAVE_MAXSIZE + 1);
-    PartialSaveString[CHARSAVE_MAXSIZE] = '\x00';
+    char *PartialSaveString = calloc(CHARSAVE_MAXSIZE + 1, sizeof(char));
+    PartialSaveString[CHARSAVE_MAXSIZE] = 0;
     
     for (int i = 0; i < CHARSAVE_MAXCVARS; i++)
         SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), "");
@@ -336,7 +342,11 @@ NamedScript MenuEntry void SaveCharacter()
         Success = false;
     for (int i = 0; Success && i < PartialStringsNeeded; i++)
     {
-        strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE);
+        strncpy(PartialSaveString, EncodedSaveString + (CHARSAVE_MAXSIZE * i), CHARSAVE_MAXSIZE - 1);
+
+        Delay(1);
+        //if (GetCVar("drpg_debug"))
+        //  Log("Writing Save Data: %s", PartialSaveString);
         if (!SetUserCVarString(PlayerNumber(), StrParam("drpg_char_data_%d", i), StrParam("%s", PartialSaveString)))
             Success = false;
     }
@@ -376,9 +386,9 @@ NamedScript MenuEntry void LoadCharacter()
 {
     char *EncodedSaveString;
     char *SaveString;
-    CharSaveInfo Info;
+    //CharSaveInfo Info;
     
-    EncodedSaveString = malloc(65536);
+    EncodedSaveString = calloc(4000, sizeof(char));
     EncodedSaveString[0] = '\x00';
     
     int NumCVars = GetActivatorCVar("drpg_char_data_len");
@@ -405,22 +415,28 @@ NamedScript MenuEntry void LoadCharacter()
         free((void *)tmp);
     }
     
-    EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
-    // Log("Load Data (Encoded): %S", EncodedSaveString);
+    //EncodedSaveString = realloc(EncodedSaveString, strlen(EncodedSaveString) + 1);
+    LogMessage(StrParam("Load Data (Encoded): %s", EncodedSaveString), LOG_DEBUG);
     
-    SaveString = malloc(65536);
+    SaveString = calloc(25000, sizeof(char));
     
     DecodeRLE(EncodedSaveString, SaveString);
     
-    SaveString = realloc(SaveString, strlen(SaveString) + 1);
-    // Log("Load Data (Raw): %S", SaveString);
+    //SaveString = realloc(SaveString, strlen(SaveString) + 1);
+    //if (GetCVar("drpg_debug"))
+    //    Log("Load Data (Raw): %s", SaveString);
     free((void *)EncodedSaveString);
     
+    ClearInfo(&Info);
     LoadCharDataFromString(&Info, SaveString);
     
+    /*while(!LoadedData)
+        Delay(1);
+    */
     free((void *)SaveString);
     
     // Version / Compatibility Flag
+    LogMessage(StrParam("Version:%d",Info.Version),LOG_DEBUG);
     if (Info.Version < 0)
     {
         str const ReasonStrings[3] =
@@ -465,22 +481,14 @@ NamedScript MenuEntry void LoadCharacter()
     Player.Luck         = Info.Stats[7];
     
     // Stat XP
-    if (Info.Stats[0] > 0)
-        Player.StrengthXP = StatTable[Info.Stats[0] - 1];
-    if (Info.Stats[1] > 0)
-        Player.DefenseXP = StatTable[Info.Stats[1] - 1];
-    if (Info.Stats[2] > 0)
-        Player.VitalityXP = StatTable[Info.Stats[2] - 1];
-    if (Info.Stats[3] > 0)
-        Player.EnergyXP = StatTable[Info.Stats[3] - 1];
-    if (Info.Stats[4] > 0)
-        Player.RegenerationXP = StatTable[Info.Stats[4] - 1];
-    if (Info.Stats[5] > 0)
-        Player.AgilityXP = StatTable[Info.Stats[5] - 1];
-    if (Info.Stats[6] > 0)
-        Player.CapacityXP = StatTable[Info.Stats[6] - 1];
-    if (Info.Stats[7] > 0)
-        Player.LuckXP = StatTable[Info.Stats[7] - 1];
+    Player.StrengthXP = StatTable[Info.Stats[0] - 1];
+    Player.DefenseXP = StatTable[Info.Stats[1] - 1];
+    Player.VitalityXP = StatTable[Info.Stats[2] - 1];
+    Player.EnergyXP = StatTable[Info.Stats[3] - 1];
+    Player.RegenerationXP = StatTable[Info.Stats[4] - 1];
+    Player.AgilityXP = StatTable[Info.Stats[5] - 1];
+    Player.CapacityXP = StatTable[Info.Stats[6] - 1];
+    Player.LuckXP = StatTable[Info.Stats[7] - 1];
     
     Player.EP = Player.Energy * 10;
     Player.HealthMax = Player.Vitality * 10;
@@ -538,7 +546,8 @@ NamedScript MenuEntry void LoadCharacter()
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            Player.Locker[i][j] += Info.Locker[i][j];
+            if (Info.Locker[i][j])
+                Player.Locker[i][j] += Info.Locker[i][j];
             
             if (Info.CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
             {
@@ -558,18 +567,21 @@ NamedScript MenuEntry void LoadCharacter()
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
             Player.ItemAutoMode[i][j] = Info.ItemAutoMode[i][j];
-    
+        
     // ----- COMPATIBILITY EXTENSIONS -----
     
     // DRLA Tokens
-    for (int i = 0; i < DRLA_MAX_TOKENS; i++)
-        if (Info.DRLATokens[i])
-            SetInventory(DRLATokens[i], 1);
+    if (CompatMode == COMPAT_DRLA)
+        for (int i = 0; i < DRLA_MAX_TOKENS; i++)
+            if (Info.DRLATokens[i])
+                SetInventory(DRLATokens[i], 1);
     
     // Set Health and EP to their proper max values
     Player.ActualHealth = Player.HealthMax;
     Player.EP = Player.EPMax;
     
+    UpdateShopAutoList();
+
     ActivatorSound("charsave/accept", 127);
     SetFont("BIGFONT");
     HudMessage("===== Character Load Complete =====");
@@ -630,7 +642,6 @@ NamedScript void DepositInventory()
                     DepositItems++;
                     if ((Count++ % TimeDivide) == 0) Delay(1);
                 }
-    
     // Stop the depositing process
     DepositItems = DepositTotal;
     Delay(1);
@@ -720,13 +731,13 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     
     for (int i = 0; i < TU_MAX; i++)
         Info->TurretUpgrades[i] = Player.Turret.Upgrade[i];
-    
-    // Misc
+
+      // Misc
     Info->Credits = CheckInventory("DRPGCredits");
     Info->Modules = CheckInventory("DRPGModule");
     Info->Medkit = Player.Medkit;
     Info->GoldChips = CheckInventory("DRPGChipGold");
-    Info->PlatinumChips = CheckInventory("DrpgChipPlatinum");
+    Info->PlatinumChips = CheckInventory("DRPGChipPlatinum");
     Info->ShopCard = Player.ShopCard;
     Info->Battery = Player.Augs.Battery;
     Info->Toxicity = Player.Toxicity;
@@ -736,19 +747,20 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            Info->Locker[i][j] = Player.Locker[i][j];
-            
+            if (Player.Locker[i][j]) 
+              Info->Locker[i][j] = Player.Locker[i][j];
+
             if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
             {
-                Info->WeaponMods[j][0] = Player.WeaponMods[j].Total;
-                Info->WeaponMods[j][1] = Player.WeaponMods[j].Power;
-                Info->WeaponMods[j][2] = Player.WeaponMods[j].Bulk;
-                Info->WeaponMods[j][3] = Player.WeaponMods[j].Agility;
-                Info->WeaponMods[j][4] = Player.WeaponMods[j].Technical;
-                Info->WeaponMods[j][5] = Player.WeaponMods[j].Sniper;
-                Info->WeaponMods[j][6] = Player.WeaponMods[j].Firestorm;
-                Info->WeaponMods[j][7] = Player.WeaponMods[j].Nano;
-                Info->WeaponMods[j][8] = Player.WeaponMods[j].Artifacts;
+              Info->WeaponMods[j][0] = Player.WeaponMods[j].Total;
+              Info->WeaponMods[j][1] = Player.WeaponMods[j].Power;
+              Info->WeaponMods[j][2] = Player.WeaponMods[j].Bulk;
+              Info->WeaponMods[j][3] = Player.WeaponMods[j].Agility;
+              Info->WeaponMods[j][4] = Player.WeaponMods[j].Technical;
+              Info->WeaponMods[j][5] = Player.WeaponMods[j].Sniper;
+              Info->WeaponMods[j][6] = Player.WeaponMods[j].Firestorm;
+              Info->WeaponMods[j][7] = Player.WeaponMods[j].Nano;
+              Info->WeaponMods[j][8] = Player.WeaponMods[j].Artifacts;
             }
         }
     
@@ -756,17 +768,19 @@ NamedScript void PopulateCharData(CharSaveInfo *Info)
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
             Info->ItemAutoMode[i][j] = Player.ItemAutoMode[i][j];
-    
+   
     // ----- COMPATIBILITY EXTENSIONS -----
     
     // DRLA Tokens
-    for (int i = 0; i < DRLA_MAX_TOKENS; i++)
-        if (CheckInventory(DRLATokens[i]))
-            Info->DRLATokens[i] = true;
+    if (CompatMode == COMPAT_DRLA)
+        for (int i = 0; i < DRLA_MAX_TOKENS; i++)
+            if (CheckInventory(DRLATokens[i]))
+                Info->DRLATokens[i] = true;
 }
 
 NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
 {
+    //LoadedData = false;
     int StringPos = 0;
     int Version = 0;
     Info->Version = -3;
@@ -777,6 +791,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     if (Version != CHARSAVE_VERSION)
     {
         Info->Version = -2;
+        //LoadedData = true;
         return;
     }
     
@@ -785,6 +800,7 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     if (Info->CompatMode != CompatMode)
     {
         Info->Version = -1;
+        //LoadedData = true;
         return;
     }
     
@@ -862,24 +878,36 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     
     // Locker
     for (int i = 0; i < ITEM_CATEGORIES; i++)
+    {
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            Info->Locker[i][j] = HexToInteger(String + StringPos, 4);
+            if (i < ItemCategories && j < ItemMax[i])
+            {
+                Info->Locker[i][j] = HexToInteger(String + StringPos, 4);
+            }   
             StringPos += 4;
             
             if (Info->CompatMode == COMPAT_DRLA && i == 0) // Weapon Modpacks
                 for (int k = 0; k < DRLA_MODPACK_SIZE; k++)
                 {
-                    Info->WeaponMods[j][k] = HexToInteger(String + StringPos, 1);
+                    if (j < ItemMax[i])
+                    {
+                        Info->WeaponMods[j][k] = HexToInteger(String + StringPos, 1);
+                    }
                     StringPos += 1;
                 }
         }
+        //Delay(1);
+    }
     
     // Auto-State
     for (int i = 0; i < ITEM_CATEGORIES; i++)
         for (int j = 0; j < ITEM_MAX; j++)
         {
-            Info->ItemAutoMode[i][j] = HexToInteger(String + StringPos, 1);
+            if (i < ItemCategories && j < ItemMax[i])
+            {
+                Info->ItemAutoMode[i][j] = HexToInteger(String + StringPos, 1);
+            }
             StringPos += 1;
         }
     
@@ -902,19 +930,21 @@ NamedScript void LoadCharDataFromString(CharSaveInfo *Info, char const *String)
     
     if (GetCVar("drpg_debug"))
         Log("\CdDEBUG: \C-CRC for recalled character is %d (%X)", Checksum, Checksum);
-    
+    LogMessage(StrParam("Version:%d",Version),LOG_DEBUG);
     Info->Version = Version;
     
     if (Checksum != Info->Checksum)
     {
         Info->Version = -3;
+        //LoadedData = true;
         return;
     }
+    //LoadedData = true;
 }
 
 NamedScript char const *MakeSaveString(CharSaveInfo *Info)
 {
-    char *SaveString = malloc(65536);
+    char *SaveString = calloc(25000, sizeof(char));
     unsigned int pos = 0;
     
     // Version
@@ -1122,8 +1152,8 @@ NamedScript char const *MakeSaveString(CharSaveInfo *Info)
     pos += 8;
     
     SaveString[pos] = '\x00';
-    
-    SaveString = realloc(SaveString, strlen(SaveString) + 1);
+    //length 23498. 105 strings @ 224 chars/str
+    //SaveString = realloc(SaveString, strlen(SaveString) + 1);
     return SaveString;
 }
 
@@ -1146,8 +1176,8 @@ NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
         {
             if (LastCount > 3)
             {
-                LastSize = malloc(48);
-                memset(LastSize, 0, 48);
+                LastSize = calloc(48, sizeof(char));
+                //memset(LastSize, 0, 48);
                 snprintf(LastSize, 48, c"[%X]", LastCount - 1);
                 for (int i = 0; i < strlen(LastSize); i++)
                     OutString[OutPos++] = (char)LastSize[i];
@@ -1171,8 +1201,8 @@ NamedScriptSync void EncodeRLE(char const *InString, char *OutString)
     
     if (LastCount > 1)
     {
-        LastSize = malloc(48);
-        memset(LastSize, 0, 48);
+        LastSize = calloc(48, sizeof(char));
+        //memset(LastSize, 0, 48);
         snprintf(LastSize, 48, c"[%X]", LastCount - 1);
         for (int i = 0; i < strlen(LastSize); i++)
             OutString[OutPos++] = (char)LastSize[i];
@@ -1189,7 +1219,7 @@ NamedScriptSync void DecodeRLE(char const *InString, char *OutString)
     int InLength = strlen(InString);
     
     char LastSeen = '\x00';
-    char *CountString = malloc(8);
+    char *CountString = calloc(8, sizeof(char));
     int CountStringLength = 0;
     int RepeatCount = 0;
     bool InBrackets = false;
@@ -1248,7 +1278,7 @@ char *StringToCharP(str Source)
     int Length;
     Length = StrLen(Source);
 
-    char *Destination = malloc(Length + 1);
+    char *Destination = calloc(Length + 1, sizeof(char));
     Destination[Length] = '\x00';
     
     for (int i = 0; i < Length; i++)
@@ -1331,6 +1361,26 @@ NamedScript unsigned long crc(char const *buf, int len)
     unsigned long i = update_crc(0xFFFFFFFFL, buf, len) ^ 0xFFFFFFFFL;
     crc_table_computed = false;
     return i;
+}
+
+NamedScript Console void TestLocker(int item)
+{
+    int ItemCount = Player.Locker[0][item];
+    int ModsCount = Player.WeaponMods[item].Total;
+    int PowerMods = Player.WeaponMods[item].Power;
+    int BulkMods = Player.WeaponMods[item].Bulk;
+    int AgilityMods = Player.WeaponMods[item].Agility;
+    int TechnicalMods = Player.WeaponMods[item].Technical;
+    int SniperMods = Player.WeaponMods[item].Sniper;
+    int FirestormMods = Player.WeaponMods[item].Firestorm;
+    int NanoMods = Player.WeaponMods[item].Nano;
+    int Artifacts = Player.WeaponMods[item].Artifacts;
+    Log("Item # %i\nName: %S\nTotal Mods: %i\n\
+    Power Mods:   %i  Bulk Mods:      %i\n\
+    Agility Mods: %i  Tech Mods:      %i\n\
+    Sniper Mods:  %i  Firestorm Mods: %i\n\
+    Nano mods:    %i  Artifacts:      %i",
+    ItemCount,ItemData[0][item].Name,ModsCount,PowerMods,BulkMods,AgilityMods,TechnicalMods,SniperMods,FirestormMods,NanoMods,Artifacts);
 }
 
 // ----------------------------------------------------------------------------

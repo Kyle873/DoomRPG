@@ -572,8 +572,9 @@ void CheckStats()
     }
     
     // DRLA Checking
-    if (CheckInventory("RLTacticalBootsToken"))
-        Player.SurvivalBonus += 20.0;
+    if (CompatMode == COMPAT_DRLA)
+        if (CheckInventory("RLTacticalBootsToken"))
+            Player.SurvivalBonus += 20.0;
 }
 
 void CheckStatBonus()
@@ -1077,7 +1078,7 @@ void CheckStatusEffects()
             
             // Build a jibberish string
             int Length = Random(5, 30);
-            char *Nonsense;
+            char *Nonsense = malloc(Length);
             
             // Fill the char array with garbage
             for (int i = 0; i < Length - 1; i++) 
