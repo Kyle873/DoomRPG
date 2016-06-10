@@ -305,7 +305,7 @@ void PayoutReady()
     PrintSpriteFade("PAYPDA", 0, 640 / 2, 480 - 64, 5.0, 5.0);
     
     ActivatorSound("payout/ready", 127);
-    Player.InMenu = false;
+    //Player.InMenu = false;
     Player.PayReady = true;
 }
 
