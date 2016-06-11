@@ -1253,6 +1253,8 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
             Actor = "DRPGGenericMonsterDropper";
     }
     
+    fixed ItemX, ItemY;
+    
     // Find the furthest item from the player to determine some approximate boundaries to work with
     for (int i = 0; ItemTIDs[i] != -1; i++)
     {
@@ -1260,8 +1262,8 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
         
         NumItems = i + 1;
         
-        fixed ItemX = GetActorX(ItemTIDs[i]);
-        fixed ItemY = GetActorY(ItemTIDs[i]);
+        ItemX = GetActorX(ItemTIDs[i]);
+        ItemY = GetActorY(ItemTIDs[i]);
         
         if (LowerX > ItemX) LowerX = ItemX;
         if (UpperX < ItemX) UpperX = ItemX;
@@ -1272,13 +1274,16 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
     if (NumItems < 1) // [KS] If we can't find any possible positions to spawn anything, fuck it.
         return;
     
+    int TID, A;
+    fixed X, Y, Z;
+    
     while (Items < MaxItems)
     {
-        int TID = UniqueTID();
-        fixed X = RandomFixed(LowerX, UpperX);
-        fixed Y = RandomFixed(LowerY, UpperY);
-        fixed Z = 0;
-        int A = 32 * Random(0, 7);
+        TID = UniqueTID();
+        X = RandomFixed(LowerX, UpperX);
+        Y = RandomFixed(LowerY, UpperY);
+        Z = 0;
+        A = 32 * Random(0, 7);
         
         // Try to keep Z near the floor
         SpawnForced("MapSpot", X, Y, 0, TID, 0);

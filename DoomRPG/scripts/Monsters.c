@@ -2114,6 +2114,8 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
     int MonsterListLength;
     int BossesSpawned = 0;
     
+    MonsterInfoPtr TempMonster;
+    
     // Build a list of monsters
     if (DRLA)
         MonsterDataAmount = MAX_DEF_MONSTERS_DRLA;
@@ -2122,7 +2124,6 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
     
     for (int i = 0; i < MonsterDataAmount && MonsterListLength < MAX_TEMP_MONSTERS; i++)
     {
-        MonsterInfoPtr TempMonster;
         if (DRLA)
             TempMonster = &MonsterDataDRLA[i];
         else
@@ -2139,21 +2140,18 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
         return;
     }
     
+    bool Complete, Success;
+    fixed X, Y, Z, SpawnX, SpawnY;
+    int MonsterIndex, TID, SpawnTries, CurrentRadius;
+    
     while (true)
     {
         Delay((Time > 0 ? (35 * Time) : -Time));
         
-        bool Complete = true;
-        fixed X = GetActorX(0);
-        fixed Y = GetActorY(0);
-        fixed Z = GetActorZ(0);
-        int MonsterIndex;
-        fixed SpawnX;
-        fixed SpawnY;
-        int TID;
-        bool Success;
-        int SpawnTries;
-        int CurrentRadius;
+        Complete = true;
+        X = GetActorX(0);
+        Y = GetActorY(0);
+        Z = GetActorZ(0);
         
         // Stop spawning if time is frozen
         while (IsTimeFrozen()) Delay(1);
