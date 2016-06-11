@@ -632,6 +632,14 @@ NamedScript void BuildItemData()
         for (int i=0; i < ItemMax[0]; i++)
         {
             str Name = StrParam("%S", ItemData[0][i].Actor);
+            
+            str Mod = StrParam("%SModLimit", Name);
+            Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
+            if (Success)
+            {
+                ItemData[0][i].CompatMods |= RL_MOD_LIMIT;
+                Thing_Remove(TID);
+            }
             str Mod = StrParam("%SPowerMod", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)

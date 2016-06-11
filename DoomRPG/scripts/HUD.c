@@ -1289,7 +1289,9 @@ NamedScript Type_ENTER void DRLAHUD()
                 str Name = StrParam("%S", ItemPtr->Name);
                 str Color = "";
                 int TotalMax = 0;
-                int Total[2] = { CheckInventory(StrParam("%SModLimit", ItemPtr->Actor)), 0 };
+                int Total[2] = {0, 0};
+                if (ItemPtr->CompatMods & RL_MOD_LIMIT)
+                    Total[0] = CheckInventory(StrParam("%SModLimit", ItemPtr->Actor));
                 int Power[2] = {0, 0};
                 if (ItemPtr->CompatMods & RL_POWER_MOD)
                     Power[0] = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
@@ -1314,7 +1316,7 @@ NamedScript Type_ENTER void DRLAHUD()
                 int DemonArtifacts[2] = {0, 0};
                 if (ItemPtr->CompatMods & RL_DEMON_MOD)
                     DemonArtifacts[0] = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
-                
+                    
                 // Determine total modpacks and the color char to use
                 if (CheckInventory("RLStandardWeaponToken"))
                 {

@@ -364,6 +364,7 @@ typedef enum
     RL_FIREST_MOD = 0x20,
     RL_NANO_MOD = 0x40,
     RL_DEMON_MOD = 0x80,
+    RL_MOD_LIMIT = 0x100,
 } ERLWepModFlags;
 
 // --------------------------------------------------

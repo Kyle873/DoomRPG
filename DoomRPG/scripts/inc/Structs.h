@@ -342,7 +342,7 @@ struct ItemInfo_S
     } Sprite;
     
     // Only used for the Shop Special and specific DRLA checks
-    unsigned char CompatMods;
+    unsigned int CompatMods;
     int Category;
     int Index;
 };
