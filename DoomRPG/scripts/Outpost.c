@@ -1276,14 +1276,6 @@ NamedScript MapSpecial void MissionBBS()
         // Input
         if (Buttons & BT_FORWARD && !(OldButtons & BT_FORWARD))
         {
-            /*ActivatorSound("menu/move", 127);
-            Index -= MAX_MISSIONS / 3;
-            if (Index < 0)
-            {
-                Index = 0;
-                if (Difficulty > 0)
-                    Difficulty--;
-            }*/
             ActivatorSound("menu/move", 127);
             Index -= MAX_MISSIONS / 3;
             if (Index < 0)
@@ -1291,21 +1283,6 @@ NamedScript MapSpecial void MissionBBS()
         };
         if (Buttons & BT_BACK && !(OldButtons & BT_BACK))
         {
-            /*ActivatorSound("menu/move", 127);
-            Index += MAX_MISSIONS / 3;
-            if (Index > MAX_MISSIONS - 1)
-            {
-                Index = 0;
-                if (Difficulty < Player.RankLevel - 1)
-                {
-                    if (Difficulty >= MAX_DIFFICULTIES - 1)
-                        Difficulty = MAX_DIFFICULTIES - 1;
-                    else
-                        Difficulty++;
-                }
-                else
-                    Index = MAX_MISSIONS - 1;
-            }*/
             ActivatorSound("menu/move", 127);
             Index += MAX_MISSIONS / 3;
             if (Index > MAX_MISSIONS - 1)
@@ -1313,14 +1290,6 @@ NamedScript MapSpecial void MissionBBS()
         };
         if (Buttons & BT_MOVELEFT && !(OldButtons & BT_MOVELEFT))
         {
-            /*ActivatorSound("menu/move", 127);
-            Index--;
-            if (Index < 0)
-            {
-                Index = 0;
-                if (Difficulty > 0)
-                    Difficulty--;
-            };*/
             ActivatorSound("menu/move", 127);
             if (Buttons & BT_SPEED)
             {
@@ -1336,11 +1305,9 @@ NamedScript MapSpecial void MissionBBS()
         };
         if (Buttons & BT_MOVERIGHT && !(OldButtons & BT_MOVERIGHT))
         {
-            /*ActivatorSound("menu/move", 127);
-            Index++;
-            if (Index > MAX_MISSIONS - 1)
+            ActivatorSound("menu/move", 127);
+            if (Buttons & BT_SPEED)
             {
-                Index = 0;
                 if (Difficulty < Player.RankLevel - 1)
                 {
                     if (Difficulty >= MAX_DIFFICULTIES - 1)
@@ -1349,15 +1316,7 @@ NamedScript MapSpecial void MissionBBS()
                         Difficulty++;
                 }
                 else
-                    Index = MAX_MISSIONS - 1;
-            }*/
-            ActivatorSound("menu/move", 127);
-            if (Buttons & BT_SPEED)
-            {
-                if (Difficulty >= MAX_DIFFICULTIES - 1)
-                    Difficulty = MAX_DIFFICULTIES - 1;
-                else
-                    Difficulty++;
+                    ActivatorSound("menu/error", 127);
             }
             else
             {
@@ -1373,11 +1332,7 @@ NamedScript MapSpecial void MissionBBS()
             Player.Mission = *Mission;
             CreateMissionAt(Difficulty, Index);
         };
-        /*if (Buttons == BT_SPEED)      //Old shift to exit BBS handling
-        {
-            SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
-            Player.OutpostMenu = 0;
-        }*/
+
         if (Buttons == BT_ATTACK && OldButtons != BT_ATTACK && Player.Mission.Active)
         {
             ActivatorSound("mission/fail", 127);

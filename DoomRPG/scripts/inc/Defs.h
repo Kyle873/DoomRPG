@@ -272,9 +272,11 @@ typedef enum
 #define WINDOW_X        0
 #define WINDOW_Y        0
 
-#define GUI_CURSOR_ID   700
-#define GUI_PANEL_ID    800
-#define GUI_BACK_ID     900
+#define GUI_CURSOR_ID   600
+#define GUI_TOOLTIP_ID  700
+#define GUI_CONTENTS_ID 1000
+#define GUI_PANEL_ID    2000
+#define GUI_BACK_ID     3000
 
 // Control Types
 typedef enum

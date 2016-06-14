@@ -120,8 +120,8 @@ OptionalArgs(1) void PrintSpritePulse(str, int, fixed, fixed, fixed, fixed, fixe
 OptionalArgs(2) void PrintMessage(str, int, fixed);
 void PrintError(str);
 void DrawBattery();
-void DrawShieldInfo(int, fixed, fixed);
-void DrawShieldModel(int, fixed, fixed);
+void DrawShieldInfo(int, fixed, fixed, int);
+void DrawShieldModel(int, fixed, fixed, int);
 void DrawMissionInfo(MissionInfo *, fixed, fixed, bool);
 OptionalArgs(1) void DrawBar(str, int, int, int, bool);
 void DrawProgressBar(str, int);

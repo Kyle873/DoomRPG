@@ -5,10 +5,6 @@
 
 NamedScript Console void ToggleGUI();
 
-NamedScript void CreateGUIMenu();
-NamedScript void CreateTabs();
-NamedScript void CreatePanels();
-
 NamedScript void UpdateGUIMenu();
 NamedScript void UpdateGUICursor();
 NamedScript void UpdateTabs();
@@ -45,8 +41,7 @@ bool InRegion(int, int, int, int);
 GUITooltip *GUICreateTooltip();
 GUIContextMenu *GUICreateContextMenu();
 
-// Panel functions
-NamedScript void CreateOverviewPanel();
-NamedScript void UpdateOverviewPanel(GUIPanel *);
+//Debugging
+NamedScript Console void GUITest(int, int, int, int);
 
 #endif

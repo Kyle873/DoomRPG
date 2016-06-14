@@ -160,7 +160,7 @@ NamedScript Type_ENTER void OverviewHUD()
     // If we're on the title map, terminate
     if (InTitle) return;
     
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || Player.InMenu || Player.InShop) { Delay(1); goto Start;}
     
     Credits.Value = CheckInventory("DRPGCredits");
     Modules.Value = CheckInventory("DRPGModule");
@@ -1171,433 +1171,444 @@ NamedScript Type_ENTER void DRLAHUD()
     
     if (CompatMode != COMPAT_DRLA) return;
     
+    fixed Offset, X, Y;
+    bool IsTechnician;
+    int Weapons, Armors, ModPacks, Skulls, Devices, TotalMax;
+    int Total[2] = {0, 0};
+    int Power[2] = {0, 0};
+    int Bulk[2] = {0, 0};
+    int Agility[2] = {0, 0};
+    int Tech[2] = {0, 0};
+    int Sniper[2] = {0, 0};
+    int Firestorm[2] = {0, 0};
+    int Nano[2] = {0, 0};
+    int DemonArtifacts[2] = {0, 0};
+    
     Start:
     
     // If we're on the title map, terminate
     if (InTitle) return;
     
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || Player.InMenu || Player.InShop) { Delay(1); goto Start;}
     
-    fixed Offset;
+    Offset;
     
-    while (true)
+    X = GetActivatorCVar("drpg_drla_x");
+    Y = GetActivatorCVar("drpg_drla_y");
+    IsTechnician = (PlayerClass(PlayerNumber()) == 2);
+    Weapons = CheckInventory("RLWeaponLimit");
+    Armors = CheckInventory("RLArmorInInventory");
+    ModPacks = (IsTechnician ? CheckInventory("RLScavengerModLimit") : CheckInventory("RLModLimit"));
+    Skulls = CheckInventory("RLSkullLimit");
+    Devices = CheckInventory("RLPhaseDeviceLimit");
+    
+    SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
+     
+    // Counters
+    if (!(GetCVar("drpg_debug_drla") & DDM_NOLIMITS))
     {
-        fixed X = GetActivatorCVar("drpg_drla_x");
-        fixed Y = GetActivatorCVar("drpg_drla_y");
-        bool IsTechnician = (PlayerClass(PlayerNumber()) == 2);
-        int Weapons = CheckInventory("RLWeaponLimit");
-        int Armors = CheckInventory("RLArmorInInventory");
-        int ModPacks = (IsTechnician ? CheckInventory("RLScavengerModLimit") : CheckInventory("RLModLimit"));
-        int Skulls = CheckInventory("RLSkullLimit");
-        int Devices = CheckInventory("RLPhaseDeviceLimit");
+        fixed XOff = X - 54.0; // +27.0 offset
         
-        SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
-         
-        // Counters
-        if (!(GetCVar("drpg_debug_drla") & DDM_NOLIMITS))
+        if (Devices > 0)
         {
-            fixed XOff = X - 54.0; // +27.0 offset
-            
-            if (Devices > 0)
+            SetFont("BIGFONT");
+            if (Devices >= DRLA_DEVICE_MAX)
             {
-                SetFont("BIGFONT");
-                if (Devices >= DRLA_DEVICE_MAX)
-                {
-                    HudMessage("%d", Devices);
-                    EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-                }
-                else
-                {
-                    HudMessage("%d", Devices);
-                    EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
-                }
-                PrintSprite("PHS1I0", 0, XOff - 7.0, Y, 0.05);
-                XOff -= 27.0;
+                HudMessage("%d", Devices);
+                EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
             }
-            if (Skulls > 0)
+            else
             {
-                SetFont("BIGFONT");
-                if (Skulls >= DRLA_SKULL_MAX)
-                {
-                    HudMessage("%d", Skulls);
-                    EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-                }
-                else
-                {
-                    HudMessage("%d", Skulls);
-                    EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
-                }
-                PrintSprite("ISKLC0", 0, XOff + 11.0, Y + 16.0, 0.05);
-                XOff -= 27.0;
+                HudMessage("%d", Devices);
+                EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
             }
-            if (ModPacks > 0)
-            {
-                SetFont("BIGFONT");
-                if ((!IsTechnician && ModPacks >= 4) || (IsTechnician && ModPacks >= 8))
-                {
-                    HudMessage("%d", ModPacks);
-                    EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-                }
-                else
-                {
-                    HudMessage("%d", ModPacks);
-                    EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
-                }
-                PrintSprite("GMODICON", 0, XOff + 1.0, Y, 0.05);
-                XOff -= 27.0;
-            }
-            if (Armors > 0)
-            {
-                SetFont("BIGFONT");
-                if (Armors >= DRLA_ARMOR_MAX)
-                {
-                    HudMessage("%d", Armors);
-                    EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-                }
-                else
-                {
-                    HudMessage("%d", Armors);
-                    EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
-                }
-                PrintSprite("HARMOR", 0, XOff + 1.0, Y + 4.0, 0.05);
-                XOff -= 27.0;
-            }
-            if (Weapons > 0)
-            {
-                SetFont("BIGFONT");
-                if (Weapons >= 6)
-                {
-                    HudMessage("%d", Weapons);
-                    EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-                }
-                else
-                {
-                    HudMessage("%d", Weapons);
-                    EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
-                }
-                PrintSprite("PISGX0", 0, XOff + 11.0, Y + 12.0, 0.05);
-            }
+            PrintSprite("PHS1I0", 0, XOff - 7.0, Y, 0.05);
+            XOff -= 27.0;
         }
-        
-        for (int i = 0; i < ItemMax[0]; i++)
+        if (Skulls > 0)
         {
-            ItemInfoPtr ItemPtr = &ItemData[0][i];
-            
-            if (CheckWeapon(ItemPtr->Actor))
+            SetFont("BIGFONT");
+            if (Skulls >= DRLA_SKULL_MAX)
             {
-                bool Duel = false;
-                str Name = StrParam("%S", ItemPtr->Name);
-                str Color = "";
-                int TotalMax = 0;
-                int Total[2] = {0, 0};
-                if (ItemPtr->CompatMods & RL_MOD_LIMIT)
-                    Total[0] = CheckInventory(StrParam("%SModLimit", ItemPtr->Actor));
-                int Power[2] = {0, 0};
-                if (ItemPtr->CompatMods & RL_POWER_MOD)
-                    Power[0] = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
-                int Bulk[2] = {0, 0};
-                if (ItemPtr->CompatMods & RL_BULK_MOD)
-                    Bulk[0] = CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor));
-                int Agility[2] = {0, 0};
-                if (ItemPtr->CompatMods & RL_AGILITY_MOD)
-                    Agility[0] = CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor));
-                int Tech[2] = {0, 0};
-                if (ItemPtr->CompatMods & RL_TECH_MOD)
-                    Tech[0] = CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor));
-                int Sniper[2] = {0, 0};
-                if (ItemPtr->CompatMods & RL_SNIPER_MOD)
-                    Sniper[0] = CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
-                int Firestorm[2] = {0, 0};
-                if (ItemPtr->CompatMods & RL_FIREST_MOD)
-                    Firestorm[0] = CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
-                int Nano[2] = {0, 0};
-                if (ItemPtr->CompatMods & RL_NANO_MOD)
-                    Nano[0] = CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
-                int DemonArtifacts[2] = {0, 0};
-                if (ItemPtr->CompatMods & RL_DEMON_MOD)
-                    DemonArtifacts[0] = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
-                    
-                // Determine total modpacks and the color char to use
-                if (CheckInventory("RLStandardWeaponToken"))
-                {
-                    Color = "\Cj";
-                    TotalMax = 4;
-                }
-                else if (CheckInventory("RLExoticWeaponToken"))
-                {
-                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[0]));
-                    Color = "\Ct";
-                    TotalMax = 4;
-                }
-                else if (CheckInventory("RLSuperiorWeaponToken"))
-                {
-                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[1]));
-                    Color = "\Ci";
-                    TotalMax = 2;
-                }
-                else if (CheckInventory("RLAssembledWeaponToken"))
-                {
-                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[2]));
-                    Color = "\Cv";
-                    TotalMax = 2;
-                }
-                else if (CheckInventory("RLUniqueWeaponToken"))
-                {
-                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[3]));
-                    Color = "\Cd";
-                    TotalMax = 1;
-                }
-                else if (CheckInventory("RLDemonicWeaponToken"))
-                {
-                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[4]));
-                    Color = "\Cg";
-                    TotalMax = 1;
-                }
-                else if (CheckInventory("RLLegendaryWeaponToken"))
-                {
-                    Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[5]));
-                    Color = "\Cf";
-                    TotalMax = 1;
-                }
-                else break; // Kinda lolhax
+                HudMessage("%d", Skulls);
+                EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+            }
+            else
+            {
+                HudMessage("%d", Skulls);
+                EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
+            }
+            PrintSprite("ISKLC0", 0, XOff + 11.0, Y + 16.0, 0.05);
+            XOff -= 27.0;
+        }
+        if (ModPacks > 0)
+        {
+            SetFont("BIGFONT");
+            if ((!IsTechnician && ModPacks >= 4) || (IsTechnician && ModPacks >= 8))
+            {
+                HudMessage("%d", ModPacks);
+                EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+            }
+            else
+            {
+                HudMessage("%d", ModPacks);
+                EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
+            }
+            PrintSprite("GMODICON", 0, XOff + 1.0, Y, 0.05);
+            XOff -= 27.0;
+        }
+        if (Armors > 0)
+        {
+            SetFont("BIGFONT");
+            if (Armors >= DRLA_ARMOR_MAX)
+            {
+                HudMessage("%d", Armors);
+                EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+            }
+            else
+            {
+                HudMessage("%d", Armors);
+                EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
+            }
+            PrintSprite("HARMOR", 0, XOff + 1.0, Y + 4.0, 0.05);
+            XOff -= 27.0;
+        }
+        if (Weapons > 0)
+        {
+            SetFont("BIGFONT");
+            if (Weapons >= 6)
+            {
+                HudMessage("%d", Weapons);
+                EndHudMessage(HUDMSG_ALPHA, 0, "Gold", XOff, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+            }
+            else
+            {
+                HudMessage("%d", Weapons);
+                EndHudMessage(HUDMSG_PLAIN, 0, "White", XOff, Y + 12.0, 0.05);
+            }
+            PrintSprite("PISGX0", 0, XOff + 11.0, Y + 12.0, 0.05);
+        }
+    }
+    
+    for (int i = 0; i < ItemMax[0]; i++)
+    {
+        ItemInfoPtr ItemPtr = &ItemData[0][i];
+        
+        if (CheckWeapon(ItemPtr->Actor))
+        {
+            bool Duel = false;
+            str Name = StrParam("%S", ItemPtr->Name);
+            str Color = "";
+            TotalMax = 0;
+            Total[0] = 0, Total[1] = 0;
+            if (ItemPtr->CompatMods & RL_MOD_LIMIT)
+                Total[0] = CheckInventory(StrParam("%SModLimit", ItemPtr->Actor));
+            Power[0] = 0, Power[1] = 0;
+            if (ItemPtr->CompatMods & RL_POWER_MOD)
+                Power[0] = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
+            Bulk[0] = 0, Bulk[1] = 0;
+            if (ItemPtr->CompatMods & RL_BULK_MOD)
+                Bulk[0] = CheckInventory(StrParam("%SBulkMod", ItemPtr->Actor));
+            Agility[0] = 0, Agility[1] = 0;
+            if (ItemPtr->CompatMods & RL_AGILITY_MOD)
+                Agility[0] = CheckInventory(StrParam("%SAgilityMod", ItemPtr->Actor));
+            Tech[0] = 0, Tech[1] = 0;
+            if (ItemPtr->CompatMods & RL_TECH_MOD)
+                Tech[0] = CheckInventory(StrParam("%STechnicalMod", ItemPtr->Actor));
+            Sniper[0] = 0, Sniper[1] = 0;
+            if (ItemPtr->CompatMods & RL_SNIPER_MOD)
+                Sniper[0] = CheckInventory(StrParam("%SSniperMod", ItemPtr->Actor));
+            Firestorm[0] = 0, Firestorm[1] = 0;
+            if (ItemPtr->CompatMods & RL_FIREST_MOD)
+                Firestorm[0] = CheckInventory(StrParam("%SFirestormMod", ItemPtr->Actor));
+            Nano[0] = 0, Nano[1] = 0;
+            if (ItemPtr->CompatMods & RL_NANO_MOD)
+                Nano[0] = CheckInventory(StrParam("%SNanoMod", ItemPtr->Actor));
+            DemonArtifacts[0] = 0, DemonArtifacts[1] = 0;
+            if (ItemPtr->CompatMods & RL_DEMON_MOD)
+                DemonArtifacts[0] = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
                 
-                // Synthfire/Duel-wielded weapons
-                if (CheckWeapon("RLAntiFreakJackal") && CheckInventory("RLAntiFreakJackalDemonArtifacts")) // Jackal/Casull
+            // Determine total modpacks and the color char to use
+            if (CheckInventory("RLStandardWeaponToken"))
+            {
+                Color = "\Cj";
+                TotalMax = 4;
+            }
+            else if (CheckInventory("RLExoticWeaponToken"))
+            {
+                Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[0]));
+                Color = "\Ct";
+                TotalMax = 4;
+            }
+            else if (CheckInventory("RLSuperiorWeaponToken"))
+            {
+                Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[1]));
+                Color = "\Ci";
+                TotalMax = 2;
+            }
+            else if (CheckInventory("RLAssembledWeaponToken"))
+            {
+                Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[2]));
+                Color = "\Cv";
+                TotalMax = 2;
+            }
+            else if (CheckInventory("RLUniqueWeaponToken"))
+            {
+                Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[3]));
+                Color = "\Cd";
+                TotalMax = 1;
+            }
+            else if (CheckInventory("RLDemonicWeaponToken"))
+            {
+                Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[4]));
+                Color = "\Cg";
+                TotalMax = 1;
+            }
+            else if (CheckInventory("RLLegendaryWeaponToken"))
+            {
+                Name = StrLeft(Name, StrLen(Name) - StrLen(RaritySuffix[5]));
+                Color = "\Cf";
+                TotalMax = 1;
+            }
+            else break; // Kinda lolhax
+            
+            // Synthfire/Duel-wielded weapons
+            if (CheckWeapon("RLAntiFreakJackal") && CheckInventory("RLAntiFreakJackalDemonArtifacts")) // Jackal/Casull
+            {
+                Duel = true;
+                Name = "\CdAnti-Freak Jackal & Hellsing ARMS Casull";
+                Total[1] = CheckInventory("RLHellsingARMSCasullModLimit");
+                Power[1] = CheckInventory("RLHellsingARMSCasullPowerMod");
+                Bulk[1] = CheckInventory("RLHellsingARMSCasullBulkMod");
+                Agility[1] = CheckInventory("RLHellsingARMSCasullAgilityMod");
+                Tech[1] = CheckInventory("RLHellsingARMSCasullTechnicalMod");
+                Sniper[1] = CheckInventory("RLHellsingARMSCasullSniperMod");
+                Firestorm[1] = CheckInventory("RLHellsingARMSCasullFirestormMod");
+                Nano[1] = CheckInventory("RLHellsingARMSCasullNanoMod");
+            }
+            else if (CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonShotgunsDemonArtifacts")) // Twin WSTE-M5's
+            {
+                Duel = true;
+                Name = "\CdTwin WSTE-M5 Shotguns";
+            }
+            else if (CheckWeapon("RLUzi") && CheckInventory("RLUziDemonArtifacts")) // Duel Uzis
+                Duel = true;
+            
+            // Name
+            SetFont("RLFONT");
+            HudMessage("%S%S", Color, Name);
+            EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y - 20.0, 0.05);
+            
+            // Duke 2 Rifle special icon fancyness
+            if (CheckWeapon("RLDuke2Rifle"))
+            {
+                str const DukeModIcons[5] =
                 {
-                    Duel = true;
-                    Name = "\CdAnti-Freak Jackal & Hellsing ARMS Casull";
-                    Total[1] = CheckInventory("RLHellsingARMSCasullModLimit");
-                    Power[1] = CheckInventory("RLHellsingARMSCasullPowerMod");
-                    Bulk[1] = CheckInventory("RLHellsingARMSCasullBulkMod");
-                    Agility[1] = CheckInventory("RLHellsingARMSCasullAgilityMod");
-                    Tech[1] = CheckInventory("RLHellsingARMSCasullTechnicalMod");
-                    Sniper[1] = CheckInventory("RLHellsingARMSCasullSniperMod");
-                    Firestorm[1] = CheckInventory("RLHellsingARMSCasullFirestormMod");
-                    Nano[1] = CheckInventory("RLHellsingARMSCasullNanoMod");
-                }
-                else if (CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonShotgunsDemonArtifacts")) // Twin WSTE-M5's
-                {
-                    Duel = true;
-                    Name = "\CdTwin WSTE-M5 Shotguns";
-                }
-                else if (CheckWeapon("RLUzi") && CheckInventory("RLUziDemonArtifacts")) // Duel Uzis
-                    Duel = true;
+                    "DN2PAICO",
+                    "DN2PBICO",
+                    "DN2PCICO",
+                    "DN2PDICO",
+                    "DN2PEICO"
+                };
                 
-                // Name
-                SetFont("RLFONT");
-                HudMessage("%S%S", Color, Name);
-                EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y - 20.0, 0.05);
-                
-                // Duke 2 Rifle special icon fancyness
-                if (CheckWeapon("RLDuke2Rifle"))
+                int Mods[5] =
                 {
-                    str const DukeModIcons[5] =
+                    1, // You always have the default shot
+                    Sniper[0],
+                    Firestorm[0],
+                    Nano[0],
+                    (GetActorPowerupTics(0, "PowerRLDuke2RifleRapidFire") > 0)
+                };
+                
+                int Count = 0;
+                int ModAdd = 0;
+                int Radius = 24;
+                
+                // Count the mods
+                for (int i = 0; i < 5; i++)
+                    if (Mods[i])
+                        Count++;
+                
+                // Draw the mods
+                for (int i = 0; i < 5; i++)
+                    if (Mods[i])
                     {
-                        "DN2PAICO",
-                        "DN2PBICO",
-                        "DN2PCICO",
-                        "DN2PDICO",
-                        "DN2PEICO"
-                    };
-                    
-                    int Mods[5] =
-                    {
-                        1, // You always have the default shot
-                        Sniper[0],
-                        Firestorm[0],
-                        Nano[0],
-                        (GetActorPowerupTics(0, "PowerRLDuke2RifleRapidFire") > 0)
-                    };
-                    
-                    int Count = 0;
-                    int ModAdd = 0;
-                    int Radius = 24;
-                    
-                    // Count the mods
-                    for (int i = 0; i < 5; i++)
-                        if (Mods[i])
-                            Count++;
+                        fixed Angle = -0.25 + ((1.0 / Count) * ModAdd++) + Offset;
+                        fixed XOff = X + (Radius * Cos(Angle));
+                        fixed YOff = Y + (Radius * Sin(Angle));
+                        PrintSprite(DukeModIcons[i], 0, (int)XOff + ItemPtr->Sprite.XOff - 12.0, (int)YOff + ItemPtr->Sprite.YOff + 8.0, 0.05);
+                    }
+                
+                // Offset
+                Offset += 0.005;
+            }
+            else // Everything else
+            {
+                // Demonic Weapons special artifact icons and animation
+                if (CheckInventory("RLDemonicWeaponToken"))
+                {
+                    int Count = DemonArtifacts[0] + DemonArtifacts[1];
+                    int Add = 0;
+                    int Radius = 24 + (int)(Sin((fixed)Offset / 64.0) * 4.0);
                     
                     // Draw the mods
-                    for (int i = 0; i < 5; i++)
-                        if (Mods[i])
-                        {
-                            fixed Angle = -0.25 + ((1.0 / Count) * ModAdd++) + Offset;
-                            fixed XOff = X + (Radius * Cos(Angle));
-                            fixed YOff = Y + (Radius * Sin(Angle));
-                            PrintSprite(DukeModIcons[i], 0, (int)XOff + ItemPtr->Sprite.XOff - 12.0, (int)YOff + ItemPtr->Sprite.YOff + 8.0, 0.05);
-                        }
+                    for (int i = 0; i < Count; i++)
+                    {
+                        fixed Angle = -0.25 + ((1.0 / Count) * Add++) + Offset;
+                        fixed XOff = X + (Radius * Cos(Angle));
+                        fixed YOff = Y + (Radius * Sin(Angle));
+                        PrintSpritePulse("DMNAA0", 0, (int)XOff + 16.0, (int)YOff + 44.0, 0.5, 256.0, 0.25);
+                    }
                     
                     // Offset
                     Offset += 0.005;
                 }
-                else // Everything else
-                {
-                    // Demonic Weapons special artifact icons and animation
-                    if (CheckInventory("RLDemonicWeaponToken"))
-                    {
-                        int Count = DemonArtifacts[0] + DemonArtifacts[1];
-                        int Add = 0;
-                        int Radius = 24 + (int)(Sin((fixed)Offset / 64.0) * 4.0);
-                        
-                        // Draw the mods
-                        for (int i = 0; i < Count; i++)
-                        {
-                            fixed Angle = -0.25 + ((1.0 / Count) * Add++) + Offset;
-                            fixed XOff = X + (Radius * Cos(Angle));
-                            fixed YOff = Y + (Radius * Sin(Angle));
-                            PrintSpritePulse("DMNAA0", 0, (int)XOff + 16.0, (int)YOff + 44.0, 0.5, 256.0, 0.25);
-                        }
-                        
-                        // Offset
-                        Offset += 0.005;
-                    }
-                    
-                    // Mod Packs
-                    SetFont("SMALLFONT");
-                    /* TODO: Turn this into a loop
-                     * Maybe I'll bring these back if I can come up with a decent way to get the actual total mods the weapon can ahve
-                       otherwise right now it's just too inaccurate to be useful
-                    if (Total[0] > 0 && Total[0] >= TotalMax)
-                    {
-                        HudMessage("%d", Total[0]);
-                        EndHudMessage(HUDMSG_ALPHA, 0, "Gold", X - 50.0, Y, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-                    }
-                    else if (Total[0] > 0)
-                    {
-                        HudMessage("%d", Total[0]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "White", X - 50.0, Y, 0.05);
-                    }
-                    if (Total[1] > 0 && Total[0] >= TotalMax)
-                    {
-                        HudMessage("%d", Total[1]);
-                        EndHudMessage(HUDMSG_ALPHA, 0, "Gold", X - 50.0, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
-                    }
-                    else if (Total[1] > 0)
-                    {
-                        HudMessage("%d", Total[1]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "White", X - 50.0, Y + 12.0, 0.05);
-                    }
-                    */
-                    if (Power[0] > 0)
-                    {
-                        HudMessage("%d", Power[0]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Red", X - 30.0, Y + 20.0, 0.05);
-                    }
-                    if (Bulk[0] > 0)
-                    {
-                        HudMessage("%d", Bulk[0]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Blue", X - 20.0, Y + 20.0, 0.05);
-                    }
-                    if (Agility[0] > 0)
-                    {
-                        HudMessage("%d", Agility[0]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Green", X - 10.0, Y + 20.0, 0.05);
-                    }
-                    if (Tech[0] > 0)
-                    {
-                        HudMessage("%d", Tech[0]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", X, Y + 20.0, 0.05);
-                    }
-                    if (Sniper[0] > 0)
-                    {
-                        HudMessage("%d", Sniper[0]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Purple", X + 10.0, Y + 20.0, 0.05);
-                    }
-                    if (Firestorm[0] > 0)
-                    {
-                        HudMessage("%d", Firestorm[0]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Orange", X + 20.0, Y + 20.0, 0.05);
-                    }
-                    if (Nano[0] > 0)
-                    {
-                        HudMessage("%d", Nano[0]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 30.0, Y + 20.0, 0.05);
-                    }
-                    if (DemonArtifacts[0] > 0)
-                    {
-                        HudMessage("%d", DemonArtifacts[0]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "DarkRed", X + 40.0, Y + 20.0, 0.05);
-                    }
-                    if (Power[1] > 0)
-                    {
-                        HudMessage("%d", Power[1]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Red", X - 30.0, Y + 32.0, 0.05);
-                    }
-                    if (Bulk[1] > 0)
-                    {
-                        HudMessage("%d", Bulk[1]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Blue", X - 20.0, Y + 32.0, 0.05);
-                    }
-                    if (Agility[1] > 0)
-                    {
-                        HudMessage("%d", Agility[1]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Green", X - 10.0, Y + 32.0, 0.05);
-                    }
-                    if (Tech[1] > 0)
-                    {
-                        HudMessage("%d", Tech[1]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", X, Y + 32.0, 0.05);
-                    }
-                    if (Sniper[1] > 0)
-                    {
-                        HudMessage("%d", Sniper[1]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Purple", X + 10.0, Y + 32.0, 0.05);
-                    }
-                    if (Firestorm[1] > 0)
-                    {
-                        HudMessage("%d", Firestorm[1]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "Orange", X + 20.0, Y + 32.0, 0.05);
-                    }
-                    if (Nano[1] > 0)
-                    {
-                        HudMessage("%d", Nano[1]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 30.0, Y + 32.0, 0.05);
-                    }
-                    if (DemonArtifacts[1] > 0)
-                    {
-                        HudMessage("%d", DemonArtifacts[1]);
-                        EndHudMessage(HUDMSG_PLAIN, 0, "DarkRed", X + 40.0, Y + 32.0, 0.05);
-                    }
-                }
                 
-                // Drop Icon
-                if (CheckInventory("RLWeaponDrop") || CheckInventory("RLScavengerDrop"))
-                    PrintSpritePulse("DROPICON", 0, X - 30.0, Y + 12.0, 0.75, 32.0, 0.25);
-                
-                // Icon
-                if (Duel) // Duel-wielding
+                // Mod Packs
+                SetFont("SMALLFONT");
+                /* TODO: Turn this into a loop
+                 * Maybe I'll bring these back if I can come up with a decent way to get the actual total mods the weapon can ahve
+                   otherwise right now it's just too inaccurate to be useful
+                if (Total[0] > 0 && Total[0] >= TotalMax)
                 {
-                    if (CheckWeapon("RLAntiFreakJackal") && CheckInventory("RLAntiFreakJackalDemonArtifacts")) // Jackal/Casull
-                    {
-                        ItemInfoPtr JackelItem = &ItemData[0][42]; // Should probably come up with a better way to reference these?
-                        ItemInfoPtr CasullItem = &ItemData[0][43];
-                        
-                        PrintSprite(JackelItem->Sprite.Name, 0, X + JackelItem->Sprite.XOff, Y + JackelItem->Sprite.YOff + (int)(Sin((fixed)Timer() / 128.0) * 4.0), 0.05);
-                        PrintSprite(CasullItem->Sprite.Name, 0, X + CasullItem->Sprite.XOff + 32.0, Y + CasullItem->Sprite.YOff + (int)(Cos((fixed)Timer() / 128.0) * 4.0), 0.05);
-                    }
-                    else if (CheckWeapon("RLUzi") && CheckInventory("RLUziDemonArtifacts") ||
-                             CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonShotgunsDemonArtifacts")) // Everything else that is just duel wielding
-                    {
-                        PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff + (int)(Sin((fixed)Timer() / 128.0) * 4.0), 0.05);
-                        PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff + 32.0, Y + ItemPtr->Sprite.YOff + (int)(Cos((fixed)Timer() / 128.0) * 4.0), 0.05);
-                    }
+                    HudMessage("%d", Total[0]);
+                    EndHudMessage(HUDMSG_ALPHA, 0, "Gold", X - 50.0, Y, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
                 }
-                else
+                else if (Total[0] > 0)
                 {
-                    if (CheckInventory("RLUsePowerMod") || CheckInventory("RLUseBulkMod") ||
-                        CheckInventory("RLUseAgilityMod") || CheckInventory("RLUseTechnicalMod") ||
-                        CheckInventory("RLUseFirestormMod") || CheckInventory("RLUseSniperMod") ||
-                        CheckInventory("RLUseNanoMod") || CheckInventory("RLUseDemonArtifact"))
-                        PrintSpritePulse(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff, 0.75, 32.0, 0.25);
-                    else
-                        PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff, 0.05);
+                    HudMessage("%d", Total[0]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "White", X - 50.0, Y, 0.05);
                 }
-                
-                break;
+                if (Total[1] > 0 && Total[0] >= TotalMax)
+                {
+                    HudMessage("%d", Total[1]);
+                    EndHudMessage(HUDMSG_ALPHA, 0, "Gold", X - 50.0, Y + 12.0, 0.05, 0.75 + (Sin((fixed)Timer() / 32.0) * 0.25));
+                }
+                else if (Total[1] > 0)
+                {
+                    HudMessage("%d", Total[1]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "White", X - 50.0, Y + 12.0, 0.05);
+                }
+                */
+                if (Power[0] > 0)
+                {
+                    HudMessage("%d", Power[0]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Red", X - 30.0, Y + 20.0, 0.05);
+                }
+                if (Bulk[0] > 0)
+                {
+                    HudMessage("%d", Bulk[0]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Blue", X - 20.0, Y + 20.0, 0.05);
+                }
+                if (Agility[0] > 0)
+                {
+                    HudMessage("%d", Agility[0]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Green", X - 10.0, Y + 20.0, 0.05);
+                }
+                if (Tech[0] > 0)
+                {
+                    HudMessage("%d", Tech[0]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", X, Y + 20.0, 0.05);
+                }
+                if (Sniper[0] > 0)
+                {
+                    HudMessage("%d", Sniper[0]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Purple", X + 10.0, Y + 20.0, 0.05);
+                }
+                if (Firestorm[0] > 0)
+                {
+                    HudMessage("%d", Firestorm[0]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Orange", X + 20.0, Y + 20.0, 0.05);
+                }
+                if (Nano[0] > 0)
+                {
+                    HudMessage("%d", Nano[0]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 30.0, Y + 20.0, 0.05);
+                }
+                if (DemonArtifacts[0] > 0)
+                {
+                    HudMessage("%d", DemonArtifacts[0]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "DarkRed", X + 40.0, Y + 20.0, 0.05);
+                }
+                if (Power[1] > 0)
+                {
+                    HudMessage("%d", Power[1]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Red", X - 30.0, Y + 32.0, 0.05);
+                }
+                if (Bulk[1] > 0)
+                {
+                    HudMessage("%d", Bulk[1]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Blue", X - 20.0, Y + 32.0, 0.05);
+                }
+                if (Agility[1] > 0)
+                {
+                    HudMessage("%d", Agility[1]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Green", X - 10.0, Y + 32.0, 0.05);
+                }
+                if (Tech[1] > 0)
+                {
+                    HudMessage("%d", Tech[1]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", X, Y + 32.0, 0.05);
+                }
+                if (Sniper[1] > 0)
+                {
+                    HudMessage("%d", Sniper[1]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Purple", X + 10.0, Y + 32.0, 0.05);
+                }
+                if (Firestorm[1] > 0)
+                {
+                    HudMessage("%d", Firestorm[1]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "Orange", X + 20.0, Y + 32.0, 0.05);
+                }
+                if (Nano[1] > 0)
+                {
+                    HudMessage("%d", Nano[1]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 30.0, Y + 32.0, 0.05);
+                }
+                if (DemonArtifacts[1] > 0)
+                {
+                    HudMessage("%d", DemonArtifacts[1]);
+                    EndHudMessage(HUDMSG_PLAIN, 0, "DarkRed", X + 40.0, Y + 32.0, 0.05);
+                }
             }
+            
+            // Drop Icon
+            if (CheckInventory("RLWeaponDrop") || CheckInventory("RLScavengerDrop"))
+                PrintSpritePulse("DROPICON", 0, X - 30.0, Y + 12.0, 0.75, 32.0, 0.25);
+            
+            // Icon
+            if (Duel) // Duel-wielding
+            {
+                if (CheckWeapon("RLAntiFreakJackal") && CheckInventory("RLAntiFreakJackalDemonArtifacts")) // Jackal/Casull
+                {
+                    ItemInfoPtr JackelItem = &ItemData[0][42]; // Should probably come up with a better way to reference these?
+                    ItemInfoPtr CasullItem = &ItemData[0][43];
+                    
+                    PrintSprite(JackelItem->Sprite.Name, 0, X + JackelItem->Sprite.XOff, Y + JackelItem->Sprite.YOff + (int)(Sin((fixed)Timer() / 128.0) * 4.0), 0.05);
+                    PrintSprite(CasullItem->Sprite.Name, 0, X + CasullItem->Sprite.XOff + 32.0, Y + CasullItem->Sprite.YOff + (int)(Cos((fixed)Timer() / 128.0) * 4.0), 0.05);
+                }
+                else if (CheckWeapon("RLUzi") && CheckInventory("RLUziDemonArtifacts") ||
+                         CheckWeapon("RLMarathonShotguns") && CheckInventory("RLMarathonShotgunsDemonArtifacts")) // Everything else that is just duel wielding
+                {
+                    PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff + (int)(Sin((fixed)Timer() / 128.0) * 4.0), 0.05);
+                    PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff + 32.0, Y + ItemPtr->Sprite.YOff + (int)(Cos((fixed)Timer() / 128.0) * 4.0), 0.05);
+                }
+            }
+            else
+            {
+                if (CheckInventory("RLUsePowerMod") || CheckInventory("RLUseBulkMod") ||
+                    CheckInventory("RLUseAgilityMod") || CheckInventory("RLUseTechnicalMod") ||
+                    CheckInventory("RLUseFirestormMod") || CheckInventory("RLUseSniperMod") ||
+                    CheckInventory("RLUseNanoMod") || CheckInventory("RLUseDemonArtifact"))
+                    PrintSpritePulse(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff, 0.75, 32.0, 0.25);
+                else
+                    PrintSprite(ItemPtr->Sprite.Name, 0, X + ItemPtr->Sprite.XOff, Y + ItemPtr->Sprite.YOff, 0.05);
+            }
+            
+            break;
         }
-        
-        Delay(1);
     }
+    
+    Delay(1);
+    goto Start;
 }

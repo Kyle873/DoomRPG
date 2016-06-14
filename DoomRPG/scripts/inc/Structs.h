@@ -181,6 +181,7 @@ struct GUIControl_S
     int Y;
     int Width;
     int Height;
+    int id;
     bool Visible;
 
     struct GUITooltip_S *Tooltip;

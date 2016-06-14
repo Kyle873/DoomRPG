@@ -3,6 +3,7 @@
 #include "Arena.h"
 #include "Augs.h"
 #include "GUI.h"
+#include "GUIMenu.h"
 #include "HealthBars.h"
 #include "HUD.h"
 #include "ItemData.h"

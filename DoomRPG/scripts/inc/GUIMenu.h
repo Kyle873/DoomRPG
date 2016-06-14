@@ -4,13 +4,12 @@
 #include "Defs.h"
 
 // Menu Creation
-void CreateMenus();
+NamedScript void CreateGUIMenu();
+NamedScript void CreateTabs();
+NamedScript void CreatePanels();
 
-// Menu Updating
-void MenuUpdate();
-NamedScript void UpdateMainMenu();
-NamedScript void UpdateStatsMenu();
-NamedScript void UpdateAugsMenu();
-NamedScript void UpdateSkillsMenu();
+// Panel functions
+NamedScript void CreateOverviewPanel();
+NamedScript void UpdateOverviewPanel(GUIPanel *);
 
 #endif

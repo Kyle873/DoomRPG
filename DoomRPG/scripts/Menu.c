@@ -289,7 +289,7 @@ void DrawMainMenu()
         SetHudClipRect(0, 0, 0, 0);
         
         // Shield
-        DrawShieldInfo(-1, 173, 232);
+        DrawShieldInfo(-1, 173, 232, 0);
         
         // Current Stim
         if (Player.Stim.Size > 0)
@@ -954,7 +954,7 @@ void DrawStatsMenu()
             DrawToxicityBar(276.0, 250.0, true);
         
         // Shield
-        DrawShieldInfo(Player.MenuIndex, 232, 281);
+        DrawShieldInfo(Player.MenuIndex, 232, 281, 0);
         
         // Health/Armor
         int Health = PlayerPtr->ActualHealth;
@@ -1514,7 +1514,7 @@ void DrawShieldMenu()
     }
     
     // Shield Stats/Model
-    DrawShieldInfo(-1, 32, 272);
+    DrawShieldInfo(-1, 32, 272, 0);
     
     // Component Description
     SetFont("SMALLFONT");
