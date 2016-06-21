@@ -8,8 +8,4 @@ NamedScript void CreateGUIMenu();
 NamedScript void CreateTabs();
 NamedScript void CreatePanels();
 
-// Panel functions
-NamedScript void CreateOverviewPanel();
-NamedScript void UpdateOverviewPanel(GUIPanel *);
-
 #endif

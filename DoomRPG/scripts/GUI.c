@@ -18,6 +18,9 @@ NamedScript Console void ToggleGUI()
     
     if (Player.GUI.Open)
         UpdateGUIMenu();
+    else if (Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel->Close)
+        Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel->Close(Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel);
+    
 }
 
 NamedScript void UpdateGUIMenu()
@@ -130,15 +133,31 @@ NamedScript void UpdateGUICursor()
     
     // Draw Cursor
     PrintSprite("Cursor", GUI_CURSOR_ID, (fixed)Player.GUI.Mouse.X + 0.1, (fixed)Player.GUI.Mouse.Y + 0.1, 0.03);
+    if(GetCVar("drpg_debug"))
+    {
+        SetFont("SMALLFONT");
+        HudMessage("%d, %d", (Player.GUI.Mouse.X - WINDOW_X), (Player.GUI.Mouse.Y - WINDOW_Y - 48));
+        EndHudMessage(HUDMSG_PLAIN, GUI_CURSOR_ID + 25, "Untranslated", Player.GUI.Mouse.X, Player.GUI.Mouse.Y + 25, 0.03);
+    }
     
-    if (Player.GUI.Mouse.ActiveTooltip != NULL)
+    if (Player.GUI.Mouse.ActiveTooltip != NULL && Player.GUI.Mouse.ActiveTooltip->Visible == true)
         DrawTooltip(Player.GUI.Mouse.ActiveTooltip);
+    
+    if (!GetCVar("drpg_debug_gui") || (Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.EditItem))
+        Player.GUI.Mouse.EditItem = NULL;
+    
+    if (Player.GUI.Mouse.EditItem)
+    {
+        Player.GUI.Mouse.EditItem->X = Player.GUI.Mouse.X - WINDOW_X;
+        Player.GUI.Mouse.EditItem->Y = Player.GUI.Mouse.Y - WINDOW_Y - 48;
+        LogMessage(StrParam("X: %d Y: %d", Player.GUI.Mouse.EditItem->X, Player.GUI.Mouse.EditItem->Y));
+    }
 }
 
 void DrawTooltip(GUITooltip *Tooltip)
 {
     int Type = Tooltip->Type;
-    str Title = Tooltip->Text;
+    str Title = Tooltip->Title;
     str Text = Tooltip->Text;
     str Color = Tooltip->Color;
     int X = Player.GUI.Mouse.X + 16;
@@ -158,13 +177,13 @@ void DrawTooltip(GUITooltip *Tooltip)
         int Longest;
         int Index;
         
-        Longest = StrLen(Title) / 2;
+        Longest = Round(StrLen(Title) * 1.5);
         
         for (int i = 0; i < StrLen(Text); i++)
         {
             Index++;
             
-            if (Text[i] == '\n')
+            if (Text[i] == '\n' || i == (StrLen(Text) - 1))
             {
                 if (Index > Longest)
                     Longest = Index;
@@ -176,7 +195,7 @@ void DrawTooltip(GUITooltip *Tooltip)
             Longest = StrLen(Text);
         if (!Longest)
             Longest = 1;
-        Width = Longest * 10;
+        Width = Longest * 8;
     }
     if (Height == 0)
     {
@@ -208,7 +227,7 @@ void DrawTooltip(GUITooltip *Tooltip)
         // Basic Tooltip with Title
         if (Type == TT_TITLE)
         {
-            Width += 96;
+            //Width += 96;
             Height += 48;
             
             // Bounding
@@ -227,6 +246,22 @@ void DrawTooltip(GUITooltip *Tooltip)
             HudMessage("%S", Tooltip->Text);
             EndHudMessage(HUDMSG_PLAIN, GUI_CURSOR_ID + 6, Color, X + 8.1, Y + 32.1, 0.03);
         }
+        if (Type == TT_BIG)
+        {
+            Width *= 1.5;
+            Height *= 1.5;
+            
+            // Bounding
+            if (X > ScreenWidth - Width)
+                X = ScreenWidth - Width;
+            if (Y > ScreenHeight - Height)
+                Y = ScreenHeight - Height;
+            
+            // Text
+            SetFont("BIGFONT");
+            HudMessage("%S", Tooltip->Text);
+            EndHudMessage(HUDMSG_PLAIN, GUI_CURSOR_ID + 5, Color, X + (NoBack ? 0.1 : 5.1), Y + (NoBack ? 0.1 : 5.1), 0.03);
+        }
         
         // Draw Background
         if (!NoBack)
@@ -241,8 +276,8 @@ void DrawTooltip(GUITooltip *Tooltip)
 
 bool InRegion(int X, int Y, int Width, int Height)
 {
-    if (Player.GUI.Mouse.X > X && Player.GUI.Mouse.X < X + Width &&
-        Player.GUI.Mouse.Y > Y && Player.GUI.Mouse.Y < Y + Height)
+    if (Player.GUI.Mouse.X >= X && Player.GUI.Mouse.X < X + Width &&
+        Player.GUI.Mouse.Y >= Y && Player.GUI.Mouse.Y < Y + Height)
         return true;
     else
         return false;
@@ -276,6 +311,8 @@ NamedScript void UpdateTabs()
         
         if (InRegion(X - 17, Y - 19, 34, 38) && Player.GUI.Mouse.LeftButton && Player.GUI.TabStrip.Tabs[i].Enabled && Player.GUI.TabStrip.ActiveTab != i)
         {
+            if (Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel->Close)
+                Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel->Close(Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel);
             Player.GUI.TabStrip.ActiveTab = i;
             ActivatorSound("gui/open", 127);
         }
@@ -304,9 +341,9 @@ NamedScript void UpdateTabs()
     if (Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel)
     {
         if (Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel->Update)
+        {
             Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel->Update(Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel);
-        
-        //DrawPanel(Player.GUI.TabStrip.Tabs[Player.GUI.TabStrip.ActiveTab].Panel);
+        }
     }
 }
 
@@ -316,6 +353,7 @@ GUITooltip *GUICreateTooltip()
     
     Tooltip->Type = TT_BASIC;
     Tooltip->Color = "White";
+    Tooltip->Visible = true;
     
     return Tooltip;
 }
@@ -330,20 +368,20 @@ GUIContextMenu *GUICreateContextMenu()
 void DrawBorder(str Prefix, int StartID, int BorderSize, int X, int Y, int Width, int Height)
 {
     // Border corners
-    PrintSprite(StrParam("%STL", Prefix), StartID++, X + 0.1, Y + 0.1, 0.03);
-    PrintSprite(StrParam("%STR", Prefix), StartID++, X + Width + 0.2, Y + 0.1, 0.03);
-    PrintSprite(StrParam("%SBL", Prefix), StartID++, X + 0.1, Y + Height + 0.2, 0.03);
-    PrintSprite(StrParam("%SBR", Prefix), StartID++, X + Width + 0.2, Y + Height + 0.2, 0.03);
+    PrintSprite(StrParam("%STL", Prefix), (StartID == 0 ? 0 : StartID++), X + 0.1, Y + 0.1, 0.03);
+    PrintSprite(StrParam("%STR", Prefix), (StartID == 0 ? 0 : StartID++), X + Width + 0.2, Y + 0.1, 0.03);
+    PrintSprite(StrParam("%SBL", Prefix), (StartID == 0 ? 0 : StartID++), X + 0.1, Y + Height + 0.2, 0.03);
+    PrintSprite(StrParam("%SBR", Prefix), (StartID == 0 ? 0 : StartID++), X + Width + 0.2, Y + Height + 0.2, 0.03);
     
     // Border sides
     SetHudClipRect(X, Y + BorderSize, BorderSize, Height - (BorderSize * 2));
-    PrintSprite(StrParam("%SL", Prefix), StartID++, X + 0.1, Y + 0.1, 0.03);
+    PrintSprite(StrParam("%SL", Prefix), (StartID == 0 ? 0 : StartID++), X + 0.1, Y + 0.1, 0.03);
     SetHudClipRect(X + Width - BorderSize, Y + BorderSize, BorderSize, Height - (BorderSize * 2));
-    PrintSprite(StrParam("%SR", Prefix), StartID++, X + Width + 0.2, Y + 0.1, 0.03);
+    PrintSprite(StrParam("%SR", Prefix), (StartID == 0 ? 0 : StartID++), X + Width + 0.2, Y + 0.1, 0.03);
     SetHudClipRect(X + BorderSize, Y, Width - (BorderSize * 2), BorderSize);
-    PrintSprite(StrParam("%ST", Prefix), StartID++, X + BorderSize + 0.1, Y + 0.1, 0.03);
+    PrintSprite(StrParam("%ST", Prefix), (StartID == 0 ? 0 : StartID++), X + BorderSize + 0.1, Y + 0.1, 0.03);
     SetHudClipRect(X + BorderSize, Y + Height - BorderSize, Width - (BorderSize * 2), BorderSize);
-    PrintSprite(StrParam("%SB", Prefix), StartID, X + BorderSize + 0.1, Y + Height + 0.2, 0.03);
+    PrintSprite(StrParam("%SB", Prefix), (StartID == 0 ? 0 : StartID), X + BorderSize + 0.1, Y + Height + 0.2, 0.03);
     SetHudClipRect(0, 0, 0, 0);
 }
 
@@ -437,6 +475,9 @@ NamedScript GUIIcon *GUIAddIcon(GUIPanel *Panel, str Name)
     Icon->Control.Update = (ControlUpdateFunc)UpdateIcon;
     
     Icon->CalculateSize = true;
+    Icon->Pulse = 0;
+    Icon->Alpha = 0;
+    Icon->Radius = 1;
     
     return Icon;
 }
@@ -604,28 +645,80 @@ NamedScript void UpdateLabel(GUILabel *Label)
     HudMessage("%S", Text);
     EndHudMessage(HUDMSG_PLAIN, Label->Control.id, Color, X, Y, 0.05);
     
-    // Tooltip
-    if (InRegion(X, Y, Width, Height) && Label->Control.Tooltip != NULL)
-        Player.GUI.Mouse.ActiveTooltip = Label->Control.Tooltip;
+    // Debugging - Draw a border to show the Label's width/height
+    if (GetCVar("drpg_debug_gui"))
+        DrawBorder("Bor", 0, 8, X, (Y + (Big ? -6 : 0)), Width, Height);
+    
+
+    if (InRegion(X, (Y + (Big ? -6 : 0)), Width, Height))
+    {
+        if (Label->Control.Hover)
+            Label->Control.Hover((GUIControl *)Label);
+        // Tooltip
+        if (Label->Control.Tooltip != NULL)
+            Player.GUI.Mouse.ActiveTooltip = Label->Control.Tooltip;
+    }
     
     // Context Menu
-    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Label->Control.ContextMenu != NULL)
+    if (InRegion(X, (Y + (Big ? -6 : 0)), Width, Height) && Player.GUI.Mouse.RightButton && Label->Control.ContextMenu != NULL)
         Player.GUI.Mouse.ActiveContextMenu = Label->Control.ContextMenu;
+    
+    // OnClick Event
+    if (GetCVar("drpg_debug_gui"))
+        if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.ActiveContextMenu == NULL)
+            GUIEditPosition(&Label->Control);
 }
 
 NamedScript void UpdateIcon(GUIIcon *Icon)
 {
-    str Texture = Icon->Texture;
     int X = WINDOW_X + Icon->Control.X;
     int Y = WINDOW_Y + Icon->Control.Y + 48;
-    int XOff = Icon->XOff;
-    int YOff = Icon->YOff;
     int Width = Icon->Control.Width;
     int Height = Icon->Control.Height;
-    bool CalculateSize = Icon->CalculateSize;
     
     // Set the Resolution/HUD Size
     SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
+    
+    // Debugging - Draw a border to show the Icon's width/height
+    if (GetCVar("drpg_debug_gui"))
+        DrawBorder("Bor", 0, 8, X, Y, Width, Height);
+    
+    if (InRegion(X + 4, Y + 8, Width, Height))
+    {
+        //OnHover Event
+        if (Icon->Control.Hover)
+            Icon->Control.Hover((GUIControl *)Icon);
+        // Tooltip
+        if (Icon->Control.Tooltip != NULL)
+            Player.GUI.Mouse.ActiveTooltip = Icon->Control.Tooltip;
+    }
+    
+    // Context Menu
+    if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.RightButton && Icon->Control.ContextMenu != NULL)
+        Player.GUI.Mouse.ActiveContextMenu = Icon->Control.ContextMenu;
+    
+    // OnClick Event
+    if (GetCVar("drpg_debug_gui"))
+    {
+        if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.ActiveContextMenu == NULL)
+            GUIEditPosition(&Icon->Control);
+    }
+    else if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Icon->Control.Click && Player.GUI.Mouse.ActiveContextMenu == NULL)
+        Icon->Control.Click((GUIControl *)Icon);
+
+    //recheck in case these values were modified by events
+    X = WINDOW_X + Icon->Control.X;
+    Y = WINDOW_Y + Icon->Control.Y + 48;
+    Width = Icon->Control.Width;
+    Height = Icon->Control.Height;    
+    
+    str Texture = Icon->Texture;
+    int XOff = Icon->XOff;
+    int YOff = Icon->YOff;
+    bool CalculateSize = Icon->CalculateSize;
+    fixed Pulse = Icon->Pulse;
+    fixed Alpha = Icon->Alpha;
+    fixed Radius = Icon->Radius;
     
     // Automatically detect X/Y Offset if none are specified
     if (XOff == 0 && YOff == 0 && CalculateSize)
@@ -635,23 +728,18 @@ NamedScript void UpdateIcon(GUIIcon *Icon)
     }
     
     // Drawing
-    PrintSprite(Texture, Icon->Control.id, X + XOff + 0.1, Y + YOff + 0.1, 0.05);
-    
-    // Debugging - Draw a border to show the Icon's width/height
-    if (GetCVar("drpg_debug_gui"))
-        DrawBorder("Bor", 0, 8, X, Y, Width, Height);
-    
-    // Tooltip
-    if (InRegion(X + 4, Y + 8, Width, Height) && Icon->Control.Tooltip != NULL)
-        Player.GUI.Mouse.ActiveTooltip = Icon->Control.Tooltip;
-    
-    // Context Menu
-    if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.RightButton && Icon->Control.ContextMenu != NULL)
-        Player.GUI.Mouse.ActiveContextMenu = Icon->Control.ContextMenu;
-    
-    // OnClick Event
-    if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Icon->Control.Click && Player.GUI.Mouse.ActiveContextMenu == NULL)
-        Icon->Control.Click((GUIControl *)Icon);
+    if (Pulse > 0)
+    {
+        PrintSpritePulse(Texture, Icon->Control.id, X + XOff + 0.1, Y + YOff + 0.1, Alpha, Pulse, Radius, false);
+    }
+    else if (Pulse == 0 && Alpha > 0)
+    {
+        PrintSpriteAlpha(Texture, Icon->Control.id, X + XOff + 0.1, Y + YOff + 0.1, 0.05, Alpha);
+    }
+    else
+    {
+        PrintSprite(Texture, Icon->Control.id, X + XOff + 0.1, Y + YOff + 0.1, 0.05);
+    }
 }
 
 NamedScript void UpdateButton(GUIButton *Button)
@@ -685,7 +773,7 @@ NamedScript void UpdateButton(GUIButton *Button)
     
     // Drawing
     SetFont((Big ? "BIGFONT" : "SMALLFONT"));
-    if (InRegion(X, Y, Width, Height))
+    if (InRegion(X, (Y + (Big ? -6 : 0)), Width, Height))
     {
         HudMessage("%S", Text);
         EndHudMessage(HUDMSG_PLAIN, Button->Control.id, HoverColor, X + 0.1, Y, 0.05);
@@ -695,17 +783,33 @@ NamedScript void UpdateButton(GUIButton *Button)
         HudMessage("%S", Text);
         EndHudMessage(HUDMSG_PLAIN, Button->Control.id, Color, X + 0.1, Y, 0.05);
     }
+
+    // Debugging - Draw a border to show the Button's width/height
+    if (GetCVar("drpg_debug_gui"))
+        DrawBorder("Bor", 0, 8, X, (Y + (Big ? -6 : 0)), Width, Height);
     
-    // Tooltip
-    if (InRegion(X, Y, Width, Height) && Button->Control.Tooltip != NULL)
-        Player.GUI.Mouse.ActiveTooltip = Button->Control.Tooltip;
+
+    if (InRegion(X, (Y + (Big ? -6 : 0)), Width, Height)) 
+    {
+        //OnHover
+        if (Button->Control.Hover)
+            Button->Control.Hover((GUIControl *)Button);
+        // Tooltip
+        if (Button->Control.Tooltip != NULL)
+            Player.GUI.Mouse.ActiveTooltip = Button->Control.Tooltip;
+    }
     
     // Context Menu
-    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Button->Control.ContextMenu != NULL)
+    if (InRegion(X, (Y + (Big ? -6 : 0)), Width, Height) && Player.GUI.Mouse.RightButton && Button->Control.ContextMenu != NULL)
         Player.GUI.Mouse.ActiveContextMenu = Button->Control.ContextMenu;
     
     // OnClick event
-    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.LeftButton && Button->Control.Click && Player.GUI.Mouse.ActiveContextMenu == NULL)
+    if (GetCVar("drpg_debug_gui"))
+    {
+        if (InRegion(X, (Y + (Big ? -6 : 0)), Width, Height) && Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.ActiveContextMenu == NULL)
+            GUIEditPosition(&Button->Control);
+    }
+    else if (InRegion(X, (Y + (Big ? -6 : 0)), Width, Height) && Player.GUI.Mouse.LeftButton && Button->Control.Click && Player.GUI.Mouse.ActiveContextMenu == NULL)
         Button->Control.Click((GUIControl *)Button);
 }
 
@@ -718,6 +822,10 @@ NamedScript void UpdateBar(GUIBar *Bar)
     int Value = Bar->Value;
     int ValueMax = Bar->ValueMax;
     str Texture = Bar->Texture;
+    int id = Bar->Control.id;
+    bool Fade = Bar->Fade;
+    bool FadePrint = Bar->FadePrint;
+    fixed FadeLength = Bar->FadeLength;
     
     // Set the Resolution/HUD Size
     SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
@@ -732,10 +840,10 @@ NamedScript void UpdateBar(GUIBar *Bar)
     if (Value > ValueMax)
         Value = ValueMax;
     
-    // Auto-calculate width and height based on ValueMax
+    // Auto-calculate width and height based on Value
     if (Width == 0 && Height == 0)
     {
-        Width = ValueMax;
+        Width = Value;
         Height = 6;
     }
     
@@ -745,18 +853,36 @@ NamedScript void UpdateBar(GUIBar *Bar)
     for (int i = 0; i < Value; i++)
     {
         //XPos = X + 0.1 + (i * 1.0);
-        PrintSprite(Texture, 0, X + 0.1 + i, Y, 0.05);
+        if (!Fade)
+            PrintSprite(Texture, (id == 0 ? 0 : (id + i)), X + 0.1 + i, Y + 2, 0.05);
+        else if (FadePrint)
+        {
+            PrintSpriteFade(Texture, (id == 0 ? 0 : (id + i)), X + 0.1 + i, Y + 2, 0.05, FadeLength);
+            Bar->FadePrint = false;
+        }
         //PrintSprite(Texture, 0, ++X, Y, 0.05);
     }
         
     
-    // Tooltip
-    if (InRegion(X, Y, Width, Height) && Bar->Control.Tooltip != NULL)
-        Player.GUI.Mouse.ActiveTooltip = Bar->Control.Tooltip;
+//Hover
+    if (InRegion(X, Y, Width, Height))
+    {
+        //OnHover
+        if (Bar->Control.Hover)
+            Bar->Control.Hover((GUIControl *)Bar);
+        // Tooltip
+        if (Bar->Control.Tooltip != NULL)
+            Player.GUI.Mouse.ActiveTooltip = Bar->Control.Tooltip;
+    }
     
     // Context Menu
     if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Bar->Control.ContextMenu != NULL)
         Player.GUI.Mouse.ActiveContextMenu = Bar->Control.ContextMenu;
+    
+    // OnClick Event
+    if (GetCVar("drpg_debug_gui"))
+        if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.ActiveContextMenu == NULL)
+            GUIEditPosition(&Bar->Control);
 }
 
 NamedScript void UpdateList(GUIList *List)
@@ -851,6 +977,10 @@ NamedScript void UpdateList(GUIList *List)
         List->Offset--;
     if (InRegion(X + Longest + 16.0, Y + (Shown * 10.0) - 24.0, 24, 24) && Player.GUI.Mouse.LeftButton && List->Offset < MaxEntries - Shown)
         List->Offset++;
+    
+    /* if (GetCVar("drpg_debug_gui"))
+        if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.ActiveContextMenu == NULL)
+            GUIEditPosition((GUIControl *)List); */
 }
 
 NamedScript void UpdateGrid(GUIGrid *Grid)
@@ -908,6 +1038,14 @@ NamedScript void HandleContextMenu(GUIContextMenu *Menu)
 }
 */
 
+
+void GUIEditPosition(GUIControl *Obj)
+{
+    if (!Player.GUI.Mouse.EditItem)
+        Player.GUI.Mouse.EditItem = Obj;
+    else
+        Player.GUI.Mouse.EditItem = NULL;
+}
 
 // Temporary, for testing coordinates
 NamedScript Console void GUITest(int X, int Y, int X2, int Y2)

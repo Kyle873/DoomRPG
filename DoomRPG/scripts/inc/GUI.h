@@ -41,6 +41,9 @@ bool InRegion(int, int, int, int);
 GUITooltip *GUICreateTooltip();
 GUIContextMenu *GUICreateContextMenu();
 
+//Editing
+void GUIEditPosition(GUIControl *);
+
 //Debugging
 NamedScript Console void GUITest(int, int, int, int);
 

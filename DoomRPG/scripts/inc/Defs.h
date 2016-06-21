@@ -275,8 +275,8 @@ typedef enum
 #define GUI_CURSOR_ID   600
 #define GUI_TOOLTIP_ID  700
 #define GUI_CONTENTS_ID 1000
-#define GUI_PANEL_ID    2000
-#define GUI_BACK_ID     3000
+#define GUI_PANEL_ID    (MAKE_ID('P', 'A', 'N', 'L'))
+#define GUI_BACK_ID     (MAKE_ID('Z', 'Z', 'Z', 'Z'))
 
 // Control Types
 typedef enum
@@ -326,6 +326,7 @@ typedef enum
 {
     TT_BASIC,
     TT_TITLE,
+    TT_BIG
 } ETooltipType;
 
 // --------------------------------------------------

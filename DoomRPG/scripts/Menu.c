@@ -348,18 +348,6 @@ void DrawStatsMenu()
         &Player.Luck
     };
     
-    str const StatColors[STAT_MAX] =
-    {
-        "Red",         // Strength
-        "Green",       // Defense
-        "Brick",       // Vitality
-        "LightBlue",   // Energy
-        "Purple",      // Regeneration
-        "Orange",      // Agility
-        "Blue",        // Capacity
-        "Gold"         // Luck
-    };
-    
     // Title
     SetFont("BIGFONT");
     if (Player.StatPage == STATPAGE_STATS)
@@ -2465,7 +2453,7 @@ void IncreaseStat(int Stat)
         Cost = (int)((1 * (fixed)MODULE_STAT_MULT) * GetCVarFixed("drpg_module_statfactor"));
 
     // Make sure you have enough Modules
-    if (CheckInventory("DRPGModule") < Cost && Player.InMenu)
+    if (CheckInventory("DRPGModule") < Cost && (Player.InMenu || Player.GUI.Open))
     {
         if (Player.DelayTimer > 0 || GetActivatorCVar("drpg_auto_spend")) return;
         PrintError("You don't have enough Modules to upgrade this stat");
@@ -2493,7 +2481,7 @@ void IncreaseStat(int Stat)
         return;
     }
     
-    if (Player.InMenu) // Spent the point in the menu, make a sound
+    if (Player.InMenu || Player.GUI.Open) // Spent the point in the menu, make a sound
         ActivatorSound("menu/move", 127);
     
     TakeInventory("DRPGModule", Cost);
@@ -2746,7 +2734,7 @@ void DrawToxicityBar(fixed X, fixed Y, bool HideInfo)
     
     // Beat
     int BeatTics[3] = { 8 / (1 + (Player.Toxicity >= 75)), 16 / (1 + (Player.Toxicity >= 50)), 8 / (1 + (Player.Toxicity >= 25)) };
-    int TotalTics;
+    int TotalTics = 0;
     for (int i = 0; i < 3; i++)
         TotalTics += BeatTics[i];
     if ((Player.ToxicTimer % (35 * (3 - (int)((fixed)Player.Toxicity * 0.0275k)))) < TotalTics)
@@ -2768,12 +2756,13 @@ void DrawToxicityBar(fixed X, fixed Y, bool HideInfo)
     
     // Increase Timer
     Player.ToxicTimer++;
-    
+
     // Draw Pixel
     if (Player.Toxicity >= 100)
         PrintSpriteFade(Color, TOXMETER_ID + (Player.ToxicTimer % 100), X + (Player.ToxicTimer % 100), Y + 16, 0.05, 1.0);
     else
         PrintSpriteFade(Color, TOXMETER_ID + (Player.ToxicTimer % 100), X + (Player.ToxicTimer % 100), Y + 16 + Player.ToxicOffset, 0.05, 1.0);
+    
     
     // Toxicity Penalties
     if (GetActivatorCVar("drpg_menuhelp") && !HideInfo)

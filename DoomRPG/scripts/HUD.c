@@ -363,7 +363,7 @@ NamedScript Type_ENTER void SkillHUD()
     goto Start;
 }
 
-NamedScript void StimHUD()
+NamedScript Type_ENTER void StimHUD()
 {
     Start: NOP;
     
@@ -870,7 +870,7 @@ NamedScript Type_ENTER void CoopViewHUD()
     }
 }
 
-NamedScript void MultiplayerHUD()
+NamedScript Type_ENTER void MultiplayerHUD()
 {
     Start:
     
@@ -1017,18 +1017,6 @@ NamedScript Type_ENTER void TurretHUD()
 
 NamedScript Type_ENTER void StatHUD()
 {
-    str const StatColors[STAT_MAX] =
-    {
-        "Red",         // Strength
-        "Green",       // Defense
-        "Brick",       // Vitality
-        "LightBlue",   // Energy
-        "Purple",      // Regeneration
-        "Orange",      // Agility
-        "Blue",        // Capacity
-        "Gold"         // Luck
-    };
-    
     int *Stats[STAT_MAX] =
     {
         &Player.Strength,

@@ -2436,7 +2436,7 @@ void RemoveMonsterAura(MonsterStatsPtr Stats)
 
 str DetermineBestStatColor(MonsterStatsPtr Stats)
 {
-    str const StatColors[STAT_MAX] =
+    str const StatColorsM[STAT_MAX] =
     {
         "\Cg",
         "\Cd",
@@ -2471,7 +2471,7 @@ str DetermineBestStatColor(MonsterStatsPtr Stats)
             HighestStatType = i;
         }
     
-    return StatColors[HighestStatType];
+    return StatColorsM[HighestStatType];
 }
 
 int BestStat(MonsterStatsPtr Stats)

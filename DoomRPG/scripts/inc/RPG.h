@@ -33,6 +33,9 @@ extern int ShieldArray Address(0) Shield[MAX_PLAYERS];
 extern int ShieldCapacityArray Address(0) ShieldCapacity[MAX_PLAYERS];
 extern int ShieldHealthArray Address(0) ShieldHealth[MAX_PLAYERS];
 
+//Stats
+extern str const StatColors[STAT_MAX];
+
 NamedScript KeyBind void ToggleFocusMode();
 NamedScript void FocusMode();
 NamedScript DECORATE void StatusEffect(int, int, int);

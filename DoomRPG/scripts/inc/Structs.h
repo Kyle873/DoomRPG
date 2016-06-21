@@ -141,11 +141,13 @@ extern struct GUIList_S;
 extern struct GUIGrid_S;
 
 typedef void (*PanelUpdateFunc) (struct GUIPanel_S *) NamedScript;
+typedef void (*PanelCloseFunc) (struct GUIPanel_S *) NamedScript;
 typedef void (*ContextMenuSelectFunc) ();
 
 // GUI Event Function Pointers
 typedef void (*ControlUpdateFunc) (struct GUIControl_S *) NamedScript;
 typedef void (*ControlClickFunc) (struct GUIControl_S *) NamedScript;
+typedef void (*ControlHoverFunc) (struct GUIControl_S *) NamedScript;
 
 struct GUITooltip_S
 {
@@ -156,6 +158,7 @@ struct GUITooltip_S
     int Width;
     int Height;
     bool NoBack;
+    bool Visible;
 };
 
 struct GUIContextMenu_S
@@ -190,6 +193,7 @@ struct GUIControl_S
     // Events
     ControlUpdateFunc Update;
     ControlClickFunc Click;
+    ControlHoverFunc Hover;
 };
 
 struct GUILabel_S
@@ -210,6 +214,9 @@ struct GUIIcon_S
     int XOff;
     int YOff;
     bool CalculateSize;
+    fixed Pulse;
+    fixed Alpha;
+    fixed Radius;
 };
 
 struct GUIButton_S
@@ -229,6 +236,9 @@ struct GUIBar_S
     int Value;
     int ValueMax;
     str Texture;
+    bool Fade;
+    bool FadePrint;
+    fixed FadeLength;
 };
 
 struct GUIList_S
@@ -264,6 +274,7 @@ struct GUIGrid_S
 struct GUIPanel_S
 {
     PanelUpdateFunc Update;
+    PanelCloseFunc Close;
     
     int NumControls;
     struct GUIControl_S **Controls;
@@ -305,6 +316,7 @@ struct GUIMouseInfo_S
     
     struct GUITooltip_S *ActiveTooltip;
     struct GUIContextMenu_S *ActiveContextMenu;
+    struct GUIControl_S *EditItem;
 };
 
 // Base GUI Data

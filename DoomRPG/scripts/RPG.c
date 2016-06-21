@@ -62,6 +62,18 @@ int ShieldArray Address(0) Shield[MAX_PLAYERS];
 int ShieldCapacityArray Address(0) ShieldCapacity[MAX_PLAYERS];
 int ShieldHealthArray Address(0) ShieldHealth[MAX_PLAYERS];
 
+str const StatColors[STAT_MAX] =
+{
+    "Red",         // Strength
+    "Green",       // Defense
+    "Brick",       // Vitality
+    "LightBlue",   // Energy
+    "Purple",      // Regeneration
+    "Orange",      // Agility
+    "Blue",        // Capacity
+    "Gold"         // Luck
+};
+
 NamedScript Type_OPEN void GlobalInit()
 {
     if (!GlobalsInitialized)

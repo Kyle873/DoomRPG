@@ -49,6 +49,33 @@ str const ColorNames[22] =
     "Cyan"
 };
 
+str const ColorCodes[22] =
+{
+    "\Ca",
+    "\Cb",
+    "\Cc",
+    "\Cd",
+    "\Ce",
+    "\Cf",
+    "\Cg",
+    "\Ch",
+    "\Ci",
+    "\Cj",
+    "\Ck",
+    "\Cl",
+    "\Cm",
+    "\Cn",
+    "\Co",
+    "\Cp",
+    "\Cq",
+    "\Cr",
+    "\Cs",
+    "\Ct",
+    "\Cu",
+    "\Cv"
+};
+
+
 // Skill Level Names
 str const SkillLevels[6] =
 {
@@ -2271,6 +2298,16 @@ str FormatTime(int t)
     return Time;
 }
 
+str ColorCodeFromName(str s)
+{
+    for (int i = 0; i < sizeof(ColorNames); i++)
+    {
+        if (StrCmp(s, ColorNames[i]) == 0)
+            return ColorCodes[i];
+    }
+    return "";
+}
+
 // --------------------------------------------------
 // Debugging/Cheats
 // 
@@ -2831,4 +2868,9 @@ void ArrayDestroy(DynamicArray *Array)
 NamedScript void Silly()
 {
     SetMusic("Credits2");
+}
+
+NamedScript Console void Test()
+{
+    return;
 }

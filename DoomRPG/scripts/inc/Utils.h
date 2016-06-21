@@ -5,6 +5,7 @@
 
 extern int const AuraTID;
 extern str const ColorNames[22];
+extern str const ColorCodes[22];
 extern str const SkillLevels[6];
 extern str const AuraIcons[AURA_MAX + 1];
 
@@ -156,6 +157,8 @@ OptionalArgs(1) bool EndsWith(str, str, bool);
 OptionalArgs(1) bool Contains(str, str, bool);
 str FormatTime(int);
 
+str ColorCodeFromName(str);
+
 // Debugging/Cheats
 NamedScript Console void Cheat(int);
 NamedScript Console void ModStat(int, int);
@@ -180,5 +183,7 @@ void ArrayCreate(DynamicArray *, str, int, int);
 void ArrayResize(DynamicArray *);
 void ArrayDestroy(DynamicArray *);
 //void ArrayDump(DynamicArray *);
+
+NamedScript Console void Test();
 
 #endif
