@@ -68,30 +68,30 @@ struct CharSaveInfo_S
     // Version / Compatibility Flag
     int Version;
     int CompatMode;
-    
+
     // Level / Rank Level
     int Level;
     int RankLevel;
     int PP;
-    
+
     // Stats
     int Stats[STAT_MAX];
-    
+
     // Skills
     int Skills[MAX_CATEGORIES][MAX_SKILLS];
-    
+
     // Skill Wheel
     int SkillWheel[MAX_SKILLKEYS][2];
-    
+
     // Augmentations
     int Augs[AUG_MAX];
-    
+
     // Stims
     int Stims[STIM_MAX];
-    
+
     // Turret Upgrades
     int TurretUpgrades[TU_MAX];
-    
+
     // Misc
     int Credits;
     int Modules;
@@ -102,21 +102,21 @@ struct CharSaveInfo_S
     int Battery;
     int Toxicity;
     int ArenaWave;
-    
+
     // Locker
     int Locker[ITEM_CATEGORIES][ITEM_MAX];
     int WeaponMods[ITEM_MAX][DRLA_MODPACK_SIZE];
-    
+
     // Auto-Sell
     int ItemAutoMode[ITEM_CATEGORIES][ITEM_MAX];
-    
+
     // ----- COMPATIBILITY EXTENSIONS -----
-    
+
     // DRLA Tokens
     bool DRLATokens[DRLA_MAX_TOKENS];
-    
+
     // ------------------------------------
-    
+
     // Checksum
     unsigned int Checksum;
 };
@@ -165,7 +165,7 @@ struct GUIContextMenu_S
 {
     int X;
     int Y;
-    
+
     struct
     {
         str Name;
@@ -178,7 +178,7 @@ struct GUIControl_S
     str Name;
     EControlTypes Kind;
     struct GUIPanel_S *Owner;
-    
+
     // Display Properties
     int X;
     int Y;
@@ -189,7 +189,7 @@ struct GUIControl_S
 
     struct GUITooltip_S *Tooltip;
     struct GUIContextMenu_S *ContextMenu;
-    
+
     // Events
     ControlUpdateFunc Update;
     ControlClickFunc Click;
@@ -199,7 +199,7 @@ struct GUIControl_S
 struct GUILabel_S
 {
     struct GUIControl_S Control;
-    
+
     str Text;
     int Alignment;
     str Color;
@@ -209,7 +209,7 @@ struct GUILabel_S
 struct GUIIcon_S
 {
     struct GUIControl_S Control;
-    
+
     str Texture;
     int XOff;
     int YOff;
@@ -217,12 +217,13 @@ struct GUIIcon_S
     fixed Pulse;
     fixed Alpha;
     fixed Radius;
+    bool Enabled;
 };
 
 struct GUIButton_S
 {
     struct GUIControl_S Control;
-    
+
     str Text;
     str Color;
     str HoverColor;
@@ -232,7 +233,7 @@ struct GUIButton_S
 struct GUIBar_S
 {
     struct GUIControl_S Control;
-    
+
     int Value;
     int ValueMax;
     str Texture;
@@ -244,7 +245,7 @@ struct GUIBar_S
 struct GUIList_S
 {
     struct GUIControl_S Control;
-    
+
     int Shown;
     int Offset;
     int Selected;
@@ -256,10 +257,10 @@ struct GUIList_S
 struct GUIGrid_S
 {
     struct GUIControl_S Control;
-    
+
     int NumItems;
     int ItemsPerRow;
-    
+
     str BackFrame;
     str SelectionFrame;
 
@@ -271,11 +272,18 @@ struct GUIGrid_S
     } Items[];
 };
 
+struct GUIBorder_S
+{
+    struct GUIControl_S Control;
+    str Texture;
+    int BorderSize;
+};
+
 struct GUIPanel_S
 {
     PanelUpdateFunc Update;
     PanelCloseFunc Close;
-    
+
     int NumControls;
     struct GUIControl_S **Controls;
 };
@@ -287,7 +295,7 @@ struct GUITabStrip_S
     int TabHeight;
     int TabWidth;
     int TabSpacing;
-    
+
     struct
     {
         str Icon;
@@ -297,7 +305,7 @@ struct GUITabStrip_S
         struct GUITooltip_S *Tooltip;
         struct GUIPanel_S *Panel;
     } Tabs[MAX_TABS];
-    
+
     int ActiveTab;
 };
 
@@ -313,7 +321,7 @@ struct GUIMouseInfo_S
     bool RightButton;
     bool LeftButtonDown;
     bool RightButtonDown;
-    
+
     struct GUITooltip_S *ActiveTooltip;
     struct GUIContextMenu_S *ActiveContextMenu;
     struct GUIControl_S *EditItem;
@@ -324,13 +332,13 @@ struct GUIData_S
 {
     bool Created;
     bool Open;
-    
+
     struct
     {
         int Position;
         int Delay;
     } GlowLine;
-    
+
     struct GUIMouseInfo_S Mouse;
     struct GUITabStrip_S TabStrip;
 };
@@ -342,10 +350,10 @@ struct ItemInfo_S
 {
     str Actor;
     str Name;
-    
+
     int Price;
     int Rank;
-    
+
     // Sprite information
     struct
     {
@@ -353,7 +361,7 @@ struct ItemInfo_S
         int XOff;
         int YOff;
     } Sprite;
-    
+
     // Only used for the Shop Special and specific DRLA checks
     unsigned int CompatMods;
     int Category;
@@ -379,19 +387,19 @@ struct CrateInfo_S
     int TID;
     int Amount;
     int Rarity;
-    
+
     bool Active[CRATE_MAX_ITEMS];
     struct ItemInfo_S RPGGlobal *Item[CRATE_MAX_ITEMS];
-    
+
     // Hacking Minigame
     bool HacksGenerated;
     int Hacking;
     int HackingCooldown;
-    
+
     int Tries;
-    
+
     int NodeMax[NODE_MAX];
-    
+
     struct HackNode_S Nodes[MAX_NODES];
     int GenTotal;
     int GenType;
@@ -439,7 +447,7 @@ struct ShieldPart_S
     str Actor;
     str Name;
     str Icon;
-    
+
     int Capacity;
     int ChargeRate;
     fixed DelayRate;
@@ -463,7 +471,7 @@ struct ShieldAccessory_S
     int Price;
     str Description;
     EShieldPassive PassiveEffect;
-    
+
     ShieldAccModScript          Modifier;
     ShieldAccEquipScript        Equip;
     ShieldAccUnequipScript      Unequip;
@@ -489,12 +497,12 @@ struct MonsterStats_S
     int SpawnHealth;
     int HealthMax;
     int RegenHealth;
-    
+
     // Properties
     fixed Speed;
     fixed Height;
     fixed Radius;
-    
+
     // Flags
     bool Init;
     bool NeedReinit;
@@ -502,10 +510,10 @@ struct MonsterStats_S
     bool Named;
     bool Reinforcement;
     bool MegaBoss;
-    
+
     // Missions
     int Target;
-    
+
     // Stats
     int Level;
     int Threat;
@@ -517,7 +525,7 @@ struct MonsterStats_S
     int Agility;
     int Capacity;
     int Luck;
-    
+
     // Auras
     struct AuraInfo_S Aura;
 };
@@ -526,13 +534,13 @@ struct MonsterInfo_S
 {
     str Actor;
     str Name;
-    
+
     // This monster's relative threat level as a percentage
     int Difficulty;
     int ThreatLevel;
     // These guys are in short supply
     bool Boss;
-    
+
     // Special event text for One Monster level events
     str Feeling;
 };
@@ -548,12 +556,12 @@ struct MegabossInfo_S
 struct HUDBarInfo_S
 {
     int TID;
-    
+
     // Is this referencing a player or enemy?
     bool IsPlayer;
     // Is the actor friendly?
     bool Friendly;
-    
+
     // Basic
     str Actor;
     str NameColor;
@@ -562,7 +570,7 @@ struct HUDBarInfo_S
     int Rank;
     int Flags;
     struct AuraInfo_S Aura;
-    
+
     // Health, Armor, Shield
     int Health;
     int HealthMax;
@@ -572,7 +580,7 @@ struct HUDBarInfo_S
     bool ShieldActive;
     int Shield;
     int ShieldMax;
-    
+
     // Stats
     int Strength;
     int Defense;
@@ -582,7 +590,7 @@ struct HUDBarInfo_S
     int Agility;
     int Capacity;
     int Luck;
-    
+
     // Position
     fixed X;
     fixed Y;
@@ -598,14 +606,14 @@ struct MissionInfo_S
     bool Active;
     int Type;
     int Difficulty;
-    
+
     // Reward
     long int RewardXP;
     long int RewardRank;
     int RewardCredits;
     int RewardModules;
     struct ItemInfo_S RPGGlobal *RewardItem;
-    
+
     // Mission Data
     struct ItemInfo_S RPGGlobal *Item;
     struct MonsterInfo_S const *Monster;
@@ -627,11 +635,11 @@ struct TurretUpgrade_S
     str Name;
     int MaxLevel;
     int Cost;
-    
+
     str Description;
     str UpgradeInfo;
     str CommandInfo;
-    
+
     struct TurretUpgrade_S *Prereq;
 };
 
@@ -647,22 +655,22 @@ struct LevelInfo_S
 {
     // MAPINFO Level Number
     int LevelNum;
-    
+
     // If we start in the Outpost, we set this on MAP01 to tell ourselves that
     // we need to replace the placeholder info with real info.
     bool NeedsRealInfo;
-    
+
     // Map is an Outpost or an Arena
     bool UACBase;
     bool UACArena;
-    
+
     // Name data
     str LumpName;
     str NiceName;
-    
+
     // Level stats
     bool Completed;
-    
+
     int MaxMonstersKilled;
     int MaxTotalMonsters;
     int MaxMonsterPercentage;
@@ -674,35 +682,35 @@ struct LevelInfo_S
     int MaxSecretPercentage;
     int ShortestTime;
     int UniqueSecrets;
-    
+
     // Par/Sucks time
     int Par;
     int Sucks;
-    
+
     // 100% Bonuses
     bool KillBonus;
     bool ItemsBonus;
     bool SecretsBonus;
     bool AllBonus;
     bool ParBonus;
-    
+
     // Miscellaneous
     int AdditionalMonsters;
     bool SecretMap;
-    
+
     // Event stuff
     struct DynamicArray_S MonsterPositions;
     unsigned int Event;
     bool EventCompleted;
-    
+
     // Megaboss Event
     struct MegabossInfo_S const *MegabossActor;
-    
+
     // Environmental Hazard Event
     int HazardLevel;
     int RadLeft;
     int GeneratorFuel;
-    
+
     // Thermonuclear Bomb event
     int BombTime;
     bool BombExplode;
@@ -710,22 +718,22 @@ struct LevelInfo_S
     bool BombKeyActive[MAX_NUKE_KEYS];
     bool BombKeyDisarming[MAX_NUKE_KEYS];
     int BombKeyTimer[MAX_NUKE_KEYS];
-    
+
     // Low Power Event
     bool PowerGeneratorActive;
-    
+
     // One Monster Event
     struct MonsterInfo_S const *SelectedMonster;
-    
+
     // Hell Unleashed Event
     int HellUnleashedActive;
     int PandoraBoxTID;
     fixed LevelAdd;
     fixed RareAdd;
-    
+
     // Harmonized Destruction event
     int AuraType;
-    
+
     // Doomsday Event
     int DoomTime;
 };
@@ -757,13 +765,13 @@ struct Payout_S
         int Missions;
         int Maps;
     } Total;
-    
+
     // Level & Rank
     int XP;
     int Levels;
     int Rank;
     int RankLevels;
-    
+
     // Damage
     int Kills;
     int Deaths;
@@ -771,11 +779,11 @@ struct Payout_S
     int StatusEffectHit;
     int StatusEffectsEvaded;
     int LivesUsed;
-    
+
     // Credits
     int CreditsFound;
     int CreditsSpent;
-    
+
     // Skills
     int SkillsUsed;
     int SkillsOverdrive;
@@ -785,33 +793,33 @@ struct Payout_S
     int SkillHealed;
     int SkillRepaired;
     int SkillSummons;
-    
+
     // Augs
     int AugBatteryUsed;
     int AugsDisrupted;
-    
+
     // Shields
     int ShieldDamage;
     int ShieldBreaks;
-    
+
     // Stims
     int StimsMade;
     int StimsUsed;
     int StimToxicity;
     int StimImmunity;
-    
+
     // Turret
     int TurretDamageTaken;
     int TurretMaintenanceCost;
     int TurretChargeTime;
     int TurretRepairTime;
     int TurretRefitTime;
-    
+
     // Missions
     // TODO: Each mission sub-type?
     int MissionsCompleted;
     int EventsCompleted;
-    
+
     // Map
     int MapsCompleted;
     int ParTimesBeaten;
@@ -825,7 +833,7 @@ struct PayoutData_S
     str Sound;
     str Color;
     int *Total;
-    
+
     struct
     {
         str Name;
@@ -839,7 +847,7 @@ struct PlayerData_S
 {
     int TID;
     int PlayerView;
-    
+
     // Inputs
     struct
     {
@@ -847,17 +855,17 @@ struct PlayerData_S
         bool AltAttack;
         bool Use;
         bool Modifier;
-        
+
         bool SkillWheel;
         bool TurretWheel;
         bool DRPGMenu;
-        
+
         bool Forward;
         bool Back;
         bool Right;
         bool Left;
     } Input, OldInput;
-    
+
     // Flags
     bool FirstRun;
     bool InMenu;
@@ -865,7 +873,7 @@ struct PlayerData_S
     bool InMinigame;
     bool CrateOpen;
     bool LastLegs;      // You're about to die, do something about it!
-    
+
     // Primary Stats
     int Strength;       // Increases Damage
     int Defense;        // Reduces Damage taken
@@ -881,7 +889,7 @@ struct PlayerData_S
     int HealthMax;      // Max player Health
     int PrevHealth;     // Player's Health from last tic
     int PrevCredits;    // Player's held Credits from last tic
-    
+
     // Stat Bonuses
     int StrengthBonus;
     int DefenseBonus;
@@ -891,7 +899,7 @@ struct PlayerData_S
     int AgilityBonus;
     int CapacityBonus;
     int LuckBonus;
-    
+
     // Stat XP Levels
     long int StrengthXP;
     long int DefenseXP;
@@ -901,11 +909,11 @@ struct PlayerData_S
     long int AgilityXP;
     long int CapacityXP;
     long int LuckXP;
-    
+
     // Stat Perks
     bool Perks[STAT_MAX];
     int AgilityTimer;
-    
+
     // Secondary Stats
     int LevelDamage;            // Damage dependent on the player's level
     int BonusDamage;            // Damage bonus given by the Strength stat
@@ -923,28 +931,28 @@ struct PlayerData_S
     int InvItems;               // How many inventory items you are currently carrying
     int MedkitMax;              // THe total amount of healing your Medkit can hold
     int StatCap;                // Current Stat Cap
-    
+
     // Energy Points (EP)
     int EP;
     int EPMax;
-    
+
     // Level
     int Level;
     long int XP;
     long int XPNext;
-    
+
     // Rank
     str RankString;
     int RankLevel;
     long int Rank;
     long int RankNext;
-    
+
     // Payout
     bool PayReady;
     bool PayingOut;
     int PP;
     int PayTimer;
-    
+
     // Combo System
     int Combo;
     int ComboTimer;
@@ -980,7 +988,7 @@ struct PlayerData_S
     fixed AugChance;
     fixed ShieldChance;
     fixed StimChance;
-    
+
     // Menu Data
     bool MenuBlock;
     int Menu;
@@ -995,7 +1003,7 @@ struct PlayerData_S
     int TurretPage;
     int ShopIndex;
     int ShopPage;
-    
+
     // Skill Info
     struct SkillLevelInfo_S SkillLevel[MAX_CATEGORIES][MAX_SKILLS];
     struct AuraInfo_S Aura;
@@ -1015,7 +1023,7 @@ struct PlayerData_S
     int SkillSupplyCooldown;
     bool Focusing;
     bool Overdrive;
-    
+
     // Status Effects
     bool StatusType[SE_MAX];
     int StatusTypeHUD;
@@ -1023,7 +1031,7 @@ struct PlayerData_S
     int StatusTimer[SE_MAX];
     int StatusTimerMax[SE_MAX];
     int Toxicity;
-    
+
     // Locker
     bool LockerMode;
     int Locker[ITEM_CATEGORIES][ITEM_MAX];
@@ -1039,32 +1047,40 @@ struct PlayerData_S
         int Nano;
         int Artifacts;
     } WeaponMods[ITEM_MAX];
-    
+
     // Medkit
     int Medkit;
-    
+
     // GUI
     struct GUIData_S GUI;
-    
+
+    //GUI Stats Order Form
+    struct
+    {
+        int ChangeLevels;
+        int ChangeCost;
+        str ChangeString;
+    } OrderForm[STAT_MAX];
+
     // Auto-Sell/Auto-Store
     int ItemAutoMode[ITEM_CATEGORIES][ITEM_MAX];
     struct DynamicArray_S AutoSellList;
     struct DynamicArray_S AutoStoreList;
-    
+
     // Toxicity Meter
     int ToxicTimer;
     int ToxicOffset;
     int ToxicStage;
-    
+
     // Crate
     int CrateID;
     int CrateIndex;
     bool CrateHacking;
-    
+
     // Damage
     int DamageTID;
     int DamageType;
-    
+
     // Misc
     int StimImmunity;
     int ShopDiscount;
@@ -1072,10 +1088,10 @@ struct PlayerData_S
     int DelayTimer;
     bool AutosaveTimerReset;
     bool SeenEventTip[MAPEVENT_MAX];
-    
+
     // Associated Drops
     struct DynamicArray_S DropTID;
-    
+
     // Structception
     struct
     {
@@ -1088,7 +1104,7 @@ struct PlayerData_S
         bool Active[AUG_MAX];
         int Level[AUG_MAX];
     } Augs;
-    
+
     struct
     {
         // Current Parts
@@ -1096,11 +1112,11 @@ struct PlayerData_S
         struct ShieldPart_S const *Battery;
         struct ShieldPart_S const *Capacitor;
         struct ShieldAccessory_S const *Accessory;
-        
+
         // Flags
         bool Active;
         bool Full;
-        
+
         // Stats
         int Charge;
         int Capacity;
@@ -1108,18 +1124,18 @@ struct PlayerData_S
         int ChargeRate;
         fixed DelayRate;
         int Timer;
-        
+
         // Accessories
         int AccessoryBattery;
         int AccessoryTimer;
         struct Position_S AccessoryPosition;
-        
+
         // Armor
         str ArmorType;
         int ArmorAmount;
         int ArmorMax;
     } Shield;
-    
+
     struct
     {
         int Vials[STIM_MAX];
@@ -1129,9 +1145,9 @@ struct PlayerData_S
 
         int PowerupTimer[STIM_MAX];
         int PowerupTimerMax[STIM_MAX];
-        
+
         int PrevStats[STAT_MAX];
-        
+
         bool Active;
         int Size;
         int Amount;
@@ -1141,7 +1157,7 @@ struct PlayerData_S
         int TimerMax;
         int Toxicity;
     } Stim;
-    
+
     struct
     {
         // Flags
@@ -1150,21 +1166,21 @@ struct PlayerData_S
         bool Destroyed;
         bool Maintenance;
         bool PaidForRepair;
-        
+
         // TID
         int TID;
-        
+
         // Command Wheel
         bool WheelOpen;
         int WheelCommand;
-        
+
         // Upgrades
         int Upgrade[MAX_UPGRADES];
-        
+
         // Health
         int Health;
         int HealthMax;
-        
+
         // Weapons/Ammo
         int Weapon;
         int BulletAmmo;
@@ -1179,20 +1195,20 @@ struct PlayerData_S
         int RailAmmoMax;
         bool Autoload;
         bool SelfDestruct;
-        
+
         // Assist
         bool TeleportEnabled;
         bool StimFocused;
         bool StimPicked;
         int StimTimer;
         int StimVialType;
-        
+
         // Sensors
         bool SensorsActive;
         int SensorMode;
         int SensorPercent;
         int ModulesCollected;
-        
+
         struct
         {
             bool Enabled;
@@ -1201,7 +1217,7 @@ struct PlayerData_S
             int PulseDelay;
             int CheckDelay;
         } SensorItemData;
-        
+
         struct
         {
             bool Enabled;
@@ -1210,27 +1226,27 @@ struct PlayerData_S
             int PulseDelay;
             int CheckDelay;
         } SensorCrateData;
-        
+
         // Command
         int Command;
-        
+
         // Battery
         int Battery;
         int BatteryMax;
-        
+
         // Timers
         int HitTimer;
         int TeleportTimer;
         int ChargeTimer;
         int RepairTimer;
         int RefitTimer;
-        
+
         // Offsets
         fixed AngleOffset;
         fixed DistanceOffset;
         fixed HeightOffset;
     } Turret;
-    
+
     struct Payout_S Payout;
     struct MissionInfo_S Mission;
 };

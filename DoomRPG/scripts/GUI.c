@@ -479,6 +479,8 @@ NamedScript GUIIcon *GUIAddIcon(GUIPanel *Panel, str Name)
     Icon->Alpha = 0;
     Icon->Radius = 1;
     
+    Icon->Enabled = true;
+    
     return Icon;
 }
 
@@ -586,6 +588,35 @@ NamedScript GUIGrid *GUIAddGrid(GUIPanel *Panel, str Name)
     return Grid;
 }
 
+NamedScript GUIBorder *GUIAddBorder(GUIPanel *Panel, str Name)
+{
+    GUIBorder *Border = calloc(sizeof(GUIBorder), 1);
+    
+    if(!GUIAddExistingControl(Panel, (GUIControl *)Border))
+    {
+        free(Border);
+        return NULL;
+    }
+    
+    Border->Control.Name = Name;
+    Border->Control.Kind = CTL_BORDER;
+    Border->Control.Owner = Panel;
+    
+    Border->Control.X = 0;
+    Border->Control.Y = 0;
+    Border->Control.Width = 32;
+    Border->Control.Height = 32;
+    Border->Control.id = 0;
+    Border->Control.Visible = true;
+    
+    Border->Texture = "Bor";
+    Border->BorderSize = 8;
+    
+    Border->Control.Update = (ControlUpdateFunc)UpdateBorder;
+    
+    return Border;
+}
+
 NamedScript void GUIUpdatePanelControls(GUIPanel *Panel)
 {
     for (int i = 0; i < Panel->NumControls; i++)
@@ -683,7 +714,7 @@ NamedScript void UpdateIcon(GUIIcon *Icon)
     if (GetCVar("drpg_debug_gui"))
         DrawBorder("Bor", 0, 8, X, Y, Width, Height);
     
-    if (InRegion(X + 4, Y + 8, Width, Height))
+    if (InRegion(X, Y, Width, Height))
     {
         //OnHover Event
         if (Icon->Control.Hover)
@@ -694,16 +725,16 @@ NamedScript void UpdateIcon(GUIIcon *Icon)
     }
     
     // Context Menu
-    if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.RightButton && Icon->Control.ContextMenu != NULL)
+    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Icon->Control.ContextMenu != NULL)
         Player.GUI.Mouse.ActiveContextMenu = Icon->Control.ContextMenu;
     
     // OnClick Event
     if (GetCVar("drpg_debug_gui"))
     {
-        if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.ActiveContextMenu == NULL)
+        if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.ActiveContextMenu == NULL)
             GUIEditPosition(&Icon->Control);
     }
-    else if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Icon->Control.Click && Player.GUI.Mouse.ActiveContextMenu == NULL)
+    else if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.LeftButton && Icon->Control.Click && Player.GUI.Mouse.ActiveContextMenu == NULL)
         Icon->Control.Click((GUIControl *)Icon);
 
     //recheck in case these values were modified by events
@@ -719,6 +750,7 @@ NamedScript void UpdateIcon(GUIIcon *Icon)
     fixed Pulse = Icon->Pulse;
     fixed Alpha = Icon->Alpha;
     fixed Radius = Icon->Radius;
+    bool Enabled = Icon->Enabled;
     
     // Automatically detect X/Y Offset if none are specified
     if (XOff == 0 && YOff == 0 && CalculateSize)
@@ -728,13 +760,13 @@ NamedScript void UpdateIcon(GUIIcon *Icon)
     }
     
     // Drawing
-    if (Pulse > 0)
+    if (Enabled && Pulse > 0)
     {
         PrintSpritePulse(Texture, Icon->Control.id, X + XOff + 0.1, Y + YOff + 0.1, Alpha, Pulse, Radius, false);
     }
-    else if (Pulse == 0 && Alpha > 0)
+    else if (!Enabled || (Pulse == 0 && Alpha > 0))
     {
-        PrintSpriteAlpha(Texture, Icon->Control.id, X + XOff + 0.1, Y + YOff + 0.1, 0.05, Alpha);
+        PrintSpriteAlpha(Texture, Icon->Control.id, X + XOff + 0.1, Y + YOff + 0.1, 0.05, (Alpha ? Alpha : 0.33));
     }
     else
     {
@@ -986,6 +1018,23 @@ NamedScript void UpdateList(GUIList *List)
 NamedScript void UpdateGrid(GUIGrid *Grid)
 {
     // TODO
+}
+
+NamedScript void UpdateBorder(GUIBorder *Border)
+{
+    str Texture = Border->Texture;
+    int BorderSize = Border->BorderSize;
+    fixed X = WINDOW_X + Border->Control.X;
+    fixed Y = WINDOW_Y + Border->Control.Y + 48;
+    int Width = Border->Control.Width;
+    int Height = Border->Control.Height;
+    int id = Border->Control.id;
+    
+    // Set the Resolution/HUD Size
+    SetHudSize(GUI_WIDTH, GUI_HEIGHT, true);
+    
+    //Draw Border
+    DrawBorder(Texture, id, BorderSize, X, Y, Width, Height);
 }
 
 /* Kyle halp

@@ -8,11 +8,14 @@ NamedScript void CreateStatsPanel();
 NamedScript void UpdateStatsPanel(GUIPanel *);
 //NamedScript void CloseStatsPanel(GUIPanel *);
 
-//OnClick handling
+//Buttons Event handling
 NamedScript void ButtonClicked(GUIControl *);
 
-//OnHover handling
+//Icons Event handling
 NamedScript void IconHover(GUIControl *);
+NamedScript void IconUpClick(GUIControl *);
+NamedScript void IconDownClick(GUIControl *);
 
-int CostOfStatUpgrade(int *);
+void BuildOrderFormString(int);
+int CostOfStatUpgrade(int);
 #endif

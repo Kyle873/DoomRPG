@@ -288,6 +288,7 @@ typedef enum
     CTL_BAR,
     CTL_LIST,
     CTL_GRID,
+    CTL_BORDER,
     CTL_MAX
 } EControlTypes;
 
@@ -1111,6 +1112,7 @@ typedef struct CharSaveInfo_S       CharSaveInfo;
 //       +--GUIBar
 //       +--GUIList
 //       +--GUIGrid
+//       +--GUIBorder
 typedef struct GUIData_S            GUIData;
 typedef struct GUIMouseInfo_S       GUIMouseInfo;
 typedef struct GUIContextMenu_S     GUIContextMenu;
@@ -1124,6 +1126,7 @@ typedef struct GUIButton_S          GUIButton;
 typedef struct GUIBar_S             GUIBar;
 typedef struct GUIList_S            GUIList;
 typedef struct GUIGrid_S            GUIGrid;
+typedef struct GUIBorder_S          GUIBorder;
 
 // Health Bars
 typedef struct HUDBarInfo_S         HUDBarInfo;

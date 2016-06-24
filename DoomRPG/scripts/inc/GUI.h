@@ -25,6 +25,7 @@ NamedScript GUIButton *GUIAddButton(GUIPanel *, str);
 NamedScript GUIBar    *GUIAddBar(GUIPanel *, str);
 NamedScript GUIList   *GUIAddList(GUIPanel *, str);
 NamedScript GUIGrid   *GUIAddGrid(GUIPanel *, str);
+NamedScript GUIBorder *GUIAddBorder(GUIPanel *, str);
 NamedScript void GUIUpdatePanelControls(GUIPanel *Panel);
 
 // Control Functions
@@ -34,6 +35,7 @@ NamedScript void UpdateButton(GUIButton *);
 NamedScript void UpdateBar(GUIBar *);
 NamedScript void UpdateList(GUIList *);
 NamedScript void UpdateGrid(GUIGrid *);
+NamedScript void UpdateBorder(GUIBorder *);
 
 // Utility
 bool InRegion(int, int, int, int);
