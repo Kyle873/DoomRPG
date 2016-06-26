@@ -103,7 +103,10 @@ NamedScript void InitMission()
                     ActorToCheck = Players(j).Mission.Monster->Actor;
 
                 if(CompatMode == COMPAT_LEGENDOOM)
+                {
                     ActorToCheck = StrParam("LD%S", Players(j).Mission.Monster->Actor);
+                    if (ActorToCheck == "LDFatso") ActorToCheck = "LDMancubus";
+                }
 
                     LogMessage(StrParam("Checking:%S - Looking For:%S",Monsters[i].Actor, ActorToCheck), LOG_DEBUG);
 
