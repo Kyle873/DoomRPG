@@ -226,7 +226,7 @@ MissionInfo CreateMission(int Difficulty)
     ItemInfoPtr RewardItem;
     MissionInfo Mission;
 
-    if (Difficulty == MAX_DIFFICULTIES - 1 && Random(0, 100) < 15)
+    if (CompatMode == COMPAT_DRLA && Difficulty == MAX_DIFFICULTIES - 1 && Random(0, 100) < 15)
     {
         RewardItem = GetRewardItem(Difficulty + 1);
     }
