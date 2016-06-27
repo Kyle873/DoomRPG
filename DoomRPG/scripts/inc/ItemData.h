@@ -13,11 +13,12 @@
     ItemCategory = (index); \
     ItemIndex = 0
 
-#define ITEMDATA_DEF(actor, name, price, rank, sprite, xofs, yofs) \
+#define ITEMDATA_DEF(actor, name, price, rank, rarity, sprite, xofs, yofs) \
     ItemData[ItemCategory][ItemIndex].Actor = (actor); \
     ItemData[ItemCategory][ItemIndex].Name = (name); \
     ItemData[ItemCategory][ItemIndex].Price = (price); \
     ItemData[ItemCategory][ItemIndex].Rank = (rank); \
+    ItemData[ItemCategory][ItemIndex].Rarity = (rarity); \
     ItemData[ItemCategory][ItemIndex].Sprite.Name = (sprite); \
     ItemData[ItemCategory][ItemIndex].Sprite.XOff = (xofs); \
     ItemData[ItemCategory][ItemIndex].Sprite.YOff = (yofs); \
@@ -35,8 +36,8 @@ extern int RPGGlobal ItemCategoryFlags[ITEM_CATEGORIES];
 extern int RPGGlobal ItemMax[ITEM_CATEGORIES];
 extern ItemInfo RPGGlobal ItemData[ITEM_CATEGORIES][ITEM_MAX];
 extern bool RPGGlobal ItemRanksRemoved;
-extern ItemInfoPtr RewardList[ITEM_CATEGORIES * ITEM_MAX];
-extern int RPGGlobal MaxRewards;
+extern ItemInfoPtr RewardList[MAX_DIFFICULTIES + 1][ITEM_CATEGORIES * ITEM_MAX];
+extern int RPGGlobal MaxRewards[MAX_DIFFICULTIES + 1];
 extern bool RPGGlobal RewardsInit;
 
 NamedScript void BuildItemData();

@@ -1281,6 +1281,15 @@ void BuildOrderFormString(int Stat)
         }
     case STAT_LUCK:
         {
+            ChangeString = StrParam("%S+%d Luck\n\n",
+                StatColorsS[STAT_LUCK], ChangeLevels);
+            
+            if (Player.Luck < 100 && Player.Luck + ChangeLevels >= 100)
+            {
+                ChangeString = StrParam("%Luck Perk\n", ChangeString);
+            }
+            
+            ChangeString = StrParam("%S\Cr-%d", ChangeString, ChangeCost);
             break;
         }
     }

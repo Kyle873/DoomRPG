@@ -226,7 +226,14 @@ MissionInfo CreateMission(int Difficulty)
     ItemInfoPtr RewardItem;
     MissionInfo Mission;
 
-    RewardItem = GetRewardItem(Difficulty);
+    if (Difficulty == MAX_DIFFICULTIES - 1 && Random(0, 100) < 15)
+    {
+        RewardItem = GetRewardItem(Difficulty + 1);
+    }
+    else
+    {
+        RewardItem = GetRewardItem(Difficulty);
+    }
 
     // Calculate the rewards based on all Player's average Level and Rank
     // XPTable[Player.Level + 1] / (3 + MAX_DIFFICULTIES - Difficulty) + Random(0, XPTable[Player.Level + 1] / GameSkill());

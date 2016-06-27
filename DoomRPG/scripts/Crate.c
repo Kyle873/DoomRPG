@@ -268,6 +268,10 @@ NamedScript void CrateHack()
     bool Hacking = true;
     int X = Random(25, 275);
     int Direction = (Random(1, 2) == 1 ? -1 : 1);
+    int Buttons;
+    int OldButtons;
+    long int XPBonus;
+    long int RankBonus;
     
     // Prevent the use input from leaking into the input handling below (aka exploding a crate immediately in your face)
     Delay(4);
@@ -280,8 +284,8 @@ NamedScript void CrateHack()
     
     while (Hacking)
     {
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
         
         SetHudSize(320, 240, false);
         
@@ -327,8 +331,8 @@ NamedScript void CrateHack()
         if (Buttons == BT_USE && OldButtons != BT_USE)
         {
             bool HitNothing = true;
-            long int XPBonus = XPTable[Player.Level] / 100l;
-            long int RankBonus = RankTable[Player.RankLevel] / 100l;
+            XPBonus = XPTable[Player.Level] / 100l;
+            RankBonus = RankTable[Player.RankLevel] / 100l;
             
             // Check Nodes
             for (int i = 0; i < MAX_NODES; i++)

@@ -2299,7 +2299,7 @@ NamedScript DECORATE void HellUnleashedStart()
     {
         if (!PlayerInGame(i)) continue;
         
-        ItemInfoPtr Item = GetRewardItem(MAX_DIFFICULTIES - 1);
+        ItemInfoPtr Item = GetRewardItem(MAX_DIFFICULTIES + 1);
         int ItemTID = UniqueTID();
         fixed X = GetActorX(CurrentLevel->PandoraBoxTID);
         fixed Y = GetActorY(CurrentLevel->PandoraBoxTID);

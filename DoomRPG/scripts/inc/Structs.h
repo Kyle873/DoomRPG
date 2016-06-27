@@ -353,6 +353,7 @@ struct ItemInfo_S
 
     int Price;
     int Rank;
+    int Rarity;
 
     // Sprite information
     struct
