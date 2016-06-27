@@ -1001,7 +1001,7 @@ NamedScript Type_OPEN void ShopSpecialHandler()
             Delay(1);
 
             // Pick an item
-            Category = (GetCVar("drpg_shopspecial_category") >= 0 ? GetCVar("drpg_shopspecial_category") : Random(0, ItemCategories - 1));
+            Category = (GetCVar("drpg_shopspecial_category") >= 0 ? GetCVar("drpg_shopspecial_category") : Random(0, (ItemCategories - 1)));
             Index = Random(0, ItemMax[Category] - 1);
 
             // We're not having any luck meeting the criteria, or the min/max value are impossible values to meet (0 / 0)

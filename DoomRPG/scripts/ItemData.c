@@ -17,28 +17,31 @@ ItemInfo RPGGlobal ItemData[ITEM_CATEGORIES][ITEM_MAX];
 
 bool RPGGlobal ItemRanksRemoved;
 ItemInfoPtr RewardList[MAX_DIFFICULTIES + 1][ITEM_CATEGORIES * ITEM_MAX];
-int RPGGlobal MaxRewards[MAX_DIFFICULTIES + 1];
 bool RPGGlobal RewardsInit;
+int RPGGlobal RewardsCount[(MAX_DIFFICULTIES + 1)];
 
 NamedScriptSync void PopulateRewards()
 {
+    int rarity;
+    int max;
+    int i, j;
     // Populate the reward list
-    for (int i = 0; i< MAX_DIFFICULTIES + 1; i++) MaxRewards[i] = 0;
-    for (int i = 0; i < ItemCategories; i++)
+    for (i = 0; i < (MAX_DIFFICULTIES + 1); i++) { RewardsCount[i] = 0; }
+    for (i = 0; i < ItemCategories; i++)
     {
         // Don't pick worthless ammo or loot
         if (i == 1 || i == 7)
             continue;
         
-        for (int j = 0; j < ItemMax[i]; j++)
+        for (j = 0; j < ItemMax[i]; j++)
         {
-            int rarity = ItemData[i][j].Rarity;
+            rarity = ItemData[i][j].Rarity;
             // Don't pick cheap stuff like a Pistol or Armor Bonus
             if (rarity == -1 || ItemData[i][j].Price <= 100)
                 continue;
-            
-            RewardList[rarity][MaxRewards[rarity]] = &ItemData[i][j];
-            ++MaxRewards[rarity];
+            max = RewardsCount[rarity];
+            RewardList[rarity][max] = &ItemData[i][j];
+            RewardsCount[rarity] = RewardsCount[rarity] + 1;
         }
     }
 }
@@ -50,7 +53,7 @@ NamedScriptSync bool SortRewards()
     int Instructions = 0;
     for (int i = 0; i < MAX_DIFFICULTIES + 1; i++)
     {
-        while (RewardIndex < MaxRewards[i] - 1)
+        while (RewardIndex < (RewardsCount[i] - 1))
         {
             if (RewardList[i][RewardIndex]->Price > RewardList[i][RewardIndex + 1]->Price)
             {
@@ -1093,7 +1096,7 @@ ItemInfoPtr GetRewardItem(int Difficulty)
         }
     }
       
-    Index = Random(0, (MaxRewards[Difficulty] - 1));
+    Index = Random(0, (RewardsCount[Difficulty] - 1));
     Reward = RewardList[Difficulty][Index];
     //Log("\CdDEBUG: \C-Reward Item %S\C- (%S) picked - Rarity %d Item %d", Reward->Name, Reward->Actor, Difficulty, Index);
     if (Reward->Actor == "DRPGTurretPart")

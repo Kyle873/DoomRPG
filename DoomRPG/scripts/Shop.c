@@ -622,7 +622,6 @@ void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
                 if (ItemPtr->CompatMods & RL_DEMON_MOD)
                     Player.WeaponMods[Index].Artifacts = CheckInventory(StrParam("%SDemonArtifacts", ItemPtr->Actor));
                 
-                
                 // Check DRLA set bonuses
                 CheckDRLASetWeapons();
             }
