@@ -23,7 +23,7 @@
 #include "Utils.h"
 
 // Version
-const str Version = "v0.10.0 Beta - Powered by GDCC!";
+const str Version = "v0.10.1 Beta - Powered by GDCC!";
 
 // Flags
 bool Transported;
