@@ -41,7 +41,7 @@ NamedScriptSync void PopulateRewards()
                 continue;
             max = RewardsCount[rarity];
             RewardList[rarity][max] = &ItemData[i][j];
-            RewardsCount[rarity] = RewardsCount[rarity] + 1;
+            RewardsCount[rarity]++;
         }
     }
 }
@@ -51,13 +51,14 @@ NamedScriptSync bool SortRewards()
 {
     int RewardIndex = 0;
     int Instructions = 0;
+    ItemInfoPtr Temp;
     for (int i = 0; i < MAX_DIFFICULTIES + 1; i++)
     {
         while (RewardIndex < (RewardsCount[i] - 1))
         {
             if (RewardList[i][RewardIndex]->Price > RewardList[i][RewardIndex + 1]->Price)
             {
-                ItemInfoPtr Temp = RewardList[i][RewardIndex];
+                Temp = RewardList[i][RewardIndex];
                 RewardList[i][RewardIndex] = RewardList[i][RewardIndex + 1];
                 RewardList[i][RewardIndex + 1] = Temp;
                 
@@ -651,7 +652,7 @@ NamedScript void BuildItemData()
             
             // Demolition Ammo Assembled Weapons
             ITEMDATA_DEF("RLDemolitionAmmoPistol",                  "Demolition Ammo Pistol \Cv[Assembled]\C-",             180000, -1, -1, "DPISX0", 11, 13);
-            ITEMDATA_DEF("RLDemolitionAmmoChaingun",                "Demolition Ammo Chaingun \Cv[Assembled]\C-",           150000, -1, -1, "BCHGX0", 27, 15);
+            ITEMDATA_DEF("RLDemolitionAmmoChaingun",                "Demolition Ammo Chaingun \Cv[Assembled]\C-",           150000, -1, -1, "DCHGX0", 27, 15);
             ITEMDATA_DEF("RLDemolitionAmmoBattleRifle",             "Demolition Ammo Battle Rifle \Cv[Assembled]\C-",       150000, -1, -1, "DEMRX0", 23, 15);
             ITEMDATA_DEF("RLDemolitionAmmoCombatPistol",            "Demolition Ammo Combat Pistol \Cv[Assembled]\C-",      160000, -1, -1, "DGLKX0", 10, 13);
             ITEMDATA_DEF("RLDemolitionAmmoDesertEagle",             "Demolition Ammo Handcannon \Cv[Assembled]\C-",         180000, -1, -1, "DDEAX0", 11, 14);
@@ -1043,10 +1044,10 @@ ItemInfoPtr GetRewardItem(int Difficulty)
     int Index = Random(SliceStart, (SliceStart + SliceLength) - 1);
     ItemInfoPtr Reward = RewardList[Index]; */
     ItemInfoPtr Reward;
-    int Index;
+    int Index, cap, rng;
     if (Difficulty < 10)
     {
-        int rng = Random(0, 99);
+        rng = Random(0, 99);
         
         if (rng < 20) Difficulty--; //unlucky, item will be a rank lower
         if (rng > 95) Difficulty++; //lucky, item will be a rank higher
@@ -1056,7 +1057,7 @@ ItemInfoPtr GetRewardItem(int Difficulty)
         //higher chance for modpacks
         if (CompatMode == COMPAT_DRLA && Difficulty > 1)
         {
-            int cap = 10;   //all modpacks
+            cap = 10;   //all modpacks
             if (Difficulty <= 4) cap = 9;   //exclude demon artifact
             if (Difficulty == 2) cap = 4;   //basic modpacks only
             
@@ -1070,7 +1071,7 @@ ItemInfoPtr GetRewardItem(int Difficulty)
         }
         if (Random(0, 99) < 20)    //stims/augs/turret
         {
-            int cap;
+            cap = 0;
             switch (Difficulty)
             {
                 case 0: cap = 8; break;

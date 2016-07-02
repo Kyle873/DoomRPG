@@ -894,19 +894,28 @@ NamedScript void HellSkillTransport(int player)
     }
     
     //Log("%d monsters", MonsterListLength);
+
+    fixed X, Y, Z;
+    int MonsterIndex;
+    fixed SpawnX;
+    fixed SpawnY;
+    int TID;
+    bool Success;
+    int SpawnTries;
+    int CurrentRadius;
     
     while (GetLevelInfo(LEVELINFO_KILLED_MONSTERS) < GetLevelInfo(LEVELINFO_TOTAL_MONSTERS))
     {
-        fixed X = GetActorX(0);
-        fixed Y = GetActorY(0);
-        fixed Z = GetActorZ(0);
-        int MonsterIndex;
-        fixed SpawnX;
-        fixed SpawnY;
-        int TID;
-        bool Success;
-        int SpawnTries;
-        int CurrentRadius;
+        X = GetActorX(0);
+        Y = GetActorY(0);
+        Z = GetActorZ(0);
+        MonsterIndex = 0;
+        SpawnX = 0.0;
+        SpawnY = 0.0;
+        TID = 0;
+        Success = false;
+        SpawnTries = 0;
+        CurrentRadius = 0;
         
         // Stop spawning if time is frozen
         while (IsTimeFrozen()) Delay(1);
@@ -1516,8 +1525,8 @@ NamedScript Type_UNLOADING void ResetMapEvent()
 bool SpawnEventActor(str Actor, int TID)
 {
     fixed Angle = GetActorAngle(Players(0).TID) + 0.5;
-    fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 128.0;
-    fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 128.0;
+    fixed X = GetActorX(Players(0).TID) + Cos(Angle) * 64.0;
+    fixed Y = GetActorY(Players(0).TID) + Sin(Angle) * 64.0;
     fixed Z = GetActorZ(Players(0).TID);
     bool Spawned = Spawn(Actor, X, Y, Z, TID, 0);
     
@@ -1796,9 +1805,11 @@ NamedScript void EnvironmentalHazardDamage()
 {
     Delay(32); // Initial buffer to allow players to Transport away if they don't have suits
     
+    int Damage;
+    
     while (CurrentLevel->HazardLevel)
     {
-        int Damage = 20;
+        Damage = 20;
 
         if (CurrentLevel->HazardLevel < 3)
             Damage = 5;
@@ -1949,6 +1960,8 @@ NamedScript void ThermonuclearBombEvent()
     // Set bomb's active state
     SetActorState(BombTID, "SpawnActive");
     
+    int DisarmCount;
+    
     // Bomb Loop
     while (CurrentLevel->BombTime > 0 && !BombDisarmed && !CurrentLevel->BombExplode)
     {
@@ -1979,7 +1992,7 @@ NamedScript void ThermonuclearBombEvent()
         }
         
         // Disarm the bomb if all keys are disarmed
-        int DisarmCount = 0;
+        DisarmCount = 0;
         for (int i = 0; i < MAX_NUKE_KEYS; i++)
             if (!CurrentLevel->BombKeyActive[i])
                 DisarmCount++;
@@ -2329,9 +2342,14 @@ NamedScript void HellUnleashedSpawnMonsters()
     
     Delay(1); // Maximize our instructions
     
+    int TID;
+    MonsterStatsPtr Stats;
+    bool Success;
+    
     for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
     {
-        int TID = UniqueTID();
+        TID = UniqueTID();
+        Success = false;
         Position *CurrentPosition = &((Position *)CurrentLevel->MonsterPositions.Data)[i];; // Totally leaving this typo here because IT'S CRYING OKAY, I AM TOO
         
         // Determine a monster
@@ -2341,17 +2359,17 @@ NamedScript void HellUnleashedSpawnMonsters()
         else
             Monster = &MonsterData[Random(0, MAX_DEF_MONSTERS - 1)];
         
-        bool Success = Spawn(Monster->Actor, CurrentPosition->X, CurrentPosition->Y, CurrentPosition->Z, TID, CurrentPosition->Angle);
+        Success = Spawn(Monster->Actor, CurrentPosition->X, CurrentPosition->Y, CurrentPosition->Z, TID, CurrentPosition->Angle);
         if (Success)
+        {
             Spawn("TeleportFog", CurrentPosition->X, CurrentPosition->Y, CurrentPosition->Z, 0, CurrentPosition->Angle);
-        
+            // Setup Stats
+            Stats = &Monsters[GetMonsterID(TID)];
+            Stats->Level += (int)CurrentLevel->LevelAdd;
+            Stats->NeedReinit = true;        
+        }
         // Stagger the loop here so that we can make monsters appear to spawn in semi-randomly
         Delay(Random(1, 10));
-        
-        // Setup Stats
-        MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
-        Stats->Level += (int)CurrentLevel->LevelAdd;
-        Stats->NeedReinit = true;
     }
 }
 
@@ -2404,10 +2422,11 @@ NamedScript void TeleportCracksEvent()
 {
     SetMusic("Cracks");
     
+    int X, InPortalTID, OutPortalTID;
     // Shuffle positions
     for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
     {
-        int X = Random(0, CurrentLevel->MonsterPositions.Position - 1);
+        X = Random(0, CurrentLevel->MonsterPositions.Position - 1);
         Position TempPosition;
         
         TempPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
@@ -2427,11 +2446,11 @@ NamedScript void TeleportCracksEvent()
             
             Position Source = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
             Position Destination = ((Position *)CurrentLevel->MonsterPositions.Data)[i + 1];
-            int InPortalTID = UniqueTID();
+            InPortalTID = UniqueTID();
             if (!Spawn("DRPGTeleportCrackIn", Source.X, Source.Y, Source.Z, InPortalTID, Source.Angle * 256))
                 continue;
             
-            int OutPortalTID = UniqueTID();
+            OutPortalTID = UniqueTID();
             if (!Spawn("DRPGTeleportCrackOut", Destination.X, Destination.Y, Destination.Z, OutPortalTID, Destination.Angle * 256))
             {
                 Thing_Remove(InPortalTID);
@@ -2471,6 +2490,8 @@ NamedScript void TeleporterCrackView(int PlayerID)
     fixed ViewTime = 0;
     fixed Intensity = RandomFixed(1.0, 5.0);
     
+    fixed ViewCycle, ViewDist, Angle1, Angle2;
+    
     Start:
     
     if (ViewTime >= ViewTimeMax) return;
@@ -2478,10 +2499,10 @@ NamedScript void TeleporterCrackView(int PlayerID)
     SetHudSize(640, 480, true);
     SetFont(StrParam("P%iVIEW", PlayerID + 1));
     
-    fixed ViewCycle = Timer() / (120.0 - (10.0 * Intensity));
-    fixed ViewDist = 25.0 * Intensity * (ViewTime++ / ViewTimeMax);
-    fixed Angle1 = RandomFixed(0.0, 1.0);
-    fixed Angle2 = RandomFixed(0.0, 1.0);
+    ViewCycle = Timer() / (120.0 - (10.0 * Intensity));
+    ViewDist = 25.0 * Intensity * (ViewTime++ / ViewTimeMax);
+    Angle1 = RandomFixed(0.0, 1.0);
+    Angle2 = RandomFixed(0.0, 1.0);
     
     // View Intensification
     HudMessage("A");
@@ -2506,6 +2527,7 @@ NamedScript void TeleporterCrack(int Source, int Destination)
     bool DRLA = (CompatMode == COMPAT_DRLA);
     int SpawnEnemyTimer = 0;
     bool CloseToPlayer;
+    str TempMonster;
     
     Start:
     CloseToPlayer = false;
@@ -2521,7 +2543,7 @@ NamedScript void TeleporterCrack(int Source, int Destination)
     
     if (++SpawnEnemyTimer >= 263 && Random(1, 4096) == 1 && CloseToPlayer)
     {
-        str TempMonster;
+        TempMonster = "";
         if (DRLA)
             TempMonster = "RLArmageddonPainElemental";
         else
@@ -2819,13 +2841,17 @@ NamedScript void SinstormSpawner(int PlayerTID)
 {
     SetActivator(PlayerTID);
     
+    bool Success;
+    int Tries;
+    int TID;
+    
     while (true)
     {
         Delay(35 * 45);
         
-        bool Success = false;
-        int Tries = 10;
-        int TID = UniqueTID();
+        Success = false;
+        Tries = 10;
+        TID = UniqueTID();
         
         while (Tries-- > 0)
         {
@@ -2909,15 +2935,18 @@ NamedScript void FeedingFrenzyEvent()
     for (int i = 0; i < MAX_PLAYERS; i++)
         FeedingFrenzyVisualHorror(i);
     
+    int SpotTID;
+    bool VisibleToPlayer;
+    
     while (ThingCountName("RLArmageddonLostSoulRPG", 0) < 10)
     {
         Position SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[Random(0, CurrentLevel->MonsterPositions.Position)];
         
-        int SpotTID = UniqueTID();
+        SpotTID = UniqueTID();
         
         Spawn("MapSpot", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, SpotTID, SpawnPosition.Angle * 256);
         
-        bool VisibleToPlayer = false;
+        VisibleToPlayer = false;
         
         for (int i = 0; i < MAX_PLAYERS; i++)
             if (CheckSight(SpotTID, Players(i).TID, CSF_NOBLOCKALL))
@@ -2948,11 +2977,11 @@ NamedScript void FeedingFrenzyEvent()
             
             Position SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
             
-            int SpotTID = UniqueTID();
+            SpotTID = UniqueTID();
             
             Spawn("MapSpot", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, SpotTID, SpawnPosition.Angle * 256);
             
-            bool VisibleToPlayer = false;
+            VisibleToPlayer = false;
             
             for (int i = 0; i < MAX_PLAYERS; i++)
                 if (CheckSight(SpotTID, Players(i).TID, CSF_NOBLOCKALL))
@@ -3162,6 +3191,9 @@ NamedScript void WhispersofDarknessVisionIntensifier(int PlayerID)
     int MindblastTime = 1;
     int MindblastTimeMax = 1;
     bool ShowOvermind = false;
+    Position SpawnPosition;
+    int SpotTID;
+    bool VisibleToPlayer;
     
     Start:
     
@@ -3196,7 +3228,7 @@ NamedScript void WhispersofDarknessVisionIntensifier(int PlayerID)
         {
             for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
             {
-                Position SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+                SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
                 
                 if (!Random(0, 7))
                     continue;
@@ -3210,13 +3242,13 @@ NamedScript void WhispersofDarknessVisionIntensifier(int PlayerID)
             ShowOvermind = true;
             for (int i = 0; i < CurrentLevel->MonsterPositions.Position; i++)
             {
-                Position SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
+                SpawnPosition = ((Position *)CurrentLevel->MonsterPositions.Data)[i];
                 
-                int SpotTID = UniqueTID();
+                SpotTID = UniqueTID();
                 
                 Spawn("MapSpot", SpawnPosition.X, SpawnPosition.Y, SpawnPosition.Z, SpotTID, SpawnPosition.Angle * 256);
                 
-                bool VisibleToPlayer = false;
+                VisibleToPlayer = false;
                 
                 for (int i = 0; i < MAX_PLAYERS; i++)
                     if (CheckSight(SpotTID, Players(i).TID, CSF_NOBLOCKALL))

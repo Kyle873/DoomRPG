@@ -67,6 +67,8 @@ str const ArenaMonsters[MAX_DEF_MONSTERS] =
 // Arena Script
 NamedScript MapSpecial void ArenaLoop()
 {
+    int BonusRandomizer, Buttons, OldButtons;
+    bool Ready;
     ArenaSetEnvironment(AEVENT_NONE);
     
     // Arena Loop
@@ -85,7 +87,7 @@ NamedScript MapSpecial void ArenaLoop()
         // Arena Status Handling
         if (ArenaState == ARENA_INTERMISSION)
         {
-            int BonusRandomizer = Random(-10, ABONUS_MAX - 1);
+            BonusRandomizer = Random(-10, ABONUS_MAX - 1);
 
             ArenaMod = -1;
             ArenaGetBonus(BonusRandomizer);
@@ -94,9 +96,9 @@ NamedScript MapSpecial void ArenaLoop()
         }
         else if (ArenaState == ARENA_WAITING)
         {
-            int Buttons = GetPlayerInput(ArenaPlayerNumber, INPUT_BUTTONS);
-            int OldButtons = GetPlayerInput(ArenaPlayerNumber, INPUT_OLDBUTTONS);
-            bool Ready = true;
+            Buttons = GetPlayerInput(ArenaPlayerNumber, INPUT_BUTTONS);
+            OldButtons = GetPlayerInput(ArenaPlayerNumber, INPUT_OLDBUTTONS);
+            Ready = true;
             
             SetHudSize(0, 0, false);
             SetFont("BIGFONT");
@@ -236,6 +238,8 @@ NamedScript MapSpecial void ArenaChooseBonus()
 {
     int BonusChoice = 1;
     bool CanChooseKey = false;
+    fixed X, Y;
+    int Buttons, OldButtons;
     
     // There's a 1/4 chance you can use Drop Key
     if (Random(1, 4) == 1) CanChooseKey = true;
@@ -244,10 +248,10 @@ NamedScript MapSpecial void ArenaChooseBonus()
     
     while (true)
     {
-        fixed X = 48.1;
-        fixed Y = 50.0;
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        X = 48.1;
+        Y = 50.0;
+        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
         
         SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
         
@@ -432,18 +436,22 @@ void ArenaGetBonus(int Bonus)
 
 void DropArenaItem(str Item)
 {
+    int TID;
+    bool Success;
+    fixed X, Y, Z, XSpeed, YSpeed, ZSpeed;
+    
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
         if (!PlayerInGame(i)) continue;
         
-        int TID = UniqueTID();
-        bool Success = false;
-        fixed X = GetActorX(Players(i).TID);
-        fixed Y = GetActorY(Players(i).TID);
-        fixed Z = GetActorCeilingZ(Players(i).TID) - 32.0;
-        fixed XSpeed = GetCVarFixed("drpg_monster_dropdist");
-        fixed YSpeed = GetCVarFixed("drpg_monster_dropdist");
-        fixed ZSpeed = 8.0;
+        TID = UniqueTID();
+        Success = false;
+        X = GetActorX(Players(i).TID);
+        Y = GetActorY(Players(i).TID);
+        Z = GetActorCeilingZ(Players(i).TID) - 32.0;
+        XSpeed = GetCVarFixed("drpg_monster_dropdist");
+        YSpeed = GetCVarFixed("drpg_monster_dropdist");
+        ZSpeed = 8.0;
         
         SpawnForced("DRPGTurretTeleport", X, Y, Z, 0, 0);
         Success = SpawnForced(Item, X, Y, Z, TID, 0);
@@ -575,9 +583,11 @@ void ArenaSpawnMobs()
     
     if (Boss)
     {
+        int SpotTID;
+        
         for (int i = 0; i < 32; i++)
         {
-            int SpotTID = ArenaSpotSpawns + Random(0, 30);
+            SpotTID = ArenaSpotSpawns + Random(0, 30);
             
             if (SpawnSpotFacing(ArenaMonsters[Random(15, 16)], SpotTID, ArenaMonstersTID))
             {

@@ -402,8 +402,9 @@ NamedScript OptionalArgs(1) GUIControl *GUIControlByName(GUIPanel *Panel, str Na
 {
     for (int i = 0; i < Panel->NumControls; i++)
     {
-        if (!StrCmp(Name, Panel->Controls[i]->Name) && (!Kind || Kind == Panel->Controls[i]->Kind))
-            return Panel->Controls[i];
+        if (!Kind || Kind == Panel->Controls[i]->Kind)
+            if (!StrCmp(Name, Panel->Controls[i]->Name))
+                return Panel->Controls[i];
     }
     
     return NULL;
@@ -895,9 +896,9 @@ NamedScript void UpdateBar(GUIBar *Bar)
         //PrintSprite(Texture, 0, ++X, Y, 0.05);
     }
         
-    
+    bool MouseOver = InRegion(X, Y, Width, Height);
 //Hover
-    if (InRegion(X, Y, Width, Height))
+    if (MouseOver)
     {
         //OnHover
         if (Bar->Control.Hover)
@@ -908,12 +909,12 @@ NamedScript void UpdateBar(GUIBar *Bar)
     }
     
     // Context Menu
-    if (InRegion(X, Y, Width, Height) && Player.GUI.Mouse.RightButton && Bar->Control.ContextMenu != NULL)
+    if (MouseOver && Player.GUI.Mouse.RightButton && Bar->Control.ContextMenu != NULL)
         Player.GUI.Mouse.ActiveContextMenu = Bar->Control.ContextMenu;
     
     // OnClick Event
     if (GetCVar("drpg_debug_gui"))
-        if (InRegion(X + 4, Y + 8, Width, Height) && Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.ActiveContextMenu == NULL)
+        if (MouseOver && Player.GUI.Mouse.LeftButton && Player.GUI.Mouse.ActiveContextMenu == NULL)
             GUIEditPosition(&Bar->Control);
 }
 

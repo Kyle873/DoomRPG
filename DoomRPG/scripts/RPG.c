@@ -952,17 +952,19 @@ NamedScript void AutosaveHandler()
 
 NamedScript Type_OPEN void ShopSpecialHandler()
 {
+    bool ValidItem;
+    int Tries, MinValue, MaxValue, Category, Index;
     Start:
 
     // Reset the item
     if (ShopSpecialTimer <= 0)
     {
-        bool ValidItem = false;
-        int Tries = 0;
-        int MinValue = 0;
-        int MaxValue = 0;
-        int Category = 0;
-        int Index = 0;
+        ValidItem = false;
+        Tries = 0;
+        MinValue = 0;
+        MaxValue = 0;
+        Category = 0;
+        Index = 0;
 
         // Calculate min and max based on settings
         switch (GetCVar("drpg_shopspecial_type"))
@@ -1077,6 +1079,8 @@ NamedScript Type_OPEN void ShopSpecialHandler()
 // Handles the Items dynamic array and associated behavior
 NamedScript void ItemHandler()
 {
+    fixed Dist, Height, Divisor, Angle, Pitch, Amount, X, Y, Z;
+
     // Create the Items Array
     for (int i = 0; i < MAX_ITEMS; i++)
     {
@@ -1115,15 +1119,11 @@ NamedScript void ItemHandler()
                 // Skip this player if they are dead
                 if (GetActorProperty(Players(j).TID, APROP_Health) <= 0) continue;
 
-                fixed Dist = Distance(ItemTIDs[i], Players(j).TID);
-                fixed Height = GetActorPropertyFixed(Players(j).TID, APROP_Height);
-                fixed Divisor = (Dist - 16.0) + Dist;
-                fixed Angle = VectorAngle (GetActorX(Players(j).TID) - GetActorX(ItemTIDs[i]), GetActorY(Players(j).TID) - GetActorY(ItemTIDs[i]));
-                fixed Pitch = VectorAngle (Dist, GetActorZ(Players(j).TID) - GetActorZ(ItemTIDs[i]));
-                fixed Amount;
-                fixed X;
-                fixed Y;
-                fixed Z;
+                Dist = Distance(ItemTIDs[i], Players(j).TID);
+                Height = GetActorPropertyFixed(Players(j).TID, APROP_Height);
+                Divisor = (Dist - 16.0) + Dist;
+                Angle = VectorAngle (GetActorX(Players(j).TID) - GetActorX(ItemTIDs[i]), GetActorY(Players(j).TID) - GetActorY(ItemTIDs[i]));
+                Pitch = VectorAngle (Dist, GetActorZ(Players(j).TID) - GetActorZ(ItemTIDs[i]));
 
                 // Calculate the amount based on close versus far distance
                 if (Dist < 16.0)
@@ -1154,6 +1154,8 @@ NamedScript void ItemHandler()
 // Initializes an item and adds it to the Items array
 NamedScript DECORATE void ItemInit()
 {
+    int TID;
+    
     // Delay while the Items array is being initialized
     while (!ItemTIDsInitialized) Delay(1);
 
@@ -1172,7 +1174,7 @@ NamedScript DECORATE void ItemInit()
             // Doesn't have a TID, so assign it one
             if (ActivatorTID() == 0)
             {
-                int TID = UniqueTID();
+                TID = UniqueTID();
                 ItemTIDs[i] = TID;
                 Thing_ChangeTID(0, TID);
             }
@@ -1327,7 +1329,7 @@ NamedScript OptionalArgs(1) void DynamicLootGenerator(str Actor, int MaxItems)
 
         Iterations++;
 
-        if (Iterations % 100 == 0) Delay(1);
+        if (Iterations % 50 == 0) Delay(1);
 
         /*if (Iterations == 2000) // Trick to restart ourselves if we ran out of iterations
         {
@@ -1360,6 +1362,7 @@ NamedScript void FocusMode()
         RegenWindupSpeed = 35;
     int StartWindupSpeed = RegenWindupSpeed;
     int RegenDelay = (RegenWindupSpeed * (Player.EPTime / 4)) / StartWindupSpeed;
+    int Buttons, Percent;
 
     // [KS] Someone did this!
     if (GetActorProperty(0, APROP_Health) <= 0) return;
@@ -1371,8 +1374,8 @@ NamedScript void FocusMode()
 
     while (Player.Focusing)
     {
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int Percent = 100 - (RegenWindupSpeed * 100 / StartWindupSpeed);
+        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        Percent = 100 - (RegenWindupSpeed * 100 / StartWindupSpeed);
         fixed X = GetActorX(0) + Cos((fixed)Timer() / 64.0) * 32.0;
         fixed Y = GetActorY(0) + Sin((fixed)Timer() / 64.0) * 32.0;
         fixed Z = GetActorZ(0);
@@ -1732,9 +1735,11 @@ NamedScript void Loadout_GiveAugs()
 {
     // Active Augs
     int ActiveAugs = 0;
+    int Type;
+    
     while (ActiveAugs < GetActivatorCVar("drpg_start_aug_amount"))
     {
-        int Type = Random(0, AUG_MAX - 1);
+        Type = Random(0, AUG_MAX - 1);
 
         // Skip this aug if it's already active
         if (Player.Augs.Level[Type] > 0) continue;
@@ -1807,13 +1812,14 @@ NamedScript void Loadout_GiveShieldAccessories()
     // Shield Accessories
     int TotalAccessories = GetActivatorCVar("drpg_start_shield_amount_acc");
     int Accessories = 0;
+    int Category;
     if (GetActivatorCVar("drpg_start_shield_type_acc") >= 0)
         if (TotalAccessories > Loadout_AccessoryCount[GetActivatorCVar("drpg_start_shield_type_acc")])
             TotalAccessories = Loadout_AccessoryCount[GetActivatorCVar("drpg_start_shield_type_acc")];
 
     while (Accessories < TotalAccessories)
     {
-        int Category = Random(0, LOADOUT_SHIELDACCS - 1);
+        Category = Random(0, LOADOUT_SHIELDACCS - 1);
 
         // Force the category type if the CVAR is set
         if (GetActivatorCVar("drpg_start_shield_type_acc") >= 0)
@@ -1869,10 +1875,11 @@ NamedScript void Loadout_GiveVials()
     int Vials = 0;
     int MaxVials = GetActivatorCVar("drpg_start_stim_vials");
     if (MaxVials > 3000) MaxVials = 3000;
+    int Type;
 
     while (Vials < MaxVials)
     {
-        int Type = Random(0, STIM_MAX - 1);
+        Type = Random(0, STIM_MAX - 1);
         bool Maxed = true;
 
         // Check to make sure all the vials aren't maxed
@@ -1992,11 +1999,12 @@ NamedScript void Loadout_GiveDRLAEquipment()
         }
 
     // Mod Packs
+    int Type;
     if (PlayerClass(0) == 2)
         ModPackMax--;
     while (ModPackCount < ModPackMax)
     {
-        int Type = Random(0, LOADOUT_DRLAMODPACKS - 1);
+        Type = Random(0, LOADOUT_DRLAMODPACKS - 1);
 
         // Stop if we're not the technician and we try and give over 4 mods
         if (PlayerClass(0) != 2 && ModPackCount >= 4) break;

@@ -58,11 +58,15 @@ NamedScript Type_ENTER void StatusEffectHUD()
     fixed X = GetActivatorCVar("drpg_stateffect_x");
     fixed Y = GetActivatorCVar("drpg_stateffect_y");
 
+    str Icon;
+    str Fill;
+    int TimerPercent;
+    
     for (int i = 0; i < SE_MAX; i++)
     {
-        str Icon;
-        str Fill;
-        int TimerPercent;
+        Icon = "";
+        Fill = "";
+        TimerPercent = 0;
 
         switch (i)
         {
@@ -155,6 +159,8 @@ NamedScript Type_ENTER void OverviewHUD()
     // Misc
     int CreditColor;
 
+    fixed X, Y;
+    
     Start:
 
     // If we're on the title map, terminate
@@ -167,8 +173,8 @@ NamedScript Type_ENTER void OverviewHUD()
     Medkit.Value = Player.Medkit;
     CreditColor = (Timer() / (35 * 60)) % 6;
 
-    fixed X = GetActivatorCVar("drpg_credits_x");
-    fixed Y = GetActivatorCVar("drpg_credits_y");
+    X = GetActivatorCVar("drpg_credits_x");
+    Y = GetActivatorCVar("drpg_credits_y");
 
     SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
@@ -249,6 +255,8 @@ NamedScript Type_ENTER void ComboHUD()
     InterpData Bonus;
     Bonus.TimerMaxCap = 1;
 
+    fixed X, Y;
+    
     Start:
 
     // If we're on the title map, terminate
@@ -256,8 +264,8 @@ NamedScript Type_ENTER void ComboHUD()
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
-    fixed X = GetActivatorCVar("drpg_combo_x");
-    fixed Y = GetActivatorCVar("drpg_combo_y");
+    X = GetActivatorCVar("drpg_combo_x");
+    Y = GetActivatorCVar("drpg_combo_y");
 
     SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
@@ -322,12 +330,16 @@ NamedScript Type_ENTER void ComboHUD()
 
 NamedScript Type_ENTER void SkillHUD()
 {
+    fixed X, Y;
+    int Cost;
+    str Color;
+    
     Start: NOP;
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
-    fixed X = GetActivatorCVar("drpg_skill_x");
-    fixed Y = GetActivatorCVar("drpg_skill_y");
+    X = GetActivatorCVar("drpg_skill_x");
+    Y = GetActivatorCVar("drpg_skill_y");
 
     SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
@@ -339,8 +351,8 @@ NamedScript Type_ENTER void SkillHUD()
             SkillPtr CurrentSkill = &Skills[Player.SkillCategory[Player.SkillSelected]][Player.SkillIndex[Player.SkillSelected]];
             SkillLevelInfo *SkillLevel = &Player.SkillLevel[Player.SkillCategory[Player.SkillSelected]][Player.SkillIndex[Player.SkillSelected]];
 
-            int Cost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel);
-            str Color = "LightBlue";
+            Cost = ScaleEPCost(CurrentSkill->Cost * SkillLevel->CurrentLevel);
+            Color = "LightBlue";
 
             if (Player.EP < Cost)
                 Color = "Red";
@@ -365,19 +377,22 @@ NamedScript Type_ENTER void SkillHUD()
 
 NamedScript Type_ENTER void StimHUD()
 {
+    fixed X, Y;
+    int TimerPercent;
+    
     Start: NOP;
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
-    fixed X = GetActivatorCVar("drpg_stim_x");
-    fixed Y = GetActivatorCVar("drpg_stim_y");
+    X = GetActivatorCVar("drpg_stim_x");
+    Y = GetActivatorCVar("drpg_stim_y");
 
     SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
     // Stat Boosts
     if (Player.Stim.Timer > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
-        int TimerPercent = (int)(((fixed)Player.Stim.Timer / (fixed)Player.Stim.TimerMax) * 100.0);
+        TimerPercent = (int)(((fixed)Player.Stim.Timer / (fixed)Player.Stim.TimerMax) * 100.0);
         if (TimerPercent > 100)
             TimerPercent = 100;
 
@@ -408,7 +423,7 @@ NamedScript Type_ENTER void StimHUD()
     for (int i = StimPowerupStart; i < StimPowerupEnd; i++)
         if ((Player.Stim.ActiveBonus[i] && Player.Stim.PowerupTimer[i] > 0) || GetActivatorCVar("drpg_hud_preview"))
         {
-            int TimerPercent = (int)(((fixed)Player.Stim.PowerupTimer[i] / (fixed)Player.Stim.PowerupTimerMax[i]) * 100.0);
+            TimerPercent = (int)(((fixed)Player.Stim.PowerupTimer[i] / (fixed)Player.Stim.PowerupTimerMax[i]) * 100.0);
             if (TimerPercent > 100)
                 TimerPercent = 100;
 
@@ -430,13 +445,16 @@ NamedScript Type_ENTER void StimHUD()
 
 NamedScript Type_ENTER void MissionHUD()
 {
+    int OldAmount;
+    fixed X, Y;
+    
     Start: NOP;
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
-    int OldAmount = Player.Mission.Current;
-    fixed X = GetActivatorCVar("drpg_mission_x");
-    fixed Y = GetActivatorCVar("drpg_mission_y");
+    OldAmount = Player.Mission.Current;
+    X = GetActivatorCVar("drpg_mission_x");
+    Y = GetActivatorCVar("drpg_mission_y");
 
     Delay(1);
 
@@ -493,19 +511,22 @@ NamedScript Type_ENTER void MissionHUD()
 
 NamedScript Type_ENTER void AuraTimerHUD()
 {
+    fixed Offset, X, Y, Angle, XOff, YOff;
+    int AuraCount, AuraAdd, Radius;
+    
     Start: NOP;
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
-    fixed Offset = 0;
+    Offset = 0;
 
     while (PlayerHasAura(PlayerNumber()) || GetActivatorCVar("drpg_hud_preview"))
     {
-        fixed X = GetActivatorCVar("drpg_auratimer_x");
-        fixed Y = GetActivatorCVar("drpg_auratimer_y");
-        int AuraCount = 0;
-        int AuraAdd = 0;
-        int Radius = 16;
+        X = GetActivatorCVar("drpg_auratimer_x");
+        Y = GetActivatorCVar("drpg_auratimer_y");
+        AuraCount = 0;
+        AuraAdd = 0;
+        Radius = 16;
 
         SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
@@ -540,9 +561,9 @@ NamedScript Type_ENTER void AuraTimerHUD()
         for (int i = 0; i < AURA_MAX; i++)
             if (Player.Aura.Type[i].Active || GetActivatorCVar("drpg_hud_preview"))
             {
-                fixed Angle = -0.25 + ((1.0 / AuraCount) * AuraAdd++) + Offset;
-                fixed XOff = X + (Radius * Cos(Angle));
-                fixed YOff = Y + (Radius * Sin(Angle)) + 32.0;
+                Angle = -0.25 + ((1.0 / AuraCount) * AuraAdd++) + Offset;
+                XOff = X + (Radius * Cos(Angle));
+                YOff = Y + (Radius * Sin(Angle)) + 32.0;
                 PrintSpriteAlpha(AuraIcons[i], 0, (int)XOff, (int)YOff, 0.05, 0.75);
             }
 
@@ -558,20 +579,25 @@ NamedScript Type_ENTER void AuraTimerHUD()
 
 NamedScript Type_ENTER void PowerupHUD()
 {
+    fixed BaseX, BaseY, X, Y;
+    int GridCount, InvulnTime, InvisTime, ShadowTime, GhostTime, ActualInvisTime, Lives;
+    int FreezeTime, LightAmpPowerupTime, LightAmpTime, IronFeetPowerTime, IronFeetTime;
+    bool HaveIronFeet;
+    
     Start: NOP;
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
-    fixed BaseX = GetActivatorCVar("drpg_powerup_x");
-    fixed BaseY = GetActivatorCVar("drpg_powerup_y");
-    fixed X = BaseX;
-    fixed Y = BaseY;
-    int GridCount = 0;
+    BaseX = GetActivatorCVar("drpg_powerup_x");
+    BaseY = GetActivatorCVar("drpg_powerup_y");
+    X = BaseX;
+    Y = BaseY;
+    GridCount = 0;
 
     SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
     // Invulnerability
-    int InvulnTime = GetActorPowerupTics(0, "PowerInvulnerable");
+    InvulnTime = GetActorPowerupTics(0, "PowerInvulnerable");
     if (InvulnTime > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
@@ -588,12 +614,12 @@ NamedScript Type_ENTER void PowerupHUD()
     }
 
     // Invisibility
-    int InvisTime = GetActorPowerupTics(0, "PowerInvisibility");
-    int ShadowTime = GetActorPowerupTics(0, "PowerShadow");
-    int GhostTime = GetActorPowerupTics(0, "PowerGhost");
+    InvisTime = GetActorPowerupTics(0, "PowerInvisibility");
+    ShadowTime = GetActorPowerupTics(0, "PowerShadow");
+    GhostTime = GetActorPowerupTics(0, "PowerGhost");
     if (InvisTime > 0 || ShadowTime > 0 || GhostTime > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
-        int ActualInvisTime;
+        ActualInvisTime = 0;
         if (InvisTime > 0)
             ActualInvisTime = InvisTime;
         else if (ShadowTime > 0)
@@ -615,7 +641,7 @@ NamedScript Type_ENTER void PowerupHUD()
     }
 
     // Time Freeze
-    int FreezeTime = GetActorPowerupTics(0, "PowerTimeFreezer");
+    FreezeTime = GetActorPowerupTics(0, "PowerTimeFreezer");
     if (FreezeTime > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
@@ -648,8 +674,8 @@ NamedScript Type_ENTER void PowerupHUD()
     }
 
     // Light Amp
-    int LightAmpPowerupTime = GetActorPowerupTics(0, "PowerLightAmp");
-    int LightAmpTime = LightAmpPowerupTime;
+    LightAmpPowerupTime = GetActorPowerupTics(0, "PowerLightAmp");
+    LightAmpTime = LightAmpPowerupTime;
     if (LightAmpTime > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         SetFont("SMALLFONT");
@@ -705,9 +731,9 @@ NamedScript Type_ENTER void PowerupHUD()
     }
 
     // Iron Feet
-    bool HaveIronFeet = false;
-    int IronFeetPowerTime = GetActorPowerupTics(0, "PowerIronFeet");
-    int IronFeetTime = IronFeetPowerTime;
+    HaveIronFeet = false;
+    IronFeetPowerTime = GetActorPowerupTics(0, "PowerIronFeet");
+    IronFeetTime = IronFeetPowerTime;
     if (IronFeetTime > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         if (GridCount > 0)
@@ -723,7 +749,7 @@ NamedScript Type_ENTER void PowerupHUD()
     }
 
     // 1-Ups
-    int Lives = CheckInventory("DRPGLife");
+    Lives = CheckInventory("DRPGLife");
     if (Lives > 0 || GetActivatorCVar("drpg_hud_preview"))
     {
         if (HaveIronFeet)
@@ -755,12 +781,16 @@ NamedScript Type_ENTER void EventHUD()
         "NKEYI0"
     };
 
+    fixed X, Y;
+    int KeyOffset;
+    str GeneratorStatus;
+    
     Start: NOP;
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
-    fixed X = GetActivatorCVar("drpg_event_x");
-    fixed Y = GetActivatorCVar("drpg_event_y");
+    X = GetActivatorCVar("drpg_event_x");
+    Y = GetActivatorCVar("drpg_event_y");
 
     SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
@@ -771,7 +801,7 @@ NamedScript Type_ENTER void EventHUD()
         HudMessage("\CgT - %S", FormatTime(CurrentLevel->BombTime));
         EndHudMessage(HUDMSG_PLAIN, NUKE_ID, "Red", X + 0.1, Y + 0.1, 0.05);
 
-        int KeyOffset = 0;
+        KeyOffset = 0;
         for (int i = 0; i < MAX_NUKE_KEYS; i++)
         {
             // Skip drawing this key if it's disabled
@@ -806,7 +836,7 @@ NamedScript Type_ENTER void EventHUD()
     // Environmental Hazard
     if (CurrentLevel->Event == MAPEVENT_TOXICHAZARD && !CurrentLevel->EventCompleted)
     {
-        str GeneratorStatus = "\CgStopped\C-";
+        GeneratorStatus = "\CgStopped\C-";
         if (CurrentLevel->GeneratorFuel > 0)
             GeneratorStatus = "\CdRunning\C-";
         SetFont("BIGFONT");
@@ -847,14 +877,16 @@ NamedScript Type_ENTER void EventHUD()
 
 NamedScript Type_ENTER void CoopViewHUD()
 {
+    fixed X, Y;
+    
     Start:
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
     while (Player.PlayerView != PlayerNumber())
     {
-        fixed X = GetActivatorCVar("drpg_coopview_x");
-        fixed Y = GetActivatorCVar("drpg_coopview_y");
+        X = GetActivatorCVar("drpg_coopview_x");
+        Y = GetActivatorCVar("drpg_coopview_y");
 
         SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
@@ -872,14 +904,17 @@ NamedScript Type_ENTER void CoopViewHUD()
 
 NamedScript Type_ENTER void MultiplayerHUD()
 {
+    fixed X, Y, Alpha;
+    int HealthPercent, ShieldPercent;
+    
     Start:
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
     while ((InMultiplayer && GetActivatorCVar("drpg_multiplayer_hud")) || GetActivatorCVar("drpg_hud_preview"))
     {
-        fixed X = GetActivatorCVar("drpg_multiplayer_x");
-        fixed Y = GetActivatorCVar("drpg_multiplayer_y");
+        X = GetActivatorCVar("drpg_multiplayer_x");
+        Y = GetActivatorCVar("drpg_multiplayer_y");
 
         SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
@@ -888,9 +923,9 @@ NamedScript Type_ENTER void MultiplayerHUD()
             // Skip this player if they aren't in-game
             if (!PlayerInGame(i)) continue;
 
-            int HealthPercent = (int)(((fixed)Players(i).ActualHealth / (fixed)Players(i).HealthMax) * 100.0);
-            int ShieldPercent = (int)(((fixed)Players(i).Shield.Charge / (fixed)Players(i).Shield.Capacity) * 100.0);
-            fixed Alpha = 1.0;
+            HealthPercent = (int)(((fixed)Players(i).ActualHealth / (fixed)Players(i).HealthMax) * 100.0);
+            ShieldPercent = (int)(((fixed)Players(i).Shield.Charge / (fixed)Players(i).Shield.Capacity) * 100.0);
+            Alpha = 1.0;
 
             // Health Critical
             if (HealthPercent <= 10)
@@ -939,23 +974,26 @@ NamedScript Type_ENTER void TurretHUD()
     InterpData Health;
     Health.TimerMaxCap = 2;
 
+    fixed X, Y;
+    str AmmoIcon;
+    int Ammo[TW_MAX];
+    
     Start:
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
 
     while (Player.Turret.Active || Player.Turret.Maintenance || GetActivatorCVar("drpg_hud_preview"))
     {
-        fixed X = GetActivatorCVar("drpg_turret_x");
-        fixed Y = GetActivatorCVar("drpg_turret_y");
-        int Ammo[TW_MAX] =
-        {
-            Player.Turret.BulletAmmo,
-            Player.Turret.ShellAmmo,
-            Player.Turret.RocketAmmo,
-            Player.Turret.PlasmaAmmo,
-            Player.Turret.RailAmmo
-        };
-        str AmmoIcon = "";
+        X = GetActivatorCVar("drpg_turret_x");
+        Y = GetActivatorCVar("drpg_turret_y");
+
+        Ammo[TW_BULLET] = Player.Turret.BulletAmmo;
+        Ammo[TW_PELLET] = Player.Turret.ShellAmmo;
+        Ammo[TW_ROCKET] = Player.Turret.RocketAmmo;
+        Ammo[TW_PLASMA] = Player.Turret.PlasmaAmmo;
+        Ammo[TW_RAILGUN] = Player.Turret.RailAmmo;
+
+        AmmoIcon = "";
 
         SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
@@ -1002,7 +1040,7 @@ NamedScript Type_ENTER void TurretHUD()
             EndHudMessage(HUDMSG_PLAIN, 0, "Yellow", X + 24.1, Y, 0.05);
             if (Player.Turret.Weapon != TW_NONE)
             {
-                HudMessage("%d", Ammo[Player.Turret.Weapon - 1]);
+                HudMessage("%d", Ammo[Player.Turret.Weapon]);
                 EndHudMessage(HUDMSG_PLAIN, 0, AmmoColors[Player.Turret.Weapon - 1], X + 24.1, Y + 16.0, 0.05);
             }
         }
@@ -1042,7 +1080,8 @@ NamedScript Type_ENTER void StatHUD()
     };
 
     bool Change[STAT_MAX];
-
+    fixed X, Y;
+    
     Start:
 
     if (Player.GUI.Open) { Delay(1); goto Start;}
@@ -1053,8 +1092,8 @@ NamedScript Type_ENTER void StatHUD()
     // If we're on the title map, terminate
     if (InTitle) return;
 
-    fixed X = GetActivatorCVar("drpg_stats_x");
-    fixed Y = GetActivatorCVar("drpg_stats_y");
+    X = GetActivatorCVar("drpg_stats_x");
+    Y = GetActivatorCVar("drpg_stats_y");
 
     SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
 
@@ -1159,9 +1198,9 @@ NamedScript Type_ENTER void DRLAHUD()
 
     if (CompatMode != COMPAT_DRLA) return;
 
-    fixed Offset, X, Y;
-    bool IsTechnician;
-    int Weapons, Armors, ModPacks, Skulls, Devices, TotalMax;
+    fixed Offset, X, Y, Angle, XOff, YOff;
+    bool IsTechnician, Duel;
+    int Weapons, Armors, ModPacks, Skulls, Devices, TotalMax, Count, Add, ModAdd, Radius;
     int Total[2] = {0, 0};
     int Power[2] = {0, 0};
     int Bulk[2] = {0, 0};
@@ -1171,7 +1210,19 @@ NamedScript Type_ENTER void DRLAHUD()
     int Firestorm[2] = {0, 0};
     int Nano[2] = {0, 0};
     int DemonArtifacts[2] = {0, 0};
+    ItemInfoPtr ItemPtr, JackelItem, CasullItem;
+    int Mods[5];
+    str const DukeModIcons[5] =
+    {
+        "DN2PAICO",
+        "DN2PBICO",
+        "DN2PCICO",
+        "DN2PDICO",
+        "DN2PEICO"
+    };
 
+    str Name, Color;
+    
     Start:
 
     // If we're on the title map, terminate
@@ -1179,7 +1230,7 @@ NamedScript Type_ENTER void DRLAHUD()
 
     if (Player.GUI.Open || Player.InMenu || Player.InShop) { Delay(1); goto Start;}
 
-    Offset;
+    Offset = 0.0;
 
     X = GetActivatorCVar("drpg_drla_x");
     Y = GetActivatorCVar("drpg_drla_y");
@@ -1280,13 +1331,13 @@ NamedScript Type_ENTER void DRLAHUD()
 
     for (int i = 0; i < ItemMax[0]; i++)
     {
-        ItemInfoPtr ItemPtr = &ItemData[0][i];
+        ItemPtr = &ItemData[0][i];
 
         if (CheckWeapon(ItemPtr->Actor))
         {
-            bool Duel = false;
-            str Name = StrParam("%S", ItemPtr->Name);
-            str Color = "";
+            Duel = false;
+            Name = StrParam("%S", ItemPtr->Name);
+            Color = "";
             TotalMax = 0;
             Total[0] = 0, Total[1] = 0;
             if (ItemPtr->CompatMods & RL_MOD_LIMIT)
@@ -1390,27 +1441,15 @@ NamedScript Type_ENTER void DRLAHUD()
             // Duke 2 Rifle special icon fancyness
             if (CheckWeapon("RLDuke2Rifle"))
             {
-                str const DukeModIcons[5] =
-                {
-                    "DN2PAICO",
-                    "DN2PBICO",
-                    "DN2PCICO",
-                    "DN2PDICO",
-                    "DN2PEICO"
-                };
+                Mods[0] = 1; // You always have the default shot
+                Mods[1] = Sniper[0];
+                Mods[2] = Firestorm[0];
+                Mods[3] = Nano[0];
+                Mods[4] = (GetActorPowerupTics(0, "PowerRLDuke2RifleRapidFire") > 0);
 
-                int Mods[5] =
-                {
-                    1, // You always have the default shot
-                    Sniper[0],
-                    Firestorm[0],
-                    Nano[0],
-                    (GetActorPowerupTics(0, "PowerRLDuke2RifleRapidFire") > 0)
-                };
-
-                int Count = 0;
-                int ModAdd = 0;
-                int Radius = 24;
+                Count = 0;
+                ModAdd = 0;
+                Radius = 24;
 
                 // Count the mods
                 for (int i = 0; i < 5; i++)
@@ -1421,9 +1460,9 @@ NamedScript Type_ENTER void DRLAHUD()
                 for (int i = 0; i < 5; i++)
                     if (Mods[i])
                     {
-                        fixed Angle = -0.25 + ((1.0 / Count) * ModAdd++) + Offset;
-                        fixed XOff = X + (Radius * Cos(Angle));
-                        fixed YOff = Y + (Radius * Sin(Angle));
+                        Angle = -0.25 + ((1.0 / Count) * ModAdd++) + Offset;
+                        XOff = X + (Radius * Cos(Angle));
+                        YOff = Y + (Radius * Sin(Angle));
                         PrintSprite(DukeModIcons[i], 0, (int)XOff + ItemPtr->Sprite.XOff - 12.0, (int)YOff + ItemPtr->Sprite.YOff + 8.0, 0.05);
                     }
 
@@ -1435,16 +1474,16 @@ NamedScript Type_ENTER void DRLAHUD()
                 // Demonic Weapons special artifact icons and animation
                 if (CheckInventory("RLDemonicWeaponToken"))
                 {
-                    int Count = DemonArtifacts[0] + DemonArtifacts[1];
-                    int Add = 0;
-                    int Radius = 24 + (int)(Sin((fixed)Offset / 64.0) * 4.0);
+                    Count = DemonArtifacts[0] + DemonArtifacts[1];
+                    Add = 0;
+                    Radius = 24 + (int)(Sin((fixed)Offset / 64.0) * 4.0);
 
                     // Draw the mods
                     for (int i = 0; i < Count; i++)
                     {
-                        fixed Angle = -0.25 + ((1.0 / Count) * Add++) + Offset;
-                        fixed XOff = X + (Radius * Cos(Angle));
-                        fixed YOff = Y + (Radius * Sin(Angle));
+                        Angle = -0.25 + ((1.0 / Count) * Add++) + Offset;
+                        XOff = X + (Radius * Cos(Angle));
+                        YOff = Y + (Radius * Sin(Angle));
                         PrintSpritePulse("DMNAA0", 0, (int)XOff + 16.0, (int)YOff + 44.0, 0.5, 256.0, 0.25);
                     }
 
@@ -1569,8 +1608,8 @@ NamedScript Type_ENTER void DRLAHUD()
             {
                 if (CheckWeapon("RLAntiFreakJackal") && CheckInventory("RLAntiFreakJackalDemonArtifacts")) // Jackal/Casull
                 {
-                    ItemInfoPtr JackelItem = &ItemData[0][42]; // Should probably come up with a better way to reference these?
-                    ItemInfoPtr CasullItem = &ItemData[0][43];
+                    JackelItem = &ItemData[0][42]; // Should probably come up with a better way to reference these?
+                    CasullItem = &ItemData[0][43];
 
                     PrintSprite(JackelItem->Sprite.Name, 0, X + JackelItem->Sprite.XOff, Y + JackelItem->Sprite.YOff + (int)(Sin((fixed)Timer() / 128.0) * 4.0), 0.05);
                     PrintSprite(CasullItem->Sprite.Name, 0, X + CasullItem->Sprite.XOff + 32.0, Y + CasullItem->Sprite.YOff + (int)(Cos((fixed)Timer() / 128.0) * 4.0), 0.05);

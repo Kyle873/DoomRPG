@@ -109,6 +109,20 @@ void DrawBarSprite(HUDBarInfo *Info, str Sprite)
 NamedScript void HealthBars()
 {
     int PlayerNum = PlayerNumber();
+    bool HideBar, DrawStats;
+    int ID;
+    
+    // Initialize HUD information struct
+    auto HUDBarInfo Info =
+    {
+        0,                          // TID
+        false, false,               // Is Player? / Is Friendly?
+        "", "", "",                 // Actor/Name
+        0, 0, 0, NULL,              // Level/Rank/Auras
+        0, 0, 0, 0, 0, false, 0, 0, // Health/Armor/Shield
+        0, 0, 0, 0, 0, 0, 0, 0,     // Stats
+        0.0, 0.0, 0.0, 0.0,         // Position
+    };
     
     Start:
     
@@ -130,20 +144,19 @@ NamedScript void HealthBars()
         HealthBarY = 0;
         HealthBarAlpha = 1.0;
         
-        bool HideBar = false;
-        bool DrawStats = true;
+        HideBar = false;
+        DrawStats = true;
         
-        // Initialize HUD information struct
-        auto HUDBarInfo Info =
-        {
-            0,                          // TID
-            false, false,               // Is Player? / Is Friendly?
-            "", "", "",                 // Actor/Name
-            0, 0, 0, NULL,              // Level/Rank/Auras
-            0, 0, 0, 0, 0, false, 0, 0, // Health/Armor/Shield
-            0, 0, 0, 0, 0, 0, 0, 0,     // Stats
-            0.0, 0.0, 0.0, 0.0,         // Position
-        };
+        //reset HUD Info struct
+        Info.TID = 0;
+        Info.IsPlayer = false; Info.Friendly = false;
+        Info.Actor = ""; Info.NameColor = ""; Info.Name = "";
+        Info.Level = 0; Info.Rank = 0; Info.Flags = 0;
+        Info.Health = 0; Info.HealthMax = 0; Info.SpawnHealth = 0; Info.Armor = 0;
+        Info.ArmorMax = 0; Info.ShieldActive = false; Info.Shield = 0; Info.ShieldMax = 0;
+        Info.Strength = 0; Info.Defense = 0; Info.Vitality = 0; Info.Energy = 0;
+        Info.Regeneration = 0; Info.Agility = 0; Info.Capacity = 0; Info.Luck = 0;
+        Info.X = 0.0; Info.Y = 0.0; Info.Z = 0.0; Info.Height = 0.0;
         
         // Actor
         Info.Actor = GetActorClass(0);
@@ -155,7 +168,7 @@ NamedScript void HealthBars()
         // Populate Stats
         if (ClassifyActor(0) & ACTOR_PLAYER)
         {
-            int ID = FindPlayerID(ActivatorTID());
+            ID = FindPlayerID(ActivatorTID());
             
             Info.TID = Players(ID).TID;
             

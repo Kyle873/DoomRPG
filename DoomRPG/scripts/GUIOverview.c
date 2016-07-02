@@ -9,6 +9,79 @@
 #include "RPG.h"
 #include "Utils.h"
 
+struct
+{
+    GUIIcon *PlayerSpriteIcon;
+    
+    GUIIcon *ModuleIcon;
+    GUIIcon *TurretPartsIcon;
+    GUIIcon *AugChargeIcon;
+    GUIIcon *AugSlotsIcon;
+    GUIIcon *AugCanistersIcon;
+    GUIIcon *AugUpgradesIcon;
+    GUIIcon *StimsIcon;
+    GUIIcon *ChipsGoldIcon;
+    GUIIcon *ChipsPlatIcon;
+    GUIIcon *InventoryIcon;
+    
+    GUIIcon *DRLAWeaponIcon;
+    GUIIcon *DRLAArmorIcon;
+    GUIIcon *DRLAModpackIcon;
+    GUIIcon *DRLASkullIcon;
+    GUIIcon *DRLADeviceIcon;
+    
+    GUIIcon *MapIcon;
+    
+    GUIIcon *ShAccIcon;
+    GUIIcon *ShBatIcon;
+    GUIIcon *ShCapIcon;
+    GUIIcon *ShBodIcon;
+} static GUIIcons;
+
+struct
+{
+    GUILabel *NameLabel;
+    GUILabel *LevelLabel;
+    GUILabel *XPLabel;
+    GUILabel *TitleLabel;
+    GUILabel *RankLabel;
+    GUILabel *PPLabel;
+    
+    GUILabel *ModuleLabel;
+    GUILabel *TurretPartsLabel;
+    GUILabel *AugChargeLabel;
+    GUILabel *AugSlotsLabel;
+    GUILabel *AugUpgradesLabel;
+    GUILabel *StimsLabel;
+    GUILabel *ChipsGoldLabel;
+    GUILabel *ChipsPlatLabel;
+    GUILabel *InventoryLabel;
+    
+    GUILabel *DRLALabel;
+    
+    GUILabel *MapNameLabel;
+    GUILabel *MapInfoLabel;
+    GUILabel *MapTimeLabel;
+    GUILabel *MapKillsLabel;
+    GUILabel *MapItemsLabel;
+    GUILabel *MapSecretsLabel;
+    
+    GUILabel *ShNameLabel;
+    GUILabel *ShCapLabel;
+    GUILabel *ShCrgLabel;
+    GUILabel *ShDlyLabel;
+    
+    GUILabel *CurStimLabel;
+    
+    GUILabel *ToxicityLabel;
+    
+    GUILabel *ToxicityRegenLabel;
+    GUILabel *ToxicityEnergyLabel;
+    GUILabel *ToxicitySpeedLabel;
+} static GUILabels;
+
+static GUIBar *CurStimBar[STIM_MAX];
+static GUIBar *ToxicityBar[100];
 
 // --------------------------------------------------
 // GUI Panels
@@ -30,7 +103,7 @@ NamedScript void CreateOverviewPanel()
     
     str PlayerSprite = "PLAYA1";
     
-    GUIIcon *PlayerSpriteIcon = GUIAddIcon(OverviewPanel, "Player Sprite");
+    GUIIcons.PlayerSpriteIcon = GUIAddIcon(OverviewPanel, "Player Sprite");
     
     if (CompatMode == COMPAT_DRLA)
     {
@@ -46,351 +119,350 @@ NamedScript void CreateOverviewPanel()
             PlayerSprite = "PDMOA1";
     }
     
-    PlayerSpriteIcon->Texture = PlayerSprite;
-    PlayerSpriteIcon->Control.X = 16;
-    PlayerSpriteIcon->Control.Y = 40;
-    PlayerSpriteIcon->Control.id = ++GUIElementID;
+    GUIIcons.PlayerSpriteIcon->Texture = PlayerSprite;
+    GUIIcons.PlayerSpriteIcon->Control.X = 16;
+    GUIIcons.PlayerSpriteIcon->Control.Y = 40;
+    GUIIcons.PlayerSpriteIcon->Control.id = ++GUIElementID;
     
     // --------------------------------------------------
     // Player Info
     //
     
-    GUILabel *NameLabel = GUIAddLabel(OverviewPanel, "Player Name");
-    GUILabel *LevelLabel = GUIAddLabel(OverviewPanel, "Player Level");
-    GUILabel *XPLabel = GUIAddLabel(OverviewPanel, "Player XP");
-    GUILabel *TitleLabel = GUIAddLabel(OverviewPanel, "Player Rank Title");
-    GUILabel *RankLabel = GUIAddLabel(OverviewPanel, "Player Rank");
-    GUILabel *PPLabel = GUIAddLabel(OverviewPanel, "Player Payout Status");
+    GUILabels.NameLabel = GUIAddLabel(OverviewPanel, "Player Name");
+    GUILabels.LevelLabel = GUIAddLabel(OverviewPanel, "Player Level");
+    GUILabels.XPLabel = GUIAddLabel(OverviewPanel, "Player XP");
+    GUILabels.TitleLabel = GUIAddLabel(OverviewPanel, "Player Rank Title");
+    GUILabels.RankLabel = GUIAddLabel(OverviewPanel, "Player Rank");
+    GUILabels.PPLabel = GUIAddLabel(OverviewPanel, "Player Payout Status");
     
-    NameLabel->Control.X = 64;
-    NameLabel->Control.Y = 16;
-    NameLabel->Control.id = ++GUIElementID;
-    NameLabel->Color = "White";
-    NameLabel->Big = true;
+    GUILabels.NameLabel->Control.X = 64;
+    GUILabels.NameLabel->Control.Y = 16;
+    GUILabels.NameLabel->Control.id = ++GUIElementID;
+    GUILabels.NameLabel->Color = "White";
+    GUILabels.NameLabel->Big = true;
     
-    LevelLabel->Control.X = 64;
-    LevelLabel->Control.Y = 28;
-    LevelLabel->Control.id = ++GUIElementID;
-    LevelLabel->Color = "White";
-    LevelLabel->Big = true;
+    GUILabels.LevelLabel->Control.X = 64;
+    GUILabels.LevelLabel->Control.Y = 28;
+    GUILabels.LevelLabel->Control.id = ++GUIElementID;
+    GUILabels.LevelLabel->Color = "White";
+    GUILabels.LevelLabel->Big = true;
     
-    XPLabel->Control.X = 64;
-    XPLabel->Control.Y = 40;
-    XPLabel->Control.id = ++GUIElementID;
-    XPLabel->Color = "White";
-    XPLabel->Big = true;
+    GUILabels.XPLabel->Control.X = 64;
+    GUILabels.XPLabel->Control.Y = 40;
+    GUILabels.XPLabel->Control.id = ++GUIElementID;
+    GUILabels.XPLabel->Color = "White";
+    GUILabels.XPLabel->Big = true;
     
-    TitleLabel->Control.X = 64;
-    TitleLabel->Control.Y = 52;
-    TitleLabel->Control.id = ++GUIElementID;
-    TitleLabel->Color = "Yellow";
-    TitleLabel->Big = true;
+    GUILabels.TitleLabel->Control.X = 64;
+    GUILabels.TitleLabel->Control.Y = 52;
+    GUILabels.TitleLabel->Control.id = ++GUIElementID;
+    GUILabels.TitleLabel->Color = "Yellow";
+    GUILabels.TitleLabel->Big = true;
     
-    RankLabel->Control.X = 64;
-    RankLabel->Control.Y = 64;
-    RankLabel->Control.id = ++GUIElementID;
-    RankLabel->Color = "Yellow";
-    RankLabel->Big = true;
+    GUILabels.RankLabel->Control.X = 64;
+    GUILabels.RankLabel->Control.Y = 64;
+    GUILabels.RankLabel->Control.id = ++GUIElementID;
+    GUILabels.RankLabel->Color = "Yellow";
+    GUILabels.RankLabel->Big = true;
     
-    PPLabel->Control.X = 64;
-    PPLabel->Control.Y = 76;
-    PPLabel->Control.id = ++GUIElementID;
-    PPLabel->Color = "Gold";
-    PPLabel->Big = true;
+    GUILabels.PPLabel->Control.X = 64;
+    GUILabels.PPLabel->Control.Y = 76;
+    GUILabels.PPLabel->Control.id = ++GUIElementID;
+    GUILabels.PPLabel->Color = "Gold";
+    GUILabels.PPLabel->Big = true;
     
     // --------------------------------------------------
     // Totals
     //
     
     
-    GUIIcon *ModuleIcon = GUIAddIcon(OverviewPanel, "Module Icon");
-    GUIIcon *TurretPartsIcon = GUIAddIcon(OverviewPanel, "Turret Parts Icon");
-    GUIIcon *AugChargeIcon = GUIAddIcon(OverviewPanel, "Aug Charge icon");
-    GUIIcon *AugSlotsIcon = GUIAddIcon(OverviewPanel, "Aug Slots Icon");
-    GUIIcon *AugCanistersIcon = GUIAddIcon(OverviewPanel, "Aug Canisters Icon");
-    GUIIcon *AugUpgradesIcon = GUIAddIcon(OverviewPanel, "Aug Upgrades Icon");
-    GUIIcon *StimsIcon = GUIAddIcon(OverviewPanel, "Stims Icon");
-    GUIIcon *ChipsGoldIcon = GUIAddIcon(OverviewPanel, "Gold Chips Icon");
-    GUIIcon *ChipsPlatIcon = GUIAddIcon(OverviewPanel, "Platinum Chips Icon");
-    GUIIcon *InventoryIcon = GUIAddIcon(OverviewPanel, "Inventory Icon");
+    GUIIcons.ModuleIcon = GUIAddIcon(OverviewPanel, "Module Icon");
+    GUIIcons.TurretPartsIcon = GUIAddIcon(OverviewPanel, "Turret Parts Icon");
+    GUIIcons.AugChargeIcon = GUIAddIcon(OverviewPanel, "Aug Charge icon");
+    GUIIcons.AugSlotsIcon = GUIAddIcon(OverviewPanel, "Aug Slots Icon");
+    GUIIcons.AugCanistersIcon = GUIAddIcon(OverviewPanel, "Aug Canisters Icon");
+    GUIIcons.AugUpgradesIcon = GUIAddIcon(OverviewPanel, "Aug Upgrades Icon");
+    GUIIcons.StimsIcon = GUIAddIcon(OverviewPanel, "Stims Icon");
+    GUIIcons.ChipsGoldIcon = GUIAddIcon(OverviewPanel, "Gold Chips Icon");
+    GUIIcons.ChipsPlatIcon = GUIAddIcon(OverviewPanel, "Platinum Chips Icon");
+    GUIIcons.InventoryIcon = GUIAddIcon(OverviewPanel, "Inventory Icon");
     
-    GUILabel *ModuleLabel = GUIAddLabel(OverviewPanel, "Module Count");
-    GUILabel *TurretPartsLabel = GUIAddLabel(OverviewPanel, "Turret Part Count");
-    GUILabel *AugChargeLabel = GUIAddLabel(OverviewPanel, "Aug Charge");
-    GUILabel *AugSlotsLabel = GUIAddLabel(OverviewPanel, "Aug Slots");
-    GUILabel *AugUpgradesLabel = GUIAddLabel(OverviewPanel, "Aug Upgrades");
-    GUILabel *StimsLabel = GUIAddLabel(OverviewPanel, "Stim Counts");
-    GUILabel *ChipsGoldLabel = GUIAddLabel(OverviewPanel, "Gold Chip Count");
-    GUILabel *ChipsPlatLabel = GUIAddLabel(OverviewPanel, "Platinum Chip Count");
-    GUILabel *InventoryLabel = GUIAddLabel(OverviewPanel, "Inventory Count");
+    GUILabels.ModuleLabel = GUIAddLabel(OverviewPanel, "Module Count");
+    GUILabels.TurretPartsLabel = GUIAddLabel(OverviewPanel, "Turret Part Count");
+    GUILabels.AugChargeLabel = GUIAddLabel(OverviewPanel, "Aug Charge");
+    GUILabels.AugSlotsLabel = GUIAddLabel(OverviewPanel, "Aug Slots");
+    GUILabels.AugUpgradesLabel = GUIAddLabel(OverviewPanel, "Aug Upgrades");
+    GUILabels.StimsLabel = GUIAddLabel(OverviewPanel, "Stim Counts");
+    GUILabels.ChipsGoldLabel = GUIAddLabel(OverviewPanel, "Gold Chip Count");
+    GUILabels.ChipsPlatLabel = GUIAddLabel(OverviewPanel, "Platinum Chip Count");
+    GUILabels.InventoryLabel = GUIAddLabel(OverviewPanel, "Inventory Count");
     
     if (CompatMode == COMPAT_DRLA)
     {
-        GUIIcon *DRLAWeaponIcon = GUIAddIcon(OverviewPanel, "DRLA Weapon Icon");
-        GUIIcon *DRLAArmorIcon = GUIAddIcon(OverviewPanel, "DRLA Armor Icon");
-        GUIIcon *DRLAModpackIcon = GUIAddIcon(OverviewPanel, "DRLA Modpack Icon");
-        GUIIcon *DRLASkullIcon = GUIAddIcon(OverviewPanel, "DRLA Skull Icon");
-        GUIIcon *DRLADeviceIcon = GUIAddIcon(OverviewPanel, "DRLA Device Icon");
+        GUIIcons.DRLAWeaponIcon = GUIAddIcon(OverviewPanel, "DRLA Weapon Icon");
+        GUIIcons.DRLAArmorIcon = GUIAddIcon(OverviewPanel, "DRLA Armor Icon");
+        GUIIcons.DRLAModpackIcon = GUIAddIcon(OverviewPanel, "DRLA Modpack Icon");
+        GUIIcons.DRLASkullIcon = GUIAddIcon(OverviewPanel, "DRLA Skull Icon");
+        GUIIcons.DRLADeviceIcon = GUIAddIcon(OverviewPanel, "DRLA Device Icon");
         
-        GUILabel *DRLALabel = GUIAddLabel(OverviewPanel, "DRLA Label");
+        GUILabels.DRLALabel = GUIAddLabel(OverviewPanel, "DRLA Label");
         
-        DRLAWeaponIcon->Texture = "PISGX0";
-        DRLAWeaponIcon->Control.X = 14 - 4;
-        DRLAWeaponIcon->Control.Y = 466 - 16;
-        DRLAWeaponIcon->Control.id = ++GUIElementID;
+        GUIIcons.DRLAWeaponIcon->Texture = "PISGX0";
+        GUIIcons.DRLAWeaponIcon->Control.X = 14 - 4;
+        GUIIcons.DRLAWeaponIcon->Control.Y = 466 - 16;
+        GUIIcons.DRLAWeaponIcon->Control.id = ++GUIElementID;
         
-        DRLAArmorIcon->Texture = "HARMOR";
-        DRLAArmorIcon->Control.X = 44 - 16;
-        DRLAArmorIcon->Control.Y = 468 - 30;
-        DRLAArmorIcon->Control.id = ++GUIElementID;
+        GUIIcons.DRLAArmorIcon->Texture = "HARMOR";
+        GUIIcons.DRLAArmorIcon->Control.X = 44 - 16;
+        GUIIcons.DRLAArmorIcon->Control.Y = 468 - 30;
+        GUIIcons.DRLAArmorIcon->Control.id = ++GUIElementID;
         
-        DRLAModpackIcon->Texture = "GMODICON";
-        DRLAModpackIcon->Control.X = 18 - 16;
-        DRLAModpackIcon->Control.Y = 488 - 30;
-        DRLAModpackIcon->Control.id = ++GUIElementID;
+        GUIIcons.DRLAModpackIcon->Texture = "GMODICON";
+        GUIIcons.DRLAModpackIcon->Control.X = 18 - 16;
+        GUIIcons.DRLAModpackIcon->Control.Y = 488 - 30;
+        GUIIcons.DRLAModpackIcon->Control.id = ++GUIElementID;
         
-        DRLASkullIcon->Texture = "ISKLC0";
-        DRLASkullIcon->Control.X = 44 - 6;
-        DRLASkullIcon->Control.Y = 486 - 10;
-        DRLASkullIcon->Control.id = ++GUIElementID;
+        GUIIcons.DRLASkullIcon->Texture = "ISKLC0";
+        GUIIcons.DRLASkullIcon->Control.X = 44 - 6;
+        GUIIcons.DRLASkullIcon->Control.Y = 486 - 10;
+        GUIIcons.DRLASkullIcon->Control.id = ++GUIElementID;
         
-        DRLADeviceIcon->Texture = "PHS1I0";
-        DRLADeviceIcon->Control.X = 32 - 24;
-        DRLADeviceIcon->Control.Y = 506 - 30;
-        DRLADeviceIcon->Control.id = ++GUIElementID;
+        GUIIcons.DRLADeviceIcon->Texture = "PHS1I0";
+        GUIIcons.DRLADeviceIcon->Control.X = 32 - 24;
+        GUIIcons.DRLADeviceIcon->Control.Y = 506 - 30;
+        GUIIcons.DRLADeviceIcon->Control.id = ++GUIElementID;
         
-        DRLALabel->Control.X = 84;
-        DRLALabel->Control.Y = 500;
-        DRLALabel->Control.id = ++GUIElementID;
-        DRLALabel->Color = "White";
-        DRLALabel->Big = true;
+        GUILabels.DRLALabel->Control.X = 84;
+        GUILabels.DRLALabel->Control.Y = 500;
+        GUILabels.DRLALabel->Control.id = ++GUIElementID;
+        GUILabels.DRLALabel->Color = "White";
+        GUILabels.DRLALabel->Big = true;
     }
     
-    ModuleIcon->Texture = "UMODA0";
-    ModuleIcon->Control.X = 24;
-    ModuleIcon->Control.Y = 96;
-    ModuleIcon->Control.id = ++GUIElementID;
+    GUIIcons.ModuleIcon->Texture = "UMODA0";
+    GUIIcons.ModuleIcon->Control.X = 24;
+    GUIIcons.ModuleIcon->Control.Y = 96;
+    GUIIcons.ModuleIcon->Control.id = ++GUIElementID;
     
-    TurretPartsIcon->Texture = "TPRTA0";
-    TurretPartsIcon->Control.X = 24;
-    TurretPartsIcon->Control.Y = 128;
-    TurretPartsIcon->Control.id = ++GUIElementID;
+    GUIIcons.TurretPartsIcon->Texture = "TPRTA0";
+    GUIIcons.TurretPartsIcon->Control.X = 24;
+    GUIIcons.TurretPartsIcon->Control.Y = 128;
+    GUIIcons.TurretPartsIcon->Control.id = ++GUIElementID;
     
-    AugChargeIcon->Texture = "AUGBATT";
-    AugChargeIcon->Control.X = 24;
-    AugChargeIcon->Control.Y = 148;
-    AugChargeIcon->Control.id = ++GUIElementID;
+    GUIIcons.AugChargeIcon->Texture = "AUGBATT";
+    GUIIcons.AugChargeIcon->Control.X = 24;
+    GUIIcons.AugChargeIcon->Control.Y = 148;
+    GUIIcons.AugChargeIcon->Control.id = ++GUIElementID;
     
-    AugSlotsIcon->Texture = "AUGUB0";
-    AugSlotsIcon->Control.X = 24;
-    AugSlotsIcon->Control.Y = 178;
-    AugSlotsIcon->Control.id = ++GUIElementID;
+    GUIIcons.AugSlotsIcon->Texture = "AUGUB0";
+    GUIIcons.AugSlotsIcon->Control.X = 24;
+    GUIIcons.AugSlotsIcon->Control.Y = 178;
+    GUIIcons.AugSlotsIcon->Control.id = ++GUIElementID;
     
-    AugCanistersIcon->Texture = "AUGCA0";
-    AugCanistersIcon->Control.X = 16;
-    AugCanistersIcon->Control.Y = 204;
-    AugCanistersIcon->Control.id = ++GUIElementID;
+    GUIIcons.AugCanistersIcon->Texture = "AUGCA0";
+    GUIIcons.AugCanistersIcon->Control.X = 16;
+    GUIIcons.AugCanistersIcon->Control.Y = 204;
+    GUIIcons.AugCanistersIcon->Control.id = ++GUIElementID;
     
-    AugUpgradesIcon->Texture = "AUGUA0";
-    AugUpgradesIcon->Control.X = 32;
-    AugUpgradesIcon->Control.Y = 198;
-    AugUpgradesIcon->Control.id = ++GUIElementID;
+    GUIIcons.AugUpgradesIcon->Texture = "AUGUA0";
+    GUIIcons.AugUpgradesIcon->Control.X = 32;
+    GUIIcons.AugUpgradesIcon->Control.Y = 198;
+    GUIIcons.AugUpgradesIcon->Control.id = ++GUIElementID;
     
-    StimsIcon->Texture = "STIMB0";
-    StimsIcon->Control.X = 24;
-    StimsIcon->Control.Y = 248;
-    StimsIcon->Control.id = ++GUIElementID;
+    GUIIcons.StimsIcon->Texture = "STIMB0";
+    GUIIcons.StimsIcon->Control.X = 24;
+    GUIIcons.StimsIcon->Control.Y = 248;
+    GUIIcons.StimsIcon->Control.id = ++GUIElementID;
     
-    ChipsGoldIcon->Texture = "CHIPGOLD";
-    ChipsGoldIcon->Control.X = 8;
-    ChipsGoldIcon->Control.Y = 268;
-    ChipsGoldIcon->Control.id = ++GUIElementID;
+    GUIIcons.ChipsGoldIcon->Texture = "CHIPGOLD";
+    GUIIcons.ChipsGoldIcon->Control.X = 8;
+    GUIIcons.ChipsGoldIcon->Control.Y = 268;
+    GUIIcons.ChipsGoldIcon->Control.id = ++GUIElementID;
     
-    ChipsPlatIcon->Texture = "CHIPPLAT";
-    ChipsPlatIcon->Control.X = 8;
-    ChipsPlatIcon->Control.Y = 304;
-    ChipsPlatIcon->Control.id = ++GUIElementID;
+    GUIIcons.ChipsPlatIcon->Texture = "CHIPPLAT";
+    GUIIcons.ChipsPlatIcon->Control.X = 8;
+    GUIIcons.ChipsPlatIcon->Control.Y = 304;
+    GUIIcons.ChipsPlatIcon->Control.id = ++GUIElementID;
     
-    InventoryIcon->Texture = "GPAKA0";
-    InventoryIcon->Control.X = 24;
-    InventoryIcon->Control.Y = 396;
-    InventoryIcon->Control.id = ++GUIElementID;
+    GUIIcons.InventoryIcon->Texture = "GPAKA0";
+    GUIIcons.InventoryIcon->Control.X = 24;
+    GUIIcons.InventoryIcon->Control.Y = 396;
+    GUIIcons.InventoryIcon->Control.id = ++GUIElementID;
     
-    ModuleLabel->Control.X = 84;
-    ModuleLabel->Control.Y = 116;
-    ModuleLabel->Control.id = ++GUIElementID;
-    ModuleLabel->Color = "Green";
-    ModuleLabel->Big = true;
+    GUILabels.ModuleLabel->Control.X = 84;
+    GUILabels.ModuleLabel->Control.Y = 116;
+    GUILabels.ModuleLabel->Control.id = ++GUIElementID;
+    GUILabels.ModuleLabel->Color = "Green";
+    GUILabels.ModuleLabel->Big = true;
     
-    TurretPartsLabel->Control.X = 84;
-    TurretPartsLabel->Control.Y = 148;
-    TurretPartsLabel->Control.id = ++GUIElementID;
-    TurretPartsLabel->Color = "White";
-    TurretPartsLabel->Big = true;
+    GUILabels.TurretPartsLabel->Control.X = 84;
+    GUILabels.TurretPartsLabel->Control.Y = 148;
+    GUILabels.TurretPartsLabel->Control.id = ++GUIElementID;
+    GUILabels.TurretPartsLabel->Color = "White";
+    GUILabels.TurretPartsLabel->Big = true;
     
-    AugChargeLabel->Control.X = 84;
-    AugChargeLabel->Control.Y = 180;
-    AugChargeLabel->Control.id = ++GUIElementID;
-    AugChargeLabel->Color = "Yellow";
-    AugChargeLabel->Big = true;
+    GUILabels.AugChargeLabel->Control.X = 84;
+    GUILabels.AugChargeLabel->Control.Y = 180;
+    GUILabels.AugChargeLabel->Control.id = ++GUIElementID;
+    GUILabels.AugChargeLabel->Color = "Yellow";
+    GUILabels.AugChargeLabel->Big = true;
     
-    AugSlotsLabel->Control.X = 84;
-    AugSlotsLabel->Control.Y = 200;
-    AugSlotsLabel->Control.id = ++GUIElementID;
-    AugSlotsLabel->Color = "Green";
-    AugSlotsLabel->Big = true;
+    GUILabels.AugSlotsLabel->Control.X = 84;
+    GUILabels.AugSlotsLabel->Control.Y = 200;
+    GUILabels.AugSlotsLabel->Control.id = ++GUIElementID;
+    GUILabels.AugSlotsLabel->Color = "Green";
+    GUILabels.AugSlotsLabel->Big = true;
     
-    AugUpgradesLabel->Control.X = 84;
-    AugUpgradesLabel->Control.Y = 224;
-    AugUpgradesLabel->Control.id = ++GUIElementID;
-    AugUpgradesLabel->Color = "Green";
-    AugUpgradesLabel->Big = true;
+    GUILabels.AugUpgradesLabel->Control.X = 84;
+    GUILabels.AugUpgradesLabel->Control.Y = 224;
+    GUILabels.AugUpgradesLabel->Control.id = ++GUIElementID;
+    GUILabels.AugUpgradesLabel->Color = "Green";
+    GUILabels.AugUpgradesLabel->Big = true;
     
-    StimsLabel->Control.X = 84;
-    StimsLabel->Control.Y = 264;
-    StimsLabel->Control.id = ++GUIElementID;
-    StimsLabel->Color = "White";
-    StimsLabel->Big = true;
+    GUILabels.StimsLabel->Control.X = 84;
+    GUILabels.StimsLabel->Control.Y = 264;
+    GUILabels.StimsLabel->Control.id = ++GUIElementID;
+    GUILabels.StimsLabel->Color = "White";
+    GUILabels.StimsLabel->Big = true;
     
-    ChipsGoldLabel->Control.X = 84;
-    ChipsGoldLabel->Control.Y = 314;
-    ChipsGoldLabel->Control.id = ++GUIElementID;
-    ChipsGoldLabel->Color = "Gold";
-    ChipsGoldLabel->Big = true;
+    GUILabels.ChipsGoldLabel->Control.X = 84;
+    GUILabels.ChipsGoldLabel->Control.Y = 314;
+    GUILabels.ChipsGoldLabel->Control.id = ++GUIElementID;
+    GUILabels.ChipsGoldLabel->Color = "Gold";
+    GUILabels.ChipsGoldLabel->Big = true;
     
-    ChipsPlatLabel->Control.X = 84;
-    ChipsPlatLabel->Control.Y = 350;
-    ChipsPlatLabel->Control.id = ++GUIElementID;
-    ChipsPlatLabel->Color = "White";
-    ChipsPlatLabel->Big = true;
+    GUILabels.ChipsPlatLabel->Control.X = 84;
+    GUILabels.ChipsPlatLabel->Control.Y = 350;
+    GUILabels.ChipsPlatLabel->Control.id = ++GUIElementID;
+    GUILabels.ChipsPlatLabel->Color = "White";
+    GUILabels.ChipsPlatLabel->Big = true;
     
-    InventoryLabel->Control.X = 84;
-    InventoryLabel->Control.Y = 412;
-    InventoryLabel->Control.id = ++GUIElementID;
-    InventoryLabel->Color = "White";
-    InventoryLabel->Big = true;
+    GUILabels.InventoryLabel->Control.X = 84;
+    GUILabels.InventoryLabel->Control.Y = 412;
+    GUILabels.InventoryLabel->Control.id = ++GUIElementID;
+    GUILabels.InventoryLabel->Color = "White";
+    GUILabels.InventoryLabel->Big = true;
     
     // --------------------------------------------------
     // Map Stats
     //
     
-    GUIIcon *MapIcon = GUIAddIcon(OverviewPanel, "Map Icon");
+    GUIIcons.MapIcon = GUIAddIcon(OverviewPanel, "Map Icon");
     
-    GUILabel *MapNameLabel = GUIAddLabel(OverviewPanel, "Map Name");
-    GUILabel *MapInfoLabel = GUIAddLabel(OverviewPanel, "Map Info");
-    GUILabel *MapTimeLabel = GUIAddLabel(OverviewPanel, "Map Time");
-    GUILabel *MapKillsLabel = GUIAddLabel(OverviewPanel, "Map Kills");
-    GUILabel *MapItemsLabel = GUIAddLabel(OverviewPanel, "Map Items");
-    GUILabel *MapSecretsLabel = GUIAddLabel(OverviewPanel, "Map Secrets");
+    GUILabels.MapNameLabel = GUIAddLabel(OverviewPanel, "Map Name");
+    GUILabels.MapInfoLabel = GUIAddLabel(OverviewPanel, "Map Info");
+    GUILabels.MapTimeLabel = GUIAddLabel(OverviewPanel, "Map Time");
+    GUILabels.MapKillsLabel = GUIAddLabel(OverviewPanel, "Map Kills");
+    GUILabels.MapItemsLabel = GUIAddLabel(OverviewPanel, "Map Items");
+    GUILabels.MapSecretsLabel = GUIAddLabel(OverviewPanel, "Map Secrets");
     
-    MapIcon->Texture = "PMAPA0";
-    MapIcon->Control.X = 284;
-    MapIcon->Control.Y = 96;
-    MapIcon->Control.id = ++GUIElementID;
+    GUIIcons.MapIcon->Texture = "PMAPA0";
+    GUIIcons.MapIcon->Control.X = 284;
+    GUIIcons.MapIcon->Control.Y = 96;
+    GUIIcons.MapIcon->Control.id = ++GUIElementID;
     
-    MapNameLabel->Control.X = 328;
-    MapNameLabel->Control.Y = 110;
-    MapNameLabel->Control.id = ++GUIElementID;
-    MapNameLabel->Color = "White";
-    MapNameLabel->Big = true;
+    GUILabels.MapNameLabel->Control.X = 328;
+    GUILabels.MapNameLabel->Control.Y = 110;
+    GUILabels.MapNameLabel->Control.id = ++GUIElementID;
+    GUILabels.MapNameLabel->Color = "White";
+    GUILabels.MapNameLabel->Big = true;
     
-    MapInfoLabel->Control.X = 328;
-    MapInfoLabel->Control.Y = 122;
-    MapInfoLabel->Control.id = ++GUIElementID;
-    MapInfoLabel->Color = "Green";
-    MapInfoLabel->Big = true;
+    GUILabels.MapInfoLabel->Control.X = 328;
+    GUILabels.MapInfoLabel->Control.Y = 122;
+    GUILabels.MapInfoLabel->Control.id = ++GUIElementID;
+    GUILabels.MapInfoLabel->Color = "Green";
+    GUILabels.MapInfoLabel->Big = true;
     
-    MapTimeLabel->Control.X = 328;
-    MapTimeLabel->Control.Y = 134;
-    MapTimeLabel->Control.id = ++GUIElementID;
-    MapTimeLabel->Color = "Orange";
-    MapTimeLabel->Big = true;
+    GUILabels.MapTimeLabel->Control.X = 328;
+    GUILabels.MapTimeLabel->Control.Y = 134;
+    GUILabels.MapTimeLabel->Control.id = ++GUIElementID;
+    GUILabels.MapTimeLabel->Color = "Orange";
+    GUILabels.MapTimeLabel->Big = true;
     
-    MapKillsLabel->Control.X = 328;
-    MapKillsLabel->Control.Y = 146;
-    MapKillsLabel->Control.id = ++GUIElementID;
-    MapKillsLabel->Big = true;
+    GUILabels.MapKillsLabel->Control.X = 328;
+    GUILabels.MapKillsLabel->Control.Y = 146;
+    GUILabels.MapKillsLabel->Control.id = ++GUIElementID;
+    GUILabels.MapKillsLabel->Big = true;
     
-    MapItemsLabel->Control.X = 328;
-    MapItemsLabel->Control.Y = 158;
-    MapItemsLabel->Control.id = ++GUIElementID;
-    MapItemsLabel->Big = true;
+    GUILabels.MapItemsLabel->Control.X = 328;
+    GUILabels.MapItemsLabel->Control.Y = 158;
+    GUILabels.MapItemsLabel->Control.id = ++GUIElementID;
+    GUILabels.MapItemsLabel->Big = true;
     
-    MapSecretsLabel->Control.X = 328;
-    MapSecretsLabel->Control.Y = 170;
-    MapSecretsLabel->Control.id = ++GUIElementID;
-    MapSecretsLabel->Big = true;
+    GUILabels.MapSecretsLabel->Control.X = 328;
+    GUILabels.MapSecretsLabel->Control.Y = 170;
+    GUILabels.MapSecretsLabel->Control.id = ++GUIElementID;
+    GUILabels.MapSecretsLabel->Big = true;
     
     // --------------------------------------------------
     // Shield
     //
-    GUIIcon *ShAccIcon = GUIAddIcon(OverviewPanel, "Shield Accessory");
-    GUIIcon *ShBatIcon = GUIAddIcon(OverviewPanel, "Shield Battery");
-    GUIIcon *ShCapIcon = GUIAddIcon(OverviewPanel, "Shield Capacitor");
-    GUIIcon *ShBodIcon = GUIAddIcon(OverviewPanel, "Shield Body");
+    GUIIcons.ShAccIcon = GUIAddIcon(OverviewPanel, "Shield Accessory");
+    GUIIcons.ShBatIcon = GUIAddIcon(OverviewPanel, "Shield Battery");
+    GUIIcons.ShCapIcon = GUIAddIcon(OverviewPanel, "Shield Capacitor");
+    GUIIcons.ShBodIcon = GUIAddIcon(OverviewPanel, "Shield Body");
     
-    ShAccIcon->Texture = "SHA2A0";
-    ShAccIcon->Control.X = 286;
-    ShAccIcon->Control.Y = 205;
-    ShAccIcon->Control.id = ++GUIElementID;
+    GUIIcons.ShAccIcon->Texture = "SHA2A0";
+    GUIIcons.ShAccIcon->Control.X = 286;
+    GUIIcons.ShAccIcon->Control.Y = 205;
+    GUIIcons.ShAccIcon->Control.id = ++GUIElementID;
     
-    ShBatIcon->Texture = "SHBAA0";
-    ShBatIcon->Control.X = 286;
-    ShBatIcon->Control.Y = 205;
-    ShBatIcon->Control.id = ++GUIElementID;
+    GUIIcons.ShBatIcon->Texture = "SHBAA0";
+    GUIIcons.ShBatIcon->Control.X = 286;
+    GUIIcons.ShBatIcon->Control.Y = 205;
+    GUIIcons.ShBatIcon->Control.id = ++GUIElementID;
     
-    ShCapIcon->Texture = "SHCAA0";
-    ShCapIcon->Control.X = 286;
-    ShCapIcon->Control.Y = 205;
-    ShCapIcon->Control.id = ++GUIElementID;
+    GUIIcons.ShCapIcon->Texture = "SHCAA0";
+    GUIIcons.ShCapIcon->Control.X = 286;
+    GUIIcons.ShCapIcon->Control.Y = 205;
+    GUIIcons.ShCapIcon->Control.id = ++GUIElementID;
     
-    ShBodIcon->Texture = "SHBOA0";
-    ShBodIcon->Control.X = 286;
-    ShBodIcon->Control.Y = 205;
-    ShBodIcon->Control.id = ++GUIElementID;
+    GUIIcons.ShBodIcon->Texture = "SHBOA0";
+    GUIIcons.ShBodIcon->Control.X = 286;
+    GUIIcons.ShBodIcon->Control.Y = 205;
+    GUIIcons.ShBodIcon->Control.id = ++GUIElementID;
     
-    GUILabel *ShNameLabel = GUIAddLabel(OverviewPanel, "Shield Name");
-    GUILabel *ShCapLabel = GUIAddLabel(OverviewPanel, "Shield Capacity");
-    GUILabel *ShCrgLabel = GUIAddLabel(OverviewPanel, "Shield Charge");
-    GUILabel *ShDlyLabel = GUIAddLabel(OverviewPanel, "Shield Delay");
+    GUILabels.ShNameLabel = GUIAddLabel(OverviewPanel, "Shield Name");
+    GUILabels.ShCapLabel = GUIAddLabel(OverviewPanel, "Shield Capacity");
+    GUILabels.ShCrgLabel = GUIAddLabel(OverviewPanel, "Shield Charge");
+    GUILabels.ShDlyLabel = GUIAddLabel(OverviewPanel, "Shield Delay");
     
-    ShNameLabel->Control.X = 324;
-    ShNameLabel->Control.Y = 210;
-    ShNameLabel->Control.id = ++GUIElementID;
-    ShNameLabel->Color = "White";
+    GUILabels.ShNameLabel->Control.X = 324;
+    GUILabels.ShNameLabel->Control.Y = 210;
+    GUILabels.ShNameLabel->Control.id = ++GUIElementID;
+    GUILabels.ShNameLabel->Color = "White";
     
-    ShCapLabel->Control.X = 324;
-    ShCapLabel->Control.Y = 218;
-    ShCapLabel->Control.id = ++GUIElementID;
-    ShCapLabel->Color = "White";
+    GUILabels.ShCapLabel->Control.X = 324;
+    GUILabels.ShCapLabel->Control.Y = 218;
+    GUILabels.ShCapLabel->Control.id = ++GUIElementID;
+    GUILabels.ShCapLabel->Color = "White";
     
-    ShCrgLabel->Control.X = 324;
-    ShCrgLabel->Control.Y = 226;
-    ShCrgLabel->Control.id = ++GUIElementID;
-    ShCrgLabel->Color = "White";
+    GUILabels.ShCrgLabel->Control.X = 324;
+    GUILabels.ShCrgLabel->Control.Y = 226;
+    GUILabels.ShCrgLabel->Control.id = ++GUIElementID;
+    GUILabels.ShCrgLabel->Color = "White";
     
-    ShDlyLabel->Control.X = 324;
-    ShDlyLabel->Control.Y = 234;
-    ShDlyLabel->Control.id = ++GUIElementID;
-    ShDlyLabel->Color = "White";
+    GUILabels.ShDlyLabel->Control.X = 324;
+    GUILabels.ShDlyLabel->Control.Y = 234;
+    GUILabels.ShDlyLabel->Control.id = ++GUIElementID;
+    GUILabels.ShDlyLabel->Color = "White";
     
     // --------------------------------------------------
     // Current Stim / Toxicity
     //
     
-    GUILabel *CurStimLabel = GUIAddLabel(OverviewPanel, "Current Stim");
-    CurStimLabel->Control.X = 324;
-    CurStimLabel->Control.Y = 260;
-    CurStimLabel->Control.id = ++GUIElementID;
-    CurStimLabel->Color = "Green";
-    CurStimLabel->Big = true;
+    GUILabels.CurStimLabel = GUIAddLabel(OverviewPanel, "Current Stim");
+    GUILabels.CurStimLabel->Control.X = 324;
+    GUILabels.CurStimLabel->Control.Y = 260;
+    GUILabels.CurStimLabel->Control.id = ++GUIElementID;
+    GUILabels.CurStimLabel->Color = "Green";
+    GUILabels.CurStimLabel->Big = true;
     
     GUITooltip *CurStimTooltip = GUICreateTooltip();
     CurStimTooltip->Type = TT_TITLE;
     CurStimTooltip->Title = "";
     CurStimTooltip->Text = "";
     
-    GUIBar *CurStimBar[STIM_MAX];
     for (int i = 0; i < STIM_MAX; i++)
     {
         CurStimBar[i] = GUIAddBar(OverviewPanel, StrParam("Stim Bar %d", i));
@@ -405,14 +477,13 @@ NamedScript void CreateOverviewPanel()
         GUIElementID = GUIElementID + 100;
     }    
     
-    GUILabel *ToxicityLabel = GUIAddLabel(OverviewPanel, "Toxicity");
-    ToxicityLabel->Control.X = 324;
-    ToxicityLabel->Control.Y = 300;
-    ToxicityLabel->Control.id = ++GUIElementID;
-    ToxicityLabel->Color = "Green";
-    ToxicityLabel->Big = true;
+    GUILabels.ToxicityLabel = GUIAddLabel(OverviewPanel, "Toxicity");
+    GUILabels.ToxicityLabel->Control.X = 324;
+    GUILabels.ToxicityLabel->Control.Y = 300;
+    GUILabels.ToxicityLabel->Control.id = ++GUIElementID;
+    GUILabels.ToxicityLabel->Color = "Green";
+    GUILabels.ToxicityLabel->Big = true;
     
-    GUIBar *ToxicityBar[100];
     for (int i = 0; i < sizeof(ToxicityBar); i++)
     {
         ToxicityBar[i] = GUIAddBar(OverviewPanel, StrParam("Toxicity Bar %d", i));
@@ -426,113 +497,60 @@ NamedScript void CreateOverviewPanel()
         ToxicityBar[i]->FadeLength = 1.0;
     }
     
-    GUILabel *ToxicityRegenLabel = GUIAddLabel(OverviewPanel, "Toxicity Regen");
-    GUILabel *ToxicityEnergyLabel = GUIAddLabel(OverviewPanel, "Toxicity Energy");
-    GUILabel *ToxicitySpeedLabel = GUIAddLabel(OverviewPanel, "Toxicity Speed");
+    GUILabels.ToxicityRegenLabel = GUIAddLabel(OverviewPanel, "Toxicity Regen");
+    GUILabels.ToxicityEnergyLabel = GUIAddLabel(OverviewPanel, "Toxicity Energy");
+    GUILabels.ToxicitySpeedLabel = GUIAddLabel(OverviewPanel, "Toxicity Speed");
     
-    ToxicityRegenLabel->Control.X = 450;
-    ToxicityRegenLabel->Control.Y = 314;
-    ToxicityRegenLabel->Control.id = ++GUIElementID;
-    ToxicityRegenLabel->Color = "Brick";
-    ToxicityRegenLabel->Text = "- No Regeneration";
+    GUILabels.ToxicityRegenLabel->Control.X = 450;
+    GUILabels.ToxicityRegenLabel->Control.Y = 314;
+    GUILabels.ToxicityRegenLabel->Control.id = ++GUIElementID;
+    GUILabels.ToxicityRegenLabel->Color = "Brick";
+    GUILabels.ToxicityRegenLabel->Text = "- No Regeneration";
     
     
-    ToxicityEnergyLabel->Control.X = 450;
-    ToxicityEnergyLabel->Control.Y = 322;
-    ToxicityEnergyLabel->Control.id = ++GUIElementID;
-    ToxicityEnergyLabel->Color = "Brick";
-    ToxicityEnergyLabel->Text = "- Energy Loss";
+    GUILabels.ToxicityEnergyLabel->Control.X = 450;
+    GUILabels.ToxicityEnergyLabel->Control.Y = 322;
+    GUILabels.ToxicityEnergyLabel->Control.id = ++GUIElementID;
+    GUILabels.ToxicityEnergyLabel->Color = "Brick";
+    GUILabels.ToxicityEnergyLabel->Text = "- Energy Loss";
     
-    ToxicitySpeedLabel->Control.X = 450;
-    ToxicitySpeedLabel->Control.Y = 330;
-    ToxicitySpeedLabel->Control.id = ++GUIElementID;
-    ToxicitySpeedLabel->Color = "Brick";
-    ToxicitySpeedLabel->Text = "- Reduced Movement Speed";
+    GUILabels.ToxicitySpeedLabel->Control.X = 450;
+    GUILabels.ToxicitySpeedLabel->Control.Y = 330;
+    GUILabels.ToxicitySpeedLabel->Control.id = ++GUIElementID;
+    GUILabels.ToxicitySpeedLabel->Color = "Brick";
+    GUILabels.ToxicitySpeedLabel->Text = "- Reduced Movement Speed";
     
 }
 
 NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
 {
-    GUILabel *NameLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Name");
-    GUILabel *LevelLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Level");
-    GUILabel *XPLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player XP");
-    GUILabel *TitleLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Rank Title");
-    GUILabel *RankLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Rank");
-    GUILabel *PPLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Player Payout Status");
-    
-    GUILabel *ModuleLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Module Count");
-    GUILabel *TurretPartsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Turret Part Count");
-    GUILabel *AugChargeLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Aug Charge");
-    GUILabel *AugSlotsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Aug Slots");
-    GUILabel *AugUpgradesLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Aug Upgrades");
-    GUILabel *StimsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Stim Counts");
-    GUILabel *ChipsGoldLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Gold Chip Count");
-    GUILabel *ChipsPlatLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Platinum Chip Count");
-    GUILabel *InventoryLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Inventory Count");
-    
-    GUIIcon  *MapIcon = (GUIIcon *)GUIControlByName(OverviewPanel, "Map Icon");
-    GUILabel *MapNameLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Name");
-    GUILabel *MapInfoLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Info");
-    GUILabel *MapTimeLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Time");
-    GUILabel *MapKillsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Kills");
-    GUILabel *MapItemsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Items");
-    GUILabel *MapSecretsLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Map Secrets");
-    
-    GUIIcon  *ShAccIcon = (GUIIcon *)GUIControlByName(OverviewPanel, "Shield Accessory");
-    GUIIcon  *ShBatIcon = (GUIIcon *)GUIControlByName(OverviewPanel, "Shield Battery");
-    GUIIcon  *ShCapIcon = (GUIIcon *)GUIControlByName(OverviewPanel, "Shield Capacitor");
-    GUIIcon  *ShBodIcon = (GUIIcon *)GUIControlByName(OverviewPanel, "Shield Body");
-    
-    GUILabel *ShNameLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Shield Name");
-    GUILabel *ShCapLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Shield Capacity");
-    GUILabel *ShCrgLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Shield Charge");
-    GUILabel *ShDlyLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Shield Delay");
-    
-    GUILabel *CurStimLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Current Stim");
-    GUIBar *CurStimBar[STIM_MAX];
-    for (int i = 0; i < STIM_MAX; i++)
-    {
-        CurStimBar[i] = (GUIBar *)GUIControlByName(OverviewPanel, StrParam("Stim Bar %d", i));
-    }
-    
-    GUILabel *ToxicityLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Toxicity");
-    GUIBar *ToxicityBar[100];
-    for (int i = 0; i < sizeof(ToxicityBar); i++)
-    {
-        ToxicityBar[i] = (GUIBar *)GUIControlByName(OverviewPanel, StrParam("Toxicity Bar %d", i));
-    }
-    
-    GUILabel *ToxicityRegenLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Toxicity Regen");
-    GUILabel *ToxicityEnergyLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Toxicity Energy");
-    GUILabel *ToxicitySpeedLabel = (GUILabel *)GUIControlByName(OverviewPanel, "Toxicity Speed");
-    
     //-------------------------
     //Character
     //-------------------------
     
-    NameLabel->Text = StrParam("%tS", PlayerNumber() + 1);
-    LevelLabel->Text = StrParam("Level: %d", Player.Level);
-    XPLabel->Text = StrParam("XP: %ld / %ld", Player.XP, Player.XPNext);
-    TitleLabel->Text = StrParam("Title: %S (%d/%d)", Ranks[Player.RankLevel], Player.RankLevel, MAX_RANK);
-    RankLabel->Text = StrParam("Rank: %ld / %ld", Player.Rank, Player.RankNext);
+    GUILabels.NameLabel->Text = StrParam("%tS", PlayerNumber() + 1);
+    GUILabels.LevelLabel->Text = StrParam("Level: %d", Player.Level);
+    GUILabels.XPLabel->Text = StrParam("XP: %ld / %ld", Player.XP, Player.XPNext);
+    GUILabels.TitleLabel->Text = StrParam("Title: %S (%d/%d)", Ranks[Player.RankLevel], Player.RankLevel, MAX_RANK);
+    GUILabels.RankLabel->Text = StrParam("Rank: %ld / %ld", Player.Rank, Player.RankNext);
     if (Player.PayReady && !Player.PayingOut)
-        PPLabel->Text = StrParam("PP: %d (%S) [\C[%S]Ready\C-]", Player.PP, FormatTime(Player.PayTimer), PayReadyColor);
+        GUILabels.PPLabel->Text = StrParam("PP: %d (%S) [\C[%S]Ready\C-]", Player.PP, FormatTime(Player.PayTimer), PayReadyColor);
     else
-        PPLabel->Text = StrParam("PP: %d (%S)", Player.PP, FormatTime(Player.PayTimer));
+        GUILabels.PPLabel->Text = StrParam("PP: %d (%S)", Player.PP, FormatTime(Player.PayTimer));
     
     //-------------------------
     //Inventory
     //-------------------------
     
-    ModuleLabel->Text = StrParam("%d", CheckInventory("DRPGModule"));
-    TurretPartsLabel->Text = StrParam("%d", CheckInventory("DRPGTurretPart"));
-    AugChargeLabel->Text = StrParam("%d%% / %d%%", (int)Player.Augs.Battery, (int)Player.Augs.BatteryMax);
-    AugSlotsLabel->Text = StrParam("%d / %d", Player.Augs.SlotsUsed, Player.Augs.Slots);
-    AugUpgradesLabel->Text = StrParam("%d / %d", CheckInventory("DRPGAugCanister"), CheckInventory("DRPGAugUpgradeCanister"));
-    StimsLabel->Text = StrParam("S: %d\nM: %d\nL: %d\nXL: %d", CheckInventory("DRPGStimSmall"), CheckInventory("DRPGStimMedium"), CheckInventory("DRPGStimLarge"), CheckInventory("DRPGStimXL"));
-    ChipsGoldLabel->Text = StrParam("%d", CheckInventory("DRPGChipGold"));
-    ChipsPlatLabel->Text = StrParam("%d", CheckInventory("DRPGChipPlatinum"));
-    InventoryLabel->Text = StrParam("Inventory: %d / %d\n\CaBullets: %d / %d\n\CiShells: %d / %d\n\CcRockets: %d / %d\n\CdCells: %d / %d",
+    GUILabels.ModuleLabel->Text = StrParam("%d", CheckInventory("DRPGModule"));
+    GUILabels.TurretPartsLabel->Text = StrParam("%d", CheckInventory("DRPGTurretPart"));
+    GUILabels.AugChargeLabel->Text = StrParam("%d%% / %d%%", (int)Player.Augs.Battery, (int)Player.Augs.BatteryMax);
+    GUILabels.AugSlotsLabel->Text = StrParam("%d / %d", Player.Augs.SlotsUsed, Player.Augs.Slots);
+    GUILabels.AugUpgradesLabel->Text = StrParam("%d / %d", CheckInventory("DRPGAugCanister"), CheckInventory("DRPGAugUpgradeCanister"));
+    GUILabels.StimsLabel->Text = StrParam("S: %d\nM: %d\nL: %d\nXL: %d", CheckInventory("DRPGStimSmall"), CheckInventory("DRPGStimMedium"), CheckInventory("DRPGStimLarge"), CheckInventory("DRPGStimXL"));
+    GUILabels.ChipsGoldLabel->Text = StrParam("%d", CheckInventory("DRPGChipGold"));
+    GUILabels.ChipsPlatLabel->Text = StrParam("%d", CheckInventory("DRPGChipPlatinum"));
+    GUILabels.InventoryLabel->Text = StrParam("Inventory: %d / %d\n\CaBullets: %d / %d\n\CiShells: %d / %d\n\CcRockets: %d / %d\n\CdCells: %d / %d",
                                     Player.InvItems, CheckInventoryMax(),
                                     CheckInventory("Clip"), GetAmmoCapacity("Clip"),
                                     CheckInventory("Shell"), GetAmmoCapacity("Shell"),
@@ -546,8 +564,6 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
     
     if (CompatMode == COMPAT_DRLA)
     {
-        GUILabel *DRLALabel = (GUILabel *)GUIControlByName(OverviewPanel, "DRLA Label");
-        
         int IsTechnician = (PlayerClass(PlayerNumber()) == 2);
         int Weapons = CheckInventory("RLWeaponLimit");
         int Armors = CheckInventory("RLArmorInInventory");
@@ -555,7 +571,7 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
         int Skulls = CheckInventory("RLSkullLimit");
         int Devices = CheckInventory("RLPhaseDeviceLimit");
         
-        DRLALabel->Text = StrParam("DRLA Inventory:\n%SWeapons: %d / 6\n%SArmor: %d / %d\n%SModpacks: %d / %d\n%SSkulls: %d / %d\n%SDevices: %d / %d",
+        GUILabels.DRLALabel->Text = StrParam("DRLA Inventory:\n%SWeapons: %d / 6\n%SArmor: %d / %d\n%SModpacks: %d / %d\n%SSkulls: %d / %d\n%SDevices: %d / %d",
             (Weapons >= 6 ? "\Cf" : "\Ca"), Weapons,
             (Armors >= DRLA_ARMOR_MAX ? "\Cf" : "\Cd"), Armors, DRLA_ARMOR_MAX,
             (((!IsTechnician && ModPacks >= 4) || (IsTechnician && ModPacks >= 8)) ? "\Cf" : "\Cc"),
@@ -577,48 +593,48 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
     if (CurrentLevel->UACArena)
         MapType = "UAC Arena";
     
-    MapNameLabel->Text = StrParam("%S", CurrentLevel->NiceName);
-    MapInfoLabel->Text = StrParam("%S, level %d - %S", CurrentLevel->LumpName, CurrentLevel->LevelNum, MapType);
+    GUILabels.MapNameLabel->Text = CurrentLevel->NiceName;
+    GUILabels.MapInfoLabel->Text = StrParam("%S, level %d - %S", CurrentLevel->LumpName, CurrentLevel->LevelNum, MapType);
     if (CurrentLevel->Par > 0)
-        MapTimeLabel->Text = StrParam("Time: %S (Par: %S)", FormatTime(Timer()), FormatTime(CurrentLevel->Par * 35));
+        GUILabels.MapTimeLabel->Text = StrParam("Time: %S (Par: %S)", FormatTime(Timer()), FormatTime(CurrentLevel->Par * 35));
     else
-        MapTimeLabel->Text = StrParam("Time: %S", FormatTime(Timer()));
-    MapKillsLabel->Text = StrParam("Monsters: %d / %d", GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
-    MapItemsLabel->Text = StrParam("Items: %d / %d", GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
-    MapSecretsLabel->Text = StrParam("Secrets: %d / %d", GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
+        GUILabels.MapTimeLabel->Text = StrParam("Time: %S", FormatTime(Timer()));
+    GUILabels.MapKillsLabel->Text = StrParam("Monsters: %d / %d", GetLevelInfo(LEVELINFO_KILLED_MONSTERS), GetLevelInfo(LEVELINFO_TOTAL_MONSTERS));
+    GUILabels.MapItemsLabel->Text = StrParam("Items: %d / %d", GetLevelInfo(LEVELINFO_FOUND_ITEMS), GetLevelInfo(LEVELINFO_TOTAL_ITEMS));
+    GUILabels.MapSecretsLabel->Text = StrParam("Secrets: %d / %d", GetLevelInfo(LEVELINFO_FOUND_SECRETS), GetLevelInfo(LEVELINFO_TOTAL_SECRETS));
     
     if (CurrentLevel && CurrentLevel->KillBonus)
-        MapKillsLabel->Color = MenuCursorColor;
+        GUILabels.MapKillsLabel->Color = MenuCursorColor;
     else
-        MapKillsLabel->Color = "Brick";
+        GUILabels.MapKillsLabel->Color = "Brick";
     if (CurrentLevel && CurrentLevel->ItemsBonus)
-        MapItemsLabel->Color = MenuCursorColor;
+        GUILabels.MapItemsLabel->Color = MenuCursorColor;
     else
-        MapItemsLabel->Color = "LightBlue";
+        GUILabels.MapItemsLabel->Color = "LightBlue";
     if (CurrentLevel && CurrentLevel->SecretsBonus)
-        MapSecretsLabel->Color = MenuCursorColor;
+        GUILabels.MapSecretsLabel->Color = MenuCursorColor;
     else
-        MapSecretsLabel->Color = "Gold";
+        GUILabels.MapSecretsLabel->Color = "Gold";
     
     if (CurrentLevel && !CurrentLevel->UACBase)
     {
-        MapIcon->Control.Visible = true;
-        MapNameLabel->Control.Visible = true;
-        MapInfoLabel->Control.Visible = true;
-        MapTimeLabel->Control.Visible = true;
-        MapKillsLabel->Control.Visible = true;
-        MapItemsLabel->Control.Visible = true;
-        MapSecretsLabel->Control.Visible = true;
+        GUIIcons.MapIcon->Control.Visible = true;
+        GUILabels.MapNameLabel->Control.Visible = true;
+        GUILabels.MapInfoLabel->Control.Visible = true;
+        GUILabels.MapTimeLabel->Control.Visible = true;
+        GUILabels.MapKillsLabel->Control.Visible = true;
+        GUILabels.MapItemsLabel->Control.Visible = true;
+        GUILabels.MapSecretsLabel->Control.Visible = true;
     }
     else
     {
-        MapIcon->Control.Visible = false;
-        MapNameLabel->Control.Visible = false;
-        MapInfoLabel->Control.Visible = false;
-        MapTimeLabel->Control.Visible = false;
-        MapKillsLabel->Control.Visible = false;
-        MapItemsLabel->Control.Visible = false;
-        MapSecretsLabel->Control.Visible = false;
+        GUIIcons.MapIcon->Control.Visible = false;
+        GUILabels.MapNameLabel->Control.Visible = false;
+        GUILabels.MapInfoLabel->Control.Visible = false;
+        GUILabels.MapTimeLabel->Control.Visible = false;
+        GUILabels.MapKillsLabel->Control.Visible = false;
+        GUILabels.MapItemsLabel->Control.Visible = false;
+        GUILabels.MapSecretsLabel->Control.Visible = false;
     }
     
     //-------------------------
@@ -629,35 +645,35 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
     {
         if (Player.Shield.Accessory)
         {
-            ShAccIcon->Control.Visible = true;
-            ShAccIcon->Texture = Player.Shield.Accessory->Icon;
+            GUIIcons.ShAccIcon->Control.Visible = true;
+            GUIIcons.ShAccIcon->Texture = Player.Shield.Accessory->Icon;
         }
         else
-            ShAccIcon->Control.Visible = false;
+            GUIIcons.ShAccIcon->Control.Visible = false;
         
         if (Player.Shield.Battery)
         {
-            ShBatIcon->Control.Visible = true;
-            ShBatIcon->Texture = Player.Shield.Battery->Icon;
+            GUIIcons.ShBatIcon->Control.Visible = true;
+            GUIIcons.ShBatIcon->Texture = Player.Shield.Battery->Icon;
         }
         else
-            ShBatIcon->Control.Visible = false;
+            GUIIcons.ShBatIcon->Control.Visible = false;
         
         if (Player.Shield.Capacitor)
         {
-            ShCapIcon->Control.Visible = true;
-            ShCapIcon->Texture = Player.Shield.Capacitor->Icon;
+            GUIIcons.ShCapIcon->Control.Visible = true;
+            GUIIcons.ShCapIcon->Texture = Player.Shield.Capacitor->Icon;
         }
         else
-            ShCapIcon->Control.Visible = false;
+            GUIIcons.ShCapIcon->Control.Visible = false;
         
         if (Player.Shield.Body)
         {
-            ShBodIcon->Control.Visible = true;
-            ShBodIcon->Texture = Player.Shield.Body->Icon;
+            GUIIcons.ShBodIcon->Control.Visible = true;
+            GUIIcons.ShBodIcon->Texture = Player.Shield.Body->Icon;
         }
         else
-            ShBodIcon->Control.Visible = false;
+            GUIIcons.ShBodIcon->Control.Visible = false;
         
         // Epic Shield Name
         str ShieldName = "";
@@ -666,36 +682,36 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
         if (Player.Shield.Body)      ShieldName = StrParam("%S \C-%S", ShieldName, Player.Shield.Body->Name);
         if (Player.Shield.Accessory) ShieldName = StrParam("%S \C-%S", ShieldName, Player.Shield.Accessory->Name);
         ShieldName = StrParam("%S\C- Shield", ShieldName);
-        ShNameLabel->Control.Visible = true;
-        ShNameLabel->Text = StrParam("%S", ShieldName);
+        GUILabels.ShNameLabel->Control.Visible = true;
+        GUILabels.ShNameLabel->Text = StrParam("%S", ShieldName);
         
-        ShCapLabel->Control.Visible = true;
-        ShCapLabel->Text = StrParam(" \CvCapacity: %d / %d", Player.Shield.Charge, Player.Shield.Capacity);
+        GUILabels.ShCapLabel->Control.Visible = true;
+        GUILabels.ShCapLabel->Text = StrParam(" \CvCapacity: %d / %d", Player.Shield.Charge, Player.Shield.Capacity);
         
-        ShCrgLabel->Control.Visible = true;
+        GUILabels.ShCrgLabel->Control.Visible = true;
         if (Player.Shield.Accessory && Player.Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
         {
-            ShCrgLabel->Text = " \CgDoes not recharge automatically";
-            ShDlyLabel->Control.Visible = false;
+            GUILabels.ShCrgLabel->Text = " \CgDoes not recharge automatically";
+            GUILabels.ShDlyLabel->Control.Visible = false;
         }
         else
         {
-            ShCrgLabel->Text = StrParam(" \CdCharge: %d", Player.Shield.ChargeRate);
-            ShDlyLabel->Control.Visible = true;
-            ShDlyLabel->Text = StrParam(" \CaDelay: %.2k", Player.Shield.DelayRate);
+            GUILabels.ShCrgLabel->Text = StrParam(" \CdCharge: %d", Player.Shield.ChargeRate);
+            GUILabels.ShDlyLabel->Control.Visible = true;
+            GUILabels.ShDlyLabel->Text = StrParam(" \CaDelay: %.2k", Player.Shield.DelayRate);
         }
     }
     else
     {
-        ShAccIcon->Control.Visible = false;
-        ShBatIcon->Control.Visible = false;
-        ShCapIcon->Control.Visible = false;
-        ShBodIcon->Control.Visible = false;
+        GUIIcons.ShAccIcon->Control.Visible = false;
+        GUIIcons.ShBatIcon->Control.Visible = false;
+        GUIIcons.ShCapIcon->Control.Visible = false;
+        GUIIcons.ShBodIcon->Control.Visible = false;
         
-        ShNameLabel->Control.Visible = false;
-        ShCapLabel->Control.Visible = false;
-        ShCrgLabel->Control.Visible = false;
-        ShDlyLabel->Control.Visible = false;
+        GUILabels.ShNameLabel->Control.Visible = false;
+        GUILabels.ShCapLabel->Control.Visible = false;
+        GUILabels.ShCrgLabel->Control.Visible = false;
+        GUILabels.ShDlyLabel->Control.Visible = false;
     }
     
     // --------------------------------------------------
@@ -704,31 +720,31 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
     
     if (Player.Stim.Size > 0)
     {
-        CurStimLabel->Control.Visible = true;
+        GUILabels.CurStimLabel->Control.Visible = true;
         // Draw Stim selection
         switch (Player.Stim.Size)
         {
             case 1:
             {
-                CurStimLabel->Text = StrParam("Small Stim: %d/%d", Player.Stim.Amount, Player.Stim.Capacity);
+                GUILabels.CurStimLabel->Text = StrParam("Small Stim: %d/%d", Player.Stim.Amount, Player.Stim.Capacity);
                 break;
             }
         
             case 2:
             {
-                CurStimLabel->Text = StrParam("Medium Stim: %d/%d", Player.Stim.Amount, Player.Stim.Capacity);
+                GUILabels.CurStimLabel->Text = StrParam("Medium Stim: %d/%d", Player.Stim.Amount, Player.Stim.Capacity);
                 break;
             }
             
             case 3:
             {
-                CurStimLabel->Text = StrParam("Large Stim: %d/%d", Player.Stim.Amount, Player.Stim.Capacity);
+                GUILabels.CurStimLabel->Text = StrParam("Large Stim: %d/%d", Player.Stim.Amount, Player.Stim.Capacity);
                 break;
             }
             
             case 4:
             {
-                CurStimLabel->Text = StrParam("Extra-Large Stim: %d/%d", Player.Stim.Amount, Player.Stim.Capacity);
+                GUILabels.CurStimLabel->Text = StrParam("Extra-Large Stim: %d/%d", Player.Stim.Amount, Player.Stim.Capacity);
                 break;
             }
         }
@@ -758,7 +774,7 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
     }
     else
     {
-        CurStimLabel->Control.Visible = false;
+        GUILabels.CurStimLabel->Control.Visible = false;
         for (int i = 0; i < STIM_MAX; i++)
         {
             CurStimBar[i]->Control.Visible = false;
@@ -771,8 +787,8 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
     
     if (Player.Toxicity > 0 || Player.Stim.Size > 0)
     {
-        ToxicityLabel->Control.Visible = true;
-        ToxicityLabel->Text = StrParam("Toxicity: %d%%", Player.Toxicity);
+        GUILabels.ToxicityLabel->Control.Visible = true;
+        GUILabels.ToxicityLabel->Text = StrParam("Toxicity: %d%%", Player.Toxicity);
         
         for (int i = 0; i < sizeof(ToxicityBar); i++)
         {
@@ -825,7 +841,7 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
     }
     else
     {
-        ToxicityLabel->Control.Visible = false;
+        GUILabels.ToxicityLabel->Control.Visible = false;
         for (int i = 0; i < sizeof(ToxicityBar); i++)
         {
             ToxicityBar[i]->Control.Visible = false;
@@ -834,15 +850,15 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
     
     if (GetActivatorCVar("drpg_menuhelp"))
     {
-        ToxicityRegenLabel->Control.Visible = Player.Toxicity >= 25;
-        ToxicityEnergyLabel->Control.Visible = Player.Toxicity >= 50;
-        ToxicitySpeedLabel->Control.Visible = Player.Toxicity >= 75;
+        GUILabels.ToxicityRegenLabel->Control.Visible = Player.Toxicity >= 25;
+        GUILabels.ToxicityEnergyLabel->Control.Visible = Player.Toxicity >= 50;
+        GUILabels.ToxicitySpeedLabel->Control.Visible = Player.Toxicity >= 75;
     }
     else
     {
-        ToxicityRegenLabel->Control.Visible = false;
-        ToxicityEnergyLabel->Control.Visible = false;
-        ToxicitySpeedLabel->Control.Visible = false;
+        GUILabels.ToxicityRegenLabel->Control.Visible = false;
+        GUILabels.ToxicityEnergyLabel->Control.Visible = false;
+        GUILabels.ToxicitySpeedLabel->Control.Visible = false;
     }
     
     GUIUpdatePanelControls(OverviewPanel);

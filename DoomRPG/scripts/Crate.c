@@ -183,12 +183,14 @@ NamedScript DECORATE void UseCrate(int ID)
 NamedScriptSync bool GenerateCrateNodes(CrateInfo RPGMap *Crate)
 {
     int StopCount = 4000;
+    bool Conflict;
+    int Start, End;
     
     while (Crate->GenType < NODE_MAX)
     {
-        bool Conflict = false;
-        int Start = Random(0, 300 - 12);
-        int End = 4 * Random(1, 2);
+        Conflict = false;
+        Start = Random(0, 300 - 12);
+        End = 4 * Random(1, 2);
         
         // Make sure we don't generate over the max amount of allowed node types
         if (Crate->GenNodes[Crate->GenType] >= Crate->NodeMax[Crate->GenType])

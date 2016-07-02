@@ -7,6 +7,102 @@
 #include "RPG.h"
 #include "Utils.h"
 
+struct
+{
+    GUIIcon *ModulesIcon;
+    
+    GUIIcon *StrengthIcon;
+    GUIIcon *StrLvlDnIcon;
+    GUIIcon *StrLvlUpIcon;
+    GUIIcon *DefenseIcon;
+    GUIIcon *DefLvlDnIcon;
+    GUIIcon *DefLvlUpIcon;
+    GUIIcon *VitalityIcon;
+    GUIIcon *VitLvlDnIcon;
+    GUIIcon *VitLvlUpIcon;
+    GUIIcon *EnergyIcon;
+    GUIIcon *EngLvlDnIcon;
+    GUIIcon *EngLvlUpIcon;
+    GUIIcon *RegenIcon;
+    GUIIcon *RgnLvlDnIcon;
+    GUIIcon *RgnLvlUpIcon;
+    GUIIcon *AgilityIcon;
+    GUIIcon *AglLvlDnIcon;
+    GUIIcon *AglLvlUpIcon;
+    GUIIcon *CapacityIcon;
+    GUIIcon *CapLvlDnIcon;
+    GUIIcon *CapLvlUpIcon;
+    GUIIcon *LuckIcon;
+    GUIIcon *LckLvlDnIcon;
+    GUIIcon *LckLvlUpIcon;
+} static GUIIcons;
+
+struct
+{
+    GUILabel *ModulesLabel;
+    
+    GUILabel *StrengthLabel;
+    GUILabel *StrGenLabel;
+    GUILabel *DefenseLabel;
+    GUILabel *DefGenLabel;
+    GUILabel *VitalityLabel;
+    GUILabel *VitGenLabel;
+    GUILabel *EnergyLabel;
+    GUILabel *EngGenLabel;
+    GUILabel *RegenLabel;
+    GUILabel *RgnGenLabel;
+    GUILabel *AgilityLabel;
+    GUILabel *AglGenLabel;
+    GUILabel *CapacityLabel;
+    GUILabel *CapGenLabel;
+    GUILabel *LuckLabel;
+    GUILabel *LckGenLabel;
+} static GUILabels;
+
+struct
+{
+    GUIBar *StrXPBar;
+    GUIBar *StrXPBGBar;
+    GUIBar *DefXPBar;
+    GUIBar *DefXPBGBar;
+    GUIBar *VitXPBar;
+    GUIBar *VitXPBGBar;
+    GUIBar *EngXPBar;
+    GUIBar *EngXPBGBar;
+    GUIBar *RgnXPBar;
+    GUIBar *RgnXPBGBar;
+    GUIBar *AglXPBar;
+    GUIBar *AglXPBGBar;
+    GUIBar *CapXPBar;
+    GUIBar *CapXPBGBar;
+    GUIBar *LckXPBar;
+    GUIBar *LckXPBGBar;
+} static GUIBars;
+
+struct
+{
+    GUIButton *StrLvlMaxButton;
+    GUIButton *StrDtlButton;
+    GUIButton *DefLvlMaxButton;
+    GUIButton *DefDtlButton;
+    GUIButton *VitLvlMaxButton;
+    GUIButton *VitDtlButton;
+    GUIButton *EngLvlMaxButton;
+    GUIButton *EngDtlButton;
+    GUIButton *RgnLvlMaxButton;
+    GUIButton *RgnDtlButton;
+    GUIButton *AglLvlMaxButton;
+    GUIButton *AglDtlButton;
+    GUIButton *CapLvlMaxButton;
+    GUIButton *CapDtlButton;
+    GUIButton *LckLvlMaxButton;
+    GUIButton *LckDtlButton;
+    
+    GUIButton *OrderClearButton;
+    GUIButton *OrderConfirmButton;
+} static GUIButtons;
+
+GUIBorder *OrderFormBorder;
 // --------------------------------------------------
 // GUI Panels
 //
@@ -29,19 +125,19 @@ NamedScript void CreateStatsPanel()
     int GUIElementID = GUI_CONTENTS_ID;
 
     //Modules
-    GUIIcon *ModulesIcon = GUIAddIcon(StatsPanel, "Modules Icon");
-    GUILabel *ModulesLabel = GUIAddLabel(StatsPanel, "Modules Label");
+    GUIIcons.ModulesIcon = GUIAddIcon(StatsPanel, "Modules Icon");
+    GUILabels.ModulesLabel = GUIAddLabel(StatsPanel, "Modules Label");
 
-    ModulesIcon->Control.X = 10;
-    ModulesIcon->Control.Y = 12;
-    ModulesIcon->Control.id = ++GUIElementID;
-    ModulesIcon->Texture = "UMODA0";
+    GUIIcons.ModulesIcon->Control.X = 10;
+    GUIIcons.ModulesIcon->Control.Y = 12;
+    GUIIcons.ModulesIcon->Control.id = ++GUIElementID;
+    GUIIcons.ModulesIcon->Texture = "UMODA0";
 
-    ModulesLabel->Control.X = 46;
-    ModulesLabel->Control.Y = 30;
-    ModulesLabel->Control.id = ++GUIElementID;
-    ModulesLabel->Big = true;
-    ModulesLabel->Color = "Green";
+    GUILabels.ModulesLabel->Control.X = 46;
+    GUILabels.ModulesLabel->Control.Y = 30;
+    GUILabels.ModulesLabel->Control.id = ++GUIElementID;
+    GUILabels.ModulesLabel->Big = true;
+    GUILabels.ModulesLabel->Color = "Green";
 
     //Stat cost to increase tooltip
 /*     GUITooltip *StatIncTooltip = GUICreateTooltip();
@@ -52,92 +148,92 @@ NamedScript void CreateStatsPanel()
     StatIncTooltip->Text = "Null"; */
 
     //Strength
-    GUIIcon *StrengthIcon = GUIAddIcon(StatsPanel, "Strength Icon");
-    GUILabel *StrengthLabel = GUIAddLabel(StatsPanel, "Strength Label");
-    GUILabel *StrGenLabel = GUIAddLabel(StatsPanel, "Strength General Label");
-    GUIBar *StrXPBar = GUIAddBar(StatsPanel, "Strength XP Bar");
-    GUIBar *StrXPBGBar = GUIAddBar(StatsPanel, "Strength XP BG Bar");
+    GUIIcons.StrengthIcon = GUIAddIcon(StatsPanel, "Strength Icon");
+    GUILabels.StrengthLabel = GUIAddLabel(StatsPanel, "Strength Label");
+    GUILabels.StrGenLabel = GUIAddLabel(StatsPanel, "Strength General Label");
+    GUIBars.StrXPBar = GUIAddBar(StatsPanel, "Strength XP Bar");
+    GUIBars.StrXPBGBar = GUIAddBar(StatsPanel, "Strength XP BG Bar");
 
-    GUIIcon *StrLvlDnIcon = GUIAddIcon(StatsPanel, "Strength Level Down Icon");
-    GUIIcon *StrLvlUpIcon = GUIAddIcon(StatsPanel, "Strength Level Up Icon");
-    GUIButton *StrLvlMaxButton = GUIAddButton(StatsPanel, "Strength Level Max Button");
-    GUIButton *StrDtlButton = GUIAddButton(StatsPanel, "Strength Detail Button");
+    GUIIcons.StrLvlDnIcon = GUIAddIcon(StatsPanel, "Strength Level Down Icon");
+    GUIIcons.StrLvlUpIcon = GUIAddIcon(StatsPanel, "Strength Level Up Icon");
+    GUIButtons.StrLvlMaxButton = GUIAddButton(StatsPanel, "Strength Level Max Button");
+    GUIButtons.StrDtlButton = GUIAddButton(StatsPanel, "Strength Detail Button");
     //GUILabel *StrDtlLabel = GUIAddLabel(StatsPanel, "Strength Detail Label");
     //GUILabel *StrXPLabel = GUIAddLabel(StatsPanel, "Strength XP Label");
 
-    StrengthIcon->Control.X = 22;
-    StrengthIcon->Control.Y = 58;
-    StrengthIcon->Control.id = ++GUIElementID;
-    StrengthIcon->Texture = "STAT1";
+    GUIIcons.StrengthIcon->Control.X = 22;
+    GUIIcons.StrengthIcon->Control.Y = 58;
+    GUIIcons.StrengthIcon->Control.id = ++GUIElementID;
+    GUIIcons.StrengthIcon->Texture = "STAT1";
 
-    StrengthLabel->Control.X = 60;
-    StrengthLabel->Control.Y = 64;
-    StrengthLabel->Control.id = ++GUIElementID;
-    StrengthLabel->Big = true;
-    StrengthLabel->Color = StatColors[STAT_STRENGTH];
+    GUILabels.StrengthLabel->Control.X = 60;
+    GUILabels.StrengthLabel->Control.Y = 64;
+    GUILabels.StrengthLabel->Control.id = ++GUIElementID;
+    GUILabels.StrengthLabel->Big = true;
+    GUILabels.StrengthLabel->Color = StatColors[STAT_STRENGTH];
 
-    StrGenLabel->Control.X = 60;
-    StrGenLabel->Control.Y = 76;
-    StrGenLabel->Control.id = ++GUIElementID;
-    StrGenLabel->Text = "+ damage dealt";
-    StrGenLabel->Color = "White";
+    GUILabels.StrGenLabel->Control.X = 60;
+    GUILabels.StrGenLabel->Control.Y = 76;
+    GUILabels.StrGenLabel->Control.id = ++GUIElementID;
+    GUILabels.StrGenLabel->Text = "+ damage dealt";
+    GUILabels.StrGenLabel->Color = "White";
 
-    StrXPBar->Control.X = 60;
-    StrXPBar->Control.Y = 90;
-    StrXPBar->Control.id = ++GUIElementID;
-    StrXPBar->Control.Height = 16;
-    StrXPBar->Value = 0;
-    StrXPBar->ValueMax = 150;
-    StrXPBar->Texture = "StatBar1";
-
-    GUIElementID += 150;
-
-    StrXPBGBar->Control.X = 60;
-    StrXPBGBar->Control.Y = 90;
-    StrXPBGBar->Control.id = ++GUIElementID;
-    StrXPBGBar->Control.Height = 16;
-    StrXPBGBar->Value = 150;
-    StrXPBGBar->ValueMax = 150;
-    StrXPBGBar->Texture = "StatBarB";
+    GUIBars.StrXPBar->Control.X = 60;
+    GUIBars.StrXPBar->Control.Y = 90;
+    GUIBars.StrXPBar->Control.id = ++GUIElementID;
+    GUIBars.StrXPBar->Control.Height = 16;
+    GUIBars.StrXPBar->Value = 0;
+    GUIBars.StrXPBar->ValueMax = 150;
+    GUIBars.StrXPBar->Texture = "StatBar1";
 
     GUIElementID += 150;
 
-    StrLvlDnIcon->Control.X = 224;
-    StrLvlDnIcon->Control.Y = 76;
-    StrLvlDnIcon->Control.Width = 18;
-    StrLvlDnIcon->Control.Height = 18;
-    StrLvlDnIcon->Control.id = ++GUIElementID;
-    StrLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    StrLvlDnIcon->Control.Click = (ControlClickFunc)IconDownClick;
-    StrLvlDnIcon->Texture = "HLISTDN";
-    StrLvlDnIcon->Enabled = false;
+    GUIBars.StrXPBGBar->Control.X = 60;
+    GUIBars.StrXPBGBar->Control.Y = 90;
+    GUIBars.StrXPBGBar->Control.id = ++GUIElementID;
+    GUIBars.StrXPBGBar->Control.Height = 16;
+    GUIBars.StrXPBGBar->Value = 150;
+    GUIBars.StrXPBGBar->ValueMax = 150;
+    GUIBars.StrXPBGBar->Texture = "StatBarB";
 
-    StrLvlUpIcon->Control.X = 224;
-    StrLvlUpIcon->Control.Y = 58;
-    StrLvlUpIcon->Control.Width = 18;
-    StrLvlUpIcon->Control.Height = 18;
-    StrLvlUpIcon->Control.id = ++GUIElementID;
-    StrLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    StrLvlUpIcon->Control.Click = (ControlClickFunc)IconUpClick;
-    StrLvlUpIcon->Texture = "HLISTUP";
+    GUIElementID += 150;
 
-    StrLvlMaxButton->Control.X = 248;
-    StrLvlMaxButton->Control.Y = 66;
-    StrLvlMaxButton->Control.Width = 42;
-    StrLvlMaxButton->Control.Height = 16;
-    StrLvlMaxButton->Control.id = ++GUIElementID;
-    StrLvlMaxButton->Text = "MAX";
-    StrLvlMaxButton->Big = true;
-    StrLvlMaxButton->Color = "Green";
+    GUIIcons.StrLvlDnIcon->Control.X = 224;
+    GUIIcons.StrLvlDnIcon->Control.Y = 76;
+    GUIIcons.StrLvlDnIcon->Control.Width = 18;
+    GUIIcons.StrLvlDnIcon->Control.Height = 18;
+    GUIIcons.StrLvlDnIcon->Control.id = ++GUIElementID;
+    GUIIcons.StrLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.StrLvlDnIcon->Control.Click = (ControlClickFunc)IconDownClick;
+    GUIIcons.StrLvlDnIcon->Texture = "HLISTDN";
+    GUIIcons.StrLvlDnIcon->Enabled = false;
 
-    StrDtlButton->Control.X = 260;
-    StrDtlButton->Control.Y = 82;
-    StrDtlButton->Control.Width = 16;
-    StrDtlButton->Control.Height = 16;
-    StrDtlButton->Control.id = ++GUIElementID;
-    StrDtlButton->Text = "...";
-    StrDtlButton->Big = true;
-    StrDtlButton->Color = "Green";
+    GUIIcons.StrLvlUpIcon->Control.X = 224;
+    GUIIcons.StrLvlUpIcon->Control.Y = 58;
+    GUIIcons.StrLvlUpIcon->Control.Width = 18;
+    GUIIcons.StrLvlUpIcon->Control.Height = 18;
+    GUIIcons.StrLvlUpIcon->Control.id = ++GUIElementID;
+    GUIIcons.StrLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.StrLvlUpIcon->Control.Click = (ControlClickFunc)IconUpClick;
+    GUIIcons.StrLvlUpIcon->Texture = "HLISTUP";
+
+    GUIButtons.StrLvlMaxButton->Control.X = 248;
+    GUIButtons.StrLvlMaxButton->Control.Y = 66;
+    GUIButtons.StrLvlMaxButton->Control.Width = 42;
+    GUIButtons.StrLvlMaxButton->Control.Height = 16;
+    GUIButtons.StrLvlMaxButton->Control.id = ++GUIElementID;
+    GUIButtons.StrLvlMaxButton->Text = "MAX";
+    GUIButtons.StrLvlMaxButton->Big = true;
+    GUIButtons.StrLvlMaxButton->Color = "Green";
+
+    GUIButtons.StrDtlButton->Control.X = 260;
+    GUIButtons.StrDtlButton->Control.Y = 82;
+    GUIButtons.StrDtlButton->Control.Width = 16;
+    GUIButtons.StrDtlButton->Control.Height = 16;
+    GUIButtons.StrDtlButton->Control.id = ++GUIElementID;
+    GUIButtons.StrDtlButton->Text = "...";
+    GUIButtons.StrDtlButton->Big = true;
+    GUIButtons.StrDtlButton->Color = "Green";
 
     /*     StrDtlLabel->Control.X = 236;
     StrDtlLabel->Control.Y = 58;
@@ -153,34 +249,34 @@ NamedScript void CreateStatsPanel()
     StrXPLabel->Text = ""; */
 
     //Defense
-    GUIIcon *DefenseIcon = GUIAddIcon(StatsPanel, "Defense Icon");
-    GUILabel *DefenseLabel = GUIAddLabel(StatsPanel, "Defense Label");
-    GUILabel *DefGenLabel = GUIAddLabel(StatsPanel, "Defense General Label");
+    GUIIcons.DefenseIcon = GUIAddIcon(StatsPanel, "Defense Icon");
+    GUILabels.DefenseLabel = GUIAddLabel(StatsPanel, "Defense Label");
+    GUILabels.DefGenLabel = GUIAddLabel(StatsPanel, "Defense General Label");
     //GUILabel *DefXPLabel = GUIAddLabel(StatsPanel, "Defense XP Label");
-    GUIBar *DefXPBar = GUIAddBar(StatsPanel, "Defense XP Bar");
-    GUIBar *DefXPBGBar = GUIAddBar(StatsPanel, "Defense XP BG Bar");
+    GUIBars.DefXPBar = GUIAddBar(StatsPanel, "Defense XP Bar");
+    GUIBars.DefXPBGBar = GUIAddBar(StatsPanel, "Defense XP BG Bar");
 
-    GUIIcon *DefLvlDnIcon = GUIAddIcon(StatsPanel, "Defense Level Down Icon");
-    GUIIcon *DefLvlUpIcon = GUIAddIcon(StatsPanel, "Defense Level Up Icon");
-    GUIButton *DefLvlMaxButton = GUIAddButton(StatsPanel, "Defense Level Max Button");
-    GUIButton *DefDtlButton = GUIAddButton(StatsPanel, "Defense Detail Button");
+    GUIIcons.DefLvlDnIcon = GUIAddIcon(StatsPanel, "Defense Level Down Icon");
+    GUIIcons.DefLvlUpIcon = GUIAddIcon(StatsPanel, "Defense Level Up Icon");
+    GUIButtons.DefLvlMaxButton = GUIAddButton(StatsPanel, "Defense Level Max Button");
+    GUIButtons.DefDtlButton = GUIAddButton(StatsPanel, "Defense Detail Button");
 
-    DefenseIcon->Control.X = 22;
-    DefenseIcon->Control.Y = 112 - 6;
-    DefenseIcon->Control.id = ++GUIElementID;
-    DefenseIcon->Texture = "STAT2";
+    GUIIcons.DefenseIcon->Control.X = 22;
+    GUIIcons.DefenseIcon->Control.Y = 112 - 6;
+    GUIIcons.DefenseIcon->Control.id = ++GUIElementID;
+    GUIIcons.DefenseIcon->Texture = "STAT2";
 
-    DefenseLabel->Control.X = 60;
-    DefenseLabel->Control.Y = 118;
-    DefenseLabel->Control.id = ++GUIElementID;
-    DefenseLabel->Big = true;
-    DefenseLabel->Color = StatColors[STAT_DEFENSE];
+    GUILabels.DefenseLabel->Control.X = 60;
+    GUILabels.DefenseLabel->Control.Y = 118;
+    GUILabels.DefenseLabel->Control.id = ++GUIElementID;
+    GUILabels.DefenseLabel->Big = true;
+    GUILabels.DefenseLabel->Color = StatColors[STAT_DEFENSE];
 
-    DefGenLabel->Control.X = 60;
-    DefGenLabel->Control.Y = 136;
-    DefGenLabel->Control.id = ++GUIElementID;
-    DefGenLabel->Text = "- damage taken\n- knockback";
-    DefGenLabel->Color = "White";
+    GUILabels.DefGenLabel->Control.X = 60;
+    GUILabels.DefGenLabel->Control.Y = 136;
+    GUILabels.DefGenLabel->Control.id = ++GUIElementID;
+    GUILabels.DefGenLabel->Text = "- damage taken\n- knockback";
+    GUILabels.DefGenLabel->Color = "White";
 
     /* DefXPLabel->Control.X = 135;
     DefXPLabel->Control.Y = 157;
@@ -189,90 +285,90 @@ NamedScript void CreateStatsPanel()
     DefXPLabel->Color = "Grey";
     DefXPLabel->Text = ""; */
 
-    DefXPBar->Control.X = 60;
-    DefXPBar->Control.Y = 154;
-    DefXPBar->Control.id = ++GUIElementID;
-    DefXPBar->Control.Height = 16;
-    DefXPBar->Value = 0;
-    DefXPBar->ValueMax = 150;
-    DefXPBar->Texture = "StatBar2";
+    GUIBars.DefXPBar->Control.X = 60;
+    GUIBars.DefXPBar->Control.Y = 154;
+    GUIBars.DefXPBar->Control.id = ++GUIElementID;
+    GUIBars.DefXPBar->Control.Height = 16;
+    GUIBars.DefXPBar->Value = 0;
+    GUIBars.DefXPBar->ValueMax = 150;
+    GUIBars.DefXPBar->Texture = "StatBar2";
 
     GUIElementID += 150;
 
-    DefXPBGBar->Control.X = 60;
-    DefXPBGBar->Control.Y = 154;
-    DefXPBGBar->Control.id = ++GUIElementID;
-    DefXPBGBar->Control.Height = 16;
-    DefXPBGBar->Value = 150;
-    DefXPBGBar->ValueMax = 150;
-    DefXPBGBar->Texture = "StatBarB";
+    GUIBars.DefXPBGBar->Control.X = 60;
+    GUIBars.DefXPBGBar->Control.Y = 154;
+    GUIBars.DefXPBGBar->Control.id = ++GUIElementID;
+    GUIBars.DefXPBGBar->Control.Height = 16;
+    GUIBars.DefXPBGBar->Value = 150;
+    GUIBars.DefXPBGBar->ValueMax = 150;
+    GUIBars.DefXPBGBar->Texture = "StatBarB";
 
     GUIElementID += 150;
 
-    DefLvlDnIcon->Control.X = 224;
-    DefLvlDnIcon->Control.Y = 130;
-    DefLvlDnIcon->Control.Width = 18;
-    DefLvlDnIcon->Control.Height = 18;
-    DefLvlDnIcon->Control.id = ++GUIElementID;
-    DefLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    DefLvlDnIcon->Texture = "HLISTDN";
-    DefLvlDnIcon->Enabled = false;
+    GUIIcons.DefLvlDnIcon->Control.X = 224;
+    GUIIcons.DefLvlDnIcon->Control.Y = 130;
+    GUIIcons.DefLvlDnIcon->Control.Width = 18;
+    GUIIcons.DefLvlDnIcon->Control.Height = 18;
+    GUIIcons.DefLvlDnIcon->Control.id = ++GUIElementID;
+    GUIIcons.DefLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.DefLvlDnIcon->Texture = "HLISTDN";
+    GUIIcons.DefLvlDnIcon->Enabled = false;
 
-    DefLvlUpIcon->Control.X = 224;
-    DefLvlUpIcon->Control.Y = 112;
-    DefLvlUpIcon->Control.Width = 18;
-    DefLvlUpIcon->Control.Height = 18;
-    DefLvlUpIcon->Control.id = ++GUIElementID;
-    DefLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    DefLvlUpIcon->Texture = "HLISTUP";
+    GUIIcons.DefLvlUpIcon->Control.X = 224;
+    GUIIcons.DefLvlUpIcon->Control.Y = 112;
+    GUIIcons.DefLvlUpIcon->Control.Width = 18;
+    GUIIcons.DefLvlUpIcon->Control.Height = 18;
+    GUIIcons.DefLvlUpIcon->Control.id = ++GUIElementID;
+    GUIIcons.DefLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.DefLvlUpIcon->Texture = "HLISTUP";
 
-    DefLvlMaxButton->Control.X = 248;
-    DefLvlMaxButton->Control.Y = 120;
-    DefLvlMaxButton->Control.Width = 42;
-    DefLvlMaxButton->Control.Height = 16;
-    DefLvlMaxButton->Control.id = ++GUIElementID;
-    DefLvlMaxButton->Text = "MAX";
-    DefLvlMaxButton->Big = true;
-    DefLvlMaxButton->Color = "Green";
+    GUIButtons.DefLvlMaxButton->Control.X = 248;
+    GUIButtons.DefLvlMaxButton->Control.Y = 120;
+    GUIButtons.DefLvlMaxButton->Control.Width = 42;
+    GUIButtons.DefLvlMaxButton->Control.Height = 16;
+    GUIButtons.DefLvlMaxButton->Control.id = ++GUIElementID;
+    GUIButtons.DefLvlMaxButton->Text = "MAX";
+    GUIButtons.DefLvlMaxButton->Big = true;
+    GUIButtons.DefLvlMaxButton->Color = "Green";
 
-    DefDtlButton->Control.X = 260;
-    DefDtlButton->Control.Y = 136;
-    DefDtlButton->Control.Width = 16;
-    DefDtlButton->Control.Height = 16;
-    DefDtlButton->Control.id = ++GUIElementID;
-    DefDtlButton->Text = "...";
-    DefDtlButton->Big = true;
-    DefDtlButton->Color = "Green";
+    GUIButtons.DefDtlButton->Control.X = 260;
+    GUIButtons.DefDtlButton->Control.Y = 136;
+    GUIButtons.DefDtlButton->Control.Width = 16;
+    GUIButtons.DefDtlButton->Control.Height = 16;
+    GUIButtons.DefDtlButton->Control.id = ++GUIElementID;
+    GUIButtons.DefDtlButton->Text = "...";
+    GUIButtons.DefDtlButton->Big = true;
+    GUIButtons.DefDtlButton->Color = "Green";
 
     //Vitality
-    GUIIcon *VitalityIcon = GUIAddIcon(StatsPanel, "Vitality Icon");
-    GUILabel *VitalityLabel = GUIAddLabel(StatsPanel, "Vitality Label");
-    GUILabel *VitGenLabel = GUIAddLabel(StatsPanel, "Vitality General Label");
+    GUIIcons.VitalityIcon = GUIAddIcon(StatsPanel, "Vitality Icon");
+    GUILabels.VitalityLabel = GUIAddLabel(StatsPanel, "Vitality Label");
+    GUILabels.VitGenLabel = GUIAddLabel(StatsPanel, "Vitality General Label");
     //GUILabel *VitXPLabel = GUIAddLabel(StatsPanel, "Vitality XP Label");
-    GUIBar *VitXPBar = GUIAddBar(StatsPanel, "Vitality XP Bar");
-    GUIBar *VitXPBGBar = GUIAddBar(StatsPanel, "Vitality XP BG Bar");
+    GUIBars.VitXPBar = GUIAddBar(StatsPanel, "Vitality XP Bar");
+    GUIBars.VitXPBGBar = GUIAddBar(StatsPanel, "Vitality XP BG Bar");
 
-    GUIIcon *VitLvlDnIcon = GUIAddIcon(StatsPanel, "Vitality Level Down Icon");
-    GUIIcon *VitLvlUpIcon = GUIAddIcon(StatsPanel, "Vitality Level Up Icon");
-    GUIButton *VitLvlMaxButton = GUIAddButton(StatsPanel, "Vitality Level Max Button");
-    GUIButton *VitDtlButton = GUIAddButton(StatsPanel, "Vitality Detail Button");
+    GUIIcons.VitLvlDnIcon = GUIAddIcon(StatsPanel, "Vitality Level Down Icon");
+    GUIIcons.VitLvlUpIcon = GUIAddIcon(StatsPanel, "Vitality Level Up Icon");
+    GUIButtons.VitLvlMaxButton = GUIAddButton(StatsPanel, "Vitality Level Max Button");
+    GUIButtons.VitDtlButton = GUIAddButton(StatsPanel, "Vitality Detail Button");
 
-    VitalityIcon->Control.X = 22;
-    VitalityIcon->Control.Y = 172;
-    VitalityIcon->Control.id = ++GUIElementID;
-    VitalityIcon->Texture = "STAT3";
+    GUIIcons.VitalityIcon->Control.X = 22;
+    GUIIcons.VitalityIcon->Control.Y = 172;
+    GUIIcons.VitalityIcon->Control.id = ++GUIElementID;
+    GUIIcons.VitalityIcon->Texture = "STAT3";
 
-    VitalityLabel->Control.X = 60;
-    VitalityLabel->Control.Y = 178;
-    VitalityLabel->Control.id = ++GUIElementID;
-    VitalityLabel->Big = true;
-    VitalityLabel->Color = StatColors[STAT_VITALITY];
+    GUILabels.VitalityLabel->Control.X = 60;
+    GUILabels.VitalityLabel->Control.Y = 178;
+    GUILabels.VitalityLabel->Control.id = ++GUIElementID;
+    GUILabels.VitalityLabel->Big = true;
+    GUILabels.VitalityLabel->Color = StatColors[STAT_VITALITY];
 
-    VitGenLabel->Control.X = 60;
-    VitGenLabel->Control.Y = 200;
-    VitGenLabel->Control.id = ++GUIElementID;
-    VitGenLabel->Text = "+ max HP\n+ HP regen amount\n+ status effect resist";
-    VitGenLabel->Color = "White";
+    GUILabels.VitGenLabel->Control.X = 60;
+    GUILabels.VitGenLabel->Control.Y = 200;
+    GUILabels.VitGenLabel->Control.id = ++GUIElementID;
+    GUILabels.VitGenLabel->Text = "+ max HP\n+ HP regen amount\n+ status effect resist";
+    GUILabels.VitGenLabel->Color = "White";
 
     /* VitXPLabel->Control.X = 135;
     VitXPLabel->Control.Y = 225;
@@ -281,90 +377,90 @@ NamedScript void CreateStatsPanel()
     VitXPLabel->Color = "Grey";
     VitXPLabel->Text = ""; */
 
-    VitXPBar->Control.X = 60;
-    VitXPBar->Control.Y = 222;
-    VitXPBar->Control.id = ++GUIElementID;
-    VitXPBar->Control.Height = 16;
-    VitXPBar->Value = 0;
-    VitXPBar->ValueMax = 150;
-    VitXPBar->Texture = "StatBar3";
+    GUIBars.VitXPBar->Control.X = 60;
+    GUIBars.VitXPBar->Control.Y = 222;
+    GUIBars.VitXPBar->Control.id = ++GUIElementID;
+    GUIBars.VitXPBar->Control.Height = 16;
+    GUIBars.VitXPBar->Value = 0;
+    GUIBars.VitXPBar->ValueMax = 150;
+    GUIBars.VitXPBar->Texture = "StatBar3";
 
     GUIElementID += 150;
 
-    VitXPBGBar->Control.X = 60;
-    VitXPBGBar->Control.Y = 222;
-    VitXPBGBar->Control.id = ++GUIElementID;
-    VitXPBGBar->Control.Height = 16;
-    VitXPBGBar->Value = 150;
-    VitXPBGBar->ValueMax = 150;
-    VitXPBGBar->Texture = "StatBarB";
+    GUIBars.VitXPBGBar->Control.X = 60;
+    GUIBars.VitXPBGBar->Control.Y = 222;
+    GUIBars.VitXPBGBar->Control.id = ++GUIElementID;
+    GUIBars.VitXPBGBar->Control.Height = 16;
+    GUIBars.VitXPBGBar->Value = 150;
+    GUIBars.VitXPBGBar->ValueMax = 150;
+    GUIBars.VitXPBGBar->Texture = "StatBarB";
 
     GUIElementID += 150;
 
-    VitLvlDnIcon->Control.X = 224;
-    VitLvlDnIcon->Control.Y = 190;
-    VitLvlDnIcon->Control.Width = 18;
-    VitLvlDnIcon->Control.Height = 18;
-    VitLvlDnIcon->Control.id = ++GUIElementID;
-    VitLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    VitLvlDnIcon->Texture = "HLISTDN";
-    VitLvlDnIcon->Enabled = false;
+    GUIIcons.VitLvlDnIcon->Control.X = 224;
+    GUIIcons.VitLvlDnIcon->Control.Y = 190;
+    GUIIcons.VitLvlDnIcon->Control.Width = 18;
+    GUIIcons.VitLvlDnIcon->Control.Height = 18;
+    GUIIcons.VitLvlDnIcon->Control.id = ++GUIElementID;
+    GUIIcons.VitLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.VitLvlDnIcon->Texture = "HLISTDN";
+    GUIIcons.VitLvlDnIcon->Enabled = false;
 
-    VitLvlUpIcon->Control.X = 224;
-    VitLvlUpIcon->Control.Y = 172;
-    VitLvlUpIcon->Control.Width = 18;
-    VitLvlUpIcon->Control.Height = 18;
-    VitLvlUpIcon->Control.id = ++GUIElementID;
-    VitLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    VitLvlUpIcon->Texture = "HLISTUP";
+    GUIIcons.VitLvlUpIcon->Control.X = 224;
+    GUIIcons.VitLvlUpIcon->Control.Y = 172;
+    GUIIcons.VitLvlUpIcon->Control.Width = 18;
+    GUIIcons.VitLvlUpIcon->Control.Height = 18;
+    GUIIcons.VitLvlUpIcon->Control.id = ++GUIElementID;
+    GUIIcons.VitLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.VitLvlUpIcon->Texture = "HLISTUP";
 
-    VitLvlMaxButton->Control.X = 248;
-    VitLvlMaxButton->Control.Y = 180;
-    VitLvlMaxButton->Control.Width = 42;
-    VitLvlMaxButton->Control.Height = 16;
-    VitLvlMaxButton->Control.id = ++GUIElementID;
-    VitLvlMaxButton->Text = "MAX";
-    VitLvlMaxButton->Big = true;
-    VitLvlMaxButton->Color = "Green";
+    GUIButtons.VitLvlMaxButton->Control.X = 248;
+    GUIButtons.VitLvlMaxButton->Control.Y = 180;
+    GUIButtons.VitLvlMaxButton->Control.Width = 42;
+    GUIButtons.VitLvlMaxButton->Control.Height = 16;
+    GUIButtons.VitLvlMaxButton->Control.id = ++GUIElementID;
+    GUIButtons.VitLvlMaxButton->Text = "MAX";
+    GUIButtons.VitLvlMaxButton->Big = true;
+    GUIButtons.VitLvlMaxButton->Color = "Green";
 
-    VitDtlButton->Control.X = 260;
-    VitDtlButton->Control.Y = 196;
-    VitDtlButton->Control.Width = 16;
-    VitDtlButton->Control.Height = 16;
-    VitDtlButton->Control.id = ++GUIElementID;
-    VitDtlButton->Text = "...";
-    VitDtlButton->Big = true;
-    VitDtlButton->Color = "Green";
+    GUIButtons.VitDtlButton->Control.X = 260;
+    GUIButtons.VitDtlButton->Control.Y = 196;
+    GUIButtons.VitDtlButton->Control.Width = 16;
+    GUIButtons.VitDtlButton->Control.Height = 16;
+    GUIButtons.VitDtlButton->Control.id = ++GUIElementID;
+    GUIButtons.VitDtlButton->Text = "...";
+    GUIButtons.VitDtlButton->Big = true;
+    GUIButtons.VitDtlButton->Color = "Green";
 
     //Energy
-    GUIIcon *EnergyIcon = GUIAddIcon(StatsPanel, "Energy Icon");
-    GUILabel *EnergyLabel = GUIAddLabel(StatsPanel, "Energy Label");
-    GUILabel *EngGenLabel = GUIAddLabel(StatsPanel, "Energy General Label");
+    GUIIcons.EnergyIcon = GUIAddIcon(StatsPanel, "Energy Icon");
+    GUILabels.EnergyLabel = GUIAddLabel(StatsPanel, "Energy Label");
+    GUILabels.EngGenLabel = GUIAddLabel(StatsPanel, "Energy General Label");
     //GUILabel *EngXPLabel = GUIAddLabel(StatsPanel, "Energy XP Label");
-    GUIBar *EngXPBar = GUIAddBar(StatsPanel, "Energy XP Bar");
-    GUIBar *EngXPBGBar = GUIAddBar(StatsPanel, "Energy XP BG Bar");
+    GUIBars.EngXPBar = GUIAddBar(StatsPanel, "Energy XP Bar");
+    GUIBars.EngXPBGBar = GUIAddBar(StatsPanel, "Energy XP BG Bar");
 
-    GUIIcon *EngLvlDnIcon = GUIAddIcon(StatsPanel, "Energy Level Down Icon");
-    GUIIcon *EngLvlUpIcon = GUIAddIcon(StatsPanel, "Energy Level Up Icon");
-    GUIButton *EngLvlMaxButton = GUIAddButton(StatsPanel, "Energy Level Max Button");
-    GUIButton *EngDtlButton = GUIAddButton(StatsPanel, "Energy Detail Button");
+    GUIIcons.EngLvlDnIcon = GUIAddIcon(StatsPanel, "Energy Level Down Icon");
+    GUIIcons.EngLvlUpIcon = GUIAddIcon(StatsPanel, "Energy Level Up Icon");
+    GUIButtons.EngLvlMaxButton = GUIAddButton(StatsPanel, "Energy Level Max Button");
+    GUIButtons.EngDtlButton = GUIAddButton(StatsPanel, "Energy Detail Button");
 
-    EnergyIcon->Control.X = 22;
-    EnergyIcon->Control.Y = 236;
-    EnergyIcon->Control.id = ++GUIElementID;
-    EnergyIcon->Texture = "STAT4";
+    GUIIcons.EnergyIcon->Control.X = 22;
+    GUIIcons.EnergyIcon->Control.Y = 236;
+    GUIIcons.EnergyIcon->Control.id = ++GUIElementID;
+    GUIIcons.EnergyIcon->Texture = "STAT4";
 
-    EnergyLabel->Control.X = 60;
-    EnergyLabel->Control.Y = 242;
-    EnergyLabel->Control.id = ++GUIElementID;
-    EnergyLabel->Big = true;
-    EnergyLabel->Color = StatColors[STAT_ENERGY];
+    GUILabels.EnergyLabel->Control.X = 60;
+    GUILabels.EnergyLabel->Control.Y = 242;
+    GUILabels.EnergyLabel->Control.id = ++GUIElementID;
+    GUILabels.EnergyLabel->Big = true;
+    GUILabels.EnergyLabel->Color = StatColors[STAT_ENERGY];
 
-    EngGenLabel->Control.X = 60;
-    EngGenLabel->Control.Y = 268;
-    EngGenLabel->Control.id = ++GUIElementID;
-    EngGenLabel->Text = "+ max EP\n+ EP regen amount\n+ aura duration\n+ aura effect range";
-    EngGenLabel->Color = "White";
+    GUILabels.EngGenLabel->Control.X = 60;
+    GUILabels.EngGenLabel->Control.Y = 268;
+    GUILabels.EngGenLabel->Control.id = ++GUIElementID;
+    GUILabels.EngGenLabel->Text = "+ max EP\n+ EP regen amount\n+ aura duration\n+ aura effect range";
+    GUILabels.EngGenLabel->Color = "White";
 
     /* EngXPLabel->Control.X = 135;
     EngXPLabel->Control.Y = 295;
@@ -373,90 +469,90 @@ NamedScript void CreateStatsPanel()
     EngXPLabel->Color = "Grey";
     EngXPLabel->Text = ""; */
 
-    EngXPBar->Control.X = 60;
-    EngXPBar->Control.Y = 292;
-    EngXPBar->Control.id = ++GUIElementID;
-    EngXPBar->Control.Height = 16;
-    EngXPBar->Value = 0;
-    EngXPBar->ValueMax = 150;
-    EngXPBar->Texture = "StatBar4";
+    GUIBars.EngXPBar->Control.X = 60;
+    GUIBars.EngXPBar->Control.Y = 292;
+    GUIBars.EngXPBar->Control.id = ++GUIElementID;
+    GUIBars.EngXPBar->Control.Height = 16;
+    GUIBars.EngXPBar->Value = 0;
+    GUIBars.EngXPBar->ValueMax = 150;
+    GUIBars.EngXPBar->Texture = "StatBar4";
 
     GUIElementID += 150;
 
-    EngXPBGBar->Control.X = 60;
-    EngXPBGBar->Control.Y = 292;
-    EngXPBGBar->Control.id = ++GUIElementID;
-    EngXPBGBar->Control.Height = 16;
-    EngXPBGBar->Value = 150;
-    EngXPBGBar->ValueMax = 150;
-    EngXPBGBar->Texture = "StatBarB";
+    GUIBars.EngXPBGBar->Control.X = 60;
+    GUIBars.EngXPBGBar->Control.Y = 292;
+    GUIBars.EngXPBGBar->Control.id = ++GUIElementID;
+    GUIBars.EngXPBGBar->Control.Height = 16;
+    GUIBars.EngXPBGBar->Value = 150;
+    GUIBars.EngXPBGBar->ValueMax = 150;
+    GUIBars.EngXPBGBar->Texture = "StatBarB";
 
     GUIElementID += 150;
 
-    EngLvlDnIcon->Control.X = 224;
-    EngLvlDnIcon->Control.Y = 254;
-    EngLvlDnIcon->Control.Width = 18;
-    EngLvlDnIcon->Control.Height = 18;
-    EngLvlDnIcon->Control.id = ++GUIElementID;
-    EngLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    EngLvlDnIcon->Texture = "HLISTDN";
-    EngLvlDnIcon->Enabled = false;
+    GUIIcons.EngLvlDnIcon->Control.X = 224;
+    GUIIcons.EngLvlDnIcon->Control.Y = 254;
+    GUIIcons.EngLvlDnIcon->Control.Width = 18;
+    GUIIcons.EngLvlDnIcon->Control.Height = 18;
+    GUIIcons.EngLvlDnIcon->Control.id = ++GUIElementID;
+    GUIIcons.EngLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.EngLvlDnIcon->Texture = "HLISTDN";
+    GUIIcons.EngLvlDnIcon->Enabled = false;
 
-    EngLvlUpIcon->Control.X = 224;
-    EngLvlUpIcon->Control.Y = 236;
-    EngLvlUpIcon->Control.Width = 18;
-    EngLvlUpIcon->Control.Height = 18;
-    EngLvlUpIcon->Control.id = ++GUIElementID;
-    EngLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    EngLvlUpIcon->Texture = "HLISTUP";
+    GUIIcons.EngLvlUpIcon->Control.X = 224;
+    GUIIcons.EngLvlUpIcon->Control.Y = 236;
+    GUIIcons.EngLvlUpIcon->Control.Width = 18;
+    GUIIcons.EngLvlUpIcon->Control.Height = 18;
+    GUIIcons.EngLvlUpIcon->Control.id = ++GUIElementID;
+    GUIIcons.EngLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.EngLvlUpIcon->Texture = "HLISTUP";
 
-    EngLvlMaxButton->Control.X = 248;
-    EngLvlMaxButton->Control.Y = 244;
-    EngLvlMaxButton->Control.Width = 42;
-    EngLvlMaxButton->Control.Height = 16;
-    EngLvlMaxButton->Control.id = ++GUIElementID;
-    EngLvlMaxButton->Text = "MAX";
-    EngLvlMaxButton->Big = true;
-    EngLvlMaxButton->Color = "Green";
+    GUIButtons.EngLvlMaxButton->Control.X = 248;
+    GUIButtons.EngLvlMaxButton->Control.Y = 244;
+    GUIButtons.EngLvlMaxButton->Control.Width = 42;
+    GUIButtons.EngLvlMaxButton->Control.Height = 16;
+    GUIButtons.EngLvlMaxButton->Control.id = ++GUIElementID;
+    GUIButtons.EngLvlMaxButton->Text = "MAX";
+    GUIButtons.EngLvlMaxButton->Big = true;
+    GUIButtons.EngLvlMaxButton->Color = "Green";
 
-    EngDtlButton->Control.X = 260;
-    EngDtlButton->Control.Y = 260;
-    EngDtlButton->Control.Width = 16;
-    EngDtlButton->Control.Height = 16;
-    EngDtlButton->Control.id = ++GUIElementID;
-    EngDtlButton->Text = "...";
-    EngDtlButton->Big = true;
-    EngDtlButton->Color = "Green";
+    GUIButtons.EngDtlButton->Control.X = 260;
+    GUIButtons.EngDtlButton->Control.Y = 260;
+    GUIButtons.EngDtlButton->Control.Width = 16;
+    GUIButtons.EngDtlButton->Control.Height = 16;
+    GUIButtons.EngDtlButton->Control.id = ++GUIElementID;
+    GUIButtons.EngDtlButton->Text = "...";
+    GUIButtons.EngDtlButton->Big = true;
+    GUIButtons.EngDtlButton->Color = "Green";
 
     //Regen
-    GUIIcon *RegenIcon = GUIAddIcon(StatsPanel, "Regen Icon");
-    GUILabel *RegenLabel = GUIAddLabel(StatsPanel, "Regen Label");
-    GUILabel *RgnGenLabel = GUIAddLabel(StatsPanel, "Regen General Label");
+    GUIIcons.RegenIcon = GUIAddIcon(StatsPanel, "Regen Icon");
+    GUILabels.RegenLabel = GUIAddLabel(StatsPanel, "Regen Label");
+    GUILabels.RgnGenLabel = GUIAddLabel(StatsPanel, "Regen General Label");
     //GUILabel *RgnXPLabel = GUIAddLabel(StatsPanel, "Regen XP Label");
-    GUIBar *RgnXPBar = GUIAddBar(StatsPanel, "Regen XP Bar");
-    GUIBar *RgnXPBGBar = GUIAddBar(StatsPanel, "Regen XP BG Bar");
+    GUIBars.RgnXPBar = GUIAddBar(StatsPanel, "Regen XP Bar");
+    GUIBars.RgnXPBGBar = GUIAddBar(StatsPanel, "Regen XP BG Bar");
 
-    GUIIcon *RgnLvlDnIcon = GUIAddIcon(StatsPanel, "Regen Level Down Icon");
-    GUIIcon *RgnLvlUpIcon = GUIAddIcon(StatsPanel, "Regen Level Up Icon");
-    GUIButton *RgnLvlMaxButton = GUIAddButton(StatsPanel, "Regen Level Max Button");
-    GUIButton *RgnDtlButton = GUIAddButton(StatsPanel, "Regen Detail Button");
+    GUIIcons.RgnLvlDnIcon = GUIAddIcon(StatsPanel, "Regen Level Down Icon");
+    GUIIcons.RgnLvlUpIcon = GUIAddIcon(StatsPanel, "Regen Level Up Icon");
+    GUIButtons.RgnLvlMaxButton = GUIAddButton(StatsPanel, "Regen Level Max Button");
+    GUIButtons.RgnDtlButton = GUIAddButton(StatsPanel, "Regen Detail Button");
 
-    RegenIcon->Control.X = 22;
-    RegenIcon->Control.Y = 308;
-    RegenIcon->Control.id = ++GUIElementID;
-    RegenIcon->Texture = "STAT5";
+    GUIIcons.RegenIcon->Control.X = 22;
+    GUIIcons.RegenIcon->Control.Y = 308;
+    GUIIcons.RegenIcon->Control.id = ++GUIElementID;
+    GUIIcons.RegenIcon->Texture = "STAT5";
 
-    RegenLabel->Control.X = 60;
-    RegenLabel->Control.Y = 314;
-    RegenLabel->Control.id = ++GUIElementID;
-    RegenLabel->Big = true;
-    RegenLabel->Color = StatColors[STAT_REGENERATION];
+    GUILabels.RegenLabel->Control.X = 60;
+    GUILabels.RegenLabel->Control.Y = 314;
+    GUILabels.RegenLabel->Control.id = ++GUIElementID;
+    GUILabels.RegenLabel->Big = true;
+    GUILabels.RegenLabel->Color = StatColors[STAT_REGENERATION];
 
-    RgnGenLabel->Control.X = 60;
-    RgnGenLabel->Control.Y = 325;
-    RgnGenLabel->Control.id = ++GUIElementID;
-    RgnGenLabel->Text = "+ regen frequency";
-    RgnGenLabel->Color = "White";
+    GUILabels.RgnGenLabel->Control.X = 60;
+    GUILabels.RgnGenLabel->Control.Y = 325;
+    GUILabels.RgnGenLabel->Control.id = ++GUIElementID;
+    GUILabels.RgnGenLabel->Text = "+ regen frequency";
+    GUILabels.RgnGenLabel->Color = "White";
 
     /* RgnXPLabel->Control.X = 135;
     RgnXPLabel->Control.Y = 339;
@@ -465,90 +561,90 @@ NamedScript void CreateStatsPanel()
     RgnXPLabel->Color = "Grey";
     RgnXPLabel->Text = ""; */
 
-    RgnXPBar->Control.X = 60;
-    RgnXPBar->Control.Y = 336;
-    RgnXPBar->Control.id = ++GUIElementID;
-    RgnXPBar->Control.Height = 16;
-    RgnXPBar->Value = 0;
-    RgnXPBar->ValueMax = 150;
-    RgnXPBar->Texture = "StatBar5";
+    GUIBars.RgnXPBar->Control.X = 60;
+    GUIBars.RgnXPBar->Control.Y = 336;
+    GUIBars.RgnXPBar->Control.id = ++GUIElementID;
+    GUIBars.RgnXPBar->Control.Height = 16;
+    GUIBars.RgnXPBar->Value = 0;
+    GUIBars.RgnXPBar->ValueMax = 150;
+    GUIBars.RgnXPBar->Texture = "StatBar5";
 
     GUIElementID += 150;
 
-    RgnXPBGBar->Control.X = 60;
-    RgnXPBGBar->Control.Y = 336;
-    RgnXPBGBar->Control.id = ++GUIElementID;
-    RgnXPBGBar->Control.Height = 16;
-    RgnXPBGBar->Value = 150;
-    RgnXPBGBar->ValueMax = 150;
-    RgnXPBGBar->Texture = "StatBarB";
+    GUIBars.RgnXPBGBar->Control.X = 60;
+    GUIBars.RgnXPBGBar->Control.Y = 336;
+    GUIBars.RgnXPBGBar->Control.id = ++GUIElementID;
+    GUIBars.RgnXPBGBar->Control.Height = 16;
+    GUIBars.RgnXPBGBar->Value = 150;
+    GUIBars.RgnXPBGBar->ValueMax = 150;
+    GUIBars.RgnXPBGBar->Texture = "StatBarB";
 
     GUIElementID += 150;
 
-    RgnLvlDnIcon->Control.X = 224;
-    RgnLvlDnIcon->Control.Y = 326;
-    RgnLvlDnIcon->Control.Width = 18;
-    RgnLvlDnIcon->Control.Height = 18;
-    RgnLvlDnIcon->Control.id = ++GUIElementID;
-    RgnLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    RgnLvlDnIcon->Texture = "HLISTDN";
-    RgnLvlDnIcon->Enabled = false;
+    GUIIcons.RgnLvlDnIcon->Control.X = 224;
+    GUIIcons.RgnLvlDnIcon->Control.Y = 326;
+    GUIIcons.RgnLvlDnIcon->Control.Width = 18;
+    GUIIcons.RgnLvlDnIcon->Control.Height = 18;
+    GUIIcons.RgnLvlDnIcon->Control.id = ++GUIElementID;
+    GUIIcons.RgnLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.RgnLvlDnIcon->Texture = "HLISTDN";
+    GUIIcons.RgnLvlDnIcon->Enabled = false;
 
-    RgnLvlUpIcon->Control.X = 224;
-    RgnLvlUpIcon->Control.Y = 308;
-    RgnLvlUpIcon->Control.Width = 18;
-    RgnLvlUpIcon->Control.Height = 18;
-    RgnLvlUpIcon->Control.id = ++GUIElementID;
-    RgnLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    RgnLvlUpIcon->Texture = "HLISTUP";
+    GUIIcons.RgnLvlUpIcon->Control.X = 224;
+    GUIIcons.RgnLvlUpIcon->Control.Y = 308;
+    GUIIcons.RgnLvlUpIcon->Control.Width = 18;
+    GUIIcons.RgnLvlUpIcon->Control.Height = 18;
+    GUIIcons.RgnLvlUpIcon->Control.id = ++GUIElementID;
+    GUIIcons.RgnLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.RgnLvlUpIcon->Texture = "HLISTUP";
 
-    RgnLvlMaxButton->Control.X = 248;
-    RgnLvlMaxButton->Control.Y = 316;
-    RgnLvlMaxButton->Control.Width = 42;
-    RgnLvlMaxButton->Control.Height = 16;
-    RgnLvlMaxButton->Control.id = ++GUIElementID;
-    RgnLvlMaxButton->Text = "MAX";
-    RgnLvlMaxButton->Big = true;
-    RgnLvlMaxButton->Color = "Green";
+    GUIButtons.RgnLvlMaxButton->Control.X = 248;
+    GUIButtons.RgnLvlMaxButton->Control.Y = 316;
+    GUIButtons.RgnLvlMaxButton->Control.Width = 42;
+    GUIButtons.RgnLvlMaxButton->Control.Height = 16;
+    GUIButtons.RgnLvlMaxButton->Control.id = ++GUIElementID;
+    GUIButtons.RgnLvlMaxButton->Text = "MAX";
+    GUIButtons.RgnLvlMaxButton->Big = true;
+    GUIButtons.RgnLvlMaxButton->Color = "Green";
 
-    RgnDtlButton->Control.X = 260;
-    RgnDtlButton->Control.Y = 332;
-    RgnDtlButton->Control.Width = 16;
-    RgnDtlButton->Control.Height = 16;
-    RgnDtlButton->Control.id = ++GUIElementID;
-    RgnDtlButton->Text = "...";
-    RgnDtlButton->Big = true;
-    RgnDtlButton->Color = "Green";
+    GUIButtons.RgnDtlButton->Control.X = 260;
+    GUIButtons.RgnDtlButton->Control.Y = 332;
+    GUIButtons.RgnDtlButton->Control.Width = 16;
+    GUIButtons.RgnDtlButton->Control.Height = 16;
+    GUIButtons.RgnDtlButton->Control.id = ++GUIElementID;
+    GUIButtons.RgnDtlButton->Text = "...";
+    GUIButtons.RgnDtlButton->Big = true;
+    GUIButtons.RgnDtlButton->Color = "Green";
 
     //Agility
-    GUIIcon *AgilityIcon = GUIAddIcon(StatsPanel, "Agility Icon");
-    GUILabel *AgilityLabel = GUIAddLabel(StatsPanel, "Agility Label");
-    GUILabel *AglGenLabel = GUIAddLabel(StatsPanel, "Agility General Label");
+    GUIIcons.AgilityIcon = GUIAddIcon(StatsPanel, "Agility Icon");
+    GUILabels.AgilityLabel = GUIAddLabel(StatsPanel, "Agility Label");
+    GUILabels.AglGenLabel = GUIAddLabel(StatsPanel, "Agility General Label");
     //GUILabel *AglXPLabel = GUIAddLabel(StatsPanel, "Agility XP Label");
-    GUIBar *AglXPBar = GUIAddBar(StatsPanel, "Agility XP Bar");
-    GUIBar *AglXPBGBar = GUIAddBar(StatsPanel, "Agility XP BG Bar");
+    GUIBars.AglXPBar = GUIAddBar(StatsPanel, "Agility XP Bar");
+    GUIBars.AglXPBGBar = GUIAddBar(StatsPanel, "Agility XP BG Bar");
 
-    GUIIcon *AglLvlDnIcon = GUIAddIcon(StatsPanel, "Agility Level Down Icon");
-    GUIIcon *AglLvlUpIcon = GUIAddIcon(StatsPanel, "Agility Level Up Icon");
-    GUIButton *AglLvlMaxButton = GUIAddButton(StatsPanel, "Agility Level Max Button");
-    GUIButton *AglDtlButton = GUIAddButton(StatsPanel, "Agility Detail Button");
+    GUIIcons.AglLvlDnIcon = GUIAddIcon(StatsPanel, "Agility Level Down Icon");
+    GUIIcons.AglLvlUpIcon = GUIAddIcon(StatsPanel, "Agility Level Up Icon");
+    GUIButtons.AglLvlMaxButton = GUIAddButton(StatsPanel, "Agility Level Max Button");
+    GUIButtons.AglDtlButton = GUIAddButton(StatsPanel, "Agility Detail Button");
 
-    AgilityIcon->Control.X = 22;
-    AgilityIcon->Control.Y = 352;
-    AgilityIcon->Control.id = ++GUIElementID;
-    AgilityIcon->Texture = "STAT6";
+    GUIIcons.AgilityIcon->Control.X = 22;
+    GUIIcons.AgilityIcon->Control.Y = 352;
+    GUIIcons.AgilityIcon->Control.id = ++GUIElementID;
+    GUIIcons.AgilityIcon->Texture = "STAT6";
 
-    AgilityLabel->Control.X = 60;
-    AgilityLabel->Control.Y = 358;
-    AgilityLabel->Control.id = ++GUIElementID;
-    AgilityLabel->Big = true;
-    AgilityLabel->Color = StatColors[STAT_AGILITY];
+    GUILabels.AgilityLabel->Control.X = 60;
+    GUILabels.AgilityLabel->Control.Y = 358;
+    GUILabels.AgilityLabel->Control.id = ++GUIElementID;
+    GUILabels.AgilityLabel->Big = true;
+    GUILabels.AgilityLabel->Color = StatColors[STAT_AGILITY];
 
-    AglGenLabel->Control.X = 60;
-    AglGenLabel->Control.Y = 384;
-    AglGenLabel->Control.id = ++GUIElementID;
-    AglGenLabel->Text = "+ movement speed\n+ jump height\n+ weapon fire rate\n+ survival chance";
-    AglGenLabel->Color = "White";
+    GUILabels.AglGenLabel->Control.X = 60;
+    GUILabels.AglGenLabel->Control.Y = 384;
+    GUILabels.AglGenLabel->Control.id = ++GUIElementID;
+    GUILabels.AglGenLabel->Text = "+ movement speed\n+ jump height\n+ weapon fire rate\n+ survival chance";
+    GUILabels.AglGenLabel->Color = "White";
 
     /* AglXPLabel->Control.X = 135;
     AglXPLabel->Control.Y = 411;
@@ -557,90 +653,90 @@ NamedScript void CreateStatsPanel()
     AglXPLabel->Color = "Grey";
     AglXPLabel->Text = ""; */
 
-    AglXPBar->Control.X = 60;
-    AglXPBar->Control.Y = 408;
-    AglXPBar->Control.id = ++GUIElementID;
-    AglXPBar->Control.Height = 16;
-    AglXPBar->Value = 0;
-    AglXPBar->ValueMax = 150;
-    AglXPBar->Texture = "StatBar6";
+    GUIBars.AglXPBar->Control.X = 60;
+    GUIBars.AglXPBar->Control.Y = 408;
+    GUIBars.AglXPBar->Control.id = ++GUIElementID;
+    GUIBars.AglXPBar->Control.Height = 16;
+    GUIBars.AglXPBar->Value = 0;
+    GUIBars.AglXPBar->ValueMax = 150;
+    GUIBars.AglXPBar->Texture = "StatBar6";
 
     GUIElementID += 150;
 
-    AglXPBGBar->Control.X = 60;
-    AglXPBGBar->Control.Y = 408;
-    AglXPBGBar->Control.id = ++GUIElementID;
-    AglXPBGBar->Control.Height = 16;
-    AglXPBGBar->Value = 150;
-    AglXPBGBar->ValueMax = 150;
-    AglXPBGBar->Texture = "StatBarB";
+    GUIBars.AglXPBGBar->Control.X = 60;
+    GUIBars.AglXPBGBar->Control.Y = 408;
+    GUIBars.AglXPBGBar->Control.id = ++GUIElementID;
+    GUIBars.AglXPBGBar->Control.Height = 16;
+    GUIBars.AglXPBGBar->Value = 150;
+    GUIBars.AglXPBGBar->ValueMax = 150;
+    GUIBars.AglXPBGBar->Texture = "StatBarB";
 
     GUIElementID += 150;
 
-    AglLvlDnIcon->Control.X = 224;
-    AglLvlDnIcon->Control.Y = 370;
-    AglLvlDnIcon->Control.Width = 18;
-    AglLvlDnIcon->Control.Height = 18;
-    AglLvlDnIcon->Control.id = ++GUIElementID;
-    AglLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    AglLvlDnIcon->Texture = "HLISTDN";
-    AglLvlDnIcon->Enabled = false;
+    GUIIcons.AglLvlDnIcon->Control.X = 224;
+    GUIIcons.AglLvlDnIcon->Control.Y = 370;
+    GUIIcons.AglLvlDnIcon->Control.Width = 18;
+    GUIIcons.AglLvlDnIcon->Control.Height = 18;
+    GUIIcons.AglLvlDnIcon->Control.id = ++GUIElementID;
+    GUIIcons.AglLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.AglLvlDnIcon->Texture = "HLISTDN";
+    GUIIcons.AglLvlDnIcon->Enabled = false;
 
-    AglLvlUpIcon->Control.X = 224;
-    AglLvlUpIcon->Control.Y = 352;
-    AglLvlUpIcon->Control.Width = 18;
-    AglLvlUpIcon->Control.Height = 18;
-    AglLvlUpIcon->Control.id = ++GUIElementID;
-    AglLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    AglLvlUpIcon->Texture = "HLISTUP";
+    GUIIcons.AglLvlUpIcon->Control.X = 224;
+    GUIIcons.AglLvlUpIcon->Control.Y = 352;
+    GUIIcons.AglLvlUpIcon->Control.Width = 18;
+    GUIIcons.AglLvlUpIcon->Control.Height = 18;
+    GUIIcons.AglLvlUpIcon->Control.id = ++GUIElementID;
+    GUIIcons.AglLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.AglLvlUpIcon->Texture = "HLISTUP";
 
-    AglLvlMaxButton->Control.X = 248;
-    AglLvlMaxButton->Control.Y = 360;
-    AglLvlMaxButton->Control.Width = 42;
-    AglLvlMaxButton->Control.Height = 16;
-    AglLvlMaxButton->Control.id = ++GUIElementID;
-    AglLvlMaxButton->Text = "MAX";
-    AglLvlMaxButton->Big = true;
-    AglLvlMaxButton->Color = "Green";
+    GUIButtons.AglLvlMaxButton->Control.X = 248;
+    GUIButtons.AglLvlMaxButton->Control.Y = 360;
+    GUIButtons.AglLvlMaxButton->Control.Width = 42;
+    GUIButtons.AglLvlMaxButton->Control.Height = 16;
+    GUIButtons.AglLvlMaxButton->Control.id = ++GUIElementID;
+    GUIButtons.AglLvlMaxButton->Text = "MAX";
+    GUIButtons.AglLvlMaxButton->Big = true;
+    GUIButtons.AglLvlMaxButton->Color = "Green";
 
-    AglDtlButton->Control.X = 260;
-    AglDtlButton->Control.Y = 376;
-    AglDtlButton->Control.Width = 16;
-    AglDtlButton->Control.Height = 16;
-    AglDtlButton->Control.id = ++GUIElementID;
-    AglDtlButton->Text = "...";
-    AglDtlButton->Big = true;
-    AglDtlButton->Color = "Green";
+    GUIButtons.AglDtlButton->Control.X = 260;
+    GUIButtons.AglDtlButton->Control.Y = 376;
+    GUIButtons.AglDtlButton->Control.Width = 16;
+    GUIButtons.AglDtlButton->Control.Height = 16;
+    GUIButtons.AglDtlButton->Control.id = ++GUIElementID;
+    GUIButtons.AglDtlButton->Text = "...";
+    GUIButtons.AglDtlButton->Big = true;
+    GUIButtons.AglDtlButton->Color = "Green";
 
     //Capacity
-    GUIIcon *CapacityIcon = GUIAddIcon(StatsPanel, "Capacity Icon");
-    GUILabel *CapacityLabel = GUIAddLabel(StatsPanel, "Capacity Label");
-    GUILabel *CapGenLabel = GUIAddLabel(StatsPanel, "Capacity General Label");
+    GUIIcons.CapacityIcon = GUIAddIcon(StatsPanel, "Capacity Icon");
+    GUILabels.CapacityLabel = GUIAddLabel(StatsPanel, "Capacity Label");
+    GUILabels.CapGenLabel = GUIAddLabel(StatsPanel, "Capacity General Label");
     //GUILabel *CapXPLabel = GUIAddLabel(StatsPanel, "Capacity XP Label");
-    GUIBar *CapXPBar = GUIAddBar(StatsPanel, "Capacity XP Bar");
-    GUIBar *CapXPBGBar = GUIAddBar(StatsPanel, "Capacity XP BG Bar");
+    GUIBars.CapXPBar = GUIAddBar(StatsPanel, "Capacity XP Bar");
+    GUIBars.CapXPBGBar = GUIAddBar(StatsPanel, "Capacity XP BG Bar");
 
-    GUIIcon *CapLvlDnIcon = GUIAddIcon(StatsPanel, "Capacity Level Down Icon");
-    GUIIcon *CapLvlUpIcon = GUIAddIcon(StatsPanel, "Capacity Level Up Icon");
-    GUIButton *CapLvlMaxButton = GUIAddButton(StatsPanel, "Capacity Level Max Button");
-    GUIButton *CapDtlButton = GUIAddButton(StatsPanel, "Capacity Detail Button");
+    GUIIcons.CapLvlDnIcon = GUIAddIcon(StatsPanel, "Capacity Level Down Icon");
+    GUIIcons.CapLvlUpIcon = GUIAddIcon(StatsPanel, "Capacity Level Up Icon");
+    GUIButtons.CapLvlMaxButton = GUIAddButton(StatsPanel, "Capacity Level Max Button");
+    GUIButtons.CapDtlButton = GUIAddButton(StatsPanel, "Capacity Detail Button");
 
-    CapacityIcon->Control.X = 22;
-    CapacityIcon->Control.Y = 416;
-    CapacityIcon->Control.id = ++GUIElementID;
-    CapacityIcon->Texture = "STAT7";
+    GUIIcons.CapacityIcon->Control.X = 22;
+    GUIIcons.CapacityIcon->Control.Y = 416;
+    GUIIcons.CapacityIcon->Control.id = ++GUIElementID;
+    GUIIcons.CapacityIcon->Texture = "STAT7";
 
-    CapacityLabel->Control.X = 60;
-    CapacityLabel->Control.Y = 426;
-    CapacityLabel->Control.id = ++GUIElementID;
-    CapacityLabel->Big = true;
-    CapacityLabel->Color = StatColors[STAT_CAPACITY];
+    GUILabels.CapacityLabel->Control.X = 60;
+    GUILabels.CapacityLabel->Control.Y = 426;
+    GUILabels.CapacityLabel->Control.id = ++GUIElementID;
+    GUILabels.CapacityLabel->Big = true;
+    GUILabels.CapacityLabel->Color = StatColors[STAT_CAPACITY];
 
-    CapGenLabel->Control.X = 60;
-    CapGenLabel->Control.Y = 456;
-    CapGenLabel->Control.id = ++GUIElementID;
-    CapGenLabel->Text = "+ inventory capacity\n+ ammo capacity\n+ aug battery size\n+ stim capacity\n+ medkit capacity";
-    CapGenLabel->Color = "White";
+    GUILabels.CapGenLabel->Control.X = 60;
+    GUILabels.CapGenLabel->Control.Y = 456;
+    GUILabels.CapGenLabel->Control.id = ++GUIElementID;
+    GUILabels.CapGenLabel->Text = "+ inventory capacity\n+ ammo capacity\n+ aug battery size\n+ stim capacity\n+ medkit capacity";
+    GUILabels.CapGenLabel->Color = "White";
 
     /* CapXPLabel->Control.X = 135;
     CapXPLabel->Control.Y = 489;
@@ -649,90 +745,90 @@ NamedScript void CreateStatsPanel()
     CapXPLabel->Color = "Grey";
     CapXPLabel->Text = ""; */
 
-    CapXPBar->Control.X = 60;
-    CapXPBar->Control.Y = 486;
-    CapXPBar->Control.id = ++GUIElementID;
-    CapXPBar->Control.Height = 16;
-    CapXPBar->Value = 0;
-    CapXPBar->ValueMax = 150;
-    CapXPBar->Texture = "StatBar7";
+    GUIBars.CapXPBar->Control.X = 60;
+    GUIBars.CapXPBar->Control.Y = 486;
+    GUIBars.CapXPBar->Control.id = ++GUIElementID;
+    GUIBars.CapXPBar->Control.Height = 16;
+    GUIBars.CapXPBar->Value = 0;
+    GUIBars.CapXPBar->ValueMax = 150;
+    GUIBars.CapXPBar->Texture = "StatBar7";
 
     GUIElementID += 150;
 
-    CapXPBGBar->Control.X = 60;
-    CapXPBGBar->Control.Y = 486;
-    CapXPBGBar->Control.id = ++GUIElementID;
-    CapXPBGBar->Control.Height = 16;
-    CapXPBGBar->Value = 150;
-    CapXPBGBar->ValueMax = 150;
-    CapXPBGBar->Texture = "StatBarB";
+    GUIBars.CapXPBGBar->Control.X = 60;
+    GUIBars.CapXPBGBar->Control.Y = 486;
+    GUIBars.CapXPBGBar->Control.id = ++GUIElementID;
+    GUIBars.CapXPBGBar->Control.Height = 16;
+    GUIBars.CapXPBGBar->Value = 150;
+    GUIBars.CapXPBGBar->ValueMax = 150;
+    GUIBars.CapXPBGBar->Texture = "StatBarB";
 
     GUIElementID += 150;
 
-    CapLvlDnIcon->Control.X = 224;
-    CapLvlDnIcon->Control.Y = 438;
-    CapLvlDnIcon->Control.Width = 18;
-    CapLvlDnIcon->Control.Height = 18;
-    CapLvlDnIcon->Control.id = ++GUIElementID;
-    CapLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    CapLvlDnIcon->Texture = "HLISTDN";
-    CapLvlDnIcon->Enabled = false;
+    GUIIcons.CapLvlDnIcon->Control.X = 224;
+    GUIIcons.CapLvlDnIcon->Control.Y = 438;
+    GUIIcons.CapLvlDnIcon->Control.Width = 18;
+    GUIIcons.CapLvlDnIcon->Control.Height = 18;
+    GUIIcons.CapLvlDnIcon->Control.id = ++GUIElementID;
+    GUIIcons.CapLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.CapLvlDnIcon->Texture = "HLISTDN";
+    GUIIcons.CapLvlDnIcon->Enabled = false;
 
-    CapLvlUpIcon->Control.X = 224;
-    CapLvlUpIcon->Control.Y = 420;
-    CapLvlUpIcon->Control.Width = 18;
-    CapLvlUpIcon->Control.Height = 18;
-    CapLvlUpIcon->Control.id = ++GUIElementID;
-    CapLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    CapLvlUpIcon->Texture = "HLISTUP";
+    GUIIcons.CapLvlUpIcon->Control.X = 224;
+    GUIIcons.CapLvlUpIcon->Control.Y = 420;
+    GUIIcons.CapLvlUpIcon->Control.Width = 18;
+    GUIIcons.CapLvlUpIcon->Control.Height = 18;
+    GUIIcons.CapLvlUpIcon->Control.id = ++GUIElementID;
+    GUIIcons.CapLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.CapLvlUpIcon->Texture = "HLISTUP";
 
-    CapLvlMaxButton->Control.X = 248;
-    CapLvlMaxButton->Control.Y = 428;
-    CapLvlMaxButton->Control.Width = 42;
-    CapLvlMaxButton->Control.Height = 16;
-    CapLvlMaxButton->Control.id = ++GUIElementID;
-    CapLvlMaxButton->Text = "MAX";
-    CapLvlMaxButton->Big = true;
-    CapLvlMaxButton->Color = "Green";
+    GUIButtons.CapLvlMaxButton->Control.X = 248;
+    GUIButtons.CapLvlMaxButton->Control.Y = 428;
+    GUIButtons.CapLvlMaxButton->Control.Width = 42;
+    GUIButtons.CapLvlMaxButton->Control.Height = 16;
+    GUIButtons.CapLvlMaxButton->Control.id = ++GUIElementID;
+    GUIButtons.CapLvlMaxButton->Text = "MAX";
+    GUIButtons.CapLvlMaxButton->Big = true;
+    GUIButtons.CapLvlMaxButton->Color = "Green";
 
-    CapDtlButton->Control.X = 260;
-    CapDtlButton->Control.Y = 444;
-    CapDtlButton->Control.Width = 16;
-    CapDtlButton->Control.Height = 16;
-    CapDtlButton->Control.id = ++GUIElementID;
-    CapDtlButton->Text = "...";
-    CapDtlButton->Big = true;
-    CapDtlButton->Color = "Green";
+    GUIButtons.CapDtlButton->Control.X = 260;
+    GUIButtons.CapDtlButton->Control.Y = 444;
+    GUIButtons.CapDtlButton->Control.Width = 16;
+    GUIButtons.CapDtlButton->Control.Height = 16;
+    GUIButtons.CapDtlButton->Control.id = ++GUIElementID;
+    GUIButtons.CapDtlButton->Text = "...";
+    GUIButtons.CapDtlButton->Big = true;
+    GUIButtons.CapDtlButton->Color = "Green";
 
     //Luck
-    GUIIcon *LuckIcon = GUIAddIcon(StatsPanel, "Luck Icon");
-    GUILabel *LuckLabel = GUIAddLabel(StatsPanel, "Luck Label");
-    GUILabel *LckGenLabel = GUIAddLabel(StatsPanel, "Luck General Label");
+    GUIIcons.LuckIcon = GUIAddIcon(StatsPanel, "Luck Icon");
+    GUILabels.LuckLabel = GUIAddLabel(StatsPanel, "Luck Label");
+    GUILabels.LckGenLabel = GUIAddLabel(StatsPanel, "Luck General Label");
     //GUILabel *LckXPLabel = GUIAddLabel(StatsPanel, "Luck XP Label");
-    GUIBar *LckXPBar = GUIAddBar(StatsPanel, "Luck XP Bar");
-    GUIBar *LckXPBGBar = GUIAddBar(StatsPanel, "Luck XP BG Bar");
+    GUIBars.LckXPBar = GUIAddBar(StatsPanel, "Luck XP Bar");
+    GUIBars.LckXPBGBar = GUIAddBar(StatsPanel, "Luck XP BG Bar");
 
-    GUIIcon *LckLvlDnIcon = GUIAddIcon(StatsPanel, "Luck Level Down Icon");
-    GUIIcon *LckLvlUpIcon = GUIAddIcon(StatsPanel, "Luck Level Up Icon");
-    GUIButton *LckLvlMaxButton = GUIAddButton(StatsPanel, "Luck Level Max Button");
-    GUIButton *LckDtlButton = GUIAddButton(StatsPanel, "Luck Detail Button");
+    GUIIcons.LckLvlDnIcon = GUIAddIcon(StatsPanel, "Luck Level Down Icon");
+    GUIIcons.LckLvlUpIcon = GUIAddIcon(StatsPanel, "Luck Level Up Icon");
+    GUIButtons.LckLvlMaxButton = GUIAddButton(StatsPanel, "Luck Level Max Button");
+    GUIButtons.LckDtlButton = GUIAddButton(StatsPanel, "Luck Detail Button");
 
-    LuckIcon->Control.X = 22;
-    LuckIcon->Control.Y = 492;
-    LuckIcon->Control.id = ++GUIElementID;
-    LuckIcon->Texture = "STAT8";
+    GUIIcons.LuckIcon->Control.X = 22;
+    GUIIcons.LuckIcon->Control.Y = 492;
+    GUIIcons.LuckIcon->Control.id = ++GUIElementID;
+    GUIIcons.LuckIcon->Texture = "STAT8";
 
-    LuckLabel->Control.X = 60;
-    LuckLabel->Control.Y = 506;
-    LuckLabel->Control.id = ++GUIElementID;
-    LuckLabel->Big = true;
-    LuckLabel->Color = StatColors[STAT_LUCK];
+    GUILabels.LuckLabel->Control.X = 60;
+    GUILabels.LuckLabel->Control.Y = 506;
+    GUILabels.LuckLabel->Control.id = ++GUIElementID;
+    GUILabels.LuckLabel->Big = true;
+    GUILabels.LuckLabel->Color = StatColors[STAT_LUCK];
 
-    LckGenLabel->Control.X = 60;
-    LckGenLabel->Control.Y = 518;
-    LckGenLabel->Control.id = ++GUIElementID;
-    LckGenLabel->Text = "+ loot drops";
-    LckGenLabel->Color = "White";
+    GUILabels.LckGenLabel->Control.X = 60;
+    GUILabels.LckGenLabel->Control.Y = 518;
+    GUILabels.LckGenLabel->Control.id = ++GUIElementID;
+    GUILabels.LckGenLabel->Text = "+ loot drops";
+    GUILabels.LckGenLabel->Color = "White";
 
     /* LckXPLabel->Control.X = 135;
     LckXPLabel->Control.Y = 533;
@@ -741,63 +837,63 @@ NamedScript void CreateStatsPanel()
     LckXPLabel->Color = "Grey";
     LckXPLabel->Text = ""; */
 
-    LckXPBar->Control.X = 60;
-    LckXPBar->Control.Y = 530;
-    LckXPBar->Control.id = ++GUIElementID;
-    LckXPBar->Control.Height = 16;
-    LckXPBar->Value = 0;
-    LckXPBar->ValueMax = 150;
-    LckXPBar->Texture = "StatBar8";
+    GUIBars.LckXPBar->Control.X = 60;
+    GUIBars.LckXPBar->Control.Y = 530;
+    GUIBars.LckXPBar->Control.id = ++GUIElementID;
+    GUIBars.LckXPBar->Control.Height = 16;
+    GUIBars.LckXPBar->Value = 0;
+    GUIBars.LckXPBar->ValueMax = 150;
+    GUIBars.LckXPBar->Texture = "StatBar8";
 
     GUIElementID += 150;
 
-    LckXPBGBar->Control.X = 60;
-    LckXPBGBar->Control.Y = 530;
-    LckXPBGBar->Control.id = ++GUIElementID;
-    LckXPBGBar->Control.Height = 16;
-    LckXPBGBar->Value = 150;
-    LckXPBGBar->ValueMax = 150;
-    LckXPBGBar->Texture = "StatBarB";
+    GUIBars.LckXPBGBar->Control.X = 60;
+    GUIBars.LckXPBGBar->Control.Y = 530;
+    GUIBars.LckXPBGBar->Control.id = ++GUIElementID;
+    GUIBars.LckXPBGBar->Control.Height = 16;
+    GUIBars.LckXPBGBar->Value = 150;
+    GUIBars.LckXPBGBar->ValueMax = 150;
+    GUIBars.LckXPBGBar->Texture = "StatBarB";
 
     GUIElementID += 150;
 
-    LckLvlDnIcon->Control.X = 224;
-    LckLvlDnIcon->Control.Y = 518;
-    LckLvlDnIcon->Control.Width = 18;
-    LckLvlDnIcon->Control.Height = 18;
-    LckLvlDnIcon->Control.id = ++GUIElementID;
-    LckLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    LckLvlDnIcon->Texture = "HLISTDN";
-    LckLvlDnIcon->Enabled = false;
+    GUIIcons.LckLvlDnIcon->Control.X = 224;
+    GUIIcons.LckLvlDnIcon->Control.Y = 518;
+    GUIIcons.LckLvlDnIcon->Control.Width = 18;
+    GUIIcons.LckLvlDnIcon->Control.Height = 18;
+    GUIIcons.LckLvlDnIcon->Control.id = ++GUIElementID;
+    GUIIcons.LckLvlDnIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.LckLvlDnIcon->Texture = "HLISTDN";
+    GUIIcons.LckLvlDnIcon->Enabled = false;
 
-    LckLvlUpIcon->Control.X = 224;
-    LckLvlUpIcon->Control.Y = 500;
-    LckLvlUpIcon->Control.Width = 18;
-    LckLvlUpIcon->Control.Height = 18;
-    LckLvlUpIcon->Control.id = ++GUIElementID;
-    LckLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
-    LckLvlUpIcon->Texture = "HLISTUP";
+    GUIIcons.LckLvlUpIcon->Control.X = 224;
+    GUIIcons.LckLvlUpIcon->Control.Y = 500;
+    GUIIcons.LckLvlUpIcon->Control.Width = 18;
+    GUIIcons.LckLvlUpIcon->Control.Height = 18;
+    GUIIcons.LckLvlUpIcon->Control.id = ++GUIElementID;
+    GUIIcons.LckLvlUpIcon->Control.Hover = (ControlHoverFunc)IconHover;
+    GUIIcons.LckLvlUpIcon->Texture = "HLISTUP";
 
-    LckLvlMaxButton->Control.X = 248;
-    LckLvlMaxButton->Control.Y = 508;
-    LckLvlMaxButton->Control.Width = 42;
-    LckLvlMaxButton->Control.Height = 16;
-    LckLvlMaxButton->Control.id = ++GUIElementID;
-    LckLvlMaxButton->Text = "MAX";
-    LckLvlMaxButton->Big = true;
-    LckLvlMaxButton->Color = "Green";
+    GUIButtons.LckLvlMaxButton->Control.X = 248;
+    GUIButtons.LckLvlMaxButton->Control.Y = 508;
+    GUIButtons.LckLvlMaxButton->Control.Width = 42;
+    GUIButtons.LckLvlMaxButton->Control.Height = 16;
+    GUIButtons.LckLvlMaxButton->Control.id = ++GUIElementID;
+    GUIButtons.LckLvlMaxButton->Text = "MAX";
+    GUIButtons.LckLvlMaxButton->Big = true;
+    GUIButtons.LckLvlMaxButton->Color = "Green";
 
-    LckDtlButton->Control.X = 260;
-    LckDtlButton->Control.Y = 524;
-    LckDtlButton->Control.Width = 16;
-    LckDtlButton->Control.Height = 16;
-    LckDtlButton->Control.id = ++GUIElementID;
-    LckDtlButton->Text = "...";
-    LckDtlButton->Big = true;
-    LckDtlButton->Color = "Green";
+    GUIButtons.LckDtlButton->Control.X = 260;
+    GUIButtons.LckDtlButton->Control.Y = 524;
+    GUIButtons.LckDtlButton->Control.Width = 16;
+    GUIButtons.LckDtlButton->Control.Height = 16;
+    GUIButtons.LckDtlButton->Control.id = ++GUIElementID;
+    GUIButtons.LckDtlButton->Text = "...";
+    GUIButtons.LckDtlButton->Big = true;
+    GUIButtons.LckDtlButton->Color = "Green";
 
     //Order Form Border
-    GUIBorder *OrderFormBorder = GUIAddBorder(StatsPanel, "Order Form Border");
+    OrderFormBorder = GUIAddBorder(StatsPanel, "Order Form Border");
 
     OrderFormBorder->Control.X = 600;
     OrderFormBorder->Control.Y = 16;
@@ -806,28 +902,28 @@ NamedScript void CreateStatsPanel()
     OrderFormBorder->Control.id = MAKE_ID('O','F','B','R');
 
     //Clear/Confirm Buttons
-    GUIButton *OrderClearButton = GUIAddButton(StatsPanel, "Order Form Clear Button");
-    GUIButton *OrderConfirmButton = GUIAddButton(StatsPanel, "Order Form Confirm Button");
+    GUIButtons.OrderClearButton = GUIAddButton(StatsPanel, "Order Form Clear Button");
+    GUIButtons.OrderConfirmButton = GUIAddButton(StatsPanel, "Order Form Confirm Button");
 
-    OrderClearButton->Control.X = 610;
-    OrderClearButton->Control.Y = 520;
-    OrderClearButton->Control.id = ++GUIElementID;
-    OrderClearButton->Control.Width = 64;
-    OrderClearButton->Control.Height = 16;
-    OrderClearButton->Text = "CLEAR";
-    OrderClearButton->Big = true;
-    OrderClearButton->Color = "Dark Grey";
-    OrderClearButton->HoverColor = "Dark Grey";
+    GUIButtons.OrderClearButton->Control.X = 610;
+    GUIButtons.OrderClearButton->Control.Y = 520;
+    GUIButtons.OrderClearButton->Control.id = ++GUIElementID;
+    GUIButtons.OrderClearButton->Control.Width = 64;
+    GUIButtons.OrderClearButton->Control.Height = 16;
+    GUIButtons.OrderClearButton->Text = "CLEAR";
+    GUIButtons.OrderClearButton->Big = true;
+    GUIButtons.OrderClearButton->Color = "Dark Grey";
+    GUIButtons.OrderClearButton->HoverColor = "Dark Grey";
 
-    OrderConfirmButton->Control.X = 694;
-    OrderConfirmButton->Control.Y = 520;
-    OrderConfirmButton->Control.id = ++GUIElementID;
-    OrderConfirmButton->Control.Width = 90;
-    OrderConfirmButton->Control.Height = 16;
-    OrderConfirmButton->Text = "CONFIRM";
-    OrderConfirmButton->Big = true;
-    OrderConfirmButton->Color = "Dark Grey";
-    OrderConfirmButton->HoverColor = "Dark Grey";
+    GUIButtons.OrderConfirmButton->Control.X = 694;
+    GUIButtons.OrderConfirmButton->Control.Y = 520;
+    GUIButtons.OrderConfirmButton->Control.id = ++GUIElementID;
+    GUIButtons.OrderConfirmButton->Control.Width = 90;
+    GUIButtons.OrderConfirmButton->Control.Height = 16;
+    GUIButtons.OrderConfirmButton->Text = "CONFIRM";
+    GUIButtons.OrderConfirmButton->Big = true;
+    GUIButtons.OrderConfirmButton->Color = "Dark Grey";
+    GUIButtons.OrderConfirmButton->HoverColor = "Dark Grey";
 }
 
 NamedScript void UpdateStatsPanel(GUIPanel *StatsPanel)
@@ -857,87 +953,62 @@ NamedScript void UpdateStatsPanel(GUIPanel *StatsPanel)
     };
 
 
-    GUILabel *ModulesLabel = (GUILabel *)GUIControlByName(StatsPanel, "Modules Label");
-
-    GUILabel *StrengthLabel = (GUILabel *)GUIControlByName(StatsPanel, "Strength Label");
-    GUILabel *DefenseLabel = (GUILabel *)GUIControlByName(StatsPanel, "Defense Label");
-    GUILabel *VitalityLabel = (GUILabel *)GUIControlByName(StatsPanel, "Vitality Label");
-    GUILabel *EnergyLabel = (GUILabel *)GUIControlByName(StatsPanel, "Energy Label");
-    GUILabel *RegenLabel = (GUILabel *)GUIControlByName(StatsPanel, "Regen Label");
-    GUILabel *AgilityLabel = (GUILabel *)GUIControlByName(StatsPanel, "Agility Label");
-    GUILabel *CapacityLabel = (GUILabel *)GUIControlByName(StatsPanel, "Capacity Label");
-    GUILabel *LuckLabel = (GUILabel *)GUIControlByName(StatsPanel, "Luck Label");
-
-    //GUILabel *StrDtlLabel = (GUILabel *)GUIControlByName(StatsPanel, "Strength Detail Label");
-
-    /* GUILabel *XPLabel[STAT_MAX] =
-    {
-        (GUILabel *)GUIControlByName(StatsPanel, "Strength XP Label"),
-        (GUILabel *)GUIControlByName(StatsPanel, "Defense XP Label"),
-        (GUILabel *)GUIControlByName(StatsPanel, "Vitality XP Label"),
-        (GUILabel *)GUIControlByName(StatsPanel, "Energy XP Label"),
-        (GUILabel *)GUIControlByName(StatsPanel, "Regen XP Label"),
-        (GUILabel *)GUIControlByName(StatsPanel, "Agility XP Label"),
-        (GUILabel *)GUIControlByName(StatsPanel, "Capacity XP Label"),
-        (GUILabel *)GUIControlByName(StatsPanel, "Luck XP Label")
-    }; */
-
     GUIBar *XPBar[STAT_MAX] =
     {
-        (GUIBar *)GUIControlByName(StatsPanel, "Strength XP Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Defense XP Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Vitality XP Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Energy XP Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Regen XP Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Agility XP Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Capacity XP Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Luck XP Bar")
+        GUIBars.StrXPBar,
+        GUIBars.DefXPBar,
+        GUIBars.VitXPBar,
+        GUIBars.EngXPBar,
+        GUIBars.RgnXPBar,
+        GUIBars.AglXPBar,
+        GUIBars.CapXPBar,
+        GUIBars.LckXPBar
     };
 
     GUIBar *XPBGBar[STAT_MAX] =
     {
-        (GUIBar *)GUIControlByName(StatsPanel, "Strength XP BG Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Defense XP BG Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Vitality XP BG Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Energy XP BG Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Regen XP BG Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Agility XP BG Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Capacity XP BG Bar"),
-        (GUIBar *)GUIControlByName(StatsPanel, "Luck XP BG Bar")
+        GUIBars.StrXPBGBar,
+        GUIBars.DefXPBGBar,
+        GUIBars.VitXPBGBar,
+        GUIBars.EngXPBGBar,
+        GUIBars.RgnXPBGBar,
+        GUIBars.AglXPBGBar,
+        GUIBars.CapXPBGBar,
+        GUIBars.LckXPBGBar
     };
 
     GUIIcon *LvlIcon[STAT_MAX * 2] =
     {
-        (GUIIcon *)GUIControlByName(StatsPanel, "Strength Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Strength Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Defense Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Defense Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Vitality Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Vitality Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Energy Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Energy Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Regen Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Regen Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Agility Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Agility Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Capacity Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Capacity Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Luck Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Luck Level Down Icon")
+        GUIIcons.StrLvlUpIcon,
+        GUIIcons.StrLvlDnIcon,
+        GUIIcons.DefLvlUpIcon,
+        GUIIcons.DefLvlDnIcon,
+        GUIIcons.VitLvlUpIcon,
+        GUIIcons.VitLvlDnIcon,
+        GUIIcons.EngLvlUpIcon,
+        GUIIcons.EngLvlDnIcon,
+        GUIIcons.RgnLvlUpIcon,
+        GUIIcons.RgnLvlDnIcon,
+        GUIIcons.AglLvlUpIcon,
+        GUIIcons.AglLvlDnIcon,
+        GUIIcons.CapLvlUpIcon,
+        GUIIcons.CapLvlDnIcon,
+        GUIIcons.LckLvlUpIcon,
+        GUIIcons.LckLvlDnIcon
     };
 
     //Update Current Modules
-    ModulesLabel->Text = StrParam("%d", CheckInventory("DRPGModule"));
+    GUILabels.ModulesLabel->Text = StrParam("%d", CheckInventory("DRPGModule"));
 
     //Update Current Stats
-    StrengthLabel->Text = StrParam("Strength: %d", Player.Strength);
-    DefenseLabel->Text = StrParam("Defense: %d", Player.Defense);
-    VitalityLabel->Text = StrParam("Vitality: %d", Player.Vitality);
-    EnergyLabel->Text = StrParam("Energy: %d", Player.Energy);
-    RegenLabel->Text = StrParam("Regen: %d", Player.Regeneration);
-    AgilityLabel->Text = StrParam("Agility: %d", Player.Agility);
-    CapacityLabel->Text = StrParam("Capacity: %d", Player.Capacity);
-    LuckLabel->Text = StrParam("Luck: %d", Player.Luck);
+    GUILabels.StrengthLabel->Text = StrParam("Strength: %d", Player.Strength);
+    GUILabels.DefenseLabel->Text = StrParam("Defense: %d", Player.Defense);
+    GUILabels.VitalityLabel->Text = StrParam("Vitality: %d", Player.Vitality);
+    GUILabels.EnergyLabel->Text = StrParam("Energy: %d", Player.Energy);
+    GUILabels.RegenLabel->Text = StrParam("Regen: %d", Player.Regeneration);
+    GUILabels.AgilityLabel->Text = StrParam("Agility: %d", Player.Agility);
+    GUILabels.CapacityLabel->Text = StrParam("Capacity: %d", Player.Capacity);
+    GUILabels.LuckLabel->Text = StrParam("Luck: %d", Player.Luck);
 
     /* StrDtlLabel->Text = StrParam("+%d%% base damage\n+%d%% bonus damage\n%.2kX Multiplier\n+%d%% Total Damage",
     Player.Level * (10 - GameSkill()), Player.BonusDamage,
@@ -1080,14 +1151,14 @@ NamedScript void IconUpClick(GUIIcon *GUIObj)
 
     GUIIcon *LvlIcon[STAT_MAX] =
     {
-        (GUIIcon *)GUIControlByName(StatsPanel, "Strength Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Defense Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Vitality Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Energy Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Regen Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Agility Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Capacity Level Up Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Luck Level Up Icon")
+        GUIIcons.StrLvlUpIcon,
+        GUIIcons.DefLvlUpIcon,
+        GUIIcons.VitLvlUpIcon,
+        GUIIcons.EngLvlUpIcon,
+        GUIIcons.RgnLvlUpIcon,
+        GUIIcons.AglLvlUpIcon,
+        GUIIcons.CapLvlUpIcon,
+        GUIIcons.LckLvlUpIcon
     };
 
     //Increase
@@ -1112,14 +1183,14 @@ NamedScript void IconDownClick(GUIIcon *GUIObj)
 
     GUIIcon *LvlIcon[STAT_MAX] =
     {
-        (GUIIcon *)GUIControlByName(StatsPanel, "Strength Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Defense Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Vitality Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Energy Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Regen Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Agility Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Capacity Level Down Icon"),
-        (GUIIcon *)GUIControlByName(StatsPanel, "Luck Level Down Icon")
+        GUIIcons.StrLvlDnIcon,
+        GUIIcons.DefLvlDnIcon,
+        GUIIcons.VitLvlDnIcon,
+        GUIIcons.EngLvlDnIcon,
+        GUIIcons.RgnLvlDnIcon,
+        GUIIcons.AglLvlDnIcon,
+        GUIIcons.CapLvlDnIcon,
+        GUIIcons.LckLvlDnIcon
     };
 
     //Decrease
