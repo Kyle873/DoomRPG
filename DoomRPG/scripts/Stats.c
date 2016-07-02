@@ -1079,14 +1079,17 @@ void CheckStatusEffects()
             // Build a jibberish string
             int Length = Random(5, 30);
             char *Nonsense = malloc(Length);
+            if (Nonsense != NULL)
+            {
             
-            // Fill the char array with garbage
-            for (int i = 0; i < Length - 1; i++) 
-                Nonsense[i] = Letters[Random(0, 25)];
-            Nonsense[Length] = '\0';
-            
-            SetFont((Random(1, 4) == 1 ? "BIGFONT" : "SMALLFONT"));
-            PrintTextWiggle(Nonsense, CONFUSION_NONSENSE_ID + Random(0, 10000), Random(0, 21), Random(160, 480), Random(120, 360), RandomFixed(1.0, 5.0), RandomFixed(32.0, 64.0), Random(8, 12), RandomFixed(16.0, 64.0));
+                // Fill the char array with garbage
+                for (int i = 0; i < Length - 1; i++) 
+                    Nonsense[i] = Letters[Random(0, 25)];
+                Nonsense[Length] = '\0';
+                
+                SetFont((Random(1, 4) == 1 ? "BIGFONT" : "SMALLFONT"));
+                PrintTextWiggle(Nonsense, CONFUSION_NONSENSE_ID + Random(0, 10000), Random(0, 21), Random(160, 480), Random(120, 360), RandomFixed(1.0, 5.0), RandomFixed(32.0, 64.0), Random(8, 12), RandomFixed(16.0, 64.0));
+            }
         }
         
         // Sprite Nonsense

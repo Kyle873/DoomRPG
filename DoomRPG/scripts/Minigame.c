@@ -35,11 +35,13 @@ NamedScript void ItemRoulette(bool Rare)
     // Set Resolution
     SetHudSize(640, 480, false);
     
+    int Buttons, OldButtons, Duds, Index;
+    
     while (!Finished)
     {
         // Buttons
-        int Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
-        int OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
+        Buttons = GetPlayerInput(PlayerNumber(), INPUT_BUTTONS);
+        OldButtons = GetPlayerInput(PlayerNumber(), INPUT_OLDBUTTONS);
         
         // Keep menus closed - This is technically a hack and shouldn't be here
         Player.InMenu = false;
@@ -64,10 +66,10 @@ NamedScript void ItemRoulette(bool Rare)
                 WheelItems[i] = GetRewardItem(Rarity);
             
             // Place Duds
-            int Duds = 0;
+            Duds = 0;
             while (Duds < (Amount / 2) - (int)(((fixed)Amount / 20.0) * (fixed)ChipDuds))
             {
-                int Index = Random(0, Amount);
+                Index = Random(0, Amount);
                 if (WheelItems[Index] != GetBlankItem())
                 {
                     WheelItems[Index] = GetBlankItem();

@@ -5,6 +5,7 @@
 
 extern int const AuraTID;
 extern str const ColorNames[22];
+extern str const ColorCodes[22];
 extern str const SkillLevels[6];
 extern str const AuraIcons[AURA_MAX + 1];
 
@@ -120,8 +121,8 @@ OptionalArgs(1) void PrintSpritePulse(str, int, fixed, fixed, fixed, fixed, fixe
 OptionalArgs(2) void PrintMessage(str, int, fixed);
 void PrintError(str);
 void DrawBattery();
-void DrawShieldInfo(int, fixed, fixed);
-void DrawShieldModel(int, fixed, fixed);
+void DrawShieldInfo(int, fixed, fixed, int);
+void DrawShieldModel(int, fixed, fixed, int);
 void DrawMissionInfo(MissionInfo *, fixed, fixed, bool);
 OptionalArgs(1) void DrawBar(str, int, int, int, bool);
 void DrawProgressBar(str, int);
@@ -156,6 +157,8 @@ OptionalArgs(1) bool EndsWith(str, str, bool);
 OptionalArgs(1) bool Contains(str, str, bool);
 str FormatTime(int);
 
+str ColorCodeFromName(str);
+
 // Debugging/Cheats
 NamedScript Console void Cheat(int);
 NamedScript Console void ModStat(int, int);
@@ -180,5 +183,7 @@ void ArrayCreate(DynamicArray *, str, int, int);
 void ArrayResize(DynamicArray *);
 void ArrayDestroy(DynamicArray *);
 //void ArrayDump(DynamicArray *);
+
+NamedScript Console void Test();
 
 #endif

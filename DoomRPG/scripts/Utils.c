@@ -49,6 +49,33 @@ str const ColorNames[22] =
     "Cyan"
 };
 
+str const ColorCodes[22] =
+{
+    "\Ca",
+    "\Cb",
+    "\Cc",
+    "\Cd",
+    "\Ce",
+    "\Cf",
+    "\Cg",
+    "\Ch",
+    "\Ci",
+    "\Cj",
+    "\Ck",
+    "\Cl",
+    "\Cm",
+    "\Cn",
+    "\Co",
+    "\Cp",
+    "\Cq",
+    "\Cr",
+    "\Cs",
+    "\Ct",
+    "\Cu",
+    "\Cv"
+};
+
+
 // Skill Level Names
 str const SkillLevels[6] =
 {
@@ -1734,7 +1761,7 @@ void DrawBattery()
     EndHudMessage(HUDMSG_FADEOUT, BATTERY_ID + 1, "Yellow", X + 24.0, Y - 10.0, HoldTime, FadeTime);
 }
 
-void DrawShieldInfo(int ID, fixed X, fixed Y)
+void DrawShieldInfo(int ID, fixed X, fixed Y, int DrawID)
 {
     PlayerData *CurrentPlayer = (ID == -1 ? &Player : &Players(ID));
     
@@ -1752,30 +1779,30 @@ void DrawShieldInfo(int ID, fixed X, fixed Y)
         
         // Shield Name
         HudMessage("%S", ShieldName);
-        EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 0.1, 0.05);
+        EndHudMessage(HUDMSG_PLAIN, (DrawID == 0 ? 0 : DrawID++), "White", X + 0.1, Y + 0.1, 0.05);
         
         // Shield Stats
         HudMessage(" \CvCapacity: %d / %d", CurrentPlayer->Shield.Charge, CurrentPlayer->Shield.Capacity);
-        EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 8.1, 0.05);
+        EndHudMessage(HUDMSG_PLAIN, (DrawID == 0 ? 0 : DrawID++), "White", X + 0.1, Y + 8.1, 0.05);
         if (CurrentPlayer->Shield.Accessory && CurrentPlayer->Shield.Accessory->PassiveEffect == SHIELD_PASS_KILLSCHARGE)
         {
             HudMessage(" \CgDoes not recharge automatically");
-            EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 16.1, 0.05);
+            EndHudMessage(HUDMSG_PLAIN, (DrawID == 0 ? 0 : DrawID++), "White", X + 0.1, Y + 16.1, 0.05);
         }
         else
         {
             HudMessage(" \CdCharge: %d", CurrentPlayer->Shield.ChargeRate);
-            EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 16.1, 0.05);
+            EndHudMessage(HUDMSG_PLAIN, (DrawID == 0 ? 0 : DrawID++), "White", X + 0.1, Y + 16.1, 0.05);
             HudMessage(" \CaDelay: %.2k", CurrentPlayer->Shield.DelayRate);
-            EndHudMessage(HUDMSG_PLAIN, 0, "White", X + 0.1, Y + 24.1, 0.05);
+            EndHudMessage(HUDMSG_PLAIN, (DrawID == 0 ? 0 : DrawID++), "White", X + 0.1, Y + 24.1, 0.05);
         }
         
         // Draw Shield Model
-        DrawShieldModel(ID, X - 14.0, Y + 33.0);
+        DrawShieldModel(ID, X - 14.0, Y + 33.0, DrawID);
     }
 }
 
-void DrawShieldModel(int ID, fixed X, fixed Y)
+void DrawShieldModel(int ID, fixed X, fixed Y, int DrawID)
 {
     PlayerData *CurrentPlayer = (ID == -1 ? &Player : &Players(ID));
     
@@ -1783,19 +1810,19 @@ void DrawShieldModel(int ID, fixed X, fixed Y)
 
     // Accessory
     if (CurrentPlayer->Shield.Accessory)
-        PrintSprite(CurrentPlayer->Shield.Accessory->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+        PrintSprite(CurrentPlayer->Shield.Accessory->Icon, (DrawID == 0 ? 0 : DrawID++), X + 0.1, Y + 0.1, 0.05);
     
     // Battery
     if (CurrentPlayer->Shield.Battery)
-        PrintSprite(CurrentPlayer->Shield.Battery->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+        PrintSprite(CurrentPlayer->Shield.Battery->Icon, (DrawID == 0 ? 0 : DrawID++), X + 0.1, Y + 0.1, 0.05);
     
     // Capacitor
     if (CurrentPlayer->Shield.Capacitor)
-        PrintSprite(CurrentPlayer->Shield.Capacitor->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+        PrintSprite(CurrentPlayer->Shield.Capacitor->Icon, (DrawID == 0 ? 0 : DrawID++), X + 0.1, Y + 0.1, 0.05);
     
     // Body
     if (CurrentPlayer->Shield.Body)
-        PrintSprite(CurrentPlayer->Shield.Body->Icon, 0, X + 0.1, Y + 0.1, 0.05);
+        PrintSprite(CurrentPlayer->Shield.Body->Icon, (DrawID == 0 ? 0 : DrawID++), X + 0.1, Y + 0.1, 0.05);
 }
 
 void DrawMissionInfo(MissionInfo *Mission, fixed X, fixed Y, bool Active)
@@ -2271,6 +2298,16 @@ str FormatTime(int t)
     return Time;
 }
 
+str ColorCodeFromName(str s)
+{
+    for (int i = 0; i < sizeof(ColorNames); i++)
+    {
+        if (StrCmp(s, ColorNames[i]) == 0)
+            return ColorCodes[i];
+    }
+    return "";
+}
+
 // --------------------------------------------------
 // Debugging/Cheats
 // 
@@ -2471,6 +2508,11 @@ NamedScript Console void FullLocker(int Amount)
 // Give all Stim Compounds
 NamedScript Console void GiveCompounds(int Amount)
 {
+    GiveInventory("DRPGStimSmall", Player.Capacity);
+    GiveInventory("DRPGStimMedium", Player.Capacity);
+    GiveInventory("DRPGStimLarge", Player.Capacity);
+    GiveInventory("DRPGStimXL", Player.Capacity);
+    
     for (int i = 0; i < STIM_MAX; i++)
         if (Amount == 0)
             Player.Stim.Vials[i] = Player.Capacity * 10;
@@ -2826,4 +2868,9 @@ void ArrayDestroy(DynamicArray *Array)
 NamedScript void Silly()
 {
     SetMusic("Credits2");
+}
+
+NamedScript Console void Test()
+{
+    return;
 }

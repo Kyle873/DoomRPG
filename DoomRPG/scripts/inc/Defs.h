@@ -272,9 +272,11 @@ typedef enum
 #define WINDOW_X        0
 #define WINDOW_Y        0
 
-#define GUI_CURSOR_ID   700
-#define GUI_PANEL_ID    800
-#define GUI_BACK_ID     900
+#define GUI_CURSOR_ID   600
+#define GUI_TOOLTIP_ID  700
+#define GUI_CONTENTS_ID 1000
+#define GUI_PANEL_ID    (MAKE_ID('P', 'A', 'N', 'L'))
+#define GUI_BACK_ID     (MAKE_ID('Z', 'Z', 'Z', 'Z'))
 
 // Control Types
 typedef enum
@@ -286,6 +288,7 @@ typedef enum
     CTL_BAR,
     CTL_LIST,
     CTL_GRID,
+    CTL_BORDER,
     CTL_MAX
 } EControlTypes;
 
@@ -324,6 +327,7 @@ typedef enum
 {
     TT_BASIC,
     TT_TITLE,
+    TT_BIG
 } ETooltipType;
 
 // --------------------------------------------------
@@ -364,6 +368,7 @@ typedef enum
     RL_FIREST_MOD = 0x20,
     RL_NANO_MOD = 0x40,
     RL_DEMON_MOD = 0x80,
+    RL_MOD_LIMIT = 0x100,
 } ERLWepModFlags;
 
 // --------------------------------------------------
@@ -1107,6 +1112,7 @@ typedef struct CharSaveInfo_S       CharSaveInfo;
 //       +--GUIBar
 //       +--GUIList
 //       +--GUIGrid
+//       +--GUIBorder
 typedef struct GUIData_S            GUIData;
 typedef struct GUIMouseInfo_S       GUIMouseInfo;
 typedef struct GUIContextMenu_S     GUIContextMenu;
@@ -1120,6 +1126,7 @@ typedef struct GUIButton_S          GUIButton;
 typedef struct GUIBar_S             GUIBar;
 typedef struct GUIList_S            GUIList;
 typedef struct GUIGrid_S            GUIGrid;
+typedef struct GUIBorder_S          GUIBorder;
 
 // Health Bars
 typedef struct HUDBarInfo_S         HUDBarInfo;

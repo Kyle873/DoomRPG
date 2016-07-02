@@ -181,7 +181,7 @@ NamedScript DECORATE OptionalArgs(1) void DisableAugs(bool NoDrain)
     ActivatorSound("aug/disable", 127);
 }
 
-NamedScript DECORATE void ReactivateDisabledAugs()
+NamedScript KeyBind void ReactivateDisabledAugs()
 {
     // Check that we *can* activate augs.
     if (Player.StatusType[SE_EMP] || Player.Augs.Battery <= 0)

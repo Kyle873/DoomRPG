@@ -6,7 +6,7 @@
 extern AugInfo RPGMap AugData[AUG_MAX];
 
 NamedScript DECORATE OptionalArgs(1) void DisableAugs(bool);
-NamedScript DECORATE void ReactivateDisabledAugs();
+NamedScript KeyBind void ReactivateDisabledAugs();
 NamedScript DECORATE void AddBattery(int);
 
 void CheckAugSlots();

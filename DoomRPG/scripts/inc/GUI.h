@@ -5,10 +5,6 @@
 
 NamedScript Console void ToggleGUI();
 
-NamedScript void CreateGUIMenu();
-NamedScript void CreateTabs();
-NamedScript void CreatePanels();
-
 NamedScript void UpdateGUIMenu();
 NamedScript void UpdateGUICursor();
 NamedScript void UpdateTabs();
@@ -29,6 +25,7 @@ NamedScript GUIButton *GUIAddButton(GUIPanel *, str);
 NamedScript GUIBar    *GUIAddBar(GUIPanel *, str);
 NamedScript GUIList   *GUIAddList(GUIPanel *, str);
 NamedScript GUIGrid   *GUIAddGrid(GUIPanel *, str);
+NamedScript GUIBorder *GUIAddBorder(GUIPanel *, str);
 NamedScript void GUIUpdatePanelControls(GUIPanel *Panel);
 
 // Control Functions
@@ -38,6 +35,7 @@ NamedScript void UpdateButton(GUIButton *);
 NamedScript void UpdateBar(GUIBar *);
 NamedScript void UpdateList(GUIList *);
 NamedScript void UpdateGrid(GUIGrid *);
+NamedScript void UpdateBorder(GUIBorder *);
 
 // Utility
 bool InRegion(int, int, int, int);
@@ -45,8 +43,10 @@ bool InRegion(int, int, int, int);
 GUITooltip *GUICreateTooltip();
 GUIContextMenu *GUICreateContextMenu();
 
-// Panel functions
-NamedScript void CreateOverviewPanel();
-NamedScript void UpdateOverviewPanel(GUIPanel *);
+//Editing
+void GUIEditPosition(GUIControl *);
+
+//Debugging
+NamedScript Console void GUITest(int, int, int, int);
 
 #endif
