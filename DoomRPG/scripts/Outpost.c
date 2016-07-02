@@ -121,7 +121,18 @@ NamedScript MapSpecial void RegenArea(int ID)
             DoMessage = true;
         }
         
-        if (CheckInventory("DRPGCredits") >= 5 && Player.Toxicity > 0)
+		if (CheckInventory("DRPGCredits") > 0 && Player.Medkit < Player.MedkitMax)
+		{
+			HealthCharges = Player.MedkitMax - Player.Medkit;
+			if (HealthCharges > CheckInventory("DRPGCredits"))
+				HealthCharges = CheckInventory("DRPGCredits");
+			
+			Player.Medkit += HealthCharges;
+			TakeInventory("DRPGCredits", HealthCharges);
+			DoMessage = true;
+		}
+
+		if (CheckInventory("DRPGCredits") >= 5 && Player.Toxicity > 0)
         {
             HealthCharges = Player.Toxicity;
             if (HealthCharges > CheckInventory("DRPGCredits") / 5)
