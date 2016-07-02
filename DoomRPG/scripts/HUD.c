@@ -221,7 +221,12 @@ NamedScript Type_ENTER void OverviewHUD()
     PrintSprite("MEDKA0", 0, X, Y + 80.0, 0.05);
     SetFont("BIGFONT");
     HudMessage("%ld", Medkit.DisplayValue);
-    EndHudMessage(HUDMSG_PLAIN, 0, (Medkit.DisplayValue > 0 ? "Brick" : "Red"), X + 16.1, Y + 56.0, 0.05);
+	if (Medkit.DisplayValue >= Player.MedkitMax)
+		EndHudMessage(HUDMSG_PLAIN, 0, "BrickPink", X + 16.1, Y + 56.0, 0.05);
+	else if (Medkit.DisplayValue == 0)
+		EndHudMessage(HUDMSG_PLAIN, 0, "Red", X + 16.1, Y + 56.0, 0.05);
+	else
+		EndHudMessage(HUDMSG_PLAIN, 0, "Brick", X + 16.1, Y + 56.0, 0.05);
 
     // Collection timer handling
     if (CreditsCollectionTimer > 0)
