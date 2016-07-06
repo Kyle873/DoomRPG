@@ -532,6 +532,8 @@ NamedScript GUIBar *GUIAddBar(GUIPanel *Panel, str Name)
     Bar->Control.Height = 0;
     Bar->Control.Visible = true;
     
+    Bar->Type = GUI_BAR_PIXEL;
+    
     Bar->Control.Update = (ControlUpdateFunc)UpdateBar;
     
     return Bar;
@@ -856,7 +858,7 @@ NamedScript void UpdateBar(GUIBar *Bar)
     int ValueMax = Bar->ValueMax;
     str Texture = Bar->Texture;
     int id = Bar->Control.id;
-    bool Fade = Bar->Fade;
+    int Type = Bar->Type;
     bool FadePrint = Bar->FadePrint;
     fixed FadeLength = Bar->FadeLength;
     
@@ -881,19 +883,24 @@ NamedScript void UpdateBar(GUIBar *Bar)
     }
     
     // Drawing
-    //for (int i = 0; i < (int)(((fixed)Value / (fixed)(ValueMax + 1)) * 100.0); i++)
-    //fixed XPos;
-    for (int i = 0; i < Value; i++)
+    if (Type != GUI_BAR_CLIP)
     {
-        //XPos = X + 0.1 + (i * 1.0);
-        if (!Fade)
-            PrintSprite(Texture, (id == 0 ? 0 : (id + i)), X + 0.1 + i, Y + 2, 0.05);
-        else if (FadePrint)
+        for (int i = 0; i < Value; i++)
         {
-            PrintSpriteFade(Texture, (id == 0 ? 0 : (id + i)), X + 0.1 + i, Y + 2, 0.05, FadeLength);
-            Bar->FadePrint = false;
+            if (Type == GUI_BAR_PIXEL)
+                PrintSprite(Texture, (id == 0 ? 0 : (id + i)), X + 0.1 + i, Y + 2, 0.05);
+            else if (Type == GUI_BAR_FADE && FadePrint)
+            {
+                PrintSpriteFade(Texture, (id == 0 ? 0 : (id + i)), X + 0.1 + i, Y + 2, 0.05, FadeLength);
+                Bar->FadePrint = false;
+            }
         }
-        //PrintSprite(Texture, 0, ++X, Y, 0.05);
+    }
+    else
+    {
+        SetHudClipRect(X, (Y - Height / 2), Value, Height);
+        PrintSprite(Texture, id == 0 ? 0 : id, X + 0.1, Y, 0.05);
+        SetHudClipRect(0, 0, 0, 0); //Reset
     }
         
     bool MouseOver = InRegion(X, Y, Width, Height);

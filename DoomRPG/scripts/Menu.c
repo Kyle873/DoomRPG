@@ -196,9 +196,9 @@ void DrawMainMenu()
     
     // Clear the tips
     HudMessage("");
-    EndHudMessage(HUDMSG_PLAIN, MAKE_ID('1','T','I','P'), "Untranslated", 0, 0, 0);
+    EndHudMessage(HUDMSG_PLAIN, MAKE_ID('1','T','I','P'), "Untranslated", 0, 0, 0.05);
     HudMessage("");
-    EndHudMessage(HUDMSG_PLAIN, MAKE_ID('2','T','I','P'), "Untranslated", 0, 0, 0);
+    EndHudMessage(HUDMSG_PLAIN, MAKE_ID('2','T','I','P'), "Untranslated", 0, 0, 0.05);
     
     // Draw Menu
     for (int i = 0; i < MAX_MENU; i++)
