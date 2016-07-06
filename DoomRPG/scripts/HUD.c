@@ -1235,7 +1235,7 @@ NamedScript Type_ENTER void DRLAHUD()
 
     if (Player.GUI.Open || Player.InMenu || Player.InShop) { Delay(1); goto Start;}
 
-    Offset = 0.0;
+    //Offset = 0.0;
 
     X = GetActivatorCVar("drpg_drla_x");
     Y = GetActivatorCVar("drpg_drla_y");

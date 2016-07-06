@@ -181,22 +181,20 @@ NamedScript void CreateStatsPanel()
     GUIBars.StrXPBar->Control.X = 60;
     GUIBars.StrXPBar->Control.Y = 90;
     GUIBars.StrXPBar->Control.id = ++GUIElementID;
-    GUIBars.StrXPBar->Control.Height = 16;
+    GUIBars.StrXPBar->Control.Height = 12;
     GUIBars.StrXPBar->Value = 0;
     GUIBars.StrXPBar->ValueMax = 150;
-    GUIBars.StrXPBar->Texture = "StatBar1";
-
-    GUIElementID += 150;
+    GUIBars.StrXPBar->Texture = "XPBarStr";
+    GUIBars.StrXPBar->Type = GUI_BAR_CLIP;
 
     GUIBars.StrXPBGBar->Control.X = 60;
     GUIBars.StrXPBGBar->Control.Y = 90;
     GUIBars.StrXPBGBar->Control.id = ++GUIElementID;
-    GUIBars.StrXPBGBar->Control.Height = 16;
+    GUIBars.StrXPBGBar->Control.Height = 12;
     GUIBars.StrXPBGBar->Value = 150;
     GUIBars.StrXPBGBar->ValueMax = 150;
-    GUIBars.StrXPBGBar->Texture = "StatBarB";
-
-    GUIElementID += 150;
+    GUIBars.StrXPBGBar->Texture = "XPBarBG";
+    GUIBars.StrXPBGBar->Type = GUI_BAR_CLIP;
 
     GUIIcons.StrLvlDnIcon->Control.X = 224;
     GUIIcons.StrLvlDnIcon->Control.Y = 76;
@@ -291,9 +289,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.DefXPBar->Control.Height = 16;
     GUIBars.DefXPBar->Value = 0;
     GUIBars.DefXPBar->ValueMax = 150;
-    GUIBars.DefXPBar->Texture = "StatBar2";
-
-    GUIElementID += 150;
+    GUIBars.DefXPBar->Texture = "XPBarDef";
+    GUIBars.DefXPBar->Type = GUI_BAR_CLIP;
 
     GUIBars.DefXPBGBar->Control.X = 60;
     GUIBars.DefXPBGBar->Control.Y = 154;
@@ -301,9 +298,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.DefXPBGBar->Control.Height = 16;
     GUIBars.DefXPBGBar->Value = 150;
     GUIBars.DefXPBGBar->ValueMax = 150;
-    GUIBars.DefXPBGBar->Texture = "StatBarB";
-
-    GUIElementID += 150;
+    GUIBars.DefXPBGBar->Texture = "XPBarBG";
+    GUIBars.DefXPBGBar->Type = GUI_BAR_CLIP;
 
     GUIIcons.DefLvlDnIcon->Control.X = 224;
     GUIIcons.DefLvlDnIcon->Control.Y = 130;
@@ -383,9 +379,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.VitXPBar->Control.Height = 16;
     GUIBars.VitXPBar->Value = 0;
     GUIBars.VitXPBar->ValueMax = 150;
-    GUIBars.VitXPBar->Texture = "StatBar3";
-
-    GUIElementID += 150;
+    GUIBars.VitXPBar->Texture = "XPBarVit";
+    GUIBars.VitXPBar->Type = GUI_BAR_CLIP;
 
     GUIBars.VitXPBGBar->Control.X = 60;
     GUIBars.VitXPBGBar->Control.Y = 222;
@@ -393,9 +388,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.VitXPBGBar->Control.Height = 16;
     GUIBars.VitXPBGBar->Value = 150;
     GUIBars.VitXPBGBar->ValueMax = 150;
-    GUIBars.VitXPBGBar->Texture = "StatBarB";
-
-    GUIElementID += 150;
+    GUIBars.VitXPBGBar->Texture = "XPBarBG";
+    GUIBars.VitXPBGBar->Type = GUI_BAR_CLIP;
 
     GUIIcons.VitLvlDnIcon->Control.X = 224;
     GUIIcons.VitLvlDnIcon->Control.Y = 190;
@@ -475,9 +469,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.EngXPBar->Control.Height = 16;
     GUIBars.EngXPBar->Value = 0;
     GUIBars.EngXPBar->ValueMax = 150;
-    GUIBars.EngXPBar->Texture = "StatBar4";
-
-    GUIElementID += 150;
+    GUIBars.EngXPBar->Texture = "XPBarEng";
+    GUIBars.EngXPBar->Type = GUI_BAR_CLIP;
 
     GUIBars.EngXPBGBar->Control.X = 60;
     GUIBars.EngXPBGBar->Control.Y = 292;
@@ -485,9 +478,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.EngXPBGBar->Control.Height = 16;
     GUIBars.EngXPBGBar->Value = 150;
     GUIBars.EngXPBGBar->ValueMax = 150;
-    GUIBars.EngXPBGBar->Texture = "StatBarB";
-
-    GUIElementID += 150;
+    GUIBars.EngXPBGBar->Texture = "XPBarBG";
+    GUIBars.EngXPBGBar->Type = GUI_BAR_CLIP;
 
     GUIIcons.EngLvlDnIcon->Control.X = 224;
     GUIIcons.EngLvlDnIcon->Control.Y = 254;
@@ -567,9 +559,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.RgnXPBar->Control.Height = 16;
     GUIBars.RgnXPBar->Value = 0;
     GUIBars.RgnXPBar->ValueMax = 150;
-    GUIBars.RgnXPBar->Texture = "StatBar5";
-
-    GUIElementID += 150;
+    GUIBars.RgnXPBar->Texture = "XPBarRgn";
+    GUIBars.RgnXPBar->Type = GUI_BAR_CLIP;
 
     GUIBars.RgnXPBGBar->Control.X = 60;
     GUIBars.RgnXPBGBar->Control.Y = 336;
@@ -577,10 +568,9 @@ NamedScript void CreateStatsPanel()
     GUIBars.RgnXPBGBar->Control.Height = 16;
     GUIBars.RgnXPBGBar->Value = 150;
     GUIBars.RgnXPBGBar->ValueMax = 150;
-    GUIBars.RgnXPBGBar->Texture = "StatBarB";
-
-    GUIElementID += 150;
-
+    GUIBars.RgnXPBGBar->Texture = "XPBarBG";
+    GUIBars.RgnXPBGBar->Type = GUI_BAR_CLIP;
+    
     GUIIcons.RgnLvlDnIcon->Control.X = 224;
     GUIIcons.RgnLvlDnIcon->Control.Y = 326;
     GUIIcons.RgnLvlDnIcon->Control.Width = 18;
@@ -659,9 +649,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.AglXPBar->Control.Height = 16;
     GUIBars.AglXPBar->Value = 0;
     GUIBars.AglXPBar->ValueMax = 150;
-    GUIBars.AglXPBar->Texture = "StatBar6";
-
-    GUIElementID += 150;
+    GUIBars.AglXPBar->Texture = "XPBarAgl";
+    GUIBars.AglXPBar->Type = GUI_BAR_CLIP;
 
     GUIBars.AglXPBGBar->Control.X = 60;
     GUIBars.AglXPBGBar->Control.Y = 408;
@@ -669,9 +658,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.AglXPBGBar->Control.Height = 16;
     GUIBars.AglXPBGBar->Value = 150;
     GUIBars.AglXPBGBar->ValueMax = 150;
-    GUIBars.AglXPBGBar->Texture = "StatBarB";
-
-    GUIElementID += 150;
+    GUIBars.AglXPBGBar->Texture = "XPBarBG";
+    GUIBars.AglXPBGBar->Type = GUI_BAR_CLIP;
 
     GUIIcons.AglLvlDnIcon->Control.X = 224;
     GUIIcons.AglLvlDnIcon->Control.Y = 370;
@@ -751,9 +739,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.CapXPBar->Control.Height = 16;
     GUIBars.CapXPBar->Value = 0;
     GUIBars.CapXPBar->ValueMax = 150;
-    GUIBars.CapXPBar->Texture = "StatBar7";
-
-    GUIElementID += 150;
+    GUIBars.CapXPBar->Texture = "XPBarCap";
+    GUIBars.CapXPBar->Type = GUI_BAR_CLIP;
 
     GUIBars.CapXPBGBar->Control.X = 60;
     GUIBars.CapXPBGBar->Control.Y = 486;
@@ -761,9 +748,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.CapXPBGBar->Control.Height = 16;
     GUIBars.CapXPBGBar->Value = 150;
     GUIBars.CapXPBGBar->ValueMax = 150;
-    GUIBars.CapXPBGBar->Texture = "StatBarB";
-
-    GUIElementID += 150;
+    GUIBars.CapXPBGBar->Texture = "XPBarBG";
+    GUIBars.CapXPBGBar->Type = GUI_BAR_CLIP;
 
     GUIIcons.CapLvlDnIcon->Control.X = 224;
     GUIIcons.CapLvlDnIcon->Control.Y = 438;
@@ -843,9 +829,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.LckXPBar->Control.Height = 16;
     GUIBars.LckXPBar->Value = 0;
     GUIBars.LckXPBar->ValueMax = 150;
-    GUIBars.LckXPBar->Texture = "StatBar8";
-
-    GUIElementID += 150;
+    GUIBars.LckXPBar->Texture = "XPBarLck";
+    GUIBars.LckXPBar->Type = GUI_BAR_CLIP;
 
     GUIBars.LckXPBGBar->Control.X = 60;
     GUIBars.LckXPBGBar->Control.Y = 530;
@@ -853,9 +838,8 @@ NamedScript void CreateStatsPanel()
     GUIBars.LckXPBGBar->Control.Height = 16;
     GUIBars.LckXPBGBar->Value = 150;
     GUIBars.LckXPBGBar->ValueMax = 150;
-    GUIBars.LckXPBGBar->Texture = "StatBarB";
-
-    GUIElementID += 150;
+    GUIBars.LckXPBGBar->Texture = "XPBarBG";
+    GUIBars.LckXPBGBar->Type = GUI_BAR_CLIP;
 
     GUIIcons.LckLvlDnIcon->Control.X = 224;
     GUIIcons.LckLvlDnIcon->Control.Y = 518;

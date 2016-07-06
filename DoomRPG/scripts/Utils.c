@@ -2872,5 +2872,6 @@ NamedScript void Silly()
 
 NamedScript Console void Test()
 {
+    Log(StrParam("Linedef special: %d", GetLineUDMFInt(428, "special")));
     return;
 }

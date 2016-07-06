@@ -237,7 +237,7 @@ struct GUIBar_S
     int Value;
     int ValueMax;
     str Texture;
-    bool Fade;
+    EGUIBarTypes Type;
     bool FadePrint;
     fixed FadeLength;
 };

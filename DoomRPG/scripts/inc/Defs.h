@@ -56,7 +56,7 @@
 #define ClearMessage(id) \
     ( \
         HudMessage(""), \
-        EndHudMessage(HUDMSG_PLAIN, id, "Untranslated", 0.0, 0.0, 0.0) \
+        EndHudMessage(HUDMSG_PLAIN, id, "Untranslated", 0.0, 0.0, 0.05) \
     )
 #define Log(...) \
     ( \
@@ -277,6 +277,13 @@ typedef enum
 #define GUI_CONTENTS_ID 1000
 #define GUI_PANEL_ID    (MAKE_ID('P', 'A', 'N', 'L'))
 #define GUI_BACK_ID     (MAKE_ID('Z', 'Z', 'Z', 'Z'))
+
+typedef enum
+{
+    GUI_BAR_PIXEL,
+    GUI_BAR_FADE,
+    GUI_BAR_CLIP
+} EGUIBarTypes;
 
 // Control Types
 typedef enum

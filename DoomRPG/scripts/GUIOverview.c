@@ -493,7 +493,7 @@ NamedScript void CreateOverviewPanel()
         ToxicityBar[i]->Texture = StrParam("PGreen");
         ToxicityBar[i]->Value = 1;
         ToxicityBar[i]->ValueMax = 1;
-        ToxicityBar[i]->Fade = true;
+        ToxicityBar[i]->Type = GUI_BAR_FADE;
         ToxicityBar[i]->FadeLength = 1.0;
     }
     
