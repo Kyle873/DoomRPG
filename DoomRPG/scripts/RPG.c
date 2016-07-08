@@ -29,6 +29,7 @@ const str Version = "v0.10.1 Beta - Powered by GDCC!";
 bool Transported;
 bool GlobalsInitialized;
 int CompatMode;
+bool WadSmoosh;
 
 // Arrays
 str PlayerWeapon[MAX_PLAYERS];
@@ -2148,6 +2149,17 @@ void CheckCompatibility()
         Log("\CdDEBUG: \C-Checking Compatibility...");
 
     CompatMode = COMPAT_NONE;
+    WadSmoosh = false;
+    
+    //WadSmoosh
+    Success = SpawnForced("DRPGWadSmooshActive", 0, 0, 0, TID, 0);
+    if (Success)
+    {
+        if (GetCVar("drpg_debug"))
+            Log("\CdDEBUG: \CaWadSmoosh\C- detected");
+        WadSmoosh = true;
+        Thing_Remove(TID);
+    }
 
     // Extras
     Success = SpawnForced("DRPGExtrasIsLoaded", 0, 0, 0, TID, 0);

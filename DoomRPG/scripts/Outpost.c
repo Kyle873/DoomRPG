@@ -290,10 +290,10 @@ NamedScript MapSpecial void LevelTransport()
             LevelChoice = 0;
         
         // And Overflow
-        if (LevelChoice >= KnownLevels.Position)
-            LevelChoice = KnownLevels.Position - 1;
+        if (LevelChoice >= KnownLevels->Position)
+            LevelChoice = KnownLevels->Position - 1;
         
-        LevelInfo *TeleDest = &((LevelInfo *)KnownLevels.Data)[LevelChoice];
+        LevelInfo *TeleDest = &((LevelInfo *)KnownLevels->Data)[LevelChoice];
         
         // Text
         SetFont("BIGFONT");
@@ -500,20 +500,96 @@ NamedScript MapSpecial void LevelTransport()
             ActivatorSound("menu/move", 127);
             LevelChoice--;
         }
-        if (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && LevelChoice > 0)
-        {
-            ActivatorSound("menu/move", 127);
-            LevelChoice -= 10;
-        }
-        if (Buttons == BT_BACK && OldButtons != BT_BACK && LevelChoice < KnownLevels.Position - 1)
+        if (Buttons == BT_BACK && OldButtons != BT_BACK && LevelChoice < KnownLevels->Position - 1)
         {
             ActivatorSound("menu/move", 127);
             LevelChoice++;
         }
-        if (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && LevelChoice < KnownLevels.Position - 1)
+
+        //Wadsmoosh change MapPack support
+        if (WadSmoosh)
         {
-            ActivatorSound("menu/move", 127);
-            LevelChoice += 10;
+            if ((Buttons & BT_MOVELEFT) && (Buttons & BT_SPEED) && !(OldButtons & BT_MOVELEFT))
+            {
+                int MapPack = Player.SelectedMapPack;
+                do
+                {
+                    MapPack--;
+                    if (MapPackActive[MapPack])
+                    {
+                        break;
+                    }
+                }
+                while (MapPack > -1);
+                
+                if (MapPack != -1)
+                {
+                    Player.SelectedMapPack = MapPack;
+                    KnownLevels = &WSMapPacks[MapPack]; //ah, probably means no mp support this way 
+                    //will have to move the KnownLevels pointer into the Player Struct
+                    //or use a new pointer for outpost text rendering and swap the knownlevels
+                    //pointer before changing the map
+                    LevelChoice = 1;
+                    ActivatorSound("menu/move", 127);
+                }
+                else
+                {
+                    ActivatorSound("menu/error", 127);
+                }
+            }
+            else if (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && LevelChoice > 0)
+            {
+                ActivatorSound("menu/move", 127);
+                LevelChoice -= 10;
+            }
+            
+            if ((Buttons & BT_MOVERIGHT) && (Buttons & BT_SPEED) && !(OldButtons & BT_MOVERIGHT))
+            {
+                int MapPack = Player.SelectedMapPack;
+                do
+                {
+                    MapPack++;
+                    if (MapPackActive[MapPack])
+                    {
+                        break;
+                    }
+                }
+                while (MapPack < MAX_WSMAPPACKS);
+                
+                if (MapPack != MAX_WSMAPPACKS)
+                {
+                    Player.SelectedMapPack = MapPack;
+                    KnownLevels = &WSMapPacks[MapPack]; //ah, probably means no mp support this way 
+                    //will have to move the KnownLevels pointer into the Player Struct
+                    //or use a new pointer for outpost text rendering and swap the knownlevels
+                    //pointer before changing the map
+                    LevelChoice = 1;
+                    ActivatorSound("menu/move", 127);
+                }
+                else
+                {
+                    ActivatorSound("menu/error", 127);
+                }
+            }
+            else if (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && LevelChoice < KnownLevels->Position - 1)
+            {
+                ActivatorSound("menu/move", 127);
+                LevelChoice += 10;
+            }
+        }
+        else
+        {
+            if (Buttons == BT_MOVELEFT && OldButtons != BT_MOVELEFT && LevelChoice > 0)
+            {
+                ActivatorSound("menu/move", 127);
+                LevelChoice -= 10;
+            }
+        
+            if (Buttons == BT_MOVERIGHT && OldButtons != BT_MOVERIGHT && LevelChoice < KnownLevels->Position - 1)
+            {
+                ActivatorSound("menu/move", 127);
+                LevelChoice += 10;
+            }
         }
         if (Buttons == BT_USE && OldButtons != BT_USE && !Player.PayingOut)
         {
@@ -583,12 +659,15 @@ NamedScript MapSpecial void LevelTransport()
             
             break;
         }
-        if (Buttons == BT_SPEED)
+        //changing exit menu to menu key from sprint - the code is in Menu.c
+        /* if (Buttons == BT_SPEED)
         {
             SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
             Player.OutpostMenu = 0;
             return;
-        }
+        } */
+        if (Player.OutpostMenu == 0)
+            return;
         
         Delay(1);
     }

@@ -1233,7 +1233,7 @@ NamedScript Type_ENTER void DRLAHUD()
     // If we're on the title map, terminate
     if (InTitle) return;
 
-    if (Player.GUI.Open || Player.InMenu || Player.InShop) { Delay(1); goto Start;}
+    if (Player.GUI.Open || Player.InMenu || Player.InShop || Player.OutpostMenu) { Delay(1); goto Start;}
 
     //Offset = 0.0;
 

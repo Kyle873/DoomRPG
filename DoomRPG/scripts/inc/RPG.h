@@ -10,6 +10,7 @@ extern const str Version;
 extern bool Transported;
 extern bool GlobalsInitialized;
 extern int CompatMode;
+extern bool WadSmoosh;
 
 // Arrays
 extern str PlayerWeapon[MAX_PLAYERS];

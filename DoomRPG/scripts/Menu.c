@@ -77,8 +77,8 @@ NamedScript KeyBind void OpenMenu()
     // If you're dead, terminate
     if (GetActorProperty(0, APROP_Health) <= 0) return;
     
-    //If in the Mission BBS menu
-    if (Player.OutpostMenu == OMENU_BBS) 
+    //If in the Mission BBS menu or Transport Menu
+    if (Player.OutpostMenu == OMENU_BBS || Player.OutpostMenu == OMENU_LEVELTRANSPORT) 
     {
       ActivatorSound("menu/leave", 127);
       SetPlayerProperty(0, 0, PROP_TOTALLYFROZEN);
@@ -2654,8 +2654,16 @@ void MenuHelp()
         switch (Player.OutpostMenu)
         {
         case OMENU_LEVELTRANSPORT:
-            HudMessage("\Cd%jS/%jS/%jS/%jS\C- to Select Level\n\Cd%jS\C- to Teleport to Level\n\Cd%jS\C- to Exit",
-                       "+forward", "+back", "+moveleft", "+moveright", "+use", "+speed");
+            if (WadSmoosh)
+            {
+                HudMessage("\Cd%jS/%jS/%jS/%jS\C- to Select Level\n\Cd%jS+%jS/%jS+%jS\C- to Select IWAD\n\Cd%jS\C- to Teleport to Level\n\Cd%jS\C- to Exit",
+                       "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+speed", "+moveright", "+use", "drpg_menu");
+            }
+            else
+            {
+                HudMessage("\Cd%jS/%jS/%jS/%jS\C- to Select Level\n\Cd%jS\C- to Teleport to Level\n\Cd%jS\C- to Exit",
+                       "+forward", "+back", "+moveleft", "+moveright", "+use", "drpg_menu");
+            }
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y, 0.05);
             break;
         case OMENU_SKILLCOMPUTER:
