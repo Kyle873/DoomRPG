@@ -579,7 +579,7 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
             (Skulls >= DRLA_SKULL_MAX ? "\Cf" : "\Cr"), Skulls, DRLA_SKULL_MAX,
             (Devices >= DRLA_DEVICE_MAX ? "\Cf" : "\Ct"), Devices, DRLA_DEVICE_MAX);
     }
-    
+   
     //-------------------------
     //Map
     //-------------------------
@@ -636,7 +636,7 @@ NamedScript void UpdateOverviewPanel(GUIPanel *OverviewPanel)
         GUILabels.MapItemsLabel->Control.Visible = false;
         GUILabels.MapSecretsLabel->Control.Visible = false;
     }
-    
+   
     //-------------------------
     //Shield
     //-------------------------
