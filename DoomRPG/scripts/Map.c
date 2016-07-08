@@ -13,7 +13,8 @@
 #include "Utils.h"
 
 // Level Info
-DynamicArray KnownLevels;
+DynamicArray WSMapPacks[MAX_WSMAPPACKS];
+DynamicArray *KnownLevels = WSMapPacks;
 LevelInfo *CurrentLevel;
 LevelInfo *PreviousLevel;
 LevelInfo *TransporterLevel;
@@ -25,15 +26,21 @@ bool WaitingForReplacements;
 int AllBonusMaps; // For the OCD Shield
 int CurrentSkill; // Keeps track of skill changes based on events
 
+//WadSmoosh
+bool MapPackActive[MAX_WSMAPPACKS];
+
 // Local
 static int PassingEventTimer;
 static bool DisableEvent;
+
+//WadSmoosh Local
+static bool WadSmooshInitialized;
 
 // Map Init Script
 NamedScript Type_OPEN void MapInit()
 {
     // Running the game for the first time
-    if (KnownLevels.Data == NULL)
+    if (KnownLevels->Data == NULL)
     {
         if (GetCVar("drpg_monster_mapweight") < 1)
             SetCVar("drpg_monster_mapweight", 1);
@@ -45,13 +52,13 @@ NamedScript Type_OPEN void MapInit()
         PreviousLevelSecret = false;
         PreviousLevelNum = StartMapNum - 1;
         PreviousPrimaryLevelNum = StartMapNum - 1;
-        ArrayCreate(&KnownLevels, "Levels", 32, sizeof(LevelInfo));
+        ArrayCreate(KnownLevels, "Levels", 32, sizeof(LevelInfo));
         CurrentLevel = NULL;
         PreviousLevel = NULL;
         PassingEventTimer = GetCVar("drpg_mapevent_eventtime") * 35 * 60;
         DisableEvent = true;
         
-        if (KnownLevels.Data == NULL)
+        if (KnownLevels->Data == NULL)
         {
             Log("\CgWARNING: \CaCould not allocate level info!");
             return;
@@ -60,7 +67,7 @@ NamedScript Type_OPEN void MapInit()
         // Quick check to add the standard Outpost if we didn't start on it
         if (ThingCountName("DRPGOutpostMarker", 0) == 0 && ThingCountName("DRPGArenaMarker", 0) == 0)
         {
-            LevelInfo *OutpostMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+            LevelInfo *OutpostMap = &((LevelInfo *)KnownLevels->Data)[KnownLevels->Position++];
             OutpostMap->LevelNum = 0;
             OutpostMap->LumpName = "OUTPOST";
             OutpostMap->NiceName = "UAC Outpost";
@@ -88,12 +95,12 @@ NamedScript Type_OPEN void MapInit()
     
     if (CurrentLevel == NULL) // New map - We need to create new info for it
     {
-        if (KnownLevels.Position == KnownLevels.Size)
-            ArrayResize(&KnownLevels);
+        if (KnownLevels->Position == KnownLevels->Size)
+            ArrayResize(KnownLevels);
         
-        CurrentLevel = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+        CurrentLevel = &((LevelInfo *)KnownLevels->Data)[KnownLevels->Position++];
         
-        if (KnownLevels.Data == NULL)
+        if (KnownLevels->Data == NULL)
         {
             Log("\CgWARNING: \CaCould not allocate level info!");
             return;
@@ -241,7 +248,7 @@ NamedScript Type_OPEN void MapInit()
             
             if (GetCVar("drpg_transport_on_new_map") && AllowTransport && DefaultOutpost)
             {
-                qsort(KnownLevels.Data, KnownLevels.Position, sizeof(LevelInfo), LevelSort);
+                qsort(KnownLevels->Data, KnownLevels->Position, sizeof(LevelInfo), LevelSort);
                 CurrentLevel = FindLevelInfo();
                 CurrentLevel->NeedsRealInfo = false;
                 
@@ -270,7 +277,7 @@ NamedScript Type_OPEN void MapInit()
         }
         
         // We need to make sure the maps stay sorted whenever we add one
-        qsort(KnownLevels.Data, KnownLevels.Position, sizeof(LevelInfo), LevelSort);
+        qsort(KnownLevels->Data, KnownLevels->Position, sizeof(LevelInfo), LevelSort);
     }
     
     // We need to do this again because qsort invalidated all our pointers
@@ -279,6 +286,9 @@ NamedScript Type_OPEN void MapInit()
     // Transport will take us to the last base we were in.
     if (CurrentLevel->UACBase)
         DefaultOutpost = CurrentLevel;
+    
+    //WadSmoosh
+    InitWadSmoosh();
     
     if (CurrentLevel->UACBase || CurrentLevel->UACArena)
         return; // [KS] These maps set themselves up, so nothing more to do.
@@ -638,8 +648,8 @@ NamedScript void CalculateBonusMaps()
 {
     int Count = 0;
     
-    for (int i = 0; i < KnownLevels.Position; i++)
-        if (((LevelInfo *)KnownLevels.Data)[i].AllBonus)
+    for (int i = 0; i < KnownLevels->Position; i++)
+        if (((LevelInfo *)KnownLevels->Data)[i].AllBonus)
             Count++;
     
     AllBonusMaps = Count;
@@ -677,9 +687,9 @@ LevelInfo *FindLevelInfo(str MapName)
     if (MapName == NULL)
         MapName = StrParam("%tS", PRINTNAME_LEVEL);
     
-    for (int i = 0; i < KnownLevels.Position; i++)
-        if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
-            return &((LevelInfo *)KnownLevels.Data)[i];
+    for (int i = 0; i < KnownLevels->Position; i++)
+        if (!StrICmp(((LevelInfo *)KnownLevels->Data)[i].LumpName, MapName))
+            return &((LevelInfo *)KnownLevels->Data)[i];
     
     return NULL;
 }
@@ -689,8 +699,8 @@ int FindLevelInfoIndex(str MapName)
     if (MapName == NULL)
         MapName = StrParam("%tS", PRINTNAME_LEVEL);
     
-    for (int i = 0; i < KnownLevels.Position; i++)
-        if (!StrICmp(((LevelInfo *)KnownLevels.Data)[i].LumpName, MapName))
+    for (int i = 0; i < KnownLevels->Position; i++)
+        if (!StrICmp(((LevelInfo *)KnownLevels->Data)[i].LumpName, MapName))
             return i;
     
     return 0; // Default to the Outpost because we don't actually know where we are
@@ -698,13 +708,16 @@ int FindLevelInfoIndex(str MapName)
 
 NamedScript MapSpecial void AddUnknownMap(str Name, str DisplayName, int LevelNumber, int Secret)
 {
-    while (KnownLevels.Data == NULL)
+    while (KnownLevels->Data == NULL)
         Delay(1);
+    
+    if (WadSmoosh)
+        return; // this messes up WadSmoosh too much, running every time we go to the outpost
     
     if (FindLevelInfo(Name) != NULL)
         return; // This map was already unlocked, so ignore it
     
-    LevelInfo *NewMap = &((LevelInfo *)KnownLevels.Data)[KnownLevels.Position++];
+    LevelInfo *NewMap = &((LevelInfo *)KnownLevels->Data)[KnownLevels->Position++];
     NewMap->LumpName = Name;
     NewMap->NiceName = DisplayName;
     NewMap->LevelNum = LevelNumber;
@@ -1338,9 +1351,9 @@ NamedScript Type_OPEN void PassingEvents()
             if (GetCVar("drpg_debug"))
                 Log("\CdDEBUG: \CfRe-rolling events for all inactive levels");
             
-            for (int i = 0; i < KnownLevels.Position; i++)
+            for (int i = 0; i < KnownLevels->Position; i++)
             {
-                LevelInfo *ThisLevel = &((LevelInfo *)KnownLevels.Data)[i];
+                LevelInfo *ThisLevel = &((LevelInfo *)KnownLevels->Data)[i];
                 
                 if (!ThisLevel->Completed)
                 {
@@ -1545,10 +1558,10 @@ NamedScript Console void SetMapEvent(int Level, int ID)
     
     if (Level == 0)
         MapToChange = CurrentLevel;
-    else if (Level < 0 || Level >= KnownLevels.Position)
+    else if (Level < 0 || Level >= KnownLevels->Position)
         MapToChange = NULL;
     else
-        MapToChange = &((LevelInfo *)KnownLevels.Data)[Level];
+        MapToChange = &((LevelInfo *)KnownLevels->Data)[Level];
     
     if (MapToChange == NULL)
     {
@@ -3345,4 +3358,141 @@ NamedScript void RainbowEvent()
     
     Delay(1);
     goto Start;
+}
+
+// WadSmoosh --------------------------------------------------
+NamedScript void InitWadSmoosh()
+{
+    str CvarNames[MAX_WSMAPPACKS] =
+    {
+        "drpg_ws_doom1",
+        "drpg_ws_doom2",
+        "drpg_ws_master",
+        "drpg_ws_nerve",
+        "drpg_ws_plut",
+        "drpg_ws_tnt"
+    };
+    
+    str LumpNames[MAX_WSMAPPACKS] = 
+    {
+        "E1M1",
+        "MAP01",
+        "ML_MAP01",
+        "NERVE_MAP01",
+        "PLUT_MAP01",
+        "TNT_MAP01"
+    };
+    int i;
+    bool BlankStart;
+
+    Delay(10); //Give a chance for data to load
+    
+    if (!WadSmoosh || WadSmooshInitialized) return; //let's be safe
+    LogMessage("\CdStarting Wad Smoosh Initialization", LOG_DEBUG);
+    
+    for (i = 0; i < MAX_WSMAPPACKS; i++)
+    {
+        MapPackActive[i] = GetCVar(CvarNames[i]); //find which iwads user says they have
+    };
+
+    bool StartedOnMap = KnownLevels->Position > 1;
+    
+    if (!StartedOnMap) //we started in the outpost and map arrays are empty - lets add one
+    {
+        for (i = 0; i < MAX_WSMAPPACKS; i++)
+        {
+            if (MapPackActive[i])
+            {
+                LevelInfo *NewMap = &((LevelInfo *)KnownLevels->Data)[KnownLevels->Position++];
+                NewMap->LumpName = LumpNames[i];
+                NewMap->NiceName = "Unknown Area";
+                NewMap->LevelNum = 0;
+                NewMap->SecretMap = 0;
+                NewMap->UACBase = false;
+                NewMap->UACArena = false;
+                NewMap->SecretMap = false;
+                NewMap->Completed = false;
+                NewMap->NeedsRealInfo = true;
+                LogMessage(StrParam("Loaded on Outpost! - Added Lump %S", ((LevelInfo *)KnownLevels->Data)[1].LumpName, KnownLevels), LOG_DEBUG);
+                break;
+            }
+        }
+        if (i == MAX_WSMAPPACKS)
+        {
+            LogMessage(StrParam("\CdERROR: \C-WadSmoosh loaded with no IWADS enabled!"), LOG_ERROR);
+            return;
+        }
+    }
+    str Lump = ((LevelInfo *)WSMapPacks[WS_DOOM1].Data)[1].LumpName;
+
+    
+    if (Lump != "E1M1") //we didn't start with doom 1 or started on outpost with add unknown map not set to doom 1
+    {
+        LogMessage(StrParam("\Cgnot E1M1!!!\C- - Lump is: %S", Lump), LOG_DEBUG);
+        
+        DynamicArray Temp;
+
+        for (i = 1; i < MAX_WSMAPPACKS; i++)
+        {
+            if (Lump == LumpNames[i])    //get which iwad was loaded
+                break;
+        }
+
+        LogMessage("Swapping Array positions", LOG_DEBUG);
+        Temp = WSMapPacks[i];   //store current data of correct location
+        LogMessage(StrParam("Swapping %p with %p",&WSMapPacks[i], &WSMapPacks[WS_DOOM1]), LOG_DEBUG);
+        WSMapPacks[i] = WSMapPacks[WS_DOOM1]; //move map data to correct position
+        WSMapPacks[WS_DOOM1] = Temp; //place replaced data in the outdated doom 1 slot
+       
+        KnownLevels = &WSMapPacks[i];   //update pointer to the new location
+    }
+
+    //we need to do this again to update i, just in case
+    //it's possible to get here if data is already initialised and this would
+    //mess up the current map pack pointer if we didn't recheck
+    Lump = ((LevelInfo *)KnownLevels->Data)[1].LumpName;
+    for (i = 0; i < MAX_WSMAPPACKS; i++)
+    {
+        if (Lump == LumpNames[i])    //get which iwad was loaded
+            break;
+    }
+    
+    for (int j = 0; j < MAX_WSMAPPACKS; j++) //loop through all map packs
+    {
+        if (j != i && MapPackActive[j]) //the "current" pack already has data so ignore it, also make sure the iwad is marked active
+        {
+            KnownLevels = &WSMapPacks[j]; //move pointer for this operation
+            if (KnownLevels->Data == NULL)
+                ArrayCreate(KnownLevels, "Levels", 32, sizeof(LevelInfo)); //allocate memory                
+            
+            //we need to add the outpost to each array
+            LevelInfo *OutpostMap = &((LevelInfo *)KnownLevels->Data)[KnownLevels->Position++];
+            OutpostMap->LevelNum = 0;
+            OutpostMap->LumpName = "OUTPOST";
+            OutpostMap->NiceName = "UAC Outpost";
+            OutpostMap->Completed = true;
+            OutpostMap->UACBase = true;
+            OutpostMap->UACArena = false;
+            OutpostMap->NeedsRealInfo = false;
+
+            //we add our maps manually because AddUnknownMap is expected to run on outpost load
+            LevelInfo *NewMap = &((LevelInfo *)KnownLevels->Data)[KnownLevels->Position++];
+            NewMap->LumpName = LumpNames[j];
+            NewMap->NiceName = "Unknown Area";
+            NewMap->LevelNum = 0;
+            NewMap->SecretMap = 0;
+            NewMap->UACBase = false;
+            NewMap->UACArena = false;
+            NewMap->SecretMap = false;
+            NewMap->Completed = false;
+            NewMap->NeedsRealInfo = true;
+            LogMessage(StrParam("Added Lump %S to Array %p", ((LevelInfo *)KnownLevels->Data)[1].LumpName, KnownLevels), LOG_DEBUG);
+        }
+    }
+    
+    KnownLevels = &WSMapPacks[i]; //move pointer back to current mappack
+    CurrentLevel = FindLevelInfo(); //the CurrentLevel pointer is invalidated and needs to be reset
+    Player.SelectedMapPack = i;
+    
+    WadSmooshInitialized = true;
 }

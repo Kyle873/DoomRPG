@@ -1181,6 +1181,22 @@ typedef struct PayoutData_S         PayoutData;
 // RPG
 typedef struct PlayerData_S         PlayerData;
 
+//------------------------------------------------
+// WadSmoosh Compatibility
+//
+
+#define MAX_WSMAPPACKS  6
+
+typedef enum
+{
+    WS_DOOM1,
+    WS_DOOM2,
+    WS_MASTER,
+    WS_NERVE,
+    WS_PLUT,
+    WS_TNT
+} EnumWSMapSets;
+
 // --------------------------------------------------
 // Pointer Types
 //
