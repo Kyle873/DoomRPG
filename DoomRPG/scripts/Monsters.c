@@ -35,6 +35,27 @@ MonsterInfo const MonsterData[MAX_DEF_MONSTERS] =
     { "SpiderMastermind",                   "Spider Mastermind",                95,     0, true,  "You've stumbled into a hive of the deadliest kind!" }
 };
 
+MonsterInfo const MonsterDataLD[MAX_DEF_MONSTERS] =
+{
+    { "LDZombieman",                          "Former Human",                     1,      0, false, "You hear shuffling footsteps and moans!" },
+    { "LDShotgunguy",                         "Former Sergeant",                  2,      0, false, "You hear the sound of shotguns pumping!" },
+    { "LDChaingunguy",                        "Former Commando",                  5,      0, false, "Quiet mutters and whirring set you on edge!" },
+    { "LDDoomImp",                            "Imp",                              4,      0, false, "The walls are scratched and flame-scorched!" },
+    { "LDDemon",                              "Demon",                            3,      0, false, "Hungry growls echo around you!" },
+    { "LDSpectre",                            "Spectre",                          3,      0, false, "It's dark, you are likely to be eaten by a... Spectre?" },
+    { "LDLostSoul",                           "Lost Soul",                        3,      0, false, "The sound of many flames echo about!" },
+    { "LDCacodemon",                          "Cacodemon",                        10,     0, false, "Screeches drown out all other sound!" },
+    { "LDHellKnight",                         "Hell Knight",                      20,     0, false, "A battle cry chants in the distance!" },
+    { "LDBaronOfHell",                        "Baron of Hell",                    30,     0, false, "Seems you've found Hell's nobility!" },
+    { "LDPainElemental",                      "Pain Elemental",                   40,     0, false, "You feel you are being watched!" },
+    { "LDRevenant",                           "Revenant",                         50,     0, false, "Bones clatter all around you!" },
+    { "LDMancubus",                              "Mancubus",                         60,     0, false, "You hear deep, guttural noises!" },
+    { "LDArachnotron",                        "Arachnotron",                      60,     0, false, "Leg servos squeak and whirr nearby!" },
+    { "LDArchvile",                           "Arch-Vile",                        70,     0, false, "You hear crackling flames!" },
+    { "LDCyberdemon",                         "Cyberdemon",                       85,     0, true,  "Suddenly you have a great urge to turn back! You scream in TERROR!" },
+    { "LDSpiderMastermind",                   "Spider Mastermind",                95,     0, true,  "You've stumbled into a hive of the deadliest kind!" }
+};
+
 MonsterInfo const MonsterDataDRLA[MAX_DEF_MONSTERS_DRLA] =
 {
     // Normal
@@ -2106,6 +2127,7 @@ NamedScript void MonsterDeath()
     //RemoveMonsterAura(Stats);
 }
 
+//[[alloc_Aut(16384)]]
 NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
 {
     bool DRLA = (CompatMode == COMPAT_DRLA);
@@ -2126,6 +2148,8 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
     {
         if (DRLA)
             TempMonster = &MonsterDataDRLA[i];
+        else if (CompatMode == COMPAT_LEGENDOOM)
+            TempMonster = &MonsterDataLD[i];
         else
             TempMonster = &MonsterData[i];
     
@@ -2140,9 +2164,10 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
         return;
     }
     
-    bool Complete, Success;
+    bool Complete, Success, IsBoss;
     fixed X, Y, Z, SpawnX, SpawnY;
     int MonsterIndex, TID, SpawnTries, CurrentRadius;
+    MonsterStatsPtr Stats;
     
     while (true)
     {
@@ -2168,6 +2193,8 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
         Success = false;
         SpawnTries = 0;
         CurrentRadius = Radius;
+        Stats = NULL;
+        IsBoss = false;
         
         while (!Success && SpawnTries < 3)
         {
@@ -2183,7 +2210,7 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
             
             Success = Spawn(GetMissionMonsterActor(MonsterList[MonsterIndex]->Actor), X + SpawnX, Y + SpawnY, Z, TID, 0);
             
-            bool IsBoss = CheckFlag(TID, "BOSS");
+            IsBoss = CheckFlag(TID, "BOSS");
             
             if (Success)
                 Success = CheckSight(0, TID, 0);
@@ -2211,7 +2238,7 @@ NamedScript DECORATE void MonsterTransport(int Difficulty, int Time, int Radius)
             Delay(4);
             
             // Pointer
-            MonsterStatsPtr Stats = &Monsters[GetMonsterID(TID)];
+            Stats = &Monsters[GetMonsterID(TID)];
             
             Thing_Hate(TID, Player.TID);
             Stats->Reinforcement = true;

@@ -447,6 +447,8 @@ void GetTargetMonster(MissionInfo *Mission)
         MonsterInfoPtr TempMonster;
         if (DRLA)
             TempMonster = &MonsterDataDRLA[i];
+        else if (CompatMode == COMPAT_LEGENDOOM)
+            TempMonster = &MonsterDataLD[i];
         else
             TempMonster = &MonsterData[i];
 
@@ -509,7 +511,7 @@ int CalculateAverageDifficulty()
 
 str GetMissionMonsterActor(str Actor)
 {
-    if (CompatMode == COMPAT_DRLA)
+    if (CompatMode == COMPAT_DRLA || CompatMode == COMPAT_LEGENDOOM)
         return StrParam("%SRPG", Actor);
     else if (CompatMode == COMPAT_EXTRAS)
         return StrParam("DRPG%SExtras", Actor);

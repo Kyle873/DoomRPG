@@ -6,6 +6,7 @@
 extern int RPGMap MonsterID;
 extern MonsterStats RPGMap Monsters[MAX_MONSTERS];
 extern MonsterInfo const MonsterData[MAX_DEF_MONSTERS];
+extern MonsterInfo const MonsterDataLD[MAX_DEF_MONSTERS];
 extern MonsterInfo const MonsterDataDRLA[MAX_DEF_MONSTERS_DRLA];
 extern MegabossInfo const MegaBosses[MAX_MEGABOSSES];
 

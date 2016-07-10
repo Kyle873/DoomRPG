@@ -604,7 +604,7 @@ void ArenaSetEnvironment(int ID)
     
     if (ID == AEVENT_RANDOM)
     {
-        int EnvironmentRandomizer = Random(-10, AEVENT_MAX);
+        int EnvironmentRandomizer = Random(-10, AEVENT_MAX - 1);
         if (EnvironmentRandomizer > 0)
             ID = EnvironmentRandomizer;
     }
