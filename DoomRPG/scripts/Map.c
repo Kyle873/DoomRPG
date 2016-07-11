@@ -14,7 +14,7 @@
 
 // Level Info
 DynamicArray WSMapPacks[MAX_WSMAPPACKS];
-DynamicArray *KnownLevels = WSMapPacks;
+DynamicArray *KnownLevels = &WSMapPacks[0];
 LevelInfo *CurrentLevel;
 LevelInfo *PreviousLevel;
 LevelInfo *TransporterLevel;
@@ -223,10 +223,9 @@ NamedScript Type_OPEN void MapInit()
             
             CurrentLevel->AdditionalMonsters = 0;
             CurrentLevel->Event = MAPEVENT_NONE;
-            BLANKDYNAMICARRAY(CurrentLevel->MonsterPositions);
             
             // Allocate the Monster Positions dynamic array
-            ArrayCreate(&CurrentLevel->MonsterPositions, "MPOS", 64, sizeof(Position));
+            ArrayCreate(&(CurrentLevel->MonsterPositions), "MPOS", 64, sizeof(Position));
             
             // Decide the map's event, if any
             DecideMapEvent(CurrentLevel);
@@ -278,6 +277,7 @@ NamedScript Type_OPEN void MapInit()
         
         // We need to make sure the maps stay sorted whenever we add one
         qsort(KnownLevels->Data, KnownLevels->Position, sizeof(LevelInfo), LevelSort);
+        Delay(2);
     }
     
     // We need to do this again because qsort invalidated all our pointers
@@ -293,9 +293,9 @@ NamedScript Type_OPEN void MapInit()
     if (CurrentLevel->UACBase || CurrentLevel->UACArena)
         return; // [KS] These maps set themselves up, so nothing more to do.
     
+    //Flag to run monster replacements
     WaitingForReplacements = true;
-    Delay(2);
-    
+
     // Reduce monster population based on difficulty settings
     ReduceMonsterCount();
     
@@ -307,7 +307,9 @@ NamedScript Type_OPEN void MapInit()
         
         // Array has grown too big, resize it
         if (CurrentLevel->MonsterPositions.Position == CurrentLevel->MonsterPositions.Size)
+        {
             ArrayResize(&CurrentLevel->MonsterPositions);
+        }
         
         // Store position
         ((Position *)CurrentLevel->MonsterPositions.Data)[CurrentLevel->MonsterPositions.Position++] = Monsters[i].spawnPos;
@@ -3386,6 +3388,9 @@ NamedScript void InitWadSmoosh()
     bool BlankStart;
 
     Delay(10); //Give a chance for data to load
+    
+    if (CurrentLevel->LumpName == "TITLEMAP") //don't need to run on title screen
+        return;
     
     if (!WadSmoosh || WadSmooshInitialized) return; //let's be safe
     LogMessage("\CdStarting Wad Smoosh Initialization", LOG_DEBUG);
