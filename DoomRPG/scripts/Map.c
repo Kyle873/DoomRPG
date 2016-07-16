@@ -901,6 +901,8 @@ NamedScript void HellSkillTransport(int player)
         MonsterInfoPtr TempMonster;
         if (DRLA)
             TempMonster = &MonsterDataDRLA[i];
+        else if (CompatMode == COMPAT_LEGENDOOM)
+            TempMonster = &MonsterDataLD[i];
         else
             TempMonster = &MonsterData[i];
     
@@ -1313,6 +1315,8 @@ NamedScript void DecideMapEvent(LevelInfo *TargetLevel, bool FakeIt)
             
             if (DRLA)
                 TempMonster = &MonsterDataDRLA[i];
+            else if (CompatMode == COMPAT_LEGENDOOM)
+                TempMonster = &MonsterDataLD[i];
             else
                 TempMonster = &MonsterData[i];
             
@@ -2371,6 +2375,8 @@ NamedScript void HellUnleashedSpawnMonsters()
         MonsterInfoPtr Monster;
         if (CompatMode == COMPAT_DRLA)
             Monster = &MonsterDataDRLA[Random(0, MAX_DEF_MONSTERS_DRLA - 1)];
+        else if (CompatMode == COMPAT_LEGENDOOM)
+            Monster = &MonsterDataLD[Random(0, MAX_DEF_MONSTERS - 1)];
         else
             Monster = &MonsterData[Random(0, MAX_DEF_MONSTERS - 1)];
         

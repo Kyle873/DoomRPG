@@ -1081,6 +1081,8 @@ NamedScript Type_OPEN void ShopSpecialHandler()
 NamedScript void ItemHandler()
 {
     fixed Dist, Height, Divisor, Angle, Pitch, Amount, X, Y, Z;
+    int ItemTID;
+    bool NoClip;
 
     // Create the Items Array
     for (int i = 0; i < MAX_ITEMS; i++)
@@ -1106,9 +1108,9 @@ NamedScript void ItemHandler()
 
             // This item was picked up or otherwise removed
             if (ClassifyActor(ItemTIDs[i]) == ACTOR_NONE || ClassifyActor(ItemTIDs[i]) == ACTOR_WORLD) continue;
-
+            
+            NoClip = false;
             // Iterate players and check distances
-            bool NoClip = false;
             for (int j = 0; j < MAX_PLAYERS; j++)
             {
                 // Skip this player if they aren't in the game
@@ -1146,6 +1148,49 @@ NamedScript void ItemHandler()
                 SetActorInventory(ItemTIDs[i], "DRPGItemNoClip", 1);
             else
                 SetActorInventory(ItemTIDs[i], "DRPGItemNoClipOff", 1);
+        }
+        
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            // Skip this player if they aren't in the game
+            if (!PlayerInGame(i)) continue;
+
+            // Skip this player if they aren't Magnetic
+            if (Players(i).Stim.PowerupTimer[STIM_MAGNETIC] <= 0) continue;
+
+            // Skip this player if they are dead
+            if (GetActorProperty(Players(i).TID, APROP_Health) <= 0) continue;
+            
+            for (int j = 0; j < Players(i).DropTID.Size; j++)
+            {
+                NoClip = false;
+                ItemTID = ((int *)Players(i).DropTID.Data)[j];
+                
+                Dist = Distance(ItemTID, Players(i).TID);
+                Height = GetActorPropertyFixed(Players(i).TID, APROP_Height);
+                Divisor = (Dist - 16.0) + Dist;
+                Angle = VectorAngle (GetActorX(Players(i).TID) - GetActorX(ItemTID), GetActorY(Players(i).TID) - GetActorY(ItemTID));
+                Pitch = VectorAngle (Dist, GetActorZ(Players(i).TID) - GetActorZ(ItemTID));
+
+                // Calculate the amount based on close versus far distance
+                if (Dist < 16.0)
+                    Amount = 1.0;
+                else
+                    Amount = 16.0 / Divisor;
+
+                // Calculate the lerped positions
+                X = (Amount * 16.0) * Cos(Angle) * Cos(Pitch);
+                Y = (Amount * 16.0) * Sin(Angle) * Cos(Pitch);
+                Z = (Amount * 16.0) * Sin(Pitch);
+
+                SetActorVelocity(ItemTID, X, Y, Z, true, false);
+                NoClip = true;
+                
+                if (NoClip)
+                    SetActorInventory(ItemTIDs[i], "DRPGItemNoClip", 1);
+                else
+                    SetActorInventory(ItemTIDs[i], "DRPGItemNoClipOff", 1);
+            }
         }
 
         Delay(4);
