@@ -655,6 +655,14 @@ typedef enum
     COMPAT_LEGENDOOM
 } ECompatibilityMode;
 
+typedef enum {
+    LD_STANDARD,
+    LD_COMMON,
+    LD_UNCOMMON,
+    LD_RARE,
+    LD_EPIC
+} ELegendaryRarities;
+
 typedef enum
 {
     DT_NONE = -1,
@@ -1180,6 +1188,9 @@ typedef struct PayoutData_S         PayoutData;
 
 // RPG
 typedef struct PlayerData_S         PlayerData;
+
+//LegenDoom
+typedef struct LegendaryDef_S       LegendaryDef;
 
 //------------------------------------------------
 // WadSmoosh Compatibility

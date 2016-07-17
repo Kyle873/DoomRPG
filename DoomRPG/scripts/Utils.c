@@ -2872,13 +2872,10 @@ NamedScript void Silly()
 
 NamedScript Console void Test()
 {
-    AddUnknownMap("E1M1", "Unknown Area", 100, 0);
-    AddUnknownMap("E2M1", "Unknown Area", 110, 0);
-    AddUnknownMap("E3M1", "Unknown Area", 120, 0);
-    AddUnknownMap("E4M1", "Unknown Area", 130, 0);
-    AddUnknownMap("ml_map01", "Unknown Area", 200, 0);
-    AddUnknownMap("nerve_MAP01", "Unknown Area", 300, 0);
-    AddUnknownMap("plut_MAP01", "Unknown Area", 400, 0);
-    AddUnknownMap("tnt_MAP01", "Unknown Area", 500, 0);
+    int *TID = (int *)Player.DropTID.Data;
+    for (int i = 0; i < Player.DropTID.Position; i++)
+    {
+        Log("%d: ID:%d, %S", i, TID[i], GetActorClass(TID[i]));
+    }
     return;
 }

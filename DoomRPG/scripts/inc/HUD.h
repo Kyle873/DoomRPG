@@ -20,5 +20,7 @@ NamedScript void DamageHUD(int, bool);
 
 // Add-on specific
 NamedScript Type_ENTER void DRLAHUD();
+NamedScript Type_ENTER void LegenDoomHUD();
+str GetLegendaryEffectImage(LegendaryDef const *, int, str);
 
 #endif

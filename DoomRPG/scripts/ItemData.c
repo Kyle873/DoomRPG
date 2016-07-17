@@ -955,7 +955,7 @@ NamedScript void BuildItemData()
     {
         // Weapons
         ITEMDATA_CATEGORY(0, "\CgWeapons", CF_NONE);
-            ITEMDATA_DEF("LDFistsPickupLegendary",          "Fists",             2500, 0, 0, "SFISZ0", 22, 17);
+            ITEMDATA_DEF("LDFistsPickupLegendary",          "Fists",             2500, 0, 0, "SFISZ0", 14, 17);
             ITEMDATA_DEF("LDChainsawPickupLegendary",       "Chainsaw",          5000, 1, 1, "SSAWZ0", 31, 24);
             ITEMDATA_DEF("LDPistolPickupLegendary",         "Pistol",            2500, 0, 0, "PISTA0", 11, 15);
             ITEMDATA_DEF("LDShotgunPickupLegendary",        "Shotgun",           5000, 1, 1, "SHOTA0", 31, 17);

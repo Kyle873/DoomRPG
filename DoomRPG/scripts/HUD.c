@@ -1644,3 +1644,675 @@ NamedScript Type_ENTER void DRLAHUD()
     Delay(1);
     goto Start;
 }
+
+NamedScript Type_ENTER void LegenDoomHUD()
+{
+    if (CompatMode != COMPAT_LEGENDOOM)
+        return;
+    
+    LegendaryDef const LegendaryTypesCommon[] = {
+        {"Exorcist", "R_EXORCI"},
+        {"Extinguishing", "R_EXTING"},
+        {"Wrangler", "R_WRANGL"},
+        {"Determined", "R_DETERM"},
+        {"Violent", "R_VIOLEN"},
+        {"Kinetic", "R_KINETI"},
+        {"Penetrating", "R_PENETR"},
+        {"Sustained", "R_SUSTAI"},
+        {"Spiritual", "R_SPIRIT"},
+        {"Tricky", "R_TRICKY"},
+        {"Raging", "R_RAGING"},
+        {"Unknown", "R_UNKNOW"},
+        {"Hoarder", "R_HOARDE"},
+        {"Survivor", "R_SURVIV"}
+    };
+    
+    LegendaryDef const LegendaryTypesUncommon[] = {
+        {"Unlikely", "R_UNLIKE"},
+        {"Antiair", "R_ANTIAI"},
+        {"Berserker", "R_BERSER"},
+        {"Chargeup", "R_CHARGE"},
+        {"Efficient", "R_EFFICI"},
+        {"Cluster", "R_CLUSTE"},
+        {"Medic", "R_MEDIC"},
+        {"Optional", "R_OPTION"},
+        {"Painful", "R_PAINFU"},
+        {"Scattering", "R_SCATTE"},
+        {"Energetic", "R_ENERGE"},
+        {"Shockwave", "R_SHOCKW"},
+        {"Heavy", "R_HEAVY"},
+        {"Hunting", "R_HUNTIN"}
+    };
+
+    LegendaryDef const LegendaryTypesRare[] = {
+        {"Improbable", "R_IMPROB"},
+        {"Scrapper", "R_SCRAPP"},
+        {"Blessed", "R_BLESSE"},
+        {"Seeker", "R_SEEKER"},
+        {"Killstreaker", "R_KILLST"},
+        {"Nuclear", "R_NUCLEA"},
+        {"Lucky", "R_LUCKY"},
+        {"Desperate", "R_DESPER"},
+        {"Whittling", "R_WITTLI"},
+        {"Shaman", "R_SHAMAN"},
+        {"Accelerator", "R_ACCELE"},
+        {"Explosive", "R_EXPLOS"},
+        {"Vidmaster", "R_VIDMAS"},
+        {"HighExplosive", "R_HIGHEX"},
+        {"ShapedCharge", "R_SHAPED"},
+        {"Rapid", "R_RAPID"},
+        {"Marksman", "R_MARKSM"},
+        {"Sniper", "R_SNIPER"},
+        {"Extended", "R_EXTEND"},
+        {"CQC", "R_CQC"}
+    };
+    
+    LegendaryDef const LegendaryTypesEpic[] = {
+        {"Impossible", "R_IMPOSS"},
+        {"Heroic", "R_HEROIC"},
+        {"Murderous", "R_MURDER"},
+        {"Unstoppable", "R_UNSTOP"},
+        {"Irradiated", "R_IRRADI"},
+        {"Bloodthirsty", "R_BLOODT"},
+        {"Convincing", "R_CONVIN"},
+        {"Plasmatic", "R_PLASMA"},
+        {"Persistent", "R_PERSIS"},
+        {"TripleThreat", "R_TRIPLE"},
+        {"TwinShot", "R_TWINSH"},
+        {"Gauss", "R_GAUSS"}
+    };
+
+    LegendaryDef const LegendaryFistsRarity[] = {
+        {"Standard", "IFISSTAN"},
+        {"Common", "IFISCOMM"},
+        {"Uncommon", "IFISUNCO"},
+        {"Rare", "IFISRARE"},
+        {"Epic", "IFISEPIC"}
+    };
+    
+    LegendaryDef const LegendaryChainsawRarity[] = {
+        {"Standard", "ISAWSTAN"},
+        {"Common", "ISAWCOMM"},
+        {"Uncommon", "ISAWUNCO"},
+        {"Rare", "ISAWRARE"},
+        {"Epic", "ISAWEPIC"}
+    };
+
+    LegendaryDef const LegendaryPistolRarity[] = {
+        {"Standard", "IPISSTAN"},
+        {"Common", "IPISCOMM"},
+        {"Uncommon", "IPISUNCO"},
+        {"Rare", "IPISRARE"},
+        {"Epic", "IPISEPIC"}
+    };
+
+    LegendaryDef const LegendaryShotgunRarity[] = {
+        {"Standard", "ISH1STAN"},
+        {"Common", "ISH1COMM"},
+        {"Uncommon", "ISH1UNCO"},
+        {"Rare", "ISH1RARE"},
+        {"Epic", "ISH1EPIC"}
+    };
+
+    LegendaryDef const LegendarySuperShotgunRarity[] = {
+        {"Standard", "ISH2STAN"},
+        {"Common", "ISH2COMM"},
+        {"Uncommon", "ISH2UNCO"},
+        {"Rare", "ISH2RARE"},
+        {"Epic", "ISH2EPIC"}
+    };
+
+    LegendaryDef const LegendaryChaingunRarity[] = {
+        {"Standard", "ICHGSTAN"},
+        {"Common", "ICHGCOMM"},
+        {"Uncommon", "ICHGUNCO"},
+        {"Rare", "ICHGRARE"},
+        {"Epic", "ICHGEPIC"}
+    };
+
+    LegendaryDef const LegendaryRocketLauncherRarity[] = {
+        {"Standard", "IRLASTAN"},
+        {"Common", "IRLACOMM"},
+        {"Uncommon", "IRLAUNCO"},
+        {"Rare", "IRLARARE"},
+        {"Epic", "IRLAEPIC"}
+    };
+
+    LegendaryDef const LegendaryPlasmaRifleRarity[] = {
+        {"Standard", "IPLSSTAN"},
+        {"Common", "IPLSCOMM"},
+        {"Uncommon", "IPLSUNCO"},
+        {"Rare", "IPLSRARE"},
+        {"Epic", "IPLSEPIC"}
+    };
+
+    LegendaryDef const LegendaryBFG9000Rarity[] = {
+        {"Standard", "IBFGSTAN"},
+        {"Common", "IBFGCOMM"},
+        {"Uncommon", "IBFGUNCO"},
+        {"Rare", "IBFGRARE"},
+        {"Epic", "IBFGEPIC"}
+    };
+
+    fixed X, Y;
+    str FistsIcon, FistsEffect, ChainsawIcon, ChainsawEffect, PistolIcon, PistolEffect;
+    str ShotgunIcon, ShotgunEffect, SuperShotgunIcon, SuperShotgunEffect;
+    str ChaingunIcon, ChaingunEffect, RocketLauncherIcon, RocketLauncherEffect;
+    str PlasmaRifleIcon, PlasmaRifleEffect, BFG9000Icon, BFG9000Effect;
+    int i;
+    
+    Start:
+    
+    // If we're on the title map, terminate
+    if (InTitle) return;
+
+    if (Player.GUI.Open || Player.InMenu || Player.InShop || Player.OutpostMenu) { Delay(1); goto Start;}
+    
+    X = GetActivatorCVar("drpg_ld_x");
+    Y = GetActivatorCVar("drpg_ld_y");
+
+    //Update
+    //Fists
+    if (!CheckInventory("LDFists"))
+    {
+        FistsIcon = "";
+        FistsEffect = "";
+    }        
+    else if (!CheckInventory("LDFistsEffectActive"))
+    {
+        FistsIcon = LegendaryFistsRarity[0].Image;
+        FistsEffect = "";
+    }
+    else
+    {
+        for (i = LD_COMMON; i <= sizeof(LegendaryFistsRarity); i++)
+        {
+            if (CheckInventory(StrParam("LDFistsLegendary%S", LegendaryFistsRarity[i].Effect)))
+            {
+                FistsIcon = LegendaryFistsRarity[i].Image;
+                break;
+            }
+        }
+        
+        switch(i)
+        {
+            case LD_COMMON:
+                FistsEffect = GetLegendaryEffectImage(&LegendaryTypesCommon[0], sizeof(LegendaryTypesCommon), "LDFistsEffect_");
+                break;
+            
+            case LD_UNCOMMON:
+                FistsEffect = GetLegendaryEffectImage(&LegendaryTypesUncommon[0], sizeof(LegendaryTypesUncommon), "LDFistsEffect_");
+                break;
+            
+            case LD_RARE:
+                FistsEffect = GetLegendaryEffectImage(&LegendaryTypesRare[0], sizeof(LegendaryTypesRare), "LDFistsEffect_");
+                break;
+                
+            case LD_EPIC:
+                FistsEffect = GetLegendaryEffectImage(&LegendaryTypesEpic[0], sizeof(LegendaryTypesEpic), "LDFistsEffect_");
+                break;
+        }
+    }
+
+    //Chainsaw
+    if (!CheckInventory("LDChainsaw"))
+    {
+        ChainsawIcon = "";
+        ChainsawEffect = "";
+    }  
+    else if (!CheckInventory("LDChainsawEffectActive"))
+    {
+        ChainsawIcon = LegendaryChainsawRarity[0].Image;
+        ChainsawEffect = "";
+    }
+    else
+    {
+        for (i = LD_COMMON; i <= sizeof(LegendaryChainsawRarity); i++)
+        {
+            if (CheckInventory(StrParam("LDChainsawLegendary%S", LegendaryChainsawRarity[i].Effect)))
+            {
+                ChainsawIcon = LegendaryChainsawRarity[i].Image;
+                break;
+            }
+        }
+        
+        switch(i)
+        {
+            case LD_COMMON:
+                ChainsawEffect = GetLegendaryEffectImage(&LegendaryTypesCommon[0], sizeof(LegendaryTypesCommon), "LDChainsawEffect_");
+                break;
+            
+            case LD_UNCOMMON:
+                ChainsawEffect = GetLegendaryEffectImage(&LegendaryTypesUncommon[0], sizeof(LegendaryTypesUncommon), "LDChainsawEffect_");
+                break;
+            
+            case LD_RARE:
+                ChainsawEffect = GetLegendaryEffectImage(&LegendaryTypesRare[0], sizeof(LegendaryTypesRare), "LDChainsawEffect_");
+                break;
+                
+            case LD_EPIC:
+                ChainsawEffect = GetLegendaryEffectImage(&LegendaryTypesEpic[0], sizeof(LegendaryTypesEpic), "LDChainsawEffect_");
+                break;
+        }
+    }
+    
+    //Pistol
+    if (!CheckInventory("LDPistol"))
+    {
+        PistolIcon = "";
+        PistolEffect = "";
+    }  
+    else if (!CheckInventory("LDPistolEffectActive"))
+    {
+        PistolIcon = LegendaryPistolRarity[0].Image;
+        PistolEffect = "";
+    }
+    else
+    {
+        for (i = LD_COMMON; i <= sizeof(LegendaryPistolRarity); i++)
+        {
+            if (CheckInventory(StrParam("LDPistolLegendary%S", LegendaryPistolRarity[i].Effect)))
+            {
+                PistolIcon = LegendaryPistolRarity[i].Image;
+                break;
+            }
+        }
+        
+        switch(i)
+        {
+            case LD_COMMON:
+                PistolEffect = GetLegendaryEffectImage(&LegendaryTypesCommon[0], sizeof(LegendaryTypesCommon), "LDPistolEffect_");
+                break;
+            
+            case LD_UNCOMMON:
+                PistolEffect = GetLegendaryEffectImage(&LegendaryTypesUncommon[0], sizeof(LegendaryTypesUncommon), "LDPistolEffect_");
+                break;
+            
+            case LD_RARE:
+                PistolEffect = GetLegendaryEffectImage(&LegendaryTypesRare[0], sizeof(LegendaryTypesRare), "LDPistolEffect_");
+                break;
+                
+            case LD_EPIC:
+                PistolEffect = GetLegendaryEffectImage(&LegendaryTypesEpic[0], sizeof(LegendaryTypesEpic), "LDPistolEffect_");
+                break;
+        }
+    }
+    
+    //Shotgun
+    if (!CheckInventory("LDShotgun"))
+    {
+        ShotgunIcon = "";
+        ShotgunEffect = "";
+    }  
+    else if (!CheckInventory("LDShotgunEffectActive"))
+    {
+        ShotgunIcon = LegendaryShotgunRarity[0].Image;
+        ShotgunEffect = "";
+    }
+    else
+    {
+        for (i = LD_COMMON; i <= sizeof(LegendaryShotgunRarity); i++)
+        {
+            if (CheckInventory(StrParam("LDShotgunLegendary%S", LegendaryShotgunRarity[i].Effect)))
+            {
+                ShotgunIcon = LegendaryShotgunRarity[i].Image;
+                break;
+            }
+        }
+        
+        switch(i)
+        {
+            case LD_COMMON:
+                ShotgunEffect = GetLegendaryEffectImage(&LegendaryTypesCommon[0], sizeof(LegendaryTypesCommon), "LDShotgunEffect_");
+                break;
+            
+            case LD_UNCOMMON:
+                ShotgunEffect = GetLegendaryEffectImage(&LegendaryTypesUncommon[0], sizeof(LegendaryTypesUncommon), "LDShotgunEffect_");
+                break;
+            
+            case LD_RARE:
+                ShotgunEffect = GetLegendaryEffectImage(&LegendaryTypesRare[0], sizeof(LegendaryTypesRare), "LDShotgunEffect_");
+                break;
+                
+            case LD_EPIC:
+                ShotgunEffect = GetLegendaryEffectImage(&LegendaryTypesEpic[0], sizeof(LegendaryTypesEpic), "LDShotgunEffect_");
+                break;
+        }
+    }
+    
+    //Super Shotgun
+    if (!CheckInventory("LDSuperShotgun"))
+    {
+        SuperShotgunIcon = "";
+        SuperShotgunEffect = "";
+    }  
+    else if (!CheckInventory("LDSuperShotgunEffectActive"))
+    {
+        SuperShotgunIcon = LegendarySuperShotgunRarity[0].Image;
+        SuperShotgunEffect = "";
+    }
+    else
+    {
+        for (i = LD_COMMON; i <= sizeof(LegendarySuperShotgunRarity); i++)
+        {
+            if (CheckInventory(StrParam("LDSuperShotgunLegendary%S", LegendarySuperShotgunRarity[i].Effect)))
+            {
+                SuperShotgunIcon = LegendarySuperShotgunRarity[i].Image;
+                break;
+            }
+        }
+        
+        switch(i)
+        {
+            case LD_COMMON:
+                SuperShotgunEffect = GetLegendaryEffectImage(&LegendaryTypesCommon[0], sizeof(LegendaryTypesCommon), "LDSuperShotgunEffect_");
+                break;
+            
+            case LD_UNCOMMON:
+                SuperShotgunEffect = GetLegendaryEffectImage(&LegendaryTypesUncommon[0], sizeof(LegendaryTypesUncommon), "LDSuperShotgunEffect_");
+                break;
+            
+            case LD_RARE:
+                SuperShotgunEffect = GetLegendaryEffectImage(&LegendaryTypesRare[0], sizeof(LegendaryTypesRare), "LDSuperShotgunEffect_");
+                break;
+                
+            case LD_EPIC:
+                SuperShotgunEffect = GetLegendaryEffectImage(&LegendaryTypesEpic[0], sizeof(LegendaryTypesEpic), "LDSuperShotgunEffect_");
+                break;
+        }
+    }
+    
+    //Chaingun
+    if (!CheckInventory("LDChaingun"))
+    {
+        ChaingunIcon = "";
+        ChaingunEffect = "";
+    }  
+    else if (!CheckInventory("LDChaingunEffectActive"))
+    {
+        ChaingunIcon = LegendaryChaingunRarity[0].Image;
+        ChaingunEffect = "";
+    }
+    else
+    {
+        for (i = LD_COMMON; i <= sizeof(LegendaryChaingunRarity); i++)
+        {
+            if (CheckInventory(StrParam("LDChaingunLegendary%S", LegendaryChaingunRarity[i].Effect)))
+            {
+                ChaingunIcon = LegendaryChaingunRarity[i].Image;
+                break;
+            }
+        }
+        
+        switch(i)
+        {
+            case LD_COMMON:
+                ChaingunEffect = GetLegendaryEffectImage(&LegendaryTypesCommon[0], sizeof(LegendaryTypesCommon), "LDChaingunEffect_");
+                break;
+            
+            case LD_UNCOMMON:
+                ChaingunEffect = GetLegendaryEffectImage(&LegendaryTypesUncommon[0], sizeof(LegendaryTypesUncommon), "LDChaingunEffect_");
+                break;
+            
+            case LD_RARE:
+                ChaingunEffect = GetLegendaryEffectImage(&LegendaryTypesRare[0], sizeof(LegendaryTypesRare), "LDChaingunEffect_");
+                break;
+                
+            case LD_EPIC:
+                ChaingunEffect = GetLegendaryEffectImage(&LegendaryTypesEpic[0], sizeof(LegendaryTypesEpic), "LDChaingunEffect_");
+                break;
+        }
+    }
+    
+    //Rocket Launcher
+    if (!CheckInventory("LDRocketLauncher"))
+    {
+        RocketLauncherIcon = "";
+        RocketLauncherEffect = "";
+    }  
+    else if (!CheckInventory("LDRocketLauncherEffectActive"))
+    {
+        RocketLauncherIcon = LegendaryRocketLauncherRarity[0].Image;
+        RocketLauncherEffect = "";
+    }
+    else
+    {
+        for (i = LD_COMMON; i <= sizeof(LegendaryRocketLauncherRarity); i++)
+        {
+            if (CheckInventory(StrParam("LDRocketLauncherLegendary%S", LegendaryRocketLauncherRarity[i].Effect)))
+            {
+                RocketLauncherIcon = LegendaryRocketLauncherRarity[i].Image;
+                break;
+            }
+        }
+        
+        switch(i)
+        {
+            case LD_COMMON:
+                RocketLauncherEffect = GetLegendaryEffectImage(&LegendaryTypesCommon[0], sizeof(LegendaryTypesCommon), "LDRocketLauncherEffect_");
+                break;
+            
+            case LD_UNCOMMON:
+                RocketLauncherEffect = GetLegendaryEffectImage(&LegendaryTypesUncommon[0], sizeof(LegendaryTypesUncommon), "LDRocketLauncherEffect_");
+                break;
+            
+            case LD_RARE:
+                RocketLauncherEffect = GetLegendaryEffectImage(&LegendaryTypesRare[0], sizeof(LegendaryTypesRare), "LDRocketLauncherEffect_");
+                break;
+                
+            case LD_EPIC:
+                RocketLauncherEffect = GetLegendaryEffectImage(&LegendaryTypesEpic[0], sizeof(LegendaryTypesEpic), "LDRocketLauncherEffect_");
+                break;
+        }
+    }
+    
+    //Plasma Rifle
+    if (!CheckInventory("LDPlasmaRifle"))
+    {
+        PlasmaRifleIcon = "";
+        PlasmaRifleEffect = "";
+    }  
+    else if (!CheckInventory("LDPlasmaRifleEffectActive"))
+    {
+        PlasmaRifleIcon = LegendaryPlasmaRifleRarity[0].Image;
+        PlasmaRifleEffect = "";
+    }
+    else
+    {
+        for (i = LD_COMMON; i <= sizeof(LegendaryPlasmaRifleRarity); i++)
+        {
+            if (CheckInventory(StrParam("LDPlasmaRifleLegendary%S", LegendaryPlasmaRifleRarity[i].Effect)))
+            {
+                PlasmaRifleIcon = LegendaryPlasmaRifleRarity[i].Image;
+                break;
+            }
+        }
+        
+        switch(i)
+        {
+            case LD_COMMON:
+                PlasmaRifleEffect = GetLegendaryEffectImage(&LegendaryTypesCommon[0], sizeof(LegendaryTypesCommon), "LDPlasmaRifleEffect_");
+                break;
+            
+            case LD_UNCOMMON:
+                PlasmaRifleEffect = GetLegendaryEffectImage(&LegendaryTypesUncommon[0], sizeof(LegendaryTypesUncommon), "LDPlasmaRifleEffect_");
+                break;
+            
+            case LD_RARE:
+                PlasmaRifleEffect = GetLegendaryEffectImage(&LegendaryTypesRare[0], sizeof(LegendaryTypesRare), "LDPlasmaRifleEffect_");
+                break;
+                
+            case LD_EPIC:
+                PlasmaRifleEffect = GetLegendaryEffectImage(&LegendaryTypesEpic[0], sizeof(LegendaryTypesEpic), "LDPlasmaRifleEffect_");
+                break;
+        }
+    }
+    
+    //BFG9000
+    if (!CheckInventory("LDBFG9000"))
+    {
+        BFG9000Icon = "";
+        BFG9000Effect = "";
+    }  
+    else if (!CheckInventory("LDBFG9000EffectActive"))
+    {
+        BFG9000Icon = LegendaryBFG9000Rarity[0].Image;
+        BFG9000Effect = "";
+    }
+    else
+    {
+        for (i = LD_COMMON; i <= sizeof(LegendaryBFG9000Rarity); i++)
+        {
+            if (CheckInventory(StrParam("LDBFG9000Legendary%S", LegendaryBFG9000Rarity[i].Effect)))
+            {
+                BFG9000Icon = LegendaryBFG9000Rarity[i].Image;
+                break;
+            }
+        }
+        
+        switch(i)
+        {
+            case LD_COMMON:
+                BFG9000Effect = GetLegendaryEffectImage(&LegendaryTypesCommon[0], sizeof(LegendaryTypesCommon), "LDBFG9000Effect_");
+                break;
+            
+            case LD_UNCOMMON:
+                BFG9000Effect = GetLegendaryEffectImage(&LegendaryTypesUncommon[0], sizeof(LegendaryTypesUncommon), "LDBFG9000Effect_");
+                break;
+            
+            case LD_RARE:
+                BFG9000Effect = GetLegendaryEffectImage(&LegendaryTypesRare[0], sizeof(LegendaryTypesRare), "LDBFG9000Effect_");
+                break;
+                
+            case LD_EPIC:
+                BFG9000Effect = GetLegendaryEffectImage(&LegendaryTypesEpic[0], sizeof(LegendaryTypesEpic), "LDBFG9000Effect_");
+                break;
+        }
+    }
+    
+    //HUD Preview
+    if (GetActivatorCVar("drpg_hud_preview"))
+    {
+        if (FistsIcon == "")
+            FistsIcon = LegendaryFistsRarity[0].Image;
+        if (FistsEffect == "")
+            FistsEffect = LegendaryTypesCommon[0].Image;
+        
+        if (ChainsawIcon == "")
+            ChainsawIcon = LegendaryChainsawRarity[0].Image;
+        if (ChainsawEffect == "")
+            ChainsawEffect = LegendaryTypesCommon[0].Image;
+        
+        if (PistolIcon == "")
+            PistolIcon = LegendaryPistolRarity[0].Image;
+        if (PistolEffect == "")
+            PistolEffect = LegendaryTypesCommon[0].Image;
+        
+        if (ShotgunIcon == "")
+            ShotgunIcon = LegendaryShotgunRarity[0].Image;
+        if (ShotgunEffect == "")
+            ShotgunEffect = LegendaryTypesCommon[0].Image;
+        
+        if (SuperShotgunIcon == "")
+            SuperShotgunIcon = LegendarySuperShotgunRarity[0].Image;
+        if (SuperShotgunEffect == "")
+            SuperShotgunEffect = LegendaryTypesCommon[0].Image;
+        
+        if (ChaingunIcon == "")
+            ChaingunIcon = LegendaryChaingunRarity[0].Image;
+        if (ChaingunEffect == "")
+            ChaingunEffect = LegendaryTypesCommon[0].Image;
+        
+        if (RocketLauncherIcon == "")
+            RocketLauncherIcon = LegendaryRocketLauncherRarity[0].Image;
+        if (RocketLauncherEffect == "")
+            RocketLauncherEffect = LegendaryTypesCommon[0].Image;
+        
+        if (PlasmaRifleIcon == "")
+            PlasmaRifleIcon = LegendaryPlasmaRifleRarity[0].Image;
+        if (PlasmaRifleEffect == "")
+            PlasmaRifleEffect = LegendaryTypesCommon[0].Image;
+        
+        if (BFG9000Icon == "")
+            BFG9000Icon = LegendaryBFG9000Rarity[0].Image;
+        if (BFG9000Effect == "")
+            BFG9000Effect = LegendaryTypesCommon[0].Image;
+    }
+    
+    
+    //Draw
+    SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
+    
+    //Fists
+    if (FistsIcon != "")
+        PrintSprite(FistsIcon, 0, X + 0.1, Y + 0.1, 0.05);
+    if (FistsEffect != "")
+        PrintSprite(FistsEffect, 0, X + 4 + 0.1, Y + 16 + 0.1, 0.05);
+    
+    //Chainsaw
+    if (ChainsawIcon != "")
+        PrintSprite(ChainsawIcon, 0, X + 24 + 0.1, Y + 0.1, 0.05);
+    if (ChainsawEffect != "")
+        PrintSprite(ChainsawEffect, 0, X + 24 + 4 + 0.1, Y + 16 + 0.1, 0.05);
+    
+    //Pistol
+    if (PistolIcon != "")
+        PrintSprite(PistolIcon, 0, X + 48 + 0.1, Y + 0.1, 0.05);
+    if (PistolEffect != "")
+        PrintSprite(PistolEffect, 0, X + 48 + 4 + 0.1, Y + 16 + 0.1, 0.05);
+    
+    //Shotgun
+    if (ShotgunIcon != "")
+        PrintSprite(ShotgunIcon, 0, X + 72 + 0.1, Y + 0.1, 0.05);
+    if (ShotgunEffect != "")
+        PrintSprite(ShotgunEffect, 0, X + 72 + 4 + 0.1, Y + 16 + 0.1, 0.05);
+    
+    //Super Shotgun
+    if (SuperShotgunIcon != "")
+        PrintSprite(SuperShotgunIcon, 0, X + 96 + 0.1, Y + 0.1, 0.05);
+    if (SuperShotgunEffect != "")
+        PrintSprite(SuperShotgunEffect, 0, X + 96 + 4 + 0.1, Y + 16 + 0.1, 0.05);
+
+    //Chaingun
+    if (ChaingunIcon != "")
+        PrintSprite(ChaingunIcon, 0, X + 120 + 0.1, Y + 0.1, 0.05);
+    if (ChaingunEffect != "")
+        PrintSprite(ChaingunEffect, 0, X + 120 + 4 + 0.1, Y + 16 + 0.1, 0.05);
+    
+    //Rocket Launcher
+    if (RocketLauncherIcon != "")
+        PrintSprite(RocketLauncherIcon, 0, X + 144 + 0.1, Y + 0.1, 0.05);
+    if (RocketLauncherEffect != "")
+        PrintSprite(RocketLauncherEffect, 0, X + 144 + 4 + 0.1, Y + 16 + 0.1, 0.05);
+    
+    //Plasma Rifle
+    if (PlasmaRifleIcon != "")
+        PrintSprite(PlasmaRifleIcon, 0, X + 168 + 0.1, Y + 0.1, 0.05);
+    if (PlasmaRifleEffect != "")
+        PrintSprite(PlasmaRifleEffect, 0, X + 168 + 4 + 0.1, Y + 16 + 0.1, 0.05);
+    
+    //BFG9000
+    if (BFG9000Icon != "")
+        PrintSprite(BFG9000Icon, 0, X + 192 + 0.1, Y + 0.1, 0.05);
+    if (BFG9000Effect != "")
+        PrintSprite(BFG9000Effect, 0, X + 192 + 4 + 0.1, Y + 16 + 0.1, 0.05);
+    
+    Delay(1);
+    goto Start;
+}
+
+str GetLegendaryEffectImage(LegendaryDef const *Type, int Length, str Prefix)
+{
+    str Image;
+    
+    for (int i = 0; i < Length; i++)
+    {
+        if (CheckInventory(StrParam("%S%S", Prefix, Type[i].Effect)))
+        {
+            Image = Type[i].Image;
+            break;
+        }
+    }
+    
+    return Image;
+}

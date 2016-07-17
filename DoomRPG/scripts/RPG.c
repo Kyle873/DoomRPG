@@ -1161,16 +1161,19 @@ NamedScript void ItemHandler()
             // Skip this player if they are dead
             if (GetActorProperty(Players(i).TID, APROP_Health) <= 0) continue;
             
-            for (int j = 0; j < Players(i).DropTID.Size; j++)
+            
+            int *ItemTID = (int *)Player.DropTID.Data;
+            
+            for (int j = 0; j < Players(i).DropTID.Position; j++)
             {
                 NoClip = false;
-                ItemTID = ((int *)Players(i).DropTID.Data)[j];
-                
-                Dist = Distance(ItemTID, Players(i).TID);
+                if (ClassifyActor(ItemTID[j]) == ACTOR_NONE || ClassifyActor(ItemTID[j]) == ACTOR_WORLD) continue;
+
+                Dist = Distance(ItemTID[j], Players(i).TID);
                 Height = GetActorPropertyFixed(Players(i).TID, APROP_Height);
                 Divisor = (Dist - 16.0) + Dist;
-                Angle = VectorAngle (GetActorX(Players(i).TID) - GetActorX(ItemTID), GetActorY(Players(i).TID) - GetActorY(ItemTID));
-                Pitch = VectorAngle (Dist, GetActorZ(Players(i).TID) - GetActorZ(ItemTID));
+                Angle = VectorAngle (GetActorX(Players(i).TID) - GetActorX(ItemTID[j]), GetActorY(Players(i).TID) - GetActorY(ItemTID[j]));
+                Pitch = VectorAngle (Dist, GetActorZ(Players(i).TID) - GetActorZ(ItemTID[j]));
 
                 // Calculate the amount based on close versus far distance
                 if (Dist < 16.0)
@@ -1183,13 +1186,13 @@ NamedScript void ItemHandler()
                 Y = (Amount * 16.0) * Sin(Angle) * Cos(Pitch);
                 Z = (Amount * 16.0) * Sin(Pitch);
 
-                SetActorVelocity(ItemTID, X, Y, Z, true, false);
+                SetActorVelocity(ItemTID[j], X, Y, Z, true, false);
                 NoClip = true;
                 
                 if (NoClip)
-                    SetActorInventory(ItemTIDs[i], "DRPGItemNoClip", 1);
+                    SetActorInventory(ItemTID[j], "DRPGItemNoClip", 1);
                 else
-                    SetActorInventory(ItemTIDs[i], "DRPGItemNoClipOff", 1);
+                    SetActorInventory(ItemTID[j], "DRPGItemNoClipOff", 1);
             }
         }
 

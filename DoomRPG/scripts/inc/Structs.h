@@ -1255,4 +1255,11 @@ struct PlayerData_S
     struct MissionInfo_S Mission;
 };
 
+//LegenDoom
+struct LegendaryDef_S
+{
+    str Effect;
+    str Image;
+};
+
 #endif // DOOMRPG_STRUCTS_H
