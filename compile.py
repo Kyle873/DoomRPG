@@ -223,3 +223,6 @@ if __name__ == "__main__":
         print(TERMCAP_BOLD + TERMCAP_RED + "There were errors. Please review the messages above." + TERMCAP_RESET)
 
     pause_if_necessary()
+    
+    if failure:
+        sys.exit(1)
