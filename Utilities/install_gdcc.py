@@ -1,4 +1,4 @@
-#!python2.7
+#!/usr/bin/env python2
 
 import subprocess
 import urllib2
