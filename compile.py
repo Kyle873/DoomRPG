@@ -195,7 +195,8 @@ if __name__ == "__main__":
         print("Starting a new clean compile")
         for remname in os.listdir(OBJECTDIR):
             try:
-                os.remove(os.path.join(OBJECTDIR, remname))
+                if not remname.endswith("dummy.file"):
+                    os.remove(os.path.join(OBJECTDIR, remname))
             except OSError: # Windows locked the file, I DON'T CAAARE
                 pass
 
