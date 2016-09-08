@@ -124,21 +124,21 @@ struct CharSaveInfo_S
 // GUI
 
 // Pre-define control structs for the GUI
-extern struct GUIData_S;
+struct GUIData_S;
 
-extern struct GUIMouseInfo_S;
-extern struct GUITooltip_S;
-extern struct GUIContextMenu_S;
+struct GUIMouseInfo_S;
+struct GUITooltip_S;
+struct GUIContextMenu_S;
 
-extern struct GUITabStrip_S;
-extern struct GUIPanel_S;
-extern struct GUIControl_S;
-extern struct GUILabel_S;
-extern struct GUIIcon_S;
-extern struct GUIButton_S;
-extern struct GUIBar_S;
-extern struct GUIList_S;
-extern struct GUIGrid_S;
+struct GUITabStrip_S;
+struct GUIPanel_S;
+struct GUIControl_S;
+struct GUILabel_S;
+struct GUIIcon_S;
+struct GUIButton_S;
+struct GUIBar_S;
+struct GUIList_S;
+struct GUIGrid_S;
 
 typedef void (*PanelUpdateFunc) (struct GUIPanel_S *) NamedScript;
 typedef void (*PanelCloseFunc) (struct GUIPanel_S *) NamedScript;
