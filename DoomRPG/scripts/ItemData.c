@@ -22,9 +22,10 @@ int RPGGlobal RewardsCount[(MAX_DIFFICULTIES + 1)];
 
 NamedScriptSync void PopulateRewards()
 {
-    int rarity;
-    int max;
+    int Rarity;
+    int Max;
     int i, j;
+    
     // Populate the reward list
     for (i = 0; i < (MAX_DIFFICULTIES + 1); i++) { RewardsCount[i] = 0; }
     for (i = 0; i < ItemCategories; i++)
@@ -35,13 +36,15 @@ NamedScriptSync void PopulateRewards()
         
         for (j = 0; j < ItemMax[i]; j++)
         {
-            rarity = ItemData[i][j].Rarity;
+            Rarity = ItemData[i][j].Rarity;
+            
             // Don't pick cheap stuff like a Pistol or Armor Bonus
-            if (rarity == -1 || ItemData[i][j].Price <= 100)
+            if (Rarity == -1 || ItemData[i][j].Price <= 100)
                 continue;
-            max = RewardsCount[rarity];
-            RewardList[rarity][max] = &ItemData[i][j];
-            RewardsCount[rarity]++;
+            
+            Max = RewardsCount[Rarity];
+            RewardList[Rarity][Max] = &ItemData[i][j];
+            RewardsCount[Rarity]++;
         }
     }
 }
@@ -1172,7 +1175,8 @@ NamedScript DECORATE void SpawnLuckItem()
 }
 
 
-/*NamedScript Console void DumpItemData()
+/*
+NamedScript Console void DumpItemData()
 {
     Log("\Cd---------- BEGIN ITEMDATA DUMP ----------");
     for (int i = 0; i < ITEM_CATEGORIES; i++)

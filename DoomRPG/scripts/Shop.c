@@ -202,6 +202,9 @@ void ShopLoop()
     if (!GetCVar("drpg_shoptype") && !CurrentLevel->UACBase)
         Player.LockerMode = true;
     
+    // Setup dynamic Medikit refill pricing
+    ItemData[2][0].Price = Player.MedkitMax * 3;
+    
     SetFont("BIGFONT");
     if (Player.LockerMode)
     {
