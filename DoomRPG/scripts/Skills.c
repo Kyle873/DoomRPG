@@ -2296,7 +2296,7 @@ NamedScript Console bool Magnetize(SkillLevelInfo *SkillLevel, void *Data)
         return false;
     }
     
-    // Player.Overdrive - Pull the items on top of you and pick them all up
+    // Overdrive - Pull the items on top of you and pick them all up
     if (Player.Overdrive)
     {
         for (int i = 0; i < Player.DropTID.Position; i++)
