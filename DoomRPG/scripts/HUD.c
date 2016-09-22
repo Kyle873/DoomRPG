@@ -53,8 +53,12 @@ NamedScript Type_ENTER void StatusEffectHUD()
 
     Start: NOP; // [KS] C doesn't allow declarations after labels, so we need this.
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
-
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
+    
     fixed X = GetActivatorCVar("drpg_stateffect_x");
     fixed Y = GetActivatorCVar("drpg_stateffect_y");
 
@@ -161,12 +165,16 @@ NamedScript Type_ENTER void OverviewHUD()
 
     fixed X, Y;
     
-    Start:
+    Start: NOP;
 
     // If we're on the title map, terminate
     if (InTitle) return;
 
-    if (Player.GUI.Open || Player.InMenu) { Delay(1); goto Start;}
+    if (Player.GUI.Open || Player.InMenu || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     Credits.Value = CheckInventory("DRPGCredits");
     Modules.Value = CheckInventory("DRPGModule");
@@ -262,12 +270,16 @@ NamedScript Type_ENTER void ComboHUD()
 
     fixed X, Y;
     
-    Start:
+    Start: NOP;
 
     // If we're on the title map, terminate
     if (InTitle) return;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     X = GetActivatorCVar("drpg_combo_x");
     Y = GetActivatorCVar("drpg_combo_y");
@@ -341,7 +353,11 @@ NamedScript Type_ENTER void SkillHUD()
     
     Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     X = GetActivatorCVar("drpg_skill_x");
     Y = GetActivatorCVar("drpg_skill_y");
@@ -387,7 +403,11 @@ NamedScript Type_ENTER void StimHUD()
     
     Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     X = GetActivatorCVar("drpg_stim_x");
     Y = GetActivatorCVar("drpg_stim_y");
@@ -455,7 +475,11 @@ NamedScript Type_ENTER void MissionHUD()
     
     Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     OldAmount = Player.Mission.Current;
     X = GetActivatorCVar("drpg_mission_x");
@@ -521,7 +545,11 @@ NamedScript Type_ENTER void AuraTimerHUD()
     
     Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     Offset = 0;
 
@@ -591,7 +619,11 @@ NamedScript Type_ENTER void PowerupHUD()
     
     Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     BaseX = GetActivatorCVar("drpg_powerup_x");
     BaseY = GetActivatorCVar("drpg_powerup_y");
@@ -792,7 +824,11 @@ NamedScript Type_ENTER void EventHUD()
     
     Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     X = GetActivatorCVar("drpg_event_x");
     Y = GetActivatorCVar("drpg_event_y");
@@ -884,9 +920,13 @@ NamedScript Type_ENTER void CoopViewHUD()
 {
     fixed X, Y;
     
-    Start:
+    Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     while (Player.PlayerView != PlayerNumber())
     {
@@ -912,9 +952,13 @@ NamedScript Type_ENTER void MultiplayerHUD()
     fixed X, Y, Alpha;
     int HealthPercent, ShieldPercent;
     
-    Start:
+    Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     while ((InMultiplayer && GetActivatorCVar("drpg_multiplayer_hud")) || GetActivatorCVar("drpg_hud_preview"))
     {
@@ -983,9 +1027,13 @@ NamedScript Type_ENTER void TurretHUD()
     str AmmoIcon;
     int Ammo[TW_MAX];
     
-    Start:
+    Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     while (Player.Turret.Active || Player.Turret.Maintenance || GetActivatorCVar("drpg_hud_preview"))
     {
@@ -1087,9 +1135,13 @@ NamedScript Type_ENTER void StatHUD()
     bool Change[STAT_MAX];
     fixed X, Y;
     
-    Start:
+    Start: NOP;
 
-    if (Player.GUI.Open) { Delay(1); goto Start;}
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
 
     for (int i = 0; i < STAT_MAX; i++)
         Change[i] = false;
@@ -1126,7 +1178,8 @@ NamedScript Type_ENTER void StatHUD()
 
 NamedScript void DamageHUD(int Amount, bool Critical)
 {
-    if (Player.GUI.Open) { return; }
+    if (Player.GUI.Open || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+        return; 
 
     // Return if the CVAR is disabled
     if (!GetActivatorCVar("drpg_damagenumbers_hud")) return;
@@ -1201,7 +1254,8 @@ NamedScript Type_ENTER void DRLAHUD()
         // " \Ct[Pony]\C-"
     };
 
-    if (CompatMode != COMPAT_DRLA) return;
+    if (CompatMode != COMPAT_DRLA)
+        return;
 
     fixed Offset, X, Y, Angle, XOff, YOff;
     bool IsTechnician, Duel;
@@ -1228,14 +1282,14 @@ NamedScript Type_ENTER void DRLAHUD()
 
     str Name, Color;
     
-    Start:
+    Start: NOP;
 
     // If we're on the title map, terminate
     if (InTitle) return;
 
     if (Player.GUI.Open || Player.InMenu || Player.InShop || Player.OutpostMenu) { Delay(1); goto Start;}
 
-    //Offset = 0.0;
+    // Offset = 0.0;
 
     X = GetActivatorCVar("drpg_drla_x");
     Y = GetActivatorCVar("drpg_drla_y");
@@ -1801,18 +1855,24 @@ NamedScript Type_ENTER void LegenDoomHUD()
     str PlasmaRifleIcon, PlasmaRifleEffect, BFG9000Icon, BFG9000Effect;
     int i;
     
-    Start:
+    Start: NOP;
     
     // If we're on the title map, terminate
     if (InTitle) return;
 
-    if (Player.GUI.Open || Player.InMenu || Player.InShop || Player.OutpostMenu) { Delay(1); goto Start;}
+    if (Player.GUI.Open || Player.InMenu || Player.InShop || Player.OutpostMenu || (CompatMode == COMPAT_LEGENDOOM && CheckInventory("LDWeaponInfoScreenActive")))
+    {
+        Delay(1);
+        goto Start;
+    }
     
     X = GetActivatorCVar("drpg_ld_x");
     Y = GetActivatorCVar("drpg_ld_y");
 
-    //Update
-    //Fists
+    // ----------------------------------------
+    // Update
+    
+    // Fists
     if (!CheckInventory("LDFists"))
     {
         FistsIcon = "";
@@ -1854,7 +1914,7 @@ NamedScript Type_ENTER void LegenDoomHUD()
         }
     }
 
-    //Chainsaw
+    // Chainsaw
     if (!CheckInventory("LDChainsaw"))
     {
         ChainsawIcon = "";
@@ -1896,7 +1956,7 @@ NamedScript Type_ENTER void LegenDoomHUD()
         }
     }
     
-    //Pistol
+    // Pistol
     if (!CheckInventory("LDPistol"))
     {
         PistolIcon = "";
@@ -1938,7 +1998,7 @@ NamedScript Type_ENTER void LegenDoomHUD()
         }
     }
     
-    //Shotgun
+    // Shotgun
     if (!CheckInventory("LDShotgun"))
     {
         ShotgunIcon = "";
@@ -1980,7 +2040,7 @@ NamedScript Type_ENTER void LegenDoomHUD()
         }
     }
     
-    //Super Shotgun
+    // Super Shotgun
     if (!CheckInventory("LDSuperShotgun"))
     {
         SuperShotgunIcon = "";
@@ -2022,7 +2082,7 @@ NamedScript Type_ENTER void LegenDoomHUD()
         }
     }
     
-    //Chaingun
+    // Chaingun
     if (!CheckInventory("LDChaingun"))
     {
         ChaingunIcon = "";
@@ -2064,7 +2124,7 @@ NamedScript Type_ENTER void LegenDoomHUD()
         }
     }
     
-    //Rocket Launcher
+    // Rocket Launcher
     if (!CheckInventory("LDRocketLauncher"))
     {
         RocketLauncherIcon = "";
@@ -2106,7 +2166,7 @@ NamedScript Type_ENTER void LegenDoomHUD()
         }
     }
     
-    //Plasma Rifle
+    // Plasma Rifle
     if (!CheckInventory("LDPlasmaRifle"))
     {
         PlasmaRifleIcon = "";
@@ -2148,7 +2208,7 @@ NamedScript Type_ENTER void LegenDoomHUD()
         }
     }
     
-    //BFG9000
+    // BFG9000
     if (!CheckInventory("LDBFG9000"))
     {
         BFG9000Icon = "";
@@ -2190,7 +2250,9 @@ NamedScript Type_ENTER void LegenDoomHUD()
         }
     }
     
-    //HUD Preview
+    // ----------------------------------------
+    // HUD Preview
+    
     if (GetActivatorCVar("drpg_hud_preview"))
     {
         if (FistsIcon == "")
@@ -2239,59 +2301,60 @@ NamedScript Type_ENTER void LegenDoomHUD()
             BFG9000Effect = LegendaryTypesCommon[0].Image;
     }
     
+    // ----------------------------------------
+    // Draw
     
-    //Draw
     SetHudSize(GetActivatorCVar("drpg_hud_width"), GetActivatorCVar("drpg_hud_height"), false);
     
-    //Fists
+    // Fists
     if (FistsIcon != "")
         PrintSprite(FistsIcon, 0, X + 0.1, Y + 0.1, 0.05);
     if (FistsEffect != "")
         PrintSprite(FistsEffect, 0, X + 4 + 0.1, Y + 16 + 0.1, 0.05);
     
-    //Chainsaw
+    // Chainsaw
     if (ChainsawIcon != "")
         PrintSprite(ChainsawIcon, 0, X + 24 + 0.1, Y + 0.1, 0.05);
     if (ChainsawEffect != "")
         PrintSprite(ChainsawEffect, 0, X + 24 + 4 + 0.1, Y + 16 + 0.1, 0.05);
     
-    //Pistol
+    // Pistol
     if (PistolIcon != "")
         PrintSprite(PistolIcon, 0, X + 48 + 0.1, Y + 0.1, 0.05);
     if (PistolEffect != "")
         PrintSprite(PistolEffect, 0, X + 48 + 4 + 0.1, Y + 16 + 0.1, 0.05);
     
-    //Shotgun
+    // Shotgun
     if (ShotgunIcon != "")
         PrintSprite(ShotgunIcon, 0, X + 72 + 0.1, Y + 0.1, 0.05);
     if (ShotgunEffect != "")
         PrintSprite(ShotgunEffect, 0, X + 72 + 4 + 0.1, Y + 16 + 0.1, 0.05);
     
-    //Super Shotgun
+    // Super Shotgun
     if (SuperShotgunIcon != "")
         PrintSprite(SuperShotgunIcon, 0, X + 96 + 0.1, Y + 0.1, 0.05);
     if (SuperShotgunEffect != "")
         PrintSprite(SuperShotgunEffect, 0, X + 96 + 4 + 0.1, Y + 16 + 0.1, 0.05);
 
-    //Chaingun
+    // Chaingun
     if (ChaingunIcon != "")
         PrintSprite(ChaingunIcon, 0, X + 120 + 0.1, Y + 0.1, 0.05);
     if (ChaingunEffect != "")
         PrintSprite(ChaingunEffect, 0, X + 120 + 4 + 0.1, Y + 16 + 0.1, 0.05);
     
-    //Rocket Launcher
+    // Rocket Launcher
     if (RocketLauncherIcon != "")
         PrintSprite(RocketLauncherIcon, 0, X + 144 + 0.1, Y + 0.1, 0.05);
     if (RocketLauncherEffect != "")
         PrintSprite(RocketLauncherEffect, 0, X + 144 + 4 + 0.1, Y + 16 + 0.1, 0.05);
     
-    //Plasma Rifle
+    // Plasma Rifle
     if (PlasmaRifleIcon != "")
         PrintSprite(PlasmaRifleIcon, 0, X + 168 + 0.1, Y + 0.1, 0.05);
     if (PlasmaRifleEffect != "")
         PrintSprite(PlasmaRifleEffect, 0, X + 168 + 4 + 0.1, Y + 16 + 0.1, 0.05);
     
-    //BFG9000
+    // BFG9000
     if (BFG9000Icon != "")
         PrintSprite(BFG9000Icon, 0, X + 192 + 0.1, Y + 0.1, 0.05);
     if (BFG9000Effect != "")
