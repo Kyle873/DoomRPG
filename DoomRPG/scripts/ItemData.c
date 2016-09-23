@@ -666,7 +666,7 @@ NamedScript void BuildItemData()
         
         int TID = UniqueTID();
         bool Success = false;
-        for (int i=0; i < ItemMax[0]; i++)
+        for (int i = 0; i < ItemMax[0]; i++)
         {
             str Name = StrParam("%S", ItemData[0][i].Actor);
             
@@ -968,6 +968,12 @@ NamedScript void BuildItemData()
             ITEMDATA_DEF("LDPlasmaRiflePickupLegendary",    "Plasma Rifle",     50000, 4, 4, "PLASA0", 27, 19);
             ITEMDATA_DEF("LDBFG9000PickupLegendary",        "BFG9000",         100000, 5, 5, "BFUGA0", 31, 38);
         ITEMDATA_CATEGORY_END;
+        
+        // Powerups
+        ItemData[4][0].Actor = "LDInvulnerabilitySpherePickupRPG";
+        ItemData[4][1].Actor = "LDBlurSpherePickupRPG";
+        ItemData[4][4].Actor = "LDRadsuitPickupRPG";
+        ItemData[4][5].Actor = "LDInfraredPickupRPG";
     }
     
     // Misc Hidden Stuff
