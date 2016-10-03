@@ -1281,6 +1281,8 @@ NamedScript Type_ENTER void DRLAHUD()
     };
 
     str Name, Color;
+    str BarGraphic;
+    fixed Alpha;
     
     Start: NOP;
 
@@ -1698,9 +1700,6 @@ NamedScript Type_ENTER void DRLAHUD()
     // Stamina Bar
     for (int i = 0; i < 15; i++)
     {
-        str BarGraphic;
-        fixed Alpha;
-        
         if (i * 6.66 > CheckInventory("RLStamina"))
             break;
         
