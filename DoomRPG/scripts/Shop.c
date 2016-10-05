@@ -83,7 +83,8 @@ NamedScript void UpdateShopAutoList()
                 LogMessage(StrParam("Adding %S to auto-store @ %p", ItemData[i][j].Name, Item), LOG_DEBUG);
                 ((ItemInfoPtr *)Player.AutoStoreList.Data)[Player.AutoStoreList.Position++] = Item;
             }
-            //LogMessage(StrParam("Completed Item #%i, %S", j, ItemData[i][j].Name), LOG_DEBUG);
+            
+            // LogMessage(StrParam("Completed Item #%i, %S", j, ItemData[i][j].Name), LOG_DEBUG);
         }
     }
     LogMessage("Completed AutoUpdateShopList", LOG_DEBUG);
@@ -131,11 +132,16 @@ NamedScript void ShopItemAutoHandler()
             for (int i = 0; i < Player.AutoSellList.Position; i++)
             {
                 ItemInfoPtr Item = ((ItemInfoPtr *)Player.AutoSellList.Data)[i];
+                int Quantity = CheckInventory(Item->Actor);
                 
-                if (CheckInventory(Item->Actor) > 0 && !(Player.Mission.Active && Player.Mission.Type == MT_COLLECT && !StrCmp(Player.Mission.Item->Actor, Item->Actor)))
+                // Keep
+                if (Player.ItemKeep[Item->Category][Item->Index])
+                    Quantity--;
+                
+                if (Quantity > 0 && !(Player.Mission.Active && Player.Mission.Type == MT_COLLECT && !StrCmp(Player.Mission.Item->Actor, Item->Actor)))
                 {
                     if (CanSellItems)
-                        SellItem(Item->Actor, true, true);
+                        SellItem(Item->Actor, Quantity, true);
                     else if (UseAutoDepositFallback)
                         ShopItemTryAutoDeposit(Item);
                 }
@@ -162,7 +168,7 @@ NamedScript void ShopItemAutoHandler()
                     // Auto-Sell
                     if (!Player.InShop && GetActivatorCVar("drpg_pickup_behavior") == 1 && Items[i][j] > PrevItems[i][j])
                         if (CheckInventory(Item->Actor) > 0)
-                            SellItem(Item->Actor, true, true);
+                            SellItem(Item->Actor, 1, true);
                     
                     // Auto-Store
                     if (!Player.InShop && GetActivatorCVar("drpg_pickup_behavior") == 2 && Items[i][j] > PrevItems[i][j])
@@ -343,7 +349,7 @@ void ShopLoop()
             if (Player.LockerMode)
                 WithdrawItem(Player.ShopPage, Player.ShopIndex);
             else
-                SellItem(ItemPtr->Actor, false, false);
+                SellItem(ItemPtr->Actor, 1, false);
         }
         else
         {
@@ -371,23 +377,31 @@ void ShopLoop()
         }
     if (Buttons & BT_USE || (Buttons & BT_USE && Buttons & BT_SPEED))
         Player.DelayTimer++;
-    if (Buttons == BT_ATTACK && OldButtons != BT_ATTACK)
+    if (Buttons & BT_ATTACK && !(OldButtons & BT_ATTACK))
     {
-        if (Player.LockerMode)
+        if (Buttons & BT_SPEED)
         {
-            if (Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] != AT_STORE)
-                Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_STORE;
-            else
-                Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_NONE;
+            Player.ItemKeep[Player.ShopPage][Player.ShopIndex] = !Player.ItemKeep[Player.ShopPage][Player.ShopIndex];
             ActivatorSound("menu/move", 127);
         }
-        else if (!(ItemCategoryFlags[Player.ShopPage] & CF_NOSELL))
+        else
         {
-            if (Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] != AT_SELL)
-                Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_SELL;
-            else
-                Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_NONE;
-            ActivatorSound("menu/move", 127);
+            if (Player.LockerMode)
+            {
+                if (Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] != AT_STORE)
+                    Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_STORE;
+                else
+                    Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_NONE;
+                ActivatorSound("menu/move", 127);
+            }
+            else if (!(ItemCategoryFlags[Player.ShopPage] & CF_NOSELL))
+            {
+                if (Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] != AT_SELL)
+                    Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_SELL;
+                else
+                    Player.ItemAutoMode[Player.ShopPage][Player.ShopIndex] = AT_NONE;
+                ActivatorSound("menu/move", 127);
+            }
         }
         
         UpdateShopAutoList();
@@ -520,11 +534,10 @@ int GetSellPrice(str Item, int Amount)
     return SellCost;
 }
 
-int SellItem(str Item, bool SellAll, bool AutoSold)
+int SellItem(str Item, int SellAmount, bool AutoSold)
 {
-    int Amount = 1;
     int SellCost;
-
+    
     // You must be at least Rank 1 or in the Outpost to sell items
     if (Player.RankLevel == 0 && !CurrentLevel->UACBase)
     {
@@ -549,26 +562,26 @@ int SellItem(str Item, bool SellAll, bool AutoSold)
         return 0;
     }
     
-    if (SellAll)
-        Amount = CheckInventory(Item);
+    if (SellAmount == 0)
+        SellAmount = CheckInventory(Item);
     
     ItemInfoPtr Info = FindItem(Item);
     
     // Get Sell Price
-    SellCost = GetSellPrice(Item, Amount);
+    SellCost = GetSellPrice(Item, SellAmount);
     
     // Sell the Item
-    if (CheckInventory(Item) >= Amount)
+    if (CheckInventory(Item) >= SellAmount)
     {
         if (AutoSold)
             ActivatorSound("shop/autosell", 127);
         else
             ActivatorSound("menu/sell", 127);
-        TakeInventory(Item, Amount);
+        TakeInventory(Item, SellAmount);
         
         // DoomRL Compatibility
         if (CompatMode == COMPAT_DRLA)
-            for (int i = 0; i < Amount; i++)
+            for (int i = 0; i < SellAmount; i++)
                 RemoveDRLAItem(Info->Category, Info->Index);
         
         GiveInventory("DRPGCredits", SellCost);
@@ -658,6 +671,10 @@ void WithdrawItem(int Page, int Index)
     
     // Stop if this item cannot be withdrawn
     if (ItemCategoryFlags[Page] & CF_NOSTORE) return;
+    
+    // Stop if you're trying to withdraw your final copy while Keep is enabled
+    if (Player.ItemKeep[Page][Index] && *LockerAmount <= 1)
+        return;
     
     // Spawning
     if ((Player.EP >= LOCKER_EPRATE || CurrentLevel->UACBase) && *LockerAmount > 0)
@@ -801,6 +818,10 @@ void DrawItemGrid()
                 PrintSpritePulse("SELLICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
             else if (Player.ItemAutoMode[Player.ShopPage][Index] == AT_STORE)
                 PrintSpritePulse("STORICN", 0, X - 2.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
+            
+            // Keep Icon
+            if (Player.ItemKeep[Player.ShopPage][Index])
+                PrintSpritePulse("KEEPICN", 0, X + 12.0 + 0.1, Y + 0.1, 0.75, 128.0, 0.25, false);
             
             // Mod Info
             if (CompatMode == COMPAT_DRLA && Player.LockerMode && Player.ShopPage == 0 && Player.Locker[Player.ShopPage][Index] > 0)

@@ -2636,14 +2636,14 @@ void MenuHelp()
     {
         if (Player.LockerMode)
         {
-            HudMessage("\Cd%jS\C- to switch to the Shop\n\Cd%jS/%jS/%jS/%jS\C- to navigate\n\Cd%jS + %jS/%jS\C- to Switch Pages\n\Cd%jS\C- to Deposit Item\n\Cd%jS + %jS\C- to Withdraw Item\n\Cd%jS\C- to toggle Auto-Storing of item\n\Cd%jS\C- to Drop selected item\n\Cd%jS\C- to withdraw all items on the page\n\Cd%jS\C- to Exit",
-                       "+jump", "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+moveright", "+use", "+speed", "+use", "+attack", "+zoom", "+altattack", "drpg_menu");
+            HudMessage("\Cd%jS\C- to switch to the Shop\n\Cd%jS/%jS/%jS/%jS\C- to navigate\n\Cd%jS + %jS/%jS\C- to Switch Pages\n\Cd%jS\C- to Deposit Item\n\Cd%jS + %jS\C- to Withdraw Item\n\Cd%jS\C- to toggle Auto-Storing of item\n\Cd%jS + %jS\C- to toggle Auto-Keeping of 1 item\n\Cd%jS\C- to Drop selected item\n\Cd%jS\C- to withdraw all items on the page\n\Cd%jS\C- to Exit",
+                       "+jump", "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+moveright", "+use", "+speed", "+use", "+attack", "+speed", "+attack", "+zoom", "+altattack", "drpg_menu");
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y, 0.05);
         }
         else
         {
-            HudMessage("\Cd%jS\C- to switch to the Locker\n\Cd%jS/%jS/%jS/%jS\C- to navigate\n\Cd%jS + %jS/%jS\C- to Switch Pages\n\Cd%jS\C- to Buy Item\n\Cd%jS + %jS\C- to Sell Item\n\Cd%jS\C- to toggle Auto-Selling of item\n\Cd%jS\C- to Drop selected item\n\Cd%jS\C- to Exit",
-                       "+jump", "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+moveright", "+use", "+speed", "+use", "+attack", "+zoom", "drpg_menu");
+            HudMessage("\Cd%jS\C- to switch to the Locker\n\Cd%jS/%jS/%jS/%jS\C- to navigate\n\Cd%jS + %jS/%jS\C- to Switch Pages\n\Cd%jS\C- to Buy Item\n\Cd%jS + %jS\C- to Sell Item\n\Cd%jS\C- to toggle Auto-Selling of item\n\Cd%jS + %jS\C- to toggle Auto-Keeping of 1 item\n\Cd%jS\C- to Drop selected item\n\Cd%jS\C- to Exit",
+                       "+jump", "+forward", "+back", "+moveleft", "+moveright", "+speed", "+moveleft", "+moveright", "+use", "+speed", "+use", "+attack", "+speed", "+attack", "+zoom", "drpg_menu");
             EndHudMessage(HUDMSG_PLAIN, 0, "White", X, Y, 0.05);
         }
     }

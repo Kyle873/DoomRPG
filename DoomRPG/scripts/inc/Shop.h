@@ -22,7 +22,7 @@ void ShopLoop();
 int GetAmmoAmount(str);
 void BuyItem(str);
 int GetSellPrice(str, int);
-int SellItem(str, bool, bool);
+int SellItem(str, int, bool);
 void DepositItem(int, int, bool, bool);
 void WithdrawItem(int, int);
 void DrawItemGrid();

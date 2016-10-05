@@ -363,7 +363,6 @@ struct ItemInfo_S
         int YOff;
     } Sprite;
 
-    // Only used for the Shop Special and specific DRLA checks
     unsigned int CompatMods;
     int Category;
     int Index;
@@ -1005,7 +1004,7 @@ struct PlayerData_S
     int ShopIndex;
     int ShopPage;
 
-    //WadSmoosh
+    // WadSmoosh
     int SelectedMapPack;
     
     // Skill Info
@@ -1068,6 +1067,7 @@ struct PlayerData_S
 
     // Auto-Sell/Auto-Store
     int ItemAutoMode[ITEM_CATEGORIES][ITEM_MAX];
+    bool ItemKeep[ITEM_CATEGORIES][ITEM_MAX];
     struct DynamicArray_S AutoSellList;
     struct DynamicArray_S AutoStoreList;
 
