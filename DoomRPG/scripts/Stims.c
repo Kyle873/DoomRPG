@@ -139,18 +139,45 @@ NamedScript KeyBind void UseStim(bool Force)
     }
     
     // Set Timer for Stat bonuses
-    for (int i = StimStatsStart; i < StimStatsEnd + 2; i++)
-        if (Player.Stim.Current[i] > 0)
-        {
-            int InitialTime = 35 * (60 + (Player.Stim.Current[STIM_PURIFIER] * 30));
-            InitialTime -= InitialTime * Player.StimImmunity / 100;
-            
-            Player.Stim.Active = true;
-            Player.Stim.Timer += InitialTime;
-            
-            if (Player.Stim.Timer >= Player.Stim.TimerMax)
-                Player.Stim.TimerMax = Player.Stim.Timer;
-        }
+    int InitialTime;
+    if (Turret)
+    {
+        if (Player.Turret.StimFocused && Player.Turret.StimVialType == STIM_PURIFIER)
+            InitialTime = 35 * (60 * Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT] * 2);
+        else if (Player.Turret.StimFocused && Player.Turret.StimVialType == STIM_POTENCY)
+            InitialTime = 35 * 60;
+        else
+            InitialTime = 35 * (60 + ((Player.Turret.Upgrade[TU_ASSIST_INJECTOR_AMOUNT] - 1) * 60));
+        
+        // Immunity penalty
+        InitialTime -= InitialTime * Player.StimImmunity / 100;
+        
+        Player.Stim.Active = true;
+        Player.Stim.Timer += InitialTime;
+        
+        if (Player.Stim.Timer >= Player.Stim.TimerMax)
+            Player.Stim.TimerMax = Player.Stim.Timer;
+    }
+    else
+    {
+        for (int i = StimStatsStart; i < StimStatsEnd + 2; i++)
+            if (Player.Stim.Current[i] > 0)
+            {
+                if (i == STIM_PURIFIER)
+                    InitialTime += 35 * (Player.Stim.Current[STIM_PURIFIER] * 60);
+                else
+                    InitialTime += 35 * 60;
+                
+                // Immunity penalty
+                InitialTime -= InitialTime * Player.StimImmunity / 100;
+                
+                Player.Stim.Active = true;
+                Player.Stim.Timer += InitialTime;
+                
+                if (Player.Stim.Timer >= Player.Stim.TimerMax)
+                    Player.Stim.TimerMax = Player.Stim.Timer;
+            }
+    }
     
     // Apply Multiplier and Potency
     for (int i = StimStatsStart; i < StimStatsEnd; i++)
@@ -188,6 +215,10 @@ NamedScript KeyBind void UseStim(bool Force)
     Player.Toxicity += Player.Stim.Toxicity;
     Player.Payout.StimToxicity += Player.Stim.Toxicity;
     
+    // Prevent Toxicity death with turret injections
+    if (Turret && Player.Toxicity >= 100)
+        Player.Toxicity = 99;
+    
     // Add Immunity
     Player.StimImmunity += Player.Stim.Toxicity * 5;
     Player.Payout.StimImmunity += Player.Stim.Toxicity * 5;
@@ -202,6 +233,7 @@ NamedScript KeyBind void UseStim(bool Force)
     if (Turret)
     {
         Size = Player.Stim.Size;
+        
         for (int i = 0; i < STIM_MAX; i++)
             Player.Stim.Current[i] = Injector[i];
     }
