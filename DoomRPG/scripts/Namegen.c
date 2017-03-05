@@ -207,6 +207,8 @@ str DemonNames[NAME_MAX_DEMON_NAMES] =
     "Tarivror",
     "Xibavel",
     "M'Rub", // [marrub] god damn it yholl
+    "P'Noon Ikl", // [marrub] god damn it, yholl
+    "Olok",
 };
 
 str BossSuffixes[NAME_MAX_BOSS_SUFFIXES] =
