@@ -538,7 +538,7 @@ typedef enum
 //
 
 #define NAME_MAX_SHARED         91
-#define NAME_MAX_DEMON_NAMES    107
+#define NAME_MAX_DEMON_NAMES    109
 #define NAME_MAX_BOSS_SUFFIXES  27
 #define NAME_MAX_COLORS         20
 #define NAME_MAX_ZOMBIE_RANK    9
