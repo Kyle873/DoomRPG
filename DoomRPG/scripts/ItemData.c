@@ -665,69 +665,74 @@ NamedScript void BuildItemData()
             ITEMDATA_DEF("RLDemolitionAmmoMinigun",                 "Demolition Ammo Minigun \Cv[Assembled]\C-",            200000, -1, -1, "ZGGGX0", 30, 20);
         ITEMDATA_CATEGORY_END;
         
+        // Hack to remove the garbage at the end of this list, not sure what's causing it
+        ItemMax[0] -= 12;
+        
+        // Figure out which modpacks can be applied to which weapons
         int TID = UniqueTID();
         bool Success = false;
+        str Mod;
         for (int i = 0; i < ItemMax[0]; i++)
         {
             str Name = StrParam("%S", ItemData[0][i].Actor);
             
-            str Mod = StrParam("%SModLimit", Name);
+            Mod = StrParam("%SModLimit", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)
             {
                 ItemData[0][i].CompatMods |= RL_MOD_LIMIT;
                 Thing_Remove(TID);
             }
-            str Mod = StrParam("%SPowerMod", Name);
+            Mod = StrParam("%SPowerMod", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)
             {
                 ItemData[0][i].CompatMods |= RL_POWER_MOD;
                 Thing_Remove(TID);
             }
-            str Mod = StrParam("%SBulkMod", Name);
+            Mod = StrParam("%SBulkMod", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)
             {
                 ItemData[0][i].CompatMods |= RL_BULK_MOD;
                 Thing_Remove(TID);
             }
-            str Mod = StrParam("%SAgilityMod", Name);
+            Mod = StrParam("%SAgilityMod", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)
             {
                 ItemData[0][i].CompatMods |= RL_AGILITY_MOD;
                 Thing_Remove(TID);
             }
-            str Mod = StrParam("%STechnicalMod", Name);
+            Mod = StrParam("%STechnicalMod", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)
             {
                 ItemData[0][i].CompatMods |= RL_TECH_MOD;
                 Thing_Remove(TID);
             }
-            str Mod = StrParam("%SSniperMod", Name);
+            Mod = StrParam("%SSniperMod", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)
             {
                 ItemData[0][i].CompatMods |= RL_SNIPER_MOD;
                 Thing_Remove(TID);
             }
-            str Mod = StrParam("%SFirestormMod", Name);
+            Mod = StrParam("%SFirestormMod", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)
             {
                 ItemData[0][i].CompatMods |= RL_FIREST_MOD;
                 Thing_Remove(TID);
             }
-            str Mod = StrParam("%SNanoMod", Name);
+            Mod = StrParam("%SNanoMod", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)
             {
                 ItemData[0][i].CompatMods |= RL_NANO_MOD;
                 Thing_Remove(TID);
             }
-            str Mod = StrParam("%SDemonArtifacts", Name);
+            Mod = StrParam("%SDemonArtifacts", Name);
             Success = SpawnForced(Mod, 0, 0, 0, TID, 0);
             if (Success)
             {
@@ -914,7 +919,6 @@ NamedScript void BuildItemData()
             // Assembled Boots
             ITEMDATA_DEF("RLCerberusBootsPickup",               "Cerberus Boots \Cv[Assembled]\C-",                      18000, 4, 6, "CERBA0", 13, 24);
             ITEMDATA_DEF("RLTacticalBootsPickup",               "Tactical Boots \Cv[Assembled]\C-",                      14000, 4, 6, "TACBA0", 14, 21);
-			
             ITEMDATA_DEF("RLAntigravSteelBootsPickup",          "Anti-Grav Steel Boots \Cv[Assembled]\C-",                2000, 1, 2, "AGSBA0", 14, 27);
             ITEMDATA_DEF("RLAntigravProtectiveBootsPickup",     "Anti-Grav Protective Boots \Cv[Assembled]\C-",           3000, 1, 3, "AGGBA0", 14, 27);
             ITEMDATA_DEF("RLAntigravPlasteelBootsPickup",       "Anti-Grav Plasteel Boots \Cv[Assembled]\C-",             4000, 1, 4, "AGBBA0", 14, 27);

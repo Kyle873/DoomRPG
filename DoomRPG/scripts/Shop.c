@@ -619,7 +619,6 @@ void DepositItem(int Page, int Index, bool CharSave, bool NoSound)
                 }
                 
                 // Store the weapons modpack data
-                
                 Player.WeaponMods[Index].Total = CheckInventory(StrParam("%SModLimit", ItemPtr->Actor));
                 if (ItemPtr->CompatMods & RL_POWER_MOD)
                     Player.WeaponMods[Index].Power = CheckInventory(StrParam("%SPowerMod", ItemPtr->Actor));
@@ -783,7 +782,6 @@ void DrawItemGrid()
             bool Unlocked = !((Rank > 0 && Player.RankLevel < Rank));
             bool CanBuy = !(Rank == -1);
             bool CanAfford = (CheckInventory("DRPGCredits") >= Price - Price * Player.ShopDiscount / 100);
-            
             
             // Placeholder Icon
             if (StrLen(Icon) == 0)
