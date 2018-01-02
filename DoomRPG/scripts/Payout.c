@@ -165,13 +165,13 @@ NamedScript Console void CalculatePayout()
     ActivatorSound("payout/end", 127);
     SetFont("BIGFONT");
     HudMessage("%+d PP", Total);
-    EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, (Total >= 0 ? "Gold" : "Red"), PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 5.0, 0.5, 0.5);
+    EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + PAYOUT_DATA_MAX + 1, (Total >= 0 ? "Gold" : "Red"), PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + 12 + (8 * PAYOUT_DATA_MAX), 10.0, 0.5, 0.5);
     
     // Log
     if (InMultiplayer)
-        Log("\Cf%tS has received %+d PP", PlayerNumber() + 1, Total);
+        Log("\Cf%tS has received %d PP", PlayerNumber() + 1, Total);
     else
-        Log("\CfYou have received %+d PP", Total);
+        Log("\CfYou have received %d PP", Total);
     
     PayoutAddPP();
     
@@ -184,42 +184,54 @@ NamedScriptSync void PayoutDrawData(PayoutData *Data, int Offset)
     
     SetHudSize(320, 240, true);
     
-    ActivatorSound(Data->Sound, 127);
-    SetFont("BIGFONT");
-    HudMessage(Data->Name);
-    EndHudMessage(HUDMSG_FADEOUT, PAYOUT_ID, Data->Color, PAYOUT_TEXT_X + 0.1, PAYOUT_TEXT_Y - 24, 3.0, 2.0);
-    Delay(35);
-    
-    SetFont("SMALLFONT");
-    
-    for (int i = 0; i < PAYOUT_VALUES_MAX; i++)
+    if (!GetActivatorCVar("drpg_pay_quick"))
     {
-        if (StrLen(Data->Values[i].Name) == 0)
-            break;
+        ActivatorSound(Data->Sound, 127);
+        SetFont("BIGFONT");
+        HudMessage(Data->Name);
+        EndHudMessage(HUDMSG_FADEOUT, PAYOUT_ID, Data->Color, PAYOUT_TEXT_X + 0.1, PAYOUT_TEXT_Y - 24, 3.0, 2.0);
+        Delay(35);
         
-        TotalOffset++;
+        SetFont("SMALLFONT");
+    
+        for (int i = 0; i < PAYOUT_VALUES_MAX; i++)
+        {
+            if (StrLen(Data->Values[i].Name) == 0)
+                break;
+            
+            TotalOffset++;
+            
+            ActivatorSound("payout/next", 127);
+            HudMessage("%S: \Cf%d", Data->Values[i].Name, Data->Values[i].Value);
+            EndHudMessage(HUDMSG_FADEOUT, PAYOUT_ID + i + 1, Data->Color, PAYOUT_TEXT_X + 2 + 0.1, PAYOUT_TEXT_Y + (i * 8), 3.0, 2.0);
+            Delay(35 / 8);
+        }
         
-        ActivatorSound("payout/next", 127);
-        HudMessage("%S: \Cf%d", Data->Values[i].Name, Data->Values[i].Value);
-        EndHudMessage(HUDMSG_FADEOUT, PAYOUT_ID + i + 1, Data->Color, PAYOUT_TEXT_X + 2 + 0.1, PAYOUT_TEXT_Y + (i * 8), 3.0, 2.0);
-        Delay(35 / 8);
+        Delay(35 / 2 + (TotalOffset * 2));
+        
+        ActivatorSound("payout/total", 127);
+        SetFont("BIGFONT");
+        HudMessage("Total: \Cf%d", *Data->Total);
+        EndHudMessage(HUDMSG_FADEOUT, PAYOUT_ID + PAYOUT_VALUES_MAX, Data->Color, PAYOUT_TEXT_X + 0.1, PAYOUT_TEXT_Y + 4 + (8 * (TotalOffset + 1)), 3.0, 2.0);
+        
+        Delay(35);
     }
     
-    Delay(35 / 2 + (TotalOffset * 2));
-    
-    ActivatorSound("payout/total", 127);
-    SetFont("BIGFONT");
-    HudMessage("Total: \Cf%d", *Data->Total);
-    EndHudMessage(HUDMSG_FADEOUT, PAYOUT_ID + PAYOUT_VALUES_MAX, Data->Color, PAYOUT_TEXT_X + 0.1, PAYOUT_TEXT_Y + 4 + (8 * (TotalOffset + 1)), 3.0, 2.0);
-    
-    Delay(35);
-    
-    ActivatorSound("payout/totaladd", 127);
+    if (GetActivatorCVar("drpg_pay_quick"))
+        ActivatorSound("payout/next", 127);
+    else
+        ActivatorSound("payout/totaladd", 127);
     SetFont("SMALLFONT");
     HudMessage("%S: \Cf%d", Data->Name, *Data->Total);
-    EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + Offset + 1, Data->Color, PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + (8 * Offset), 50.0 - (5.0 * Offset), 0.5, 0.5);
+    if (GetActivatorCVar("drpg_pay_quick"))
+        EndHudMessage(HUDMSG_FADEOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + Offset + 1, Data->Color, PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + (8 * Offset), 10.5, 0.5, 0.5);
+    else
+        EndHudMessage(HUDMSG_FADEINOUT, PAYOUT_ID + PAYOUT_VALUES_MAX + Offset + 1, Data->Color, PAYOUT_TOTAL_X + 0.1, PAYOUT_TOTAL_Y + (8 * Offset), 56.5 - (5.0 * Offset), 0.5, 0.5);
     
-    Delay(35 * 2);
+    if (GetActivatorCVar("drpg_pay_quick"))
+        Delay(35 / 8);
+    else
+        Delay(35 * 2);
 }
 
 void PayoutCalculateTotals()
