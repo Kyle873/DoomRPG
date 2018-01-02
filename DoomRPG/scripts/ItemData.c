@@ -493,7 +493,7 @@ NamedScript void BuildItemData()
             ITEMDATA_DEF("RLSpeedloaderPistol",                     "Revolver \Cv[Assembled]\C-",                              800, -1, -1, "REVOX0", 16, 20);
             ITEMDATA_DEF("RLSilencedPistol",                        "Silenced Pistol \Cv[Assembled]\C-",                       500, -1, -1, "SILPX0", 17, 15);
             ITEMDATA_DEF("RLStealthRifle",                          "Stealth Rifle \Cv[Assembled]\C-",                        1800, -1, -1, "STELX0", 25, 14);
-            ITEMDATA_DEF("RLShredderPistol",                        "Shredder Pistol \Cv[Assembled]\C-",                      1200, -1, -1, "SHRPX0", 10, 13);
+            ITEMDATA_DEF("RLShredderPistol",                        "Shredder Pistol \Cv[Assembled]\C-",                      1200, -1, -1, "SRPSX0", 10, 13);
             ITEMDATA_DEF("RLShredderShotgun",                       "Shredder Shotgun \Cv[Assembled]\C-",                     6000, -1, -1, "SHRSX0", 23, 12);
             ITEMDATA_DEF("RLElephantGun",                           "Elephant Gun \Cv[Assembled]\C-",                         1800, -1, -1, "ELEGX0", 21, 13);
             ITEMDATA_DEF("RLGatlingGun",                            "Gatling Gun \Cv[Assembled]\C-",                          2500, -1, -1, "DGTGX0", 38, 19);
