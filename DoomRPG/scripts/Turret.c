@@ -1799,7 +1799,7 @@ NamedScript void TurretAI(int TID)
         SetActorVelocity(0, 0, 0, TurretSpeed, true, false);
     
     // Teleport detection - If the player suddenly poofs into another part of the map, we need to go with them.
-    if (GetActorProperty(PlayerTID, APROP_Reactiontime) > 0 && Distance(0, PlayerTID) > 96.0)
+    if (GetActorProperty(PlayerTID, APROP_ReactionTime) > 0 && Distance(0, PlayerTID) > 96.0)
         NeedsTeleport = true;
     
     if (GetUserVariable(0, "user_needs_teleport"))

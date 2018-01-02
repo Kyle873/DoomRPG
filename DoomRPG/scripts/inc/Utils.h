@@ -137,7 +137,7 @@ void CheckDRLASetWeapons();
 int CalcPercent(int, int);
 int Pow(int, int);
 int Abs(int);
-int Round(fixed);
+int RoundInt(fixed);
 fixed AbsFixed(fixed);
 fixed Min(fixed, fixed);
 fixed Max(fixed, fixed);

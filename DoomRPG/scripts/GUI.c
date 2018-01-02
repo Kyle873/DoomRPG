@@ -177,7 +177,7 @@ void DrawTooltip(GUITooltip *Tooltip)
         int Longest;
         int Index;
         
-        Longest = Round(StrLen(Title) * 1.5);
+        Longest = RoundInt(StrLen(Title) * 1.5);
         
         for (int i = 0; i < StrLen(Text); i++)
         {

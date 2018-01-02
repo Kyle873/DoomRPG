@@ -873,7 +873,7 @@ NamedScript void WeaponSpeed()
     Start:
 
     if (Player.Agility <= 100)
-        Time = Abs(Round(Player.WeaponSpeed * 0.35 - 35.0));
+        Time = Abs(RoundInt(Player.WeaponSpeed * 0.35 - 35.0));
     else
         Time = 0;
 

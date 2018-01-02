@@ -1351,7 +1351,7 @@ NamedScript MapSpecial void MissionBBS()
             
             // Cursor
             if (i == Index)
-                PrintSprite("MissBoxH", 0, 0.1 + (i % (MAX_MISSIONS / 3) * 48.0) + Round((Cos((fixed)Timer() / 64.0) * 8.0)), 80.0 + (i / (MAX_MISSIONS / 3) * 48.0) + Round((Sin((fixed)Timer() / 64.0) * 8.0)), 0.05);
+                PrintSprite("MissBoxH", 0, 0.1 + (i % (MAX_MISSIONS / 3) * 48.0) + RoundInt((Cos((fixed)Timer() / 64.0) * 8.0)), 80.0 + (i / (MAX_MISSIONS / 3) * 48.0) + RoundInt((Sin((fixed)Timer() / 64.0) * 8.0)), 0.05);
             
             // Icon
             PrintSprite(StrParam("BBS_M%d", MissionIter->Type + 1), 0, 8.1 + (i % (MAX_MISSIONS / 3) * 48.0), 80.0 + (i / (MAX_MISSIONS / 3) * 48.0), 0.05);

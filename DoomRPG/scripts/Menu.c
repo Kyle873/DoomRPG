@@ -1190,7 +1190,7 @@ void DrawSkillMenu()
         SetFont("BIGFONT");
         if (Player.SkillRefundMult > 0)
         {
-            HudMessage("+%d%% Skill Cost\n%d%% Skill Cost Refund", Player.SkillCostMult, Round(Player.SkillRefundMult * 100));
+            HudMessage("+%d%% Skill Cost\n%d%% Skill Cost Refund", Player.SkillCostMult, RoundInt(Player.SkillRefundMult * 100));
             EndHudMessage(HUDMSG_PLAIN, 0, "Cyan", 256.1, 112.0, 0.05);
         }
         else

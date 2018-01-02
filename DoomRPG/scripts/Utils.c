@@ -2110,7 +2110,7 @@ int Abs(int x)
 }
 
 // Rounds a fixed to the nearest integer
-int Round(fixed x)
+int RoundInt(fixed x)
 {
     return (int)(x + 0.5);
 }
