@@ -334,6 +334,7 @@ NamedScript void BuildItemData()
         ITEMDATA_DEF("DRPGBatteryLarge",        "Large Battery",                      2500, 8, 2, "BATTB0", 14, 21);
         
         ITEMDATA_DEF("DRPGTurretPart",          "Turret Part",                        1000, 1, 1, "TPRTA0", 29, 21);
+        ITEMDATA_DEF("DRPGTurretPartCrate",     "Turret Parts Crate",                50000, 4, 4, "TCRTA0", 29, 26);
     ITEMDATA_CATEGORY_END;
     
     // Generic Loot
@@ -1043,89 +1044,75 @@ void RemoveItemRanks()
 
 ItemInfoPtr GetRewardItem(int Difficulty)
 {
-    // [KS] I redid all of it
-    // [K873] The rest of it is done via sorting into a separate RewardList array in BuildItemData()
-    /* int SliceStart = (MaxRewards / MAX_DIFFICULTIES) * Difficulty;
-    int SliceLength = MaxRewards / MAX_DIFFICULTIES;
-    if (Difficulty == MAX_DIFFICULTIES - 1)
-        SliceLength += MaxRewards % MAX_DIFFICULTIES;
-    
-    int Index = Random(SliceStart, (SliceStart + SliceLength) - 1);
-    ItemInfoPtr Reward = RewardList[Index]; */
     ItemInfoPtr Reward;
-    int Index, cap, rng;
+    int Index;
+    int Cap;
+    int DiffPick;
+    
     if (Difficulty < 10)
     {
-        rng = Random(0, 99);
+        DiffPick = Random(0, 100);
         
-        if (rng < 20) Difficulty--; //unlucky, item will be a rank lower
-        if (rng > 95) Difficulty++; //lucky, item will be a rank higher
+        if (DiffPick < 20) Difficulty--; // Unlucky, item will be a rank lower
+        if (DiffPick > 95) Difficulty++; // Lucky, item will be a rank higher
+        
+        // Prevent under/overflow
         if (Difficulty < 0) Difficulty = 0;
         if (Difficulty > 9) Difficulty = 9;
         
-        //higher chance for modpacks
+        // Higher chance for modpacks if we're playing with DRLA
         if (CompatMode == COMPAT_DRLA && Difficulty > 1)
         {
-            cap = 10;   //all modpacks
-            if (Difficulty <= 4) cap = 9;   //exclude demon artifact
-            if (Difficulty == 2) cap = 4;   //basic modpacks only
+            if (Difficulty <= 4) Cap = 9;   // Exclude demon artifact
+            if (Difficulty == 2) Cap = 4;   // Basic modpacks only
+            else                 Cap = 10;  // All modpacks
             
-            if (Random(0, 99) < 25)
+            if (Random(0, 100) < 25)
             {
-                Index = Random(0, cap - 1);
+                Index = Random(0, Cap - 1);
                 Reward = &ItemData[8][Index];
-                //Log("\CdDEBUG: \C-Reward Item %S\C- (%S) picked - Rarity %d Item %d", Reward->Name, Reward->Actor, Difficulty, Index);
+                
+                if (GetCVar("drpg_debug"))
+                    Log("\CdDEBUG: \C-Reward Item %S\C- (%S) picked - Rarity %d Item %d", Reward->Name, Reward->Actor, Difficulty, Index);
+                
                 return Reward;
             }
         }
-        if (Random(0, 99) < 20)    //stims/augs/turret
+        else if (Random(0, 100) < 20) // Stims/Augs/Turret
         {
-            cap = 0;
+            Cap = 0;
+            
             switch (Difficulty)
             {
-                case 0: cap = 8; break;
-                case 1: cap = 22; break;
-                case 2: case 3: cap = 25; break;
-                case 4: cap = 26; break;
-                case 5: cap = 27; break;
-                case 6: cap = 28; break;
-                case 7: cap = 29; break;
-                case 8: cap = 31; break;
-                case 9: cap = 32; break;
+                case 0: Cap = 8; break;
+                case 1: Cap = 22; break;
+                case 2:
+                case 3: Cap = 25; break;
+                case 4: Cap = 26; break;
+                case 5: Cap = 27; break;
+                case 6: Cap = 28; break;
+                case 7: Cap = 29; break;
+                case 8: Cap = 31; break;
+                case 9: Cap = 32; break;
             }
             
-            Index = Random(0, cap - 1);
+            Index = Random(0, Cap - 1);
             Reward = &ItemData[6][Index];
-            //Log("\CdDEBUG: \C-Reward Item %S\C- (%S) picked - Rarity %d Item %d", Reward->Name, Reward->Actor, Difficulty, Index);
-            if (Reward->Actor == "DRPGTurretPart")
-            {
-                Reward->Actor = "DRPGTurretPartCrate";
-                Reward->Name = "Turret Parts Crate";
-            }
+            
+            if (GetCVar("drpg_debug"))
+                Log("\CdDEBUG: \C-Reward Item %S\C- (%S) picked - Rarity %d Item %d", Reward->Name, Reward->Actor, Difficulty, Index);
+            
             return Reward;
         }
     }
-      
-    Index = Random(0, (RewardsCount[Difficulty] - 1));
+    
+    Index = Random(0, RewardsCount[Difficulty] - 1);
     Reward = RewardList[Difficulty][Index];
-    //Log("\CdDEBUG: \C-Reward Item %S\C- (%S) picked - Rarity %d Item %d", Reward->Name, Reward->Actor, Difficulty, Index);
-    if (Reward->Actor == "DRPGTurretPart")
-    {
-        Reward->Actor = "DRPGTurretPartCrate";
-        Reward->Name = "Turret Parts Crate";
-    }
+    
+    if (GetCVar("drpg_debug"))
+        Log("\CdDEBUG: \C-Reward Item %S\C- (%S) picked - Rarity %d Item %d", Reward->Name, Reward->Actor, Difficulty, Index);
+    
     return Reward;
-        /* Some extra stuff to catch errors and spit out debug logging
-        if (GetCVar("drpg_debug"))
-        {
-            Log("\CdDEBUG: \C-Reward Item %S\C- (%S) picked", Reward->Name, Reward->Actor);
-            
-            if (Index > MaxRewards)
-            {
-                Log("\CgERROR: \C-Tried to pick a reward past the max available reward index");
-                return nullptr;
-            };
-        }; */
 }
 
 ItemInfoPtr FindItem(str Item)
@@ -1179,7 +1166,6 @@ NamedScript DECORATE void SpawnLuckItem()
     
     Thing_Remove(0);
 }
-
 
 /*
 NamedScript Console void DumpItemData()
