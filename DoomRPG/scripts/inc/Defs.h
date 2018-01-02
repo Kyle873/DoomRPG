@@ -637,7 +637,7 @@ typedef enum
 #define ASAVE_SAFETIME          20 * 35
 #define ASAVE_RETRYTIME         5 * 35
 #define MAX_ITEMS               65535
-#define MAX_TIPS                76
+#define MAX_TIPS                75
 
 #define LOADOUT_WEAPONS         8
 #define LOADOUT_ARMORS          10
