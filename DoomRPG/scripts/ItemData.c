@@ -906,7 +906,7 @@ NamedScript void BuildItemData()
             ITEMDATA_DEF("RLArmorModItem",          "Armor Modpack",        50000, 2, 4, "AMK1A0", 10, 20);
             
             // Demon Artifact
-            ITEMDATA_DEF("RLDemonArtifactItem",     "Demon Artifact",       100000, 4, 6, "DMNAA0", 19, 48);
+            ITEMDATA_DEF("RLDemonArtifactItem",     "Demon Artifact",       100000, 4, 6, "DMNAA0", 19, 65);
         ITEMDATA_CATEGORY_END;
         
         // Boots
