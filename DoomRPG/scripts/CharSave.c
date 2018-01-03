@@ -470,6 +470,22 @@ NamedScript MenuEntry void LoadCharacter()
     }
     Player.PP = Info.PP;
     
+    // Misc
+    SetInventory("DRPGCredits", Info.Credits);
+    SetInventory("DRPGModule", Info.Modules);
+    Player.Medkit = Info.Medkit;
+    SetInventory("DRPGChipGold", Info.GoldChips);
+    SetInventory("DRPGChipPlatinum", Info.PlatinumChips);
+    SetInventory("DRPGUACCard", Info.ShopCard);
+    if (Info.ShopCard == 5)
+        SetInventory("DRPGDiamondUACCard", 1);
+    Player.Augs.Battery = Info.Battery;
+    Player.Toxicity = Info.Toxicity;
+    ArenaMaxWave = Info.ArenaWave;
+    
+    // We need to delay here so that given items don't affect other things like Stat XP
+    Delay(1);
+    
     // Stats
     Player.Strength     = Info.Stats[0];
     Player.Defense      = Info.Stats[1];
@@ -526,19 +542,6 @@ NamedScript MenuEntry void LoadCharacter()
     // Turret
     for (int i = 0; i < TU_MAX; i++)
         Player.Turret.Upgrade[i] = Info.TurretUpgrades[i];
-    
-    // Misc
-    SetInventory("DRPGCredits", Info.Credits);
-    SetInventory("DRPGModule", Info.Modules);
-    Player.Medkit = Info.Medkit;
-    SetInventory("DRPGChipGold", Info.GoldChips);
-    SetInventory("DRPGChipPlatinum", Info.PlatinumChips);
-    SetInventory("DRPGUACCard", Info.ShopCard);
-    if (Info.ShopCard == 5)
-        SetInventory("DRPGDiamondUACCard", 1);
-    Player.Augs.Battery = Info.Battery;
-    Player.Toxicity = Info.Toxicity;
-    ArenaMaxWave = Info.ArenaWave;
     
     Delay(1);
     
