@@ -1,6 +1,5 @@
 ﻿Quick Stuff
 ===
-- Increase default map event chance from 10% to 20% to make up for the increased time I forgot I changed forever ago
 - Animate the invulnerability sphere icon in the stats screen
 - Medkit shop refill needs a pickup message
 - Add Dark Marty for DRLA
@@ -59,6 +58,7 @@ QoL
 Bugs
 ===
 - Modpack save/load is broken
+- Infinite ammo related buffs are broken
 - Furious Fusion stops working every time you sell a weapon?
 - Look into summons always attacking the Force Wall object
 - Whenever allied Arch-viles resurrect enemies they becomes allied too, but their auras act versus you
