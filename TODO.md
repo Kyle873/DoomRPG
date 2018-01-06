@@ -1,10 +1,10 @@
 ﻿Quick Stuff
 ===
-- Animate the invulnerability sphere icon in the stats screen
 
 General
 ===
 - Re-check all default settings, see how they feel, etc
+- Powerup icon animations on the HUD that use ANIMDEFS are no longer working for some reason
 - Add combo stuff to rank payout level section
 - Clean up the crate hacking interface a bit (use IDs, prevent overlaps, etc)
 - Rework the way auras drop items; in particular, use the Inventory Transfer flag to make enemies drop backpacks
