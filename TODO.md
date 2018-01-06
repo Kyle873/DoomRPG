@@ -1,7 +1,6 @@
 ﻿Quick Stuff
 ===
 - Animate the invulnerability sphere icon in the stats screen
-- Add Dark Marty for DRLA
 
 General
 ===
