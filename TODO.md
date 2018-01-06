@@ -1,7 +1,6 @@
 ﻿Quick Stuff
 ===
 - Animate the invulnerability sphere icon in the stats screen
-- Medkit shop refill needs a pickup message
 - Add Dark Marty for DRLA
 
 General
