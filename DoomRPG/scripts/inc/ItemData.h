@@ -36,9 +36,9 @@ extern int RPGGlobal ItemCategoryFlags[ITEM_CATEGORIES];
 extern int RPGGlobal ItemMax[ITEM_CATEGORIES];
 extern ItemInfo RPGGlobal ItemData[ITEM_CATEGORIES][ITEM_MAX];
 extern bool RPGGlobal ItemRanksRemoved;
-extern ItemInfoPtr RewardList[MAX_DIFFICULTIES + 1][ITEM_CATEGORIES * ITEM_MAX];
+extern ItemInfoPtr RewardList[ITEM_MAX_RARITY][ITEM_CATEGORIES * ITEM_MAX];
 extern bool RPGGlobal RewardsInit;
-extern int RPGGlobal RewardsCount[MAX_DIFFICULTIES + 1];
+extern int RPGGlobal RewardsCount[ITEM_MAX_RARITY];
 
 NamedScript void BuildItemData();
 

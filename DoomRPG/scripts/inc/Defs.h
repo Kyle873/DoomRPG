@@ -93,26 +93,26 @@
 #define DECORATE        [[extern("ACS")]]
 #define MapSpecial      [[extern("ACS")]]
 #define Console         [[extern("ACS")]]
-#define KeyBind         [[extern("ACS"), script("Net")]]
-#define MenuEntry       [[extern("ACS"), script("Net")]]
+#define KeyBind         [[extern("ACS"), script("net")]]
+#define MenuEntry       [[extern("ACS"), script("net")]]
 
 #define NumberedScript(N)       [[call("ScriptI"), address(N)]]
 #define NamedScript             [[call("ScriptS")]]
 #define NumberedScriptSync(N)   [[call("SScriptI"), address(N)]]
 #define NamedScriptSync         [[call("SScriptS")]]
 
-#define Type_OPEN       [[script("Open")]]
-#define Type_UNLOADING  [[script("Unloading")]]
-#define Type_LIGHTNING  [[script("Lightning")]]
+#define Type_OPEN       [[script("open")]]
+#define Type_UNLOADING  [[script("unloading")]]
+#define Type_LIGHTNING  [[script("lightning")]]
 
-#define Type_ENTER      [[script("Enter")]]
-#define Type_RETURN     [[script("Return")]]
-#define Type_RESPAWN    [[script("Respawn")]]
-#define Type_DEATH      [[script("Death")]]
-#define Type_DISCONNECT [[script("Disconnect")]]
+#define Type_ENTER      [[script("enter")]]
+#define Type_RETURN     [[script("return")]]
+#define Type_RESPAWN    [[script("respawn")]]
+#define Type_DEATH      [[script("death")]]
+#define Type_DISCONNECT [[script("disconnect")]]
 
-#define Flag_Puke       [[script("Net")]]
-#define Flag_ClientSide [[script("Clientside")]]
+#define Flag_Puke       [[script("net")]]
+#define Flag_ClientSide [[script("clientside")]]
 
 // Macro functions
 #define MAKE_ID(a, b, c, d) ((int)((a) | ((b) << 8) | ((c) << 16) | ((d) << 24)))
@@ -355,6 +355,7 @@ typedef enum
 
 #define ITEM_CATEGORIES         16
 #define ITEM_MAX                256
+#define ITEM_MAX_RARITY         16
 
 typedef enum
 {
